@@ -5,15 +5,15 @@ WZD_BUILD_NUM=$(DATE_TAG)
 COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
 COMMON_LIBS=
 
-OBJS=wzd_main.o wzd_site.o wzd_site_user.o wzd_socket.o \
-  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o \
-  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o list.o stack.o
-DOBJS=$(OBJS:%.o=%.do)
-POBJS=$(OBJS:%.o=%.po)
-SOURCES=$(OBJS:%.o=%.c)
+SOURCES=wzd_main.c wzd_site.c wzd_site_user.c wzd_socket.c \
+  wzd_ClientThread.c wzd_ServerThread.c wzd_init.c \
+  ls.c wzd_data.c wzd_action.c wzd_file.c wzd_perm.c list.c stack.c
+OBJS=$(SOURCES:%.c=%.o)
+DOBJS=$(SOURCES:%.c=%.do)
+POBJS=$(SOURCES:%.c=%.po)
 LIBS=-ldl $(COMMON_LIBS)
 WINLIBS=$(COMMON_LIBS) -lcrypto
-CFLAGS=-O2 $(COMMON_CFLAGS)
+CFLAGS=-O3 $(COMMON_CFLAGS)
 DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
 PCFLAGS=-g -DDEBUG $(COMMON_CFLAGS) -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
 
@@ -23,7 +23,7 @@ LIBWZD_DOBJS = $(LIBWZD_SOURCES:%.c=%.do)
 LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
 
 ifeq ($(SSL_SUPPORT),1)
-OBJS += wzd_tls.o
+SOURCES += wzd_tls.c
 COMMON_LIBS += -lssl
 endif
 
@@ -37,7 +37,7 @@ COMMON_LIBS += -lpthread
 endif
 
 ifeq ($(INTERNAL_SFV),1)
-OBJS += wzd_crc32.o
+SOURCES += wzd_crc32.c
 COMMON_CFLAGS += -DINTERNAL_SFV=1
 endif
 
@@ -53,7 +53,13 @@ CC=gcc
 LIBWZD = libwzd.dll
 EXEC=wzdFTPd.exe
 COMMON_LIBS += -L. -llibwzd -Wl,-rpath,.
+ifeq ($(WINSOCK_SUPPORT),1)
+COMMON_CFLAGS += -DWINSOCK_SUPPORT
+COMMON_LIBS += -lwsock32
+WINLIBFLAGS = -lwsock32
 endif
+
+endif # !linux
 
 
 .SUFFIXES: .c .o .do .po
@@ -85,7 +91,7 @@ ifeq ($(PLATFORM),Linux)
 	$(CC) -shared -o $(LIBWZD) $(LIBWZD_OBJS) && \
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 else
-	$(CC) -shared -o $(LIBWZD) $(LIBWZD_OBJS) && \
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_OBJS) $(WINLIBFLAGS) && \
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
 endif
 
@@ -94,7 +100,7 @@ ifeq ($(PLATFORM),Linux)
 	$(CC) -shared -o $(LIBWZD) $(LIBWZD_DOBJS) && \
 	$(CC) -o $(EXEC) $(DOBJS) $(LIBS)
 else
-	$(CC) -shared -o $(LIBWZD) $(LIBWZD_DOBJS) && \
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_DOBJS) $(WINLIBFLAGS) && \
 	$(CC) -o $(EXEC) $(DOBJS) $(WINLIBS)
 endif
 
