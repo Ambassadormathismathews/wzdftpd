@@ -144,7 +144,10 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     return 0;
   }
   if (strcasecmp(varname,"tag")==0) {
-    snprintf(data,datalength,"%s",user->tagline);
+    if (user->tagline[0] != '\0')
+      snprintf(data,datalength,"%s",user->tagline);
+    else
+      snprintf(data,datalength,"no tagline set");
     return 0;
   }
 
@@ -431,6 +434,124 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   /* add it to backend */
   /* FIXME backend name hardcoded */
   ret = backend_mod_user("plaintext",username,&user,_USER_ALL);
+
+  return ret;
+}
+
+int vars_group_get(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  wzd_group_t * group;
+
+  if (!groupname || !varname) return 1;
+
+  group = GetGroupByName(groupname);
+  if (!group) return 1;
+
+  if (strcasecmp(varname,"home")==0) {
+    snprintf(data,datalength,"%s",group->defaultpath);
+    return 0;
+  }
+  if (strcasecmp(varname,"maxdl")==0) {
+    snprintf(data,datalength,"%ld",group->max_dl_speed);
+    return 0;
+  }
+  if (strcasecmp(varname,"maxul")==0) {
+    snprintf(data,datalength,"%ld",group->max_ul_speed);
+    return 0;
+  }
+  if (strcasecmp(varname,"name")==0) {
+    snprintf(data,datalength,"%s",group->groupname);
+    return 0;
+  }
+  if (strcasecmp(varname,"tag")==0) {
+    if (group->tagline[0] != '\0')
+      snprintf(data,datalength,"%s",group->tagline);
+    else
+      snprintf(data,datalength,"no tagline set");
+    return 0;
+  }
+
+  return 1;
+}
+
+int vars_group_set(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  wzd_group_t * group;
+  unsigned long mod_type;
+  unsigned long ul;
+  char *ptr;
+  int ret;
+
+  if (!groupname || !varname) return 1;
+
+  group = GetGroupByName(groupname);
+  if (!group) return -1;
+
+  /* find modification type */
+  mod_type = _GROUP_NOTHING;
+
+  /* groupname */
+  if (strcmp(varname,"name")==0) {
+    mod_type = _GROUP_GROUPNAME;
+    strncpy(group->groupname,data,sizeof(group->groupname));
+    /* NOTE: we do not need to iterate through users, group is referenced
+     * by id, not by name
+     */
+  }
+  /* tagline */
+  else if (strcmp(varname,"tagline")==0) {
+    mod_type = _GROUP_TAGLINE;
+    strncpy(group->tagline,data,sizeof(group->tagline));
+  }
+  /* homedir */
+  else if (strcmp(varname,"homedir")==0) {
+    /* check if homedir exist */
+    {
+      struct stat s;
+      if (stat(data,&s) || !S_ISDIR(s.st_mode)) {
+        /* Homedir does not exist */
+        return 2;
+      }
+    }
+    mod_type = _GROUP_DEFAULTPATH;
+    strncpy(group->defaultpath,data,WZD_MAX_PATH);
+  }
+  /* max_idle */
+  else if (strcmp(varname,"max_idle")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) { mod_type = _GROUP_IDLE; group->max_idle_time = ul; }
+  }
+  /* perms */
+  else if (strcmp(varname,"perms")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) { mod_type = _GROUP_GROUPPERMS; group->groupperms = ul; }
+  }
+  /* max_ul */
+  else if (strcmp(varname,"max_ul")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) { mod_type = _GROUP_MAX_ULS; group->max_ul_speed = ul; }
+  }
+  /* max_dl */
+  else if (strcmp(varname,"max_dl")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) { mod_type = _GROUP_MAX_DLS; group->max_dl_speed = ul; }
+  }
+  /* num_logins */
+  else if (strcmp(varname,"num_logins")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) { mod_type = _GROUP_NUMLOGINS; group->num_logins = (unsigned short)ul; }
+  }
+  /* ratio */
+  else if (strcmp(varname,"ratio")==0) {
+    ul=strtoul(data,&ptr,0);
+    if (!*ptr) {
+      mod_type = _GROUP_RATIO; group->ratio = ul;
+    }
+  }
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_group("plaintext", groupname, group, mod_type);
 
   return ret;
 }

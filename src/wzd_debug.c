@@ -106,6 +106,12 @@ int fd_is_valid(int fd)
   return (void*)malloc(size);
 }
 
+/* Memory reallocation */
+void * wzd_realloc(void * ptr, size_t size)
+{
+  return (void*)realloc(ptr, size);
+}
+
 /* Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr)
 {

@@ -116,8 +116,9 @@ int do_site_test(char *command, wzd_context_t * context)
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
   ret = 0;
 
-/*  fd_dump();*/
+  fd_dump();
 
+#if 0
   {
     char buffer[WZD_MAX_PATH+1];
     ret = checkpath_new(command, buffer, context);
@@ -126,6 +127,7 @@ int do_site_test(char *command, wzd_context_t * context)
     else
       out_err(LEVEL_INFO,"[%s] : error %d\n",command,ret);
   }
+#endif
 
 /*  ret = module_unload(&mainConfig->module,command);*/
 
@@ -1730,7 +1732,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
     strcpy(permname_buf,"site_");
     strncpy(permname_buf+5,token,250); /* 250 = 256 - strlen("site_") - 1 */
 
-    if (perm_check(permname_buf,context,mainConfig)) {
+    if (perm_check(permname_buf,context,mainConfig) == 1) {
       ret = send_message_with_args(501,context,"Permission Denied");
       return 1;
     }
@@ -1817,11 +1819,15 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
 
   FORALL_HOOKS(EVENT_SITE)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
-    catched = 1;
-    if (hook->hook)
+    if (hook->hook) {
       ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
+      /** \todo implement and use constants: HANDLED, NEXT, ERROR or something like .. */
+      if (ret == 0)
+        catched = 1;
+    }
     /* custom site commands */
     if (hook->opt && hook->external_command && strcasecmp(hook->opt,token)==0) {
+      catched = 1;
       send_message_raw("200-\r\n",context);
       ret = hook_call_custom(context, hook, 200, command_line+strlen(token)+1);
       if (!ret) {
@@ -1834,7 +1840,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
   END_FORALL_HOOKS
 
   if (ret || !catched)
-    ret = send_message_with_args(250,context,"SITE ","command unknown, ok");
+    ret = send_message_with_args(250,context,"SITE ","command unknown");
 
   return 0;
 }

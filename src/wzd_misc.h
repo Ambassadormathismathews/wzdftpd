@@ -84,6 +84,12 @@ wzd_bw_limiter * limiter_new(int maxspeed);
 void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check);
 void limiter_free(wzd_bw_limiter *l);
 
+/** \brief allocate buffer big enough to format arguments with printf
+ *
+ * Returned string must be freed with \ref wzd_free
+ */
+char * safe_vsnprintf(const char *format, va_list ap);
+
 /* cookies */
 /* defined in wzd_cookie_lex.l */
 int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len);

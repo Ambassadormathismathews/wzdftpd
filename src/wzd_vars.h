@@ -60,4 +60,14 @@ int vars_user_addip(const char *username, const char *ip, wzd_config_t *config);
  */
 int vars_user_delip(const char *username, const char *ip, wzd_config_t *config);
 
+/** fills data with varname content (from group), max size: datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_group_get(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
+/** change varname (from group) with data contents size of data is datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_group_set(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
 #endif /* __WZD_VARS__ */

@@ -47,6 +47,9 @@ int fd_is_valid(int fd);
 /** Memory allocation */
 void * wzd_malloc(size_t size);
 
+/** Memory reallocation */
+void * wzd_realloc(void * ptr, size_t size);
+
 /** Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr);
 

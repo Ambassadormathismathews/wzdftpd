@@ -1,11 +1,18 @@
-2004-05-14  Pierre Chifflier  <pollux@wzdftpd.net>
+2004-05-15  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new server vars to manipulate user data
 	* bugfix: unable to create dirs inside symlinks
 	* bugfix: custom site commands causing segfault
 	* bugfix: unused strange file descriptor on certificate (wzd_init_lex.l)
 	* bugfix: EVENT_LOGOUT sent twice
+	* bugfix: return correct message when SITE command is unknown
+	* bugfix: unclosed handle after FXP (closes #954477)
 	* tcl: each client now run commands in a separate slave interpreter
+	* tcl: send_message now parse cookies and can be multi-line
+	* tcl: new command vars_group get/set
+
+	* IMPORTANT: behaviour change: site commands with no explicit permission
+	line in config are now allowed, whereas before they were not
 
 2004-05-09  Pierre Chifflier  <pollux@wzdftpd.net>
 

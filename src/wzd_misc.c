@@ -533,7 +533,28 @@ int server_diagnose(void)
   return 0;
 }
 
+
 #define WORK_BUF_LEN	8192
+
+/** \brief allocate buffer big enough to format arguments with printf
+ *
+ * Returned string must be freed with \ref wzd_free
+ */
+char * safe_vsnprintf(const char *format, va_list ap)
+{
+  int size = WORK_BUF_LEN;
+  char * buffer = wzd_malloc(size);
+  int result;
+
+  result = vsnprintf(buffer, size, format, ap);
+  if (result >= size)
+  {
+    buffer = wzd_realloc(result+1, buffer);
+    result = vsnprintf(buffer, result+1, format, ap);
+  }
+
+  return buffer;
+}
 
 /** if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply

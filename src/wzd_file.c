@@ -436,8 +436,13 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   /** \bug if file_cur->filename contains spaces, we MUST quote it when writing name */
   while (file_cur) {
     if (file_cur->kind == FILE_LNK) {
-      snprintf(buffer,sizeof(buffer),"link\t%s\t%s\t%s\t%s\t%lo\n",
-          file_cur->filename,(char*)file_cur->data,file_cur->owner,file_cur->group,file_cur->permissions);
+      if (strchr( (char*)file_cur->data, ' ')) {
+        snprintf(buffer,sizeof(buffer),"link\t%s\t'%s'\t%s\t%s\t%lo\n",
+            file_cur->filename,(char*)file_cur->data,file_cur->owner,file_cur->group,file_cur->permissions);
+      } else {
+        snprintf(buffer,sizeof(buffer),"link\t%s\t%s\t%s\t%s\t%lo\n",
+            file_cur->filename,(char*)file_cur->data,file_cur->owner,file_cur->group,file_cur->permissions);
+      }
       fwrite(buffer,strlen(buffer),1,fp);
     } else { /* not a link */
       /* first write owner if available */
@@ -1178,6 +1183,7 @@ int softlink_create(const char *target, const char *linkname)
     file_cur = find_file(stripped_filename, perm_list);
     if (file_cur) {
       /* error, an entry already exists with the same name */
+      out_err(LEVEL_FLOOD, "symlink: link already exists here (%s)\n", perm_filename);
       free_file_recursive(perm_list);
       return EEXIST;
     }

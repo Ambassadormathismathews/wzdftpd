@@ -181,7 +181,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
         ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
-        close(context->current_action.current_file);
+        file_close(context->current_action.current_file, context);
         FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
         context->current_action.current_file = 0;
         context->current_action.bytesnow = 0;
@@ -205,7 +205,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
         user->credits -= n;
       context->idle_time_data_start = time(NULL);
     } else { /* end */
-      close(context->current_action.current_file);
+      file_close(context->current_action.current_file, context);
       FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
 
       out_xferlog(context,1 /* complete */);

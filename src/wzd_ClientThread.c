@@ -3046,6 +3046,7 @@ void * clientThreadProc(void *arg)
     struct hostent *h;
     char inet_str[256];
 
+    FD_UNREGISTER(sockfd, "client socket");
     socket_close (sockfd);
 
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
@@ -3173,6 +3174,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     ret = data_check_fd(context,&fds_r,&fds_w,&efds);
     if (ret == -1) {
       /* we had an error reading data connection */
+      /** \todo should be remove data descriptors and so ? */
     }
 
     if (!FD_ISSET(sockfd,&fds_r)) {

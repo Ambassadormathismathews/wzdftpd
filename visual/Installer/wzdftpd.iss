@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040514
+AppVerName=wzdftpd 0.4cvs-20040515
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040514
+OutputBaseFilename=wzdftpd-0.4cvs-20040515
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -42,7 +42,7 @@ Source: ..\release\libwzd.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 Source: ..\iconv\bin\libiconv-2.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
-Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
+Source: ..\openssl\lib\libeay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 Source: ..\..\src\file_*.txt; DestDir: {app}\etc; Flags: ignoreversion
 Source: ..\..\AUTHORS; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\ChangeLog; DestDir: {app}; Flags: ignoreversion

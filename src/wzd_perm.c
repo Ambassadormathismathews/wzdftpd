@@ -397,7 +397,7 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 
 /***/
 
-/** \return 0 if ok, 1 otherwise */
+/** \return 0 if ok, 1 if denied, -1 otherwise */
 int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config)
 {
   wzd_command_perm_t * command_perm;
@@ -415,12 +415,12 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
 #endif
     user = GetUserByID(context->userid);
 
-  if (!permname || !context) return 1;
-  if (!config->perm_list) return 1;
-  if (!strlen(permname)) return 1;
+  if (!permname || !context) return -1;
+  if (!config->perm_list) return -1;
+  if (!strlen(permname)) return -1;
 
   command_perm = perm_find(permname,config);
-  if (!command_perm) return 1;
+  if (!command_perm) return -1;
 
   entry = command_perm->entry_list;
   if (!entry) return 1;

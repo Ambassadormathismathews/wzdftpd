@@ -1127,36 +1127,15 @@ int server_switch_to_config(wzd_config_t *config)
   }
 #endif /* WIN32 */
 
-  /* creates pid file */
-  {
-    char buf[64];
-#ifndef WIN32
-    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
-#else
-    /* ignore if file exists for visual version ... */
-    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT,0644);
-#endif
-    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
-    if (fd==-1) {
-      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",mainConfig->pid_file,strerror(errno));
-      if (created_shm) {
-        free_config(mainConfig);
-      }
-      exit(1);
-    }
-    ret = write(fd,buf,strlen(buf));
-    close(fd);
-  }
-
 
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
   size_context = HARD_USERLIMIT*sizeof(wzd_context_t);
   size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
   size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
   length = size_context + size_user + size_group;
-  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
+  context_shm = wzd_shm_create(config->shm_key,length,0);
   if (context_shm == NULL) {
-    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
+    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",config->shm_key);
     exit(1);
   }
   context_list = context_shm->datazone;
@@ -1164,11 +1143,11 @@ int server_switch_to_config(wzd_config_t *config)
     context_init(context_list+i);
   }
 #ifndef _MSC_VER
-  mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+  config->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  config->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 #else
-  mainConfig->user_list = (wzd_user_t*)((char*)context_list + size_context);
-  mainConfig->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
+  config->user_list = (wzd_user_t*)((char*)context_list + size_context);
+  config->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
 #endif
 
 #ifdef WIN32
@@ -1177,25 +1156,25 @@ int server_switch_to_config(wzd_config_t *config)
    * remember me to slap the one who told me to make this prog portable ... oops
    * it's me °_°
    */
-  setlib_mainConfig(mainConfig);
+  setlib_mainConfig(config);
   setlib_contextList(context_list);
 #endif /* WIN32 */
 
 
   /* create limiter sem */
-  limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
+  limiter_sem = wzd_sem_create(config->shm_key+1,1,0);
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (mainConfig->backend.name[0] == '\0') {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    serverMainThreadExit(-1);
+    return -1;
   }
-  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
-      mainConfig->group_list,HARD_DEF_GROUP_MAX);
+  ret = backend_init(config->backend.name,&backend_storage,config->user_list,HARD_DEF_USER_MAX,
+      config->group_list,HARD_DEF_GROUP_MAX);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (ret || mainConfig->backend.handle == NULL) {
+  if (ret || config->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    serverMainThreadExit(-1);
+    return -1;
   }
 
   if (config->xferlog_name) {
@@ -1257,6 +1236,28 @@ int server_switch_to_config(wzd_config_t *config)
       return 1;
     }
   }
+
+  /* creates pid file */
+  {
+    char buf[64];
+#ifndef WIN32
+    fd = open(config->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+#else
+    /* ignore if file exists for visual version ... */
+    fd = open(config->pid_file,O_WRONLY | O_CREAT,0644);
+#endif
+    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
+    if (fd==-1) {
+      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
+      if (created_shm) {
+        free_config(config);
+      }
+      exit(1);
+    }
+    ret = write(fd,buf,strlen(buf));
+    close(fd);
+  }
+
 
 
 

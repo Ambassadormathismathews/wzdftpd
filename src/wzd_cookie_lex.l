@@ -935,8 +935,8 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       /** \todo convert to kB/s ? */
         if (context->last_file.name[0]!='\0')
           snprintf(internalbuffer,IBUFSIZE,"%.1f",
-            (context->last_file.time!=0) ? 
-              ((f/(float)context->last_file.time)) : f
+            ((context->last_file.time!=0) ? 
+              ((f/(float)context->last_file.time)) : f) / 1024.f
 			  );
         else
           snprintf(internalbuffer,IBUFSIZE,"0");
@@ -964,7 +964,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       int length;
       unsigned int size;
 
-      if (checkpath(".",buffer,context)) {
+      if (checkpath_new(".",buffer,context)) {
         snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
         cookie_ptr = internalbuffer;
         cookie_length = strlen(cookie_ptr);

@@ -152,6 +152,8 @@ EXPORTS
 	utf8_to_local_charset
 	vars_get
 	vars_set
+	vars_group_get
+	vars_group_set
 	vars_user_addip
 	vars_user_delip
 	vars_user_get
@@ -177,6 +179,7 @@ EXPORTS
 	wzd_debug_fini
 	wzd_free
 	wzd_malloc
+	wzd_realloc
 	wzd_sem_create
 	wzd_sem_destroy
 	wzd_sem_lock

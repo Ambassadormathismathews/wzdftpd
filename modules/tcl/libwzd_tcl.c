@@ -111,6 +111,7 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 
@@ -149,6 +150,7 @@ int WZD_MODULE_INIT(void)
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"stat",tcl_stat,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"vars_group",tcl_vars_group,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
@@ -295,6 +297,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
     ret = Tcl_CreateAlias(slave, "send_message_raw", interp, "send_message_raw", 0, NULL);
     ret = Tcl_CreateAlias(slave, "stat", interp, "stat", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars", interp, "vars", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "vars_group", interp, "vars_group", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars_user", interp, "vars_user", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vfs", interp, "vfs", 0, NULL);
 
@@ -360,16 +363,17 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
 {
   char *ptr;
   int ret;
-  unsigned int length;
+  wzd_user_t * user = current_context ? GetUserByID(current_context->userid) : NULL;
+  wzd_group_t * group = current_context ? GetGroupByID(user->groups[0]) : NULL;
 
-  if (argc != 2) return TCL_ERROR;
+  if (argc < 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
   /** \todo XXX we could format the string using argv[2,] */
 
-  length = strlen(argv[1]);
-  ptr = malloc(length+4);
-  snprintf(ptr,length+4," %s\r\n",argv[1]);
+  ptr = malloc(4096);
+
+  cookie_parse_buffer(argv[1],user,group,current_context,ptr,4096);
 
   ret = send_message_raw(ptr,current_context);
 
@@ -443,6 +447,49 @@ static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *a
   } else if (!strcmp(argv[1],"set")) {
     ret = vars_set(argv[2],(void*)argv[3],1024,getlib_mainConfig());
     return (ret)?TCL_ERROR:TCL_OK;
+  }
+
+  return TCL_OK;
+}
+
+static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  int ret;
+  char *buffer;
+
+  if (argc <= 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  Tcl_ResetResult(interp);
+
+  if (!strcmp(argv[1],"get")) {
+    buffer = wzd_malloc(1024);
+
+    ret = vars_group_get(argv[2],argv[3],buffer,1024,getlib_mainConfig());
+    if (!ret)
+      Tcl_SetResult(interp, buffer, (Tcl_FreeProc *)&wzd_free);
+    else
+    {
+      wzd_free(buffer);
+      return TCL_ERROR;
+    }
+  } else if (!strcmp(argv[1],"set")) {
+    ret = vars_group_set(argv[2],argv[3],(void*)argv[4],1024,getlib_mainConfig());
+    return (ret)?TCL_ERROR:TCL_OK;
+#if 0
+  } else if (!strcmp(argv[1],"new")) { /* new user creation */
+    ret = vars_group_new(argv[2],argv[3],argv[4],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
+  } else if (!strcmp(argv[1],"addip")) { /* add new ip */
+    ret = vars_group_addip(argv[2],argv[3],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
+  } else if (!strcmp(argv[1],"delip")) { /* remove ip */
+    ret = vars_group_delip(argv[2],argv[3],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
+#endif
   }
 
   return TCL_OK;
@@ -540,18 +587,18 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
         /* ex: vfs link create -r c:\real linkname */
         pos1++; pos2++;
         if (argc <= pos2) return TCL_ERROR;
-        strncpy(buffer_link, argv[pos1], sizeof(buffer_link));
+        strncpy(buffer_real, argv[pos1], sizeof(buffer_real));
       } else {
-        if (checkpath_new(argv[pos1],buffer_link,current_context) != E_FILE_NOEXIST)
+        if (checkpath_new(argv[pos1],buffer_real,current_context) != E_FILE_NOEXIST)
           return TCL_ERROR;
       }
       if (!strcmp(argv[pos2],"-r") || !strcmp(argv[pos2],"--real")) {
         /* ex: vfs link create -r c:\real linkname */
         pos2++;
         if (argc <= pos2) return TCL_ERROR;
-        strncpy(buffer_real, argv[pos2], sizeof(buffer_link));
+        strncpy(buffer_link, argv[pos2], sizeof(buffer_link));
       } else {
-        if (checkpath_new(argv[pos2],buffer_real,current_context) != 0)
+        if (checkpath_new(argv[pos2],buffer_link,current_context) != E_FILE_NOEXIST)
           return TCL_ERROR;
       }
 
