@@ -4,6 +4,8 @@
   * \brief strtoull() replacement
   */
 
+#include "wzd_all.h"
+
 #include <stdlib.h>
 #include <ctype.h> /* isspace, etc. */
 

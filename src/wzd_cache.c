@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #if defined(_MSC_VER) || (defined  __CYGWIN__ && defined WINSOCK_SUPPORT)
 #include <winsock2.h>
 #else
@@ -54,6 +58,8 @@
 #include "wzd_misc.h"
 
 #include "wzd_debug.h"
+
+#endif /* WZD_USE_PCH */
 
 #define MAX_CACHE_FILE_LEN	32768
 

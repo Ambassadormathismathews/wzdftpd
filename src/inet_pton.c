@@ -17,11 +17,13 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
 #endif
-
-#ifndef HAVE_INET_PTON
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
@@ -35,6 +37,10 @@
 #endif
 
 #include <errno.h>
+
+#endif /* WZD_USE_PCH */
+
+#ifndef HAVE_INET_PTON
 
 #define NS_INT16SZ	 2
 #define NS_INADDRSZ	 4

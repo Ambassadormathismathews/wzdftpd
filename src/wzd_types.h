@@ -196,7 +196,7 @@ typedef size_t ssize_t;
 /*********************** VERSION **************************/
 
 /* Version */
-#define  WZD_VERSION_NUM "0.4.0 visual"
+#define  WZD_VERSION_NUM "0.5.0 visual"
 #define  WZD_BUILD_NUM __DATE__
 #define  WZD_BUILD_OPTS  "visual"
 
@@ -275,6 +275,8 @@ __inline int gettimeofday(struct timeval *tv, struct timezone *tz)
 
     return 0;
 }
+
+const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 
 
 

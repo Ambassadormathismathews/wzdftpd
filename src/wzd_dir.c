@@ -28,6 +28,10 @@
   * \brief Utilities functions to manipulate file and dir names
   */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -62,6 +66,7 @@
 
 #include "wzd_debug.h"
 
+#endif /* WZD_USE_PCH */
 
 struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 {
@@ -93,7 +98,10 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   dir = opendir(name);
   if (!dir) return NULL;
 #else
-  snprintf(dirfilter,sizeof(dirfilter),"%s/*",name);
+  if (name[strlen(name)-1] != '/')
+    snprintf(dirfilter,sizeof(dirfilter),"%s/*",name);
+  else
+    snprintf(dirfilter,sizeof(dirfilter),"%s*",name);
   if ((dir = FindFirstFile(dirfilter,&fileData)) == INVALID_HANDLE_VALUE) return NULL;
 #endif
 

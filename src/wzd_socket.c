@@ -424,7 +424,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   {
     int retry;
     int save_errno;
-    for (retry=0; retry<6; retry++)
+    for (retry=0; retry<100; retry++)
     {
       ret = socket_wait_to_write(sock,timeout);
       if (ret == 0) /* ok */
@@ -436,7 +436,8 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
         return -1;
       }
       if (errno == WSAEWOULDBLOCK) {
-        out_log(LEVEL_INFO,"WSAEWOULDBLOCK (removed me: %s:%d)\n",__FILE__,__LINE__);
+/*        out_log(LEVEL_FLOOD,"WSAEWOULDBLOCK (removed me: %s:%d)\n",__FILE__,__LINE__);*/
+        Sleep(5); /* wait 5 milliseconds before retrying */
         continue;
       }
       /* error */
@@ -471,8 +472,10 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   } /* if (timeout) */
 
   if (ret < 0) {
-    out_log(LEVEL_FLOOD,"Connect failed %s:%d\n", __FILE__, __LINE__);
+    ret = errno;
+    out_log(LEVEL_FLOOD,"Connect failed %d %s:%d\n", errno, __FILE__, __LINE__);
     socket_close (sock);
+    errno = ret;
     return -1;
   }
 
@@ -536,32 +539,41 @@ int socket_wait_to_read(int sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
-  fd_set fds, efds;
+  fd_set rfds, wfds, efds;
   struct timeval tv;
+
+  if (sock<0) return -1;
 
   if (timeout==0)
     return 0; /* blocking sockets are always ready */
   else {
     while (1) {
-      FD_ZERO(&fds);
+      FD_ZERO(&rfds);
+      FD_ZERO(&wfds);
       FD_ZERO(&efds);
-      FD_SET(sock,&fds);
+      FD_SET(sock,&rfds);
+      FD_SET(sock,&wfds);
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
 #if defined(_MSC_VER)
-      ret = select(0,&fds,NULL,&efds,&tv);
+      ret = select(0,&rfds,&wfds,&efds,&tv);
 #else
-      ret = select(sock+1,&fds,NULL,&efds,&tv);
+      ret = select(sock+1,&rfds,&wfds,&efds,&tv);
 #endif
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
-        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %s\n",strerror(save_errno));
+        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %d %s\n",save_errno,strerror(save_errno));
         return -1;
       }
-      if (!FD_ISSET(sock,&fds)) /* timeout */
+      if (FD_ISSET(sock,&wfds)) {
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"WTF, socket %d wants to write during socket_wait_to_read: %s\n",sock,strerror(save_errno));
+        return -1;
+      }
+      if (!FD_ISSET(sock,&rfds)) /* timeout */
         return 1;
       break;
     }
@@ -575,32 +587,44 @@ int socket_wait_to_write(int sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
-  fd_set fds, efds;
+  fd_set rfds, wfds, efds;
   struct timeval tv;
+
+  if (sock<0) return -1;
 
   if (timeout==0)
     return 0; /* blocking sockets are always ready */
   else {
     while (1) {
-      FD_ZERO(&fds);
+      FD_ZERO(&rfds);
+      FD_ZERO(&wfds);
       FD_ZERO(&efds);
-      FD_SET(sock,&fds);
+      FD_SET(sock,&rfds);
+      FD_SET(sock,&wfds);
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER)
-      ret = select(0,NULL,&fds,&efds,&tv);
+#ifdef WIN32
+      ret = select(0,&rfds,&wfds,&efds,&tv);
 #else
-      ret = select(sock+1,NULL,&fds,&efds,&tv);
+      ret = select(sock+1,&rfds,&wfds,&efds,&tv);
 #endif
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
-        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %s\n",strerror(save_errno));
+#ifdef WIN32
+        if (save_errno == WSAEWOULDBLOCK) return -1; /* no error message */
+#endif
+        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %d %s\n",save_errno,strerror(save_errno));
         return -1;
       }
-      if (!FD_ISSET(sock,&fds)) /* timeout */
+      if (FD_ISSET(sock,&rfds)) {
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"WTF, socket %d wants to read during socket_wait_to_write: %s\n",sock,strerror(save_errno));
+        return -1;
+      }
+      if (!FD_ISSET(sock,&wfds)) /* timeout */
         return 1;
       break;
     }

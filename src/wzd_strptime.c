@@ -35,6 +35,9 @@
   * \brief strptime() replacement
   */
 
+
+#include "wzd_all.h"
+
 #include <ctype.h>
 #include <string.h>
 #include <time.h>

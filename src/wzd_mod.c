@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +70,8 @@
 #else
 #define DL_PREFIX
 #endif
+
+#endif /* WZD_USE_PCH */
 
 struct event_entry_t {
   unsigned long mask;

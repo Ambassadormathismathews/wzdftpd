@@ -24,8 +24,12 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
 #include <stdio.h>
 #include <stdlib.h>
+#endif
 
 #ifndef MAX
 #define MAX(x,y) ((x) > (y) ? (x) : (y))

@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- use generic list definition when possible
+'********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=
 '********'
 - get_bandwidth(): give download, upload, total
@@ -88,7 +90,7 @@ current objectives:
 - SFV: site rescan
 - per dir global permissions (to pass over rootpath)
 - use options in ls
-- modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
+- modify checkpath to return 0 if ok and file exists, -1 if !ok, 1 if file does not
   exist but path was converted
 - bandwidth limit: add global limit / group limit
 - perms: implement permissions on global commands like delete, mkdir, site ...

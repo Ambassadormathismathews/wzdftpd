@@ -24,12 +24,18 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <string.h>
 /*#include <sys/time.h>*/
 #include <time.h>
 
 #include "wzd_structs.h"
+
+#endif /* WZD_USE_PCH */
 
 void set_action(wzd_context_t * context, unsigned int token, const char *arg)
 {

@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -47,6 +51,14 @@
 #include "wzd_section.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
+
+#else /* WZD_USE_PCH */
+#ifdef _MSC_VER
+#include "../visual/gnu_regex_dist/regex.h"
+#else
+#include <regex.h>
+#endif
+#endif /* WZD_USE_PCH */
 
 
 char * section_getname(wzd_section_t * section)

@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #if defined(_MSC_VER)
 #include <winsock2.h>
 #else
@@ -47,6 +51,7 @@
 #include "wzd_section.h"
 #include "wzd_vfs.h"
 
+#endif /* WZD_USE_PCH */
 
 #define DEFAULT_MSG	"No message for this code"
 

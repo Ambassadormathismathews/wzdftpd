@@ -24,6 +24,9 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
 #include <stdio.h>
 #include <string.h>
 
@@ -31,6 +34,7 @@
 
 #include "wzd_libmain.h"
 #include "wzd_log.h"
+#endif /* WZD_USE_PCH */
 
 wzd_config_t *  mainConfig;
 wzd_context_t * context_list;

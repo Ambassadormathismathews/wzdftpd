@@ -28,6 +28,10 @@
   * \warning This file contains many platform-dependant code.
   */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #ifdef __CYGWIN__
 #include <w32api/windows.h>
 #endif /* __CYGWIN__ */
@@ -44,6 +48,8 @@
 #include <unistd.h>
 #include <semaphore.h>
 #endif
+
+#endif /* WZD_USE_PCH */
 
 #include "wzd_structs.h"
 #include "wzd_libmain.h" /* getlib_server_uid */
@@ -113,7 +119,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 /** create a semaphore */
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {
-  wzd_sem_t sem = malloc(sizeof(struct _CRITICAL_SECTION));
+  wzd_sem_t sem = malloc(sizeof(CRITICAL_SECTION));
   InitializeCriticalSection(sem);
   return sem;
 }

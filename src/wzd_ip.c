@@ -28,6 +28,10 @@
  * \brief IP address related routines
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #ifdef _MSC_VER
 #include <winsock2.h>
 #else
@@ -49,6 +53,8 @@
 #include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+
+#endif /* WZD_USE_PCH */
 
 
 /** \brief IP comparison

@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,6 +83,9 @@
 #include "wzd_messages.h"
 #include "wzd_mutex.h"
 #include "wzd_ServerThread.h"
+
+#endif /* WZD_USE_PCH */
+
 
 #if defined(WIN32) || defined(BSD)
 #define LONGBITS  0x20

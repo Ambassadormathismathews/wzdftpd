@@ -1,5 +1,8 @@
 /* vi:ai:et:ts=8 sw=2
  */
+
+/*#include "wzd_all.h"*/
+
 #include <stdlib.h>
 #include <string.h>
 

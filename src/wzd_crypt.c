@@ -17,6 +17,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+/*#include "wzd_all.h"*/
+
 #include "wzd_crypt.h"
 
 #include <time.h>
@@ -252,7 +254,7 @@ setkey (char *schl)
     }
 }
 
-char *
+char * 
 des_crypt (const char *wort, const char *salt)
 {
   static char retkey[14];

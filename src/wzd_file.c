@@ -24,12 +24,18 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+#endif /* WZD_USE_PCH */
 
 #ifdef _MSC_VER
 #include <winsock2.h>
@@ -40,7 +46,6 @@
 #include <windows.h>
 #include <tchar.h>
 #include <winioctl.h>
-
 
 // Since MS apparently removed this struct (and its documentation) from
 // the W2k SDK, but still refer to it in 'winioctl.h' for the specific

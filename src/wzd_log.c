@@ -28,6 +28,10 @@
  * @brief Contains routines to log files.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -54,6 +58,8 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+
+#endif /* WZD_USE_PCH */
 
 /* NOTE we are forced to open log in lib, because of win32
  * memory management

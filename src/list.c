@@ -28,6 +28,8 @@
   * \brief Linked list implementation
   */
 
+#include "wzd_all.h"
+
 #include <stdlib.h>
 #include <string.h>
 

@@ -43,8 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /FD /c
-# SUBTRACT CPP /YX /Yc /Yu
+# ADD CPP /nologo /MT /W3 /GX /O2 /D "WZD_USE_PCH" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
@@ -71,8 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "DEBUG" /D "_DEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /FD /GZ /c
-# SUBTRACT CPP /Fr /YX /Yc /Yu
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WZD_USE_PCH" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
@@ -108,7 +106,26 @@ SOURCE=.\libwzd.def
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\list.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_action.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_all.c
+
+!IF  "$(CFG)" == "libwzd - Win32 Release"
+
+# ADD CPP /Yc"wzd_all.h"
+
+!ELSEIF  "$(CFG)" == "libwzd - Win32 Debug"
+
+# ADD CPP /Yc"wzd_all.h"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -121,6 +138,7 @@ SOURCE=..\src\wzd_cache.c
 # Begin Source File
 
 SOURCE=..\src\wzd_cookie_lex.c
+# SUBTRACT CPP /YX /Yc /Yu
 # End Source File
 # Begin Source File
 
@@ -164,6 +182,7 @@ SOURCE=..\src\wzd_crontab.c
 # Begin Source File
 
 SOURCE=..\src\wzd_crypt.c
+# SUBTRACT CPP /YX /Yc /Yu
 # End Source File
 # Begin Source File
 
@@ -196,6 +215,7 @@ SOURCE=..\src\wzd_md5.c
 # Begin Source File
 
 SOURCE=..\src\wzd_md5crypt.c
+# SUBTRACT CPP /YX /Yc /Yu
 # End Source File
 # Begin Source File
 
@@ -259,7 +279,15 @@ SOURCE=..\src\wzd_vfs.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\src\list.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_action.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_all.h
 # End Source File
 # Begin Source File
 

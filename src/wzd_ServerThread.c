@@ -90,8 +90,6 @@
 
 #include "wzd_debug.h"
 
-#define BUFFER_LEN	4096
-
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
@@ -140,6 +138,9 @@ static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, 
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(int index);
 static void server_ident_timeout_check(void);
+
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);;
+static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
 static void server_login_accept(wzd_context_t * context);
 
@@ -511,6 +512,31 @@ int commit_backend(void)
   return 0;
 }
 
+/*
+ * add idents to the correct fd_set
+ */
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd)
+{
+  if (mainConfig->controlfd >= 0) {
+    FD_SET(mainConfig->controlfd,r_fds);
+    FD_SET(mainConfig->controlfd,e_fds);
+    *maxfd = MAX(*maxfd,mainConfig->controlfd);
+  }
+}
+
+static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
+{
+  if (mainConfig->controlfd >= 0) {
+    if (FD_ISSET(mainConfig->controlfd,e_fds)) { /* error */
+      /** \todo XXX FIXME error on control FD, warn user, and then ? */
+      out_log(LEVEL_HIGH, "Error on control fd: %d %s\n",errno,strerror(errno));
+      return;
+    }
+    if (FD_ISSET(mainConfig->controlfd,r_fds)) { /* get control entry */
+      /** \todo XXX FIXME spawn a new control thread: authenticate user then take commands */
+    }
+  }
+}
 
 /*
  * add a connection to the list of idents to be checked
@@ -586,13 +612,16 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
 #endif
 
   if (fd_ident == -1) {
-#ifdef _MSC_VER
-    errno = h_errno;
-#endif
     if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
       server_login_accept(context);
       return 0;
     }
+#ifdef WIN32
+    if (errno == WSAEWOULDBLOCK) {
+      server_login_accept(context);
+      return 0;
+    }
+#endif
     out_log(LEVEL_INFO,"Could not get ident (error: %d %s)\n",errno,strerror(errno));
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
@@ -642,7 +671,7 @@ static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, 
  */
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 {
-  char buffer[BUFFER_LEN];
+  char buffer[1024];
   const char * ptr;
   int i=0;
   wzd_context_t * context=NULL;
@@ -723,7 +752,7 @@ continue_connection:
         local_port = socket_get_local_port(context->controlfd);
         remote_port = socket_get_remote_port(context->controlfd);
 
-        snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",remote_port,local_port);
+        snprintf(buffer,sizeof(buffer),"%u, %u\r\n",remote_port,local_port);
 
         /* 3- try to write */
         ret = send(fd_ident,buffer,strlen(buffer),0);
@@ -1096,8 +1125,10 @@ int server_switch_to_config(wzd_config_t *config)
     }
   }
 
+/** \bug XXX FIXME polling with select on named pipe seems to fail ... */
 #if 0
   /* set up control named pipe */
+  out_log(LEVEL_INFO, "Creating named pipe\n");
 #ifndef _MSC_VER
 #else /* _MSC_VER */
 
@@ -1126,10 +1157,10 @@ int server_switch_to_config(wzd_config_t *config)
     fdp = _open_osfhandle((long)hpipe,0);
     out_log(LEVEL_FLOOD,"Named pipe created, fd: %d\n",fdp);
 
-    CloseHandle(hpipe);
+    config->controlfd = fdp;
+    FD_REGISTER(mainConfig->controlfd,"Server control fd");
   }
 #endif /* _MSC_VER */
-#endif
 
 #ifndef WIN32
   /* if running as root, we must give up root rigths for security */
@@ -1141,6 +1172,7 @@ int server_switch_to_config(wzd_config_t *config)
     }
   }
 #endif /* WIN32 */
+#endif
 
 
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
@@ -1446,13 +1478,13 @@ void serverMainThreadProc(void *arg)
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
     maxfd = mainConfig->mainSocket;
     server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);
+    server_control_select(&r_fds, &w_fds, &e_fds, &maxfd);
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     ret = select(0, &r_fds, &w_fds, &e_fds, &tv);
 #else
     ret = select(maxfd+1, &r_fds, &w_fds, &e_fds, &tv);
 #endif
 
-    time (&server_time);
 /*    out_err(LEVEL_FLOOD,".");*/
 /*    fflush(stderr);*/
 
@@ -1474,6 +1506,9 @@ void serverMainThreadProc(void *arg)
       break;
 #endif
     default: /* input */
+      time (&server_time);
+
+      server_control_check(&r_fds,&w_fds,&e_fds);
       server_ident_check(&r_fds,&w_fds,&e_fds);
       /* check ident timeout */
       server_ident_timeout_check();
@@ -1513,7 +1548,7 @@ static void free_config(wzd_config_t * config)
 
   ip_free(mainConfig->login_pre_ip_denied);
 
-  if (mainConfig->xferlog_fd != -1)
+  if (mainConfig->xferlog_fd >= 0)
     xferlog_close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     wzd_free(mainConfig->xferlog_name);
@@ -1548,6 +1583,10 @@ void serverMainThreadExit(int retcode)
   
   close(mainConfig->mainSocket);
   FD_UNREGISTER(mainConfig->mainSocket,"Server listening socket");
+  if (mainConfig->controlfd >= 0) {
+    close(mainConfig->controlfd);
+    FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
+  }
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER
   /* kill all childs threads */

@@ -518,6 +518,7 @@ typedef struct {
   unsigned int  umask;
   char		dir_message[256];
   unsigned int	mainSocket;
+  int		controlfd; /**< external control: named pipe, unix socket, or socket */
   unsigned char	ip[MAX_IP_LENGTH];
   unsigned char	dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;

@@ -331,6 +331,8 @@ int set_default_options(void)
   tempConfig.xferlog_name = NULL;
   tempConfig.xferlog_fd = -1;
 
+  tempConfig.controlfd = -1;
+
   tempConfig.loglevel=LEVEL_NORMAL;
 
   tempConfig.perm_list = NULL;

@@ -24,6 +24,9 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -36,6 +39,7 @@
 #include "wzd_crontab.h"
 
 #include "wzd_debug.h"
+#endif /* WZD_USE_PCH */
 
 static time_t cronjob_find_next_exec_date(time_t start, 
     char * minutes, char * hours, char * day_of_month,

@@ -29,6 +29,10 @@
   * only multithread code.
   */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +53,12 @@
 
 #include "wzd_debug.h"
 
+#else /* WZD_USE_PCH */
+#ifdef WIN32
+#define _WIN32_WINNT    0x500
+#include <windows.h>
+#endif
+#endif /* WZD_USE_PCH */
 
 
 struct _wzd_mutex_t {

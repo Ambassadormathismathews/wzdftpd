@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #if defined(_MSC_VER) || (defined __CYGWIN__ && defined WINSOCK_SUPPORT)
 #include <winsock2.h>
 #else
@@ -43,6 +47,7 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
+#endif /* WZD_USE_PCH */
 
 /* uncomment to trace ALL fd registration operations */
 /*#define WZD_DBG_FD*/

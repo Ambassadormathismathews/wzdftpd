@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +69,7 @@
 #define	DL_PREFIX
 #endif
 
+#endif /* WZD_USE_PCH */
 
 static int _backend_check_function(void * handle, const char *name, const char *backend_name);
 
@@ -326,9 +331,16 @@ int backend_close(const char *backend)
   if (mainConfig->backend.handle)
     ret = dlclose(mainConfig->backend.handle);
   if (ret) {
-    out_log(LEVEL_CRITICAL,"Could not close backend %s (handle %lu)\n",
+#ifdef WIN32
+    ret = GetLastError();
+    out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
+      backend,mainConfig->backend.handle, ret,strerror(ret));
+    backend_clear_struct(&mainConfig->backend);
+#else
+    out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
       backend,mainConfig->backend.handle);
-    out_log(LEVEL_CRITICAL," Error '%s'\n",dlerror());
+    out_log(LEVEL_INFO," Error '%s'\n",dlerror());
+#endif
     return 1;
   }
 
