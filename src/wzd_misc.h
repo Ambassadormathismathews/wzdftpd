@@ -54,6 +54,10 @@ time_t lget_file_ctime(int fd);
 /* renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst);
 
+#ifndef HAVE_INET_NTOP
+const char * inet_ntop(int af, const void *src, char *dst, int size);
+#endif
+
 /* formats the message if multiline, e.g 220-hello\r\n220 End */
 /* if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply

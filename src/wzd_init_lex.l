@@ -33,6 +33,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>	/* gethostbyname() */
 #endif
 
 #include <stdio.h>
@@ -40,7 +41,6 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <netdb.h>	/* gethostbyname() */
 #include <limits.h>	/* ULONG_MAX */
 
 #ifndef __CYGWIN__

@@ -76,7 +76,7 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime],,exit 1)
-AC_CHECK_FUNCS([statfs],,exit 1)
+AC_CHECK_FUNCS([inet_ntop])
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
@@ -181,3 +181,16 @@ AC_CONFIG_FILES([Makefile
                  tools/siteuptime/Makefile
                  tools/sitewho/Makefile])
 AC_OUTPUT
+
+
+HOSTOS=`uname -o`
+if test x$HOSTOS = xCygwin; then
+  echo "Patching libtool ! ..."
+  sed -e 's/deplibs_check_method="file_magic \^x86 archive import|\^x86 DLL"/deplibs_check_method="file_magic ^x86 archive import|^x86 DLL|^x86 archive static"/' libtool > libtool2
+#  sed -e 's|sed -e s/\^lib/cyg/| true |' libtool2 > libtool
+#  rm -f libtool2
+  mv libtool2 libtool
+  echo "Patching default configuration ! ..."
+  sed -e 's/lib\(.*\)\.so/cyg\1.dll/' src/wzd.cfg.in > src/wzd.cfg.in2
+  mv src/wzd.cfg.in2 src/wzd.cfg.in
+fi

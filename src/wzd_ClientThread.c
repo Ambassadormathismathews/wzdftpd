@@ -24,6 +24,7 @@
 
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
+#include <w32api/ws2tcpip.h>
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
