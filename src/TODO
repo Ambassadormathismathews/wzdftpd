@@ -14,8 +14,6 @@
 - finish MLST
 - implement MLSD
 '********'
-- md5_crypt not working ?? (last char is incorrect)
-'********'
 - check if 'dh_shlibdeps -L wzdftpd' would be better than ugly sed in
   debian/rules
 '********'

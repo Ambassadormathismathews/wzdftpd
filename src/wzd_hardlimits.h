@@ -52,7 +52,7 @@
 #define	MAX_GROUPS_PER_USER	32
 
 #define	MAX_FLAGS_NUM		32
-#define	MAX_PASS_LENGTH		32
+#define	MAX_PASS_LENGTH		48
 
 #define	MAX_TAGLINE_LENGTH	256
 
