@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -158,77 +160,77 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
       wzd_free(ptr_out);
 
       if (DIRNCMP(buffer_vfs,directory,strlen(directory))==0)
-	  {
-	char * ptr = buffer_vfs + strlen(directory) + vfs_pad;
-	if (strchr(ptr,'/')==NULL) {
-	  if (stat(vfs->physical_dir,&st)<0) {
-	    vfs = vfs->next_vfs;
-	    continue;
-	  }
-	if (!vfs_match_perm(vfs->target,user)) { vfs = vfs->next_vfs; continue; }
-	if (!list_match(ptr,mask)) { vfs = vfs->next_vfs; continue; }
-        /* date */
-        
-        timeval=time(NULL);
-        ntime=localtime(&timeval);
-        i=ntime->tm_year;
-        
-        ntime=localtime(&st.st_mtime);
-        
-        if (ntime->tm_year==i)
+      {
+        char * ptr = buffer_vfs + strlen(directory) + vfs_pad;
+        if (strchr(ptr,'/')==NULL) {
+          if (stat(vfs->physical_dir,&st)<0) {
+            vfs = vfs->next_vfs;
+            continue;
+          }
+          if (!vfs_match_perm(vfs->target,user)) { vfs = vfs->next_vfs; continue; }
+          if (!list_match(ptr,mask)) { vfs = vfs->next_vfs; continue; }
+          /* date */
+
+          timeval=time(NULL);
+          ntime=localtime(&timeval);
+          i=ntime->tm_year;
+
+          ntime=localtime(&st.st_mtime);
+
+          if (ntime->tm_year==i)
           strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-        else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
-        
-        /* permissions */
-        
-        if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
-            !S_ISREG(st.st_mode)) {
-	  vfs = vfs->next_vfs;
-	  continue;
-	}
+          else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+
+          /* permissions */
+
+          if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
+              !S_ISREG(st.st_mode)) {
+            vfs = vfs->next_vfs;
+            continue;
+          }
 
 #ifndef _MSC_VER
-        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
-                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-                st.st_mode & S_IRUSR ? 'r' : '-',
-                st.st_mode & S_IWUSR ? 'w' : '-',
-                st.st_mode & S_IXUSR ? 'x' : '-',
-                st.st_mode & S_IRGRP ? 'r' : '-',
-                st.st_mode & S_IWGRP ? 'w' : '-',
-                st.st_mode & S_IXGRP ? 'x' : '-',
-                st.st_mode & S_IROTH ? 'r' : '-',
-                st.st_mode & S_IWOTH ? 'w' : '-',
-                st.st_mode & S_IXOTH ? 'x' : '-',
-                (int)st.st_nlink,
-                user->username,
-                "ftp",
-                (u64_t)st.st_size,
-                datestr,
-                ptr);
+          sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+              S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+              st.st_mode & S_IRUSR ? 'r' : '-',
+              st.st_mode & S_IWUSR ? 'w' : '-',
+              st.st_mode & S_IXUSR ? 'x' : '-',
+              st.st_mode & S_IRGRP ? 'r' : '-',
+              st.st_mode & S_IWGRP ? 'w' : '-',
+              st.st_mode & S_IXGRP ? 'x' : '-',
+              st.st_mode & S_IROTH ? 'r' : '-',
+              st.st_mode & S_IWOTH ? 'w' : '-',
+              st.st_mode & S_IXOTH ? 'x' : '-',
+              (int)st.st_nlink,
+              user->username,
+              "ftp",
+              (u64_t)st.st_size,
+              datestr,
+              ptr);
 #else
-        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-                st.st_mode & S_IRUSR ? 'r' : '-',
-                st.st_mode & S_IWUSR ? 'w' : '-',
-                st.st_mode & S_IXUSR ? 'x' : '-',
-                st.st_mode & S_IRGRP ? 'r' : '-',
-                st.st_mode & S_IWGRP ? 'w' : '-',
-                st.st_mode & S_IXGRP ? 'x' : '-',
-                st.st_mode & S_IROTH ? 'r' : '-',
-                st.st_mode & S_IWOTH ? 'w' : '-',
-                st.st_mode & S_IXOTH ? 'x' : '-',
-                (int)st.st_nlink,
-                user->username,
-                "ftp",
-                (u64_t)st.st_size,
-                datestr,
-                ptr);
+          sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+              S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+              st.st_mode & S_IRUSR ? 'r' : '-',
+              st.st_mode & S_IWUSR ? 'w' : '-',
+              st.st_mode & S_IXUSR ? 'x' : '-',
+              st.st_mode & S_IRGRP ? 'r' : '-',
+              st.st_mode & S_IWGRP ? 'w' : '-',
+              st.st_mode & S_IXGRP ? 'x' : '-',
+              st.st_mode & S_IROTH ? 'r' : '-',
+              st.st_mode & S_IWOTH ? 'w' : '-',
+              st.st_mode & S_IXOTH ? 'x' : '-',
+              (int)st.st_nlink,
+              user->username,
+              "ftp",
+              (u64_t)st.st_size,
+              datestr,
+              ptr);
 #endif
 
-                
-/*        if (!callback(sock,context,line)) break;*/
-	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
-	}
+
+          /*        if (!callback(sock,context,line)) break;*/
+          if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
+        }
       }
       vfs = vfs->next_vfs;
     }
@@ -240,164 +242,164 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 #else
   finished = 0;
   while (!finished) {
-	dir_filename = fileData.cFileName;
+    dir_filename = fileData.cFileName;
 #endif
     if (dir_filename[0]=='.') {
       if (strcmp(dir_filename,".")==0 ||
-	  strcmp(dir_filename,"..")==0 ||
-	  is_hidden_file(dir_filename) )
-	  {
+          strcmp(dir_filename,"..")==0 ||
+          is_hidden_file(dir_filename) )
+      {
 #ifdef _MSC_VER
-		if (!FindNextFile(dir,&fileData))
-		{
-		  if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
+        if (!FindNextFile(dir,&fileData))
+        {
+          if (GetLastError() == ERROR_NO_MORE_FILES)
+            finished = 1;
+        }
 #endif
         continue;
       }
       if ( ! (format & LIST_SHOW_HIDDEN) )
-	  {
+      {
 #ifdef _MSC_VER
-		if (!FindNextFile(dir,&fileData))
-		{
-		  if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
+        if (!FindNextFile(dir,&fileData))
+        {
+          if (GetLastError() == ERROR_NO_MORE_FILES)
+            finished = 1;
+        }
 #endif
         continue;
-	  }
+      }
     }
 /*#ifdef DEBUG
     fprintf(stderr,"list_match(%s,%s)\n",entr->d_name,mask);
 #endif*/
     if (list_match(dir_filename,mask)) {
       if (format & LIST_TYPE_SHORT) {
-	strcpy(line,dir_filename);
-	strcat(line,"\r\n");
+        strcpy(line,dir_filename);
+        strcat(line,"\r\n");
 /*        if (!callback(sock,context,line)) break;*/
-	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
+        if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
       } else {
 
-	/* stat */
+        /* stat */
 
-	if (strlen(dir_filename)+dirlen>=1024)/* continue; FIXME VISUAL */  /* sorry ... */
-	{
+        if (strlen(dir_filename)+dirlen>=1024)/* continue; FIXME VISUAL */  /* sorry ... */
+        {
 #ifdef _MSC_VER
-      if (!FindNextFile(dir,&fileData))
-	  {
-		if (GetLastError() == ERROR_NO_MORE_FILES)
-		  finished = 1;
-	  }
+          if (!FindNextFile(dir,&fileData))
+          {
+            if (GetLastError() == ERROR_NO_MORE_FILES)
+              finished = 1;
+          }
 #endif
-	  continue;
-	}
-	strcpy(filename+dirlen,dir_filename);
-	if (lstat(filename,&st)<0)
-	{
+          continue;
+        }
+        strcpy(filename+dirlen,dir_filename);
+        if (lstat(filename,&st)<0)
+        {
 #ifdef _MSC_VER
-      if (!FindNextFile(dir,&fileData))
-	  {
-		if (GetLastError() == ERROR_NO_MORE_FILES)
-		  finished = 1;
-	  }
+          if (!FindNextFile(dir,&fileData))
+          {
+            if (GetLastError() == ERROR_NO_MORE_FILES)
+              finished = 1;
+          }
 #endif
-	  continue;
-	}
+          continue;
+        }
 
-	/* date */
+        /* date */
 
-	timeval=time(NULL);
-	ntime=localtime(&timeval);
-	i=ntime->tm_year;
-	
-	ntime=localtime(&st.st_mtime);
+        timeval=time(NULL);
+        ntime=localtime(&timeval);
+        i=ntime->tm_year;
 
-	if (ntime->tm_year==i)
-	  strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-	else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+        ntime=localtime(&st.st_mtime);
 
-	/* permissions */
+        if (ntime->tm_year==i)
+          strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+        else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
 
-	if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
-	    !S_ISREG(st.st_mode))
-	  {
+        /* permissions */
+
+        if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
+            !S_ISREG(st.st_mode))
+        {
 #ifdef _MSC_VER
-		if (!FindNextFile(dir,&fileData))
-		{
-		  if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
+          if (!FindNextFile(dir,&fileData))
+          {
+            if (GetLastError() == ERROR_NO_MORE_FILES)
+              finished = 1;
+          }
 #endif
         continue;
-	  }
+        }
 
-	if (S_ISLNK(st.st_mode)) {
-	  char linkbuf[256];
-	  int linksize;
-	  linksize = readlink(filename,linkbuf,255);
-	  if (linksize > 0) {
-	    linkbuf[linksize]='\0';
-	    snprintf(buffer_name,255,"%s -> %s",dir_filename,linkbuf);
-	  }
-	  else
-	    snprintf(buffer_name,255,"%s -> (INEXISTANT FILE)",dir_filename);
-	} else {
-	  strncpy(buffer_name,dir_filename,255);
-	  if (strlen(dir_filename)<256) buffer_name[strlen(dir_filename)]='\0';
-	  else buffer_name[255] = '\0';
-	}
+        if (S_ISLNK(st.st_mode)) {
+          char linkbuf[256];
+          int linksize;
+          linksize = readlink(filename,linkbuf,255);
+          if (linksize > 0) {
+            linkbuf[linksize]='\0';
+            snprintf(buffer_name,255,"%s -> %s",dir_filename,linkbuf);
+          }
+          else
+            snprintf(buffer_name,255,"%s -> (INEXISTANT FILE)",dir_filename);
+        } else {
+          strncpy(buffer_name,dir_filename,255);
+          if (strlen(dir_filename)<256) buffer_name[strlen(dir_filename)]='\0';
+          else buffer_name[255] = '\0';
+        }
 
-	owner = (wzd_user_t*)file_getowner( filename, context);
+        owner = (wzd_user_t*)file_getowner( filename, context);
 
 #ifndef _MSC_VER
-	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
-		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-		st.st_mode & S_IRUSR ? 'r' : '-',
-		st.st_mode & S_IWUSR ? 'w' : '-',
-		st.st_mode & S_IXUSR ? 'x' : '-',
-		st.st_mode & S_IRGRP ? 'r' : '-',
-		st.st_mode & S_IWGRP ? 'w' : '-',
-		st.st_mode & S_IXGRP ? 'x' : '-',
-		st.st_mode & S_IROTH ? 'r' : '-',
-		st.st_mode & S_IWOTH ? 'w' : '-',
-		st.st_mode & S_IXOTH ? 'x' : '-',
-		(int)st.st_nlink,
-		(owner)?owner->username:"unknown",
-		"ftp",
-		(u64_t)st.st_size,
-		datestr,
-		buffer_name);
+        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+            S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+            st.st_mode & S_IRUSR ? 'r' : '-',
+            st.st_mode & S_IWUSR ? 'w' : '-',
+            st.st_mode & S_IXUSR ? 'x' : '-',
+            st.st_mode & S_IRGRP ? 'r' : '-',
+            st.st_mode & S_IWGRP ? 'w' : '-',
+            st.st_mode & S_IXGRP ? 'x' : '-',
+            st.st_mode & S_IROTH ? 'r' : '-',
+            st.st_mode & S_IWOTH ? 'w' : '-',
+            st.st_mode & S_IXOTH ? 'x' : '-',
+            (int)st.st_nlink,
+            (owner)?owner->username:"unknown",
+            "ftp",
+            (u64_t)st.st_size,
+            datestr,
+            buffer_name);
 #else
-	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-		st.st_mode & S_IRUSR ? 'r' : '-',
-		st.st_mode & S_IWUSR ? 'w' : '-',
-		st.st_mode & S_IXUSR ? 'x' : '-',
-		st.st_mode & S_IRGRP ? 'r' : '-',
-		st.st_mode & S_IWGRP ? 'w' : '-',
-		st.st_mode & S_IXGRP ? 'x' : '-',
-		st.st_mode & S_IROTH ? 'r' : '-',
-		st.st_mode & S_IWOTH ? 'w' : '-',
-		st.st_mode & S_IXOTH ? 'x' : '-',
-		(int)st.st_nlink,
-		(owner)?owner->username:"unknown",
-		"ftp",
-		(u64_t)st.st_size,
-		datestr,
-		buffer_name);
+        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+            S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+            st.st_mode & S_IRUSR ? 'r' : '-',
+            st.st_mode & S_IWUSR ? 'w' : '-',
+            st.st_mode & S_IXUSR ? 'x' : '-',
+            st.st_mode & S_IRGRP ? 'r' : '-',
+            st.st_mode & S_IWGRP ? 'w' : '-',
+            st.st_mode & S_IXGRP ? 'x' : '-',
+            st.st_mode & S_IROTH ? 'r' : '-',
+            st.st_mode & S_IWOTH ? 'w' : '-',
+            st.st_mode & S_IXOTH ? 'x' : '-',
+            (int)st.st_nlink,
+            (owner)?owner->username:"unknown",
+            "ftp",
+            (u64_t)st.st_size,
+            datestr,
+            buffer_name);
 #endif
 
 /*        if (!callback(sock,context,line)) break;*/
-	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
+        if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
       }
     }
 #ifdef _MSC_VER
-	if (!FindNextFile(dir,&fileData))
-	{
-	  if (GetLastError() == ERROR_NO_MORE_FILES)
-	    finished = 1;
-	}
+    if (!FindNextFile(dir,&fileData))
+    {
+      if (GetLastError() == ERROR_NO_MORE_FILES)
+        finished = 1;
+    }
 #endif
   }
 

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -73,6 +75,21 @@
 #include "wzd_opts.h"
 
 #include "wzd_debug.h"
+
+#ifdef _MSC_VER
+int nt_service_register(void);
+int nt_service_unregister(void);
+int nt_service_start(void);
+int nt_service_stop(void);
+int nt_is_service(void);
+void SvcDebugOut(LPSTR string, DWORD status);
+VOID MyServiceStart(DWORD argc, LPSTR *argv);
+VOID MyServiceCtrlHandler(DWORD opcode);
+DWORD MyServiceInitialization(DWORD argc, LPSTR *argv, DWORD *specificError);
+
+SERVICE_STATUS              service_status;
+SERVICE_STATUS_HANDLE       service_status_handle;
+#endif
 
 char configfile_name[256];
 int stay_foreground=0;
@@ -176,11 +193,11 @@ void cleanup_shm(void)
       value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
 
       if (strcasecmp(varname,"shm_key")==0) {
-	unsigned long new_key=0;
-	errno = 0;
-	new_key = strtoul(value,(char**)NULL,0);
-	if (errno == ERANGE) return;
-	shm_key = new_key;
+        unsigned long new_key=0;
+        errno = 0;
+        new_key = strtoul(value,(char**)NULL,0);
+        if (errno == ERANGE) return;
+        shm_key = new_key;
       }
     }
   }
@@ -226,8 +243,8 @@ int main_parse_args(int argc, char **argv)
       return 1;
     case 'f':
       if (strlen(optarg)>=255) {
-	fprintf(stderr,"filename too long (>255 chars)\n");
-	return 1;
+        fprintf(stderr,"filename too long (>255 chars)\n");
+        return 1;
       }
       strncpy(configfile_name,optarg,255);
       break;
@@ -239,8 +256,64 @@ int main_parse_args(int argc, char **argv)
       break;
     case 'V':
       fprintf(stderr,"%s build %s (%s)\n",
-	  WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+          WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
       return 1;
+    }
+  }
+#else /* _MSC_VER */
+  if (argc > 1) {
+    int optindex=1;
+    while (optindex < argc) {
+      if (!strcmp(argv[optindex],"-f")) {
+        optindex++;
+        if (optindex < argc) {
+          if (strlen(argv[optindex])>=255) {
+            fprintf(stderr,"filename too long (>255 chars)\n");
+            return 1;
+          }
+          strncpy(configfile_name,argv[optindex],255);
+          optindex++;
+        } else {
+          fprintf(stderr,"missing filename after -f option\n");
+          return 1;
+        }
+        break;
+      }
+      if (!strcmp(argv[optindex],"-b")) {
+        stay_foreground = 0;
+        optindex++;
+        break;
+      }
+      if (!strcmp(argv[optindex],"-s")) {
+        stay_foreground = 1;
+        optindex++;
+        break;
+      }
+      if (!strcmp(argv[optindex],"-h")) {
+        display_usage();
+        return 1;
+      }
+      if (!strcmp(argv[optindex],"-V")) {
+        fprintf(stderr,"%s build %s (%s)\n",
+            WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+        return 1;
+      }
+      if (!strcmp(argv[optindex],"-si")) {
+        nt_service_register();
+        return 1;
+      }
+      if (!strcmp(argv[optindex],"-sd")) {
+        nt_service_unregister();
+        return 1;
+      }
+      if (!strcmp(argv[optindex],"-ss")) {
+        nt_service_start();
+        return 1;
+      }
+      if (!strcmp(argv[optindex],"-st")) {
+        nt_service_stop();
+        return 1;
+      }
     }
   }
 #endif /* _MSC_VER */
@@ -286,7 +359,7 @@ int main(int argc, char **argv)
 #ifndef _MSC_VER
     forkresult = fork();
 #else
-	forkresult = 0;
+    forkresult = 0;
 #endif
 
     if ((int)forkresult == -1)
@@ -349,7 +422,7 @@ int main(int argc, char **argv)
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
 #else
-	out_err(LEVEL_HIGH,"Syslog is NOT supported by platform !");
+    out_err(LEVEL_HIGH,"Syslog is NOT supported by platform !");
 #endif
   }
   else {
@@ -368,9 +441,420 @@ int main(int argc, char **argv)
   }
 #endif
 
+#if defined(DEBUG) || !defined(_MSC_VER)
   ret = runMainThread(argc,argv);
+#else
+  if (nt_is_service())
+  {
+    SERVICE_TABLE_ENTRY         DispatchTable[] = 
+    {
+      { "wzdftpd", (LPSERVICE_MAIN_FUNCTION)MyServiceStart },
+      { NULL, NULL }
+    };
+    if (!StartServiceCtrlDispatcher(DispatchTable))
+      SvcDebugOut( "[wzdftpd] StartServiceCtrlDispatcher error = %d\n", GetLastError());
+  }
+  else
+    ret = runMainThread(argc,argv);
+#endif
 
   /* we should never pass here - see wzd_ServerThread.c */
 
   return ret;
 }
+
+#ifdef _MSC_VER
+
+VOID MyServiceStart(DWORD argc, LPSTR *argv)
+{
+  DWORD status;
+  DWORD specificError;
+
+  service_status.dwServiceType = SERVICE_WIN32;
+  service_status.dwCurrentState = SERVICE_START_PENDING;
+  service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_PAUSE_CONTINUE;
+  service_status.dwWin32ExitCode = 0;
+  service_status.dwServiceSpecificExitCode = 0;
+  service_status.dwCheckPoint = 0;
+  service_status.dwWaitHint = 0;
+
+  service_status_handle = RegisterServiceCtrlHandler(
+    "wzdftpd",
+    (LPHANDLER_FUNCTION)MyServiceCtrlHandler);
+
+  if (service_status_handle == (SERVICE_STATUS_HANDLE)0) {
+    SvcDebugOut( "[wzdftpd] RegisterServiceCtrlHandler error = %d\n", GetLastError());
+    return;
+  }
+
+  /* initialization goes here */
+  status = MyServiceInitialization(argc,argv,&specificError);
+
+  /* handle error code */
+
+  /* report running status */
+  service_status.dwCurrentState = SERVICE_RUNNING;
+  service_status.dwCheckPoint = 0;
+  service_status.dwWaitHint = 0;
+
+  if (!SetServiceStatus(service_status_handle, &service_status))
+  {
+    status = GetLastError();
+    SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
+  }
+
+  /* This is where the service does its work */
+  SvcDebugOut(" [wzdftpd] returning to main thread\n",0);
+  runMainThread(argc,argv);
+}
+
+VOID MyServiceCtrlHandler(DWORD opcode)
+{
+  DWORD status;
+
+  switch(opcode)
+  {
+    case SERVICE_CONTROL_PAUSE:
+      break;
+    case SERVICE_CONTROL_CONTINUE:
+      break;
+    case SERVICE_CONTROL_STOP:
+      mainConfig->serverstop = 1;
+
+      service_status.dwCurrentState = SERVICE_STOPPED;
+      service_status.dwWin32ExitCode = 0;
+      service_status.dwServiceSpecificExitCode = 0;
+      service_status.dwCheckPoint = 0;
+      service_status.dwWaitHint = 0;
+
+      if (!SetServiceStatus(service_status_handle, &service_status))
+      {
+        status = GetLastError();
+        SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
+      }
+      SvcDebugOut(" [wzdftpd] exiting\n",0);
+
+      return;
+    case SERVICE_CONTROL_INTERROGATE:
+      /* fall through to send current status */
+      break;
+    default:
+      SvcDebugOut(" [wzdftpd] Unrecognized opcode %ld\n",opcode);
+      break;
+  }
+
+  /* send current status */
+  if (!SetServiceStatus(service_status_handle,&service_status))
+  {
+    status = GetLastError();
+    SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
+  }
+}
+
+DWORD MyServiceInitialization(DWORD argc, LPSTR *argv, DWORD *specificError)
+{
+  specificError = 0;
+  return 0;
+}
+
+int nt_is_service(void)
+{
+  SC_HANDLE schService, schSCManager;
+  int is_service;
+
+  /* obtain a handler to the SC Manager database */
+  schSCManager = OpenSCManager(
+      NULL,     /* local machine */
+      NULL,     /* ServicesActive database */
+      SC_MANAGER_ALL_ACCESS); /* full access rights */
+
+  if (schSCManager == NULL) return -1;
+
+  schService = OpenService(
+      schSCManager,             /* SCManager database */
+      "wzdftpd",                /* name of service */
+      SERVICE_ALL_ACCESS);
+
+  is_service = (schService != NULL);
+
+  CloseServiceHandle(schService);
+  CloseServiceHandle(schSCManager);
+
+  return is_service;
+}
+
+int nt_service_register(void)
+{
+  SC_HANDLE schService, schSCManager;
+  LPCTSTR binaryPathName;
+  char buffer[MAX_PATH+1];
+  char *p;
+
+  /* obtain a handler to the SC Manager database */
+  schSCManager = OpenSCManager(
+      NULL,     /* local machine */
+      NULL,     /* ServicesActive database */
+      SC_MANAGER_ALL_ACCESS); /* full access rights */
+
+  if (schSCManager == NULL) return -1;
+
+  GetModuleFileName(NULL,buffer,sizeof(buffer));
+  binaryPathName = buffer;
+
+  schService = CreateService(
+      schSCManager,             /* SCManager database */
+      "wzdftpd",                /* name of service */
+      "wzdftpd",                /* service name to display */
+      SERVICE_ALL_ACCESS,       /* desired access */
+      SERVICE_WIN32_OWN_PROCESS,/* service type */
+      SERVICE_DEMAND_START,     /* start type */
+      SERVICE_ERROR_NORMAL,     /* error control type */
+      binaryPathName,           /* service's binary */
+      NULL,                     /* no load ordering group */
+      NULL,                     /* no tag identifier */
+      NULL,                     /* no dependancies */
+      NULL,                     /* LocalSystem account */
+      NULL);                    /* no password */
+
+  if (schService == NULL) {
+    fprintf(stderr,"CreateService failed %d\n",GetLastError());
+    CloseServiceHandle(schSCManager);
+    return -1;
+  }
+
+
+
+
+  CloseServiceHandle(schService);
+  CloseServiceHandle(schSCManager);
+  
+  return 0;
+}
+
+int nt_service_unregister(void)
+{
+  SC_HANDLE schService, schSCManager;
+
+  /* obtain a handler to the SC Manager database */
+  schSCManager = OpenSCManager(
+      NULL,     /* local machine */
+      NULL,     /* ServicesActive database */
+      SC_MANAGER_ALL_ACCESS); /* full access rights */
+
+  if (schSCManager == NULL) return -1;
+
+  schService = OpenService(
+      schSCManager,             /* SCManager database */
+      "wzdftpd",                /* name of service */
+      DELETE);                  /* only need DELETE access */
+
+  if (schService == NULL) {
+    fprintf(stderr,"OpenService failed %d\n",GetLastError());
+    CloseServiceHandle(schSCManager);
+    return -1;
+  }
+
+  if (!DeleteService(schService)) {
+    fprintf(stderr,"DeleteService failed %d\n",GetLastError());
+    CloseServiceHandle(schSCManager);
+    return -1;
+  }
+
+  CloseServiceHandle(schService);
+  CloseServiceHandle(schSCManager);
+  
+  return 0;
+}
+
+int nt_service_start(void)
+{
+  SC_HANDLE schService, schSCManager;
+  SERVICE_STATUS ssStatus;
+  DWORD dwOldCheckPoint;
+  DWORD dwStartTickCount;
+  DWORD dwWaitTime;
+
+  /* obtain a handler to the SC Manager database */
+  schSCManager = OpenSCManager(
+      NULL,     /* local machine */
+      NULL,     /* ServicesActive database */
+      SC_MANAGER_ALL_ACCESS); /* full access rights */
+
+  if (schSCManager == NULL) return -1;
+
+  schService = OpenService(
+      schSCManager,             /* SCManager database */
+      "wzdftpd",                /* name of service */
+      SERVICE_ALL_ACCESS);
+
+  if (schService == NULL) {
+    fprintf(stderr,"OpenService failed %d\n",GetLastError());
+    CloseServiceHandle(schSCManager);
+    return -1;
+  }
+
+  if (!StartService(
+        schService,     /* handle to service */
+        0,              /* number of arguments */
+        NULL))          /* no arguments */
+  {
+    fprintf(stderr,"Service started\n");
+    CloseServiceHandle(schService);
+    CloseServiceHandle(schSCManager);
+    return 0;
+  } else {
+    fprintf(stderr,"Service start pending\n");
+
+    /* check the status until the service is no longer start pending */
+    if (!QueryServiceStatus(
+          schService,   /* handle to service */
+          &ssStatus))   /* address of status information structure */
+    {
+      CloseServiceHandle(schSCManager);
+      return -1;
+    }
+
+    /* save the tick count and initial checkpoint */
+    dwStartTickCount = GetTickCount();
+    dwOldCheckPoint = ssStatus.dwCheckPoint;
+
+    while (ssStatus.dwCurrentState == SERVICE_START_PENDING)
+    {
+      /* do not wait longer than the wait hint. A good interval is
+       * one tenth the wait hint, but no less than 1 second and no
+       * more than 10 seconds
+       */
+      dwWaitTime = ssStatus.dwWaitHint / 10;
+      if (dwWaitTime < 1000)
+        dwWaitTime = 1000;
+      else if (dwWaitTime > 10000)
+        dwWaitTime = 10000;
+
+      Sleep(dwWaitTime);
+
+      /* check the status again */
+      if (!QueryServiceStatus(
+            schService,   /* handle to service */
+            &ssStatus))   /* address of status information structure */
+        break;
+
+      fprintf(stderr,".");
+      fflush(stderr);
+
+      if (ssStatus.dwCheckPoint > dwOldCheckPoint)
+      {
+        /* the service is making progress */
+        dwStartTickCount = GetTickCount();
+        dwOldCheckPoint = ssStatus.dwCheckPoint;
+      } else {
+        if (GetTickCount()-dwStartTickCount > ssStatus.dwWaitHint)
+        {
+          /* no progress made withiin the wait hint */
+          break;
+        }
+      }
+    }
+    
+  }
+
+  CloseServiceHandle(schService);
+  CloseServiceHandle(schSCManager);
+
+  if (ssStatus.dwCurrentState == SERVICE_RUNNING)
+  {
+    fprintf(stderr,"Service started.\n");
+  } else {
+    fprintf(stderr,"Service not started\n");
+  }
+ 
+  return 0;
+}
+
+int nt_service_stop(void)
+{
+  SC_HANDLE schService, schSCManager;
+  SERVICE_STATUS ssStatus;
+  DWORD dwStartTime;
+  DWORD dwTimeout;
+
+  /* obtain a handler to the SC Manager database */
+  schSCManager = OpenSCManager(
+      NULL,     /* local machine */
+      NULL,     /* ServicesActive database */
+      SC_MANAGER_ALL_ACCESS); /* full access rights */
+
+  if (schSCManager == NULL) return -1;
+
+  schService = OpenService(
+      schSCManager,             /* SCManager database */
+      "wzdftpd",                /* name of service */
+      SERVICE_ALL_ACCESS);
+
+  if (schService == NULL) {
+    fprintf(stderr,"OpenService failed %d\n",GetLastError());
+    CloseServiceHandle(schSCManager);
+    return -1;
+  }
+  dwStartTime = GetTickCount();
+  dwTimeout = 10000; /* 10s */
+
+  if (!QueryServiceStatus( schService, &ssStatus))
+    return GetLastError();
+
+  if (ssStatus.dwCurrentState == SERVICE_STOPPED) {
+    fprintf(stderr,"Service already stopped\n");
+    return 0;
+  }
+
+  /* if a stop is pending, just wait for it */
+  while (ssStatus.dwCurrentState == SERVICE_STOP_PENDING)
+  {
+    Sleep(ssStatus.dwWaitHint);
+
+    if (!QueryServiceStatus( schService, &ssStatus))
+      return GetLastError();
+
+    if (GetTickCount()-dwStartTime > dwTimeout) {
+      fprintf(stderr,"Timeout\n");
+      return -1;
+    }
+  }
+
+  if (!ControlService( schService, SERVICE_CONTROL_STOP, &ssStatus))
+    return GetLastError();
+
+  /* wait for the service to stop */
+  while (ssStatus.dwCurrentState != SERVICE_STOPPED)
+  {
+    Sleep(ssStatus.dwWaitHint);
+
+    if (!QueryServiceStatus( schService, &ssStatus))
+      return GetLastError();
+
+    if (GetTickCount()-dwStartTime > dwTimeout) {
+      fprintf(stderr,"Timeout\n");
+      return -1;
+    }
+  }
+
+  CloseServiceHandle(schService);
+  CloseServiceHandle(schSCManager);
+
+  if (ssStatus.dwCurrentState == SERVICE_STOPPED)
+  {
+    fprintf(stderr,"Service stopped.\n");
+  } else {
+    fprintf(stderr,"Service not stopped\n");
+  }
+ 
+  return 0;
+}
+
+void SvcDebugOut(LPSTR string, DWORD status)
+{
+  CHAR buffer[1024];
+  snprintf(buffer,1024,string,status);
+  OutputDebugStringA(buffer);
+}
+
+#endif /* _MSC_VER */

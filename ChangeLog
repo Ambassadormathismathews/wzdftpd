@@ -1,3 +1,10 @@
+2004-03-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: first service implementation (visual): register/unregister, start/stop
+	* cosmetic: cleaned up all tabs in files
+	* bugfix: arguments are interpreted on visual
+	* bugfix: tls implicit mode broken (initialized twice)
+
 2004-03-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: num_logins broken

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -94,23 +96,23 @@ void out_log(int level,const char *fmt,...)
     if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
       char buffer[1024];
       switch (level) {
-      case LEVEL_CRITICAL:
-	prior = LOG_ALERT;
-	break;
-      case LEVEL_HIGH:
-	prior = LOG_CRIT;
-	break;
-      case LEVEL_NORMAL:
-	prior = LOG_ERR;
-	break;
-      case LEVEL_INFO:
-	prior = LOG_WARNING;
-	break;
-      case LEVEL_FLOOD:
-	prior = LOG_INFO;
-	break;
-      default:
-	break;
+        case LEVEL_CRITICAL:
+          prior = LOG_ALERT;
+          break;
+        case LEVEL_HIGH:
+          prior = LOG_CRIT;
+          break;
+        case LEVEL_NORMAL:
+          prior = LOG_ERR;
+          break;
+        case LEVEL_INFO:
+          prior = LOG_WARNING;
+          break;
+        case LEVEL_FLOOD:
+          prior = LOG_INFO;
+          break;
+        default:
+          break;
       }
 
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
@@ -119,40 +121,40 @@ void out_log(int level,const char *fmt,...)
 
     } else
 #endif /* _MSC_VER */
-	{ /* syslog */
+    { /* syslog */
 
-    char new_format[1024];
+      char new_format[1024];
 
 #ifdef DEBUG
       switch (level) {
-	case LEVEL_CRITICAL:
-	  strcpy(msg_begin,CLR_BOLD);
-	  strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
-	  strcpy(msg_end,CLR_NOCOLOR);
-	  prior = LOG_ALERT;
-	  break;
-	case LEVEL_HIGH:
-	  strcpy(msg_begin,CLR_RED);
-	  strcpy(msg_end,CLR_NOCOLOR);
-	  prior = LOG_CRIT;
-	  break;
-	case LEVEL_NORMAL:
-	  strcpy(msg_begin,CLR_GREEN);
-	  strcpy(msg_end,CLR_NOCOLOR);
-	  prior = LOG_ERR;
-	  break;
-	case LEVEL_INFO:
-	  strcpy(msg_begin,CLR_BLUE);
-	  strcpy(msg_end,CLR_NOCOLOR);
-	  prior = LOG_WARNING;
-	  break;
-	case LEVEL_FLOOD:
-	  strcpy(msg_begin,CLR_CYAN);
-	  strcpy(msg_end,CLR_NOCOLOR);
-	  prior = LOG_INFO;
-	  break;
-	default:
-	  break;
+        case LEVEL_CRITICAL:
+          strcpy(msg_begin,CLR_BOLD);
+          strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
+          strcpy(msg_end,CLR_NOCOLOR);
+          prior = LOG_ALERT;
+          break;
+        case LEVEL_HIGH:
+          strcpy(msg_begin,CLR_RED);
+          strcpy(msg_end,CLR_NOCOLOR);
+          prior = LOG_CRIT;
+          break;
+        case LEVEL_NORMAL:
+          strcpy(msg_begin,CLR_GREEN);
+          strcpy(msg_end,CLR_NOCOLOR);
+          prior = LOG_ERR;
+          break;
+        case LEVEL_INFO:
+          strcpy(msg_begin,CLR_BLUE);
+          strcpy(msg_end,CLR_NOCOLOR);
+          prior = LOG_WARNING;
+          break;
+        case LEVEL_FLOOD:
+          strcpy(msg_begin,CLR_CYAN);
+          strcpy(msg_end,CLR_NOCOLOR);
+          prior = LOG_INFO;
+          break;
+        default:
+          break;
       }
 #endif
 
@@ -161,18 +163,18 @@ void out_log(int level,const char *fmt,...)
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
 #ifdef DEBUG
       if (mainConfig->logfile) {
-	vfprintf(stdout,new_format,argptr);
+        vfprintf(stdout,new_format,argptr);
         fflush(stdout);
 /*        vfprintf(mainConfig->logfile,fmt,argptr);
-	  fflush(mainConfig->logfile);*/
+          fflush(mainConfig->logfile);*/
       } else { /* security - will be used iff log is not opened at this time */
-	vfprintf(stderr,new_format,argptr);
+        vfprintf(stderr,new_format,argptr);
         fflush(stderr);
       }
 #else
       if (mainConfig->logfile) {
-	vfprintf(mainConfig->logfile,fmt,argptr);
-	fflush(mainConfig->logfile);
+        vfprintf(mainConfig->logfile,fmt,argptr);
+        fflush(mainConfig->logfile);
       }
 #endif
     } /* syslog */
@@ -199,23 +201,23 @@ void out_err(int level, const char *fmt,...)
     if (0) {
       char buffer[1024];
       switch (level) {
-      case LEVEL_CRITICAL:
-	prior = LOG_ALERT;
-	break;
-      case LEVEL_HIGH:
-	prior = LOG_CRIT;
-	break;
-      case LEVEL_NORMAL:
-	prior = LOG_ERR;
-	break;
-      case LEVEL_INFO:
-	prior = LOG_WARNING;
-	break;
-      case LEVEL_FLOOD:
-	prior = LOG_INFO;
-	break;
-      default:
-	break;
+        case LEVEL_CRITICAL:
+          prior = LOG_ALERT;
+          break;
+        case LEVEL_HIGH:
+          prior = LOG_CRIT;
+          break;
+        case LEVEL_NORMAL:
+          prior = LOG_ERR;
+          break;
+        case LEVEL_INFO:
+          prior = LOG_WARNING;
+          break;
+        case LEVEL_FLOOD:
+          prior = LOG_INFO;
+          break;
+        default:
+          break;
       }
 
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
@@ -224,33 +226,33 @@ void out_err(int level, const char *fmt,...)
 
     } else
 #endif /* _MSC_VER */
-	{ /* syslog */
+    { /* syslog */
 
 
       switch (level) {
-      case LEVEL_CRITICAL:
-	strcpy(msg_begin,CLR_BOLD);
-	strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
-	strcpy(msg_end,CLR_NOCOLOR);
-	break;
-      case LEVEL_HIGH:
-	strcpy(msg_begin,CLR_RED);
-	strcpy(msg_end,CLR_NOCOLOR);
-	break;
-      case LEVEL_NORMAL:
-	strcpy(msg_begin,CLR_GREEN);
-	strcpy(msg_end,CLR_NOCOLOR);
-	break;
-      case LEVEL_INFO:
-	strcpy(msg_begin,CLR_BLUE);
-	strcpy(msg_end,CLR_NOCOLOR);
-	break;
-      case LEVEL_FLOOD:
-	strcpy(msg_begin,CLR_CYAN);
-	strcpy(msg_end,CLR_NOCOLOR);
-	break;
-      default:
-	break;
+        case LEVEL_CRITICAL:
+          strcpy(msg_begin,CLR_BOLD);
+          strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
+          strcpy(msg_end,CLR_NOCOLOR);
+          break;
+        case LEVEL_HIGH:
+          strcpy(msg_begin,CLR_RED);
+          strcpy(msg_end,CLR_NOCOLOR);
+          break;
+        case LEVEL_NORMAL:
+          strcpy(msg_begin,CLR_GREEN);
+          strcpy(msg_end,CLR_NOCOLOR);
+          break;
+        case LEVEL_INFO:
+          strcpy(msg_begin,CLR_BLUE);
+          strcpy(msg_end,CLR_NOCOLOR);
+          break;
+        case LEVEL_FLOOD:
+          strcpy(msg_begin,CLR_CYAN);
+          strcpy(msg_end,CLR_NOCOLOR);
+          break;
+        default:
+          break;
       }
 
       snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
@@ -310,7 +312,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
       context->current_action.arg, /* filename */
       'b', /* transfer type: b(inary) / a(scii) */
       '_', /* special action flag: C(ompressed), U(ncompressed),
-	      T(ar'ed) _ (no action) */
+              T(ar'ed) _ (no action) */
       (context->current_action.token==TOK_RETR)?'o':'i',
         /* direction: o (outgoing) i (incoming) */
       'r', /* access-mode: a (anonymous) g (guest) r (real-user) */

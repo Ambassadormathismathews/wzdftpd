@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -22,16 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
 #include <winsock2.h>
-
-#ifdef __CYGWIN__
-#include <w32api/ws2tcpip.h>
-#endif
-
 #else
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -125,9 +121,15 @@ short created_shm=0;
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
-	serverMainThreadProc(0);
+#ifndef DEBUG
+  close(0);
+  close(1);
+  close(2);
+#endif
 
-	return 0;
+  serverMainThreadProc(0);
+
+  return 0;
 }
 
 /************ PRIVATE *************/
@@ -164,13 +166,13 @@ static void cleanchild(int nr) {
       /* TODO search context list and cleanup context */
       for (i=0; i<HARD_USERLIMIT; i++)
       {
-	if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
+        if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
 #ifdef DEBUG
-	  fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
+          fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
 #endif
           client_die(&context_list[i]);
-	  break;
-	}
+          break;
+        }
       }
       if (i == HARD_USERLIMIT) break; /* context not found ?! */
     } else { /* no more childs */
@@ -322,15 +324,15 @@ void server_restart(int signum)
     sock = mainConfig->mainSocket = socket_make((const char *)mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
     if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
-	  __FILE__, __LINE__);
+          __FILE__, __LINE__);
       serverMainThreadExit(-1);
     }
     {
       int one=1;
 
       if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
-	out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
-	serverMainThreadExit(-1);
+        out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+        serverMainThreadExit(-1);
       }
     }
     out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
@@ -355,8 +357,8 @@ void server_restart(int signum)
       fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
 #endif /* BSD */
       if (fd==-1)
-	out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
-	    mainConfig->xferlog_name);
+        out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
+            mainConfig->xferlog_name);
       mainConfig->xferlog_fd = fd;
     }
   }
@@ -374,7 +376,7 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port)
   sock = mainConfig->mainSocket = socket_make((const char *)ip,&new_port,mainConfig->max_threads);
   if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
-	  __FILE__, __LINE__);
+          __FILE__, __LINE__);
       serverMainThreadExit(-1);
   }
   {
@@ -421,7 +423,7 @@ int check_server_dynamic_ip(void)
     ret = get_system_ip("eth0",&addr_current);
     if (ret < 0) {
       out_err(LEVEL_HIGH,"get_system_ip FAILED %s:%d\n",
-	  __FILE__,__LINE__);
+          __FILE__,__LINE__);
       return -1;
     }
 /*    out_log(LEVEL_CRITICAL,"SYSTEM IP: %s\n",inet_ntoa(addr_current));*/
@@ -446,13 +448,13 @@ int check_server_dynamic_ip(void)
       if(!inet_aton(ip, &sa_config.sin_addr))
 #endif
       {
-	// failing that, look up the name
-	if( (host_info = gethostbyname(ip)) == NULL)
-	{
-	  out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",ip,__FILE__,__LINE__);
-	  return -1;
-	}
-	memcpy(&sa_config.sin_addr, host_info->h_addr, host_info->h_length);
+        // failing that, look up the name
+        if( (host_info = gethostbyname(ip)) == NULL)
+        {
+          out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",ip,__FILE__,__LINE__);
+          return -1;
+        }
+        memcpy(&sa_config.sin_addr, host_info->h_addr, host_info->h_length);
       }
     }
 /*    {
@@ -469,8 +471,8 @@ int check_server_dynamic_ip(void)
   {
     if (sa_current.sin_addr.s_addr != 0 && (sa_current.sin_addr.s_addr != sa_config.sin_addr.s_addr) ) {
       out_log(LEVEL_HIGH,"Rebinding main server ! (from %d.%d.%d.%d to %d.%d.%d.%d)\n",
-	  str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
-	  str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
+          str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
+          str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
       server_rebind((const unsigned char *)inet_ntoa(sa_config.sin_addr),mainConfig->port);
     }
   }
@@ -478,10 +480,10 @@ int check_server_dynamic_ip(void)
   /* anyway, I need to rebind pasv ip ?! */
   {
     if ( str_ip_pasv[0] != '0' && (
-	str_ip_config[0] != str_ip_pasv[0]
-	|| str_ip_config[1] != str_ip_pasv[1]
-	|| str_ip_config[2] != str_ip_pasv[2]
-	|| str_ip_config[3] != str_ip_pasv[3] ) )
+          str_ip_config[0] != str_ip_pasv[0]
+          || str_ip_config[1] != str_ip_pasv[1]
+          || str_ip_config[2] != str_ip_pasv[2]
+          || str_ip_config[3] != str_ip_pasv[3] ) )
     {
       out_log(LEVEL_HIGH,"Changing PASV ip !\n");
       mainConfig->pasv_ip[0] = str_ip_config[0];
@@ -565,24 +567,8 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
 
   memcpy(context->hostip,userip,16);
 
-  /* switch to tls mode ? */
-  /* TODO XXX FIXME to be done AFTER ident check */
-#ifdef HAVE_OPENSSL
-  if (mainConfig->tls_type == TLS_IMPLICIT) {
-    if (tls_auth("SSL",context)) {
-      close(newsock);
-      out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
-      /* mark context as free */
-      context->magic = 0;
-      return 1;
-    }
-    context->connection_flags |= CONNECTION_TLS;
-  }
-  context->ssl.data_mode = TLS_CLEAR;
-#endif
-
   /* try to open ident connection */
-  /** \todo TODO XXX FIXME remove this hardcoded WZD_INET4 */
+  /** \todo TODO XXX FIXME remove this hardcoded WZD_INET4 and use connection type */
 #if defined(IPV6_SUPPORT)
   fd_ident = socket_connect(userip,WZD_INET6,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
 #else
@@ -591,7 +577,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
 
   if (fd_ident == -1) {
 #ifdef _MSC_VER
-	  errno = h_errno;
+    errno = h_errno;
 #endif
     if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
       server_login_accept(context);
@@ -793,7 +779,6 @@ static void server_login_accept(wzd_context_t * context)
 #endif /* __CYGWIN__ */
 #endif /* WZD_MULTIPROCESS */
 
-
   userip = context->hostip;
 #if !defined(IPV6_SUPPORT)
   inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
@@ -858,11 +843,11 @@ static void server_login_accept(wzd_context_t * context)
 #ifdef HAVE_OPENSSL
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
-	close(context->controlfd);
-	out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
-	/* mark context as free */
-	context->magic = 0;
-	return;
+        close(context->controlfd);
+        out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
+        /* mark context as free */
+        context->magic = 0;
+        return;
       }
       context->connection_flags |= CONNECTION_TLS;
     }
@@ -893,12 +878,12 @@ static void server_login_accept(wzd_context_t * context)
 
       ret = pthread_attr_init(&thread_attr);
       if (ret) {
-	out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
-	return;
+        out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
+        return;
       }
       if (pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED)) {
-	out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
-	return;
+        out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
+        return;
       }
       ret = pthread_create(&thread,&thread_attr,clientThreadProc,context);
       context->pid_child = (unsigned long)thread;
@@ -1128,7 +1113,7 @@ void serverMainThreadProc(void *arg)
 #endif
 #endif /* _WIN32 */
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
   /* Start Winsock up */
   if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
     out_log(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
@@ -1182,14 +1167,14 @@ void serverMainThreadProc(void *arg)
 #ifndef _MSC_VER
     fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
 #else
-	/* ignore if file exists for visual version ... */
+    /* ignore if file exists for visual version ... */
     fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT,0644);
 #endif
     snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
     if (fd==-1) {
       fprintf(stderr,"Unable to open pid file %s\n",strerror(errno));
       if (created_shm) {
-	free_config(mainConfig);
+        free_config(mainConfig);
       }
       exit(1);
     }
@@ -1215,8 +1200,8 @@ void serverMainThreadProc(void *arg)
   mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 #else
-  mainConfig->user_list = (char*)context_list + size_context;
-  mainConfig->group_list = (char*)context_list + size_context + size_user;
+  mainConfig->user_list = (wzd_user_t*)((char*)context_list + size_context);
+  mainConfig->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
 #endif
 
 #ifdef WIN32
@@ -1227,7 +1212,7 @@ void serverMainThreadProc(void *arg)
    */
   setlib_mainConfig(mainConfig);
   setlib_contextList(context_list);
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */
 
   /* create limiter sem */
   limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
@@ -1307,9 +1292,9 @@ void serverMainThreadProc(void *arg)
     case -1: /* error */
       if (errno == EINTR) continue; /* retry */
       if (errno == EBADF) {
-	out_log(LEVEL_CRITICAL,"Bad file descriptor %d\n",
-	    mainConfig->mainSocket);
-	serverMainThreadExit(-1);
+        out_log(LEVEL_CRITICAL,"Bad file descriptor %d\n",
+            mainConfig->mainSocket);
+        serverMainThreadExit(-1);
       }
       out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%d\n",
         strerror(errno), __FILE__, __LINE__);
@@ -1322,7 +1307,7 @@ void serverMainThreadProc(void *arg)
 #endif
     default: /* input */
       server_ident_check(&r_fds,&w_fds,&e_fds);
-      /* TODO XXX check ident timeout */
+      /* check ident timeout */
       server_ident_timeout_check();
       if (FD_ISSET(mainConfig->mainSocket,&r_fds)) {
         if (server_add_ident_candidate(mainConfig->mainSocket)) {
@@ -1403,9 +1388,9 @@ void serverMainThreadExit(int retcode)
     for (i=0; i<HARD_USERLIMIT; i++)
     {
       if (context_list[i].magic == CONTEXT_MAGIC) {
-	ret = pthread_cancel(context_list[i].pid_child);
+        ret = pthread_cancel(context_list[i].pid_child);
 #ifdef DEBUG
-	fprintf(stderr,"Killing child %lu - returned %d\n",context_list[i].pid_child,ret);
+        fprintf(stderr,"Killing child %lu - returned %d\n",context_list[i].pid_child,ret);
 #endif
 /*	client_die(&context_list[i]);*/
 
@@ -1447,7 +1432,7 @@ void serverMainThreadExit(int retcode)
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
   WSACleanup();
 #endif
 #ifdef DEBUG

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -205,13 +207,13 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
        * changed
        */ 
       if (user->groups[0] == gid) {
-	snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
-	send_message_raw(buffer,context);
+        snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
+        send_message_raw(buffer,context);
       }
       group_remove_user(user,gid);
       if (user->group_num == 0) {
-	snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
-	send_message_raw(buffer,context);
+        snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
+        send_message_raw(buffer,context);
       }
     }
   }
@@ -648,8 +650,8 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
     if (context_list[i].magic == CONTEXT_MAGIC) {
       user = GetUserByID(context_list[i].userid);
       if (strcmp(me->username,user->username) && is_user_in_group(user,gid)) {
-	found=1;
-	kill_child(context_list[i].pid_child,context);
+        found=1;
+        kill_child(context_list[i].pid_child,context);
       }
     }
   }
@@ -737,8 +739,8 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
     {
       struct stat s;
       if (stat(value,&s) || !S_ISDIR(s.st_mode)) {
-	ret = send_message_with_args(501,context,"Homedir does not exist");
-	return 0;
+        ret = send_message_with_args(501,context,"Homedir does not exist");
+        return 0;
       }
     }
     mod_type = _GROUP_DEFAULTPATH;
@@ -774,9 +776,9 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
     ul=strtoul(value,&ptr,0);
     if (!*ptr) {
       if ((!me->flags || !strchr(me->flags,FLAG_SITEOP)) && ul==0) {
-	/* wants a leech access for group, but is not siteop */
-	ret = send_message_with_args(501,context,"Only siteops can do that");
-	return 0;
+        /* wants a leech access for group, but is not siteop */
+        ret = send_message_with_args(501,context,"Only siteops can do that");
+        return 0;
       }
       mod_type = _GROUP_RATIO; group.ratio = ul;
     }

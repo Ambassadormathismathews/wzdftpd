@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /** \file
   * \brief strtoull() replacement
   */

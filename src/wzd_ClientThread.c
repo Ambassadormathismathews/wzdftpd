@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -182,7 +184,7 @@ int identify_token(char *token)
   if (strcmp("\xff\xf4",token)==0) /* telnet IP */
     return TOK_NOTHING;
   if (strcmp("\xff",token)==0) /* telnet SYNCH */
-	  return TOK_NOTHING;
+    return TOK_NOTHING;
   return TOK_UNKNOWN;
 }
 
@@ -206,7 +208,7 @@ int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
       ret = select(0,&fds,NULL,&efds,&tv);
 #else
       ret = select(sock+1,&fds,NULL,&efds,&tv);
@@ -214,12 +216,12 @@ int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
-	if (save_errno == EINTR) continue;
-	out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
-	return -1;
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
+        return -1;
       }
       if (!FD_ISSET(sock,&fds)) /* timeout */
-	return 0;
+        return 0;
       break;
     }
     ret = recv(sock,msg,length,0);
@@ -245,30 +247,30 @@ int clear_write(unsigned int sock, const char *msg, unsigned int length, int fla
       ret = send(sock,msg+done,length,0);
     else {
       while (1) {
-	FD_ZERO(&fds);
-	FD_ZERO(&efds);
-	FD_SET(sock,&fds);
-	FD_SET(sock,&efds);
-	tv.tv_sec = timeout; tv.tv_usec = 0;
+        FD_ZERO(&fds);
+        FD_ZERO(&efds);
+        FD_SET(sock,&fds);
+        FD_SET(sock,&efds);
+        tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
-	ret = select(0,NULL,&fds,&efds,&tv);
+#if defined(_MSC_VER)
+        ret = select(0,NULL,&fds,&efds,&tv);
 #else
-	ret = select(sock+1,NULL,&fds,&efds,&tv);
+        ret = select(sock+1,NULL,&fds,&efds,&tv);
 #endif
-	save_errno = errno;
+        save_errno = errno;
 
-	if (FD_ISSET(sock,&efds)) {
-	  if (save_errno == EINTR) continue;
-	  out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
-	  return -1;
-	}
-	if (!FD_ISSET(sock,&fds)) /* timeout */
-	{
-	  out_log(LEVEL_CRITICAL,"Timeout during send\n");
-	  return 0;
-	}
-	break;
+        if (FD_ISSET(sock,&efds)) {
+          if (save_errno == EINTR) continue;
+          out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
+          return -1;
+        }
+        if (!FD_ISSET(sock,&fds)) /* timeout */
+        {
+          out_log(LEVEL_CRITICAL,"Timeout during send\n");
+          return 0;
+        }
+        break;
       }
       ret = send(sock,msg+done,length,0);
       if (ret==-1) return ret;
@@ -406,7 +408,7 @@ int check_timeout(wzd_context_t * context)
        * partially uploaded
        */
       FORALL_HOOKS(EVENT_POSTUPLOAD)
-	typedef int (*upload_hook)(unsigned long, const char*, const char *);
+        typedef int (*upload_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
           ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
       END_FORALL_HOOKS
@@ -436,11 +438,11 @@ int check_timeout(wzd_context_t * context)
         char inet_str[256];
         inet_str[0] = '\0';
         inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-	log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
-	    user->username,
+        log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
+            user->username,
             inet_str,
-	    delay
-	    );
+            delay
+            );
       }
       client_die(context);
 #ifdef WZD_MULTIPROCESS
@@ -458,7 +460,7 @@ int check_timeout(wzd_context_t * context)
       if (delay > gptr->max_idle_time) {
         /* TIMEOUT ! */
         send_message_with_args(421,context,"Timeout, closing connection");
-	{
+        {
           char inet_str[256];
           inet_str[0] = '\0';
           inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
@@ -470,7 +472,7 @@ int check_timeout(wzd_context_t * context)
         }
         client_die(context);
 #ifdef WZD_MULTIPROCESS
-	exit(0);
+        exit(0);
 #else /* WZD_MULTIPROCESS */
         return 1;
 #endif /* WZD_MULTIPROCESS */
@@ -516,7 +518,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     length = strlen(tmppath);
     if (length>1 && tmppath[length-1]=='/')
 #ifdef _MSC_VER
-		if (length != 3) /* root of a logical dir */
+      if (length != 3) /* root of a logical dir */
 #endif
       tmppath[length-1] = '\0';
     ret = _checkPerm(tmppath,RIGHT_CWD,user);
@@ -612,11 +614,6 @@ int waitaccept(wzd_context_t * context)
 
 int waitconnect(wzd_context_t * context)
 {
-  char str[1024];
-/*  fd_set fds;
-  struct timeval tv;
-  unsigned int remote_port;*/
-  unsigned long remote_host;
   int sock;
   int ret;
 
@@ -735,11 +732,11 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
-	switch (param[n]) {
-	case 'a':
-	  listtype |= LIST_SHOW_HIDDEN;
-	}
-	n++;
+        switch (param[n]) {
+          case 'a':
+            listtype |= LIST_SHOW_HIDDEN;
+        }
+        n++;
       }
       if (param[n]==' ') param = param+n+1;
       else param = param+n;
@@ -752,19 +749,19 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
     {
       char *ptr;
       if (strrchr(cmd,'/')) { /* probably not in current path - need to readjust path */
-	if (strrchr(cmd,'/') > strrchr(cmd,'*')) {
-	  /* char / is AFTER *, dir style: toto / * / .., we refuse */
+        if (strrchr(cmd,'/') > strrchr(cmd,'*')) {
+          /* char / is AFTER *, dir style: toto / * / .., we refuse */
           ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
           return 1;
-	}
-	ptr = strrchr(cmd,'/');
-	strncpy(cmd,ptr+1,WZD_MAX_PATH);
-	*ptr = '\0';
+        }
+        ptr = strrchr(cmd,'/');
+        strncpy(cmd,ptr+1,WZD_MAX_PATH);
+        *ptr = '\0';
 //	strncpy(cmd,strrchr(cmd,'/')+1,2048);
 //	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
-	strncpy(mask,cmd,sizeof(mask));
-	cmd[0] = '\0';
+        strncpy(mask,cmd,sizeof(mask));
+        cmd[0] = '\0';
       }
     }
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) { /* wildcards in path ? ough */
@@ -911,22 +908,22 @@ int do_mkdir(char *param, wzd_context_t * context)
       *ptr='\0';
       /* we can reuse cmd */
       if (param[0] != '/') {
-	unsigned int length;
-	strncpy(cmd,context->currentpath,WZD_MAX_PATH-1-strlen(param));
-	length = strlen(cmd);
-	if (cmd[length-1]!='/') {
-	  cmd[length++] = '/';
-	}
-	strncpy(cmd+length,param,WZD_MAX_PATH-1-length);
+        unsigned int length;
+        strncpy(cmd,context->currentpath,WZD_MAX_PATH-1-strlen(param));
+        length = strlen(cmd);
+        if (cmd[length-1]!='/') {
+          cmd[length++] = '/';
+        }
+        strncpy(cmd+length,param,WZD_MAX_PATH-1-length);
       } else {
-	strncpy(cmd,param,WZD_MAX_PATH);
+        strncpy(cmd,param,WZD_MAX_PATH);
       }
       /* we need to give the ftp-relative path here */
       section = section_find(mainConfig->section_list,cmd);
       if (section && !section_check_filter(section,ptr+1))
       {
-	out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
-	return E_MKDIR_PATHFILTER;
+        out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
+        return E_MKDIR_PATHFILTER;
       }
     }
   }
@@ -952,11 +949,11 @@ int do_mkdir(char *param, wzd_context_t * context)
     stripdir(buffer,path,WZD_MAX_PATH-1);
     
     log_message("NEWDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
-	path, /* ftp-absolute path */
-	user->username,
-	(groupname)?groupname:"No Group",
-	user->tagline
-	);
+        path, /* ftp-absolute path */
+        user->username,
+        (groupname)?groupname:"No Group",
+        user->tagline
+        );
   }
 
   return ret;
@@ -1018,12 +1015,12 @@ int do_rmdir(char * param, wzd_context_t * context)
     stripdir(buffer,path,WZD_MAX_PATH-1);
     
     log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
-	path, /* ftp-absolute path */
-	user->username,
-	(groupname)?groupname:"No Group",
-	user->tagline
-	);
-	
+        path, /* ftp-absolute path */
+        user->username,
+        (groupname)?groupname:"No Group",
+        user->tagline
+        );
+
   }
 
   return ret;
@@ -1062,14 +1059,14 @@ void do_pasv(wzd_context_t * context)
   if (mainConfig->pasv_ip[0] == 0) {
 #if defined(IPV6_SUPPORT)
       if (IN6_IS_ADDR_V4MAPPED(myip))
-	memcpy(pasv_bind_ip,myip+12,4);
+        memcpy(pasv_bind_ip,myip+12,4);
       else
 #endif /* IPV6_SUPPORT */
-	memcpy(pasv_bind_ip,myip,4);
+        memcpy(pasv_bind_ip,myip,4);
   } else {
 #if defined(IPV6_SUPPORT)
     if (IN6_IS_ADDR_V4MAPPED(context->hostip))
-	offset = 12;
+      offset = 12;
 #endif
     /* do NOT send pasv_ip if used from private network */
     if (context->hostip[offset+0]==10 ||
@@ -1079,18 +1076,18 @@ void do_pasv(wzd_context_t * context)
     {
 #if defined(IPV6_SUPPORT)
       if (IN6_IS_ADDR_V4MAPPED(myip))
-	memcpy(pasv_bind_ip,myip+12,4);
+        memcpy(pasv_bind_ip,myip+12,4);
       else
 #endif /* IPV6_SUPPORT */
-	memcpy(pasv_bind_ip,myip,4);
+        memcpy(pasv_bind_ip,myip,4);
     }
     else
 #if defined(IPV6_SUPPORT)
       if (IN6_IS_ADDR_V4MAPPED(mainConfig->pasv_ip))
-	memcpy(pasv_bind_ip,mainConfig->pasv_ip+12,4);
+        memcpy(pasv_bind_ip,mainConfig->pasv_ip+12,4);
       else
 #endif /* IPV6_SUPPORT */
-	memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
+        memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
   }
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
@@ -1144,7 +1141,7 @@ void do_pasv(wzd_context_t * context)
       ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
     else
       ret = send_message_with_args(227,context,mainConfig->pasv_ip[0], mainConfig->pasv_ip[1],
-	mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
+          mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
 #endif
 }
@@ -1317,7 +1314,7 @@ void do_epsv(wzd_context_t * context)
     sai6.sin6_port = htons(port);
     sai6.sin6_flowinfo = 0;
 /*     sai6.sin6_addr = in6addr_any;*/ /* FIXME VISUAL */
-	memset(&sai6.sin6_addr,0,16);
+    memset(&sai6.sin6_addr,0,16);
     /* XXX TODO FIXME bind to specific address works, but not for NAT */
     /* XXX TODO FIXME always bind to 'myip' ?! */
 /*    addr = INADDR_ANY;*/
@@ -1372,7 +1369,7 @@ void do_epsv(wzd_context_t * context)
       ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
     else
       ret = send_message_with_args(227,context,mainConfig->pasv_ip[0], mainConfig->pasv_ip[1],
-	mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
+          mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
 #endif
 }
@@ -1380,10 +1377,9 @@ void do_epsv(wzd_context_t * context)
 /*************** do_retr *****************************/
 int do_retr(char *param, wzd_context_t * context)
 {
-  char path[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
+  char path[WZD_MAX_PATH];
   int fd;
   unsigned long bytestot, bytesnow, byteslast;
-  unsigned long addr;
   int sock;
   int ret;
   wzd_user_t * user;
@@ -1442,7 +1438,7 @@ int do_retr(char *param, wzd_context_t * context)
   /* get length */
   bytestot = lseek(fd,0,SEEK_END);
   if (bytestot == -1) /* happens with 0-length files */
-	  bytestot = 0;
+    bytestot = 0;
   bytesnow = byteslast=context->resume;
 
   if (context->pasvsock < 0) { /* PORT ! */
@@ -1509,7 +1505,6 @@ int do_stor(char *param, wzd_context_t * context)
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
   int fd;
   unsigned long bytesnow, byteslast;
-  unsigned long addr;
   int sock;
   int ret;
   wzd_user_t * user;
@@ -2132,7 +2127,7 @@ int do_user(const char *username, wzd_context_t * context)
 #else
       if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
 #endif
-	count++;
+        count++;
     } /* for (i=0; i<HARD_USERLIMIT; i... */
 
     /* we substract 1, because the current login attempt is counted */
@@ -2155,9 +2150,9 @@ int do_user(const char *username, wzd_context_t * context)
     for (i=0; i<HARD_USERLIMIT; i++)
     {
       if (context_list[i].magic == CONTEXT_MAGIC) {
-	user = GetUserByID(context_list[i].userid);
-	for (j=0; j<user->group_num; j++)
-	  num_logins[ user->groups[j] ]++;
+        user = GetUserByID(context_list[i].userid);
+        for (j=0; j<user->group_num; j++)
+          num_logins[ user->groups[j] ]++;
       }
     }
     /* checks num_logins for all groups */
@@ -2165,9 +2160,9 @@ int do_user(const char *username, wzd_context_t * context)
     {
       group = GetGroupByID( me->groups[i] );
       if (group && group->num_logins
-	  && (num_logins[me->groups[i]]>group->num_logins))
-	  /* > and not >= because current login attempt is counted ! */
-	return E_GROUP_NUMLOGINS; /* user has reached group max num_logins */
+          && (num_logins[me->groups[i]]>group->num_logins))
+        /* > and not >= because current login attempt is counted ! */
+        return E_GROUP_NUMLOGINS; /* user has reached group max num_logins */
     }
   }
   
@@ -2239,7 +2234,7 @@ int check_tls_forced(wzd_context_t * context)
     group = GetGroupByID(user->groups[i]);
     if (group->flags && strchr(group->flags,FLAG_TLS)) {
       if ( !(context->connection_flags & CONNECTION_TLS) ) {
-	return 1;
+        return 1;
       }
   }
 #endif
@@ -2287,7 +2282,7 @@ static int do_login_loop(wzd_context_t * context)
     {
       int length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
-	buffer[length-- -1] = '\0';
+        buffer[length-- -1] = '\0';
       strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
     }
 
@@ -2302,34 +2297,34 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     switch (command) {
     case TOK_USER:
       if (user_ok) { /* USER command issued 2 times */
-	ret = send_message_with_args(421,context,"USER command issued twice");
-	return 1;
+        ret = send_message_with_args(421,context,"USER command issued twice");
+        return 1;
       }
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
-	ret = send_message_with_args(421,context,"Give me a user name !");
-	return 1;
+        ret = send_message_with_args(421,context,"Give me a user name !");
+        return 1;
       }
       ret = do_user(token,context);
       switch (ret) {
       case E_USER_REJECTED: /* user was not accepted */
-	ret = send_message_with_args(421,context,"User rejected");
-	return 1;
+        ret = send_message_with_args(421,context,"User rejected");
+        return 1;
       case E_USER_NUMLOGINS: /* too many logins */
-	ret = send_message_with_args(421,context,"Too many connections with your login");
-	return 1;
+        ret = send_message_with_args(421,context,"Too many connections with your login");
+        return 1;
       case E_USER_CLOSED: /* site closed */
-	ret = send_message_with_args(421,context,"Site is closed, try again later");
-	return 1;
+        ret = send_message_with_args(421,context,"Site is closed, try again later");
+        return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
-	ret = send_message_with_args(421,context,"Too many connections for your group");
-	return 1;
+        ret = send_message_with_args(421,context,"Too many connections for your group");
+        return 1;
       }
       /* validate ip for user */
       ret = do_user_ip(token,context);
       if (ret) { /* user was not accepted */
-	ret = send_message_with_args(421,context,"IP not allowed");
-	return 1;
+        ret = send_message_with_args(421,context,"IP not allowed");
+        return 1;
       }
       strncpy(username,token,HARD_USERNAME_LENGTH-1);
       ret = send_message_with_args(331,context,username);
@@ -2337,34 +2332,34 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       break;
     case TOK_PASS:
       if (!user_ok || pass_ok) {
-	ret = send_message_with_args(421,context,"Incorrect login sequence");
-	return 1;
+        ret = send_message_with_args(421,context,"Incorrect login sequence");
+        return 1;
       }
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
-	ret = send_message_with_args(421,context,"Give me a password !");
-	return 1;
+        ret = send_message_with_args(421,context,"Give me a password !");
+        return 1;
       }
       ret = do_pass(username,token,context);
       if (ret==E_PASS_REJECTED) { /* pass was not accepted */
-	ret = send_message_with_args(421,context,"Password rejected");
-	return E_PASS_REJECTED;
+        ret = send_message_with_args(421,context,"Password rejected");
+        return E_PASS_REJECTED;
       }
       if (ret==E_USER_NO_HOME) { /* pass is ok, could not chdir */
-	ret = send_message_with_args(421,context,"Could not go to my home directory !");
-	return E_USER_NO_HOME;
+        ret = send_message_with_args(421,context,"Could not go to my home directory !");
+        return E_USER_NO_HOME;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
 #ifdef HAVE_OPENSSL
       if (mainConfig->tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
-	ret = send_message_with_args(421,context,"TLS session MUST be engaged");
-	return 1;
+        ret = send_message_with_args(421,context,"TLS session MUST be engaged");
+        return 1;
       }
 #endif
       /* check if user must be connected in tls mode */
       if (check_tls_forced(context)) {
-	  ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
-	  return 1;
+        ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
+        return 1;
       }
       return 0; /* user + pass ok */
       break;
@@ -2378,15 +2373,15 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       if (strcasecmp(token,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
         context->ssl.data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
       else
-	context->ssl.data_mode = TLS_CLEAR;
+        context->ssl.data_mode = TLS_CLEAR;
       if (mainConfig->tls_type != TLS_IMPLICIT) {
         ret = send_message_with_args(234, context, token);
       }
       ret = tls_auth(token,context);
       if (ret) { /* couldn't switch to ssl */
         /* XXX should we send a message ? - with ssl aborted we can't be sure there won't be problems */
-	ret = send_message_with_args(431,context,"Failed TLS negotiation");
-	return 1;
+        ret = send_message_with_args(431,context,"Failed TLS negotiation");
+        return 1;
       }
       tls_ok = 1;
       context->connection_flags |= CONNECTION_TLS;
@@ -2461,11 +2456,13 @@ void * clientThreadProc(void *arg)
   char *ptr;
   int command;
   wzd_user_t * user;
+#ifndef _MSC_VER
   int oldtype;
+#endif
 
   context = arg;
   sockfd = context->controlfd;
-	
+
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
 #ifndef _MSC_VER
 #ifdef WZD_MULTITHREAD
@@ -2509,11 +2506,11 @@ void * clientThreadProc(void *arg)
     else
       remote_host = h->h_name;
     log_message("LOGIN","%s (%s) \"%s\" \"%s\" \"%s\"",
-	(remote_host)?remote_host:"no host !",
+        (remote_host)?remote_host:"no host !",
         inet_str,
         user->username,
-	(groupname)?groupname:"No Group",
-	user->tagline
+        (groupname)?groupname:"No Group",
+        user->tagline
         );
   }
 
@@ -2554,7 +2551,7 @@ void * clientThreadProc(void *arg)
 #ifdef DEBUG
     if (sockfd<0 || !fd_is_valid(sockfd)) {
       fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
-	  sockfd,__FILE__,__LINE__);
+          sockfd,__FILE__,__LINE__);
       exitclient=1;
       break;
     }
@@ -2610,7 +2607,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     }
     ret = (context->read_fct)(sockfd,buffer,WZD_BUFFER_LEN-1,0,0,context); /* timeout = 0, we know there's something to read */
 
-	  /* remote host has closed session */
+    /* remote host has closed session */
     if (ret==0 || ret==-1) {
       out_log(LEVEL_FLOOD,"Host disconnected improperly!\n");
       exitclient=1;
@@ -2625,7 +2622,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     {
       int length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
-	buffer[length-- -1] = '\0';
+        buffer[length-- -1] = '\0';
       strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
     }
 /*    context->idle_time_start = time(NULL);*/
@@ -2671,7 +2668,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       token = strtok_r(NULL," \t\r\n",&ptr);
       if (!token) {
         ret = send_message_with_args(501,context,"Invalid TYPE marker");
-	break;
+        break;
       }
       if (strcasecmp(token,"I")==0)
         context->current_xfer_type = BINARY;
@@ -2841,12 +2838,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       context->state = STATE_XFER;
       token = strtok_r(NULL,"\r\n",&ptr);
       do_retr(token,context);
-#if 0
-      if (do_retr(token,context))
-        ret = send_message_with_args(501,context,"RETR failed");
-      else
-        ret = send_message(226,context);
-#endif
       context->resume=0;
       context->idle_time_start = time(NULL);
       break;
@@ -2858,24 +2849,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       context->state = STATE_XFER;
       token = strtok_r(NULL,"\r\n",&ptr);
       ret = do_stor(token,context);
-#if 0
-      switch (do_stor(token,context)) {
-        case 1:
-          ret = send_message_with_args(501,context,"STOR failed");
-          break;
-        case 2:
-          ret = send_message_with_args(553,context,"You can't overwrite !\n");
-          break;
-        case 3:
-          ret = send_message(451,context);
-          break;
-        default:
-          ret = send_message(226,context);
-          out_log(LEVEL_INFO,"STOR: %s sent %s\n",
-              context->userinfo.username, param);
-          break;
-      }
-#endif
       context->resume=0;
       context->idle_time_start = time(NULL);
       break;
@@ -2896,7 +2869,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
         ret = send_message_with_args(501,context,"Invalid REST marker");
-	break;
+        break;
       }
       j=0;
       i = sscanf(token,"%lu",&j);

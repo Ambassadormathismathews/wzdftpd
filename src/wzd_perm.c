@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -354,17 +356,17 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
     if (entry_target[0] == '*') return (negate) ? 1 : 0;
     switch (entry->cp) {
       case CPERM_USER:
-	if (strcasecmp(entry_target,user->username)==0) return (negate) ? 1 : 0;
-	break;
+        if (strcasecmp(entry_target,user->username)==0) return (negate) ? 1 : 0;
+        break;
       case CPERM_GROUP:
-	for (i=0; i<user->group_num; i++) {
-	  group = GetGroupByID(user->groups[i]);
-	  if (strcasecmp(entry_target,group->groupname)==0) return (negate) ? 1 : 0;
-	}
-	break;
+        for (i=0; i<user->group_num; i++) {
+          group = GetGroupByID(user->groups[i]);
+          if (strcasecmp(entry_target,group->groupname)==0) return (negate) ? 1 : 0;
+        }
+        break;
       case CPERM_FLAG:
-	if (user->flags && strchr(user->flags,*entry_target)) return (negate) ? 1 : 0;
-	break;
+        if (user->flags && strchr(user->flags,*entry_target)) return (negate) ? 1 : 0;
+        break;
     }
     entry = entry->next_entry;
   } while (entry);

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -21,15 +23,6 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
-
-#ifdef __CYGWIN__
-#include <w32api/windows.h>
-
-#ifndef AF_INET6
-#define	AF_INET6 10
-#endif
-
-#endif /* __CYGWIN__ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -262,8 +255,8 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
   err = _getdiskfree(drive, &df);
   if (!err) {
     if (f_free) *f_free = df.avail_clusters * df.sectors_per_cluster;
-	if (f_bsize) *f_bsize = df.bytes_per_sector;
-	if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
+    if (f_bsize) *f_bsize = df.bytes_per_sector;
+    if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
   }
 #endif
   return -1;
@@ -288,11 +281,11 @@ static int _int_rename(const char * src, const char *dst)
     struct dirent *entr;
 #else
     HANDLE dir;
-	WIN32_FIND_DATA fileData;
-	int finished;
-	char dirfilter[2048];
+    WIN32_FIND_DATA fileData;
+    int finished;
+    char dirfilter[2048];
 #endif
-	const char *filename;
+    const char *filename;
 
     ret = mkdir(dst,s.st_mode & 0xffff);
     ret = chmod(dst,s.st_mode & 0xffff);
@@ -310,31 +303,31 @@ static int _int_rename(const char * src, const char *dst)
 #ifndef _MSC_VER
     if ((dir=opendir(src))==NULL) return -1;
     while ((entr=readdir(dir))!=NULL) {
-	  filename = entr->d_name;
+      filename = entr->d_name;
       if (entr->d_name[0]=='.') {
-	    if (strcmp(entr->d_name,".")==0 ||
-	      strcmp(entr->d_name,"..")==0)
-	    continue;
+        if (strcmp(entr->d_name,".")==0 ||
+            strcmp(entr->d_name,"..")==0)
+          continue;
       }
 #else
-	snprintf(dirfilter,2048,"%s/*",src);
-	if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+    snprintf(dirfilter,2048,"%s/*",src);
+    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
 
-	finished = 0;
-	while (!finished)
-	{
-	  filename = fileData.cFileName;
+    finished = 0;
+    while (!finished)
+    {
+      filename = fileData.cFileName;
       if (filename[0]=='.') {
         if (strcmp(filename,".")==0 ||
-	    strcmp(filename,"..")==0)
-		{
-		  if (!FindNextFile(dirfilter,&fileData))
-		  {
-             if (GetLastError() == ERROR_NO_MORE_FILES)
-             finished = 1;
-		  }
+            strcmp(filename,"..")==0)
+        {
+          if (!FindNextFile(dirfilter,&fileData))
+          {
+            if (GetLastError() == ERROR_NO_MORE_FILES)
+              finished = 1;
+          }
           continue;
-		}
+        }
       }
 #endif
       strncpy(ptr_src,filename,length_src-1); /* FIXME check ret */
@@ -343,11 +336,11 @@ static int _int_rename(const char * src, const char *dst)
       *ptr_src = '\0';
       *ptr_dst = '\0';
 #ifdef _MSC_VER
-	  if (!FindNextFile(dirfilter,&fileData))
-	  {
+      if (!FindNextFile(dirfilter,&fileData))
+      {
         if (GetLastError() == ERROR_NO_MORE_FILES)
-        finished = 1;
-	  }
+          finished = 1;
+      }
 #endif
     }
     rmdir(src);
@@ -627,10 +620,10 @@ void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list a
           snprintf(old_buffer,20,"%d Truncated\r\n",code);
           break;
         }
-	if (is_terminated) /* no more line, remove the - */
-	  snprintf(buffer,length,"%d %s\r\n",code,token);
-	else
-	  snprintf(buffer,length,"%d-%s\r\n",code,token);
+        if (is_terminated) /* no more line, remove the - */
+          snprintf(buffer,length,"%d %s\r\n",code,token);
+        else
+          snprintf(buffer,length,"%d-%s\r\n",code,token);
         break;
       }
       /* check remaining size */
@@ -739,7 +732,7 @@ wzd_sem_unlock(sem,1);
     elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
     elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
 #else
-	_ftime(&tb);
+    _ftime(&tb);
     elapsed = (double) (tb.time - l->current_time.time);
     elapsed += (double) (tb.millitm - l->current_time.millitm) / (double)1000;
 #endif
@@ -943,7 +936,7 @@ void win_normalize(char * s, unsigned int length)
     if (s[i] >= 'A' && s[i] <= 'Z') {
       s[i] |= 0x20;
     }
-	if (s[i] == '\\') s[i] = '/';
+    if (s[i] == '\\') s[i] = '/';
     i++;
   }
 }
@@ -1105,7 +1098,7 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
       host = gethostbyname(ptr_test);
       if (!host) {
         /* XXX could not resolve hostname - warning in log ? */
-	i++;
+        i++;
         continue;
       }
       
@@ -1136,7 +1129,7 @@ out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
       host = gethostbyaddr(host_ip,4,AF_INET);
       if (!host) {
         /* XXX could not resolve hostname - warning in log ? */
-	i++;
+        i++;
         continue;
       }
 
@@ -1221,7 +1214,7 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
       host = gethostbyname(ptr_test);
       if (!host) {
         /* XXX could not resolve hostname - warning in log ? */
-	i++;
+        i++;
         continue;
       }
       
@@ -1252,7 +1245,7 @@ out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
       host = gethostbyaddr(host_ip,4,AF_INET);
       if (!host) {
         /* XXX could not resolve hostname - warning in log ? */
-	i++;
+        i++;
         continue;
       }
 
@@ -1293,7 +1286,7 @@ wzd_user_t * GetUserByName(const char *name)
   {
     if (mainConfig->user_list[i].username[0] != '\0') {
       if (strcmp(name,mainConfig->user_list[i].username)==0)
-	return &mainConfig->user_list[i];
+        return &mainConfig->user_list[i];
     }
     i++;
   }
@@ -1318,7 +1311,7 @@ wzd_group_t * GetGroupByName(const char *name)
   {
     if (mainConfig->group_list[i].groupname[0] != '\0') {
       if (strcmp(name,mainConfig->group_list[i].groupname)==0)
-	return &mainConfig->group_list[i];
+        return &mainConfig->group_list[i];
     }
     i++;
   }
@@ -1335,7 +1328,7 @@ unsigned int GetUserIDByName(const char *name)
   {
     if (mainConfig->user_list[i].username[0] != '\0') {
       if (strcmp(name,mainConfig->user_list[i].username)==0)
-	return i;
+        return i;
     }
     i++;
   }
@@ -1353,7 +1346,7 @@ unsigned int GetGroupIDByName(const char *name)
   {
     if (mainConfig->group_list[i].groupname[0] != '\0') {
       if (strcmp(name,mainConfig->group_list[i].groupname)==0)
-	return i;
+        return i;
     }
     i++;
   }
@@ -1363,12 +1356,12 @@ unsigned int GetGroupIDByName(const char *name)
 
 short is_user_in_group(wzd_user_t * user, unsigned int gid)
 {
-	unsigned int i;
+  unsigned int i;
 
-	if (!user || user->group_num<=0) return -1;
-	for (i=0; i<user->group_num; i++)
-		if (gid==user->groups[i]) return 1;
-	return 0;
+  if (!user || user->group_num<=0) return -1;
+  for (i=0; i<user->group_num; i++)
+    if (gid==user->groups[i]) return 1;
+  return 0;
 }
 
 

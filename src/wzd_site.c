@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -302,10 +304,10 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
   long_perms = strtoul(mode,&endptr,8);
   if (endptr != mode) {
     snprintf(str_perms,63,"%c%c%c",
-	(long_perms & 01) ? 'r' : '-',
-	(long_perms & 02) ? 'w' : '-',
-	(long_perms & 04) ? 'x' : '-'
-	);
+        (long_perms & 01) ? 'r' : '-',
+        (long_perms & 02) ? 'w' : '-',
+        (long_perms & 04) ? 'x' : '-'
+        );
   } else
     strncpy(str_perms,mode,63);
 
@@ -393,10 +395,10 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
   long_perms = strtoul(mode,&endptr,8);
 /*  if (endptr != mode) {
     snprintf(str_perms,63,"%c%c%c",
-	(long_perms & 01) ? 'r' : '-',
-	(long_perms & 02) ? 'w' : '-',
-	(long_perms & 04) ? 'x' : '-'
-	);
+      (long_perms & 01) ? 'r' : '-',
+      (long_perms & 02) ? 'w' : '-',
+      (long_perms & 04) ? 'x' : '-'
+    );
   } else
     strncpy(str_perms,mode,63);*/
 
@@ -1013,6 +1015,7 @@ int do_site_reload(char * ignored, wzd_context_t * context)
     snprintf(buffer,255,"200 kill returned ok\r\n");
   ret = send_message_raw(buffer,context);
 #else
+  /* FIXME VISUAL : call server_restart explicitely ? */
   ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");
   return 1;
 #endif
@@ -1088,11 +1091,11 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
 /********************* do_site_savecfg *********************/
 int do_site_savecfg(char *command_line, wzd_context_t * context)
 {
-	if( wzd_savecfg() )
-      send_message_with_args(501,context,"Cannot save server config");
-	else
-      send_message_with_args(200,context,"Server config saved");
-	return 0;
+  if( wzd_savecfg() )
+    send_message_with_args(501,context,"Cannot save server config");
+  else
+    send_message_with_args(200,context,"Server config saved");
+  return 0;
 }
 
 /********************* do_site_unlock **********************/
@@ -1780,9 +1783,9 @@ int do_site(char *command_line, wzd_context_t * context)
       send_message_raw("200-\r\n",context);
       ret = hook_call_custom(context,hook,command_line+strlen(token)+1);
       if (!ret) {
-	ret = send_message_with_args(200,context,"SITE command ok");
+        ret = send_message_with_args(200,context,"SITE command ok");
       } else {
-	ret = send_message_with_args(200,context,"SITE command failed");
+        ret = send_message_with_args(200,context,"SITE command failed");
       }
       return 0; /* there can be only one site command ! */
     }

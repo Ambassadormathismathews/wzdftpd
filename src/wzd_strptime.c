@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * Copyright (c) 1994 Powerdog Industries.  All rights reserved.
  *
@@ -87,287 +89,286 @@ extern int      strncasecmp();
 char    *
 strptime(char *buf, char *fmt, struct tm *tm)
 {
-        char    c,
-                *ptr;
-        int     i, j,
-                len;
-        ptr = fmt;
-        while (*ptr != 0) {
-                if (*buf == 0)
-                        break;
+  char    c, *ptr;
+  int     i, j, len;
 
-                c = *ptr++;
+  ptr = fmt;
+  while (*ptr != 0) {
+    if (*buf == 0)
+      break;
 
-                if (c != '%') {
-                        if (isspace(c))
-                                while (*buf != 0 && isspace(*buf))
-                                        buf++;
-                        else if (c != *buf++)
-                                return 0;
-                        continue;
-                }
+    c = *ptr++;
 
-                c = *ptr++;
-                switch (c) {
-                case 0:
-                case '%':
-                        if (*buf++ != '%')
-                                return 0;
-                        break;
+    if (c != '%') {
+      if (isspace(c))
+        while (*buf != 0 && isspace(*buf))
+          buf++;
+      else if (c != *buf++)
+        return 0;
+      continue;
+    }
 
-                case 'C':
-                        buf = strptime(buf, En_US.ldate_format, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+    c = *ptr++;
+    switch (c) {
+      case 0:
+      case '%':
+        if (*buf++ != '%')
+          return 0;
+        break;
 
-                case 'c':
-                        buf = strptime(buf, "%x %X", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'C':
+        buf = strptime(buf, En_US.ldate_format, tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'D':
-                        buf = strptime(buf, "%m/%d/%y", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'c':
+        buf = strptime(buf, "%x %X", tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'R':
-                        buf = strptime(buf, "%H:%M", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'D':
+        buf = strptime(buf, "%m/%d/%y", tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'r':
-                        buf = strptime(buf, "%I:%M:%S %p", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'R':
+        buf = strptime(buf, "%H:%M", tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'T':
-                        buf = strptime(buf, "%H:%M:%S", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'r':
+        buf = strptime(buf, "%I:%M:%S %p", tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'X':
-                        buf = strptime(buf, En_US.time_format, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'T':
+        buf = strptime(buf, "%H:%M:%S", tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'x':
-                        buf = strptime(buf, En_US.sdate_format, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+      case 'X':
+        buf = strptime(buf, En_US.time_format, tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                case 'j':
-                        if (!isdigit(*buf))
-                                return 0;
+      case 'x':
+        buf = strptime(buf, En_US.sdate_format, tm);
+        if (buf == 0)
+          return 0;
+        break;
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 365)
-                                return 0;
+      case 'j':
+        if (!isdigit(*buf))
+          return 0;
 
-                        tm->tm_yday = i;
-                        break;
+        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+        if (i > 365)
+          return 0;
 
-                case 'M':
-                case 'S':
-                        if (*buf == 0 || isspace(*buf))
-                                break;
+        tm->tm_yday = i;
+        break;
 
-                        if (!isdigit(*buf))
-                                return 0;
+      case 'M':
+      case 'S':
+        if (*buf == 0 || isspace(*buf))
+          break;
 
-                        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 59)
-                                return 0;
+        if (!isdigit(*buf))
+          return 0;
 
-                        if (c == 'M')
-                                tm->tm_min = i;
-                        else
-                                tm->tm_sec = i;
+        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+        if (i > 59)
+          return 0;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+        if (c == 'M')
+          tm->tm_min = i;
+        else
+          tm->tm_sec = i;
 
-                case 'H':
-                case 'I':
-                case 'k':
-                case 'l':
-                        if (!isdigit(*buf))
-                                return 0;
+        if (*buf != 0 && isspace(*buf))
+          while (*ptr != 0 && !isspace(*ptr))
+            ptr++;
+        break;
 
-                        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (c == 'H' || c == 'k') {
-                                if (i > 23)
-                                        return 0;
-                        } else if (i > 11)
-                                return 0;
+      case 'H':
+      case 'I':
+      case 'k':
+      case 'l':
+        if (!isdigit(*buf))
+          return 0;
 
-                        tm->tm_hour = i;
+        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+        if (c == 'H' || c == 'k') {
+          if (i > 23)
+            return 0;
+        } else if (i > 11)
+          return 0;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+        tm->tm_hour = i;
 
-                case 'p':
-                        len = strlen(En_US.am_string);
-                        lowercase_string( buf );
+        if (*buf != 0 && isspace(*buf))
+          while (*ptr != 0 && !isspace(*ptr))
+            ptr++;
+        break;
 
-                        if (strncmp(buf, En_US.am_string, len) == 0) {
-                                if (tm->tm_hour > 12)
-                                        return 0;
-                                if (tm->tm_hour == 12)
-                                        tm->tm_hour = 0;
-                                buf += len;
-                                break;
-                        }
+      case 'p':
+        len = strlen(En_US.am_string);
+        lowercase_string( buf );
 
-                        len = strlen(En_US.pm_string);
-        
-                        if (strncmp(buf, En_US.pm_string, len) == 0) {
-                                if (tm->tm_hour > 12)
-                                        return 0;
-                                if (tm->tm_hour != 12)
-                                        tm->tm_hour += 12;
-                                buf += len;
-                                break;
-                        }
-
-                        return 0;
-
-                case 'A':
-                case 'a':
-                        for (i = 0; i < asizeof(En_US.weekday_names); i++) {
-                                len = strlen(En_US.weekday_names[i]);
-
-                                lowercase_string( buf );
-
-                                if (strncmp(buf,
-                                                En_US.weekday_names[i],
-                                                len) == 0)
-                                        break;
-
-                                len = strlen(En_US.abbrev_weekday_names[i]);
-                                if (strncmp(buf,
-                                                En_US.abbrev_weekday_names[i],
-                                                len) == 0)
-                                        break;
-                        }
-                        if (i == asizeof(En_US.weekday_names))
-                                return 0;
-
-                        tm->tm_wday = i;
-                        buf += len;
-                        break;
-
-                case 'd':
-                case 'e':
-                        if (!isdigit(*buf))
-                                return 0;
-
-                        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 31)
-                                return 0;
-
-                        tm->tm_mday = i;
-
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
-
-                case 'B':
-                case 'b':
-                case 'h':
-                        for (i = 0; i < asizeof(En_US.month_names); i++) {
-                                len = strlen(En_US.month_names[i]);
-
-                                lowercase_string( buf );
-                                if (strncmp(buf, En_US.month_names[i],len) == 0)
-                                        break;
-
-                                len = strlen(En_US.abbrev_month_names[i]);
-                                if (strncmp(buf,
-                                                En_US.abbrev_month_names[i],
-                                                len) == 0)
-                                        break;
-                        }
-                        if (i == asizeof(En_US.month_names))
-                                return 0;
-
-                        tm->tm_mon = i;
-                        buf += len;
-                        break;
-
-                case 'm':
-                        if (!isdigit(*buf))
-                                return 0;
-
-                        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i < 1 || i > 12)
-                                return 0;
-
-                        tm->tm_mon = i - 1;
-
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
-
-                case 'Y':
-                case 'y':
-                        if (*buf == 0 || isspace(*buf))
-                                break;
-
-                        if (!isdigit(*buf))
-                                return 0;
-
-                        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<((c=='Y')?4:2); j++,buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        
-			if (c == 'Y')
-                                i -= 1900;
-			else if (i < 69) /*c=='y', 00-68 is for 20xx, the rest is for 19xx*/
-				i += 100;
-
-                        if (i < 0)
-                                return 0;
-
-                        tm->tm_year = i;
-
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
-                }
+        if (strncmp(buf, En_US.am_string, len) == 0) {
+          if (tm->tm_hour > 12)
+            return 0;
+          if (tm->tm_hour == 12)
+            tm->tm_hour = 0;
+          buf += len;
+          break;
         }
 
-        return buf;
+        len = strlen(En_US.pm_string);
+
+        if (strncmp(buf, En_US.pm_string, len) == 0) {
+          if (tm->tm_hour > 12)
+            return 0;
+          if (tm->tm_hour != 12)
+            tm->tm_hour += 12;
+          buf += len;
+          break;
+        }
+
+        return 0;
+
+      case 'A':
+      case 'a':
+        for (i = 0; i < asizeof(En_US.weekday_names); i++) {
+          len = strlen(En_US.weekday_names[i]);
+
+          lowercase_string( buf );
+
+          if (strncmp(buf,
+                En_US.weekday_names[i],
+                len) == 0)
+            break;
+
+          len = strlen(En_US.abbrev_weekday_names[i]);
+          if (strncmp(buf,
+                En_US.abbrev_weekday_names[i],
+                len) == 0)
+            break;
+        }
+        if (i == asizeof(En_US.weekday_names))
+          return 0;
+
+        tm->tm_wday = i;
+        buf += len;
+        break;
+
+      case 'd':
+      case 'e':
+        if (!isdigit(*buf))
+          return 0;
+
+        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+        if (i > 31)
+          return 0;
+
+        tm->tm_mday = i;
+
+        if (*buf != 0 && isspace(*buf))
+          while (*ptr != 0 && !isspace(*ptr))
+            ptr++;
+        break;
+
+      case 'B':
+      case 'b':
+      case 'h':
+        for (i = 0; i < asizeof(En_US.month_names); i++) {
+          len = strlen(En_US.month_names[i]);
+
+          lowercase_string( buf );
+          if (strncmp(buf, En_US.month_names[i],len) == 0)
+            break;
+
+          len = strlen(En_US.abbrev_month_names[i]);
+          if (strncmp(buf,
+                En_US.abbrev_month_names[i],
+                len) == 0)
+            break;
+        }
+        if (i == asizeof(En_US.month_names))
+          return 0;
+
+        tm->tm_mon = i;
+        buf += len;
+        break;
+
+      case 'm':
+        if (!isdigit(*buf))
+          return 0;
+
+        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<2; j++,buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+        if (i < 1 || i > 12)
+          return 0;
+
+        tm->tm_mon = i - 1;
+
+        if (*buf != 0 && isspace(*buf))
+          while (*ptr != 0 && !isspace(*ptr))
+            ptr++;
+        break;
+
+      case 'Y':
+      case 'y':
+        if (*buf == 0 || isspace(*buf))
+          break;
+
+        if (!isdigit(*buf))
+          return 0;
+
+        for (j=0,i = 0; *buf != 0 && isdigit(*buf) && j<((c=='Y')?4:2); j++,buf++) {
+          i *= 10;
+          i += *buf - '0';
+        }
+
+        if (c == 'Y')
+          i -= 1900;
+        else if (i < 69) /*c=='y', 00-68 is for 20xx, the rest is for 19xx*/
+          i += 100;
+
+        if (i < 0)
+          return 0;
+
+        tm->tm_year = i;
+
+        if (*buf != 0 && isspace(*buf))
+          while (*ptr != 0 && !isspace(*ptr))
+            ptr++;
+        break;
+    }
+  }
+
+  return buf;
 }
 
 #endif   /* ndef HAVE_STRPTIME */

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -22,7 +24,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
 #include <winsock2.h>
 #else
 #include <sys/types.h>

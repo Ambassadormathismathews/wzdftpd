@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -199,8 +201,8 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
       break;
     case '-':
       for (i=0; i<user->group_num; i++) {
-	group = GetGroupByID(user->groups[i]);
-	if (strcasecmp(token,group->groupname)==0) return (negate) ? 0 : 1;
+        group = GetGroupByID(user->groups[i]);
+        if (strcasecmp(token,group->groupname)==0) return (negate) ? 0 : 1;
       }
       break;
     case '+':
@@ -247,14 +249,14 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
     wzd_free(ptr_out);
 
     if (DIRNCMP(buffer_vfs,buffer,strlen(buffer_vfs))==0
-	&&
-	(buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
-	strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
+        &&
+        (buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
+      strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
       char buf[2*WZD_MAX_PATH];
       /* test perm */
       if (vfs_list->target) {
-	if (!vfs_match_perm(vfs_list->target,user)) { vfs_list = vfs_list->next_vfs; continue; }
+        if (!vfs_match_perm(vfs_list->target,user)) { vfs_list = vfs_list->next_vfs; continue; }
       }
 #ifdef WZD_DBG_VFS
 out_err(LEVEL_HIGH,"VPATH match : %s / %s\n",buffer,vfs_list->virtual_dir);
@@ -523,7 +525,7 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
 #else
     if (wanted_path[0]!='/' && wanted_path[1]!=':')
 #endif
-	{
+    {
       return -1; /* we need absolute path, but it doesn't begin with / */
     } else {
       strcpy(cmd,wanted_path);

@@ -1,5 +1,5 @@
-#include "wzd_crypt.h"
-
+/* vi:ai:et:ts=8 sw=2
+ */
 /* encrypt.c - providing 56 bit DES encryption
    Copyright (C) 1991 Jochen Obalek
 
@@ -16,6 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+
+#include "wzd_crypt.h"
 
 #include <time.h>
 #include <string.h>
@@ -236,16 +238,16 @@ setkey (char *schl)
       shval += 1 + (ls & 1);
       akt_schl = schluessel[i];
       for (j = 0; j < KS; j++)
-	  {
+      {
         if ((k = PC2[j]) >= IS2)
-		{
+        {
           if ((k += shval) >= IS)
             k = (k - IS2) % IS2 + IS2;
-		}
+        }
         else if ((k += shval) >= IS2)
           k %= IS2;
         *akt_schl++ = tmp1[k];
-	  }
+      }
       ls >>= 1;
     }
 }
@@ -267,10 +269,10 @@ des_crypt (const char *wort, const char *salt)
         break;
       k += 7;
       for (j = 0; j < 7; j++, i++)
-	  {
+      {
         *--k = keybyte & 1;
         keybyte >>= 1;
-	  }
+      }
       k += 8;
     }
 
@@ -287,13 +289,13 @@ des_crypt (const char *wort, const char *salt)
       keybyte -= '.';
 
       for (j = 0; j < 6; j++, keybyte >>= 1, k++)
-	  {
+      {
         if (!(keybyte & 1))
           continue;
         tmp = *k;
         *k = k[24];
         k[24] = tmp;
-	  }
+      }
     }
 
   for (i = 0; i < 25; i++)
@@ -302,10 +304,10 @@ des_crypt (const char *wort, const char *salt)
   for (k = key, i = 0; i < 11; i++)
     {
       for (j = keybyte = 0; j < 6; j++)
-	  {
+      {
         keybyte <<= 1;
         keybyte |= *k++;
-	  }
+      }
 
       keybyte += '.';
       if (keybyte > '9')

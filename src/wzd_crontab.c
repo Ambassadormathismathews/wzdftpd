@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -196,22 +198,22 @@ int cronjob_run(wzd_cronjob_t ** crontab)
     {
       /* run job */
       if (job->fn) {
-	(job->fn)();
+        (job->fn)();
       } else {
-	char buffer[1024];
-	FILE * command_output;
-	if ( (command_output = popen(job->command,"r")) == NULL ) {
-	  out_log(LEVEL_HIGH,"Cronjob command '%s': unable to popen\n",job->command);
-	  return 1;
-	}
-	while (fgets(buffer,1023,command_output) != NULL)
-	{
-	  out_log(LEVEL_INFO,"cronjob: %s\n",buffer);
-	}
-	pclose(command_output);
+        char buffer[1024];
+        FILE * command_output;
+        if ( (command_output = popen(job->command,"r")) == NULL ) {
+          out_log(LEVEL_HIGH,"Cronjob command '%s': unable to popen\n",job->command);
+          return 1;
+        }
+        while (fgets(buffer,1023,command_output) != NULL)
+        {
+          out_log(LEVEL_INFO,"cronjob: %s\n",buffer);
+        }
+        pclose(command_output);
       }
       job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
-	  job->day_of_month, job->month, job->day_of_week);
+          job->day_of_month, job->month, job->day_of_week);
 #ifdef WZD_DBG_CRONTAB
       out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
       out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&job->next_run));

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -122,8 +124,8 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
       /* GAdmins cannot add user to different group */
       if (me->group_num==0 || me->groups[0]!=GetGroupIDByName(groupname))
       {
-	ret = send_message_with_args(501,context,"You are not allowed to add users to this group");
-	return 0;
+        ret = send_message_with_args(501,context,"You are not allowed to add users to this group");
+        return 0;
       }
     }
   }
@@ -365,8 +367,8 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
     if (is_gadmin)
     {
       if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
-	ret = send_message_with_args(501,context,"You can't purge this user (GAdmin limits)");
-	return 0;
+        ret = send_message_with_args(501,context,"You can't purge this user (GAdmin limits)");
+        return 0;
       }
     }
 
@@ -383,16 +385,16 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
       user = GetUserByID(i);
       if (user && user->flags && strchr(user->flags,FLAG_DELETED))
       {
-	/* gadmin ? */
-	if (is_gadmin)
-	{
-	  if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
-	    continue;
-	  }
-	}
-	/* commit changes to backend */
-	/* FIXME backend name hardcoded */
-	backend_mod_user("plaintext",user->username,NULL,_USER_ALL);
+        /* gadmin ? */
+        if (is_gadmin)
+        {
+          if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
+            continue;
+          }
+        }
+        /* commit changes to backend */
+        /* FIXME backend name hardcoded */
+        backend_mod_user("plaintext",user->username,NULL,_USER_ALL);
       }
     }
     ret = send_message_with_args(200,context,"All deleted users have been purged");
@@ -459,12 +461,12 @@ int do_site_addip(char *command_line, wzd_context_t * context)
     {
       if (user.ip_allowed[i][0]=='\0') continue;
       if (my_str_compare(ip,user.ip_allowed[i])==1) { /* ip is already included in list */
-	ret = send_message_with_args(501,context,"ip is already included in list");
-	return 0;
+        ret = send_message_with_args(501,context,"ip is already included in list");
+        return 0;
       }
       if (my_str_compare(user.ip_allowed[i],ip)==1) { /* ip will shadow one ore more ip in list */
-	ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
-	return 0;
+        ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
+        return 0;
       }
     }
 
@@ -551,13 +553,13 @@ int do_site_delip(char *command_line, wzd_context_t * context)
     ul = strtoul(ip,&ptr_ul,0);
     if (*ptr_ul=='\0') {
       if (ul <= 0 || ul >= HARD_IP_PER_USER) {
-	ret = send_message_with_args(501,context,"Invalid ip slot number");
-	return 0;
+        ret = send_message_with_args(501,context,"Invalid ip slot number");
+        return 0;
       }
       ul--; /* to index slot number from 1 */
       if (user.ip_allowed[ul][0] == '\0') {
-	ret = send_message_with_args(501,context,"Slot is already empty");
-	return 0;
+        ret = send_message_with_args(501,context,"Slot is already empty");
+        return 0;
       }
       user.ip_allowed[ul][0] = '\0';
     } else { /* if (*ptr=='\0') */
@@ -566,18 +568,18 @@ int do_site_delip(char *command_line, wzd_context_t * context)
       found = 0;
       for (i=0; i<HARD_IP_PER_USER; i++)
       {
-	if (user.ip_allowed[i][0]=='\0') continue;
-	if (strcmp(ip,user.ip_allowed[i])==0) {
-	  user.ip_allowed[i][0] = '\0';
-	  found = 1;
-	}
+        if (user.ip_allowed[i][0]=='\0') continue;
+        if (strcmp(ip,user.ip_allowed[i])==0) {
+          user.ip_allowed[i][0] = '\0';
+          found = 1;
+        }
       }
 
       if (!found) {
-	char buffer[256];
-	snprintf(buffer,256,"IP %s not found",ip);
-	ret = send_message_with_args(501,context,buffer);
-	return 0;
+        char buffer[256];
+        snprintf(buffer,256,"IP %s not found",ip);
+        ret = send_message_with_args(501,context,buffer);
+        return 0;
       }
     } /* if (*ptr=='\0') */
 
@@ -727,8 +729,8 @@ int do_site_change(char *command_line, wzd_context_t * context)
     {
       struct stat s;
       if (stat(value,&s) || !S_ISDIR(s.st_mode)) {
-	ret = send_message_with_args(501,context,"Homedir does not exist");
-	return 0;
+        ret = send_message_with_args(501,context,"Homedir does not exist");
+        return 0;
       }
     }
     mod_type = _USER_ROOTPATH;
@@ -753,21 +755,21 @@ int do_site_change(char *command_line, wzd_context_t * context)
     /* find corresponding id */
     for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
       if (backend_find_group(i,&group,&groupid)!=-1) {
-	if (strcmp(group.groupname,value)==0) { newgroupid = groupid; break; } 
+        if (strcmp(group.groupname,value)==0) { newgroupid = groupid; break; } 
       }
     }
     if (newgroupid != -1) {
       ret=0;
       for (i=0; i<user.group_num; i++)
-	if (newgroupid == user.groups[i]) { ret=1; break; } 
+        if (newgroupid == user.groups[i]) { ret=1; break; } 
       if (ret) { /* remove from group, shift them */
-	user.groups[i] = 0;
-	for (;i<user.group_num-1; i++)
-	  user.groups[i] = user.groups[i+1];
-	user.group_num -= 1;
+        user.groups[i] = 0;
+        for (;i<user.group_num-1; i++)
+          user.groups[i] = user.groups[i+1];
+        user.group_num -= 1;
       } else { /* add user to group */
-	user.groups[user.group_num] = newgroupid;
-	user.group_num++;
+        user.groups[user.group_num] = newgroupid;
+        user.group_num++;
       }
     } /* if (newgroupid != -1) */
     mod_type = _USER_GROUP | _USER_GROUPNUM;
@@ -812,10 +814,10 @@ int do_site_change(char *command_line, wzd_context_t * context)
     ul=strtoul(value,&ptr,0);
     if (!*ptr) {
       if (is_gadmin && ul==0) { /* GAdmin wants to add a leech access */
-	if (me->leech_slots == 0) {
-	  ret = send_message_with_args(501,context,"No more leech slots available");
-	  return 0;
-	}
+        if (me->leech_slots == 0) {
+          ret = send_message_with_args(501,context,"No more leech slots available");
+          return 0;
+        }
       }
       oldratio = user.ratio;
       mod_type = _USER_RATIO; user.ratio = ul;
@@ -856,12 +858,12 @@ int do_site_change(char *command_line, wzd_context_t * context)
   if (!ret && is_gadmin) {
     if ( mod_type & _USER_RATIO ) {
       if (user.ratio==0) {
-	/* gadmin added a leech access */
-	me->leech_slots--;
+        /* gadmin added a leech access */
+        me->leech_slots--;
       }
-     if (oldratio==0 && user.ratio) {
-	/* gadmin removed a leech access */
-	me->leech_slots++;
+      if (oldratio==0 && user.ratio) {
+        /* gadmin removed a leech access */
+        me->leech_slots++;
       }
     }
   }
@@ -928,21 +930,21 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
     /* find corresponding id */
     for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
       if (backend_find_group(i,&group,&groupid)!=-1) {
-	if (strcmp(group.groupname,group_name)==0) { newgroupid = groupid; break; } 
+        if (strcmp(group.groupname,group_name)==0) { newgroupid = groupid; break; } 
       }
     }
     if (newgroupid != -1) {
       ret=0;
       for (i=0; i<user.group_num; i++)
-	if (newgroupid == user.groups[i]) { ret=1; break; } 
+        if (newgroupid == user.groups[i]) { ret=1; break; } 
       if (ret) { /* remove from group, shift them */
-	user.groups[i] = 0;
-	for (;i<user.group_num-1; i++)
-	  user.groups[i] = user.groups[i+1];
-	user.group_num -= 1;
+        user.groups[i] = 0;
+        for (;i<user.group_num-1; i++)
+          user.groups[i] = user.groups[i+1];
+        user.group_num -= 1;
       } else { /* add user to group */
-	user.groups[user.group_num] = newgroupid;
-	user.group_num++;
+        user.groups[user.group_num] = newgroupid;
+        user.group_num++;
       }
     } else { /* if (newgroupid != -1) */
       char buffer[1024];
@@ -1043,9 +1045,9 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
     /* adjust slot counter for gadmin */
     if (is_gadmin) {
       if (!ratio)
-	me->leech_slots--;
+        me->leech_slots--;
       if (!oldratio && ratio)
-	me->leech_slots++;
+        me->leech_slots++;
     }
     ret = send_message_with_args(200,context,"User ratio changed");
   }
@@ -1267,15 +1269,15 @@ int do_site_kick(char *command_line, wzd_context_t * context)
     while (i<HARD_USERLIMIT) {
       if (context_list[i].magic == CONTEXT_MAGIC) {
 #ifdef BACKEND_STORAGE
-	if (mainConfig->backend.backend_storage==1) {
-	  test_username = context_list[i].userinfo.username;
-	} else 
+        if (mainConfig->backend.backend_storage==1) {
+          test_username = context_list[i].userinfo.username;
+        } else 
 #endif
-	  test_username = GetUserByID(context_list[i].userid)->username;
-	if (strcmp(username,test_username)==0) {
-	  found = 1;
-	  kill_child(context_list[i].pid_child,context);
-	}
+          test_username = GetUserByID(context_list[i].userid)->username;
+        if (strcmp(username,test_username)==0) {
+          found = 1;
+          kill_child(context_list[i].pid_child,context);
+        }
       }
       i++;
     }

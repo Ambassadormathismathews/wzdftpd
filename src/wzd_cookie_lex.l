@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -176,11 +178,15 @@ wzd_vfs_t * current_vfs=NULL;
 DIGIT [0-9]
 LETTER  [a-zA-Z]
 
-FOR_BEGIN	"%for("{LETTER}+")"("\r"?)"\n"
-FOR_END		"%endfor"("\r"?)"\n"
+LF		\x0A
+CR		\x0D
+NL		{CR}*{LF}
 
-IF_BEGIN	"%if("("+"|"=")?{LETTER}+")"("\r"?)"\n"
-IF_END		"%endif"("\r"?)"\n"
+FOR_BEGIN	"%for("{LETTER}+")"{NL}
+FOR_END		"%endfor"{NL}
+
+IF_BEGIN	"%if("("+"|"=")?{LETTER}+")"{NL}
+IF_END		"%endif"{NL}
 
 C_START		"%"
 C_FILE		([0-9]+".")?"file"
@@ -196,8 +202,8 @@ C_VFS    ([0-9]+".")?"vfs"
 %option outfile="lex.yy.c"
 %%
 
-<INITIAL>\r	/* ignore */
-<INITIAL>\n	return COOKIE_EOL;
+<INITIAL>\r		/* ignore */
+<INITIAL>\n		return COOKIE_EOL;
 
 <INITIAL>{FOR_BEGIN}	{
   BEGIN(sc_buf);
@@ -407,7 +413,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       if (length<5 || length>=256)
       {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH, "Invalid if loop\n" );
+        out_err(LEVEL_HIGH, "Invalid if loop\n" );
 #endif
         return 1;
       }
@@ -418,13 +424,14 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 /*      printf("starting if loop (%s)\n",condition);*/
       while ((cookie=yylex()) && cookie!=COOKIE_ENDIF)
       {
-	  /*	if (i>=LOOP_MAX_LINES) {
-		printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
-		return 1;
-		}*/
+        /*	if (i>=LOOP_MAX_LINES) {
+                printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
+                return 1;
+                }*/
+        while (yytext[0] && (yytext[0] == '\r' || yytext[0] == '\n')) yytext++;
         if ( (i+strlen(yytext)) >= 16384 ) {
 #ifdef WZD_DBG_COOKIES
-	  out_err(LEVEL_HIGH, "loop TOO LONG !\n" );
+          out_err(LEVEL_HIGH, "loop TOO LONG !\n" );
 #endif
           exit(1);
         }
@@ -437,7 +444,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         BEGIN(INITIAL);
       } else {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH, "unterminated if loop\n" );
+        out_err(LEVEL_HIGH, "unterminated if loop\n" );
 #endif
         return 1;
       }
@@ -476,7 +483,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       if (length<7 || length>=256)
       {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH,"invalid for loop");
+        out_err(LEVEL_HIGH,"invalid for loop");
 #endif
         return 1;
       }
@@ -487,16 +494,17 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 /*      printf("starting for loop (%s)\n",condition);*/
       while ((cookie=yylex()) && cookie!=COOKIE_ENDFOR)
       {
-	  /*	if (i>=LOOP_MAX_LINES) {
-		printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
-		return 1;
-		}*/
+        /*	if (i>=LOOP_MAX_LINES) {
+                printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
+                return 1;
+                }*/
         if ( (i+strlen(yytext)) >= 16384 ) {
 #ifdef WZD_DBG_COOKIES
-	  out_err(LEVEL_HIGH,"loop TOO LONG !");
+          out_err(LEVEL_HIGH,"loop TOO LONG !");
 #endif
           exit(1);
         }
+        while (yytext[0] && (yytext[0] == '\r' || yytext[0] == '\n')) yytext++;
         strcpy(tmpbuf+i,yytext);
 /*        printf("%s[31mMARK[0m\n",yytext);*/
         i+=strlen(yytext);
@@ -506,7 +514,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         BEGIN(INITIAL);
       } else {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH,"unterminated for loop");
+        out_err(LEVEL_HIGH,"unterminated for loop");
 #endif
         return 1;
       }
@@ -659,31 +667,31 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     case COOKIE_GROUPHOME:
       get_cookie_format(yytext,&padding);
       if (current_group)
-	snprintf(internalbuffer,IBUFSIZE,"%s",current_group->defaultpath);
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_group->defaultpath);
       else
-	snprintf(internalbuffer,IBUFSIZE,"grouphome");
+        snprintf(internalbuffer,IBUFSIZE,"grouphome");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_GROUPIP_ALLOW:
       get_cookie_format(yytext,&padding);
       {
-	unsigned long index;
-	char *ptr;
-	char *numstart;
-	/* we can suppress check here, flex has already done his work */
-	numstart = yytext+strlen(yytext)-1;
-	while ( isdigit(*(numstart-1)) ) numstart--;
-	index = strtoul(numstart,&ptr,10);
-	if (index<HARD_IP_PER_GROUP)
-	{
-	  if (current_group)
-	    snprintf(internalbuffer,IBUFSIZE,"%s",current_group->ip_allowed[index]);
-	  else
-	    snprintf(internalbuffer,IBUFSIZE,"usergroup_allow");
-	} else {
-	  snprintf(internalbuffer,IBUFSIZE,"invalid index");
-	}
+        unsigned long index;
+        char *ptr;
+        char *numstart;
+        /* we can suppress check here, flex has already done his work */
+        numstart = yytext+strlen(yytext)-1;
+        while ( isdigit(*(numstart-1)) ) numstart--;
+        index = strtoul(numstart,&ptr,10);
+        if (index<HARD_IP_PER_GROUP)
+        {
+          if (current_group)
+            snprintf(internalbuffer,IBUFSIZE,"%s",current_group->ip_allowed[index]);
+          else
+            snprintf(internalbuffer,IBUFSIZE,"usergroup_allow");
+        } else {
+          snprintf(internalbuffer,IBUFSIZE,"invalid index");
+        }
       }
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
@@ -692,10 +700,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_dl_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_dl_speed);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupmaxdl");
+        snprintf(internalbuffer,IBUFSIZE,"groupmaxdl");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -703,10 +711,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_idle_time);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_idle_time);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupmaxidle");
+        snprintf(internalbuffer,IBUFSIZE,"groupmaxidle");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -714,19 +722,19 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_ul_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_ul_speed);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupmaxul");
+        snprintf(internalbuffer,IBUFSIZE,"groupmaxul");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
      case COOKIE_GROUPNAME:
       get_cookie_format(yytext,&padding);
       if (current_group)
-	snprintf(internalbuffer,IBUFSIZE,"%s",current_group->groupname);
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_group->groupname);
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupname");
+        snprintf(internalbuffer,IBUFSIZE,"groupname");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -734,10 +742,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%d",current_group->num_logins);
+        snprintf(internalbuffer,IBUFSIZE,"%d",current_group->num_logins);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupnum_logins");
+        snprintf(internalbuffer,IBUFSIZE,"groupnum_logins");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -745,13 +753,13 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	if (current_group->ratio)
-	  snprintf(internalbuffer,IBUFSIZE,"1:%u",current_group->ratio);
-	else
-	  snprintf(internalbuffer,IBUFSIZE,"unlimited");
+        if (current_group->ratio)
+          snprintf(internalbuffer,IBUFSIZE,"1:%u",current_group->ratio);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"unlimited");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"groupratio");
+        snprintf(internalbuffer,IBUFSIZE,"groupratio");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -761,33 +769,33 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	int gid;
-	wzd_user_t * loop_user;
-	/* iterate through users and sum */
-	gid = GetGroupIDByName(current_group->groupname);
-	total = 0;
-	for (i=0; i<HARD_DEF_USER_MAX; i++)
-	{
-	  loop_user = GetUserByID(i);
-	  if (!loop_user) continue;
-	  if (is_user_in_group(loop_user,gid)==1)
-	  {
-	    total += loop_user->stats.bytes_dl_total;
-	  }
-	}
-	if (convert) {
+        int gid;
+        wzd_user_t * loop_user;
+        /* iterate through users and sum */
+        gid = GetGroupIDByName(current_group->groupname);
+        total = 0;
+        for (i=0; i<HARD_DEF_USER_MAX; i++)
+        {
+          loop_user = GetUserByID(i);
+          if (!loop_user) continue;
+          if (is_user_in_group(loop_user,gid)==1)
+          {
+            total += loop_user->stats.bytes_dl_total;
+          }
+        }
+        if (convert) {
 #ifndef _MSC_VER
-	  val = (float)total;
+          val = (float)total;
 #else
-	  val = (float)(__int64)total;
+          val = (float)(__int64)total;
 #endif
-	  bytes_to_unit(&val,&c);
-	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
-	} else
-	  snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          bytes_to_unit(&val,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"grouptotal_dl");
+        snprintf(internalbuffer,IBUFSIZE,"grouptotal_dl");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
@@ -798,33 +806,33 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-	int gid;
-	wzd_user_t * loop_user;
-	/* iterate through users and sum */
-	gid = GetGroupIDByName(current_group->groupname);
-	total = 0;
-	for (i=0; i<HARD_DEF_USER_MAX; i++)
-	{
-	  loop_user = GetUserByID(i);
-	  if (!loop_user) continue;
-	  if (is_user_in_group(loop_user,gid)==1)
-	  {
-	    total += loop_user->stats.bytes_ul_total;
-	  }
-	}
-	if (convert) {
+        int gid;
+        wzd_user_t * loop_user;
+        /* iterate through users and sum */
+        gid = GetGroupIDByName(current_group->groupname);
+        total = 0;
+        for (i=0; i<HARD_DEF_USER_MAX; i++)
+        {
+          loop_user = GetUserByID(i);
+          if (!loop_user) continue;
+          if (is_user_in_group(loop_user,gid)==1)
+          {
+            total += loop_user->stats.bytes_ul_total;
+          }
+        }
+        if (convert) {
 #ifndef _MSC_VER
-	  val = (float)total;
+          val = (float)total;
 #else
-	  val = (float)(__int64)total;
+          val = (float)(__int64)total;
 #endif
-	  bytes_to_unit(&val,&c);
-	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
-	} else
-	  snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          bytes_to_unit(&val,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"grouptotal_ul");
+        snprintf(internalbuffer,IBUFSIZE,"grouptotal_ul");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
@@ -939,24 +947,24 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	if (current_user->ratio)
-	{
-	  total = current_user->credits;
-	  if (convert) {
+        if (current_user->ratio)
+        {
+          total = current_user->credits;
+          if (convert) {
 #ifndef _MSC_VER
-	  val = (float)total;
+            val = (float)total;
 #else
-	  val = (float)(__int64)total;
+            val = (float)(__int64)total;
 #endif
-	    bytes_to_unit(&val,&c);
-	    snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
-	  } else
-	    snprintf(internalbuffer,IBUFSIZE,"%lld",total);
-	} else
-	    snprintf(internalbuffer,IBUFSIZE,"unlimited");
+            bytes_to_unit(&val,&c);
+            snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
+          } else
+            snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"unlimited");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usercredits");
+        snprintf(internalbuffer,IBUFSIZE,"usercredits");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
@@ -964,18 +972,18 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     case COOKIE_USERFILES_DL:
       get_cookie_format(yytext,&padding);
       if (current_user)
-	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_dl_total);
+        snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_dl_total);
       else
-	snprintf(internalbuffer,IBUFSIZE,"userfiles_dl");
+        snprintf(internalbuffer,IBUFSIZE,"userfiles_dl");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERFILES_UL:
       get_cookie_format(yytext,&padding);
       if (current_user)
-	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_ul_total);
+        snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_ul_total);
       else
-	snprintf(internalbuffer,IBUFSIZE,"userfiles_ul");
+        snprintf(internalbuffer,IBUFSIZE,"userfiles_ul");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -983,44 +991,44 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	if (current_user->flags && strlen(current_user->flags)>0)
-	  snprintf(internalbuffer,IBUFSIZE,"%s",current_user->flags);
-	else
-	snprintf(internalbuffer,IBUFSIZE,"no flags");
+        if (current_user->flags && strlen(current_user->flags)>0)
+          snprintf(internalbuffer,IBUFSIZE,"%s",current_user->flags);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"no flags");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userflags");
+        snprintf(internalbuffer,IBUFSIZE,"userflags");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERGROUP:
       get_cookie_format(yytext,&padding);
       {
-	wzd_group_t * group;
-	if (current_user && current_user->group_num>0)
-	{
-	  group = GetGroupByID(current_user->groups[0]);
-	  snprintf(internalbuffer,IBUFSIZE,"%s",group->groupname);
-	}
-	else
-	{
-	  snprintf(internalbuffer,IBUFSIZE,"nogroup");
-	}
-	cookie_ptr = internalbuffer;
-	cookie_length = strlen(cookie_ptr);
+        wzd_group_t * group;
+        if (current_user && current_user->group_num>0)
+        {
+          group = GetGroupByID(current_user->groups[0]);
+          snprintf(internalbuffer,IBUFSIZE,"%s",group->groupname);
+        }
+        else
+        {
+          snprintf(internalbuffer,IBUFSIZE,"nogroup");
+        }
+        cookie_ptr = internalbuffer;
+        cookie_length = strlen(cookie_ptr);
       }
       break;
     case COOKIE_USERHOME:
       get_cookie_format(yytext,&padding);
       if (current_user) {
-	/* check FLAG_SEE_HOME for self */
-	if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
-	  snprintf(internalbuffer,IBUFSIZE,"%s",current_user->rootpath);
-	} else /* not allowed to see */
-	  snprintf(internalbuffer,IBUFSIZE,"- some where -");
+        /* check FLAG_SEE_HOME for self */
+        if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
+          snprintf(internalbuffer,IBUFSIZE,"%s",current_user->rootpath);
+        } else /* not allowed to see */
+          snprintf(internalbuffer,IBUFSIZE,"- some where -");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userhome");
+        snprintf(internalbuffer,IBUFSIZE,"userhome");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1028,37 +1036,37 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-	/* check FLAG_SEE_IP for self */
-	if (me->flags && strchr(me->flags,FLAG_SEE_IP)) {
+        /* check FLAG_SEE_IP for self */
+        if (me->flags && strchr(me->flags,FLAG_SEE_IP)) {
           inet_ntop(CURRENT_AF,current_context->hostip,internalbuffer,sizeof(internalbuffer));
-	} else { /* not allowed to see */
-	  snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
-	}
+        } else { /* not allowed to see */
+          snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
+        }
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userip");
+        snprintf(internalbuffer,IBUFSIZE,"userip");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERIP_ALLOW:
       get_cookie_format(yytext,&padding);
       {
-	unsigned long index;
-	char *ptr;
-	char *numstart;
-	/* we can suppress check here, flex has already done his work */
-	numstart = yytext+strlen(yytext)-1;
-	while ( isdigit(*(numstart-1)) ) numstart--;
-	index = strtoul(numstart,&ptr,10);
-	if (index<HARD_IP_PER_USER)
-	{
-	  if (current_user)
-	    snprintf(internalbuffer,IBUFSIZE,"%s",current_user->ip_allowed[index]);
-	  else
-	    snprintf(internalbuffer,IBUFSIZE,"userip_allow");
-	} else {
-	  snprintf(internalbuffer,IBUFSIZE,"invalid index");
-	}
+        unsigned long index;
+        char *ptr;
+        char *numstart;
+        /* we can suppress check here, flex has already done his work */
+        numstart = yytext+strlen(yytext)-1;
+        while ( isdigit(*(numstart-1)) ) numstart--;
+        index = strtoul(numstart,&ptr,10);
+        if (index<HARD_IP_PER_USER)
+        {
+          if (current_user)
+            snprintf(internalbuffer,IBUFSIZE,"%s",current_user->ip_allowed[index]);
+          else
+            snprintf(internalbuffer,IBUFSIZE,"userip_allow");
+        } else {
+          snprintf(internalbuffer,IBUFSIZE,"invalid index");
+        }
       }
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
@@ -1067,18 +1075,18 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%s",current_context->last_command);
-	if (strncasecmp(internalbuffer,"site",4)==0)
-	{
-	  strcpy(internalbuffer,"SITE command");
-	}
-	if (strncasecmp(internalbuffer,"pass",4)==0)
-	{
-	  strcpy(internalbuffer,"PASS xxxxx");
-	}
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_context->last_command);
+        if (strncasecmp(internalbuffer,"site",4)==0)
+        {
+          strcpy(internalbuffer,"SITE command");
+        }
+        if (strncasecmp(internalbuffer,"pass",4)==0)
+        {
+          strcpy(internalbuffer,"PASS xxxxx");
+        }
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userlastcmd");
+        snprintf(internalbuffer,IBUFSIZE,"userlastcmd");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1086,15 +1094,15 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	if (user->last_login) {
-	  struct tm *ntime;
-	  ntime=localtime(&user->last_login);
-	  strftime(internalbuffer,IBUFSIZE,"%b %d %H:%M",ntime);
-	} else
-	  snprintf(internalbuffer,IBUFSIZE,"never");
+        if (user->last_login) {
+          struct tm *ntime;
+          ntime=localtime(&user->last_login);
+          strftime(internalbuffer,IBUFSIZE,"%b %d %H:%M",ntime);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"never");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userlast_login");
+        snprintf(internalbuffer,IBUFSIZE,"userlast_login");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1102,21 +1110,21 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%hu",current_user->leech_slots);
+        snprintf(internalbuffer,IBUFSIZE,"%hu",current_user->leech_slots);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userleechslots");
+        snprintf(internalbuffer,IBUFSIZE,"userleechslots");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
-     case COOKIE_USERMAXDL:
+    case COOKIE_USERMAXDL:
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_dl_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_dl_speed);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usermaxdl");
+        snprintf(internalbuffer,IBUFSIZE,"usermaxdl");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1124,30 +1132,30 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_idle_time);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_idle_time);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usermaxidle");
+        snprintf(internalbuffer,IBUFSIZE,"usermaxidle");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
-     case COOKIE_USERMAXUL:
+    case COOKIE_USERMAXUL:
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_ul_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_ul_speed);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usermaxul");
+        snprintf(internalbuffer,IBUFSIZE,"usermaxul");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERNAME:
       get_cookie_format(yytext,&padding);
       if (current_user)
-	snprintf(internalbuffer,IBUFSIZE,"%s",current_user->username);
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_user->username);
       else
-	snprintf(internalbuffer,IBUFSIZE,"username");
+        snprintf(internalbuffer,IBUFSIZE,"username");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1155,30 +1163,30 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%d",current_user->num_logins);
+        snprintf(internalbuffer,IBUFSIZE,"%d",current_user->num_logins);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usernum_logins");
+        snprintf(internalbuffer,IBUFSIZE,"usernum_logins");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERPATH:
       get_cookie_format(yytext,&padding);
       if (context) {
-	char dev_buffer[WZD_MAX_PATH+1];
-	/* check FLAG_SEE_HOME for self */
-	if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
-	  if (checkpath(context->currentpath,dev_buffer,context)) {
-	  snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
-	  } else {
-	    strncpy(internalbuffer,dev_buffer,IBUFSIZE);
+        char dev_buffer[WZD_MAX_PATH+1];
+        /* check FLAG_SEE_HOME for self */
+        if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
+          if (checkpath(context->currentpath,dev_buffer,context)) {
+            snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
+          } else {
+            strncpy(internalbuffer,dev_buffer,IBUFSIZE);
           }
         } else {
-	  snprintf(internalbuffer,IBUFSIZE,"- some where -");
+          snprintf(internalbuffer,IBUFSIZE,"- some where -");
         }
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userpwd");
+        snprintf(internalbuffer,IBUFSIZE,"userpwd");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1186,24 +1194,24 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-	/* check FLAG_SITEOP for self */
-	if (me->flags && strchr(me->flags,FLAG_SITEOP))
-	  snprintf(internalbuffer,IBUFSIZE,"%ld",current_context->pid_child);
-	else
-	  snprintf(internalbuffer,IBUFSIZE,"some id");
+        /* check FLAG_SITEOP for self */
+        if (me->flags && strchr(me->flags,FLAG_SITEOP))
+          snprintf(internalbuffer,IBUFSIZE,"%ld",current_context->pid_child);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"some id");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userpid");
+        snprintf(internalbuffer,IBUFSIZE,"userpid");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_USERPWD:
       get_cookie_format(yytext,&padding);
       if (context) {
-	snprintf(internalbuffer,IBUFSIZE,"%s",context->currentpath);
+        snprintf(internalbuffer,IBUFSIZE,"%s",context->currentpath);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userpwd");
+        snprintf(internalbuffer,IBUFSIZE,"userpwd");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1211,13 +1219,13 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	if (current_user->ratio)
-	  snprintf(internalbuffer,IBUFSIZE,"1:%u",current_user->ratio);
-	else
-	  snprintf(internalbuffer,IBUFSIZE,"unlimited");
+        if (current_user->ratio)
+          snprintf(internalbuffer,IBUFSIZE,"1:%u",current_user->ratio);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"unlimited");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userratio");
+        snprintf(internalbuffer,IBUFSIZE,"userratio");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1225,10 +1233,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	snprintf(internalbuffer,IBUFSIZE,"%hu",current_user->user_slots);
+        snprintf(internalbuffer,IBUFSIZE,"%hu",current_user->user_slots);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userslots");
+        snprintf(internalbuffer,IBUFSIZE,"userslots");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1236,83 +1244,83 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-	if (strncasecmp(current_context->last_command,"retr",4)==0)
-	  snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_dl_limiter.current_speed/1024.f);
-	else {
-	  if (strncasecmp(current_context->last_command,"stor",4)==0)
-	  {
-	    snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_ul_limiter.current_speed/1024.f);
-	  }
-	  else
-	    internalbuffer[0]='\0';
-	}
+        if (strncasecmp(current_context->last_command,"retr",4)==0)
+          snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_dl_limiter.current_speed/1024.f);
+        else {
+          if (strncasecmp(current_context->last_command,"stor",4)==0)
+          {
+            snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_ul_limiter.current_speed/1024.f);
+          }
+          else
+            internalbuffer[0]='\0';
+        }
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"userspeed");
+        snprintf(internalbuffer,IBUFSIZE,"userspeed");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
-    case COOKIE_USERTAG:
+   case COOKIE_USERTAG:
       get_cookie_format(yytext,&padding);
       if (current_user) {
-	if (current_user->flags && strchr(current_user->flags,FLAG_DELETED)) {
-	  snprintf(internalbuffer,IBUFSIZE,"**DELETED**");
-	} else {
-	  if (strlen(current_user->tagline)>0)
-	    snprintf(internalbuffer,IBUFSIZE,"%s",current_user->tagline);
-	  else
-	    snprintf(internalbuffer,IBUFSIZE,"no tagline set");
-	}
+        if (current_user->flags && strchr(current_user->flags,FLAG_DELETED)) {
+          snprintf(internalbuffer,IBUFSIZE,"**DELETED**");
+        } else {
+          if (strlen(current_user->tagline)>0)
+            snprintf(internalbuffer,IBUFSIZE,"%s",current_user->tagline);
+          else
+            snprintf(internalbuffer,IBUFSIZE,"no tagline set");
+        }
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usertag");
+        snprintf(internalbuffer,IBUFSIZE,"usertag");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
-    case COOKIE_USERTOTAL_DL2:
+   case COOKIE_USERTOTAL_DL2:
       convert = 1;
-    case COOKIE_USERTOTAL_DL:
+   case COOKIE_USERTOTAL_DL:
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	total = current_user->stats.bytes_dl_total;
-	if (convert) {
+        total = current_user->stats.bytes_dl_total;
+        if (convert) {
 #ifndef _MSC_VER
-	  val = (float)total;
+          val = (float)total;
 #else
-	  val = (float)(__int64)total;
+          val = (float)(__int64)total;
 #endif
-	  bytes_to_unit(&val,&c);
-	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
-	} else
-	  snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          bytes_to_unit(&val,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usertotal_dl");
+        snprintf(internalbuffer,IBUFSIZE,"usertotal_dl");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
       break;
-    case COOKIE_USERTOTAL_UL2:
+   case COOKIE_USERTOTAL_UL2:
       convert = 1;
-    case COOKIE_USERTOTAL_UL:
+   case COOKIE_USERTOTAL_UL:
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	total = current_user->stats.bytes_ul_total;
-	if (convert) {
+        total = current_user->stats.bytes_ul_total;
+        if (convert) {
 #ifndef _MSC_VER
-	  val = (float)total;
+          val = (float)total;
 #else
-	  val = (float)(__int64)total;
+          val = (float)(__int64)total;
 #endif
-	  bytes_to_unit(&val,&c);
-	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
-	} else
-	  snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          bytes_to_unit(&val,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"usertotal_ul");
+        snprintf(internalbuffer,IBUFSIZE,"usertotal_ul");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
@@ -1321,70 +1329,70 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
      * will be ok when used (although as address of constant data it should
      * always be ok) but we like sport !
      */
-    case COOKIE_NOCOL:
+   case COOKIE_NOCOL:
       if (use_colors) {
-	cookie_ptr = "[0m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[0m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_BLACK:
+   case COOKIE_BLACK:
       if (use_colors) {
-	cookie_ptr = "[30m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[30m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_RED:
+   case COOKIE_RED:
       if (use_colors) {
-	cookie_ptr = "[31m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[31m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_GREEN:
+   case COOKIE_GREEN:
       if (use_colors) {
-	cookie_ptr = "[32m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[32m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_BROWN:
+   case COOKIE_BROWN:
       if (use_colors) {
-	cookie_ptr = "[33m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[33m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_BLUE:
+   case COOKIE_BLUE:
       if (use_colors) {
-	cookie_ptr = "[34m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[34m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_MAGENTA:
+   case COOKIE_MAGENTA:
       if (use_colors) {
-	cookie_ptr = "[35m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[35m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_CYAN:
+   case COOKIE_CYAN:
       if (use_colors) {
-	cookie_ptr = "[36m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[36m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_WHITE:
+   case COOKIE_WHITE:
       if (use_colors) {
-	cookie_ptr = "[37m";
-	cookie_length = strlen(cookie_ptr);
+        cookie_ptr = "[37m";
+        cookie_length = strlen(cookie_ptr);
       } else
-	continue;
+        continue;
       break;
-    case COOKIE_ENDFOR:
+   case COOKIE_ENDFOR:
 #ifdef WZD_DBG_COOKIES
       out_err(LEVEL_HIGH,"endfor outside a for loop");
 #endif
@@ -1401,9 +1409,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       send_buffer_ptr += cookie_length;
       if (send_buffer_ptr >= MIN_SEND_BUFFERSIZE) {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH,"flushing buffer on [31mEOL[0m");
+        out_err(LEVEL_HIGH,"flushing buffer on [31mEOL[0m");
 #endif
-	/* flush buffer */
+        /* flush buffer */
         if (out_buffer) {
           unsigned int l = send_buffer_ptr;
           if (l >= out_buffer_len) {
@@ -1463,22 +1471,22 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     }
     if (cookie_ptr) {
       if (padding) {
-	if (cookie_length < padding) {
-	  for (;cookie_length<padding;cookie_length++) {
-	    cookie_ptr[cookie_length] = ' '; /* FIXME padding char hardcoded */
-	  }
-	}
-	cookie_ptr[padding] = '\0';
-	cookie_length = padding;
+        if (cookie_length < padding) {
+          for (;cookie_length<padding;cookie_length++) {
+            cookie_ptr[cookie_length] = ' '; /* FIXME padding char hardcoded */
+          }
+        }
+        cookie_ptr[padding] = '\0';
+        cookie_length = padding;
       }
-/*      printf("%s",cookie_ptr);
-      fflush(stdout);*/
+      /*      printf("%s",cookie_ptr);
+              fflush(stdout);*/
       /* bufferize and send only complete lines */
       if (send_buffer_ptr + cookie_length >= MAX_SEND_BUFFERSIZE) {
 #ifdef WZD_DBG_COOKIES
-	out_err(LEVEL_HIGH,"flushing buffer on [31mBUFFER OVERFLOW[0m");
+        out_err(LEVEL_HIGH,"flushing buffer on [31mBUFFER OVERFLOW[0m");
 #endif
-	/* flush buffer */
+        /* flush buffer */
         if (out_buffer) {
           unsigned int l = send_buffer_ptr;
           if (l >= out_buffer_len) {
@@ -1516,8 +1524,8 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   if (send_buffer_ptr) {
     if (send_buffer_ptr>2) {
       if (send_buffer[send_buffer_ptr-2]!= '\r' || send_buffer[send_buffer_ptr-1]!='\n') {
-	strncpy(send_buffer+send_buffer_ptr,"\r\n",strlen("\r\n"));
-	send_buffer_ptr += strlen("\r\n");
+        strncpy(send_buffer+send_buffer_ptr,"\r\n",strlen("\r\n"));
+        send_buffer_ptr += strlen("\r\n");
       }
     }
     else {

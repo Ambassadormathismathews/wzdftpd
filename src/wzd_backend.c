@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -67,33 +69,33 @@
 
 char *backend_get_version(wzd_backend_t *backend)
 {
-	char ** version_found;
-	
-	if (backend->handle)
-	  version_found = (char**)dlsym(backend->handle,DL_PREFIX "module_version");
-	else
-		return NULL;
+  char ** version_found;
 
-	return strdup(*version_found);
+  if (backend->handle)
+    version_found = (char**)dlsym(backend->handle,DL_PREFIX "module_version");
+  else
+    return NULL;
+
+  return strdup(*version_found);
 }
 
 char *backend_get_name(wzd_backend_t *backend)
 {
-	char ** backend_name;
-	
-	if (backend->handle)
-	  backend_name = (char**)dlsym(backend->handle,DL_PREFIX "module_name");
-	else
-		return NULL;
+  char ** backend_name;
 
-	return strdup(*backend_name);
+  if (backend->handle)
+    backend_name = (char**)dlsym(backend->handle,DL_PREFIX "module_name");
+  else
+    return NULL;
+
+  return strdup(*backend_name);
 }
 
 void backend_clear_struct(wzd_backend_t *backend)
 {
   if (backend->param) {
     wzd_free(backend->param);
-	backend->param = NULL;
+    backend->param = NULL;
   }
   backend->name[0] = '\0';
   backend->handle = NULL;
@@ -206,7 +208,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 #else
       if ( !version_found )
 #endif
-	  {
+      {
         out_err(LEVEL_CRITICAL,"Backend does not contain any \"module_version\" information\n");
         dlclose(handle);
         return 1;
@@ -316,7 +318,7 @@ int backend_close(const char *backend)
     ret = (*fini_fcn)();
     if (ret) {
       out_log(LEVEL_CRITICAL,"Backend %s reported errors on exit (handle %lu)\n",
-	  backend,mainConfig->backend.handle);
+          backend,mainConfig->backend.handle);
 /*      return 1;*/
     }
   }

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -55,14 +57,14 @@ typedef struct
     WORD   ReparseDataLength;
     WORD   Reserved;
 
-	// IO_REPARSE_TAG_MOUNT_POINT specifics follow
+    // IO_REPARSE_TAG_MOUNT_POINT specifics follow
     WORD   SubstituteNameOffset;
     WORD   SubstituteNameLength;
     WORD   PrintNameOffset;
     WORD   PrintNameLength;
     WCHAR  PathBuffer[1];
 
-	// Some helper functions
+    // Some helper functions
 //	bool Init(LPCSTR szJunctionPoint);
 //	bool Init(LPCWSTR wszJunctionPoint);
 //	int BytesForIoControl() const;
@@ -155,9 +157,9 @@ void free_file_recursive(wzd_file_t * file)
     acl_current = file->acl;
     if (acl_current) {
       do {
-	acl_next = acl_current->next_acl;
-	wzd_free(acl_current);
-	acl_current = acl_next;
+        acl_next = acl_current->next_acl;
+        wzd_free(acl_current);
+        acl_current = acl_next;
       } while (acl_current);
     }
     wzd_free (file);
@@ -316,12 +318,12 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
       strncpy(ptr_file->owner,token3,256);
       strncpy(ptr_file->group,token4,256);
       if (token5) {
-	unsigned long ul;
-	ul = strtoul(token5,&ptr,8);
-	if (ptr==token5) continue;
-	ptr_file->permissions = ul;
+        unsigned long ul;
+        ul = strtoul(token5,&ptr,8);
+        if (ptr==token5) continue;
+        ptr_file->permissions = ul;
       } else { /* default user/group permission */
-	ptr_file->permissions = 0755; /* TODO XXX FIXME */
+        ptr_file->permissions = 0755; /* TODO XXX FIXME */
       }
     }
     else if (strcmp(token1,"perm")==0) {
@@ -356,13 +358,13 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
     /* first write owner if available */
     if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
       snprintf(buffer,4096,"owner\t%s\t%s\t%s\t%lo\n",
-	  file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
+          file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
       fwrite(buffer,strlen(buffer),1,fp);
     }
     acl_cur = file_cur->acl;
     while (acl_cur) {
       snprintf(buffer,4096,"perm\t%s\t%s\t%c%c%c\n",
-	  file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
+          file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
       fwrite(buffer,strlen(buffer),1,fp);
       acl_cur = acl_cur->next_acl;
     }
@@ -424,81 +426,81 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
     if (!acl_cur) { /* ! in acl list */
       /* TODO check if user is owner or group of file, and use perms */
       {
-	unsigned int i;
-	wzd_group_t * group;
+        unsigned int i;
+        wzd_group_t * group;
 /*	out_err(LEVEL_HIGH,"owner %s\n",file_cur->owner);*/
 /*	out_err(LEVEL_HIGH,"group %s\n",file_cur->group);*/
 /*	out_err(LEVEL_HIGH,"group %lo\n",file_cur->permissions);*/
-	if (strcmp(user->username,file_cur->owner)==0) {
-	  /* NOTE all results are inverted (!=) because we return 0 on success ! */
-	  switch (wanted_right) {
-	    case RIGHT_LIST:
-	    case RIGHT_RETR:
-	      ret = (file_cur->permissions & 0400);
-	      break;
-	    case RIGHT_STOR:
-	    case RIGHT_MKDIR:
-	    case RIGHT_RMDIR:
-	    case RIGHT_RNFR:
-	      ret = (file_cur->permissions & 0200);
-	      break;
-	    case RIGHT_CWD:
-	      ret = (file_cur->permissions & 0100);
-	      break;
-	    default:
-	      ret = 0;
-	  }
+        if (strcmp(user->username,file_cur->owner)==0) {
+          /* NOTE all results are inverted (!=) because we return 0 on success ! */
+          switch (wanted_right) {
+            case RIGHT_LIST:
+            case RIGHT_RETR:
+              ret = (file_cur->permissions & 0400);
+              break;
+            case RIGHT_STOR:
+            case RIGHT_MKDIR:
+            case RIGHT_RMDIR:
+            case RIGHT_RNFR:
+              ret = (file_cur->permissions & 0200);
+              break;
+            case RIGHT_CWD:
+              ret = (file_cur->permissions & 0100);
+              break;
+            default:
+              ret = 0;
+          }
 /*	  out_err(LEVEL_HIGH,"user is file owner : %d !\n",ret);*/
-	  free_file_recursive(file_list);
-	  file_list = NULL;
-	  return !ret;
-	}
-	for (i=0; i<user->group_num; i++) {
-	  group = GetGroupByID(user->groups[i]);
-	  if (group && strcmp(group->groupname,file_cur->group)==0) {
-	    /* NOTE all results are inverted (!=) because we return 0 on success ! */
+          free_file_recursive(file_list);
+          file_list = NULL;
+          return !ret;
+        }
+        for (i=0; i<user->group_num; i++) {
+          group = GetGroupByID(user->groups[i]);
+          if (group && strcmp(group->groupname,file_cur->group)==0) {
+            /* NOTE all results are inverted (!=) because we return 0 on success ! */
   	    switch (wanted_right) {
-	      case RIGHT_LIST:
-	      case RIGHT_RETR:
-		ret = (file_cur->permissions & 0040);
-		break;
-	      case RIGHT_STOR:
-	      case RIGHT_MKDIR:
-	      case RIGHT_RMDIR:
-	      case RIGHT_RNFR:
-		ret = (file_cur->permissions & 0020);
-		break;
-	      case RIGHT_CWD:
-		ret = (file_cur->permissions & 0010);
-		break;
-	      default:
-		ret = 0;
-	    }
-/*	    out_err(LEVEL_HIGH,"user is in group : %d !\n",ret);*/
-	    free_file_recursive(file_list);
-	    file_list = NULL;
-	    return !ret;
-	  }
-	}
+              case RIGHT_LIST:
+              case RIGHT_RETR:
+                ret = (file_cur->permissions & 0040);
+                break;
+              case RIGHT_STOR:
+              case RIGHT_MKDIR:
+              case RIGHT_RMDIR:
+              case RIGHT_RNFR:
+                ret = (file_cur->permissions & 0020);
+                break;
+              case RIGHT_CWD:
+                ret = (file_cur->permissions & 0010);
+                break;
+              default:
+                ret = 0;
+            }
+            /*	    out_err(LEVEL_HIGH,"user is in group : %d !\n",ret);*/
+            free_file_recursive(file_list);
+            file_list = NULL;
+            return !ret;
+          }
+        }
       }
 
       /* NOTE all results are inverted (!=) because we return 0 on success ! */
       switch (wanted_right) {
-	case RIGHT_LIST:
-	case RIGHT_RETR:
-	  ret = (file_cur->permissions & 0004);
-	  break;
-	case RIGHT_STOR:
-	case RIGHT_MKDIR:
-	case RIGHT_RMDIR:
-	case RIGHT_RNFR:
-	  ret = (file_cur->permissions & 0002);
-	  break;
-	case RIGHT_CWD:
-	  ret = (file_cur->permissions & 0001);
-	  break;
-	default:
-	  ret = 0;
+        case RIGHT_LIST:
+        case RIGHT_RETR:
+          ret = (file_cur->permissions & 0004);
+          break;
+        case RIGHT_STOR:
+        case RIGHT_MKDIR:
+        case RIGHT_RMDIR:
+        case RIGHT_RNFR:
+          ret = (file_cur->permissions & 0002);
+          break;
+        case RIGHT_CWD:
+          ret = (file_cur->permissions & 0001);
+          break;
+        default:
+          ret = 0;
       }
 /*      out_err(LEVEL_HIGH,"user is in others : %d !\n",ret);*/
       free_file_recursive(file_list);
@@ -566,7 +568,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
       case RIGHT_MKDIR:
       case RIGHT_RMDIR:
       case RIGHT_RNFR:
-	return -1;
+        return -1;
     }
   }
 
@@ -588,8 +590,8 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
       ptr = strrchr(dir,'/');
       if (ptr) {
         strcpy(stripped_filename,ptr+1);
-	if (ptr == &dir[0]) *(ptr+1) = '\0';
-	else *ptr = 0;
+        if (ptr == &dir[0]) *(ptr+1) = '\0';
+        else *ptr = 0;
       }
     } /* ! isdir */
   } /* stat == -1 */
@@ -605,14 +607,14 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     wzd_vfs_t * vfs = mainConfig->vfs;
     while(vfs) {
       if (strncmp(dir,vfs->physical_dir,strlen(vfs->physical_dir))==0)
-	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
+        return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
       vfs = vfs->next_vfs;
     }
     /* if dir is not a vfs, we can have a vfile */
     vfs = mainConfig->vfs;
     while(vfs) {
       if (DIRCMP(filename,vfs->physical_dir)==0)
-	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
+        return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
       vfs = vfs->next_vfs;
     }
     return 1;
@@ -822,8 +824,8 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
       if (!file_cur) { /* perm file exists, but does not contains acl concerning filename */
         file_cur = add_new_file(dst_stripped_filename,file_dst->owner,file_dst->group,&dst_file_list);
       } else {
-	if (owner) strncpy(file_cur->owner,file_dst->owner,256);
-	if (group) strncpy(file_cur->group,file_dst->group,256);
+        if (owner) strncpy(file_cur->owner,file_dst->owner,256);
+        if (group) strncpy(file_cur->group,file_dst->group,256);
       }
     }
   
@@ -849,174 +851,174 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
 
 int _rdb_init(TMN_REPARSE_DATA_BUFFER * rdb, LPCWSTR wszJunctionPoint)
 {
-	size_t nDestMountPointBytes;
+  size_t nDestMountPointBytes;
 
-	if (!wszJunctionPoint || !*wszJunctionPoint) {
-		return -1;
-	}
+  if (!wszJunctionPoint || !*wszJunctionPoint) {
+    return -1;
+  }
 
-	nDestMountPointBytes = lstrlenW(wszJunctionPoint) * 2;
+  nDestMountPointBytes = lstrlenW(wszJunctionPoint) * 2;
 
-	rdb->ReparseTag           = IO_REPARSE_TAG_MOUNT_POINT;
-	rdb->ReparseDataLength    = nDestMountPointBytes + 12;
-	rdb->Reserved             = 0;
-	rdb->SubstituteNameOffset = 0;
-	rdb->SubstituteNameLength = nDestMountPointBytes;
-	rdb->PrintNameOffset      = nDestMountPointBytes + 2;
-	rdb->PrintNameLength      = 0;
-	lstrcpyW(rdb->PathBuffer, wszJunctionPoint);
+  rdb->ReparseTag           = IO_REPARSE_TAG_MOUNT_POINT;
+  rdb->ReparseDataLength    = nDestMountPointBytes + 12;
+  rdb->Reserved             = 0;
+  rdb->SubstituteNameOffset = 0;
+  rdb->SubstituteNameLength = nDestMountPointBytes;
+  rdb->PrintNameOffset      = nDestMountPointBytes + 2;
+  rdb->PrintNameLength      = 0;
+  lstrcpyW(rdb->PathBuffer, wszJunctionPoint);
 
-	return 0;
+  return 0;
 }
 
 /* returns 0 if ok */
 int RDB_INIT(TMN_REPARSE_DATA_BUFFER * rdb, LPCSTR szJunctionPoint)
 {
-	wchar_t wszDestMountPoint[512];
-	size_t cchDest;
+  wchar_t wszDestMountPoint[512];
+  size_t cchDest;
 
-	if (!szJunctionPoint || !*szJunctionPoint) {
-		return -1;
-	}
+  if (!szJunctionPoint || !*szJunctionPoint) {
+    return -1;
+  }
 
-	cchDest = lstrlenA(szJunctionPoint) + 1;
-	if (cchDest > 512) {
-		return -1;
-	}
+  cchDest = lstrlenA(szJunctionPoint) + 1;
+  if (cchDest > 512) {
+    return -1;
+  }
 
-	if (!MultiByteToWideChar(CP_THREAD_ACP,
-							MB_PRECOMPOSED,
-							szJunctionPoint,
-							cchDest,
-							wszDestMountPoint,
-							cchDest))
-	{
-		return -1;
-	}
+  if (!MultiByteToWideChar(CP_THREAD_ACP,
+        MB_PRECOMPOSED,
+        szJunctionPoint,
+        cchDest,
+        wszDestMountPoint,
+        cchDest))
+  {
+    return -1;
+  }
 
-	return _rdb_init(rdb,wszDestMountPoint);
+  return _rdb_init(rdb,wszDestMountPoint);
 }
 
 int BytesForIoControl(const TMN_REPARSE_DATA_BUFFER *rdb)
 {
-	return rdb->ReparseDataLength + TMN_REPARSE_DATA_BUFFER_HEADER_SIZE;
+  return rdb->ReparseDataLength + TMN_REPARSE_DATA_BUFFER_HEADER_SIZE;
 }
 
 HANDLE Reparse_Dir_HANDLE(LPCTSTR szDir, int bWriteable)
 {
-	return CreateFile(	szDir,
-					GENERIC_READ | (bWriteable ? GENERIC_WRITE : 0),
-					0,
-					0,
-					OPEN_EXISTING,
-					FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
-					0);
+  return CreateFile(	szDir,
+      GENERIC_READ | (bWriteable ? GENERIC_WRITE : 0),
+      0,
+      0,
+      OPEN_EXISTING,
+      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+      0);
 }
 
 /* returns 0 if failed, non-zero if success */
 int SetReparsePoint(HANDLE m_hDir, const TMN_REPARSE_DATA_BUFFER* rdb)
 {
-	DWORD dwBytes;
-	return DeviceIoControl(m_hDir,
-						FSCTL_SET_REPARSE_POINT,
-						(LPVOID)rdb,
-						BytesForIoControl(rdb),
-						NULL,
-						0,
-						&dwBytes,
-						0);
+  DWORD dwBytes;
+  return DeviceIoControl(m_hDir,
+      FSCTL_SET_REPARSE_POINT,
+      (LPVOID)rdb,
+      BytesForIoControl(rdb),
+      NULL,
+      0,
+      &dwBytes,
+      0);
 }
 
 int DeleteReparsePoint(HANDLE m_hDir)
 {
-	REPARSE_GUID_DATA_BUFFER rgdb = { 0 };
-	DWORD dwBytes;
-	rgdb.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
-	return DeviceIoControl(m_hDir,
-						FSCTL_DELETE_REPARSE_POINT,
-						&rgdb,
-						REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
-						NULL,
-						0,
-						&dwBytes,
-						0);
+  REPARSE_GUID_DATA_BUFFER rgdb = { 0 };
+  DWORD dwBytes;
+  rgdb.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+  return DeviceIoControl(m_hDir,
+      FSCTL_DELETE_REPARSE_POINT,
+      &rgdb,
+      REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
+      NULL,
+      0,
+      &dwBytes,
+      0);
 }
 
 int CreateJunctionPoint(LPCTSTR szMountDir, LPCTSTR szDestDirArg)
 {
-	TCHAR szDestDir[1024];
-	char szBuff[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
-	TMN_REPARSE_DATA_BUFFER * rdb;
-	TCHAR szFullDir[1024];
-	LPTSTR pFilePart;
+  TCHAR szDestDir[1024];
+  char szBuff[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
+  TMN_REPARSE_DATA_BUFFER * rdb;
+  TCHAR szFullDir[1024];
+  LPTSTR pFilePart;
 
-	if (!szMountDir || !szDestDirArg || !szMountDir[0] || !szDestDirArg[0]) {
-		return -1;
-	}
+  if (!szMountDir || !szDestDirArg || !szMountDir[0] || !szDestDirArg[0]) {
+    return -1;
+  }
 
-	if (szDestDirArg[0] == '\\' && szDestDirArg[1] == '?') {
-		lstrcpy(szDestDir, szDestDirArg);
-	} else {
-		lstrcpy(szDestDir, TEXT("\\??\\"));
-		if (!GetFullPathName(szDestDirArg, 1024, szFullDir, &pFilePart) ||
-			GetFileAttributes(szFullDir) == -1)
-		{
-			return -1;
-		}
-		lstrcat(szDestDir, szFullDir);
-	}
+  if (szDestDirArg[0] == '\\' && szDestDirArg[1] == '?') {
+    lstrcpy(szDestDir, szDestDirArg);
+  } else {
+    lstrcpy(szDestDir, TEXT("\\??\\"));
+    if (!GetFullPathName(szDestDirArg, 1024, szFullDir, &pFilePart) ||
+        GetFileAttributes(szFullDir) == -1)
+    {
+      return -1;
+    }
+    lstrcat(szDestDir, szFullDir);
+  }
 
-	if (!GetFullPathName(szMountDir, 1024, szFullDir, &pFilePart) )
-	{
-		return -1;
-	}
-	szMountDir = szFullDir;
+  if (!GetFullPathName(szMountDir, 1024, szFullDir, &pFilePart) )
+  {
+    return -1;
+  }
+  szMountDir = szFullDir;
 
-	// create link if not existing
-	CreateDirectory(szMountDir, NULL);
+  // create link if not existing
+  CreateDirectory(szMountDir, NULL);
 
-	rdb = (TMN_REPARSE_DATA_BUFFER*)szBuff;
+  rdb = (TMN_REPARSE_DATA_BUFFER*)szBuff;
 
-	RDB_INIT(rdb,szDestDir);
+  RDB_INIT(rdb,szDestDir);
 
-	{
-		HANDLE handle;
-		handle = Reparse_Dir_HANDLE(szMountDir, 1 /* true */);
-		if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
-		if (!SetReparsePoint(handle,rdb)) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
-		CloseHandle(handle);
-	}
+  {
+    HANDLE handle;
+    handle = Reparse_Dir_HANDLE(szMountDir, 1 /* true */);
+    if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
+    if (!SetReparsePoint(handle,rdb)) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
+    CloseHandle(handle);
+  }
 
 
-	return 0;
+  return 0;
 }
 
 int RemoveJunctionPoint(LPCTSTR szDir)
 {
-	TCHAR szFullDir[1024];
-	LPTSTR pFilePart;
+  TCHAR szFullDir[1024];
+  LPTSTR pFilePart;
 
-	if (!szDir || !szDir[0]) {
-		return -1;
-	}
+  if (!szDir || !szDir[0]) {
+    return -1;
+  }
 
-	if (!GetFullPathName(szDir, 1024, szFullDir, &pFilePart) )
-	{
-		return -1;
-	}
-	szDir = szFullDir;
+  if (!GetFullPathName(szDir, 1024, szFullDir, &pFilePart) )
+  {
+    return -1;
+  }
+  szDir = szFullDir;
 
-	{
-		HANDLE handle;
-		handle = Reparse_Dir_HANDLE(szDir, 1 /* true */);
-		if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); return -1; }
-		if (!DeleteReparsePoint(handle)) { CloseHandle(handle); return -1; }
-		CloseHandle(handle);
-		RemoveDirectory(szDir);
-	}
+  {
+    HANDLE handle;
+    handle = Reparse_Dir_HANDLE(szDir, 1 /* true */);
+    if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); return -1; }
+    if (!DeleteReparsePoint(handle)) { CloseHandle(handle); return -1; }
+    CloseHandle(handle);
+    RemoveDirectory(szDir);
+  }
 
 
-	return 0;
+  return 0;
 }
 
 
@@ -1065,20 +1067,20 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   }
   else {
     if ( mode & O_WRONLY ) {
-	  if (is_locked) {
+      if (is_locked) {
         close(fd);
 /*        fprintf(stderr,"Can't open %s in write mode, locked !\n",filename);*/
         return -1;
-	  }
-	  file_lock(fd,F_WRLCK);
-	}
+      }
+      file_lock(fd,F_WRLCK);
+    }
     else {
       if (is_locked) {
 /*	fprintf(stderr,"%s is locked, trying to read\n",filename);*/
-	if ( CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED) ) {
-	  close(fd);
-	  return -1;
-	}
+        if ( CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED) ) {
+          close(fd);
+          return -1;
+        }
       }
     }
   }
@@ -1158,17 +1160,17 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 #ifndef _MSC_VER
     if ((dir=opendir(dirname))==NULL) return 0;
 #else
-	snprintf(dirfilter,2048,"%s/*",dirname);
-	if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+    snprintf(dirfilter,2048,"%s/*",dirname);
+    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
 #endif
     
 #ifndef _MSC_VER
     while ((entr=readdir(dir))!=NULL) {
-	  filename = entr->d_name;
+      filename = entr->d_name;
 #else
-	finished = 0;
-	while (!finished) {
-	  filename = fileData.cFileName;
+    finished = 0;
+    while (!finished) {
+      filename = fileData.cFileName;
 #endif
       if (strcmp(filename,".")==0 ||
           strcmp(filename,"..")==0 ||
@@ -1351,16 +1353,16 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
     while (file_cur)
     {
       if (strcmp(stripped_filename,file_cur->filename)==0) {
-	if (file_cur->owner[0]!='\0')
-	{
-	  free_file_recursive(file_list);
-	  return GetUserByName(file_cur->owner);
-	}
-	else
-	{
-	  free_file_recursive(file_list);
-	  return GetUserByName("nobody");
-	}
+        if (file_cur->owner[0]!='\0')
+        {
+          free_file_recursive(file_list);
+          return GetUserByName(file_cur->owner);
+        }
+        else
+        {
+          free_file_recursive(file_list);
+          return GetUserByName("nobody");
+        }
       }
       file_cur = file_cur->next_file;
     }
@@ -1389,7 +1391,7 @@ fprintf(stderr,"Locking file %d\n",fd);
   }
 #else
   if (_locking(fd, LK_NBLCK, -1) == -1)
-	  return -1;
+    return -1;
 #endif
   return 0;
 }
@@ -1410,7 +1412,7 @@ fprintf(stderr,"Unlocking file %d\n",fd);
   }
 #else
   if (_locking(fd, LK_UNLCK, -1) == -1)
-	  return -1;
+    return -1;
 #endif
   return 0;
 }
@@ -1433,11 +1435,11 @@ fprintf(stderr,"Testing lock for file %d\n",fd);
   if (lck.l_type == F_RDLCK || lck.l_type == F_WRLCK) return 1;
 #else
   if (_locking(fd, LK_NBLCK, -1) != -1) {
-	  _locking(fd, LK_UNLCK, -1);
-	  return 0;
+    _locking(fd, LK_UNLCK, -1);
+    return 0;
   } else {
-	  if (errno == EACCES) return 1;
-	  return -1;
+    if (errno == EACCES) return 1;
+    return -1;
   }
 #endif
   return 0;
@@ -1479,12 +1481,12 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
 /* wrappers just to keep things in same memory zones */
 int file_read(int fd,void *data,unsigned int length)
 {
-	return read(fd,data,length);
+  return read(fd,data,length);
 }
 
 int file_write(int fd,const void *data,unsigned int length)
 {
-	return write(fd,data,length);
+  return write(fd,data,length);
 }
 
 /* symlink operations */

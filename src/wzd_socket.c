@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -25,7 +27,7 @@
   * \brief Helper routines for network access
   */
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -73,7 +75,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   struct sockaddr_in6 sai6;
 #endif
   unsigned int c;
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
   SOCKET sock;
 #else
   int sock;
@@ -89,7 +91,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   {
     struct hostent* host_info;
     // try to decode dotted quad notation
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
     if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
     if(!inet_aton(ip, &sai.sin_addr))
@@ -101,8 +103,8 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
       // failing that, look up the name
       if( (host_info = gethostbyname(real_ip)) == NULL)
       {
-	out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
-	return -1;
+        out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
+        return -1;
       }
       memcpy(&sai.sin_addr, host_info->h_addr, host_info->h_length);
    }
@@ -171,7 +173,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 /*************** socket_close ***************************/
 int socket_close(int sock)
 {
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
   char acReadBuffer[256];
   int nNewBytes;
 
@@ -189,17 +191,17 @@ int socket_close(int sock)
    * host has closed its side of the connection.
    */
   while (1) {
-	  nNewBytes = recv(sock, acReadBuffer, 256, 0);
-	  if (nNewBytes == SOCKET_ERROR) {
-		  return 1;
-	  }
-	  else if (nNewBytes != 0) {
-		  out_err(LEVEL_CRITICAL,"\nFYI, received %d unexpected bytes during shutdown.\n",nNewBytes);
-	  }
-	  else {
-		  /* Okay, we're done! */
-		  break;
-	  }
+    nNewBytes = recv(sock, acReadBuffer, 256, 0);
+    if (nNewBytes == SOCKET_ERROR) {
+      return 1;
+    }
+    else if (nNewBytes != 0) {
+      out_err(LEVEL_CRITICAL,"\nFYI, received %d unexpected bytes during shutdown.\n",nNewBytes);
+    }
+    else {
+      /* Okay, we're done! */
+      break;
+    }
   }
 
     /* Close the socket. */
@@ -235,7 +237,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
     return -1;
   }
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
   {
     unsigned long noBlock=1;
     ioctlsocket(sock,FIONBIO,&noBlock);
@@ -384,7 +386,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   {
 
 /* set non-blocking mode */
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
     {
       unsigned long noBlock=1;
       ret = ioctlsocket(sock,FIONBIO,&noBlock);
@@ -393,39 +395,39 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
     fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
     ret = connect(sock, sai, len);
-	if (ret == SOCKET_ERROR) {
-	  errno = WSAGetLastError();
-	  if (errno != WSAEWOULDBLOCK)
-	  {
+    if (ret == SOCKET_ERROR) {
+      errno = WSAGetLastError();
+      if (errno != WSAEWOULDBLOCK)
+      {
         out_log(LEVEL_INFO,"Connect failed %s:%d\n", __FILE__, __LINE__);
-		out_log(LEVEL_INFO," errno: %d\n",errno);
+        out_log(LEVEL_INFO," errno: %d\n",errno);
         socket_close (sock);
         return -1;
-	  }
-	} else
-		return sock;
+      }
+    } else
+      return sock;
   if (ret == SOCKET_ERROR)
   {
-	  int retry;
-	  for (retry=0; retry<6; retry++)
-	  {
-		ret = socket_wait_to_write(sock,timeout);
-		if (ret == 0) /* ok */
-		  break;
-		if (ret == 1) /* timeout */
-		{
-		  socket_close(sock);
-		  return -1;
-		}
-		/* error */
-		socket_close(sock);
-        errno = WSAGetLastError();
-		return -1;
-	  }
+    int retry;
+    for (retry=0; retry<6; retry++)
+    {
+      ret = socket_wait_to_write(sock,timeout);
+      if (ret == 0) /* ok */
+        break;
+      if (ret == 1) /* timeout */
+      {
+        socket_close(sock);
+        return -1;
+      }
+      /* error */
+      socket_close(sock);
+      errno = WSAGetLastError();
+      return -1;
+    }
   }
-#else /* _MSC_VER || WINSOCK_SUPPORT */
+#else /* _MSC_VER */
 
   ret = connect(sock, sai, len);
   if (ret >= 0) return sock;
@@ -446,7 +448,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       }
       break;
     } while (1);
-#endif /* _MSC_VER || WINSOCK_SUPPORT */
+#endif /* _MSC_VER */
 
   } /* if (timeout) */
 
@@ -529,7 +531,7 @@ int socket_wait_to_read(unsigned int sock, int timeout)
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
       ret = select(0,&fds,NULL,&efds,&tv);
 #else
       ret = select(sock+1,&fds,NULL,&efds,&tv);
@@ -537,12 +539,12 @@ int socket_wait_to_read(unsigned int sock, int timeout)
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
-	if (save_errno == EINTR) continue;
-	out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %s\n",strerror(save_errno));
-	return -1;
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %s\n",strerror(save_errno));
+        return -1;
       }
       if (!FD_ISSET(sock,&fds)) /* timeout */
-	return 1;
+        return 1;
       break;
     }
     return 0;
@@ -568,7 +570,7 @@ int socket_wait_to_write(unsigned int sock, int timeout)
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(_MSC_VER)
       ret = select(0,NULL,&fds,&efds,&tv);
 #else
       ret = select(sock+1,NULL,&fds,&efds,&tv);
@@ -576,12 +578,12 @@ int socket_wait_to_write(unsigned int sock, int timeout)
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
-	if (save_errno == EINTR) continue;
-	out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %s\n",strerror(save_errno));
-	return -1;
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %s\n",strerror(save_errno));
+        return -1;
       }
       if (!FD_ISSET(sock,&fds)) /* timeout */
-	return 1;
+        return 1;
       break;
     }
     return 0;

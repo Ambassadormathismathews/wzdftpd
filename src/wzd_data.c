@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -94,7 +96,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
   case TOK_RETR:
     if (context->datafd<0 || !fd_is_valid(context->datafd)) {
       fprintf(stderr,"Trying to set invalid datafd (%d) %s:%d\n",
-	  context->datafd,__FILE__,__LINE__);
+          context->datafd,__FILE__,__LINE__);
     }
     FD_SET(context->datafd,fdw);
     FD_SET(context->datafd,fde);
@@ -103,7 +105,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
   case TOK_STOR:
     if (context->datafd<0 || !fd_is_valid(context->datafd)) {
       fprintf(stderr,"Trying to set invalid datafd (%d) %s:%d\n",
-	  context->datafd,__FILE__,__LINE__);
+          context->datafd,__FILE__,__LINE__);
     }
     FD_SET(context->datafd,fdr);
     FD_SET(context->datafd,fde);
@@ -160,24 +162,24 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     if (n>0) {
 #ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
-	ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+        ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
         ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
-	close(context->current_action.current_file);
-	context->current_action.current_file = 0;
-	context->current_action.bytesnow = 0;
-	context->current_action.token = TOK_UNKNOWN;
-	data_close(context);
-	ret = send_message(426,context);
-out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
-/*	limiter_free(context->current_limiter);
-	context->current_limiter = NULL;*/
+        close(context->current_action.current_file);
+        context->current_action.current_file = 0;
+        context->current_action.bytesnow = 0;
+        context->current_action.token = TOK_UNKNOWN;
+        data_close(context);
+        ret = send_message(426,context);
+        out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
+        /*	limiter_free(context->current_limiter);
+                context->current_limiter = NULL;*/
         context->idle_time_start = time(NULL);
         context->state = STATE_COMMAND;
-	return 1;
+        return 1;
       }
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_dl,n,0);*/
@@ -221,14 +223,14 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
   case TOK_STOR:
 #ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
-	n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+        n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
       else
 #endif
       n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
-	  if (file_write(context->current_action.current_file,buffer,n) != n) {
-	    out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
-	  }
+      if (file_write(context->current_action.current_file,buffer,n) != n) {
+        out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
+      }
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_ul,n,0);*/
       limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_sem,n,0);
@@ -236,7 +238,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
       user->stats.bytes_ul_total += n;
       if (user->ratio)
-	user->credits += (user->ratio * n);
+        user->credits += (user->ratio * n);
       context->idle_time_data_start = time(NULL);
     } else { /* consider it is finished */
       file_unlock(context->current_action.current_file);

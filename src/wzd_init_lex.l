@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -700,8 +702,8 @@ int cfg_read_dynamic_ip(void)
       struct hostent *host;
       host = gethostbyname(yytext+1);
       if (!host) {
-	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
-	return 1;
+        out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
+        return 1;
       }
     }
     strncpy((char *)tempConfig.dynamic_ip,yytext+1,MAX_IP_LENGTH-1);
@@ -834,8 +836,8 @@ int cfg_read_ip(void)
       struct hostent *host;
       host = gethostbyname(yytext+1);
       if (!host) {
-	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
-	return 1;
+        out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
+        return 1;
       }
     }
     strncpy((char *)tempConfig.ip,yytext+1,MAX_IP_LENGTH-1);
@@ -1206,8 +1208,8 @@ int cfg_read_pasv_ip(void)
       unsigned char *host_ip;
       host = gethostbyname(yytext+1);
       if (!host) {
-	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",yytext);
-	return 1;
+        out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",yytext);
+        return 1;
       }
       host_ip = (unsigned char*)(host->h_addr);
       new_ip[0] = host_ip[0];
@@ -1334,7 +1336,7 @@ int cfg_read_pid_file(void)
 #else
 /*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
     ret = -1;
-	errno = ESRCH;
+    errno = ESRCH;
 #endif
     if (!ret || (ret==-1 && errno==EPERM)) {
       out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",filename);
@@ -1343,7 +1345,7 @@ int cfg_read_pid_file(void)
     if ( !(ret==-1 && errno==ESRCH) ) {
       out_err(LEVEL_CRITICAL,"Error: pid file: %s\n",filename);
       out_err(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
-	  l, ret, errno, strerror(errno));
+          l, ret, errno, strerror(errno));
       out_err(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
       return 1;
     }
@@ -1465,11 +1467,11 @@ int cfg_read_server_uid(void)
       struct passwd * p;
       p = getpwnam(yytext);
       if (!p) {
-	out_err(LEVEL_HIGH,"server_uid: could not find uid for user %s\n",yytext);
-	return 1;
+        out_err(LEVEL_HIGH,"server_uid: could not find uid for user %s\n",yytext);
+        return 1;
       }
       wzd_server_uid = p->pw_uid;
-	  setlib_server_uid(wzd_server_uid);
+      setlib_server_uid(wzd_server_uid);
       return 0;
     }
 #endif
@@ -1874,14 +1876,14 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_BACKEND_PARAM:
       {
-	char *buf;
-	if (strlen(yytext)<=strlen("backend_param_") || strlen(yytext)>=256) {
-	  out_err(LEVEL_HIGH,"token too long\n");
-	  continue;
-	}
-	buf = wzd_strdup(yytext+strlen("backend_param_"));
+        char *buf;
+        if (strlen(yytext)<=strlen("backend_param_") || strlen(yytext)>=256) {
+          out_err(LEVEL_HIGH,"token too long\n");
+          continue;
+        }
+        buf = wzd_strdup(yytext+strlen("backend_param_"));
         ret = cfg_read_backend_param(buf);
-	wzd_free(buf);
+        wzd_free(buf);
       }
       break;
     case CFG_CRONJOB:
@@ -1937,18 +1939,18 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_MESSAGE:
       {
-	unsigned long l;
-	errno = 0;
-	if (strlen(yytext)<=strlen("message_") || strlen(yytext)>=15) {
-	  out_err(LEVEL_HIGH,"token too long\n");
-	  continue;
-	}
-	l = strtoul(yytext+strlen("message_"),(char**)NULL, 0);
-	if (errno==ERANGE || l > HARD_MSG_LIMIT) {
-	  out_err(LEVEL_HIGH,"Invalid message number\n");
-	  continue;
-	}
-	ret = cfg_read_message(l);
+        unsigned long l;
+        errno = 0;
+        if (strlen(yytext)<=strlen("message_") || strlen(yytext)>=15) {
+          out_err(LEVEL_HIGH,"token too long\n");
+          continue;
+        }
+        l = strtoul(yytext+strlen("message_"),(char**)NULL, 0);
+        if (errno==ERANGE || l > HARD_MSG_LIMIT) {
+          out_err(LEVEL_HIGH,"Invalid message number\n");
+          continue;
+        }
+        ret = cfg_read_message(l);
       }
       break;
     case CFG_MODULE:
@@ -1956,14 +1958,14 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_PARAM:
       {
-	char *buf;
-	if (strlen(yytext)<=strlen("param_") || strlen(yytext)>=256) {
-	  out_err(LEVEL_HIGH,"token too long\n");
-	  continue;
-	}
-	buf = wzd_strdup(yytext+strlen("param_"));
+        char *buf;
+        if (strlen(yytext)<=strlen("param_") || strlen(yytext)>=256) {
+          out_err(LEVEL_HIGH,"token too long\n");
+          continue;
+        }
+        buf = wzd_strdup(yytext+strlen("param_"));
         ret = cfg_read_param(buf);
-	wzd_free(buf);
+        wzd_free(buf);
       }
       break;
 
@@ -1996,14 +1998,14 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_SITEFILE:
       {
-	char *buf;
-	if (strlen(yytext)<=strlen("sitefile_") || strlen(yytext)>=256) {
-	  out_err(LEVEL_HIGH,"token too long\n");
-	  continue;
-	}
-	buf = wzd_strdup(yytext+strlen("sitefile_"));
+        char *buf;
+        if (strlen(yytext)<=strlen("sitefile_") || strlen(yytext)>=256) {
+          out_err(LEVEL_HIGH,"token too long\n");
+          continue;
+        }
+        buf = wzd_strdup(yytext+strlen("sitefile_"));
         ret = cfg_read_sitefile(buf);
-	wzd_free(buf);
+        wzd_free(buf);
       }
       break;
     case CFG_TLS_CERT:
@@ -2039,30 +2041,30 @@ wzd_config_t * readConfigFile(const char *fileName)
 #endif /* 0 */
     case '-': /* permission */
       {
-	char permission_name[256];
-	char * permission_line;
-	token = yylex();
-	if (token != CFG_SITE) {
-	  out_err(LEVEL_HIGH,"Invalid config line near token %s (%u)\n",yytext,token);
-	  continue;
-	}
+        char permission_name[256];
+        char * permission_line;
+        token = yylex();
+        if (token != CFG_SITE) {
+          out_err(LEVEL_HIGH,"Invalid config line near token %s (%u)\n",yytext,token);
+          continue;
+        }
 /*        printf("PERM: %s\n",yytext);*/
-	if (strlen(yytext)>=256) {
-	  printf("token too long: '%s'\n",yytext);
-	  continue;
-	}
-	strncpy(permission_name,yytext,255);
-	if ((token=yylex())!='=') {
-	  out_err(LEVEL_HIGH,"invalid permission line\n");
-	  continue;
-	}
-	if ( !(permission_line=read_until_eol(256)) ) {
-	  out_err(LEVEL_HIGH,"Line too long\n");
-	  continue;
-	}
+        if (strlen(yytext)>=256) {
+          printf("token too long: '%s'\n",yytext);
+          continue;
+        }
+        strncpy(permission_name,yytext,255);
+        if ((token=yylex())!='=') {
+          out_err(LEVEL_HIGH,"invalid permission line\n");
+          continue;
+        }
+        if ( !(permission_line=read_until_eol(256)) ) {
+          out_err(LEVEL_HIGH,"Line too long\n");
+          continue;
+        }
         ascii_lower(permission_name,strlen(permission_name));
-	ret = do_permission_line(permission_name,permission_line);
-	wzd_free(permission_line);
+        ret = do_permission_line(permission_name,permission_line);
+        wzd_free(permission_line);
       }
       break;
     default:
