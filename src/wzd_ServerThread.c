@@ -102,6 +102,9 @@ void login_new(int socket_accept_fd)
   int newsock;
   wzd_context_t	* context;
   unsigned char *p;
+#ifdef __CYGWIN__
+  unsigned long shm_key = mainConfig->shm_key;
+#endif /* __CYGWIN__ */
 
   newsock = socket_accept(mainConfig->mainSocket, &remote_host, &remote_port);
   if (newsock <0)
@@ -123,37 +126,55 @@ void login_new(int socket_accept_fd)
     userip[0],userip[1],userip[2],userip[3]);
 
   /* start child process */
-  /* 1. create new context */
+#ifdef WZD_MULTITHREAD
+  if (fork()==0) { /* child */
+    /* 0. get shared memory zones */
+#ifdef __CYGWIN__
+    mainConfig_shm = wzd_shm_create(shm_key-1,sizeof(wzd_config_t),0);
+    if (mainConfig_shm == NULL) {
+      /* NOTE we do not have any out_log here, since we have no config !*/
+      out_err(LEVEL_CRITICAL,"I can't open main config shm ! (child)\n");
+      exit(1);
+    }
+    mainConfig = mainConfig_shm->datazone;
+    context_shm = wzd_shm_create(shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
+    if (context_shm == NULL) {
+      out_err(LEVEL_CRITICAL,"I can't open context shm ! (child)\n");
+      exit(1);
+    }
+    context_list = context_shm->datazone;
+#endif /* __CYGWIN__ */
+
+    /* close unused fd */
+    close (mainConfig->mainSocket);
+    out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
+#endif /* WZD_MULTITHREAD */
+    
+    /* 1. create new context */
 /*  context = malloc(sizeof(wzd_context_t));*/
-  context = context_find_free(context_list);
-  if (!context) {
-    out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
-    close(newsock);
-    return;
-  }
+    context = context_find_free(context_list);
+    if (!context) {
+      out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
+      close(newsock);
+      return;
+    }
 
-  /* don't forget init is done before */
-  context->magic = CONTEXT_MAGIC;
-  context->controlfd = newsock;
-  context->hostip[0] = userip[0];
-  context->hostip[1] = userip[1];
-  context->hostip[2] = userip[2];
-  context->hostip[3] = userip[3];
+    /* don't forget init is done before */
+    context->magic = CONTEXT_MAGIC;
+    context->controlfd = newsock;
+    context->hostip[0] = userip[0];
+    context->hostip[1] = userip[1];
+    context->hostip[2] = userip[2];
+    context->hostip[3] = userip[3];
 
-  /* switch to tls mode ? */
+    /* switch to tls mode ? */
 #if SSL_SUPPORT
-  if (mainConfig->tls_type == TLS_IMPLICIT)
-    tls_auth("SSL",context);
-  context->ssl.data_mode = TLS_CLEAR;
+    if (mainConfig->tls_type == TLS_IMPLICIT)
+      tls_auth("SSL",context);
+    context->ssl.data_mode = TLS_CLEAR;
 #endif
 
 #ifdef WZD_MULTITHREAD
-  if (fork()==0) { /* child */
-#ifdef __CYGWIN__
-/* XXX FIXME with windows, shared memory is NOT inherited FIXME XXX */
-#endif /* __CYGWIN__ */
-    close (mainConfig->mainSocket);
-    out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
     context->pid_child = getpid();
 #endif
     clientThreadProc(context);
