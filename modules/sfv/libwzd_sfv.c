@@ -290,6 +290,8 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   sfv->comments[count_comments] = NULL;
   sfv->sfv_list[count_entries] = NULL;
 
+  fclose(in);
+
   return 0;
 }
 
@@ -380,6 +382,7 @@ int sfv_create(const char * sfv_file)
       ret = strlen(buffer);
       if ( write(fd_sfv,buffer,ret) != ret ) {
 	out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
+        closedir(dir);
        	return -1;
       }
       i++;
@@ -388,6 +391,7 @@ int sfv_create(const char * sfv_file)
     close(fd_sfv);
   }
 
+  closedir(dir);
   sfv_free(&sfv);
   return 0;
 }
@@ -925,7 +929,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	}
 	strncpy(buffer+len,context->last_command+5,2048-len);
 	ptr = strrchr(buffer,'/');
-	if (!ptr) return;
+	if (!ptr) { closedir(d); return; }
 	*ptr='\0';
 	if (user->group_num>0) {
 	  wzd_group_t * group;
@@ -946,7 +950,8 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
       /* create empty dir ? */
       mkdir (dir,0755);
     } /* complete ? */
-  }  
+    closedir(d);
+  }
 }
 
 /* parse dir to calculate release completion % */
