@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "WZD_USE_PCH" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd_core.def"
+# ADD LINK32 libwzd-base\release\libwzd_base.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd_core.def"
 # SUBTRACT LINK32 /pdb:none /debug
 
 !ELSEIF  "$(CFG)" == "libwzd_core - Win32 Debug"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WZD_USE_PCH" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd_core.def" /pdbtype:sept
+# ADD LINK32 libwzd-base\debug\libwzd_base.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd_core.def" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -103,10 +103,6 @@ SOURCE=..\src\inet_pton.c
 # Begin Source File
 
 SOURCE=.\libwzd_core.def
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\list.c
 # End Source File
 # Begin Source File
 
@@ -237,15 +233,7 @@ SOURCE=..\src\wzd_shm.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_strlcat.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_strptime.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_strtok_r.c
 # End Source File
 # Begin Source File
 
@@ -267,10 +255,6 @@ SOURCE=..\src\wzd_vfs.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\src\list.h
-# End Source File
 # Begin Source File
 
 SOURCE=..\src\wzd_action.h
@@ -365,15 +349,7 @@ SOURCE=..\src\wzd_shm.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_strlcat.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_strptime.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_strtok_r.h
 # End Source File
 # Begin Source File
 

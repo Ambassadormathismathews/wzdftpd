@@ -40,6 +40,7 @@ Name: "{app}\tools"
 
 Source: ..\debug\wzdftpd.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\debug\libwzd_core.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\libwzd\debug\libwzd.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\iconv\bin\libiconv-2.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: ignoreversion
