@@ -1,9 +1,68 @@
+#--- cvs commit
+# Sep, 13 2002
+- bugfix: fixed stupid critical bug where read & write functions were stored in mainConfig,
+    so all clients shared these functions - even ssl ones.
+- bugfix: forgot to add a \0 at end of file name in sfv_find_sfv
+
+# Sep, 06 2002
+- bugfix: fixed critical bug in data connection, message 150 was sent AFTER waiting
+    the connection to be opened by client, must be BEFORE.
+    Curiously the bug was only visible in ssl-data transfers.
+- tls: tls_auth_data_cont changed to loop around SSL_accept
+- SFV: no more trying to check sfv if sfv file not found or file not in sfv
+- VFS: fixed bug when 2 vfs have same prefix, comparison stopped after first match
+    (e.g: vfs and vfs2 were same dirs)
+
+# Sep, 04 2002
+- hooks: EVENT_PREUPLOAD, EVENT_POSTUPLOAD
+- internal SFV checker, checks file after upload
+
+# Aug, 30 2002
+- Bugfix: changed strtol to strtoul where needed
+- added SFV checking code (wzd_crc32.c), test ok
+
+# Aug, 29 2002
+- VFS: vpath is now visible in ls
+- VFS: fixed permission problem if vpath not in user's rootpath
+- site CHPASS user new_pass
+
+# Aug, 19 2002
+- first VFS implementation (Virtual FileSytem): path translation is ok,
+   but if vfs destination is not in user's root, no access; vpath is not
+   shown in 'ls' but is accessible by 'cd'
+
+# Aug, 16 2002
+- tag were renamed and seperated: myname/username, myip/userip, ...
+- added flags support
+- IP & homedir now hidden, except for FLAG_SEE_IP and FLAG_SEE_HOME
+- flag FLAG_HIDE to hide in who (except for self)
+- first HOOKS implementation (not very clean, some problems with parameters
+   (forced to cast functions :(
+- hooks: EVENT_LOGIN, EVENT_LOGOUT
+- fixed bug in dynamic memory (wzd_ip_t structs)
+
+# Aug, 12 2002
+- site BACKEND close / init /reload back_name: low lovel function to
+   manipulate the backend - mainly usefull for development (ability to
+   compile / change backend without stopping server)
+- many changes in plaintext backend: normalization of structs used,
+   ability to write users file, new fields (tagline,ip_allowed,max_idle_time),
+   bugfixes
+- idle time checking (per user)
+
+# Aug, 10 2002
+- IP checking added in backend, to do after-login check (only allowed ip,
+  default: reject
+
+# Aug, 08 2002
+- Pre-login ip checking, 3 options: disabled, allow/deny, deny/allow
+
 # Jul, 29 2002
 - specify PASV ip range
 - site checkperm user file perms: ensure user has a specific perm on a dir/file
 
 # Jul, 23 2002
-- fixed problems with these damn '\r' under windows
+- fixed problems with these damn '\r' under windows (config files)
 
 # Jul, 12 2002
 - site shutdown now kills the server IMMEDIATLY

@@ -23,6 +23,12 @@ int set_default_options(void)
   tempConfig.pasv_low_range = 1025;
   tempConfig.pasv_up_range = 65536;
 
+  tempConfig.login_pre_ip_check = 0;
+  tempConfig.login_pre_ip_allowed = NULL;
+  tempConfig.login_pre_ip_denied = NULL;
+
+  tempConfig.vfs = NULL;
+
   tempConfig.logfilename = malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");
 
@@ -46,9 +52,6 @@ int set_default_options(void)
 
   tempConfig.tls_type = TLS_NOTYPE;
 #endif
-
-  tempConfig.read_fct = clear_read;
-  tempConfig.write_fct = clear_write;
 
   tempConfig.shm_key = 0x1331c0d3;
 
@@ -100,6 +103,9 @@ int readConfigFile(const char *fileName)
       ptr++;
     if ((*ptr)=='#' || length<=1)	/* comment and empty lines */
       continue;
+
+    /* TODO if line contains a " and is not ended, it is a multi-line */
+    /* TODO replace special chars (\n,\t,\xxx,etc) */
 
     /* trim trailing space, because fgets keep a \n */
     while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
@@ -160,13 +166,13 @@ int parseVariable(const char *varname, const char *value)
 
   /* PORT (int)
    * 2 remarks:
-   * - use strtol (instead of atoi) to detect errors
+   * - use strtoul (instead of atoi) to detect errors
    * - base can be 10 (default), 16 ( 0xnum ) or 8 ( 0num )
    */
   if (strcasecmp("port",varname)==0)
   {
     errno = 0;
-    i = strtol(value,(char**)NULL, 0);
+    i = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     if (i < 1 || i > 65535) {
@@ -183,7 +189,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("max_threads",varname)==0)
   {
     errno = 0;
-    i = strtol(value,(char**)NULL, 0);
+    i = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     if (i < 1 || i > 2000) {
@@ -215,7 +221,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("max_ul_speed",varname)==0)
   {
     errno = 0;
-    l = strtol(value,(char**)NULL, 0);
+    l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     if (tempConfig.limiter_ul) {
@@ -231,7 +237,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("max_dl_speed",varname)==0)
   {
     errno = 0;
-    l = strtol(value,(char**)NULL, 0);
+    l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     if (tempConfig.limiter_dl) {
@@ -247,7 +253,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("pasv_low_range",varname)==0)
   {
     errno = 0;
-    l = strtol(value,(char**)NULL, 0);
+    l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     out_log(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
@@ -259,11 +265,35 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("pasv_up_range",varname)==0)
   {
     errno = 0;
-    l = strtol(value,(char**)NULL, 0);
+    l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     out_log(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
     tempConfig.pasv_up_range = l;
+    return 0;
+  }
+  /* LOGIN_PRE_IP_CHECK (int)
+   */
+  if (strcasecmp("login_pre_ip_check",varname)==0)
+  {
+    if ((*value != '0' && *value != '1' && *value != '2')
+           || *(value+1)!='\0')
+      return 1;
+    tempConfig.login_pre_ip_check = (*value) - '0';
+    return 0;
+  }
+  /* LOGIN_PRE_IP_ALLOWED (string)
+   */
+  if (strcasecmp("login_pre_ip_allowed",varname)==0)
+  {
+    if (ip_add(&tempConfig.login_pre_ip_allowed,value)) return 1;
+    return 0;
+  }
+  /* LOGIN_PRE_IP_DENIED (string)
+   */
+  if (strcasecmp("login_pre_ip_denied",varname)==0)
+  {
+    if (ip_add(&tempConfig.login_pre_ip_denied,value)) return 1;
     return 0;
   }
   /* SHM_KEY (unsigned long)
@@ -271,7 +301,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("shm_key",varname)==0)
   {
     errno = 0;
-    l = strtol(value,(char**)NULL, 0);
+    l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
     out_log(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
@@ -284,6 +314,8 @@ int parseVariable(const char *varname, const char *value)
   { strncpy(tempConfig.site_config.file_help,value,256); return 0; }
   if (strcasecmp("sitefile_rules",varname)==0)
   { strncpy(tempConfig.site_config.file_rules,value,256); return 0; }
+  if (strcasecmp("sitefile_user",varname)==0)
+  { strncpy(tempConfig.site_config.file_user,value,256); return 0; }
   if (strcasecmp("sitefile_who",varname)==0)
   { strncpy(tempConfig.site_config.file_who,value,256); return 0; }
 #if SSL_SUPPORT
@@ -322,6 +354,56 @@ int parseVariable(const char *varname, const char *value)
     return 0;
   }
 #endif
+  /* VFS : Virtual FileSystem
+   */
+  if (strcasecmp("vfs",varname)==0)
+  {
+    char virtual_path[1024];
+    char physical_path[1024];
+    char delimiter;
+    const char *ptr = value;
+    char *dstptr;
+    unsigned int dstlen;
+
+    if (strlen(value) < 5) return 1; /* basic precaution */
+    delimiter = *ptr++;
+
+    dstptr = virtual_path;
+    dstlen = 0;
+    while (*ptr) {
+      if (*ptr == delimiter) break; /* end */
+      if (dstlen++ == 1023) break; /* too long */
+      *dstptr++ = *ptr++;
+    }
+    if (!*ptr || *ptr != delimiter) return 1;
+    *dstptr = '\0';
+
+    dstptr = physical_path;
+    dstlen = 0;
+    ptr++;
+    while (*ptr) {
+      if (*ptr == delimiter) break; /* end */
+      if (dstlen++ == 1023) break; /* too long */
+      *dstptr++ = *ptr++;
+    }
+    if (!*ptr || *ptr != delimiter) return 1;
+    *dstptr = '\0';
+
+    vfs_add(&mainConfig->vfs,virtual_path,physical_path);
+
+    return 0;
+  } /* vfs */
+  /* INTERNAL SFV CHECKER
+   */
+  if (strcasecmp("internal_sfv_checker",varname)==0)
+  {
+    if (strcasecmp("1",value)==0) {
+      hook_add(&mainConfig->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
+      hook_add(&mainConfig->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
+    }
+    return 0;
+  }
+
   /* PERMISSIONS
    */
   if (varname[0] == '-')

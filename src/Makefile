@@ -3,7 +3,7 @@ include Makefile.config
 PLATFORM:=$(shell uname)
 
 ifeq ($(PLATFORM),Linux)
-CC=gcc-3.1
+CC=gcc-3.2
 else
 CC=gcc
 endif
@@ -13,7 +13,8 @@ COMMON_LIBS=
 
 OBJS=wzd_misc.o wzd_site.o wzd_socket.o wzd_backend.o wzd_messages.o \
   wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o \
-  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o
+  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o wzd_crc32.o \
+  wzd_mod.o wzd_vfs.o
 DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)

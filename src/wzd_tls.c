@@ -89,8 +89,9 @@ int tls_exit(void)
 
 /*************** tls_read ****************************/
 
-int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
+  wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
   int ret;
   int sslerr;
@@ -141,8 +142,9 @@ int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, w
 
 /*************** tls_write ***************************/
 
-int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
+  wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
   int ret;
   int sslerr;
@@ -249,8 +251,8 @@ int tls_auth_cont(wzd_context_t * context)
   context->ssl.data_ssl = NULL;
 
   /* set read/write functions */
-  mainConfig->read_fct = tls_read;
-  mainConfig->write_fct = tls_write;
+  context->read_fct = (read_fct_t)tls_read;
+  context->write_fct = (write_fct_t)tls_write;
 
   return 0;
 }
@@ -263,7 +265,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     context->ssl.data_ssl = SSL_new(mainConfig->tls_ctx);
   }
   else {
-fprintf(stderr,"tls_init_datamode: this should NOT be happening\n");
+    out_log(LEVEL_CRITICAL,"tls_init_datamode: this should NOT be happening\n");
     return 1;
   }
 
@@ -274,6 +276,7 @@ fprintf(stderr,"tls_init_datamode: this should NOT be happening\n");
 
   SSL_set_cipher_list(context->ssl.data_ssl, mainConfig->tls_cipher_list);
 
+  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
   if (SSL_set_fd(context->ssl.data_ssl, sock) != 1)
   /* FIXME PORT ? */
     out_log(LEVEL_CRITICAL,"SSL_set_fd error\n");
@@ -285,29 +288,48 @@ fprintf(stderr,"tls_init_datamode: this should NOT be happening\n");
 
 int tls_auth_data_cont(wzd_context_t * context)
 {
-  SSL * ssl = (SSL*) context->ssl.data_ssl;
+  SSL * ssl = context->ssl.data_ssl;
   int status, sslerr;
+  fd_set fd_r, fd_w;
+  struct timeval tv;
+  int fd,r;
 
-fprintf(stderr,"Entering tls_auth_data_cont\n");
-  status = SSL_accept(ssl);
-fprintf(stderr,"After SSL_accept\n");
-  sslerr = SSL_get_error(ssl,status);
-
-  if (status==1) {
-fprintf(stderr,"Data connection successfully switched to ssl mode\n");
-    context->ssl.data_mode = TLS_PRIV;
-  } else {
-    switch (sslerr) {
-      case SSL_ERROR_WANT_READ:
-fprintf(stderr,"SSL_ERROR_WANT_READ\n");
-        break;
-      case SSL_ERROR_WANT_WRITE:
-fprintf(stderr,"SSL_ERROR_WANT_WRITE\n");
-        break;
+  SSL_set_accept_state(ssl);
+  fd = SSL_get_fd(ssl);
+  do {
+    status = SSL_accept(ssl);
+    sslerr = SSL_get_error(ssl,status);
+  
+    if (status==1) {
+      out_err(LEVEL_INFO,"Data connection successfully switched to ssl mode\n");
+      context->ssl.data_mode = TLS_PRIV;
+      return 0;
+    } else {
+      FD_ZERO(&fd_r);
+      FD_ZERO(&fd_w);
+      tv.tv_usec = 0;
+      tv.tv_sec = 5;
+      switch (sslerr) {
+        case SSL_ERROR_WANT_READ:
+  	FD_SET(fd,&fd_r);
+out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_READ\n");
+          break;
+        case SSL_ERROR_WANT_WRITE:
+  	FD_SET(fd,&fd_w);
+out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
+          break;
+        default:
+          out_log(LEVEL_CRITICAL,"tls_auth_data_cont: error accepting: %s\n",
+            (char*)ERR_error_string(sslerr,NULL));
+          return 1;
+      }
+      r = select(fd+1, &fd_r, &fd_w, NULL, &tv);
     }
-    out_log(LEVEL_CRITICAL,"tls_auth_data_cont: error accepting: %s\n",
-      (char*)ERR_error_string(sslerr,NULL));
-    return 1;
+  } while (status == -1 && r != 0);
+
+  if (r == 0) {
+    out_err(LEVEL_CRITICAL,"tls_auth_data_cont failed\n");
+    return -1;
   }
 
   return 0;
@@ -323,6 +345,24 @@ int tls_close_data(wzd_context_t * context)
       SSL_shutdown(context->ssl.data_ssl);*/
   }
   context->ssl.data_ssl = NULL;
+
+  return 0;
+}
+
+/***************** tls_free **************************/
+
+int tls_free(wzd_context_t * context)
+{
+  if (context->ssl.data_ssl) {
+    SSL_free(context->ssl.data_ssl);
+/*    if (SSL_shutdown(context->ssl.data_ssl)==0)
+      SSL_shutdown(context->ssl.data_ssl);*/
+  }
+  context->ssl.data_ssl = NULL;
+  if (context->ssl.obj) {
+    SSL_free(context->ssl.obj);
+  }
+  context->ssl.obj = NULL;
 
   return 0;
 }

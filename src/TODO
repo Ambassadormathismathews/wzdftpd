@@ -1,11 +1,19 @@
 ## IN PROGRESS ##
 
+- SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
+- change login in wzd_tls.c to become non-blocking
+- FIND A SOLUTION FOR THIS MEMORY IN SHARED LIB !!!
+   for allowed_ip, context, etc
+- IP checking (per group)
+- per dir global permissions (to pass over rootpath): needed for vfs
+- LINUX: drop privileges after binding port
+- lock files when writing (to avoid concurrent writes)
+- VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
 - use options in ls
 - hide some filenames in list: .dirinfo .dirmsg
 - modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
   exist but path was converted
 - wzd_misc.c: access to limiter should be thread-safe !
-- shared memory: finish to implement windows part
 - bandwidth limit: add global limit / group limit
 - perms: implement permissions on global commands like delete, mkdir, site ...
   these perms will complete per-user rights
@@ -16,42 +24,51 @@
 
 ## PRIORITY ##
 
+- Load modules : .so + try to load win DLLs (using win API ...)
 - cookies
-- hide IP in site who, except for admin
-- add a flag for users: hide in WHO
+- anti-hammering: per ip/user, ban time
+- per-dir msg / default msg; SITE commands:
+    * site DIRMSG new_msg
+    * site APPENDMSG new_line
+    * site CONVERTMSG filename
+- add option to SITE SHUTDOWN, to kick (or not) users
+- possibility to regroup txt files in 1
+- hooks for events (on_file_upload, etc)
+- external hooks for events (call external programs)
 - ACL: ascendant recursion for permissions ? need to check if >= rootpath !
-- pass arguments for LIST
 - bandwith limitations: global / group / user
     + possibility of relatives restrictions: 75g == 75 % of the group limit (for 1 user)
 - implement permissions
-- create a .dirinfo in each dir, to implement permissions
 - dir perms are useless now ?!
 - finish implementation of ssl: explicit, port, data protection, buffer size
-- invert args in strncmp in wzd_ClientThread.c (risk segfault if buffer = PAS\0 ?? )
 - give choice between hard/soft chroot
-- use fork
-- pid_child is useless now (in wzd_context_t) - HOWTO DO AN ABORT NOW ?!
 
 
 ## NORMAL ##
 
+- add detection of ip for dynamic ip
+- 'include' directive in wzd.cfg: ability to split config file
+- message system for users: site msg and/or inline messages
 - add random in PASV port choose, to avoid always using the same
     will be REALLY usefull if we use fork()
+_ possibility to link a backend statically (instead of dll)
 - option : check certificate
 - option : check CA for certificate
 - option : check certificate only at login (not at port/pasv)
-- hide some variables in 'ls' ?
-- messages files
 
 ## I'LL THINK ABOUT IT ##
 
-- virtual directories
+- mount several dir in one (only for download)
 - rolling range of ips, with change date:
    e.g during one week use ip 1, then 1 week ip 2, etc.
-- add quota
+- statistics
+- quota per user/group
+- ratio: per user/group, credit (time to re-add ?)
 - add size limit for directories
 - XCRC command
-- sfv checker
+- sfv checker / sfv creation
 - dupe checker
 - default backend hard-coded ?
 - per-dir special permissions (glftpd like)
+- possibility to change user inline
+- cache permissions in memory (parent-process shm zone ?)

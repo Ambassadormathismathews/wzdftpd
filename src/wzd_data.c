@@ -72,7 +72,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   case TOK_RETR:
     n = fread(buffer,1,sizeof(buffer),context->current_action.current_file);
     if (n>0) {
-      ret = (mainConfig->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+      ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
 	fclose(context->current_action.current_file);
@@ -100,7 +100,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     }
     break;
   case TOK_STOR:
-    n = (mainConfig->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+    n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
       fwrite(buffer,1,n,context->current_action.current_file);
       context->current_action.bytesnow += n;
@@ -115,6 +115,10 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       ret = send_message(226,context);
       limiter_free(context->current_limiter);
       context->current_limiter = NULL;
+      FORALL_HOOKS(EVENT_POSTUPLOAD)
+        typedef int (*login_hook)(unsigned long, const char*, const char *);
+        ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,context->userinfo.username,context->current_action.arg);
+      END_FORALL_HOOKS
     }
     break;
   }

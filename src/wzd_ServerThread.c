@@ -1,7 +1,5 @@
 #include "wzd.h"
 
-#define WZD_MULTITHREAD
-
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
@@ -43,7 +41,7 @@ void cleanchild(int nr) {
 #ifdef DEBUG
 	  fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
 #endif
-	  context_list[i].magic = 0;
+          client_die(&context_list[i]);
 	  break;
 	}
       }
@@ -72,6 +70,12 @@ void context_init(wzd_context_t * context)
   context->datamode = DATA_PORT;
   context->current_action.token = TOK_UNKNOWN;
   context->current_limiter = NULL;
+#if SSL_SUPPORT
+  context->ssl.obj = NULL;
+  context->ssl.data_ssl = NULL;
+#endif
+  context->read_fct = (read_fct_t)clear_read;
+  context->write_fct = (write_fct_t)clear_write;
 }
 
 wzd_context_t * context_find_free(wzd_context_t * context_list)
@@ -81,6 +85,8 @@ wzd_context_t * context_find_free(wzd_context_t * context_list)
 
   while (i<HARD_USERLIMIT) {
     if (context_list[i].magic == 0) {
+      /* cleanup context */
+      context_init(context_list+i);
       return (context_list+i);
     }
 #ifdef DEBUG
@@ -94,6 +100,25 @@ fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",
   return context;
 }
 
+/* returns 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
+int global_check_ip_allowed(int userip[4])
+{
+  char ip[30];
+
+  snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
+  switch (mainConfig->login_pre_ip_check) {
+  case 1: /* order allow, deny */
+    if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
+    if (ip_inlist(mainConfig->login_pre_ip_denied,ip)==1) return 0;
+    break;
+  case 2: /* order deny, allow */
+    if (ip_inlist(mainConfig->login_pre_ip_denied,ip)==1) return 0;
+    if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
+    break;
+  }
+  return -1;
+}
+
 void login_new(int socket_accept_fd)
 {
   unsigned long remote_host;
@@ -102,9 +127,11 @@ void login_new(int socket_accept_fd)
   int newsock;
   wzd_context_t	* context;
   unsigned char *p;
+#ifdef WZD_MULTIPROCESS
 #ifdef __CYGWIN__
   unsigned long shm_key = mainConfig->shm_key;
 #endif /* __CYGWIN__ */
+#endif /* WZD_MULTIPROCESS */
 
   newsock = socket_accept(mainConfig->mainSocket, &remote_host, &remote_port);
   if (newsock <0)
@@ -120,13 +147,24 @@ void login_new(int socket_accept_fd)
   userip[2]=*p++;
   userip[3]=*p++;
 
-  /* TODO here we can check IP BEFORE starting session */
+  /* Here we check IP BEFORE starting session */
+  /* do this iff login_pre_ip_check is enabled */
+  if (mainConfig->login_pre_ip_check &&
+        global_check_ip_allowed(userip)<=0) { /* IP was rejected */
+    /* FIXME we should not be in raw mode here ... */
+    char * reject_msg = "421-Your ip was rejected\r\n";
+    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,context);
+    close(newsock);
+    out_log(LEVEL_HIGH,"Failed login from %d.%d.%d.%d: global ip rejected\n",
+      userip[0],userip[1],userip[2],userip[3]);
+    return;
+  }
 
   out_log(LEVEL_NORMAL,"Connection opened from %d.%d.%d.%d\n",
     userip[0],userip[1],userip[2],userip[3]);
 
   /* start child process */
-#ifdef WZD_MULTITHREAD
+#ifdef WZD_MULTIPROCESS
   if (fork()==0) { /* child */
     /* 0. get shared memory zones */
 #ifdef __CYGWIN__
@@ -148,7 +186,7 @@ void login_new(int socket_accept_fd)
     /* close unused fd */
     close (mainConfig->mainSocket);
     out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
-#endif /* WZD_MULTITHREAD */
+#endif /* WZD_MULTIPROCESS */
     
     /* 1. create new context */
 /*  context = malloc(sizeof(wzd_context_t));*/
@@ -174,11 +212,11 @@ void login_new(int socket_accept_fd)
     context->ssl.data_mode = TLS_CLEAR;
 #endif
 
-#ifdef WZD_MULTITHREAD
+#ifdef WZD_MULTIPROCESS
     context->pid_child = getpid();
 #endif
     clientThreadProc(context);
-#ifdef WZD_MULTITHREAD
+#ifdef WZD_MULTIPROCESS
     exit (0);
   } else { /* parent */
     close (newsock);
@@ -198,7 +236,6 @@ fprintf(stderr,"Received signal %d\n",signum);
 #endif
   serverMainThreadExit(0);
 }
-
 
 /*********************** SERVER MAIN THREAD *****************************/
 
@@ -226,7 +263,7 @@ void serverMainThreadProc(void *arg)
     exit (1);
   }
 
-  out_log(LEVEL_INFO,"Thread %ld ok\n",pthread_self());
+  out_log(LEVEL_INFO,"Process %d ok\n",getpid());
 
   /* catch broken pipe ! */
 #ifdef __SVR4
@@ -241,7 +278,7 @@ void serverMainThreadProc(void *arg)
   signal(SIGTERM,interrupt);
   signal(SIGKILL,interrupt);
 
-#ifdef POSIX
+#ifdef POSIX /* NO, winblows is NOT posix ! */
   /* set fork() limit */
   {
     struct rlimit rlim;
@@ -249,10 +286,15 @@ void serverMainThreadProc(void *arg)
     getrlimit(RLIMIT_NOFILE, &rlim);
     rlim.rlim_cur = rlim.rlim_max;
     setrlim(RLIMIT_NOFILE, &rlim);
+
+    /* no core file ! */
+    getrlim(RLIMIT_CORE, &rlim);
+    rlim.rlim_cur = 0;
+    setrlim(RLIMIT_CORE, &rlim);
   }
 #endif /* POSIX */
 
-  ret = mainConfig->mainSocket = socket_make(&mainConfig->port);
+  ret = mainConfig->mainSocket = socket_make(&mainConfig->port,5);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -262,8 +304,10 @@ void serverMainThreadProc(void *arg)
   /* sets start time, for uptime */
   time(&server_start);
 
-  /* now the blocking call: accept */
-  out_log(LEVEL_INFO,"Entering accept mode (main)\n");
+  out_log(LEVEL_INFO,WZD_VERSION_STR " started\n");
+
+  /* now waiting for a connection */
+  out_log(LEVEL_FLOOD,"Waiting for connections (main)\n");
 
   mainConfig->serverstop=0;
   while (!mainConfig->serverstop) {
@@ -293,6 +337,33 @@ void serverMainThreadProc(void *arg)
   serverMainThreadExit(0);
 }
 
+void free_config(wzd_config_t * config)
+{
+  wzd_ip_t * current_ip, * next_ip;
+
+  limiter_free(mainConfig->limiter_ul);
+  limiter_free(mainConfig->limiter_dl);
+
+  current_ip = mainConfig->login_pre_ip_allowed;
+  while (current_ip) {
+    next_ip = current_ip->next_ip;
+    free(current_ip->regexp);
+    free(current_ip);
+    current_ip = next_ip;
+  }
+
+  current_ip = mainConfig->login_pre_ip_denied;
+  while (current_ip) {
+    next_ip = current_ip->next_ip;
+    free(current_ip->regexp);
+    free(current_ip);
+    current_ip = next_ip;
+  }
+
+  fclose(mainConfig->logfile);
+  wzd_shm_free(mainConfig_shm);
+}
+
 void serverMainThreadExit(int retcode)
 {
   out_log(LEVEL_INFO,"Server exiting, retcode %d\n",retcode);
@@ -300,12 +371,11 @@ void serverMainThreadExit(int retcode)
 #if SSL_SUPPORT
   tls_exit();
 #endif
+  hook_free(&mainConfig->hook);
+  vfs_free(&mainConfig->vfs);
 /*  free(context_list);*/
-  limiter_free(mainConfig->limiter_ul);
-  limiter_free(mainConfig->limiter_dl);
   wzd_shm_free(context_shm);
-  fclose(mainConfig->logfile);
   /* free(mainConfig); */
-  wzd_shm_free(mainConfig_shm);
+  free_config(mainConfig);
   exit (retcode);
 }

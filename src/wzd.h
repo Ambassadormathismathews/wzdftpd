@@ -1,6 +1,8 @@
 #ifndef __WZD__
 #define __WZD__
 
+/*#define WZD_MULTIPROCESS*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +18,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #define INVALID_SOCKET -1
-#define	closesocket close
 
 #if SSL_SUPPORT
 #include <openssl/ssl.h>
@@ -32,6 +33,8 @@
 #include <sys/stat.h>
 #include <pthread.h>
 #include <dlfcn.h>
+
+#define	KEY_BELL	"\007"
 
 /* colors */
 
@@ -80,15 +83,13 @@ typedef enum {
 #define	LIST_SHOW_HIDDEN	0x0010
 typedef unsigned long list_type_t;
 
-typedef enum {
-  DATA_PORT,
-  DATA_PASV
-} data_mode_t;
-
 /* important - must not be fffff or d0d0d0, etc.
  * to make distinction with unallocated zone
  */
 #define	CONTEXT_MAGIC	0x0aa87d45
+
+typedef int (*read_fct_t)(int,char*,unsigned int,int,int,void *);
+typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 
 typedef struct {
   unsigned long	magic;
@@ -100,6 +101,8 @@ typedef struct {
   int	        pid_child;
   int	        portsock;
   int	        pasvsock;
+  read_fct_t	read_fct;
+  write_fct_t	write_fct;
   int	        dataport;
   int	        dataip[4];
   unsigned long	resume;
@@ -109,6 +112,7 @@ typedef struct {
   wzd_action_t	current_action;
   char		last_command[2048];
   wzd_bw_limiter * current_limiter;
+  time_t	idle_time_start;
 #if SSL_SUPPORT
   wzd_ssl_t   	ssl;
 #endif
@@ -116,9 +120,6 @@ typedef struct {
 
 
 void set_action(wzd_context_t * context, unsigned int token, const char *arg);
-
-typedef int (*read_fct_t)(int,char*,unsigned int,int,int,wzd_context_t *);
-typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,wzd_context_t *);
 
 typedef struct {
   int		serverstop;
@@ -128,12 +129,15 @@ typedef struct {
   char *	logfilemode;
   FILE *	logfile;
   int		loglevel;
-  read_fct_t	read_fct;
-  write_fct_t	write_fct;
   int		mainSocket;
   int		port;
   unsigned long	pasv_low_range;
   unsigned long	pasv_up_range;
+  int		login_pre_ip_check;
+  wzd_ip_t	*login_pre_ip_allowed;
+  wzd_ip_t	*login_pre_ip_denied;
+  wzd_vfs_t	*vfs;
+  wzd_hook_t	*hook;
 #if SSL_SUPPORT
   char		tls_certificate[256];
   char          tls_cipher_list[256];
@@ -169,9 +173,27 @@ extern wzd_context_t *	context_list;
 #include "wzd_init.h"
 #include "wzd_data.h"
 #include "wzd_perm.h"
+#include "wzd_mod.h"
+#include "wzd_vfs.h"
+#include "wzd_crc32.h"
 #include "wzd_ServerThread.h"
 #include "wzd_ClientThread.h"
 #include "wzd_site.h"
 #include "ls.h"
+
+/* Version */
+#define	WZD_VERSION_NUM	"0.1"
+
+#ifdef WZD_MULTIPROCESS
+#define	WZD_MP	" mp "
+#else /* WZD_MULTIPROCESS */
+#define	WZD_MP	" up "
+#endif /* WZD_MULTIPROCESS */
+
+#ifdef __CYGWIN__
+#define	WZD_VERSION_STR	"wzdFTPd cygwin" WZD_MP WZD_VERSION_NUM
+#else /* __CYGWIN__ */
+#define	WZD_VERSION_STR	"wzdFTPd linux" WZD_MP WZD_VERSION_NUM
+#endif /* __CYGWIN__ */
 
 #endif /* __WZD__ */

@@ -3,12 +3,19 @@
 .----------------.----------------------------------------------.------------.
 |    command     |                  description                 | users can  |
 .----------------.----------------------------------------------.------------.
+| site help      | pfff what you are reading !                  | r,s,n,g    |
+| site rules     | show site rules                              | r,s,n,g    |
 | site uptime    | give you information about actual uptime of  |            |
 |                | this server                                  | r,s,n,g    |
 | site who       | show who's online                            | r,s,n,g    |
+| site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
 | site chmod     | change access rights on a file or directory  | r,s        |
 | site chown     | change the owner of a file or directory      | r,s        |
+| site checkperm | checks access for a user on a file/dir       | r,s        |
+|                | site checkperm user file rights              | r,s        |
+| site user      | (username) show user info                    | r,s        |
 | site shutdown  | shutdown the server remotely                 | r          |
+| site backend   | (init/close/reload) backend_name             | r          |
 .----------------.----------------------------------------------.------------.
-| command : site help (r,s,n,g users) give you these informations            |
+| note: permissions on commands can be changed by server admin               |
 .----------------------------------------------------------------------------.

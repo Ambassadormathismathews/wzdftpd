@@ -12,7 +12,9 @@
 # groups definitions
 [GROUPS]
 privgroup	admin
+
 privgroup	anonymous
+max_idle_time=10
 
 # users definitions
 # users MUST begin by line name=<>
@@ -24,6 +26,10 @@ pass=tobNnnhhJY2Fs
 uid=501
 groups=admin
 rights=0xffffffff
+tagline=v0dk4 kNigHt
+ip_allowed=*
+max_idle_time=0
+flags=IstH
 
 name=guest
 home=/home/pollux/tmp
@@ -32,6 +38,8 @@ uid=200
 groups=nogroup
 rights=0x03
 max_dl_speed=100000
+ip_allowed=*
+max_idle_time=90
 
 # per hosts rights
 [HOSTS]

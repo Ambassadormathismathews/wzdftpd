@@ -167,7 +167,7 @@ void limiter_free(wzd_bw_limiter *l)
 
 
 /* cookies */
-int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
+int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context)
 {
   unsigned long length=0;
   wzd_context_t * context = void_context;
@@ -178,6 +178,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
   char * cookie;
   unsigned int cookielength;
   char c;
+  wzd_context_t * param_context=NULL;
 
   if (buffersize > 4095) {
 #ifdef DEBUG
@@ -223,38 +224,72 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
     cookielength = 0;
     cookie = NULL;
 
-    /* %username */
-    if (strncmp(srcptr,"username",8)==0) {
-      cookie = context->userinfo.username;
-      cookielength = strlen(cookie);
-      srcptr += 8; /* strlen("username"); */
-    }
-    /* %userip */
-    if (strncmp(srcptr,"userip",6)==0) {
-      snprintf(tmp_buffer,4096,"%d.%d.%d.%d",context->hostip[0],
-	  context->hostip[1],context->hostip[2],context->hostip[3]);
-      cookie = tmp_buffer;
-      cookielength = strlen(cookie);
-      srcptr += 6; /* strlen("userip"); */
-    }
-    /* %usergroup */
-    if (strncmp(srcptr,"usergroup",9)==0) {
-      wzd_group_t group;
-      if ( (context->userinfo.group_num > 0) && (backend_find_group(context->userinfo.groups[0],&group)==0) ) {
-        snprintf(tmp_buffer,4096,"%s",group.groupname);
-      } else {
-	strcpy(tmp_buffer,"nogroup");
+    if (strncmp(srcptr,"my",2)==0)
+    { param_context=context; srcptr += 2; }
+    if (strncmp(srcptr,"user",4)==0)
+    { param_context=void_param; srcptr += 4; }
+
+    if (param_context) {
+      /* name */
+      if (strncmp(srcptr,"name",4)==0) {
+        cookie = param_context->userinfo.username;
+        cookielength = strlen(cookie);
+        srcptr += 4; /* strlen("name"); */
       }
-      cookie = tmp_buffer;
-      cookielength = strlen(cookie);
-      srcptr += 9; /* strlen("usergroup"); */
-    }
-    /* %lastcommand */
-    if (strncmp(srcptr,"lastcommand",11)==0) {
-      cookie = context->last_command;
-      cookielength = strlen(cookie);
-      srcptr += 11; /* strlen("lastcommand"); */
-    }
+      /* ip */
+      if (strncmp(srcptr,"ip",2)==0) {
+        if (context->userinfo.flags && strchr(context->userinfo.flags,FLAG_SEE_IP)) {
+        snprintf(tmp_buffer,4096,"%d.%d.%d.%d",param_context->hostip[0],
+  	  param_context->hostip[1],param_context->hostip[2],
+          param_context->hostip[3]);
+        } else { /* not allowed to see */
+          strcpy(tmp_buffer,"xxx.xxx.xxx.xxx");
+        }
+        cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 2; /* strlen("ip"); */
+      }
+      /* home */
+      if (strncmp(srcptr,"home",4)==0) {
+        if (context->userinfo.flags && strchr(context->userinfo.flags,FLAG_SEE_IP)) {
+          cookie = param_context->userinfo.rootpath;
+        } else { /* user not allowed to see */
+          strcpy(tmp_buffer,"- some where -");
+          cookie = tmp_buffer;
+        }
+        cookielength = strlen(cookie);
+        srcptr += 4; /* strlen("home"); */
+      }
+      /* group */
+      if (strncmp(srcptr,"group",5)==0) {
+        wzd_group_t group;
+        if ( (param_context->userinfo.group_num > 0) && (backend_find_group(param_context->userinfo.groups[0],&group)==0) ) {
+          snprintf(tmp_buffer,4096,"%s",group.groupname);
+        } else {
+          strcpy(tmp_buffer,"nogroup");
+        }
+        cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("group"); */
+      }
+      /* tag */
+      if (strncmp(srcptr,"tag",3)==0) {
+        if (strlen(param_context->userinfo.tagline) > 0) {
+          cookie = param_context->userinfo.tagline;
+        } else {
+          strcpy(tmp_buffer,"no tagline set");
+          cookie = tmp_buffer;
+        }
+        cookielength = strlen(cookie);
+        srcptr += 3; /* strlen("tag"); */
+      }
+      /* lastcmd */
+      if (strncmp(srcptr,"lastcmd",7)==0) {
+        cookie = param_context->last_command;
+        cookielength = strlen(cookie);
+        srcptr += 7; /* strlen("lastcmd"); */
+      }
+    } /* if param_context */
     /* end of cookies */
 
 
@@ -331,4 +366,159 @@ unsigned long right_text2word(const char * text)
   } while (*ptr);
 
   return word;
+}
+
+
+/* IP allowing */
+int ip_add(wzd_ip_t **list, const char *newip)
+{
+  wzd_ip_t * new_ip_t, *insert_point;
+
+  /* of course this should never happen :) */
+  if (list == NULL) return -1;
+
+  if (strlen(newip) < 1) return -1;
+  if (strlen(newip) > 256) return -1; /* upper limit for an hostname */
+
+  new_ip_t = malloc(sizeof(wzd_ip_t));
+  new_ip_t->regexp = malloc(strlen(newip)+1);
+  strcpy(new_ip_t->regexp,newip);
+  new_ip_t->next_ip = NULL;
+
+  /* tail insertion, be aware that order is important */
+  insert_point = *list;
+  if (insert_point == NULL) {
+    *list = new_ip_t;
+  } else {
+    while (insert_point->next_ip != NULL)
+      insert_point = insert_point->next_ip;
+
+    insert_point->next_ip = new_ip_t;
+  }
+
+  return 0;
+}
+
+/* dst can be composed of wildcards */
+int my_str_compare(const char * src, const char *dst)
+{
+  const char * ptr_src;
+  const char * ptr_dst;
+  char c;
+
+  ptr_src = src;
+  ptr_dst = dst;
+
+  while ((c = *ptr_src)) {
+    if (*ptr_dst=='*') { /* wildcard * */
+      if (*(ptr_dst+1)=='\0') return 1; /* terminated with a *, ok */
+      ptr_dst++;
+      c = *ptr_dst;
+      while (*ptr_src && c!=*ptr_src)
+        ptr_src++;
+      if (!*ptr_src) break; /* try next ip */
+      continue;
+    }
+    if (*ptr_dst=='?') { /* wildcard ?, match one char and continue */
+      ptr_src++;
+      ptr_dst++;
+      continue;
+    }
+    if (*ptr_dst!=c) break; /* try next ip */
+    ptr_dst++;
+    ptr_src++;
+  }
+  
+  /* test if checking was complete */
+  if (*ptr_dst == '\0') return 1;
+
+  return 0;
+}
+  
+
+int ip_inlist(wzd_ip_t *list, const char *ip)
+{
+  wzd_ip_t * current_ip;
+  const char * ptr_ip;
+  char * ptr_test;
+  struct hostent *host;
+
+  current_ip = list;
+  while (current_ip) {
+    ptr_ip = ip;
+    ptr_test = current_ip->regexp;
+    if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+
+    if (*ptr_test == '+') {
+      char buffer[30];
+      unsigned char * host_ip;
+
+      ptr_test++;
+      host = gethostbyname(ptr_test);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+        current_ip = current_ip->next_ip;
+        continue;
+      }
+
+      host_ip = (unsigned char*)(host->h_addr);
+      snprintf(buffer,29,"%d.%d.%d.%d",
+        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
+out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+      if (my_str_compare(buffer,ip)==1)
+        return 1;
+    } else
+    if (*ptr_test == '-') {
+      unsigned char host_ip[5];
+      int i1, i2, i3, i4;
+
+      ptr_test++;
+      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
+        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
+          ptr_ip);
+        return 0;
+      }
+      host_ip[0] = i1;
+      host_ip[1] = i2;
+      host_ip[2] = i3;
+      host_ip[3] = i4;
+
+      host = gethostbyaddr(host_ip,4,AF_INET);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+        current_ip = current_ip->next_ip;
+        continue;
+      }
+
+      /* XXX do not forget the alias list ! */
+out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
+      if (my_str_compare(host->h_name,ptr_test)==1)
+        return 1;
+    } else
+    { /* ip does not begin with + or - */
+out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
+      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
+    } /* ip does not begin with + or - */
+  
+    current_ip = current_ip->next_ip;
+  } /* while current_ip */
+  
+  return 0;
+}
+
+void ip_free(wzd_ip_t *list)
+{
+  wzd_ip_t * current, *next;
+
+  if (!list) return;
+  current = list;
+
+  while (current) {
+    next = current->next_ip;
+
+    free(current->regexp);
+    free(current);
+
+    current = next;
+  }
 }

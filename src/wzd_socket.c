@@ -20,7 +20,7 @@ char * ul2a(unsigned long q)
 /* bind socket at port, if port = 0 picks first free and set it
  * returns -1 or socket
  */
-int socket_make(int *port)
+int socket_make(int *port, int nListen)
 {
   struct sockaddr_in sai;
   int sock, c;
@@ -48,7 +48,7 @@ int socket_make(int *port)
   c = sizeof(struct sockaddr_in);
   getsockname(sock, (struct sockaddr *)&sai, &c);
 
-  listen(sock,5);
+  listen(sock,nListen);
 
   *port = ntohs(sai.sin_port);
   return sock;

@@ -44,6 +44,63 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   fprintf(stderr,"list(): %s\n",directory);
 #endif*/
 
+/* XXX show vfs if in current dir */
+  {
+    wzd_vfs_t * vfs = mainConfig->vfs;
+
+    while (vfs) {
+      if (strncmp(vfs->virtual_dir,directory,strlen(directory))==0) {
+	char * ptr = vfs->virtual_dir + strlen(directory);
+	if (strchr(ptr,'/')==NULL) {
+	  if (stat(vfs->physical_dir,&st)<0) {
+	    vfs = vfs->next_vfs;
+	    continue;
+	  }
+        /* date */
+        
+        timeval=time(NULL);
+        ntime=localtime(&timeval);
+        i=ntime->tm_year;
+        
+        ntime=localtime(&st.st_mtime);
+        
+        if (ntime->tm_year==i)
+          strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+        else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+        
+        /* permissions */
+        
+        if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
+            !S_ISREG(st.st_mode)) {
+	  vfs = vfs->next_vfs;
+	  continue;
+	}
+
+        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13ld %s %s\r\n",
+                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+                st.st_mode & S_IRUSR ? 'r' : '-',
+                st.st_mode & S_IWUSR ? 'w' : '-',
+                st.st_mode & S_IXUSR ? 'x' : '-',
+                st.st_mode & S_IRGRP ? 'r' : '-',
+                st.st_mode & S_IWGRP ? 'w' : '-',
+                st.st_mode & S_IXGRP ? 'x' : '-',
+                st.st_mode & S_IROTH ? 'r' : '-',
+                st.st_mode & S_IWOTH ? 'w' : '-',
+                st.st_mode & S_IXOTH ? 'x' : '-',
+                (int)st.st_nlink,
+                context->userinfo.username,
+                "ftp",
+                st.st_size,
+                datestr,
+                ptr);
+                
+        if (!callback(sock,context,line)) break;
+	}
+      }
+      vfs = vfs->next_vfs;
+    }
+  }
+  
   while ((entr=readdir(dir))!=NULL) {
     if (entr->d_name[0]=='.') {
       if (strcmp(entr->d_name,".")==0 ||

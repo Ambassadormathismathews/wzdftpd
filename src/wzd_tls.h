@@ -9,11 +9,12 @@ int tls_auth (const char *type, wzd_context_t * context);
 int tls_auth_cont(wzd_context_t * context);
 int tls_init_datamode(int sock, wzd_context_t * context);
 int tls_close_data(wzd_context_t * context);
+int tls_free(wzd_context_t * context);
 
 int tls_auth_data_cont(wzd_context_t * context);
 
-int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context);
-int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context);
+int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
 
 #endif
 

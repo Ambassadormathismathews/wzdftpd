@@ -36,7 +36,7 @@ void init_default_messages(void)
 
   msg_tab[501] = "%s";
   msg_tab[502] = "Command not implemented.";
-  msg_tab[530] = "Not logged in.";
+  msg_tab[530] = "%s"; /* Not logged in." */
   msg_tab[550] = "%s: %s";
   msg_tab[553] = "Requested action not taken: %s";
 }

@@ -21,7 +21,7 @@ typedef struct _wzd_file_t {
 
 int _default_perm(unsigned long wanted_right, wzd_user_t * user)
 {
-  return (( wanted_right & user->perms ) == 0);
+  return (( wanted_right & user->userperms ) == 0);
 }
 
 void free_file_recursive(wzd_file_t * file)
@@ -259,10 +259,10 @@ int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_
 
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
-
+/*
 fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
 fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_file);
-
+*/
 
   ret = readPermFile(perm_filename,&file_list);
   if (ret) { /* no permissions file */
@@ -361,6 +361,13 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   /* check if file is in user's root path */
   if (strncmp(dir,user->rootpath,strlen(user->rootpath))!=0)
   {
+    /* if the file is in a global vfs, it does not need to be in user's rootpath */
+    wzd_vfs_t * vfs = mainConfig->vfs;
+    while(vfs) {
+      if (strncmp(dir,vfs->physical_dir,strlen(vfs->physical_dir))==0)
+	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
+      vfs = vfs->next_vfs;
+    }
     return 1;
   }
 

@@ -76,8 +76,9 @@ int identify_token(const char *token)
 
 /*************** clear_read **************************/
 
-int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
+/*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
   int save_errno;
   fd_set fds, efds;
@@ -113,8 +114,9 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
 
 /*************** clear_write *************************/
 
-int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
+/*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
 /*fprintf(stderr,".");
 fflush(stderr);*/
@@ -134,7 +136,7 @@ int send_message(int code, wzd_context_t * context)
 #ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = (mainConfig->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -152,7 +154,7 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 #ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = (mainConfig->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return 0;
 }
@@ -166,7 +168,7 @@ int send_message_raw(const char *msg, wzd_context_t * context)
 /*#ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",msg);
 #endif*/
-  ret = (mainConfig->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -191,44 +193,194 @@ unsigned char * getmyip(int sock)
   return myip;
 }
 
+/***************** client_die ************************/
+
+void client_die(wzd_context_t * context)
+{
+  int i;
+  int ret;
+
+  FORALL_HOOKS(EVENT_LOGOUT)
+    typedef int (*login_hook)(unsigned long, const char*);
+    ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,context->userinfo.username);
+  END_FORALL_HOOKS
+
+  if (context->userinfo.flags)
+    free(context->userinfo.flags);
+#ifdef DEBUG
+  if (context->current_limiter) {
+out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
+  }
+#endif
+
+  limiter_free(context->current_limiter);
+  for (i=0; i<context->userinfo.ip_allowed_num; i++)
+  {
+    free(context->userinfo.ip_allowed[i]);
+  }
+  context->userinfo.ip_allowed_num = 0;
+  context->magic = 0;
+
+  out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
+  close(context->datafd);
+  close(context->controlfd);
+}
+
 /*************** check_timeout ***********************/
 
-void check_timeout(wzd_context_t * context)
+int check_timeout(wzd_context_t * context)
 {
-  time_t t;
+  time_t t, delay;
+  wzd_group_t group;
+  int i, ret;
 
-  /* check the timeouts of all 3 phases */
+  /* check the timeout of control connection */
   t = time(NULL);
+  delay = t - context->idle_time_start;
+
+  /* do NOT check timeout if transfer in progress ? */
+
+  /* if user has 'idle' flag we check nothing */
+  if (context->userinfo.flags && strchr(context->userinfo.flags,FLAG_IDLE))
+    return 0;
+
+  /* first we check user specific timeout */
+  if (context->userinfo.max_idle_time>0) {
+    if (delay > context->userinfo.max_idle_time) {
+      /* TIMEOUT ! */
+      send_message_with_args(421,context,"Timeout, closing connection");
+      client_die(context);
+#ifdef WZD_MULTIPROCESS
+      exit(0);
+#else /* WZD_MULTIPROCESS */
+      return 1;
+#endif /* WZD_MULTIPROCESS */
+    }
+  }
+
+  /* next we check for all groups */
+  for (i=0; i<context->userinfo.group_num; i++) {
+    ret = backend_find_group(context->userinfo.groups[i],&group);
+    if (ret) continue;
+    if (group.max_idle_time > 0) {
+      if (delay > group.max_idle_time) {
+        /* TIMEOUT ! */
+        send_message_with_args(421,context,"Timeout, closing connection");
+        client_die(context);
+#ifdef WZD_MULTIPROCESS
+        exit(0);
+#else /* WZD_MULTIPROCESS */
+        return 1;
+#endif /* WZD_MULTIPROCESS */
+      }
+    } /* if max_idle_time*/
+  }
+
+  return 0;
 }
 
 /*************** checkpath ***************************/
+
+char *stripdir(char * dir, char *buf, int maxlen)
+{
+  char * in, * out;
+  char * last; 
+  int ldots;
+        
+  in   = dir;
+  out  = buf;
+  last = buf + maxlen;
+  ldots = 0; 
+  *out  = 0;
+        
+  if (*in != '/') {
+    if (getcwd(buf, maxlen - 2) ) {
+      out = buf + strlen(buf) - 1;
+      if (*out != '/') *(++out) = '/';
+      out++;
+    }       
+    else
+      return NULL;
+  }               
+
+  while (out < last) {
+    *out = *in;
+
+    if (*in == '/')
+    {
+      while (*(++in) == '/') ;
+        in--;
+    }
+
+    if (*in == '/' || !*in)
+    {
+      if (ldots == 1 || ldots == 2) {
+        while (ldots > 0 && --out > buf)
+        {
+          if (*out == '/')
+            ldots--;
+        }
+        *(out+1) = 0;
+      }
+      ldots = 0;
+
+    } else if (*in == '.') {
+      ldots++;
+    } else {
+      ldots = 0;
+    }
+
+    out++;
+
+    if (!*in)
+      break;
+                        
+    in++;
+  }       
+        
+  if (*in) {
+    errno = ENOMEM;
+    return NULL;
+  }       
+        
+  while (--out != buf && (*out == '/' || !*out)) *out=0;
+    return buf;
+}       
+
 
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 {
   char allowed[2048];
   char cmd[2048];
-
+  
   sprintf(allowed,"%s/",context->userinfo.rootpath);
   sprintf(cmd,"%s%s",context->userinfo.rootpath,context->currentpath);
+  if (cmd[strlen(cmd)-1] != '/')
+    strcat(cmd,"/");
   if (wanted_path) {
     if (wanted_path[0]!='/') {
       strcat(cmd,wanted_path);
     } else {
       strcpy(cmd,allowed);
       strcat(cmd,wanted_path+1);
-    }
-  }
-#ifdef DEBUG
+    } 
+  } 
+/*#ifdef DEBUG
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
-#endif
-  if (!realpath(cmd,path)) return 1;
-#ifdef DEBUG
+#endif*/
+/*  if (!realpath(cmd,path)) return 1;*/
+  if (!stripdir(cmd,path,2048)) return 1;
+/*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
-#endif
-  strcat(path,"/");
+#endif*/
+  if (path[strlen(path)-1] != '/')
+    strcat(path,"/");
   strcpy(cmd,path);
   cmd[strlen(allowed)]='\0';
+  /* check if user is allowed to even see the path */
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
+  /* in the case of VFS, we need to convert here to a realpath */
+  vfs_replace(mainConfig->vfs,path,2048);
   return 0;
 }
 
@@ -262,8 +414,20 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
 
   if (!stat(path,&buf)) {
-    if (S_ISDIR(buf.st_mode))
-      strncpy(context->currentpath,&path[strlen(allowed)-1],2048);
+    if (S_ISDIR(buf.st_mode)) {
+      char buffer[2048], buffer2[2048];
+      if (wanted_path[0] == '/') { /* absolute path */
+        strcpy(buffer,wanted_path);
+      } else {
+        strcpy(buffer,context->currentpath);
+        if (buffer[strlen(buffer)-1] != '/')
+          strcat(buffer,"/");
+        strcat(buffer,wanted_path);
+      }
+      stripdir(buffer,buffer2,2047);
+/*out_err(LEVEL_INFO,"DIR: %s NEW DIR: %s\n",buffer,buffer2);*/
+      strncpy(context->currentpath,buffer2,2047);
+    }
     else return 1;
   }
   else return 1;
@@ -306,7 +470,6 @@ int waitaccept(wzd_context_t * context)
       close(sock);
       send_message_with_args(501,context,"PASV timeout");
       return -1;
-/*      exit (0);*/
     }
   } while (!FD_ISSET(sock,&fds));
 
@@ -315,12 +478,12 @@ int waitaccept(wzd_context_t * context)
     close(sock);
     send_message_with_args(501,context,"PASV timeout");
       return -1;
-/*      exit (0);*/
   }
 
 #if SSL_SUPPORT
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_init_datamode(sock, context);
+/*    ret = tls_auth_data_cont(context);*/
 #endif
 
   close (context->pasvsock);
@@ -359,7 +522,7 @@ int list_callback(int sock, wzd_context_t * context, char *line)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
 #endif
-    (mainConfig->write_fct)(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
+    (context->write_fct)(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
 
   return 1;
 }
@@ -431,20 +594,20 @@ fprintf(stderr,"PARAM: '%s'\n",param);
     strcpy(mask,cmask);
   }
 
-#ifdef DEBUG
+/*#ifdef DEBUG
 printf("path before: '%s'\n",cmd);
-#endif
+#endif*/
 
   if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
     return 1;
   }
 
-#ifdef DEBUG
+/*#ifdef DEBUG
 printf("path: '%s'\n",path);
-#endif
+#endif*/
 
-/*  ret = backend_chek_perm(&context->userinfo,RIGHT_LIST,path);*/ /* CHECK PERM */
+  /* CHECK PERM */
   ret = _checkPerm(path,RIGHT_LIST,&context->userinfo);
 
   if (ret) { /* no access */
@@ -463,19 +626,20 @@ printf("path: '%s'\n",path);
       return 1;
     }
 
+    ret = send_message(150,context); /* about to open data connection */
     sock = socket_connect(addr,context->dataport);
     if (sock == -1) {
       ret = send_message(425,context);
       return 1;
     }
   } else { /* PASV ! */
+    ret = send_message(150,context); /* about to open data connection */
     if ((sock=waitaccept(context)) <= 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
       return 1;
     }
   }
 
-  ret = send_message(150,context); /* about to open data connection */
 
   if (strlen(mask)==0) strcpy(mask,"*");
 
@@ -561,12 +725,14 @@ int do_rmdir(char * param, wzd_context_t * context)
   if (stat(path,&s)) return 1;
 
   /* check permissions */
+#if 0
 #ifndef __CYGWIN__
   if (s.st_uid != context->userinfo.uid) {
     /* check if group or others permissions are ok */
     return 1;
   }
 #endif
+#endif /* 0 */
 
 #ifdef DEBUG
 fprintf(stderr,"Removing directory '%s'\n",path);
@@ -654,31 +820,6 @@ int do_retr(char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Invalid file name");
     return 1;
   }
-  
-  if (context->pasvsock <= 0) { /* PORT ! */
-    /* IP-check needed (FXP ?!) */
-    snprintf(cmd,2048,"%d.%d.%d.%d",
-	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-    addr = inet_addr(cmd);
-    if ((int)addr==-1) {
-      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-      ret = send_message_with_args(501,context,cmd);
-      return 1;
-    }
-
-    sock = socket_connect(addr,context->dataport);
-    if (sock == -1) {
-      ret = send_message(425,context);
-      return 1;
-    }
-  } else { /* PASV ! */
-    if ((sock=waitaccept(context)) <= 0) {
-      ret = send_message_with_args(501,context,"PASV connection failed");
-      return 1;
-    }
-  }
-
-  context->datafd = sock;
 
   /* trailing / ? */
   if (path[strlen(path)-1]=='/')
@@ -707,16 +848,44 @@ int do_retr(char *param, wzd_context_t * context)
   fseek(fp,0,SEEK_END);
   bytestot = ftell(fp);
   bytesnow = byteslast=context->resume;
-  /* FIXME */
-/*  sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
-    param, bytestot);*/
-  ret = send_message(150,context);
+
+  if (context->pasvsock <= 0) { /* PORT ! */
+    /* IP-check needed (FXP ?!) */
+    snprintf(cmd,2048,"%d.%d.%d.%d",
+	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+    addr = inet_addr(cmd);
+    if ((int)addr==-1) {
+      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+      ret = send_message_with_args(501,context,cmd);
+      return 1;
+    }
+
+    /* FIXME */
+/*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
+      param, bytestot);*/
+    ret = send_message(150,context);
+    sock = socket_connect(addr,context->dataport);
+    if (sock == -1) {
+      ret = send_message(425,context);
+      return 1;
+    }
+  } else { /* PASV ! */
+    /* FIXME */
+/*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
+      param, bytestot);*/
+    ret = send_message(150,context);
+    if ((sock=waitaccept(context)) <= 0) {
+      ret = send_message_with_args(501,context,"PASV connection failed");
+      return 1;
+    }
+  }
+
+  context->datafd = sock;
+
   fseek(fp,context->resume,SEEK_SET);
 
-#ifdef DEBUG
-fprintf(stderr,"Download: User %s starts downloading %s (%ld bytes)\n",
-  context->userinfo.username,param,bytestot);
-#endif
+  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%ld bytes)\n",
+    context->userinfo.username,param,bytestot);
 
   context->current_action.token = TOK_RETR;
   strncpy(context->current_action.arg,path,4096);
@@ -749,8 +918,8 @@ int do_stor(char *param, wzd_context_t * context)
   if (!param) return 1;
 
   /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
-  if (strrchr(param,'/'))
-    param = strrchr(param,'/')+1;
+/* XXX if (strrchr(param,'/'))
+    param = strrchr(param,'/')+1; XXX */
   if (strlen(param)==0) return 1;
 
   strcpy(cmd,".");
@@ -803,6 +972,13 @@ fprintf(stderr,"Resolved: %s\n",path);
       fclose(fp);
       return 2;
     }*/
+
+  if ((fp=file_open(path,"w",RIGHT_STOR,context))==NULL) { /* XXX allow access to files being uploaded ? */
+    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
+    close(sock);
+    return 1;
+  }
+
   if (context->pasvsock <= 0) { /* PORT ! */
     /* IP-check needed (FXP ?!) */
     snprintf(cmd,2048,"%d.%d.%d.%d",
@@ -814,12 +990,20 @@ fprintf(stderr,"Resolved: %s\n",path);
       return 1;
     }
 
+    /* FIXME */
+/*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
+      param);*/
+    ret = send_message(150,context);
     sock = socket_connect(addr,context->dataport);
     if (sock == -1) {
       ret = send_message(425,context);
       return 1;
     }
   } else { /* PASV ! */
+    /* FIXME */
+/*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
+      param);*/
+    ret = send_message(150,context);
     if ((sock=waitaccept(context)) <= 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
       return 1;
@@ -828,21 +1012,16 @@ fprintf(stderr,"Resolved: %s\n",path);
 
   context->datafd = sock;
 
-  if ((fp=file_open(path,"w",RIGHT_STOR,context))==NULL) { /* XXX allow access to files being uploaded ? */
-    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-    close(sock);
-    return 1;
-  }
-
   /* XXX - test: change owner while file is opened ?! XXX */
   file_chown (path,context->userinfo.username,NULL,context);
 
   bytesnow = byteslast = 0;
-  /* FIXME */
-/*  sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
-    param);*/
-  ret = send_message(150,context);
   fseek(fp,context->resume,SEEK_SET);
+
+  FORALL_HOOKS(EVENT_PREUPLOAD)
+    typedef int (*login_hook)(unsigned long, const char*, const char *);
+    ret = (*(login_hook)hook->hook)(EVENT_PREUPLOAD,context->userinfo.username,path);
+  END_FORALL_HOOKS
 
 #ifdef DEBUG
 fprintf(stderr,"Download: User %s starts uploading %s\n",
@@ -1015,17 +1194,19 @@ void do_rnto(const char *filename, wzd_context_t * context)
 
 int do_pass(const char *username, const char * pass, wzd_context_t * context)
 {
-  char buffer[4096];
+/*  char buffer[4096];*/
   int ret;
 
-  ret = (*mainConfig->backend.back_validate_pass)(username,pass,&context->userinfo);
+  ret = backend_validate_pass(username,pass,&context->userinfo);
   if (ret) {
     /* pass was not accepted */
     return 1;  /* FIXME - abort thread */
   }
   /* normalize rootpath */
-  if (!realpath(context->userinfo.rootpath,buffer)) return 1;
-  strncpy(context->userinfo.rootpath,buffer,1024);
+
+/*  if (!realpath(context->userinfo.rootpath,buffer)) return 1;
+  strncpy(context->userinfo.rootpath,buffer,1024);*/
+
   /* initial dir */
   strcpy(context->currentpath,"/");
   if (do_chdir(context->currentpath,context))
@@ -1046,7 +1227,21 @@ int do_user(const char *username, wzd_context_t * context)
 {
   int ret;
 
-  ret = (*mainConfig->backend.back_validate_login)(username,&context->userinfo);
+  ret = backend_validate_login(username,&context->userinfo);
+  
+  return ret;
+}
+
+/*************** do_user_ip **************************/
+
+int do_user_ip(const char *username, wzd_context_t * context)
+{
+  int ret;
+  char ip[30];
+  const char *userip = context->hostip;
+
+  snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
+  ret = backend_validate_ip(username,ip);
   
   return ret;
 }
@@ -1068,7 +1263,7 @@ int do_login_loop(wzd_context_t * context)
 
   while (1) {
     /** wait response **/
-    ret = (mainConfig->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
+    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
 fprintf(stderr,"Connection closed or timeout\n");
@@ -1090,13 +1285,19 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
     switch (command) {
     case TOK_USER:
       if (user_ok) { /* USER command issued 2 times */
-	ret = send_message(530,context);
+	ret = send_message_with_args(421,context,"USER command issued twice");
 	return 1;
       }
       token = strtok_r(NULL," \t\r\n",&ptr);
       ret = do_user(token,context);
       if (ret) { /* user was not accepted */
-	ret = send_message(530,context);
+	ret = send_message_with_args(421,context,"User rejected");
+	return 1;
+      }
+      /* validate ip for user */
+      ret = do_user_ip(token,context);
+      if (ret) { /* user was not accepted */
+	ret = send_message_with_args(421,context,"IP not allowed");
 	return 1;
       }
       username = strdup(token);
@@ -1105,13 +1306,13 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
       break;
     case TOK_PASS:
       if (!user_ok || pass_ok) {
-	ret = send_message(530,context);
+	ret = send_message_with_args(421,context,"Incorrect login sequence");
 	return 1;
       }
       token = strtok_r(NULL," \t\r\n",&ptr);
       ret = do_pass(username,token,context);
       if (ret) { /* pass was not accepted */
-	ret = send_message(530,context);
+	ret = send_message_with_args(421,context,"Password rejected");
 	return 1;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
@@ -1155,7 +1356,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 #endif
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
-      ret = send_message(530,context);
+      ret = send_message_with_args(530,context,"Invalid login sequence");
       return 1;
     } /* switch (command) */
 
@@ -1189,7 +1390,6 @@ void clientThreadProc(void *arg)
   int p1,p2;
   unsigned long i,j;
   char buffer[BUFFER_LEN];
-  char buffer2[BUFFER_LEN];
   char * param;
   int save_errno;
   int sockfd;
@@ -1213,11 +1413,16 @@ void clientThreadProc(void *arg)
   }
 
   /* user+pass ok */
+  FORALL_HOOKS(EVENT_LOGIN)
+    typedef int (*login_hook)(unsigned long, const char*);
+    ret = (*(login_hook)hook->hook)(EVENT_LOGIN,context->userinfo.username);
+  END_FORALL_HOOKS
   ret = send_message(230,context);
 
 
   /* main loop */
   exitclient=0;
+  context->idle_time_start = time(NULL);
 
   while (!exitclient) {
     save_errno = 666;
@@ -1237,8 +1442,7 @@ void clientThreadProc(void *arg)
     tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
     ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);
     save_errno = errno;
-    /* check timeout */
-    check_timeout(context);
+
     if (FD_ISSET(sockfd,&efds)) {
       if (save_errno == EINTR) continue;
       out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));
@@ -1262,12 +1466,14 @@ void clientThreadProc(void *arg)
       }
       /* nothing to read */
       /* XXX CHECK FOR TIMEOUT: control & data if needed */
+      /* check timeout */
+      if (check_timeout(context)) break;
       continue;
     }
-    ret = (mainConfig->read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
+    ret = (context->read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
-    if (ret==0) {
+    if (ret==0 || ret==-1) {
       out_log(LEVEL_INFO,"Host disconnected improperly!\n");
       exitclient=1;
       break;
@@ -1284,6 +1490,7 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	buffer[length-- -1] = '\0';
       strncpy(context->last_command,buffer,2048);
     }
+    context->idle_time_start = time(NULL);
 
     /* 2. get next token */
     ptr = &buffer[0];
@@ -1313,7 +1520,7 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	    break;
 	  case TOK_PORT:
 	    if (context->pasvsock) {
-	      closesocket(context->pasvsock);
+	      close(context->pasvsock);
 	      context->pasvsock = 0;
 	    }
 	    /* context->resume = 0; */
@@ -1386,6 +1593,8 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	      do_list(token,LIST_TYPE_SHORT,context);
 	    break;
 	  case TOK_MKD:
+          {
+            char buffer2[BUFFER_LEN];
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    /* TODO check perms !! */
 	    if (do_mkdir(token,context)) { /* CAUTION : do_mkdir handle the case token==NULL or strlen(token)==0 ! */
@@ -1398,7 +1607,10 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	      ret = send_message_with_args(257,context,buffer2,"");
 	    }
 	    break;
+          }
 	  case TOK_RMD:
+          {
+            char buffer2[BUFFER_LEN];
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    /* TODO check perms !! */
 	    if (do_rmdir(token,context)) { /* CAUTION : do_rmdir handle the case token==NULL or strlen(token)==0 ! */
@@ -1410,6 +1622,7 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	      ret = send_message_with_args(258,context,buffer2,"");
 	    }
 	    break;
+          }
 	  case TOK_RETR:
 	    if (context->current_action.token != TOK_UNKNOWN) {
 	      ret = send_message(491,context);
@@ -1533,13 +1746,9 @@ fprintf(stderr,"RAW: '%s'",buffer);
 
 /*	Sleep(2000);*/
 
-  context->magic = 0;
-#ifdef DEBUG
-  if (context->current_limiter) {
-fprintf(stderr,"clientThread: limiter is NOT null at exit\n");
-  }
-#endif /* DEBUG */
+      client_die(context);
 
-  out_log(LEVEL_INFO,"Client dying (socket %d)\n",sockfd);
-  close(sockfd);
+#if SSL_SUPPORT
+      tls_free(context);
+#endif
 }

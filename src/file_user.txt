@@ -1,0 +1,4 @@
+%username
+%userhome
+%usergroup
+%usertag

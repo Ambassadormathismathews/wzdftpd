@@ -16,11 +16,15 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check);
 void limiter_free(wzd_bw_limiter *l);
 
 /* cookies */
-int cookies_replace(char * buffer, unsigned int buffersize, void * void_context);
+int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context);
 
 /* used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text);
 
+/* IP allowing */
+int ip_add(wzd_ip_t **list, const char *newip);
+int ip_inlist(wzd_ip_t *list, const char *ip);
+void ip_free(wzd_ip_t *list);
 
 #endif /* __WZD_MISC__ */
 

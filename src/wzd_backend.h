@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
+#include "wzd_structs.h"
+
 /* IMPORTANT:
  *
  * all validation functions have the following return code:
@@ -14,54 +16,15 @@
  */
 
 
-#define	RIGHT_NONE	0x00000000
-
-#define	RIGHT_LIST	0x00000001
-#define	RIGHT_RETR	0x00000002
-#define	RIGHT_STOR	0x00000004
-
-
-/* other rights - should not be used directly ! */
-#define	RIGHT_CWD	0x00010000
-#define	RIGHT_RNFR	0x00020000
-
-typedef unsigned long wzd_perm_t;
-
-typedef struct limiter
-{
-  int maxspeed;
-  struct timeval current_time;
-  int bytes_transfered;
-} wzd_bw_limiter;
-
 typedef struct {
-  char			username[256];
-  char			rootpath[1024];
-  char			tagline[256];
-  unsigned int		uid;
-  unsigned int          group_num;
-  unsigned int          groups[256];
-  struct timeval	max_idle_time;	/* not used yet */
-  wzd_perm_t		perms;		/* not used yet */
-  unsigned long		flags;		/* not used yet */
-  unsigned long		max_ul_speed;
-  unsigned long		max_dl_speed;	/* bytes / sec */
-} wzd_user_t;
-
-typedef struct {
-  char                  groupname[256];
-  wzd_perm_t            groupperms;
-  unsigned long         max_ul_speed;
-  unsigned long         max_dl_speed;
-} wzd_group_t;
-
-
-typedef struct {
+  char name[1024];
   void * handle;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
+  int (*back_validate_ip)(const char *, const char *);
   int (*back_find_user) (const char *, wzd_user_t *);
   int (*back_find_group) (int, wzd_group_t *);
+  int (*back_chpass) (const char *, const char *);
   int (*back_mod_user) (const char *, wzd_user_t *);
   int (*back_mod_group) (int, wzd_group_t *);
   int (*back_commit_changes) (void);
@@ -79,6 +42,10 @@ typedef struct {
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
 
+/* int FCN_VALIDATE_IP(const char *name, const char *ip) */
+#define	FCN_VALIDATE_IP		wzd_validate_ip
+#define	STR_VALIDATE_IP		"wzd_validate_ip"
+
 /* int FCN_FIND_USER(const char *name, wzd_user_t * user) */
 #define	FCN_FIND_USER		wzd_find_user
 #define	STR_FIND_USER	 	"wzd_find_user"
@@ -87,6 +54,9 @@ typedef struct {
 #define	FCN_FIND_GROUP		wzd_find_group
 #define	STR_FIND_GROUP	 	"wzd_find_group"
 
+/* int FCN_CHPASS(const char *username, const char *new_pass) */
+#define	FCN_CHPASS		wzd_chpass
+#define	STR_CHPASS	 	"wzd_chpass"
 
 /* int FCN_MOD_USER(const char *name, wzd_user_t * user) */
 #define	FCN_MOD_USER		wzd_mod_user
@@ -105,8 +75,22 @@ int backend_validate(const char *backend);
 
 int backend_init(const char *backend);
 
+int backend_close(const char *backend);
+
+int backend_reload(const char *backend);
+
 int backend_find_user(const char *name, wzd_user_t * user);
 
 int backend_find_group(int num, wzd_group_t * group);
+
+int backend_validate_login(const char *name, wzd_user_t * user);
+
+int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user);
+
+int backend_validate_ip(const char *name, const char *ip);
+
+int backend_chpass(const char *username, const char *new_pass);
+
+int backend_commit_changes(const char *backend);
 
 #endif /* __WZD_BACKEND__ */
