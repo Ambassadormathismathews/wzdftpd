@@ -82,31 +82,36 @@ site change &lt;user&gt; &lt;field&gt; &lt;value&gt;
  <tbody>
  <row><entry>Field</entry><entry>Description</entry></row>
  
- <row><entry>name</entry><entry>This will change the user's login name.
- <emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
- <row><entry>pass</entry><entry>This will change the user's password.
- This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
- <row><entry>homedir</entry><entry>This will change the user's homedir.</entry></row>
- <row><entry>tagline</entry><entry>User's tagline.
- This is similar to the <link linkend='site_tagline'>site tagline</link> command</entry></row>
- <row><entry>group</entry><entry>Add / remove user from group.
- <link linkend='site_chgrp'>site chgrp</link> command is better, as it can
- handle several group changes in one command</entry></row>
- <row><entry>max_idle</entry><entry>Set the maximum idle time for this user.
- See the <link linkend='site_idle'>site idle</link> command</entry></row>
- <row><entry>perms</entry><entry>Set user's default perms (All: 0xffffffff, retrieve only:
- 0x03).
- <emphasis>This command will change</emphasis></entry></row>
  <row><entry>flags</entry><entry>Set user's flags.
   This is similar to the <link linkend='site_flags'>site flags</link> command
   For flags info see <link linkend='table_flags'>Flags Table</link>.
   You can use '+flag' or '-flag' to add or remove flags, otherwise
   it will replace all existing flags.</entry></row>
+ <row><entry>group</entry><entry>Add / remove user from group.
+ <link linkend='site_chgrp'>site chgrp</link> command is better, as it can
+ handle several group changes in one command</entry></row>
+ <row><entry>homedir</entry><entry>This will change the user's homedir.</entry></row>
+ <row><entry>leech_slots</entry><entry>Number of leech accounts a gadmin is allowed
+ to add (done by "site change user ratio 0").
+ <emphasis>(GAdmin only)</emphasis></entry></row>
+ <row><entry>max_idle</entry><entry>Set the maximum idle time for this user.
+ See the <link linkend='site_idle'>site idle</link> command</entry></row>
  <row><entry>max_ul</entry><entry>Upstream bandwidth control in bytes/sec
  (0 = Unlimited).</entry></row>
  <row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
- <row><entry>ratio</entry><entry>User ratio</entry></row>
+ <row><entry>name</entry><entry>This will change the user's login name.
+ <emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
  <row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
+ <row><entry>pass</entry><entry>This will change the user's password.
+ This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
+ <row><entry>perms</entry><entry>Set user's default perms (All: 0xffffffff, retrieve only:
+ 0x03).
+ <emphasis>This command will change</emphasis></entry></row>
+ <row><entry>ratio</entry><entry>User ratio</entry></row>
+ <row><entry>tagline</entry><entry>User's tagline.
+ This is similar to the <link linkend='site_tagline'>site tagline</link> command</entry></row>
+ <row><entry>user_slots</entry><entry>Number of users a gadmin is allowed
+ to add. <emphasis>(GAdmin only)</emphasis></entry></row>
  </tbody>
  </tgroup>
 </informaltable>

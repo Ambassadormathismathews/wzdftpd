@@ -73,6 +73,13 @@ static char value[2048];
 
 #define	D_NUM		1
 
+
+
+
+int FCN_FIND_GROUP(const char *name, wzd_group_t * group);
+
+
+
 static const char *tab_directives[] = {
   "privgroup"
 };
@@ -533,16 +540,24 @@ fprintf(stderr,"Invalid uid %s\n",value);
       user_pool[user_count-1].userperms = num | RIGHT_CWD;
     }
     else if (strcmp("groups",varname)==0) {
+      unsigned int _gid;
+      char * group_ptr;
+
       /* first group */
-      ptr = strtok(value,",");
+      ptr = strtok_r(value,",",&group_ptr);
       if (!ptr) continue;
-      i = 0;
-      while (i < group_count) {
-        if (strcmp(value,group_pool[i].groupname)==0) {
-          user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = group_pool[i].gid; /* ouch */
-          break;
+      /* we use exported function: FCN_FIND_GROUP */
+      _gid = FCN_FIND_GROUP(ptr,NULL);
+      if (_gid != -1) {
+        user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = _gid; /* ouch */
+      }
+
+      while ( (ptr = strtok_r(NULL,",",&group_ptr)) )
+      {
+        _gid = FCN_FIND_GROUP(ptr,NULL);
+        if (_gid != -1) {
+          user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = _gid; /* ouch */
         }
-        i++;
       }
     } /* "groups" */
     else if (strcmp("tagline",varname)==0) {

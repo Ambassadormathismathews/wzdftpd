@@ -141,6 +141,7 @@ typedef enum {
   COOKIE_USERFILES_UL,
   COOKIE_USERFLAGS,
   COOKIE_USERGROUP,
+  COOKIE_USERGROUPS,
   COOKIE_USERHOME,
   COOKIE_USERID,
   COOKIE_USERIP,
@@ -344,6 +345,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}files_dl	BEGIN(INITIAL); return COOKIE_USERFILES_DL;
 <sc_cook>{C_USER}files_ul	BEGIN(INITIAL); return COOKIE_USERFILES_UL;
 <sc_cook>{C_USER}flags		BEGIN(INITIAL); return COOKIE_USERFLAGS;
+<sc_cook>{C_USER}groups		BEGIN(INITIAL); return COOKIE_USERGROUPS;
 <sc_cook>{C_USER}group		BEGIN(INITIAL); return COOKIE_USERGROUP;
 <sc_cook>{C_USER}home		BEGIN(INITIAL); return COOKIE_USERHOME;
 <sc_cook>{C_USER}id		BEGIN(INITIAL); return COOKIE_USERID;
@@ -1356,6 +1358,34 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         {
           group = GetGroupByID(current_user->groups[0]);
           snprintf(internalbuffer,IBUFSIZE,"%s",group->groupname);
+        }
+        else
+        {
+          snprintf(internalbuffer,IBUFSIZE,"nogroup");
+        }
+        cookie_ptr = internalbuffer;
+        cookie_length = strlen(cookie_ptr);
+      }
+      break;
+    case COOKIE_USERGROUPS:
+      get_cookie_format(yytext,&padding);
+      {
+        wzd_group_t * group;
+        length = IBUFSIZE;
+        cookie_ptr = internalbuffer;
+        i = 0;
+        if (current_user && current_user->group_num > 0) {
+          while (current_user && i < current_user->group_num)
+          {
+            group = GetGroupByID(current_user->groups[i]);
+            if (group) {
+              snprintf(cookie_ptr,length,"%s ",group->groupname);
+              length -= strlen(group->groupname) + 1;
+              cookie_ptr += strlen(group->groupname) + 1;
+            }
+            i++;
+          }
+          internalbuffer[strlen(internalbuffer)-1] = '\0';
         }
         else
         {
