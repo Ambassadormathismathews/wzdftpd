@@ -140,7 +140,7 @@ void do_site_chown(char *command_line, wzd_context_t * context)
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-    buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
     _setPerm(buffer,0,username,0,0,context);
   }
 
@@ -199,7 +199,7 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-    buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
     _setPerm(buffer,username,0,0,str_perms,context);
   }
 
@@ -276,7 +276,7 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
     return;
   }
   if (uid == -1) userptr = &userstruct;
-  else userptr = &mainConfig->user_list[uid];
+  else userptr = GetUserByID(uid);
 
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(filename,buffer,context)) {
@@ -284,7 +284,7 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
     return;
   }
  
-  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
 
   if (_checkPerm(buffer,word,userptr)==0) {
     strcpy(buffer,"right ok");
@@ -349,8 +349,8 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
               strcmp(tab_context[i].userinfo.username,context->userinfo.username)!=0 /* do not hide to self ! */
 #endif
 #endif
-          if (mainConfig->user_list[tab_context[i].userid].flags &&
-            strchr(mainConfig->user_list[tab_context[i].userid].flags,FLAG_HIDDEN) &&
+          if (GetUserByID(tab_context[i].userid)->flags &&
+            strchr(GetUserByID(tab_context[i].userid)->flags,FLAG_HIDDEN) &&
             tab_context[i].userid != context->userid /* do not hide to self ! */
               )
           { i++; continue; }
@@ -384,7 +384,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       } /* while */
       i=0;
       while (i<HARD_DEF_USER_MAX) {
-	if (mainConfig->user_list[i].username[0] != '\0') {
+	if (GetUserByID(i)->username[0] != '\0') {
 #if 0
 #if BACKEND_STORAGE
           if (tab_context[i].userinfo.flags &&
@@ -393,8 +393,8 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
 #endif
 #endif
 #if 0
-          if (mainConfig->user_list[i].flags &&
-            strchr(mainConfig->user_list[i].flags,FLAG_HIDDEN)
+          if (GetUserByID(i)->flags &&
+            strchr(GetUserByID(i)->flags,FLAG_HIDDEN)
             /* XXX do not hide to self ! */
               )
           { i++; continue; }
@@ -481,7 +481,7 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
     do_site_help("sfv",context);
     return;
   }
-  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   sfv_init(&sfv);
 
   if (strcasecmp(command,"add")==0) {
@@ -540,7 +540,7 @@ void do_site_user(char *command_line, wzd_context_t * context)
 /*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_user,&user_context,context);
 /*#endif
-  do_site_print_file(mainConfig->site_config.file_user,&mainConfig->user_list[uid],context);*/
+  do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),context);*/
 }
 
 /********************* do_site_utime ***********************/
@@ -567,7 +567,7 @@ void do_site_utime(char *command_line, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   ptr = command_line;
   filename = strtok_r(command_line," \t\r\n",&ptr);
@@ -619,7 +619,7 @@ void do_site_utime(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(501,context,"File does not exists");
     return;
   }
-  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   ret = _checkPerm(buffer,RIGHT_RNFR,user);  
   if (ret) {
     ret = send_message_with_args(501,context,"Access denied");
@@ -826,7 +826,8 @@ int do_site(char *command_line, wzd_context_t * context)
 
   FORALL_HOOKS(EVENT_SITE)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
-    ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
+    if (hook->hook)
+      ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
   END_FORALL_HOOKS
 
   if (ret)
