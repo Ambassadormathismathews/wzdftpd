@@ -146,6 +146,9 @@
 /* Define to 1 if you have the `strpbrk' function. */
 #undef HAVE_STRPBRK
 
+/* System has the strptime function. */
+#undef HAVE_STRPTIME
+
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
@@ -158,7 +161,7 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
-/* Define to 1 if you have the `strtoull' function. */
+/* System has the strtoull function. */
 #undef HAVE_STRTOULL
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
