@@ -20,14 +20,35 @@ char * ul2a(unsigned long q)
 /* bind socket at port, if port = 0 picks first free and set it
  * returns -1 or socket
  */
-int socket_make(int *port, int nListen)
+int socket_make(const char *ip, int *port, int nListen)
 {
   struct sockaddr_in sai;
   unsigned int c;
   int sock;
 
+  if (ip==NULL || strcmp(ip,"*")==0)
+    sai.sin_addr.s_addr = htonl(INADDR_ANY);
+  else
+  {
+    struct hostent* host_info;
+    // try to decode dotted quad notation
+    if(!inet_aton(ip, &sai.sin_addr))
+    {
+      const char *real_ip;
+      real_ip = ip;
+      if (real_ip[0]=='+') real_ip++;
+      // failing that, look up the name
+      if( (host_info = gethostbyname(real_ip)) == NULL)
+      {
+	out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
+	return -1;
+      }
+      memcpy(&sai.sin_addr, host_info->h_addr, host_info->h_length);
+   }
+  }
+
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
-    out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
     return -1;
   }
 
@@ -37,7 +58,6 @@ int socket_make(int *port, int nListen)
 /*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
 
   sai.sin_family = PF_INET;
-  sai.sin_addr.s_addr = htonl(INADDR_ANY);
   sai.sin_port = htons(*port); /* any port */
 
   if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))) {
@@ -48,6 +68,10 @@ int socket_make(int *port, int nListen)
 
   c = sizeof(struct sockaddr_in);
   getsockname(sock, (struct sockaddr *)&sai, &c);
+  {
+    unsigned char myip[4];
+    memcpy(myip,&sai.sin_addr,sizeof(myip));
+  }
 
   listen(sock,nListen);
 
