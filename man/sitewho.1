@@ -13,20 +13,23 @@ command shows process information for all active wzdftpd connections,
 and a count of all connected users off of each server.
 .SH OPTIONS
 .TP 12
-.B \-h
-Display a short usage description, including all available options.
-.TP
-.BI \-u " XXX"
+.BI \-\-user,\-u " XXX"
 Use username \fIXXX\fP instead of wzdftpd. 
 .TP
-.BI \-w " XXX"
+.BI \-\-pass,\-w " XXX"
 Use password \fIXXX\fP with the username.
 .TP
-.BI \-h " XXX"
+.BI \-\-host,\-h " XXX"
 Connect to the specified host.
 .TP
-.BI \-p " XXX"
+.BI \-\-port,\-p " XXX"
 Employ the specified port number for connecting to the server.
+.TP
+.BI \-\-secure,\-s
+Enforce a secure connection, aborts if negotiation fails.
+.TP
+.BI \-\-insecure,\-t
+Do not try to negotiate a secure connection.
 .TP
 .TP
 .PD
