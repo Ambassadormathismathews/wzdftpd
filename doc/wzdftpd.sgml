@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "/usr/local/share/sgml/docbook/4.1/docbook.dtd" [
+               "docbook/dtd/4.2/docbookx.dtd" [
 <!ENTITY introduction SYSTEM "introduction.sgml">
 <!ENTITY config SYSTEM "config.sgml">
 <!ENTITY commands_reference SYSTEM "commands_reference.sgml">
