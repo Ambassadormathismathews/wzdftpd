@@ -69,8 +69,10 @@ int server_diagnose(void);
 /* if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply
  */
-void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);
-void format_message(int code, unsigned int length, char *buffer, ...);
+void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list argptr);
+void format_message(int code, unsigned int *plength, char **pbuffer, ...);
+/*void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);*/
+/*void format_message(int code, unsigned int length, char *buffer, ...);*/
 
 /* Bandwidth limitation */
 
@@ -102,10 +104,10 @@ int ip_inlist(wzd_ip_t *list, const char *ip);
 void ip_free(wzd_ip_t *list);
 
 int user_ip_add(wzd_user_t * user, const char *newip);
-int user_ip_inlist(wzd_user_t * user, const char *ip);
+int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);
 
 int group_ip_add(wzd_group_t * group, const char *newip);
-int group_ip_inlist(wzd_group_t * group, const char *ip);
+int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
 
 /* wrappers to user list */
 wzd_user_t * GetUserByID(unsigned int id);

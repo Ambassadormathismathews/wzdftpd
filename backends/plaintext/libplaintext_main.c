@@ -88,43 +88,6 @@ unsigned int find_directive(const char *name)
   return D_NONE;
 }
 
-#if 0
-/* dst can be composed of wildcards */
-int my_str_compare(const char * src, const char *dst)
-{
-  const char * ptr_src;
-  const char * ptr_dst;
-  char c;
-
-  ptr_src = src;
-  ptr_dst = dst;
-
-  while ((c = *ptr_src)) {
-    if (*ptr_dst=='*') { /* wildcard * */
-      if (*(ptr_dst+1)=='\0') return 1; /* terminated with a *, ok */
-      ptr_dst++;
-      c = *ptr_dst;
-      while (*ptr_src && c!=*ptr_src)
-        ptr_src++;
-      if (!*ptr_src) break; /* try next ip */
-      continue;
-    }
-    if (*ptr_dst=='?') { /* wildcard ?, match one char and continue */
-      ptr_src++;
-      ptr_dst++;
-      continue;
-    }
-    if (*ptr_dst!=c) break; /* try next ip */
-    ptr_dst++;
-    ptr_src++;
-  }
-
-  /* test if checking was complete */
-  if (*ptr_dst == '\0') return 1;
-
-  return 0;
-}
-#endif
 
 /* IP allowing */
 int user_ip_add(wzd_user_t * user, const char *newip)

@@ -21,6 +21,9 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file
+  * \brief strtok_r() replacement
+  */
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"

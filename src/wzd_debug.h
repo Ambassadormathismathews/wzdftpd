@@ -42,6 +42,9 @@ int fd_is_valid(int fd);
 /* debug crontab */
 /*#define WZD_DBG_CRONTAB*/
 
+/* debug ident */
+/*#define WZD_DBG_IDENT*/
+
 /* debug permissions */
 /*#define WZD_DBG_PERMS*/
 

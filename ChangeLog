@@ -1,3 +1,18 @@
+2003-12-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* wzd_dir.c: functions to manipulate file/dir names
+	* wzd_socket.c: functions to find local/remote port
+	* wzd_messages.c: write_message_footer function obsolete, replaced by cookies
+	* feature: ident support
+	* bugfix: SIZE command not sending \r\n
+	* doc updated
+
+2003-11-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* native win32 version, using visual c++
+	* added strptime, strtoull detection & default implementation if missing
+	* cookies: spacefree, spacetotal, sectionname
+
 2003-11-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* added strtok_r detection & default implementation if missing

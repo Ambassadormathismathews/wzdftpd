@@ -1,8 +1,107 @@
 <chapter>
 <title>Config file directives</title>
 
+<sect1>
+<title>General configuration</title>
+
+<simplesect>
+<title>IPs and ident</title>
+
+<para>wzdftpd gives the possibility to check user identity on connection.</para>
+<para>To disable this, just add '*' to the list of authorized ip's for user</para>
+
+<para>Wildcards are accepted</para>
+
+<para>There are 3 types of ip supported by wzdftpd, each with a different behaviour
 <variablelist>
 
+<varlistentry><term>numeric ip: xxx.xxx.xxx.xxx</term>
+<listitem>
+<para>This will store the current ip in the authorized list.
+<screen>ip = 127.0.0.1</screen>
+<screen>ip = 127.0.0.*</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>hostname, resolved by ip: +host.domain.com</term>
+<listitem>
+<para>The name 'host.domain.com' will be converted to an ip and then compared
+to the ip of the user.
+<screen>ip = +hostname.domain.com</screen>
+</para>
+<para>With this syntax you <emphasis>can't</emphasis> use wildcards, as
+it won't be accepted in the name resolution.</para>
+<para><emphasis>IMPORTANT :</emphasis>DNS lookups can slow down connection !</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term>hostname, resolved by name: -host.domain.com</term>
+<listitem>
+<para>The ip of the connected user will be converted to a name using a DNS
+reverse lookup, and then compared to 'host.domain.com'.
+<screen>ip = -*.nerim.net</screen>
+<screen>ip = -hostname.domain.com</screen>
+</para>
+<para><emphasis>IMPORTANT :</emphasis>DNS lookups can slow down connection !</para>
+</listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+
+<para>When you specify an ip, it means all ident from this ip address are allowed.
+If you want to restrict connection for a specific ident: just add 'ident@' in front
+of the ip.
+</para>
+<screen>ip = ident@+host.domain.com</screen>
+<para><emphasis>IMPORTANT: This option is DIFFERENT from other ftpd's</emphasis>
+. Instead of specifying '*@ip'¸ just write the ip (wzdftpd understands the fact you
+don't give any ident as an implicit authorization for all idents).
+</para>
+
+</simplesect>
+
+<simplesect>
+<title>Virtual File system (VFS)</title>
+
+<para>wzdftpd offers the possibility to use virtual directories, also known as VFS.
+A VFS is a kind of link between a non-existant directory (so-called
+<emphasis>virtual</emphasis> directory) and an existing directory (so-called
+<emphasis>physical</emphasis> directory). This allow, for example, to create a directory
+whose contents is on another physical drive.
+</para>
+<screen>vfs = |/home/pollux/vfs|/etc|</screen>
+<para>This will create a virtual directory 'vfs' in '/home/pollux', which will be
+abolutely equivalent to '/etc'.</para>
+
+<para>You can use restrictions on VFS, to allow only specified users to see and use them.
+Note this is only the ability to see and use VFS, and does not affect permissions on
+directories or files contained in VFS.</para>
+<screen>vfs = |/home/pollux/vfs|/etc| +O =admin</screen>
+<para>This will define the same VFS as precedently, restricted only to siteops (+O flag)
+and members of the group 'admin' (=admin).</para>
+
+<para>It would be fastidious to define VFS for all users and groups, for example.
+To help you in this task, wzdftpd allows to use a small subset of cookies, to have
+a kind of wildcards for users, groups, etc.</para>
+<screen>vfs = |%userhome/etc|/etc| +O =admin</screen>
+<para>This will create a virtual dir called 'etc' in the homedir of every siteop and
+member of admin group, equivalent to /etc.</para>
+<para>For the moment, supported cookies are <emphasis>username</emphasis>,
+<emphasis>usergroup</emphasis>, and <emphasis>userhome</emphasis>.</para>
+
+<para><emphasis>Note on performance:</emphasis> please note that VFS are emulated, and as so
+you will suffer a small penalty on speed, compared to real directories.
+This penalty will be increased if you use cookies.</para>
+
+</simplesect>
+
+</sect1>
+
+<sect1>
+<title>Directives reference</title>
+<variablelist>
 
 <varlistentry id='cfg_backend'><term>backend (default: plaintext)</term>
 <listitem>
@@ -251,5 +350,7 @@ with classical tools).
 
 
 </variablelist>
+
+</sect1>
 
 </chapter>

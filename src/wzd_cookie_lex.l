@@ -107,6 +107,11 @@ typedef enum {
   COOKIE_GROUPTOTAL_UL,
   COOKIE_GROUPTOTAL_UL2,
 
+  COOKIE_SECTIONNAME,
+
+  COOKIE_SPACEFREE,
+  COOKIE_SPACETOTAL,
+
   COOKIE_USERCREDITS,
   COOKIE_USERCREDITS2,
   COOKIE_USERFILES_DL,
@@ -273,6 +278,10 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_GROUP}total_dl	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL;
 <sc_cook>{C_GROUP}total_ul2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL2;
 <sc_cook>{C_GROUP}total_ul	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL;
+
+<sc_cook>sectionname            BEGIN(INITIAL); return COOKIE_SECTIONNAME;
+<sc_cook>spacefree              BEGIN(INITIAL); return COOKIE_SPACEFREE;
+<sc_cook>spacetotal             BEGIN(INITIAL); return COOKIE_SPACETOTAL;
 
 <sc_cook>{C_USER}credits2	BEGIN(INITIAL); return COOKIE_USERCREDITS2;
 <sc_cook>{C_USER}credits	BEGIN(INITIAL); return COOKIE_USERCREDITS;
@@ -756,6 +765,61 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
+      break;
+/*** SECTION cookies ***/
+    case COOKIE_SECTIONNAME:
+    {
+      wzd_section_t * section;
+      section = section_find(mainConfig->section_list,context->currentpath);
+      snprintf(internalbuffer,IBUFSIZE,"%s",(section)?section_getname(section):"none");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+    }
+      break;
+/*** DISK/SPACE cookies ***/
+    case COOKIE_SPACEFREE:
+    {
+      char dev_buffer[2048];
+      long l_type, l_bsize, l_blocks, l_free;
+      float f_blocks, f_free;
+      char unit_blocks, unit_free;
+      int ret;
+
+      if (checkpath(".",dev_buffer,context)) {
+        snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
+      } else {
+        ret = get_device_info(dev_buffer,&l_type, &l_bsize, &l_blocks, &l_free);
+        f_blocks = l_blocks*(float)l_bsize;
+        f_free = l_free*(float)l_bsize;
+        bytes_to_unit(&f_blocks,&unit_blocks);
+        bytes_to_unit(&f_free,&unit_free);
+        snprintf(internalbuffer,IBUFSIZE,"%.2f %c",f_free,unit_free);
+      }
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+    }
+      break;
+    case COOKIE_SPACETOTAL:
+    {
+      char dev_buffer[2048];
+      long l_type, l_bsize, l_blocks, l_free;
+      float f_blocks, f_free;
+      char unit_blocks, unit_free;
+      int ret;
+
+      if (checkpath(".",dev_buffer,context)) {
+        snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
+      } else {
+        ret = get_device_info(dev_buffer,&l_type, &l_bsize, &l_blocks, &l_free);
+        f_blocks = l_blocks*(float)l_bsize;
+        f_free = l_free*(float)l_bsize;
+        bytes_to_unit(&f_blocks,&unit_blocks);
+        bytes_to_unit(&f_free,&unit_free);
+        snprintf(internalbuffer,IBUFSIZE,"%.2f %c",f_blocks,unit_blocks);
+      }
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+    }
       break;
 /*** USER cookies ***/
     case COOKIE_USERCREDITS2:

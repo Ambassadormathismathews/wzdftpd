@@ -33,6 +33,7 @@
 
 /* FIXME should be a variable */
 #define	HARD_XFER_TIMEOUT	30L
+#define	HARD_IDENT_TIMEOUT	5
 
 #define	TRFMSG_INTERVAL		1000000
 
@@ -43,6 +44,8 @@
 #define	HARD_DEF_GROUP_MAX	64
 #define	HARD_MSG_LIMIT		1024
 #define	HARD_MSG_LENGTH_MAX	16384
+
+#define MAX_IDENT_LENGTH        256
 
 #define	MAX_IP_LENGTH		128
 #define	HARD_IP_PER_USER	8

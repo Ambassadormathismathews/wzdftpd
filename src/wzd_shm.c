@@ -21,6 +21,10 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file wzd_shm.c
+  * \brief Semaphores and Shared Memory implementation
+  * \warning This file contains many platform-dependant code.
+  */
 
 #ifdef __CYGWIN__
 #include <w32api/windows.h>

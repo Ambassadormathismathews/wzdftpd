@@ -645,7 +645,7 @@ int waitconnect(wzd_context_t * context)
   }
 
   ret = send_message(150,context); /* about to open data connection */
-  sock = socket_connect(remote_host,context->dataport,mainConfig->port-1,context->controlfd);
+  sock = socket_connect(remote_host,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
   if (sock == -1) {
     ret = send_message(425,context);
     return -1;
@@ -872,10 +872,7 @@ printf("path: '%s'\n",path);
   if (strlen(mask)==0) strcpy(mask,"*");
 
   if (list(sock,context,listtype,path,mask,list_callback))
-  {
-    ret = send_message(-226,context); /* - means ftp reply will continue */
-    write_message_footer(226,context);
-  }
+    ret = send_message(226,context);
   else
     ret = send_message_with_args(501,context,"Error processing list");
 
@@ -1385,7 +1382,7 @@ int do_retr(char *param, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
       param, bytestot);*/
     ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
+    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       ret = send_message(425,context);
       return E_CONNECTTIMEOUT;
@@ -1541,7 +1538,7 @@ int do_stor(char *param, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
       param);*/
     ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
+    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       ret = send_message(425,context);
       return E_CONNECTTIMEOUT;
@@ -2111,13 +2108,13 @@ int do_user_ip(const char *username, wzd_context_t * context)
 #else
   inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
 #endif
-  if (user_ip_inlist(user,ip)==1)
+  if (user_ip_inlist(user,ip,context->ident)==1)
     return E_OK;
   
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
     group = GetGroupByID(user->groups[i]);
-    if (group_ip_inlist(group,ip)==1)
+    if (group_ip_inlist(group,ip,context->ident)==1)
       return E_OK;
   }
 
@@ -2160,6 +2157,75 @@ int check_tls_forced(wzd_context_t * context)
 #endif
 
   return E_OK;
+}
+
+/*************** do_user_ident ***********************/
+/** Get ident for user.
+ */
+void do_user_ident(wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  unsigned short ident_port = 113;
+  int ret;
+  int fd_ident;
+  unsigned short remote_port;
+  unsigned short local_port;
+  const char * ptr;
+
+  memset(context->ident,0,MAX_IDENT_LENGTH);
+
+  /* 1- try to open ident connection */
+  fd_ident = socket_connect(*(unsigned long*)&context->hostip,ident_port,ident_port,context->controlfd,HARD_IDENT_TIMEOUT);
+
+  if (fd_ident == -1) {
+    out_log(LEVEL_NORMAL,"Could not get ident (error: %s)\n",strerror(errno));
+    return;
+  }
+
+  /* 2- get local and remote ports */
+
+  /* get remote port number */
+  local_port = socket_get_local_port(context->controlfd);
+  remote_port = socket_get_remote_port(context->controlfd);
+
+  snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",local_port,remote_port);
+
+  /* 3- try to write */
+  do {
+    if (socket_wait_to_write(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
+      send(fd_ident,buffer,strlen(buffer),0);
+    } else {
+      if (errno == EINPROGRESS) continue;
+      out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
+      socket_close(fd_ident);
+      return;
+    }
+  } while (0);
+
+  /* 4- try to read response */
+  do {
+    if (socket_wait_to_read(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
+      ret = recv(fd_ident,buffer,sizeof(buffer),0);
+      buffer[ret] = '\0';
+    } else {
+      if (errno == EINPROGRESS) continue;
+      out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
+      socket_close(fd_ident);
+      return;
+    }
+  } while (0);
+
+  socket_close(fd_ident);
+
+  /* 5- decode response */
+  ptr = strrchr(buffer,':');
+  if (!ptr) return;
+  strncpy(context->ident,ptr+1,MAX_IDENT_LENGTH);
+  chop(context->ident);
+
+#ifdef WZD_DBG_IDENT
+  out_log(LEVEL_NORMAL,"received ident %s\n",context->ident);
+#endif
 }
 
 /*************** do_login_loop ***********************/
@@ -2344,6 +2410,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 int do_login(wzd_context_t * context)
 {
   int ret;
+
+  /* get ident */
+  do_user_ident(context);
 
   /* welcome msg */
   ret = send_message(220,context);

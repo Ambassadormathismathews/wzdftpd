@@ -21,6 +21,9 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file wzd_main.c
+  * \brief Startup code: check args, load config file and start main thread.
+  */
 
 /* Sanity check */
 #ifdef WZD_MULTIPROCESS

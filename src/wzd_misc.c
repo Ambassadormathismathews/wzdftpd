@@ -654,7 +654,7 @@ int server_diagnose(void)
 /** if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply
  */
-void v_format_message(int code, unsigned int length, char *buffer, va_list argptr)
+void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list argptr)
 {
   const char * token, *token2;
   const char * msg;
@@ -669,13 +669,17 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   wzd_group_t * group;
   wzd_context_t * context;
   /* XXX 4096 should ALWAYS be >= length */
-  char * old_buffer = buffer;
+  char * old_buffer;
+  unsigned int length;
+  char * buffer;
 
+#if 0
 #ifdef DEBUG
   if (length > WORK_BUF_LEN) {
     out_err(LEVEL_HIGH,"*** WARNING *** message too long, will be truncated\n");
     length = WORK_BUF_LEN;
   }
+#endif
 #endif
 
   if (code < 0) {
@@ -699,6 +703,12 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   if (must_free) {
     free ( (char*)msg );
   }
+
+  length = (strlen(work_buf)*150)/100 + 10; /* empirical ratio: after/before interpreting cookies */
+  buffer = malloc(length);
+  *pbuffer = buffer;
+  *plength = length;
+  old_buffer = buffer;
 
   /* adjust size, we will need more space to put the code and \r\n */
   length -= 7;
@@ -770,13 +780,13 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   }
 }
 
-void format_message(int code, unsigned int length, char *buffer, ...)
+void format_message(int code, unsigned int *plength, char **pbuffer, ...)
 {
   va_list argptr;
 
-  va_start(argptr,buffer); /* note: ansi compatible version of va_start */
+  va_start(argptr,pbuffer); /* note: ansi compatible version of va_start */
 
-  v_format_message(code,length,buffer,argptr);
+  v_format_message(code,plength,pbuffer,argptr);
 }
 
 
@@ -1138,18 +1148,38 @@ int user_ip_add(wzd_user_t * user, const char *newip)
   return 1; /* full */
 }
 
-int user_ip_inlist(wzd_user_t * user, const char *ip)
+int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
 {
   int i;
   const char * ptr_ip;
   char * ptr_test;
   struct hostent *host;
+  const char * ptr;
+  const char * ptr_ident;
+  unsigned int ident_length=0;
 
   i = 0;
   while (user->ip_allowed[i][0] != '\0') {
     ptr_ip = ip;
     ptr_test = user->ip_allowed[i];
     if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+
+    ptr = strchr(ptr_test,'@');
+    if (ptr) { /* we have an ident to check */
+      if (!ident) {
+        i++;
+        continue;
+      }
+      ptr_ident = ptr_test;
+      ident_length = ptr - ptr_ident;
+      out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
+      ptr_test = (char*)ptr+1;
+      if (strncmp(ident,ptr_ident,ident_length) != 0) {
+        /* ident does not match */
+        i++;
+        continue;
+      }
+    }
     
     if (*ptr_test == '+') {
       char buffer[30];
@@ -1234,18 +1264,38 @@ int group_ip_add(wzd_group_t * group, const char *newip)
   return 1; /* full */
 }
 
-int group_ip_inlist(wzd_group_t * group, const char *ip)
+int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
 {
   int i;
   const char * ptr_ip;
   char * ptr_test;
   struct hostent *host;
+  const char * ptr;
+  const char * ptr_ident;
+  unsigned int ident_length=0;
 
   i = 0;
   while (group->ip_allowed[i][0] != '\0') {
     ptr_ip = ip;
     ptr_test = group->ip_allowed[i];
     if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+    
+    ptr = strchr(ptr_test,'@');
+    if (ptr) { /* we have an ident to check */
+      if (!ident) {
+        i++;
+        continue;
+      }
+      ptr_ident = ptr_test;
+      ident_length = ptr - ptr_ident;
+      out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
+      ptr_test = (char*)ptr+1;
+      if (strncmp(ident,ptr_ident,ident_length) != 0) {
+        /* ident does not match */
+        i++;
+        continue;
+      }
+    }
     
     if (*ptr_test == '+') {
       char buffer[30];

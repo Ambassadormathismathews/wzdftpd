@@ -381,6 +381,7 @@ typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 typedef struct {
   unsigned long	magic;
   unsigned char	hostip[16];
+  char          ident[MAX_IDENT_LENGTH];
   int           state;
   int           controlfd;
   int           datafd;

@@ -21,25 +21,23 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+#ifndef __WZD_DIR__
+#define __WZD_DIR__
 
-#ifndef __WZD_SOCKET__
-#define __WZD_SOCKET__
-
-int socket_make(const char *ip, unsigned int *port, int nListen);
-int socket_close(int sock);
-
-int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port);
-
-int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd, unsigned int timeout);
-
-/* Returns remote/local port number for the current connection. */
-int socket_get_remote_port(int sock);
-int socket_get_local_port(int sock);
-
-/* wait for socket to be ready for read/write, for timeout seconds max
- * return 0 if ok, 1 if timeout, -1 on error
+/** \brief strip non-directory suffix from file name
+ *
+ * Return file without its trailing /component removed, if name contains
+ * no /'s, returns "." (meaning the current directory).
+ * Caller MUST free memory !
  */
-int socket_wait_to_read(int sock, int timeout);
-int socket_wait_to_write(int sock, int timeout);
+char * dir_getdirname(const char *file);
 
-#endif /* __WZD_SOCKET__ */
+/** \brief strip directory and suffix from filename
+ *
+ * Return file with any leading directory components removed. If specified,
+ * also remove a trailing suffix.
+ * Caller MUST free memory !
+ */
+char * dir_getbasename(const char *file, const char *suffix);
+
+#endif /* __WZD_DIR__ */

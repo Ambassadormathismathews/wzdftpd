@@ -21,6 +21,9 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file wzd_socket.c
+  * \brief Helper routines for network access
+  */
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
@@ -260,13 +263,16 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd)
+int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd, unsigned int timeout)
 {
   int sock;
   struct sockaddr_in sai;
   unsigned int len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
+  fd_set fds, efds;
+  struct timeval tv;
+  int save_errno;
 
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
     out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
@@ -300,12 +306,180 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #endif
 #endif
 
-  ret = connect(sock,(struct sockaddr *)&sai, len);
+  if (timeout != 0)
+  {
+
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+    {
+      unsigned long noBlock=1;
+      ioctlsocket(sock,FIONBIO,&noBlock);
+    }
+#else
+    fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
+#endif
+    while (1)
+    {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
+#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+      ret = select(0,NULL,&fds,&efds,&tv);
+#else
+      ret = select(sock+1,NULL,&fds,&efds,&tv);
+#endif
+      save_errno = errno;
+
+      if (FD_ISSET(sock,&efds)) {
+	if (save_errno == EINTR) continue;
+	out_log(LEVEL_CRITICAL,"Error during connect: %s\n",strerror(save_errno));
+	return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+      {
+        socket_close(sock);
+	return -1;
+      }
+      break;
+    } /* while (1) */
+
+  } /* if (timeout) */
+
+  /* man connect(2): connectionless protocol sockets  may  use  connect  multiple
+   * times to change their association.
+   */
+  do {
+    ret = connect(sock,(struct sockaddr *)&sai, len);
+  } while ( (ret==-1) && (errno==EINPROGRESS));
   if (ret < 0) {
-    out_log(LEVEL_CRITICAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
+    out_log(LEVEL_NORMAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
     socket_close (sock);
     return -1;
   }
 
   return sock;
+}
+
+/* Returns the local/remote port for the socket. */
+int get_sock_port(int sock, int local)
+{
+  struct sockaddr_storage from;
+  socklen_t fromlen;
+  char strport[NI_MAXSERV];
+
+  /* Get IP address of client. */
+  fromlen = sizeof(from);
+  memset(&from, 0, sizeof(from));
+  if (local) {
+    if (getsockname(sock, (struct sockaddr *)&from, &fromlen) < 0) {
+      out_log(LEVEL_CRITICAL,"getsockname failed: %.100s", strerror(errno));
+      return 0;
+    }
+  } else {
+    if (getpeername(sock, (struct sockaddr *)&from, &fromlen) < 0) {
+      out_log(LEVEL_CRITICAL,"getpeername failed: %.100s", strerror(errno));
+      return 0;
+    }
+  }
+
+  /* Work around Linux IPv6 weirdness */
+  if (from.ss_family == AF_INET6)
+    fromlen = sizeof(struct sockaddr_in6);
+
+  /* Return port number. */
+  if (getnameinfo((struct sockaddr *)&from, fromlen, NULL, 0,
+        strport, sizeof(strport), NI_NUMERICSERV) != 0)
+    out_log(LEVEL_CRITICAL,"get_sock_port: getnameinfo NI_NUMERICSERV failed");
+  return atoi(strport);
+}
+
+/* Returns remote/local port number for the current connection. */
+
+int socket_get_remote_port(int sock)
+{
+  return get_sock_port(sock, 0);
+}
+
+int socket_get_local_port(int sock)
+{
+  return get_sock_port(sock, 1);
+}
+
+int socket_wait_to_read(int sock, int timeout)
+{
+  int ret;
+  int save_errno;
+  fd_set fds, efds;
+  struct timeval tv;
+
+  if (timeout==0)
+    return 0; /* blocking sockets are always ready */
+  else {
+    while (1) {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
+
+#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+      ret = select(0,&fds,NULL,&efds,&tv);
+#else
+      ret = select(sock+1,&fds,NULL,&efds,&tv);
+#endif
+      save_errno = errno;
+
+      if (FD_ISSET(sock,&efds)) {
+	if (save_errno == EINTR) continue;
+	out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %s\n",strerror(save_errno));
+	return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+	return 1;
+      break;
+    }
+    return 0;
+  } /* timeout */
+
+  return -1;
+}
+
+int socket_wait_to_write(int sock, int timeout)
+{
+  int ret;
+  int save_errno;
+  fd_set fds, efds;
+  struct timeval tv;
+
+  if (timeout==0)
+    return 0; /* blocking sockets are always ready */
+  else {
+    while (1) {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
+
+#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
+      ret = select(0,NULL,&fds,&efds,&tv);
+#else
+      ret = select(sock+1,NULL,&fds,&efds,&tv);
+#endif
+      save_errno = errno;
+
+      if (FD_ISSET(sock,&efds)) {
+	if (save_errno == EINTR) continue;
+	out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %s\n",strerror(save_errno));
+	return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+	return 1;
+      break;
+    }
+    return 0;
+  } /* timeout */
+
+  return -1;
 }

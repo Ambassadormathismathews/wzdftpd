@@ -350,7 +350,7 @@ printf("Clearing option syslog\n");
 
   tempConfig.shm_key = 0x1331c0d3;
 
-  memset(tempConfig.pasv_ip,0,4);
+  memset(tempConfig.pasv_ip,0,16);
 
   return 0;
 }

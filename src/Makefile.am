@@ -18,6 +18,8 @@ libwzd_la_SOURCES =  \
 	wzd_crontab.h	\
 	wzd_debug.c     \
 	wzd_debug.h     \
+	wzd_dir.c	\
+	wzd_dir.h	\
 	wzd_libmain.c   \
 	wzd_libmain.h   \
 	wzd_log.c       \

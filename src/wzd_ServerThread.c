@@ -229,11 +229,11 @@ void reset_stats(wzd_server_stat_t * stats)
 }
 
 /** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
-int global_check_ip_allowed(int userip[4])
+int global_check_ip_allowed(unsigned char userip[4])
 {
   char ip[30];
 
-  snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
+  snprintf(ip,30,"%hhu.%hhu.%hhu.%hhu",userip[0],userip[1],userip[2],userip[3]);
   switch (mainConfig->login_pre_ip_check) {
   case 1: /* order allow, deny */
     if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
@@ -970,7 +970,6 @@ void serverMainThreadProc(void *arg)
   }
 
   /********** set up crontab ********/
-/*  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);*/
   cronjob_add(&crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
       "*","*","*","*");
   cronjob_add(&crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,

@@ -21,8 +21,11 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file
+  * \brief System types
+  * \warning This file contains many platform-dependant code.
+  */
 
-/* wzd_types.h : system types */
 #ifndef __WZD_TYPES__
 #define __WZD_TYPES__
 

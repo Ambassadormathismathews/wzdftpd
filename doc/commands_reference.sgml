@@ -665,6 +665,19 @@ xcrc "filename" [startpos length]
 </listitem>
 </varlistentry>
 
+<varlistentry id='xmd5'><term>
+xmd5 "filename" [startpos length]
+</term>
+<listitem>
+<para>Gives MD5 Checksum of the file</para>
+<screen>xmd5 "1mB"</screen>
+<para>This will return the MD5 of the file</para>
+<screen>xmd5 "1mB" 100 1500</screen>
+<para>This will return the MD5 of the file, only on the portion starting at
+100, and on 1500 bytes.</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 </chapter>

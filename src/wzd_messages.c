@@ -69,7 +69,7 @@ void init_default_messages(void)
   msg_tab[215] = strdup("UNIX Type: L8");
   msg_tab[220] = strdup("wzd server ready.");
   msg_tab[221] = strdup("Cya !");
-  msg_tab[226] = strdup("Closing data connection.");
+  msg_tab[226] = strdup("Closing data connection.\r\n- [Section: %sectionname] - [Free: %spacefree] - [Dl: %usertotal_dl2] - [Ul: %usertotal_ul2] -");
   msg_tab[227] = strdup("Entering Passive Mode (%d,%d,%d,%d,%d,%d)"); /* DON'T TOUCH ! */
   msg_tab[230] = strdup("User logged in, proceed.");
   msg_tab[234] = strdup("AUTH command OK. Initializing %s mode"); /* SSL init */
@@ -149,10 +149,13 @@ void setMessage(const char *newMessage, int code)
 
 int send_message(int code, wzd_context_t * context)
 {
-  char buffer[BUFFER_LEN];
+/*  char buffer[BUFFER_LEN];*/
+  char *buffer;
+  unsigned int length;
   int ret;
 
-  format_message(code,BUFFER_LEN,buffer);
+/*  format_message(code,BUFFER_LEN,buffer);*/
+  format_message(code,&length,&buffer);
 #ifdef DEBUG
 if (buffer[strlen(buffer)-1]!='\n')
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
@@ -162,6 +165,7 @@ else
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 /*  sprintf(buffer,"%3d \r\n",code);
   ret = (context->write_fct)(context->controlfd,buffer,6,0,HARD_XFER_TIMEOUT,context);*/
+  free(buffer);
 
   return ret;
 }
@@ -171,11 +175,14 @@ else
 int send_message_with_args(int code, wzd_context_t * context, ...)
 {
   va_list argptr;
-  char buffer[BUFFER_LEN];
+/*  char buffer[BUFFER_LEN];*/
+  char * buffer;
+  unsigned int length;
   int ret;
 
   va_start(argptr,context); /* note: ansi compatible version of va_start */
-  v_format_message(code,BUFFER_LEN,buffer,argptr);
+/*  v_format_message(code,BUFFER_LEN,buffer,argptr);*/
+  v_format_message(code,&length,&buffer,argptr);
 #ifdef DEBUG
 if (buffer[strlen(buffer)-1]!='\n')
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
@@ -184,6 +191,7 @@ else
 #endif
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
+  free(buffer);
   return 0;
 }
 
@@ -202,79 +210,4 @@ else
   ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
-}
-
-/*************** write_message_footer ****************/
-
-int write_message_footer(int code, wzd_context_t * context)
-{
-  char buffer[2048];
-  char buf_section[256];
-  int ret;
-  long f_type, f_bsize, f_blocks, f_free;
-  float free,total;
-  float bytes_ul, bytes_dl, bytes_credits;
-  char unit, unit_dl, unit_ul, unit_credits;
-  wzd_user_t * user;
-  wzd_section_t * section;
-
-  if (checkpath(".",buffer,context)) {
-    send_message_with_args(501,context,". does not exist ?!");
-    return -1;
-  }
-
-  user = GetUserByID(context->userid);
-
-  ret = get_device_info(buffer,&f_type, &f_bsize, &f_blocks, &f_free);
-
-  unit='k';
-  free = f_free*(f_bsize/1024.f);
-  total = f_blocks*(f_bsize/1024.f);
-
-  if (total > 1000.f) {
-    unit='M';
-    free /= 1024.f;
-    total /= 1024.f;
-  }
-  if (total > 1000.f) {
-    unit='G';
-    free /= 1024.f;
-    total /= 1024.f;
-  }
-
-#ifndef _MSC_VER
-  bytes_dl = (float)user->stats.bytes_dl_total;
-  bytes_ul = (float)user->stats.bytes_ul_total;
-#else
-  bytes_dl = (float)(__int64)user->stats.bytes_dl_total;
-  bytes_ul = (float)(__int64)user->stats.bytes_ul_total;
-#endif
-
-  bytes_to_unit(&bytes_dl,&unit_dl);
-  bytes_to_unit(&bytes_ul,&unit_ul);
-
-  section = section_find(mainConfig->section_list,context->currentpath);
-  if (section) {
-    snprintf(buf_section,255,"[Section: %s] - ",section_getname(section));
-  } else {
-    buf_section[0] = '\0';
-  }
-
-  if (user->ratio) {
-#ifndef _MSC_VER
-    bytes_credits = (float)user->credits;
-#else
-    bytes_credits = (float)(__int64)user->credits;
-#endif
-    bytes_to_unit(&bytes_credits,&unit_credits);
-    snprintf(buffer,2047,"%3d - %s[Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] - [Cred: %.2f %c] -\r\n",
-      code,buf_section,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,
-      bytes_credits,unit_credits);
-  } else {
-    snprintf(buffer,2047,"%3d - %s[Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] -\r\n",
-      code,buf_section,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul);
-  }
-  ret = send_message_raw(buffer, context);
-
-  return 0;
 }

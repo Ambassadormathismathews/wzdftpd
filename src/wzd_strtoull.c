@@ -1,3 +1,7 @@
+/** \file
+  * \brief strtoull() replacement
+  */
+
 #include <stdlib.h>
 #include <ctype.h> /* isspace, etc. */
 

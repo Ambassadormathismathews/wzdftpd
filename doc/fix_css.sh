@@ -10,6 +10,7 @@ if [ -d $1 ]; then
     sed -e 's:/docbook-dsssl/:../images/:g' tmp > tmp2
     rm tmp
     ../add_header_footer.pl tmp2 > $file
+    rm tmp2
   done
 else
   sed -e 's:></HEAD:><link rel="STYLESHEET" href="../../css/design2.css"></HEAD:g' $file > tmp
@@ -17,4 +18,5 @@ else
   rm tmp
   mv tmp2 $file
   ../add_header_footer.pl tmp2 > $file
+  rm tmp2
 fi

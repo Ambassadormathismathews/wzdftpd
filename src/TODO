@@ -3,6 +3,10 @@
 - use 'rats','splint' for security audit
 
 '********'
+- add ident string in supported ip's
+'********'
+- remove limit on msg
+'********'
 - XCRC/XMD5 command
  -> XCRC / OK
  -> XMD5 / OK
@@ -93,7 +97,6 @@ current objectives:
   e.g:
    vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|
    vfs = |/cygdrive/e/sons/mp3/pouet|/cygdrive/d/adobe|
-- Load modules : .so + try to load win DLLs (using win API ...)
 - more cookies
 - anti-hammering: per ip/user, ban time
 - special flag to start server and connect to existing shm without
@@ -131,6 +134,7 @@ _ possibility to link a backend statically (instead of dll)
 - option : check CA for certificate
 - option : check certificate only at login (not at port/pasv)
 - reward mechanism for top ten winners (credits/slots/...)
+- support ident on different port per user
 
 ## I'LL THINK ABOUT IT ##
 
