@@ -84,6 +84,7 @@
 #include "wzd_section.h"
 #include "wzd_site.h"
 #include "wzd_utf8.h"
+#include "wzd_vars.h"
 
 #include "wzd_debug.h"
 

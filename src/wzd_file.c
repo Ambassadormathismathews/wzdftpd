@@ -109,6 +109,7 @@ typedef struct
 #include "wzd_misc.h"
 #include "wzd_file.h"
 #include "wzd_cache.h"
+#include "wzd_perm.h"
 
 
 

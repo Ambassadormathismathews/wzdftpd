@@ -1448,10 +1448,10 @@ int sfv_hook_site(unsigned long event_id, wzd_context_t * context, const char *t
     char buffer[BUFFER_LEN];
     strncpy(buffer,args,BUFFER_LEN-1);
     do_site_sfv(buffer,context);
-    return 0;
+    return EVENT_HANDLED;
   }
 
-  return 1;
+  return EVENT_IGNORED;
 }
 
 /***********************/

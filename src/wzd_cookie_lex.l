@@ -96,6 +96,13 @@ typedef enum {
   COOKIE_CYAN,
   COOKIE_WHITE,
 
+  COOKIE_CONNECTED_USERS,
+
+  COOKIE_TOTAL_DL,
+  COOKIE_TOTAL_DL2,
+  COOKIE_TOTAL_UL,
+  COOKIE_TOTAL_UL2,
+
   COOKIE_FILECRC,
   COOKIE_FILEPATH,
 
@@ -197,6 +204,8 @@ IF_BEGIN	"%if("("+"|"=")?{LETTER}+")"{NL}
 IF_END		"%endif"{NL}
 
 C_START		"%"
+C_BW		([0-9]+".")?"bw"
+C_CONN		([0-9]+".")?"connected_"
 C_FILE		([0-9]+".")?"file"
 C_GROUP		([0-9]+".")?"group"
 C_LASTFILE	([0-9]+".")?"lastfile"
@@ -289,6 +298,13 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>!magenta	BEGIN(INITIAL); return COOKIE_MAGENTA;
 <sc_cook>!cyan	BEGIN(INITIAL); return COOKIE_CYAN;
 <sc_cook>!white	BEGIN(INITIAL); return COOKIE_WHITE;
+
+<sc_cook>{C_BW}total_dl2	BEGIN(INITIAL); return COOKIE_TOTAL_DL2;
+<sc_cook>{C_BW}total_dl		BEGIN(INITIAL); return COOKIE_TOTAL_DL;
+<sc_cook>{C_BW}total_ul2	BEGIN(INITIAL); return COOKIE_TOTAL_UL2;
+<sc_cook>{C_BW}total_ul		BEGIN(INITIAL); return COOKIE_TOTAL_UL;
+
+<sc_cook>{C_CONN}users		BEGIN(INITIAL); return COOKIE_CONNECTED_USERS;
 
 <sc_cook>{C_FILE}crc		BEGIN(INITIAL); return COOKIE_FILECRC;
 <sc_cook>{C_FILE}path		BEGIN(INITIAL); return COOKIE_FILEPATH;
@@ -651,6 +667,82 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       free(tmpbuf);
     }
     break;
+/*** Bandwidth cookies ***/
+    case COOKIE_TOTAL_DL2:
+      convert=1;
+    case COOKIE_TOTAL_DL:
+      get_cookie_format(yytext,&padding);
+      {
+		float speed;
+		wzd_context_t * it;
+
+        /* iterate through users and sum */
+        speed = 0.f;
+        for (i=0; i<HARD_USERLIMIT; i++)
+        {
+          if (context_list[i].magic == CONTEXT_MAGIC)
+          {
+		    it = &context_list[i];
+            if (strncasecmp(it->last_command,"retr",4)==0)
+              speed += it->current_dl_limiter.current_speed;
+	      }
+        }
+        if (convert) {
+          bytes_to_unit(&speed,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c/s",speed,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%.2f",speed);
+      }
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      convert=0;
+      break;
+    case COOKIE_TOTAL_UL2:
+      convert=1;
+    case COOKIE_TOTAL_UL:
+      get_cookie_format(yytext,&padding);
+      {
+		float speed;
+		wzd_context_t * it;
+
+        /* iterate through users and sum */
+        speed = 0.f;
+        for (i=0; i<HARD_USERLIMIT; i++)
+        {
+          if (context_list[i].magic == CONTEXT_MAGIC)
+          {
+		    it = &context_list[i];
+            if (strncasecmp(it->last_command,"stor",4)==0)
+              speed += it->current_ul_limiter.current_speed;
+	      }
+        }
+        if (convert) {
+          bytes_to_unit(&speed,&c);
+          snprintf(internalbuffer,IBUFSIZE,"%.2f %c/s",speed,c);
+        } else
+          snprintf(internalbuffer,IBUFSIZE,"%.2f",speed);
+      }
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      convert=0;
+      break;
+/*** Connecte users cookies ***/
+    case COOKIE_CONNECTED_USERS:
+      get_cookie_format(yytext,&padding);
+      {
+		unsigned int count=0;
+
+        for (i=0; i<HARD_USERLIMIT; i++)
+        {
+          if (context_list[i].magic == CONTEXT_MAGIC)
+		    count++;
+        }
+        snprintf(internalbuffer,IBUFSIZE,"%d",count);
+      }
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      convert=0;
+      break;
 /*** FILE cookies ***/
     case COOKIE_FILECRC:
       get_cookie_format(yytext,&padding);

@@ -93,7 +93,7 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
 static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
 
 /***** PROTO HOOKS *****/
-static int tcl_hook_protocol(const char *file, const char *args);
+static wzd_hook_reply_t tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
 static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
@@ -167,10 +167,10 @@ void WZD_MODULE_CLOSE(void)
 
 
 
-static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
+static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
   if (strcasecmp(token,"tcl")==0) {
-    if (!args || strlen(args)==0) { do_tcl_help(context); return 0; }
+    if (!args || strlen(args)==0) { do_tcl_help(context); return EVENT_HANDLED; }
     {
       Tcl_Obj * TempObj;
       Tcl_Interp * slave = NULL;
@@ -179,7 +179,10 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
       int ret;
 
       slave = _tcl_getslave(interp, context);
-      if (!slave) return 0;
+      if (!slave) return EVENT_ERROR;
+
+      /* send reply header */
+      send_message_raw("200-\r\n",context);
 
       current_context = context;
       user = GetUserByID(context->userid);
@@ -198,8 +201,9 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
           send_message_with_args(200,context,"TCL command ok");
       }
     }
+    return EVENT_HANDLED;
   }
-  return 0;
+  return EVENT_IGNORED;
 }
 
 static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, const char *username)

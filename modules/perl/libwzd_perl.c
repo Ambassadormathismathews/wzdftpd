@@ -96,7 +96,7 @@ static int execute_perl( SV *function, const char *args);
 static void xs_init(pTHX);
 
 /***** EVENT HOOKS *****/
-static int perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
+static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
 static int perl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
 
 /***** PROTO HOOKS *****/
@@ -159,25 +159,29 @@ void WZD_MODULE_CLOSE(void)
 
 
 
-static int perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
+static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
   SV *val;
 
   if (strcasecmp(token,"perl")==0) {
     if (!my_perl) return 0;
-    if (!args || strlen(args)==0) { do_perl_help(context); return 0; }
+    if (!args || strlen(args)==0) { do_perl_help(context); return EVENT_HANDLED; }
 
-      if (_perl_set_slave(context)) return -1;
+    if (_perl_set_slave(context)) return EVENT_ERROR;
       
-      /* exec string */
-      val = eval_pv(args, FALSE);
+    /* send reply header */
+    send_message_raw("200-\r\n",context);
 
-      if (SvTRUE(val))
-        send_message_with_args(200,context,"PERL command ok");
-      else
-        send_message_with_args(200,context,"PERL command reported errors");
+    /* exec string */
+    val = eval_pv(args, FALSE);
+
+    if (SvTRUE(val))
+      send_message_with_args(200,context,"PERL command ok");
+    else
+      send_message_with_args(200,context,"PERL command reported errors");
+    return EVENT_HANDLED;
   }
-  return 0;
+  return EVENT_IGNORED;
 }
 
 /** \bug this code is not reentrant, be carefull with _perl_set_slave ! */

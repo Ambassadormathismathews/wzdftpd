@@ -111,6 +111,12 @@ EXPORTS
 	path_getbasename
 	path_getdirname
 	path_gettrailingname
+	perm2str
+	perm_add_perm
+	perm_check
+	perm_free_recursive
+	perm_is_valid_perm
+	perm_remove
 	print_file
 	read_token
 	readPermFile
@@ -155,7 +161,9 @@ EXPORTS
 	vars_group_get
 	vars_group_set
 	vars_shm_free
+	vars_shm_get
 	vars_shm_init
+	vars_shm_set
 	vars_user_addip
 	vars_user_delip
 	vars_user_get

@@ -1369,7 +1369,11 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
 
   port = mainConfig->pasv_low_range; /* use pasv range min */
   count = mainConfig->pasv_high_range - mainConfig->pasv_low_range;
+#ifndef WIN32
   port = port + (random()) % count; /* we try to change starting port for random */
+#else
+  port = port + (rand()) % count; /* we try to change starting port for random */
+#endif
   while (count > 0) { /* use pasv range max */
     memset(&sai,0,size);
 

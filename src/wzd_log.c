@@ -171,12 +171,11 @@ void out_log(int level,const char *fmt,...)
         vfprintf(stderr,new_format,argptr);
         fflush(stderr);
       }
-#else
+#endif
       if (mainConfig->logfile) {
         vfprintf(mainConfig->logfile,fmt,argptr);
         fflush(mainConfig->logfile);
       }
-#endif
     } /* syslog */
   } /* > loglevel ? */
 }

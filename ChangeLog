@@ -1,3 +1,11 @@
+2004-05-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: all users created with same uid
+	* bugfix: wrong reply for unknown site commands, or if errors in handler
+	* cookies: %bwtotal_dl (2) %bwtotal_ul (2) to get total bandwidth used
+	* cookies: %connected_users to get number of connecter users
+	* feature: when running in debug mode, putlog sends into to both stdout and log
+
 2004-05-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new config directive: umask, to set default files/dirs permissions

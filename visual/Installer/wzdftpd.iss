@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040518
+AppVerName=wzdftpd 0.4cvs-20040523
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040518
+OutputBaseFilename=wzdftpd-0.4cvs-20040523
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -39,11 +39,11 @@ Name: "{app}\ftproot"
 
 Source: ..\release\wzdftpd.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\release\libwzd.dll; DestDir: {app}; Flags: ignoreversion
-Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
-Source: ..\iconv\bin\libiconv-2.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
-Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
-Source: ..\openssl\lib\libeay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
-Source: ..\..\src\file_*.txt; DestDir: {app}\etc; Flags: ignoreversion
+Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\iconv\bin\libiconv-2.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\openssl\lib\libeay32.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\src\file_*.txt; DestDir: {app}\etc; Flags: onlyifdoesntexist ignoreversion
 Source: ..\..\AUTHORS; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\ChangeLog; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\COPYING; DestDir: {app}; Flags: ignoreversion
@@ -51,6 +51,7 @@ Source: ..\..\INSTALL; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\Permissions.ReadMeFirst; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\README; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\TLS.ReadmeFirst; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\wzd_tls.cnf; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 Source: ..\..\src\wzd.pem; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 
 Source: ..\wzd.cfg; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall

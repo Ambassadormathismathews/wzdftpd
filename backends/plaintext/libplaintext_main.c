@@ -87,6 +87,28 @@ static unsigned int find_directive(const char *name)
   return D_NONE;
 }
 
+static unsigned int find_free_uid(unsigned int start)
+{
+  unsigned int uid = start;
+  unsigned int found;
+  unsigned int uid_is_free = 0;
+  unsigned int i;
+
+  while (!uid_is_free) {
+    found = 0;
+    for (i=0; i<user_count; i++)
+    {
+      if (user_pool[i].uid == uid) { found=1; break; }
+    }
+    if (!found) return uid;
+    uid ++;
+    if (uid == (unsigned int)-1) return (unsigned int)-1; /* we have too many users ! */
+  }
+
+  /* we should never we here */
+  return (unsigned int)-1;
+}
+
 
 /* IP allowing */
 static int user_ip_add(wzd_user_t * user, const char *newip)
@@ -1159,21 +1181,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       strncpy(user_pool[user_count].userpass,cipher,MAX_PASS_LENGTH-1);
     }
     /* find a free uid */
-    {
-      unsigned int uid = 0;
-      unsigned int uid_is_free = 0;
-      unsigned int i;
-
-      while (!uid_is_free) {
-        for (i=0; i<user_count; i++)
-        {
-          if (user_pool[user_count].uid == uid) { uid_is_free=1; break; }
-        }
-        uid ++;
-        if (uid == (unsigned int)-1) return 1; /* we have too many users ! */
-      }
-      user_pool[user_count].uid = uid;
-    }
+    user_pool[user_count].uid = find_free_uid(1);
     
     user_count++;
   } /* if (found) */

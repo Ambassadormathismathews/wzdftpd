@@ -11,5 +11,5 @@ EXPORTS
 	wzd_mod_user
 	wzd_mod_group
 	wzd_commit_changes
-	module_version
-	module_name
+	backend_version
+	backend_name

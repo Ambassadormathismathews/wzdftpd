@@ -141,10 +141,6 @@ SOURCE=..\src\wzd_main.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_perm.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_ratio.c
 # End Source File
 # Begin Source File
@@ -206,10 +202,6 @@ SOURCE=..\src\wzd_init.h
 # Begin Source File
 
 SOURCE=..\src\wzd_opts.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_perm.h
 # End Source File
 # Begin Source File
 

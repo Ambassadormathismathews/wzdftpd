@@ -25,6 +25,13 @@
 #ifndef __WZD_MOD_H__
 #define __WZD_MOD_H__
 
+typedef enum {
+  EVENT_IGNORED=0,
+  EVENT_NEXT,       /**< pass event to next handler */
+  EVENT_HANDLED,
+  EVENT_ERROR
+} wzd_hook_reply_t;
+
 /* free hook list */
 void hook_free(wzd_hook_t **hook_list);
 

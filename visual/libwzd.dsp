@@ -203,6 +203,10 @@ SOURCE=..\src\wzd_mod.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_perm.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_section.c
 # End Source File
 # Begin Source File
@@ -300,6 +304,10 @@ SOURCE=..\src\wzd_misc.h
 # Begin Source File
 
 SOURCE=..\src\wzd_mod.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_perm.h
 # End Source File
 # Begin Source File
 

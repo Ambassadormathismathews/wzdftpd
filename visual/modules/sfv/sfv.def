@@ -1,5 +1,7 @@
 LIBRARY LIBWZD_SFV
 
 EXPORTS
+	module_name
+	module_version
 	wzd_module_init
 	wzd_module_close
