@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#endif
+
 #include "wzd_all.h"
 
 #ifndef WZD_USE_PCH
@@ -67,12 +71,14 @@
 #ifndef _MSC_VER
 #include <sys/param.h>
 
-#ifdef BSD
-/* statfs */
-#include <sys/mount.h>
-#else
+#if HAVE_SYS_VFS_H
 #include <sys/vfs.h> /* statfs */
 #endif
+
+#if HAVE_SYS_MOUNT_H
+#include <sys/mount.h> /* statfs */
+#endif
+
 #endif /* _MSC_VER */
 
 
