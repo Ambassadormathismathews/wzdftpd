@@ -156,6 +156,9 @@ int main(int argc, char *argv[])
 	if (strncasecmp(command_buffer,"SITE ",5)==0) {
 	  strcpy(command_buffer+5,"xxx");
 	}
+	if (strncasecmp(command_buffer,"PASS ",5)==0) {
+	  strcpy(command_buffer+5,"xxx");
+	}
 
         fprintf(stdout,"|%15s|   %15s|%16s|%20s |\n",
             user->username?user->username:"NULL",

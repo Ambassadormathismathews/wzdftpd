@@ -791,6 +791,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	{
 	  strcpy(internalbuffer,"SITE command");
 	}
+	if (strncasecmp(internalbuffer,"pass",4)==0)
+	{
+	  strcpy(internalbuffer,"PASS xxxxx");
+	}
       }
       else
 	snprintf(internalbuffer,IBUFSIZE,"userlastcmd");
