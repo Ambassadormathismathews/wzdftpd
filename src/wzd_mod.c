@@ -313,7 +313,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
-  if (l_command+strlen(args)>=1022) return 1;
+  if (args && l_command+strlen(args)>=1022) return 1;
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
@@ -349,7 +349,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   else
   {
     *(buffer+l_command++) = ' ';
-    strcpy(buffer+l_command,args);
+    if (args) strcpy(buffer+l_command,args);
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -374,7 +374,7 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
-  if (l_command+strlen(args)>=1022) return 1;
+  if (args && l_command+strlen(args)>=1022) return 1;
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
@@ -410,7 +410,7 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   else
   {
     *(buffer+l_command++) = ' ';
-    strcpy(buffer+l_command,args);
+    if (args) strcpy(buffer+l_command,args);
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;

@@ -267,8 +267,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         else {
           char argbuf[1024];
           /* TODO XXX FIXME what happens if filename contains spaces ? :) */
-          snprintf(argbuf,1024,"%s %s",user->username,context->current_action.arg);
-          ret = hook_call_external(hook,argbuf);
+/*          snprintf(argbuf,1024,"%s %s",user->username,context->current_action.arg);*/
+          ret = hook_call_external(hook,NULL);
         }
       END_FORALL_HOOKS
       context->current_action.token = TOK_UNKNOWN;
