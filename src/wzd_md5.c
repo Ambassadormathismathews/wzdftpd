@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h> /* isspace */
 #include "wzd_md5.h"
 
 #ifndef MAX

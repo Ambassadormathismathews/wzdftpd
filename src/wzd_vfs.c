@@ -554,7 +554,8 @@ int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context
   if (vfs) {
     while (vfs->next_vfs) vfs = vfs->next_vfs;
 
-    if (buffer,vfs->physical_dir,strlen(vfs->physical_dir) == 0) {
+    /** \todo XXX FIXME this code is NOT finished ... */
+    if (strncmp(buffer,vfs->physical_dir,strlen(vfs->physical_dir)) == 0) {
       
     }
   }

@@ -40,6 +40,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 
 #include "wzd_structs.h"
@@ -59,10 +60,10 @@ int ip_compare(const char * ip, const char * pattern)
 {
   char buffer1[256], buffer2[256];
   const char *ptr;
-  char c;
   int has_wildcards1=0, has_wildcards2=0;
+#ifndef IPV6_SUPPORT
   struct hostent * host;
-  unsigned int i,j;
+#endif
 
   if (!ip || !pattern) return 0;
 
@@ -225,7 +226,6 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
   wzd_ip_t * current_ip;
   const char * ptr_ip;
   char * ptr_test;
-  struct hostent *host;
 
   current_ip = list;
   while (current_ip) {
@@ -341,7 +341,6 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
   int i;
   const char * ptr_ip;
   char * ptr_test;
-  struct hostent *host;
   const char * ptr;
   const char * ptr_ident;
   unsigned int ident_length=0;
@@ -462,7 +461,6 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
   int i;
   const char * ptr_ip;
   char * ptr_test;
-  struct hostent *host;
   const char * ptr;
   const char * ptr_ident;
   unsigned int ident_length=0;

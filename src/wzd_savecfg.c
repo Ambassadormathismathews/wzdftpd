@@ -48,6 +48,7 @@
 
 #include "wzd_savecfg.h"
 #include "wzd_vfs.h"
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_mod.h"
@@ -116,8 +117,8 @@ static void save_pasvrange (FILE *file)
   fprintf( file, "# specify this if you want to get a specific range\n");
   fprintf( file, "#pasv_low_range = 2500\n");
   fprintf( file, "#pasv_high_range  = 3000\n");
-  fprintf( file, "pasv_low_range = %d\n", mainConfig->pasv_low_range);
-  fprintf( file, "pasv_high_range  = %d\n", mainConfig->pasv_high_range);
+  fprintf( file, "pasv_low_range = %lu\n", mainConfig->pasv_low_range);
+  fprintf( file, "pasv_high_range  = %lu\n", mainConfig->pasv_high_range);
   fprintf( file, "\n" );
 }
 
@@ -291,7 +292,7 @@ static void save_shmkey (FILE *file)
   if (file==NULL) return;
   fprintf( file, "# shm_key: use for share memory (default: 0x1331c0d3)\n");
   fprintf( file, "#shm_key = 0x2442c0d3\n");
-  fprintf( file, "shm_key = 0x%08x\n", mainConfig->shm_key);
+  fprintf( file, "shm_key = 0x%08lx\n", mainConfig->shm_key);
   fprintf( file, "\n");
   fprintf( file, "# force_shm_cleanup: server will always try to delete shm if existing (default: 0)\n");
   fprintf( file, "# WARNING: if you enable this and a server really exists, ...\n");
@@ -330,7 +331,7 @@ static void save_tlsoptions (FILE *file)
     current = current->next_param;
   }
   if (current)
-    fprintf( file, "param_tls_wrapper = %s\n", current->param);
+    fprintf( file, "param_tls_wrapper = %s\n", (char*)current->param);
   else
     fprintf( file, "#param_tls_wrapper = /usr/share/wzdftpd/wzd_tlswrap.dll\n");
   fprintf( file, "\n");
@@ -594,7 +595,7 @@ static void save_cronjobs (FILE *file)
           current->day_of_month,
           current->month,
           current->day_of_week,
-          current->hook->hook
+          (char*)current->hook->hook
           );
     }
     current = current->next_cronjob;

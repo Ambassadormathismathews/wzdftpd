@@ -746,21 +746,17 @@ int do_site_change(char *command_line, wzd_context_t * context)
   /* uid */ /* FIXME useless ? */
   /* group */ /* add or remove group */
   else if (strcmp(field,"group")==0) {
-    wzd_group_t group;
-    int groupid;
     unsigned int newgroupid=(unsigned int)-1;
+
     /* GAdmin ? */
     if (is_gadmin) {
        ret = send_message_with_args(501,context,"You can't change that field");
        return 0;
     }
+
     /* find corresponding id */
-    for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
-	  /** \todo XXX FIXME the following will NOT work since backend_find_group changed */
-      if (backend_find_group(i,&group,&groupid)!=-1) {
-        if (strcmp(group.groupname,value)==0) { newgroupid = groupid; break; } 
-      }
-    }
+    newgroupid = GetGroupIDByName(value);
+
     if (newgroupid != -1) {
       ret=0;
       for (i=0; i<user.group_num; i++)
@@ -900,8 +896,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
   char * username, * group_name;
   unsigned long mod_type;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t * user;
   unsigned int i;
 
   ptr = command_line;
@@ -917,7 +912,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
   }
 
   /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( !(user=GetUserByName(username)) ) {
     ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
@@ -927,28 +922,22 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
 
   /** group **/ /* add or remove group */
   while (group_name) {
-    wzd_group_t group;
-    int groupid;
     unsigned int newgroupid=(unsigned int)-1;
-    /* find corresponding id */
-    for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
-	  /** \todo XXX FIXME the following will NOT work since backend_find_group changed */
-      if (backend_find_group(i,&group,&groupid)!=-1) {
-        if (strcmp(group.groupname,group_name)==0) { newgroupid = groupid; break; } 
-      }
-    }
+
+    newgroupid = GetGroupIDByName(group_name);
+
     if (newgroupid != -1) {
       ret=0;
-      for (i=0; i<user.group_num; i++)
-        if (newgroupid == user.groups[i]) { ret=1; break; } 
+      for (i=0; i<user->group_num; i++)
+        if (newgroupid == user->groups[i]) { ret=1; break; } 
       if (ret) { /* remove from group, shift them */
-        user.groups[i] = 0;
-        for (;i<user.group_num-1; i++)
-          user.groups[i] = user.groups[i+1];
-        user.group_num -= 1;
+        user->groups[i] = 0;
+        for (;i<user->group_num-1; i++)
+          user->groups[i] = user->groups[i+1];
+        user->group_num -= 1;
       } else { /* add user to group */
-        user.groups[user.group_num] = newgroupid;
-        user.group_num++;
+        user->groups[user->group_num] = newgroupid;
+        user->group_num++;
       }
     } else { /* if (newgroupid != -1) */
       char buffer[1024];
@@ -963,7 +952,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,mod_type);
+  backend_mod_user("plaintext",username,user,mod_type);
 
   ret = send_message_with_args(200,context,"User field change successfull");
   return 0;
@@ -1192,7 +1181,6 @@ int do_site_kill(char *command_line, wzd_context_t * context)
   char *ptr;
   int ret;
   unsigned long pid;
-  int found = 0;
 
   pid = strtoul(command_line,&ptr,0);
   if (*ptr!='\0') {
@@ -1502,7 +1490,6 @@ int do_site_su(char *command_line, wzd_context_t * context)
 
   {
     const char * groupname = NULL;
-    const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];

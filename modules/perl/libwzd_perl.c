@@ -429,7 +429,7 @@ static int _perl_set_slave(void *context)
 
 static XS(XS_wzd_test)
 {
-  char * cmd = NULL;
+/*  char * cmd = NULL;*/
 
   dXSARGS;
 
@@ -597,7 +597,7 @@ static XS(XS_wzd_stat)
   if (file == (struct wzd_file_t *)-1) {
     buffer[0] = '\0';
   } else if (file) {
-    snprintf(buffer,256,"%s/%s/%o", file->owner, file->group, file->permissions);
+    snprintf(buffer,256,"%s/%s/%lo", file->owner, file->group, file->permissions);
   } else {
     /* we know nothing about this file */
     snprintf(buffer,256,"%s/%s/%o", "unknown", "unknown", 0755);

@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*#include <wzd.h>*/
 
@@ -121,7 +122,6 @@ int parse_args(int argc, char **argv)
 
 wzd_user_t * find_id(wzd_user_t * user_list,unsigned int id)
 {
-  wzd_user_t * user = NULL;
   unsigned int i=0;
 
   while (i<HARD_DEF_USER_MAX)

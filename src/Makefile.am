@@ -145,3 +145,6 @@ wzd_shm.lo: wzd_shm.c
 @AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 	$(LTCOMPILE) -c -I/usr/include -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
 endif
+
+doxygen:
+	doxygen doxygen.cfg

@@ -1240,10 +1240,11 @@ label_error_rmdir:
 /*************** do_port *****************************/
 int do_port(char *name, char *args, wzd_context_t * context)
 {
+  int a0,a1,a2,a3;
   unsigned int p1, p2;
   int ret;
 
-  if (context->pasvsock) {
+  if (context->pasvsock >= 0) {
     socket_close(context->pasvsock);
     context->pasvsock = -1;
   }
@@ -1252,11 +1253,16 @@ int do_port(char *name, char *args, wzd_context_t * context)
     return E_PARAM_NULL;
   }
   if ((sscanf(args,"%d,%d,%d,%d,%d,%d",
-          &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
+          &a0,&a1,&a2,&a3,
           &p1,&p2))<6) {
     ret = send_message(502,context);
     return E_PARAM_INVALID;
   }
+
+  context->dataip[0] = (unsigned char)a0;
+  context->dataip[1] = (unsigned char)a1;
+  context->dataip[2] = (unsigned char)a2;
+  context->dataip[3] = (unsigned char)a3;
 
   context->dataport = ((p1&0xff)<<8) | (p2&0xff);
   context->datafamily = WZD_INET4;
@@ -1414,7 +1420,6 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   char * net_addr, * s_tcp_port;
   char * ptr;
   unsigned int tcp_port;
-  struct hostent * host;
   struct in_addr addr4;
   struct in6_addr addr6;
 
@@ -1499,11 +1504,12 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
 int do_epsv(char *name, char *arg, wzd_context_t * context)
 {
   int ret;
-  unsigned long addr;
   unsigned int size,port;
-  struct sockaddr_in sai;
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 sai6;
+#else
+  struct sockaddr_in sai;
+  unsigned long addr;
 #endif
   unsigned char *myip;
   unsigned char pasv_bind_ip[16];
@@ -2276,7 +2282,6 @@ int do_quit(char *name, char *arg, wzd_context_t * context)
   {
     const char * groupname = NULL;
     wzd_user_t * user;
-    const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
@@ -3014,7 +3019,6 @@ void * clientThreadProc(void *arg)
 
   if (ret) { /* USER not logged in */
     const char * groupname = NULL;
-    const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
@@ -3045,7 +3049,6 @@ void * clientThreadProc(void *arg)
 
   {
     const char * groupname = NULL;
-    const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];

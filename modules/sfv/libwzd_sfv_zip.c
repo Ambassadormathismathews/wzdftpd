@@ -459,10 +459,12 @@ static int unzipLocal_GetCurrentFileInfoInternal(zipFile file,
 
   /* check the magic */
   if (err == ZIP_OK)
+  {
     if (zipLocal_getLong(s->file,&magic) != ZIP_OK)
       err = ZIP_ERRNO;
     else if (magic != 0x02014b50)
       err = ZIP_BADZIPFILE;
+  }
 
   if (zipLocal_getShort(s->file,&file_info.version) != ZIP_OK)
     err = ZIP_ERRNO;
@@ -537,10 +539,12 @@ static int unzipLocal_GetCurrentFileInfoInternal(zipFile file,
       uSizeRead = extraFieldBufferSize;
 
     if (lseek != 0)
+    {
       if (fseek(s->file,lseek,SEEK_CUR) == 0)
         lseek = 0;
       else
         err = ZIP_ERRNO;
+    }
 
     if ((file_info.size_file_extra>0) && (extraFieldBufferSize>0))
       if (fread(extraField,(unsigned int)uSizeRead,1,s->file) != 1)
@@ -562,10 +566,12 @@ static int unzipLocal_GetCurrentFileInfoInternal(zipFile file,
       uSizeRead = commentBufferSize;
 
     if (lseek != 0)
+    {
       if (fseek(s->file,lseek,SEEK_CUR) == 0)
         lseek = 0;
       else
         err = ZIP_ERRNO;
+    }
 
     if ((file_info.size_file_comment>0) && (commentBufferSize>0))
       if (fread(szComment,(unsigned int)uSizeRead,1,s->file) != 1)
@@ -731,10 +737,12 @@ static int unzipLocal_CheckCurrentFileHeaderCoherency(zipFile_s * s,
     return ZIP_ERRNO;
 
   if (err == ZIP_OK)
+  {
     if (zipLocal_getLong(s->file,&magic) != ZIP_OK)
       err = ZIP_ERRNO;
     else if (magic != 0x04034b50)
       err = ZIP_BADZIPFILE;
+  }
 
   if (zipLocal_getShort(s->file,&data) != ZIP_OK)
     err = ZIP_ERRNO;
@@ -1128,7 +1136,6 @@ int unzipCloseCurrentFile(zipFile file)
 */
 int unzipGetGlobalComment ( zipFile file, char *szComment, unsigned long uSizeBuf)
 {
-  int err=ZIP_OK;
   zipFile_s * s;
   unsigned long uReadThis ;
   if (!file)

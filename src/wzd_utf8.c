@@ -67,7 +67,9 @@ typedef size_t (*fn_iconv_t)(iconv_t, const char **, size_t *, char **, size_t *
 typedef iconv_t (*fn_iconv_open_t)(const char *, const char *);
 typedef int (*fn_iconv_close_t)(iconv_t);
 
+#ifdef WIN32
 static void * _iconv_lib_handle = NULL;
+#endif
 static fn_iconv_t _iconv_fn_iconv = NULL;
 static fn_iconv_open_t _iconv_fn_iconv_open = NULL;
 static fn_iconv_close_t _iconv_fn_iconv_close = NULL;
@@ -259,7 +261,7 @@ int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const
 
 /** \brief Valid UTF-8 check
  *
- * taken from RFC2640
+ * taken from RFC2640, adapted to remove warnings :)
  * Checks if a bte sequence is valid UTF-8.
  *
  * \return 1 if input string is valid UTF-8, else 0
@@ -277,10 +279,12 @@ int utf8_valid(const unsigned char *buf, unsigned int len)
       if ((c & 0xc0) == 0x80) // does trailing byte follow UTF-8 format ?
       {
         if (byte2mask) // need to check 2nd byte for proper range
+        {
           if (c & byte2mask) // are appropriate bits set ?
             byte2mask = 0x00;
           else
             return 0;
+        }
         trailing--;
       }
       else

@@ -43,6 +43,7 @@
 #endif
 
 #include "wzd_backend.h"
+#include "wzd_debug.h"
 
 /*#define	USERS_FILE		"users"*/
 
@@ -331,12 +332,13 @@ static int write_user_file(void)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
+    /** \todo XXX FIXME this will not work on win32 (use %I64 format !) */
     fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].stats.bytes_ul_total);
     fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].stats.bytes_dl_total);
     if (user_pool[i].stats.files_ul_total)
-      fprintf(file,"files_ul_total=%llu\n",user_pool[i].stats.files_ul_total);
+      fprintf(file,"files_ul_total=%lu\n",user_pool[i].stats.files_ul_total);
     if (user_pool[i].stats.files_dl_total)
-      fprintf(file,"files_dl_total=%llu\n",user_pool[i].stats.files_dl_total);
+      fprintf(file,"files_dl_total=%lu\n",user_pool[i].stats.files_dl_total);
     fprintf(file,"credits=%llu\n",user_pool[i].credits);
     if (user_pool[i].ratio)
       fprintf(file,"ratio=%d\n",user_pool[i].ratio);

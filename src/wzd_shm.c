@@ -46,6 +46,7 @@
 #endif
 
 #include "wzd_structs.h"
+#include "wzd_libmain.h" /* getlib_server_uid */
 #include "wzd_log.h"
 #include "wzd_ServerThread.h"
 
@@ -345,7 +346,7 @@ fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,er
 wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 {
   wzd_shm_t *shm;
-  int have_set_uid=0;
+/*  int have_set_uid=0;*/
 
   shm = malloc(sizeof(wzd_shm_t));
   if (!shm) return NULL;

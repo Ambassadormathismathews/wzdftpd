@@ -440,7 +440,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 
   out_buffer_ptr = out_buffer;
 
-  while (cookie=yylex())
+  while ( (cookie=yylex()) )
   {
     cookie_ptr = NULL;
     cookie_length = 0;

@@ -275,7 +275,7 @@ int main_parse_args(int argc, char **argv)
       break;
     case 'V':
       fprintf(stderr,"%s build %s (%s)\n",
-          WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+          WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
       return 1;
     }
   }
@@ -314,7 +314,7 @@ int main_parse_args(int argc, char **argv)
       }
       if (!strcmp(argv[optindex],"-V")) {
         fprintf(stderr,"%s build %s (%s)\n",
-            WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+            WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
         return 1;
       }
       if (!strcmp(argv[optindex],"-si")) {
@@ -436,6 +436,8 @@ int main(int argc, char **argv)
 
   /* \todo XXX use values given in command-line ? */
   switch (start_command) {
+    case CMD_NONE:
+      break;
     case CMD_CLEANUP_SHM:
       cleanup_shm();
       exit(0);

@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h> /* isspace */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -1265,7 +1266,7 @@ int server_switch_to_config(wzd_config_t *config)
     /* ignore if file exists for visual version ... */
     fd = open(config->pid_file,O_WRONLY | O_CREAT,0644);
 #endif
-    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
+    snprintf(buf,64,"%ld\n",(unsigned long)getpid());
     if (fd==-1) {
       out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
       if (created_shm) {

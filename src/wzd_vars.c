@@ -86,11 +86,11 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcasecmp(varname,"pasv_low")==0) {
-    snprintf(data,datalength,"%d",config->pasv_low_range);
+    snprintf(data,datalength,"%lu",config->pasv_low_range);
     return 0;
   }
   if (strcasecmp(varname,"pasv_high")==0) {
-    snprintf(data,datalength,"%d",config->pasv_high_range);
+    snprintf(data,datalength,"%lu",config->pasv_high_range);
     return 0;
   }
   if (strcasecmp(varname,"port")==0) {

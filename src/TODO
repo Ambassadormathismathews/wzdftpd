@@ -12,7 +12,7 @@
 - create manpages !
   * create manpages for site* tools (section 1)
 '********'
-- implement uid/gid
+- implement uid/gid // almost finished
 '********'
 - threads management:
   better use thread_id instead of pid_child in diplays, etc.
@@ -101,6 +101,7 @@ current objectives:
 
 ## PRIORITY ##
 
+- add GnuTLS code to replace (or just prefer it to) OpenSSL
 - Sub-vfs work, but need to put the physical path after the first node
   e.g:
    vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|

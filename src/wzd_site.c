@@ -362,8 +362,7 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
   char * ptr;
   char * groupname, *filename;
   int ret;
-  wzd_group_t group;
-  int gid;
+  wzd_group_t * group;
 
   ptr = command_line;
   groupname = strtok_r(command_line," \t\r\n",&ptr);
@@ -372,14 +371,9 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
     return 1;
   }
   /* check that groupname exists */
-  gid = GetGroupIDByName(groupname);
-  if ( !(gid=GetGroupIDByName(groupname)) ) {
+  if ( !(group=GetGroupByName(groupname)) ) {
     ret = send_message_with_args(501,context,"Group does not exists");
     return 1;
-  }
-  if ( backend_find_group(gid, &group, NULL) ) {
-    ret = send_message_with_args(501,context,"Error getting group info");
-    return 0;
   }
 
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
@@ -438,7 +432,7 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
     _setPerm(buffer,0,0,0,0,long_perms,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"mode changed to '%o'",long_perms);
+  snprintf(buffer,BUFFER_LEN,"mode changed to '%lo'",long_perms);
   ret = send_message_with_args(200,context,buffer);
   return 0;
 }
@@ -1132,7 +1126,7 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
     pid_t mother;
     DIR * d;
     struct dirent *dent;
-    int count, i, rdi, fdcount;
+    int count, rdi, fdcount;
 
     send_message_raw("200- LINUX specific:\r\n",context);
     mother = getpid();
@@ -1144,7 +1138,7 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
     snprintf(dirname,sizeof(dirname),"/proc/%ld/task",(long)mother); /** \todo XXX 2.6 specific ? */
     d = opendir(dirname);
     if (d) {
-      while (dent = readdir(d)) {
+      while ( (dent = readdir(d)) ) {
         if (dent->d_name[0] == '.') continue;
         child = atoi(dent->d_name);
         childs[count] = child;
@@ -1161,7 +1155,7 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
     d = opendir(dirname);
     if (d) {
       fdcount = 0;
-      while (dent = readdir(d)) {
+      while ( (dent = readdir(d)) ) {
         if (dent->d_name[0] == '.') continue;
         fdcount ++;
         snprintf(dirname,sizeof(dirname),"/proc/%d/task/%d/fd/%s",mother,mother,dent->d_name); /** \todo XXX 2.6 specific ? */
@@ -1372,7 +1366,7 @@ int do_site_version(char * ignored, wzd_context_t * context)
 {
   char str[256];
   snprintf(str,256,"%s build %s (%s)\n",
-      WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+      WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
   send_message_with_args(200,context,str);
   return 0;
 }
@@ -1908,6 +1902,8 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
     break;
   case EVENT_IGNORED:
     ret = send_message_with_args(250,context,"SITE ","command unknown");
+    break;
+  case EVENT_HANDLED:
     break;
   }
 

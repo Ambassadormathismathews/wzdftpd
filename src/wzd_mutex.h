@@ -25,8 +25,6 @@
 #ifndef __WZD_MUTEX__
 #define __WZD_MUTEX__
 
-/* this file is ultra platform dependant */
-
 
 typedef struct _wzd_mutex_t wzd_mutex_t;
 

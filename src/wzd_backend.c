@@ -122,7 +122,6 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   struct stat statbuf;
   int ret;
   void * handle;
-  void * ptr;
   char filename[1024];
   char path[1024];
   int length;

@@ -331,7 +331,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 
   } /* family == WZD_INET4 */
 #if defined(IPV6_SUPPORT)
-  if (family == WZD_INET6)
+  else if (family == WZD_INET6)
   {
     len = sizeof(sai6);
 
@@ -442,8 +442,6 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   ret = connect(sock, sai, len);
   if (ret >= 0) return sock;
     do {
-      int sock_error;
-      int s_len;
       if ( (ret=socket_wait_to_write(sock,timeout))!=0) {
         if (ret == 1) { /* timeout */
           out_log(LEVEL_FLOOD,"Connect failed (timeout) %s:%d\n", __FILE__, __LINE__);

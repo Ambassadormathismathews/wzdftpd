@@ -38,6 +38,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef _MSC_VER
 #include <winsock2.h>
@@ -288,7 +289,7 @@ static void do_tcl_help(wzd_context_t * context)
 /** return 0 if ok */
 static int tcl_diagnose(void)
 {
-  int ret=0, test_int;
+  int test_int;
   Tcl_Interp * test_interp, * test_slave;
   Tcl_Command test_cmd;
   Tcl_CmdInfo test_info;
@@ -487,7 +488,7 @@ static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *a
   if (file == (struct wzd_file_t *)-1) {
     buffer[0] = '\0';
   } else if (file) {
-    snprintf(buffer,256,"%s/%s/%o", file->owner, file->group, file->permissions);
+    snprintf(buffer,256,"%s/%s/%lo", file->owner, file->group, file->permissions);
   } else {
     /* we know nothing about this file */
     snprintf(buffer,256,"%s/%s/%o", "unknown", "unknown", 0755);

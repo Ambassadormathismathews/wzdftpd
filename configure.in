@@ -18,7 +18,7 @@ AM_CONFIG_HEADER([config.h])
 AM_MAINTAINER_MODE
 
 # Checks for programs.
-CFLAGS=""
+#CFLAGS=""
 AC_PROG_CC
 AM_PROG_LEX
 AC_PROG_INSTALL

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h> /* isdigit */
 
 #ifdef _MSC_VER
 #include <winsock2.h>

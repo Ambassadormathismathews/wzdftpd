@@ -24,9 +24,11 @@
  * the source code for OpenSSL in the source distribution.
  */
 #include <stdio.h>
+#include <string.h>
 #include <mysql.h>
 
 #include <wzd_backend.h>
+#include <wzd_debug.h>
 
 enum {
   UCOL_REF=0,
@@ -160,7 +162,7 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 /*  if (mysql_field_count(&mysql) == 1)*/
   {
     MYSQL_RES   *res;
-    MYSQL_ROW    row, end_row;
+    MYSQL_ROW    row;
     int num_fields;
 
     if (!(res = mysql_store_result(&mysql))) {
@@ -217,7 +219,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 /*  if (mysql_field_count(&mysql) == 1)*/
   {
     MYSQL_RES   *res;
-    MYSQL_ROW    row, end_row;
+    MYSQL_ROW    row;
     int num_fields;
     char stored_pass[MAX_PASS_LENGTH];
 
@@ -290,7 +292,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
 /*  if (mysql_field_count(&mysql) == 1)*/
   {
     MYSQL_RES   *res;
-    MYSQL_ROW    row, end_row;
+    MYSQL_ROW    row;
     int num_fields;
 
     if (!(res = mysql_store_result(&mysql))) {
@@ -366,7 +368,7 @@ wzd_user_t * FCN_GET_USER(int uid)
 {
   char *query;
   MYSQL_RES   *res;
-  MYSQL_ROW    row, end_row;
+  MYSQL_ROW    row;
   int num_fields;
   wzd_user_t * user;
   unsigned int i,j;
@@ -492,10 +494,9 @@ wzd_group_t * FCN_GET_GROUP(int gid)
 {
   char *query;
   MYSQL_RES   *res;
-  MYSQL_ROW    row, end_row;
+  MYSQL_ROW    row;
   int num_fields;
   wzd_group_t * group;
-  unsigned int i;
 
   if (gid == -2) return (wzd_group_t*)wzd_mysql_get_group_list();
 
@@ -619,7 +620,7 @@ static int * wzd_mysql_get_user_list(void)
 {
   char *query;
   MYSQL_RES   *res;
-  MYSQL_ROW    row, end_row;
+  MYSQL_ROW    row;
   int * uid_list;
   unsigned int index, i;
 
@@ -657,7 +658,7 @@ static int * wzd_mysql_get_group_list(void)
 {
   char *query;
   MYSQL_RES   *res;
-  MYSQL_ROW    row, end_row;
+  MYSQL_ROW    row;
   int * gid_list;
   unsigned int index, i;
 

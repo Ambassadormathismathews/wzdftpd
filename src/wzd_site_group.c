@@ -163,9 +163,9 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   unsigned int gid;
   int i;
 /*  int users_maingroup_changed[HARD_DEF_USER_MAX];*/
-  int num_users_maingroup_changed=0;
+/*  int num_users_maingroup_changed=0;*/
 /*  int users_without_group[HARD_DEF_USER_MAX];*/
-  int num_users_without_group=0;
+/*  int num_users_without_group=0;*/
   char buffer[256];
 
   me = GetUserByID(context->userid);
