@@ -1207,7 +1207,10 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
         strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
       }
     }
-    if (mod_type & _USER_ROOTPATH) strcpy(user_pool[count].rootpath,user->rootpath);
+    if (mod_type & _USER_ROOTPATH) {
+      DIRNORM(user->rootpath,strlen(user->rootpath),0);
+      strcpy(user_pool[count].rootpath,user->rootpath);
+    }
     if (mod_type & _USER_TAGLINE) strcpy(user_pool[count].tagline,user->tagline);
     if (mod_type & _USER_UID) user_pool[count].uid = user->uid;
     if (mod_type & _USER_GROUPNUM) user_pool[count].group_num = user->group_num;
