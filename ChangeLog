@@ -1,3 +1,7 @@
+004-12-15  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: new config directive 'tls_certificate_key'
+
 004-12-13  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: removed server limitations for users/groups. The same has

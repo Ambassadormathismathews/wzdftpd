@@ -119,6 +119,8 @@ typedef enum {
   CFG_VFS,
   CFG_XFERLOG,
 
+  CFG_KEYWORD,
+
   CFG_UNKNOWN
 } wzd_config_token_t;
 
@@ -249,6 +251,8 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"use_syslog")) return CFG_USE_SYSLOG;
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
+
+  if (!strcmp(word,"tls_certificate_key")) return CFG_KEYWORD;
   return 0;
 }
 
@@ -1884,6 +1888,33 @@ int cfg_read_xferlog(void)
 
 
 
+int cfg_read_keyword(void)
+{
+  char * key, * data;
+  unsigned int token;
+
+  key = wzd_strdup(yytext);
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be '<id> = ...'\n");
+    wzd_free(key);
+    return 1;
+  }
+
+  if( !(data=read_until_eol(1024)) ) {
+    out_err(LEVEL_HIGH,"invalid data for keywords %s\n", key);
+    wzd_free(key);
+    return 1;
+  }
+
+  if (chtbl_insert((CHTBL*)tempConfig.htab, key, data, NULL, wzd_free, wzd_free))
+    ; /* error */
+
+  return 0;
+}
+
+
 
 
 
@@ -2078,6 +2109,11 @@ wzd_config_t * readConfigFile(const char *fileName)
     case CFG_XFERLOG:
       ret = cfg_read_xferlog();
       break;
+
+    case CFG_KEYWORD:
+      ret = cfg_read_keyword();
+      break;
+
 #if 0
 /*      printf("ID: %s\n",yytext);*/
       if (strlen(yytext)>=256) {

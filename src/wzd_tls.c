@@ -90,6 +90,7 @@ int tls_init(void)
 {
   int status;
   SSL_CTX * tls_ctx;
+  char * tls_certificate_key;
 
   ERR_load_ERR_strings();
   SSL_load_error_strings();	/* readable error messages */
@@ -123,9 +124,15 @@ int tls_init(void)
   }
 
   /* set private key file - usually the same */
-  status = SSL_CTX_use_PrivateKey_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
+  {
+    /* if no key provided, try using the same certificate */
+    tls_certificate_key = mainConfig->tls_certificate;
+  }
+
+  status = SSL_CTX_use_PrivateKey_file(tls_ctx, tls_certificate_key, X509_FILETYPE_PEM);
   if (status <= 0) {
-    out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
+    out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", tls_certificate_key, (char *)ERR_error_string(ERR_get_error(), NULL));
     SSL_CTX_free(tls_ctx);
     mainConfig->tls_ctx = NULL;
     return 1;
@@ -583,6 +590,7 @@ static gnutls_certificate_credentials x509_cred;
 
 int tls_init(void)
 {
+  char * tls_certificate_key;
   /* The order matters.
    */
   gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
@@ -597,10 +605,15 @@ int tls_init(void)
   gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
       GNUTLS_X509_FMT_PEM);
 */
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
+  {
+    /* if no key provided, try using the same certificate */
+    tls_certificate_key = mainConfig->tls_certificate;
+  }
 
   gnutls_certificate_set_x509_key_file(x509_cred,
       mainConfig->tls_certificate /* CERTFILE */,
-      mainConfig->tls_certificate /* KEYFILE */,
+      tls_certificate_key /* KEYFILE */,
       GNUTLS_X509_FMT_PEM);
 
   generate_dh_params();

@@ -3,7 +3,7 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- src/wzd_tls.c & others: add config keyword for separate key file (certificates)
+- make config->tls_certificate a dynamic buffer
 '********'
 - use generic list definition when possible
 '********'
