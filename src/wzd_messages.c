@@ -200,6 +200,8 @@ int send_message_raw(const char *msg, wzd_context_t * context)
 {
   int ret;
 
+  if (!msg || strlen(msg)==0) return 0;
+
 #ifdef DEBUG
 if (msg[strlen(msg)-1]!='\n')
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,msg);

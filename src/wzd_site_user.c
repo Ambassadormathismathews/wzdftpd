@@ -70,12 +70,12 @@ static void _flags_simplify(char *flags, size_t length);
 
 void do_site_help_adduser(wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site adduser <user> <password> [<group>]");
+  send_message_with_args(501,context,"site adduser <user> <password> [<group>] [<ip1> <ip2> <...>]");
 }
 
 /** site adduser: adds a new user
  *
- * adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;]
+ * adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;] [&lt;ip1&gt; &lt;ip2&gt; &lt;...&gt;]
  */
 int do_site_adduser(char *command_line, wzd_context_t * context)
 {
