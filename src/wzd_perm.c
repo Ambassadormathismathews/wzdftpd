@@ -257,10 +257,12 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config)
 {
   wzd_command_perm_t * command_perm;
-  wzd_command_perm_entry_t * perm_entry;
+  wzd_command_perm_entry_t * entry;
   wzd_user_t * user;
   wzd_group_t * group;
   int i;
+  int negate;
+  const char * entry_target;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
@@ -276,20 +278,36 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
   command_perm = perm_find(permname,config);
   if (!command_perm) return 1;
 
-  /* try with username */
-  perm_entry = perm_find_entry(user->username,CP_USER,command_perm);
-  if (perm_entry==(void*)-1) return 1;
-  if (perm_entry) return 0;
+  entry = command_perm->entry_list;
+  if (!entry) return 1;
 
-  /* try with groups */
-  for (i=0; i<user->group_num; i++) {
-    group = GetGroupByID(user->groups[i]);
-    perm_entry = perm_find_entry(group->groupname,CP_GROUP,command_perm);
-    if (perm_entry == (void*)-1)
-      return 1;
-    else if (perm_entry)
-      return 0;
-  }
+  /* TODO compare entries with target (regexp powaa) and if same, ok */
+
+  do {
+    entry_target = entry->target;
+    negate=0;
+    if (entry_target[0] == '!') {
+      entry_target++;
+      negate = 1;
+    }
+    if (entry_target[0] == '*') return (negate) ? 1 : 0;
+    switch (entry->cp) {
+      case CP_USER:
+	if (strcasecmp(entry_target,user->username)==0) return (negate) ? 1 : 0;
+	break;
+      case CP_GROUP:
+	for (i=0; i<user->group_num; i++) {
+	  group = GetGroupByID(user->groups[i]);
+	  if (strcasecmp(entry_target,group->groupname)==0) return (negate) ? 1 : 0;
+	}
+	break;
+      case CP_FLAG:
+	if (user->flags && strchr(user->flags,*entry_target)) return (negate) ? 1 : 0;
+	break;
+    }
+    entry = entry->next_entry;
+  } while (entry);
 
   return 1;
 }
+
