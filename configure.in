@@ -257,6 +257,7 @@ AC_CONFIG_FILES([Makefile
 		 doc/Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
+		 man/Makefile
                  modules/Makefile
                  modules/perl/Makefile
                  modules/sfv/Makefile
