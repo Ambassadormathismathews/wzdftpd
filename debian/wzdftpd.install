@@ -3,4 +3,6 @@ usr/share/doc/wzdftpd/*
 usr/sbin/wzdftpd
 usr/bin/*
 usr/lib/libwzd.so
-usr/lib/wzdftpd/backends/libwzdplaintext.*
+usr/lib/wzdftpd/backends/libwzdplaintext.so
+usr/lib/wzdftpd/backends/libwzdpam.so
+usr/lib/wzdftpd/modules/libwzd_sfv.so

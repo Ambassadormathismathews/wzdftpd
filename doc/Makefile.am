@@ -42,4 +42,4 @@ distclean: clean
 
 endif
 
-EXTRA_DIST = $(ALL_SGML_FILES) $(HTML_DEPS) $(MAIN_SGML_FILE) $(EXAMPLES) fix_css.sh add_header_footer.pl
+EXTRA_DIST = $(ALL_SGML_FILES) $(HTML_DEPS) $(MAIN_SGML_FILE) $(EXAMPLES) fix_css.sh add_header_footer.pl wzd_custom.dsl

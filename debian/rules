@@ -77,16 +77,18 @@ install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i
-	dh_installdirs -i
+#	dh_clean -k -i
+#	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into
 	# debian/<package>-doc.
 	#INSTALLDOC#
-	install -m 755 -d debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
-	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
 
-	dh_install -i
+	# TODO since we install in standard dir, the following is becoming useless ??
+#	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/html
+#	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/wzdftpd/html
+
+#	dh_install -i
 
 install-arch:
 	dh_testdir
@@ -100,6 +102,17 @@ install-arch:
 
 	install -m 755 -d debian/tmp/usr/include/wzdftpd
 	install -m 644 src/*.h debian/tmp/usr/include/wzdftpd/
+
+	# TODO since we install in standard dir, the following is becoming useless ??
+	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/html
+	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/wzdftpd/html
+
+	# we don't need them, and dh_install complains !
+	# so i remove them (was proposed on #debian-devel)
+	rm debian/tmp/usr/lib/wzdftpd/modules/libwzd_*.a
+	rm debian/tmp/usr/lib/wzdftpd/modules/libwzd_*.la
+	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.a
+	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.la
 
 #	install -m 644 debian/*.1.gz debian/wzdftpd/usr/share/man/man1/
 #
@@ -149,5 +162,5 @@ binary-indep: build-indep install-indep
 binary-arch: build-arch install-arch
 	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
 
-binary: binary-arch binary-indep
-.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch 
+binary: binary-arch
+.PHONY: build clean binary-arch binary install install-arch 

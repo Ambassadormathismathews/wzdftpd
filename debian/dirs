@@ -4,3 +4,5 @@ usr/sbin
 etc
 usr/share/man/man1
 var/log/wzdftpd
+usr/lib/wzdftpd/backends
+usr/lib/wzdftpd/modules

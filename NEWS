@@ -1,0 +1,18 @@
+   NEWS file for wzdftpd
+
+
+0.3.2: May 01 2004:
+
+ As usual now, some bugfixes:
+
+* log file empty on win32 (except if forcing use_syslog =3D 0)
+* user can now see its own home
+
+But the big part is the addition of some new features:
+* tcl: command putlog
+* new command STAT to provide a fast way to list dir
+* group tagline, cookie %grouptag
+* do not search UTF-8 by default in configure
+
+And finally some new cookies to access transfered files infos:
+* %lastfile{name,size,speed,time}

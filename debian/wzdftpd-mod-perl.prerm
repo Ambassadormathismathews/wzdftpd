@@ -9,13 +9,12 @@ fi
 CONFIG=/etc/wzdftpd/wzd.cfg
 
 if [ -f $CONFIG ]; then
-	grep -v "^module[[:space:]]*=[[:space:]]*.*libwzd_sfv.so" $CONFIG > $CONFIG.sfvremove
+	grep -v "^module[[:space:]]*=[[:space:]]*.*libwzd_perl.so" $CONFIG > $CONFIG.perlremove
 
-	# we keep param_sfv* and site_sfv*, as they can be customized
-	# by user
+	# we keep site_perl*, as they can be customized by user
 
-	chmod --reference=$CONFIG $CONFIG.sfvremove
-	mv $CONFIG.sfvremove $CONFIG
+	chmod --reference=$CONFIG $CONFIG.perlremove
+	mv $CONFIG.perlremove $CONFIG
 fi
 
 # dh_installdeb will replace this with shell code automatically

@@ -169,7 +169,7 @@
 /*********************** VERSION **************************/
 
 /* Version */
-#define  WZD_VERSION_NUM "0.4 visual"
+#define  WZD_VERSION_NUM "0.4.0 visual"
 #define  WZD_BUILD_NUM __DATE__
 #define  WZD_BUILD_OPTS  "visual"
 

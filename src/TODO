@@ -3,6 +3,9 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- create manpages !
+  * create manpages for site* tools (section 1)
+'********'
 - implement uid/gid
 '********'
 - threads management:
@@ -14,8 +17,6 @@
 '********'
 - tcl:
   create API for locks
-'********'
-- create manpages !
 '********'
 - modules: activate/desactivate module, remove from list
 '********'

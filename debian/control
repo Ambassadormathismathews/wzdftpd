@@ -3,15 +3,14 @@ Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
 Build-Depends: debhelper (>= 4.0.0), libssl-dev, zlib1g-dev, tcl8.4-dev, libpam0g-dev, libmysqlclient-dev, flex, docbook-utils
-Standards-Version: 3.6.0
+Standards-Version: 3.6.1
 
 Package: wzdftpd
 Architecture: any
 Depends: ${shlibs:Depends}
 Provides: ftp-server
 Conflicts: ftp-server
-Suggests: tcl8.4, wzdftpd-doc
-Description: A portable, modular, efficient and not user-friendly ftp server
+Description: A portable, modular, not user-friendly ftp server
  wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
  is multithreaded. Server is fully configurable online using SITE commands, and
  implements the lastest RFC extensions to FTP protocol.
@@ -22,108 +21,32 @@ Description: A portable, modular, efficient and not user-friendly ftp server
  .
  It includes several authentication backends, is easily scriptable and provides
  a powerful event-driven system to extend server.
-
-Package: wzdftpd-back-pam
-Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
-Description: A portable, modular, efficient and not user-friendly ftp server (pam backend)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
- .
- This package provides the pam backend.
 
 Package: wzdftpd-back-mysql
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Suggests: mysql-server
-Description: A portable, modular, efficient and not user-friendly ftp server (Mysql backend)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
- .
- This package provides the Mysql backend.
+Description: MySQL backend for wzdftpd
+ This package provides the MySQL backend for wzdftpd.
 
-Package: wzdftpd-mod-sfv
+Package: wzdftpd-mod-perl
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
-Description: A portable, modular, efficient and not user-friendly ftp server (SFV module)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
- .
- This package provides the SFV module.
+Description: Perl module for wzdftpd
+ This package provides the necessary files to run Perl plugins in wzdftpd,
+ in the Perl module.
 
 Package: wzdftpd-mod-tcl
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
-Suggests: tcl8.4
-Description: A portable, modular, efficient and not user-friendly ftp server (TCL module)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
- .
- This package provides the TCL module.
+Description: TCL module for wzdftpd
+ This package provides the necessary files to run TCL plugins in wzdftpd,
+ in the TCL module.
 
 Package: wzdftpd-dev
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Section: libdevel
-Description: A portable, modular, efficient and not user-friendly ftp server (devel files)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
- .
- This package provides all needed files to develop extensions.
-
-Package: wzdftpd-doc
-Architecture: all
-Suggests: wzdftpd
-Section: doc
-Description: A portable, modular, efficient and not user-friendly ftp server (Documentation)
- wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
- is multithreaded. Server is fully configurable online using SITE commands, and
- implements the lastest RFC extensions to FTP protocol.
- .
- Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories,
- dynamic ip changes auto-detection, etc.
- .
- It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
+Description: Development files for wzdftpd
+ This package provides all needed files to develop extensions for wzdftpd.
 

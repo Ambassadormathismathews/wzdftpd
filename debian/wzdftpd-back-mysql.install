@@ -1,1 +1,1 @@
-usr/lib/wzdftpd/backends/libwzdmysql*
+usr/lib/wzdftpd/backends/libwzdmysql.so

@@ -63,7 +63,7 @@ esac
 
 #DEBHELPER#
 
-# Don't wait on pure-ftpd to close file handles
+# Don't wait on wzdftpd to close file handles
 db_stop
 
 exit 0

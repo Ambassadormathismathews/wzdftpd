@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.4, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.4.0, pollux@wzdftpd.net)
 AM_INIT_AUTOMAKE
 
 #AC_CANONICAL_HOST
