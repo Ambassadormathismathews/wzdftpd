@@ -62,6 +62,7 @@
 #include "wzd_site.h"
 #include "wzd_site_group.h"
 #include "wzd_site_user.h"
+#include "wzd_vars.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
 #include "wzd_dir.h"
@@ -223,6 +224,18 @@ void do_site_help(const char *site_command, wzd_context_t * context)
   if (strcasecmp(site_command,"user")==0) {
     send_message_raw("show user info\r\n",context);
     send_message_raw("site user username\r\n",context);
+  } else
+  if (strcasecmp(site_command,"vars")==0) {
+    send_message_raw("access server variables\r\n",context);
+    send_message_raw("site vars get varname\r\n",context);
+  } else
+  if (strcasecmp(site_command,"vars_user")==0) {
+    send_message_raw("access user variables\r\n",context);
+    send_message_raw("site vars_user get user varname\r\n",context);
+  } else
+  if (strcasecmp(site_command,"vars_group")==0) {
+    send_message_raw("access group variables\r\n",context);
+    send_message_raw("site vars_group get group varname\r\n",context);
   } else
   {
     snprintf(buffer,BUFFER_LEN,"Syntax error in command %s\r\n",site_command);
@@ -1395,6 +1408,181 @@ int do_site_utime(char *command_line, wzd_context_t * context)
   return 0;
 }
 
+/********************* do_site_vars *********************/
+
+int do_site_vars(char * command_line, wzd_context_t * context)
+{
+  char *ptr, *command, *varname, *value;
+  char * buffer;
+  int ret;
+
+  ptr = command_line;
+  command = strtok_r(command_line," \t\r\n",&ptr);
+  if (!command) {
+    do_site_help("vars",context);
+    return 1; 
+  }
+  ascii_lower(command,strlen(command));
+
+  varname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!varname) { do_site_help("vars",context); return 1; }
+
+  if (strcmp(command,"get")==0) {
+    buffer = malloc(1024); /** \todo XXX harcoded value ! */
+    ret = vars_get(varname,buffer,1024,mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else {
+      send_message_raw("200-\r\n",context);
+      send_message_raw(buffer,context);
+      send_message_raw("\r\n200 Command OK\r\n",context);
+    }
+
+    free(buffer);
+    return 0;
+  }
+  else if (strcmp(command,"set")==0) {
+    value = strtok_r(NULL," \t\r\n",&ptr);
+    if (!value) { do_site_help("vars",context); return 1; }
+
+    ret = vars_set(varname,value,strlen(value),mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else
+      send_message_with_args(200,context,"command ok");
+    return 0;
+  }
+
+  send_message_with_args(200,context,"command ok");
+  return 0;
+}
+
+/****************** do_site_vars_group *******************/
+
+int do_site_vars_group(char * command_line, wzd_context_t * context)
+{
+  char *ptr, *groupname, *command, *varname, *value;
+  char * buffer;
+  int ret;
+  wzd_group_t * group;
+
+  ptr = command_line;
+  command = strtok_r(command_line," \t\r\n",&ptr);
+  if (!command) {
+    do_site_help("vars_group",context);
+    return 1; 
+  }
+  ascii_lower(command,strlen(command));
+
+  groupname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!groupname) {
+    do_site_help("vars_group",context);
+    return 1; 
+  }
+  if ( (group = GetGroupByName(groupname)) == NULL ) {
+    send_message_with_args(501,context,"group does not exist");
+    return 1; 
+  }
+
+  varname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!varname) { do_site_help("vars_group",context); return 1; }
+
+  if (strcmp(command,"get")==0) {
+    buffer = malloc(1024); /** \todo XXX harcoded value ! */
+    ret = vars_group_get(groupname,varname,buffer,1024,mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else {
+      send_message_raw("200-\r\n",context);
+      send_message_raw(buffer,context);
+      send_message_raw("\r\n200 Command OK\r\n",context);
+    }
+
+    free(buffer);
+    return 0;
+  }
+  else if (strcmp(command,"set")==0) {
+    value = strtok_r(NULL," \t\r\n",&ptr);
+    if (!value) { do_site_help("vars_group",context); return 1; }
+
+    ret = vars_group_set(groupname,varname,value,strlen(value),mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else
+      send_message_with_args(200,context,"command ok");
+    return 0;
+  }
+
+  send_message_with_args(200,context,"command ok");
+  return 0;
+}
+
+/****************** do_site_vars_user *******************/
+
+int do_site_vars_user(char * command_line, wzd_context_t * context)
+{
+  char *ptr, *username, *command, *varname, *value;
+  char * buffer;
+  int ret;
+  wzd_user_t * user;
+
+  ptr = command_line;
+  command = strtok_r(command_line," \t\r\n",&ptr);
+  if (!command) {
+    do_site_help("vars_user",context);
+    return 1; 
+  }
+  ascii_lower(command,strlen(command));
+
+  username = strtok_r(NULL," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help("vars_user",context);
+    return 1; 
+  }
+  if ( (user = GetUserByName(username)) == NULL ) {
+    send_message_with_args(501,context,"user does not exist");
+    return 1; 
+  }
+
+  varname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!varname) { do_site_help("vars_user",context); return 1; }
+
+  if (strcmp(command,"get")==0) {
+    buffer = malloc(1024); /** \todo XXX harcoded value ! */
+    ret = vars_user_get(username,varname,buffer,1024,mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else {
+      send_message_raw("200-\r\n",context);
+      send_message_raw(buffer,context);
+      send_message_raw("\r\n200 Command OK\r\n",context);
+    }
+
+    free(buffer);
+    return 0;
+  }
+  else if (strcmp(command,"set")==0) {
+    value = strtok_r(NULL," \t\r\n",&ptr);
+    if (!value) { do_site_help("vars_user",context); return 1; }
+
+    ret = vars_user_set(username,varname,value,strlen(value),mainConfig);
+
+    if (ret)
+      send_message_with_args(200,context,"an error occurred");
+    else
+      send_message_with_args(200,context,"command ok");
+    return 0;
+  }
+
+  send_message_with_args(200,context,"command ok");
+  return 0;
+}
+
 /********************* do_site_version *********************/
 
 int do_site_version(char * ignored, wzd_context_t * context)
@@ -1774,6 +1962,9 @@ int site_init(wzd_config_t * config)
   /* user */
   /* users */
   if (site_command_add(&config->site_list,"UTIME",&do_site_utime)) return 1;
+  if (site_command_add(&config->site_list,"VARS",&do_site_vars)) return 1;
+  if (site_command_add(&config->site_list,"VARS_GROUP",&do_site_vars_group)) return 1;
+  if (site_command_add(&config->site_list,"VARS_USER",&do_site_vars_user)) return 1;
   if (site_command_add(&config->site_list,"VERSION",&do_site_version)) return 1;
   /* vfs */
   if (site_command_add(&config->site_list,"VFSLS",&do_site_vfsls)) return 1;

@@ -3,11 +3,11 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- src/wzd_tls.c & others: add config keyword for separate key file (certificates)
+'********'
 - use generic list definition when possible
 '********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=
-'********'
-- get_bandwidth(): give download, upload, total
 '********'
 - provide a socket registration interface to have ~ servers
 '********'

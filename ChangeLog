@@ -1,3 +1,8 @@
+2004-10-30  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: new commands SITE VARS, VARS_USER, VARS_GROUP
+	* bugfix: use same names in vars_user get and set
+
 2004-10-19  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: potential DoS (ident connections not closed correctly)

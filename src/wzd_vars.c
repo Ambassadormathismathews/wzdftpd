@@ -70,7 +70,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
   if (!config) return 1;
 
   if (strcasecmp(varname,"bw")==0) {
-    snprintf(data,datalength,"%lu",get_bandwidth());
+    snprintf(data,datalength,"%lu",get_bandwidth(NULL,NULL));
     return 0;
   }
   if (strcmp(varname,"login_pre_ip_check")==0) {
@@ -144,6 +144,21 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
     config->loglevel = i;
     return 0;
   }
+  if (strcasecmp(varname,"pasv_low")==0) {
+    ul = strtoul(data,NULL,0);
+    if (ul < 65535 && ul < config->pasv_high_range) {
+      config->pasv_low_range = ul;
+      return 0;
+    }
+  }
+  if (strcasecmp(varname,"pasv_high")==0) {
+    ul = strtoul(data,NULL,0);
+    if (ul < 65535 && ul > config->pasv_low_range) {
+      config->pasv_high_range = ul;
+      return 0;
+    }
+  }
+
   return 1;
 }
 
@@ -169,11 +184,11 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     snprintf(data,datalength,"%s",user->rootpath);
     return 0;
   }
-  if (strcasecmp(varname,"maxdl")==0) {
+  if (strcasecmp(varname,"max_dl")==0) {
     snprintf(data,datalength,"%lu",user->max_dl_speed);
     return 0;
   }
-  if (strcasecmp(varname,"maxul")==0) {
+  if (strcasecmp(varname,"max_ul")==0) {
     snprintf(data,datalength,"%lu",user->max_ul_speed);
     return 0;
   }
@@ -343,7 +358,7 @@ int vars_user_set(const char *username, const char *varname, void *data, unsigne
     mod_type = _USER_FLAGS;
   }
   /* homedir */
-  else if (strcmp(varname, "homedir")==0) {
+  else if (strcmp(varname, "home")==0) {
     /* check if homedir exist */
     {
       struct stat s;
@@ -506,11 +521,11 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
     snprintf(data,datalength,"%s",group->defaultpath);
     return 0;
   }
-  if (strcasecmp(varname,"maxdl")==0) {
+  if (strcasecmp(varname,"max_dl")==0) {
     snprintf(data,datalength,"%lu",group->max_dl_speed);
     return 0;
   }
-  if (strcasecmp(varname,"maxul")==0) {
+  if (strcasecmp(varname,"max_ul")==0) {
     snprintf(data,datalength,"%lu",group->max_ul_speed);
     return 0;
   }
@@ -559,7 +574,7 @@ int vars_group_set(const char *groupname, const char *varname, void *data, unsig
     strncpy(group->tagline,data,sizeof(group->tagline));
   }
   /* homedir */
-  else if (strcmp(varname,"homedir")==0) {
+  else if (strcmp(varname,"home")==0) {
     /* check if homedir exist */
     {
       struct stat s;
