@@ -96,7 +96,7 @@ void chtbl_destroy(CHTBL *htab)
 
     while (list_size(list) > 0) {
       if (list_rem_next(list,0,(void**)&data)==0 && list->destroy != NULL) {
-        if (data->free_key) data->free_key(data->data);
+        if (data->free_key) data->free_key(data->key);
         if (data->free_element) data->free_element(data->data);
         list->destroy(data);
       }
