@@ -361,7 +361,7 @@ int main(int argc, char **argv)
   fprintf(stderr,"\n");
   fprintf(stderr,"This is a beta release, in active development\n");
   fprintf(stderr,"Things may break from version to version\n");
-  fprintf(stderr,"Want stability ? Use a 0.3 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"Want stability ? Use a 0.4 version. YOU WERE WARNED!\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  
+
   if (!config) {
     out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");
     exit(1);
@@ -463,6 +463,8 @@ int main(int argc, char **argv)
 #endif
   }
 
+  /** \todo we are replacing shm with standard memory */
+#if 0
   mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
     /* 2nd chance ? */
@@ -479,6 +481,11 @@ int main(int argc, char **argv)
   }
   created_shm=1;
   mainConfig = mainConfig_shm->datazone;
+#endif
+
+  mainConfig = wzd_malloc(sizeof(wzd_config_t));
+
+
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 

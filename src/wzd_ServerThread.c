@@ -159,7 +159,7 @@ static void cleanchild(int nr) {
   if (!context_list) return;
   out_log(LEVEL_FLOOD,"cleanchild nr:%d\n",nr);
   while (1) {
-    
+
     if ( (pid = wait3(NULL, WNOHANG, NULL)) > 0)
     {
       context = &context_list[0];
@@ -300,7 +300,7 @@ void server_restart(int signum)
     close(sock);
     rebind = 1;
   }
-  
+
   /* 3- Copy new config */
   {
     /* do not touch serverstop */
@@ -335,7 +335,7 @@ void server_restart(int signum)
     /* do not touch user_list */
     /* do not touch group list */
   }
-  
+
   /* 4- Re-open server */
 
   /* create socket iff different ports ! */
@@ -427,7 +427,7 @@ int check_server_dynamic_ip(void)
     unsigned char *myip = (unsigned char*)&sa_current.sin_addr;
     out_err(LEVEL_CRITICAL,"IP: %d.%d.%d.%d\n",myip[0],myip[1],myip[2],myip[3]);
   }*/
- 
+
   /* get ip by system */
   if (strcmp((const char *)mainConfig->dynamic_ip,"1")==0)
   {
@@ -892,7 +892,7 @@ static void server_login_accept(wzd_context_t * context)
     /* redefines SIGTERM handler */
     signal(SIGTERM,child_interrupt);
 #endif /* WZD_MULTIPROCESS */
-    
+
 
     /* switch to tls mode ? */
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
@@ -1088,7 +1088,7 @@ int kill_child(unsigned long pid, wzd_context_t * context)
 uid_t get_server_uid(void)
 {
 #ifndef _MSC_VER
-  return getuid(); 
+  return getuid();
 #else
   return GetCurrentProcessId();
 #endif
@@ -1189,12 +1189,19 @@ int server_switch_to_config(wzd_config_t *config)
   size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
   size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
   length = size_context + size_user + size_group;
+
+  /** \todo we are replacing shm with conventional memory */
+#if 0
   context_shm = wzd_shm_create(config->shm_key,length,0);
   if (context_shm == NULL) {
     out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",config->shm_key);
     exit(1);
   }
   context_list = context_shm->datazone;
+#endif
+
+  context_list = wzd_malloc(length);
+
   for (i=0; i<HARD_USERLIMIT; i++) {
     context_init(context_list+i);
   }
@@ -1579,7 +1586,10 @@ static void free_config(wzd_config_t * config)
     wzd_free(mainConfig->config_filename);
   if (mainConfig->pid_file)
     wzd_free(mainConfig->pid_file);
+#if 0
   wzd_shm_free(mainConfig_shm);
+#endif
+  wzd_free(mainConfig);
 #ifdef DEBUG
   mainConfig_shm = NULL;
 #endif
@@ -1593,7 +1603,7 @@ void serverMainThreadExit(int retcode)
 #ifndef _MSC_VER
   signal(SIGINT,SIG_IGN);
 #endif
-  
+
   close(mainConfig->mainSocket);
   FD_UNREGISTER(mainConfig->mainSocket,"Server listening socket");
   if (mainConfig->controlfd >= 0) {
@@ -1651,7 +1661,12 @@ void serverMainThreadExit(int retcode)
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (server_mutex) wzd_mutex_destroy(server_mutex);
+#if 0
   if (context_shm) wzd_shm_free(context_shm);
+#endif
+
+  wzd_free(context_list);
+
   context_list = NULL;
 
   wzd_debug_fini();
