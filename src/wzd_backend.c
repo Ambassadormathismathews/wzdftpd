@@ -281,8 +281,8 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
   mainConfig->backend.back_get_user  = (wzd_user_t * (*)(int))dlsym(handle,DL_PREFIX STR_GET_USER);
   mainConfig->backend.back_get_group  = (wzd_group_t * (*)(int))dlsym(handle,DL_PREFIX STR_GET_GROUP);
-  mainConfig->backend.back_find_user  = dlsym(handle,DL_PREFIX STR_FIND_USER);
-  mainConfig->backend.back_find_group  = dlsym(handle,DL_PREFIX STR_FIND_GROUP);
+  mainConfig->backend.back_find_user  = (uid_t (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_FIND_USER);
+  mainConfig->backend.back_find_group  = (gid_t (*)(const char *, wzd_group_t *))dlsym(handle,DL_PREFIX STR_FIND_GROUP);
   mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_USER);
   mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);

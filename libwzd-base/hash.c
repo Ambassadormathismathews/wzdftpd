@@ -246,11 +246,21 @@ int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), con
   return 1;
 }
 
+#ifdef WIN32
+int visual_sucks_and_does_not_support_local_functions_sortf(const void *d1, const void *d2)
+{
+  const char * key1 = ((CHTBL_Elmnt*)d1)->key;
+  const char * key2 = ((CHTBL_Elmnt*)d2)->key;
+  return (strcmp)(key1,key2);
+}
+#endif /* WIN32 */
+
 List * chtbl_extract(const CHTBL *htab, int (*match)(const void *, const void *), const void *arg, int (*sort)(const void *, const void *))
 {
   unsigned int i;
   List * return_list;
 
+#ifndef WIN32
   /* yes, that's a bit lame .. we define an internal function, dependant on the upper
    * level function's parameter, to compare the key (and not the CHTBL_Elmnt !).
    */
@@ -260,6 +270,10 @@ List * chtbl_extract(const CHTBL *htab, int (*match)(const void *, const void *)
     const char * key2 = ((CHTBL_Elmnt*)d2)->key;
     return (*sort)(key1,key2);
   }
+#else
+  int (*sortf)(const void *, const void *);
+  sortf = visual_sucks_and_does_not_support_local_functions_sortf;
+#endif
 
   return_list = malloc(sizeof(List));
   list_init(return_list,NULL);

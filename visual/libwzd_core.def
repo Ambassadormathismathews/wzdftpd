@@ -38,6 +38,7 @@ EXPORTS
 	commands_add_defaults
 	commands_fini
 	commands_init
+	commands_set_permission
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free

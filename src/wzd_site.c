@@ -984,6 +984,13 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
   return 0;
 }
 
+static int subcmp(const char * string, const char * substring)
+{
+  return strncasecmp(string,substring,strlen(substring));
+}
+
+
+
 /********************* do_site_perm ************************/
 /** perm: show  (show all permissions)
  *        show perm_name  (show permissions for all commands starting with perm_name)
@@ -1034,11 +1041,6 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
       int found=0;
       List * list;
       ListElmt * elmnt;
-
-      int subcmp(const char * string, const char * substring)
-      {
-        return strncasecmp(string,substring,strlen(substring));
-      }
 
       list = chtbl_extract(mainConfig->commands_list, (cmp_function)subcmp, str_tochar(perm_name), (cmp_function)strcmp);
 
