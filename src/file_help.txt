@@ -3,16 +3,21 @@
 .----------------.----------------------------------------------.------------.
 |    command     |                  description                 | users can  |
 .----------------.----------------------------------------------.------------.
-| site help      | pfff what you are reading !                  | r,s,n,g    |
-| site rules     | show site rules                              | r,s,n,g    |
-| site uptime    | give you information about actual uptime of  |            |
-|                | this server                                  | r,s,n,g    |
-| site who       | show who's online                            | r,s,n,g    |
-| site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
+| site addip     | add ip to user                               | r          |
+|                | site addip user ip                           |            |
+| site adduser   | add a new user                               | r          |
+|                | site adduser user pass homedir [backend]     |            |
+| site backend   | (init/close/reload/commit) backend_name      | r          |
 | site chacl     | change access rights on a file or directory  | r,s        |
 |                |   site chacl user mode file1 [file2 ...]     |            |
 |                |   site chacl user rwx dir1                   |            |
 |                |   site chacl user 7 dir1                     |            |
+| site change    | change a field for a user                    | r          |
+|                | site change user field value                 |            |
+| site checkperm | checks access for a user on a file/dir       | r,s        |
+|                | site checkperm user file rights              | r,s        |
+| site chgrp     | add/remove user from group(s)                | r          |
+|                |   site chpgrp user group1 [group2 ... ]      |            |
 | site chmod     | change permissions of a file or directory    | r,s        |
 |                |   site chmod mode file1 [file2 ...]          |            |
 |                |   site chmod 644 file1 [file2 ...]           |            |
@@ -20,25 +25,28 @@
 |                |   site chown user file1 [file2 ...]          |            |
 | site chpass    | change the password of a user                | r,s        |
 |                |   site chpass user new_pass                  |            |
-| site checkperm | checks access for a user on a file/dir       | r,s        |
-|                | site checkperm user file rights              | r,s        |
-| site user      | (username) show user info                    | r,s        |
-| site adduser   | add a new user                               | r          |
-|                | site adduser user pass homedir [backend]     |            |
-| site deluser   | delete user                                  | r          |
-| site purge     | purge deleted user                           | r          |
-| site addip     | add ip to user                               | r          |
-|                | site addip user ip                           |            |
 | site delip     | delete ip from user                          | r          |
-| site chgrp     | add/remove user from group(s)                | r          |
-|                |   site chpgrp user group1 [group2 ... ]      |            |
-| site change    | change a field for a user                    | r          |
-|                | site change user field value                 |            |
+| site deluser   | delete user                                  | r          |
+| site flags     | display user's flags                         | r,s,n,g     |
+|                |   site flags [user]                          |            |
+| site free      | show free space                              | r,s,n,g    |
+| site help      | pfff what you are reading !                  | r,s,n,g    |
 | site kick      | kick all connections from a user             | r          |
 | site kill      | kill a pid                                   | r          |
-| site shutdown  | shutdown the server remotely                 | r          |
+| site idle      | display/set your tagline                     | r,s,n,g     |
+|                |   site tagline [new tagline]                 |            |
+| site purge     | purge deleted user                           | r          |
+| site readduser | readd a deleted user                         | r          |
 | site reload    | reloads server config                        | r          |
-| site backend   | (init/close/reload/commit) backend_name      | r          |
+| site rules     | show site rules                              | r,s,n,g    |
+| site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
+| site shutdown  | shutdown the server remotely                 | r          |
+| site uptime    | give you information about actual uptime of  |            |
+|                | this server                                  | r,s,n,g    |
+| site user      | (username) show user info                    | r,s        |
+| site users     | give list of users on this server            | r          |
+| site version   | show server version                          | r,s,n,g    |
+| site who       | show who's online                            | r,s,n,g    |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
 |                                                                            |
