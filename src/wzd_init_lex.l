@@ -737,6 +737,7 @@ int cfg_read_dynamic_ip(void)
   /* number ? */
   if (strcmp(dynamic_ip,"0")==0 || strcmp(dynamic_ip,"1")==0) {
     strcpy((char *)tempConfig.dynamic_ip,dynamic_ip);
+    wzd_free(dynamic_ip);
     return 0;
   }
 
@@ -745,6 +746,7 @@ int cfg_read_dynamic_ip(void)
     char buffer[64];
     if (socket_getipbyname(dynamic_ip, buffer, sizeof(buffer))) {
       out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",dynamic_ip);
+      wzd_free(dynamic_ip);
       return 1;
     }
   }

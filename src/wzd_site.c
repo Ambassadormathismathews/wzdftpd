@@ -1987,7 +1987,7 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
 /*  wzd_user_t user;*/
 /*  int uid;*/
 
-  firstarg = str_tok(command_line," \t\r\n");
+  firstarg = str_read_token(command_line);
   if (!firstarg) {
     do_site_help("wipe",context);
     return 1;
@@ -1996,7 +1996,7 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   if ( strcasecmp(str_tochar(firstarg),"-r")==0 ) {
     str_deallocate(firstarg);
     is_recursive=1;
-    filename = str_tok(command_line," \t\r\n");
+    filename = str_read_token(command_line);
     if( !filename) {
       do_site_help("wipe",context);
       return 1;
@@ -2020,7 +2020,7 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     }
     str_deallocate(filename);
   }
-  while ( (filename = str_tok(command_line," \t\r\n")) );
+  while ( (filename = str_read_token(command_line)) );
 
   ret = send_message_with_args(200,context,"File(s) wiped");
 

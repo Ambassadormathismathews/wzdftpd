@@ -32,6 +32,8 @@
 # include "../config.h"
 #endif
 
+#include "../libwzd-base/wzd_strtok_r.h"
+
 #include "libwzd.h"
 #include "libwzd_pv.h"
 

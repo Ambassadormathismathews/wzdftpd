@@ -172,7 +172,7 @@ int identify_token(char *token)
 
 /*************** clear_read **************************/
 
-int clear_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -216,7 +216,7 @@ int clear_read(int sock, char *msg, size_t length, int flags, unsigned int timeo
 
 /*************** clear_write *************************/
 
-int clear_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -433,7 +433,7 @@ int check_timeout(wzd_context_t * context)
 
   /* first we check user specific timeout */
   if (user->max_idle_time>0) {
-    if (delay > user->max_idle_time) {
+    if (delay > (time_t)user->max_idle_time) {
       /* TIMEOUT ! */
       send_message_with_args(421,context,"Timeout, closing connection");
       {
@@ -459,7 +459,7 @@ int check_timeout(wzd_context_t * context)
   for (i=0; i<user->group_num; i++) {
     gptr = GetGroupByID(user->groups[i]);
     if (gptr->max_idle_time > 0) {
-      if (delay > gptr->max_idle_time) {
+      if (delay > (time_t)gptr->max_idle_time) {
         /* TIMEOUT ! */
         send_message_with_args(421,context,"Timeout, closing connection");
         {
@@ -1341,6 +1341,9 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       {
         out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
         ret = send_message_with_args(553,context,"dirname does not match pathfilter");
+        wzd_free(buffer);
+        wzd_free(path);
+        wzd_free(cmd);
         return E_MKDIR_PATHFILTER;
       }
     }
@@ -2564,6 +2567,7 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
   int cmd;
   int ret;
   char buffer[WZD_BUFFER_LEN];
+  wzd_string_t * str;
 
   cmd = identify_token((char*)str_tochar(name));
   switch (cmd) {
@@ -2571,8 +2575,16 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
       context->resume = 0;
       /** \todo allow msg 257 customization */
       /*ret = send_message(257,context);*/
-      snprintf(buffer,sizeof(buffer),"257 \"%s\" is current directory.\r\n",context->currentpath);
-      ret = send_message_raw(buffer,context);
+	  str = str_allocate();
+	  str_sprintf(str,"257 \"%s\" is current directory.\r\n",context->currentpath);
+#ifdef HAVE_UTF8
+      if (context->connection_flags & CONNECTION_UTF8)
+	  {
+        str_local_to_utf8(str,local_charset());
+	  }
+#endif
+      ret = send_message_raw(str_tochar(str),context);
+	  str_deallocate(str);
       break;
     case TOK_ALLO:
     case TOK_NOOP:

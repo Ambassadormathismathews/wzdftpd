@@ -416,8 +416,8 @@ typedef enum {
 #define	CONNECTION_TLS	0x00000040
 #define	CONNECTION_UTF8	0x00000100
 
-typedef int (*read_fct_t)(int,char*,size_t,int,unsigned int,void *);
-typedef int (*write_fct_t)(int,const char*,size_t,int,unsigned int,void *);
+typedef int (*read_fct_t)(fd_t,char*,size_t,int,unsigned int,void *);
+typedef int (*write_fct_t)(fd_t,const char*,size_t,int,unsigned int,void *);
 
 #include "wzd_action.h"
 
@@ -440,14 +440,14 @@ typedef struct _context_t {
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
   unsigned char	exitclient;
-  int  controlfd;
-  int  datafd;
+  fd_t          controlfd;
+  fd_t          datafd;
   data_mode_t   datamode;
   net_family_t  datafamily;
   unsigned long	pid_child;
   unsigned long	thread_id;
   int           portsock;
-  int           pasvsock;
+  fd_t          pasvsock;
   read_fct_t    read_fct;
   write_fct_t   write_fct;
   int           dataport;
@@ -515,7 +515,7 @@ typedef struct {
   unsigned int  umask;
   char *	dir_message;
   unsigned int	mainSocket;
-  int		controlfd; /**< external control: named pipe, unix socket, or socket */
+  fd_t		controlfd; /**< external control: named pipe, unix socket, or socket */
   unsigned char	ip[MAX_IP_LENGTH];
   unsigned char	dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;

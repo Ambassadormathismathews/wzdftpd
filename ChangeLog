@@ -1,3 +1,7 @@
+2005-02-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: some small memory leaks and potential buffer overflows
+
 2005-02-11  Roman Bogorodskiy <bogorodskiy@inbox.ru>
 	
 	* feature: added HELP command

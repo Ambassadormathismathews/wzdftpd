@@ -183,6 +183,12 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 
   va_start(argptr,context); /* note: ansi compatible version of va_start */
   str = v_format_message(context,code,argptr);
+#ifdef HAVE_UTF8
+  if (context->connection_flags & CONNECTION_UTF8)
+  {
+    str_local_to_utf8(str,local_charset());
+  }
+#endif
   va_end (argptr);
 #ifdef DEBUG
   out_err(LEVEL_FLOOD,"<thread %ld> ->ML %s",(unsigned long)context->pid_child,str_tochar(str));

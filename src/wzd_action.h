@@ -151,8 +151,7 @@ typedef struct {
   unsigned int	token;
   char		arg[HARD_LAST_COMMAND_LENGTH];
 
-/*  FILE *	current_file;*/
-  int		current_file;
+  fd_t		current_file;
   u64_t	bytesnow;
 
   time_t	tm_start;

@@ -38,6 +38,8 @@
 #include <wzd_backend.h>
 #include <wzd_strlcat.h>
 
+#include <wzd_misc.h> /* win_normalize */
+
 #include <wzd_debug.h>
 
 #include "libmysql.h"

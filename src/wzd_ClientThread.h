@@ -27,8 +27,8 @@
 
 #include "wzd_string.h"
 
-int clear_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
-int clear_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
 void * clientThreadProc(void *arg);
 

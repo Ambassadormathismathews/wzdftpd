@@ -384,7 +384,10 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
 
 int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
 {
+#ifdef ENABLE_CACHE
   int ret;
+#endif
+
   wzd_internal_cache_t * cache;
   cache = c->cache;
   out_err(LEVEL_FLOOD,"cache write\n");
@@ -505,6 +508,8 @@ void wzd_cache_close(wzd_cache_t * c)
       out_err(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
       FD_UNREGISTER(c->cache->fd,"Cached file"); }
       close( c->cache->fd );
+      free( c-> cache );
+      c->cache = NULL;
   }
   free(c);
 }

@@ -1391,7 +1391,7 @@ void file_close(int fd, wzd_context_t * context)
   close(fd);
 }
 
-fs_off_t file_seek(int fd, fs_off_t offset, int whence)
+fs_off_t file_seek(fd_t fd, fs_off_t offset, int whence)
 {
   return fs_lseek(fd,offset,whence);
 }
@@ -1765,7 +1765,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 /* if program crash, locks acquired by fcntl (POSIX) or _locking (VISUAL)
  * are released, and then do are less annoying.
  */
-int file_lock(int fd, short lock_mode)
+int file_lock(fd_t fd, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Locking file %d\n",fd);
@@ -1786,7 +1786,7 @@ fprintf(stderr,"Locking file %d\n",fd);
   return 0;
 }
 
-int file_unlock(int fd)
+int file_unlock(fd_t fd)
 {
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Unlocking file %d\n",fd);
@@ -1807,7 +1807,7 @@ fprintf(stderr,"Unlocking file %d\n",fd);
   return 0;
 }
 
-int file_islocked(int fd, short lock_mode)
+int file_islocked(fd_t fd, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Testing lock for file %d\n",fd);
@@ -1869,12 +1869,12 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
 }
 
 /* wrappers just to keep things in same memory zones */
-ssize_t file_read(int fd,void *data,size_t length)
+ssize_t file_read(fd_t fd,void *data,size_t length)
 {
   return read(fd,data,length);
 }
 
-ssize_t file_write(int fd,const void *data,size_t length)
+ssize_t file_write(fd_t fd,const void *data,size_t length)
 {
   return write(fd,data,length);
 }

@@ -102,7 +102,7 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
 /** bind socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-int socket_make(const char *ip, unsigned int *port, int nListen)
+fd_t socket_make(const char *ip, unsigned int *port, int nListen)
 {
   struct sockaddr_in sai = { 0 };
 #if defined(IPV6_SUPPORT)
@@ -110,11 +110,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 #endif
 /*  unsigned int c;*/
   size_t c;
-#if defined(_MSC_VER)
-  SOCKET sock;
-#else
-  int sock;
-#endif
+  fd_t sock;
 
   if (ip==NULL || strcmp(ip,"*")==0)
 #if defined(IPV6_SUPPORT)
@@ -206,7 +202,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 
  
 /*************** socket_close ***************************/
-int socket_close(int sock)
+int socket_close(fd_t sock)
 {
 #if defined(_MSC_VER)
   char acReadBuffer[256];
@@ -261,9 +257,9 @@ int socket_close(int sock)
 
 /*************** socket_accept **************************/
 
-int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port)
+int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port)
 {
-  int new_sock;
+  fd_t new_sock;
 #if !defined(IPV6_SUPPORT)
   struct sockaddr_in from;
   size_t len = sizeof(struct sockaddr_in);
@@ -328,7 +324,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
  * 1    select() timeout
  * 2    select() returned with an error condition
  */
-static int _waitconnect(int sockfd, /* socket */
+static int _waitconnect(fd_t sockfd, /* socket */
                 int timeout_msec)
 {
   fd_set fd;
@@ -372,9 +368,9 @@ static int _waitconnect(int sockfd, /* socket */
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout)
+int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, fd_t fd, unsigned int timeout)
 {
-  int sock;
+  fd_t sock;
   struct sockaddr *sai;
   struct sockaddr_in sai4;
 #if defined(IPV6_SUPPORT)
@@ -651,17 +647,17 @@ int get_sock_port(int sock, int local)
 
 /* Returns remote/local port number for the current connection. */
 
-int socket_get_remote_port(int sock)
+int socket_get_remote_port(fd_t sock)
 {
   return get_sock_port(sock, 0);
 }
 
-int socket_get_local_port(int sock)
+int socket_get_local_port(fd_t sock)
 {
   return get_sock_port(sock, 1);
 }
 
-int socket_wait_to_read(int sock, unsigned int timeout)
+int socket_wait_to_read(fd_t sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
@@ -711,7 +707,7 @@ int socket_wait_to_read(int sock, unsigned int timeout)
   return -1;
 }
 
-int socket_wait_to_write(int sock, unsigned int timeout)
+int socket_wait_to_write(fd_t sock, unsigned int timeout)
 {
   int ret;
   int save_errno;

@@ -202,18 +202,19 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
     }
     switch (c) {
     case '=':
-      if (strcasecmp(token,user->username)==0) return (negate) ? 0 : 1;
+      if (strcasecmp(token,user->username)==0) { free(buffer); return (negate) ? 0 : 1; }
       break;
     case '-':
       for (i=0; i<user->group_num; i++) {
         group = GetGroupByID(user->groups[i]);
-        if (strcasecmp(token,group->groupname)==0) return (negate) ? 0 : 1;
+        if (strcasecmp(token,group->groupname)==0) { free(buffer); return (negate) ? 0 : 1; }
       }
       break;
     case '+':
-      if (user->flags && strchr(user->flags,*token)) return (negate) ? 0 : 1;
+      if (user->flags && strchr(user->flags,*token)) { free(buffer); return (negate) ? 0 : 1; }
       break;
     case '*':
+      free(buffer);
       return !negate;
       break;
     default:
@@ -743,6 +744,8 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
 
           vfs = vfs->next_vfs;
         } /* while (vfs) */
+
+        wzd_free(buffer_vfs);
       } /* check for vfs entries */
 
       /* even if found, check the new destination exists */

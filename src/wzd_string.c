@@ -417,10 +417,10 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
      if (str->allocated >= 1024000) {
        return -1;
      }
-     _str_set_min_size(str,(str->allocated*150)/100);
+     _str_set_min_size(str,str->allocated + (str->allocated >> 2) + 20);
      va_end(argptr);
      va_start(argptr,format); /* note: ansi compatible version of va_start */
-     result = vsnprintf(str->buffer, str->allocated, format, argptr);
+     result = vsnprintf(str->buffer, str->allocated-1, format, argptr);
    }
    str->length = result;
    if ((u32_t)result == str->allocated) {
@@ -475,9 +475,11 @@ int str_local_to_utf8(wzd_string_t *str, const char * charset)
   char * utf_buf;
   size_t length;
 
-  if (!utf8_valid(str->buffer, str->length)) {
+  /** \bug testing if a strin to be converted to UTF-8 is already
+  valid UTF-8 is a bit stupid */
+/*  if (!utf8_valid(str->buffer, str->length)) {
     return -1;
-  }
+  } */
 
   length = strlen(str->buffer) + 10; /* we allocate more, small security */
   utf_buf = wzd_malloc(length);

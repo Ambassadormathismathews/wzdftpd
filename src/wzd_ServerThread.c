@@ -106,8 +106,8 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port);
 int server_switch_to_config(wzd_config_t *config);
 
 typedef struct {
-  int read_fd;
-  int write_fd;
+  fd_t read_fd;
+  fd_t write_fd;
   wzd_context_t * context;
 } wzd_ident_context_t;
 
@@ -139,12 +139,12 @@ static void free_config(wzd_config_t * config);
 
 static List server_ident_list;
 static int server_add_ident_candidate(unsigned int socket_accept_fd);
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(wzd_ident_context_t * ident_context);
 static void server_ident_timeout_check(void);
 
-static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);;
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);;
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
 static void server_login_accept(wzd_context_t * context);
@@ -381,9 +381,9 @@ int commit_backend(void)
 /*
  * add idents to the correct fd_set
  */
-static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd)
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
 {
-  if (mainConfig->controlfd >= 0) {
+  if (mainConfig->controlfd != (fd_t)-1) {
     FD_SET(mainConfig->controlfd,r_fds);
     FD_SET(mainConfig->controlfd,e_fds);
     *maxfd = MAX(*maxfd,mainConfig->controlfd);
@@ -392,7 +392,7 @@ static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds
 
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 {
-  if (mainConfig->controlfd >= 0) {
+  if (mainConfig->controlfd != (fd_t)-1) {
     if (FD_ISSET(mainConfig->controlfd,e_fds)) { /* error */
       /** \todo XXX FIXME error on control FD, warn user, and then ? */
       out_log(LEVEL_HIGH, "Error on control fd: %d %s\n",errno,strerror(errno));
@@ -524,7 +524,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
 /*
  * add idents to the correct fd_set
  */
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd)
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
 {
   ListElmt * elmnt;
   wzd_ident_context_t * ident_context;
@@ -810,6 +810,7 @@ static void server_ident_timeout_check(void)
 
   for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt))
   {
+lbl_ident_timeout_check_loop:
     ident_context = list_data(elmnt);
     if (!ident_context) continue;
     context = ident_context->context;
@@ -818,10 +819,17 @@ static void server_ident_timeout_check(void)
     {
       if (ident_context->read_fd > 0) socket_close(ident_context->read_fd);
       if (ident_context->write_fd > 0) socket_close(ident_context->write_fd);
+
+      /* save value before freeing data */
+      elmnt = list_next(elmnt);
+
       /* remove ident from list and accept login */
       server_ident_remove(ident_context);
 
       server_login_accept(context);
+
+      /* restart checks at correct index */
+      goto lbl_ident_timeout_check_loop;
     }
   }
 }
@@ -1098,7 +1106,7 @@ void serverMainThreadProc(void *arg)
 {
   int ret;
   fd_set r_fds, w_fds, e_fds;
-  int maxfd;
+  fd_t maxfd;
   struct timeval tv;
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   WSADATA wsaData;

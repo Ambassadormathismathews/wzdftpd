@@ -59,6 +59,8 @@
 #define i32_t __int32
 #define i16_t __int16
 
+typedef unsigned fd_t;
+
 typedef size_t ssize_t;
 
 #include <sys/timeb.h>
@@ -181,7 +183,7 @@ typedef size_t ssize_t;
 /* FIXME this will surely have some effects ... */
 #ifndef stat
 #   define fstat _fstati64
-#   define lstat	_stati64
+#   define lstat _stati64
 #   define stat  _stati64
 #endif
 
@@ -309,6 +311,10 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #define u32_t uint32_t
 #define i64_t int64_t
 #define u64_t uint64_t
+
+typedef unsigned fd_t;
+
+
 #include <sys/time.h> /* struct timeval */
 
 #define DIR_CONTINUE continue;
@@ -390,12 +396,9 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
-#ifndef HAVE_STRTOK_R
-char * strtok_r(char *s, const char *delim, char **last);
-#endif
-
 #include <libwzd-base/list.h>
 #include <libwzd-base/hash.h>
+#include <libwzd-base/wzd_strtok_r.h>
 
 #include "wzd_string.h"
 

@@ -644,7 +644,7 @@ int unzipGoToNextFile(zipFile file)
   s=(zipFile_s*)file;
   if (!s->current_file_ok)
     return ZIP_END_OF_LIST_OF_FILE;
-  if (!s->num_file+1 == s->gi.number_entry)
+  if (!(s->num_file+1 == s->gi.number_entry)) /** \todo i added parenthesis, check if does not fsck up code */
     return ZIP_END_OF_LIST_OF_FILE;
   
   s->pos_in_central_dir += SIZECENTRALDIRITEM + s->cur_file_info.size_filename +

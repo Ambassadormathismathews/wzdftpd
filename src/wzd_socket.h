@@ -25,22 +25,22 @@
 #ifndef __WZD_SOCKET__
 #define __WZD_SOCKET__
 
-int socket_make(const char *ip, unsigned int *port, int nListen);
-int socket_close(int sock);
+fd_t socket_make(const char *ip, unsigned int *port, int nListen);
+int socket_close(fd_t sock);
 
-int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port);
+int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port);
 
-int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout);
+int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, fd_t fd, unsigned int timeout);
 
 /* Returns remote/local port number for the current connection. */
-int socket_get_remote_port(int sock);
-int socket_get_local_port(int sock);
+int socket_get_remote_port(fd_t sock);
+int socket_get_local_port(fd_t sock);
 
 /* wait for socket to be ready for read/write, for timeout seconds max
  * return 0 if ok, 1 if timeout, -1 on error
  */
-int socket_wait_to_read(int sock, unsigned int timeout);
-int socket_wait_to_write(int sock, unsigned int timeout);
+int socket_wait_to_read(fd_t sock, unsigned int timeout);
+int socket_wait_to_write(fd_t sock, unsigned int timeout);
 
 
 

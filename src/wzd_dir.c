@@ -336,6 +336,9 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
   _dir->current_entry = _dir->first_entry;
 
+  /** \todo these are useless entries */
+  free_file_recursive(perm_list);
+
   return _dir;
 }
 

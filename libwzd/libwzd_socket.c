@@ -111,7 +111,7 @@ int server_try_socket(void)
   /* USER name */
   snprintf(buffer,1024,"USER %s\r\n",_config->user);
   ret = _config->connector.write(buffer,strlen(buffer));
-  if (ret < 0 || ret != strlen(buffer))
+  if (ret < 0 || ret != (int)strlen(buffer))
     goto server_try_socket_abort;
 
   /* 331 User name okay, need password. */
@@ -126,7 +126,7 @@ int server_try_socket(void)
   /* PASS xxx */
   snprintf(buffer,1024,"PASS %s\r\n",_config->pass);
   ret = _config->connector.write(buffer,strlen(buffer));
-  if (ret < 0 || ret != strlen(buffer))
+  if (ret < 0 || ret != (int)strlen(buffer))
     goto server_try_socket_abort;
 
   /* 230 User logged in, proceed. */
@@ -324,7 +324,7 @@ int socket_tls_switch(void)
   /* AUTH TLS */
   snprintf(buffer,1024,"AUTH TLS\r\n");
   ret = _config->connector.write(buffer,strlen(buffer));
-  if (ret < 0 || ret != strlen(buffer))
+  if (ret < 0 || ret != (int)strlen(buffer))
     goto socket_tls_switch_abort;
 
   /* 234 234 AUTH command OK. Initializing TLS mode */
