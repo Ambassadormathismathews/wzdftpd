@@ -46,16 +46,19 @@
 #include "libwzd_tls.h"
 
 #ifndef WIN32
-#include <unistd.h>
-#include <netinet/in.h> /* struct sockaddr_in */
-#include <netdb.h> /* gethostbyname */
+# include <unistd.h>
+# include <netinet/in.h> /* struct sockaddr_in */
+# include <netdb.h> /* gethostbyname */
+# include <sys/socket.h>
+#else
+# include <winsock2.h>
+# include <io.h> /* _close */
 #endif /* WIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 
 int socket_connect(const char *host, int port, const char *user, const char *pass);
 int socket_disconnect(void);
@@ -155,7 +158,9 @@ int socket_connect(const char *host, int port, const char *user, const char *pas
   struct sockaddr_in sai;
   struct hostent* host_info;
   int sock;
+#ifndef WIN32
   int i;
+#endif
   int ret;
 
   if (!_config) return -1;

@@ -1,24 +1,24 @@
-# Microsoft Developer Studio Project File - Name="libwzd" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="libwzd_core" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
 
-CFG=libwzd - Win32 Debug
+CFG=libwzd_core - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "libwzd.mak".
+!MESSAGE NMAKE /f "libwzd_core.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "libwzd.mak" CFG="libwzd - Win32 Debug"
+!MESSAGE NMAKE /f "libwzd_core.mak" CFG="libwzd_core - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "libwzd - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "libwzd - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "libwzd_core - Win32 Release" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "libwzd_core - Win32 Debug" (based on "Win32 (x86) Dynamic-Link Library")
 !MESSAGE 
 
 # Begin Project
@@ -29,7 +29,7 @@ CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "libwzd - Win32 Release"
+!IF  "$(CFG)" == "libwzd_core - Win32 Release"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 0
@@ -53,10 +53,10 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd.def"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd_core.def"
 # SUBTRACT LINK32 /pdb:none /debug
 
-!ELSEIF  "$(CFG)" == "libwzd - Win32 Debug"
+!ELSEIF  "$(CFG)" == "libwzd_core - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
@@ -80,15 +80,15 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd.def" /pdbtype:sept
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd_core.def" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
 # Begin Target
 
-# Name "libwzd - Win32 Release"
-# Name "libwzd - Win32 Debug"
+# Name "libwzd_core - Win32 Release"
+# Name "libwzd_core - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -102,7 +102,7 @@ SOURCE=..\src\inet_pton.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\libwzd.def
+SOURCE=.\libwzd_core.def
 # End Source File
 # Begin Source File
 
@@ -115,17 +115,7 @@ SOURCE=..\src\wzd_action.c
 # Begin Source File
 
 SOURCE=..\src\wzd_all.c
-
-!IF  "$(CFG)" == "libwzd - Win32 Release"
-
 # ADD CPP /Yc"wzd_all.h"
-
-!ELSEIF  "$(CFG)" == "libwzd - Win32 Debug"
-
-# ADD CPP /Yc"wzd_all.h"
-
-!ENDIF 
-
 # End Source File
 # Begin Source File
 
@@ -144,7 +134,7 @@ SOURCE=..\src\wzd_cookie_lex.c
 
 SOURCE=..\src\wzd_cookie_lex.l
 
-!IF  "$(CFG)" == "libwzd - Win32 Release"
+!IF  "$(CFG)" == "libwzd_core - Win32 Release"
 
 # Begin Custom Build
 InputDir=\HOMEDIR\wzdftpd\src
@@ -156,7 +146,7 @@ InputName=wzd_cookie_lex
 
 # End Custom Build
 
-!ELSEIF  "$(CFG)" == "libwzd - Win32 Debug"
+!ELSEIF  "$(CFG)" == "libwzd_core - Win32 Debug"
 
 # Begin Custom Build
 InputDir=\HOMEDIR\wzdftpd\src

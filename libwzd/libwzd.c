@@ -43,6 +43,8 @@
 
 #ifndef WIN32
 # include <unistd.h>
+#else
+# include <windows.h>
 #endif
 
 static int _connect_server(void);
@@ -76,7 +78,11 @@ int wzd_fini(void)
 {
   if (_config) {
     wzd_send_message("QUIT\r\n",6,NULL,0);
+#ifdef WIN32
+    Sleep(1000);
+#else
     sleep(1);
+#endif
     if (_config->host) free(_config->host);
     if (_config->user) free(_config->user);
     if (_config->pass) free(_config->pass);

@@ -153,14 +153,27 @@ int tls_deinit(void)
 
 #else /* HAVE_GNUTLS */
 
-#warning "no TLS support"
-
 int tls_init(void)
 {
   return -1;
 }
 
-int tls_handshake(void)
+int tls_deinit(void)
+{
+  return -1;
+}
+
+int tls_handshake(int fd)
+{
+  return -1;
+}
+
+int tls_read(char *buffer, int length)
+{
+  return -1;
+}
+
+int tls_write(const char *buffer, int length)
 {
   return -1;
 }

@@ -1,0 +1,6 @@
+LIBRARY LIBWZD
+
+EXPORTS
+	wzd_init
+	wzd_fini
+	wzd_send_message

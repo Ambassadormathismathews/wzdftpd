@@ -62,5 +62,14 @@ struct libwzd_config {
 
 extern struct libwzd_config * _config;
 
+
+/* some awfull things coming from win32 */
+#ifdef WIN32
+
+#define close           _close
+#define snprintf        _snprintf
+
+#endif /* WIN32 */
+
 #endif /* __LIBWZD_PV__ */
 
