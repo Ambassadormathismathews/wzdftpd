@@ -317,7 +317,7 @@ int  FCN_COMMIT_CHANGES(void)
   return 0;
 }
 
-int FCN_FINI()
+int FCN_FINI(void)
 {
   mysql_close(&mysql);
 
