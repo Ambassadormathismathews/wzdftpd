@@ -229,7 +229,7 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
 
 /*  fp = fopen(permfile,"r");*/
   fp = wzd_cache_open(permfile,O_RDONLY,0644);
-  if (!fp) return 1;
+  if (!fp) { wzd_cache_close(fp); return 1; }
 
   ptr = (char*)current_file;
   current_file = NULL;
@@ -597,7 +597,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
 
 /*fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);*/
 #ifdef DEBUG
-  fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
+  out_err(LEVEL_FLOOD,"_setPerm: dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
 #endif
 
   ret = readPermFile(perm_filename,&file_list);

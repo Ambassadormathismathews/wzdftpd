@@ -846,7 +846,12 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   ret = checkpath(param,buffer,context);
 
-  out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
+#if DEBUG
+  if (ret || errno)
+    out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
+  else
+    out_err(LEVEL_FLOOD,"Making directory '%s' (%d)\n",buffer,ret);
+#endif
 
   if (buffer[strlen(buffer)-1]=='/')
     buffer[strlen(buffer)-1]='\0';
@@ -878,7 +883,9 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
-  if (!ret) {
+  if (ret) {
+    out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
+  } else {
     const char *groupname=NULL;
     if (user->group_num > 0) {
       groupname = GetGroupByID(user->groups[0])->groupname;
@@ -896,10 +903,7 @@ int do_mkdir(char *param, wzd_context_t * context)
 	(groupname)?groupname:"No Group",
 	user->tagline
 	);
-	
   }
-
-  out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
 
   return ret;
 }
@@ -1688,6 +1692,7 @@ void do_rnto(const char *filename, wzd_context_t * context)
 
 /*************** do_pass *****************************/
 
+/* return 0 if ok, 1 if wrong pass, 2 if ok but homedir does not exist */
 int do_pass(const char *username, const char * pass, wzd_context_t * context)
 {
 /*  char buffer[4096];*/
@@ -1718,7 +1723,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   {
     /* could not chdir to home !!!! */
     out_log(LEVEL_CRITICAL,"Could not chdir to home '%s', user '%s'\n",context->currentpath,user->username);
-    return 1;
+    return 2;
   }
 
   /* XXX - now we can wait (or not) the ACCT */
@@ -1989,8 +1994,12 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	return 1;
       }
       ret = do_pass(username,token,context);
-      if (ret) { /* pass was not accepted */
+      if (ret==1) { /* pass was not accepted */
 	ret = send_message_with_args(421,context,"Password rejected");
+	return 1;
+      }
+      if (ret==2) { /* pass is ok, could not chdir */
+	ret = send_message_with_args(421,context,"Could not go to my home directory !");
 	return 1;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
@@ -2368,7 +2377,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	      break;
 	    }
 	      /* TODO print message file */
-            print_file("/home/pollux/.message",250,context);
+/*            print_file("/home/pollux/.message",250,context);*/
 	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	    break;
 	  case TOK_LIST:

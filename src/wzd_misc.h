@@ -44,6 +44,9 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
 /* returns 1 if file is perm file */
 int is_perm_file(const char *filename);
 
+/** returns 1 if file is hidden: perm,hidden,race_info file, etc */
+int is_hidden_file(const char *filename);
+
 /* get file last change time */
 time_t get_file_ctime(const char *file);
 time_t lget_file_ctime(int fd);

@@ -63,52 +63,55 @@
 #include "wzd_ServerThread.h"
 #include "wzd_vfs.h"
 
-#define	CFG_ID			256
-#define	CFG_IP_NUM		257
-#define	CFG_IP_STR		258
-#define	CFG_NUM			259
-#define	CFG_EOL			264
-#define	CFG_EQUAL		265
-#define	CFG_LOWER_EQ		266
-#define	CFG_GREATER_EQ		267
-
-#define	CFG_BACKEND		300
-#define	CFG_BACKEND_PARAM	301
-#define	CFG_CRONJOB		302
-#define	CFG_CSCRIPT		303
-#define	CFG_DENY_ACCESS_FUP	304
-#define	CFG_DIR_MESSAGE		305
-#define	CFG_DYNAMIC_IP		306
-#define	CFG_INTERNAL_SFV	307
-#define	CFG_IP			308
-#define	CFG_LOGFILE		309
-#define	CFG_LOGLEVEL		310
-#define	CFG_LOG_PRE_CHECK	311
-#define	CFG_LOG_PRE_IP_ALLOW	312
-#define	CFG_LOG_PRE_IP_DENY	313
-#define	CFG_MAX_DL_SPEED	314
-#define	CFG_MAX_THREADS		315
-#define	CFG_MAX_UL_SPEED	316
-#define	CFG_MESSAGE		317
-#define	CFG_MODULE		318
-#define	CFG_PASV_IP		319
-#define	CFG_PASV_LOW		320
-#define	CFG_PASV_HIGH		321
-#define	CFG_PID_FILE		322
-#define	CFG_PORT		323
-#define	CFG_SECTION		324
-#define	CFG_SERVER_UID		325
-#define	CFG_SHM_KEY		326
-#define	CFG_SITE		327
-#define	CFG_SITECMD		328
-#define	CFG_SITEFILE		329
-#define	CFG_TLS_CERT		330
-#define	CFG_TLS_CIPHER_LIST	331
-#define	CFG_TLS_MODE		332
-#define	CFG_VFS			333
-#define	CFG_XFERLOG		334
-
-#define	CFG_UNKNOWN	511
+typedef enum {
+  CFG_ID=256,
+  CFG_IP_NUM,
+  CFG_IP_STR,
+  CFG_NUM,
+  CFG_EOL,
+  CFG_EQUAL,
+  CFG_LOWER_EQ,
+  CFG_GREATER_EQ,
+  
+  CFG_BACKEND,
+  CFG_BACKEND_PARAM,
+  CFG_CRONJOB,
+  CFG_CSCRIPT,
+  CFG_DENY_ACCESS_FUP,
+  CFG_DIR_MESSAGE,
+  CFG_DYNAMIC_IP,
+  CFG_HIDE_DOTTED_FILES,
+  CFG_INTERNAL_SFV,
+  CFG_IP,
+  CFG_LOGFILE,
+  CFG_LOGLEVEL,
+  CFG_LOG_PRE_CHECK,
+  CFG_LOG_PRE_IP_ALLOW,
+  CFG_LOG_PRE_IP_DENY,
+  CFG_MAX_DL_SPEED,
+  CFG_MAX_THREADS,
+  CFG_MAX_UL_SPEED,
+  CFG_MESSAGE,
+  CFG_MODULE,
+  CFG_PASV_IP,
+  CFG_PASV_LOW,
+  CFG_PASV_HIGH,
+  CFG_PID_FILE,
+  CFG_PORT,
+  CFG_SECTION,
+  CFG_SERVER_UID,
+  CFG_SHM_KEY,
+  CFG_SITE,
+  CFG_SITECMD,
+  CFG_SITEFILE,
+  CFG_TLS_CERT,
+  CFG_TLS_CIPHER_LIST,
+  CFG_TLS_MODE,
+  CFG_VFS,
+  CFG_XFERLOG,
+  
+  CFG_UNKNOWN
+} wzd_config_token_t;
 
 unsigned int cfg_is_keyword(const char *word);
 
@@ -202,6 +205,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"deny_access_files_uploaded")) return CFG_DENY_ACCESS_FUP;
   if (!strcasecmp(word,"dir_message")) return CFG_DIR_MESSAGE;
   if (!strcasecmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
+  if (!strcasecmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
   if (!strcasecmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
   if (!strcasecmp(word,"ip")) return CFG_IP;
   if (!strcasecmp(word,"logfile")) return CFG_LOGFILE;
@@ -667,6 +671,37 @@ int cfg_read_dynamic_ip(void)
     out_err(LEVEL_INFO,"ip: read token %d (%c) yytext:\n",token,token,yytext);
     break;
   }
+
+  return 0;
+}
+
+/* HIDE_DOTTED_FILES (integer)
+*/
+int cfg_read_hide_dotted_files(void)
+{
+  unsigned int token;
+  unsigned long l;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'hide_dotted_files = 0|1'\n");
+    return 1;
+  }
+
+  if( (token=yylex()) != CFG_NUM ) {
+    out_err(LEVEL_HIGH,"line should be 'hide_dotted_files = 0|1'\n");
+    return 1;
+  }
+
+  errno = 0;
+  l = strtoul(yytext,(char**)NULL, 0);
+  if (errno==ERANGE)
+    return 1;
+
+  if (l)
+    CFG_SET_HIDE_DOTTED_FILES(&tempConfig);
+  else
+    CFG_CLEAR_HIDE_DOTTED_FILES(&tempConfig);
 
   return 0;
 }
@@ -1192,17 +1227,33 @@ int cfg_read_pid_file(void)
     return 1;
   }
 
-  fd = open(filename,O_WRONLY | O_CREAT | O_EXCL,0644);
-  if (fd == -1)
+  fd = open(filename,O_RDONLY,0644);
+  if (fd != -1)
   {
-    if (errno==EEXIST)
-      out_err(LEVEL_HIGH,"pid_file already exist ! (%s)\nRemove it if you are sure",filename);
-    else
-      out_err(LEVEL_HIGH,"Could not open pid_file (%s)\n",filename);
-    return 1;
+    unsigned long l,size;
+    char buf[64];
+    char *ptr;
+    size = read(fd,buf,64);
+    if (size <= 0) {
+      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",filename);
+      close(fd);
+      return 1;
+    }
+    l = strtoul(buf,&ptr,10);
+    if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
+    {
+      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",filename);
+      close(fd);
+      return 1;
+    }
+    close(fd);
+    /* TODO XXX FIXME check no process is running with this pid */
+    out_err(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",filename);
+    if (unlink(filename)) {
+      out_err(LEVEL_HIGH,"Could not remove pid_file (%s)\n",filename);
+      return 1;
+    }
   }
-  close(fd);
-  unlink(filename);
   if (tempConfig.pid_file) free(tempConfig.pid_file);
   tempConfig.pid_file = filename; /* will be freed at server exit */
 
@@ -1709,6 +1760,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_DYNAMIC_IP:
       ret = cfg_read_dynamic_ip();
+      break;
+    case CFG_HIDE_DOTTED_FILES:
+      ret = cfg_read_hide_dotted_files();
       break;
     case CFG_INTERNAL_SFV:
       ret = cfg_read_internal_sfv();

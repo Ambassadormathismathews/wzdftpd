@@ -96,6 +96,8 @@ wzd_cronjob_t	* crontab;
 
 unsigned int wzd_server_uid;
 
+short created_shm=0;
+
 
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
@@ -813,7 +815,10 @@ void serverMainThreadProc(void *arg)
     snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
     if (fd==-1) {
       fprintf(stderr,"Unable to open pid file %s\n",strerror(errno));
-      return;
+      if (created_shm) {
+	free_config(mainConfig);
+      }
+      exit(1);
     }
     ret = write(fd,buf,strlen(buf));
     close(fd);

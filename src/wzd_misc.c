@@ -97,6 +97,23 @@ unsigned long compute_hashval (const void *key, size_t keylen)
   return hval != 0 ? hval : ~((unsigned long) 0);
 }
 
+#define PRIME 211
+int hash_pjw(const char *s)
+{
+  const char *p;
+  unsigned h=0, g;
+
+  for (p=s; *p!='\0'; p++)
+  {
+    h = (h << 4) + (*p);
+    if ( (g= h & 0xF0000000) != 0) {
+      h = h ^ (g >> 24);
+      h = h ^ g;
+    }
+  }
+  return h % PRIME;
+}
+
 char *time_to_str(time_t time)
 { /* This support functionw as written by George Shearer (Dr_Delete) */
 
@@ -308,6 +325,24 @@ int safe_rename(const char *src, const char *dst)
   }
   
   return ret;
+}
+
+/** returns 1 if file is hidden: perm,hidden,race_info file, etc */
+int is_hidden_file(const char *filename)
+{
+  const char *ptr;
+
+  ptr = strrchr(filename,'/');
+  if (ptr) {
+    if (strcasecmp(ptr+1,HARD_PERMFILE)==0) return 1;
+    if (*(ptr+1)=='.' && CFG_GET_HIDE_DOTTED_FILES(mainConfig)) return 1;
+    if (mainConfig->dir_message[0]!='\0' && strcasecmp(ptr+1,mainConfig->dir_message)==0) return 1;
+  } else {
+    if (strcasecmp(filename,HARD_PERMFILE)==0) return 1;
+    if (filename[0]=='.' && CFG_GET_HIDE_DOTTED_FILES(mainConfig)) return 1;
+    if (mainConfig->dir_message[0]!='\0' && strcasecmp(filename,mainConfig->dir_message)==0) return 1;
+  }
+  return 0;
 }
 
 /** returns 1 if file is perm file */

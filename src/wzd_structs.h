@@ -27,6 +27,29 @@
 
 #include "wzd_hardlimits.h"
 
+/*********************** ERRORS ***************************/
+
+typedef enum {
+  E_OK=0,
+
+  E_TIMEOUT,		/**< timeout on control connection */
+  E_DATATIMEOUT,	/**< timeout on data connection */
+
+  E_LOGIN_PASS,		/**< wrong pass */
+  E_LOGIN_NODIR,	/**< user has no homedir */
+  E_LOGIN_NOIP,		/**< ip not allowed */
+  E_LOGIN_MAXUSERIP,	/**< max number of ip reached for user */
+  E_LOGIN_MAXGROUPIP,	/**< max number of ip reached for group */
+  E_LOGIN_CLOSED,	/**< site is closed for this login */
+  E_LOGIN_DELETED,	/**< user have been deleted */
+
+  E_FILE_NOEXIST,	/**< file does not exist */
+  E_FILE_NOPERM,	/**< not enough perms on file */
+  E_FILE_FORBIDDEN,	/**< access to file is forbidden */
+
+  E_USER_IDONTEXIST,	/**< server said i don't exist ! */
+} wzd_errno_t;
+
 /*********************** RIGHTS ***************************/
 
 #define RIGHT_NONE      0x00000000
@@ -338,12 +361,16 @@ typedef struct {
 
 /* macros used with options */
 #define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
+#define	CFG_OPT_HIDE_DOTTED_FILES		0x00000002
 
 #define	CFG_CLEAR_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts &= ~CFG_OPT_DENY_ACCESS_FILES_UPLOADED
+#define	CFG_CLEAR_HIDE_DOTTED_FILES(c)	(c)->server_opts &= ~CFG_OPT_HIDE_DOTTED_FILES
 
 #define	CFG_SET_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts |= CFG_OPT_DENY_ACCESS_FILES_UPLOADED
+#define	CFG_SET_HIDE_DOTTED_FILES(c)	(c)->server_opts |= CFG_OPT_HIDE_DOTTED_FILES
 
 #define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
+#define	CFG_GET_HIDE_DOTTED_FILES(c)	( (c)->server_opts & CFG_OPT_HIDE_DOTTED_FILES )
 
 typedef struct {
   char *	pid_file;

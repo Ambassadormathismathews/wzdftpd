@@ -1,3 +1,9 @@
+# Apr, 24 2003
+- specific error message when server can't go to user homedir at login
+- possibility to hide files beginning by '.' ('hide_dotted_files')
+- try to erase shm zone when server exits on error (only if created !)
+- delete pid file if it exists
+
 #--- cvs commit
 # Apr, 21 2003
 - site grpkill: kill all connected members from a group

@@ -131,8 +131,8 @@ int section_check(wzd_section_t * section, const char *path)
 /* \return 1 if in path matches filter or section has no filter, else 0 */
 int section_check_filter(wzd_section_t * section, const char *path)
 {
-  if (!section->pathfilter) return 1;
-  if (!regexec(section->pathfilter,path,0,NULL,0)) return 1;
+  if (!section->pathfilter || !regexec(section->pathfilter,path,0,NULL,0))
+    return 1;
   return 0;
 }
 

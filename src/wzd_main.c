@@ -65,6 +65,8 @@
 char configfile_name[256];
 int stay_foreground=0;
 
+extern short created_shm;
+
 void display_usage(void)
 {
   fprintf(stderr,"Usage:\r\n");
@@ -254,6 +256,7 @@ int main(int argc, char **argv)
       exit(1);
     }
   }
+  created_shm=1;
   mainConfig = mainConfig_shm->datazone;
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
