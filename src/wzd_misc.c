@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #ifdef __CYGWIN__
 #include <w32api/windows.h>
 #endif /* __CYGWIN__ */
@@ -17,6 +41,10 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+/* for intel compiler */
+#ifdef __INTEL_COMPILER
+# define __SWORD_TYPE   int
+#endif /* __INTEL_COMPILER */
 #include <sys/vfs.h> /* statfs */
 
 /* speed up compilation */
@@ -37,12 +65,11 @@
 #include <values.h>
 #endif
 
-/* Compute the hash value for the given string.  The algorithm
+/** Compute the hash value for the given string.  The algorithm
  * is taken from [Aho,Sethi,Ullman], modified to reduce the number of
  * collisions for short strings with very varied bit patterns.
  * See http://www.clisp.org/haible/hashfunc.html.
  */
-
 unsigned long compute_hashval (const void *key, size_t keylen)
 {
   size_t cnt;
@@ -82,6 +109,28 @@ char *time_to_str(time_t time)
   return(workstr);
 }
 
+int bytes_to_unit(float *value, char *unit)
+{
+  *unit='b';
+  if (*value>1024.f) {
+    *value /= 1024.f;
+    *unit = 'k';
+  }
+  if (*value>1024.f) {
+    *value /= 1024.f;
+    *unit = 'M';
+  }
+  if (*value>1024.f) {
+    *value /= 1024.f;
+    *unit = 'G';
+  }
+  if (*value>1024.f) {
+    *value /= 1024.f;
+    *unit = 'T';
+  }
+  return 0;
+}
+
 void chop(char *s)
 {
   char *r;
@@ -92,7 +141,7 @@ void chop(char *s)
     *r = '\0';
 }
 
-/* returns system ip on specifed interface (e.g eth0) */
+/** returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina)
 {
 /*  struct in_addr *ina = void_in;*/
@@ -120,7 +169,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
   return 0;
 }
 
-/* returns info on device containing dir/file */
+/** returns info on device containing dir/file */
 int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_blocks, long *f_free)
 {
   struct statfs fs;
@@ -135,7 +184,7 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
   return -1;
 }
 
-/* internal fct, rename files by copying data */
+/** internal fct, rename files by copying data */
 int _int_rename(const char * src, const char *dst)
 {
   struct stat s;
@@ -209,7 +258,7 @@ int _int_rename(const char * src, const char *dst)
   return 0;
 }
 
-/* renames file/dir, if on different fs then moves recursively */
+/** renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst)
 {
   int ret;
@@ -224,7 +273,7 @@ int safe_rename(const char *src, const char *dst)
   return ret;
 }
 
-/* returns 1 if file is perm file */
+/** returns 1 if file is perm file */
 int is_perm_file(const char *filename)
 {
   const char *endfile;
@@ -239,7 +288,7 @@ int is_perm_file(const char *filename)
   return 0;
 }
 
-/* get file last change time */
+/** get file last change time */
 time_t get_file_ctime(const char *file)
 {
   struct stat s;
@@ -256,6 +305,9 @@ time_t lget_file_ctime(int fd)
 
 #define WORK_BUF_LEN	8192
 
+/** if code is negative, the last line will NOT be formatted as the end
+ * of a normal ftp reply
+ */
 void v_format_message(int code, unsigned int length, char *buffer, va_list argptr)
 {
   const char * token, *token2;
@@ -263,6 +315,7 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   char *ptr;
   unsigned int size;
   char work_buf[WORK_BUF_LEN];
+  char is_terminated=1;
   /* XXX 4096 should ALWAYS be >= length */
 
 #ifdef DEBUG
@@ -271,6 +324,11 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
     length = WORK_BUF_LEN;
   }
 #endif
+
+  if (code < 0) {
+    is_terminated = 0;
+    code = abs(code);
+  }
 
   msg = getMessage(code);
   ptr = work_buf;
@@ -292,7 +350,10 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   }
   
   if (!strpbrk(work_buf,"\r\n")) { /* simple case, msg on one line */
-    snprintf(buffer,length,"%d %s\r\n",code,work_buf);
+    if (is_terminated)
+      snprintf(buffer,length,"%d %s\r\n",code,work_buf);
+    else
+      snprintf(buffer,length,"%d-%s\r\n",code,work_buf);
   }
   else { /* funnier, multiline */
     /* find first line break */
@@ -311,8 +372,11 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
       size = strlen(token);
       /* find next token */
       token2 = strtok_r(NULL,"\r\n",&ptr);
-      if (!token2) { /* no more line, remove the - */
-	snprintf(buffer,length,"%d %s\r\n",code,token);
+      if (!token2) {
+	if (is_terminated) /* no more line, remove the - */
+	  snprintf(buffer,length,"%d %s\r\n",code,token);
+	else
+	  snprintf(buffer,length,"%d-%s\r\n",code,token);
         break;
       }
       /* copy line into out buffer */
@@ -398,9 +462,16 @@ void limiter_free(wzd_bw_limiter *l)
     free(l);
 }
 
+typedef enum {
+  COOKIE_MY,
+  COOKIE_USER,
+  COOKIE_GROUP
+} wzd_cookie_t;
+
 /* cookies */
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context)
 {
+  wzd_cookie_t cookie_type;
   unsigned long length=0;
   wzd_context_t * context = void_context;
   char work_buffer[4096];
@@ -414,6 +485,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
   wzd_context_t * param_context=NULL;
   wzd_user_t * user = NULL;
   wzd_user_t * context_user = NULL;
+  wzd_group_t * group;
 
   if (buffersize > 4095) {
 #ifdef DEBUG
@@ -460,9 +532,20 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
     cookie = NULL;
 
     if (strncmp(srcptr,"my",2)==0)
-    { param_context=context; srcptr += 2; }
-    if (strncmp(srcptr,"user",4)==0)
-    { param_context=void_param; srcptr += 4; }
+    { cookie_type=COOKIE_MY; param_context=context; srcptr += 2; }
+    else if (strncmp(srcptr,"user",4)==0)
+    { cookie_type=COOKIE_USER; param_context=void_param; srcptr += 4; }
+    else if (strncmp(srcptr,"group",5)==0)
+    {
+      cookie_type=COOKIE_GROUP;
+      param_context=void_param;
+      group = GetGroupByID(param_context->userid);
+        /* userid contains the gid ... Yes, I know ! */
+      if (!group) { /* we really have a problem */
+	return 1;
+      }
+      srcptr += 5;
+    }
 
     if (param_context == NULL) {
       /* happens when using %username and void_param is not correctly set */
@@ -482,28 +565,41 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
     if (param_context) {
       /* name */
       if (strncmp(srcptr,"name",4)==0) {
-        cookie = user->username;
+	if (cookie_type==COOKIE_GROUP)
+	  cookie = group->groupname;
+	else
+	  cookie = user->username;
         cookielength = strlen(cookie);
         srcptr += 4; /* strlen("name"); */
-      }
+      } else
       /* ip_allow */
       if (strncmp(srcptr,"ip_allow",8)==0) {
 	char *endptr;
         srcptr += 8; /* strlen("ip_allow"); */
 	l = strtoul(srcptr,&endptr,10);
 	if (endptr-srcptr > 0) {
-	  if (l < HARD_IP_PER_USER) {
-            strncpy(tmp_buffer,user->ip_allowed[l],4095);
-	  } else {
-	    snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
+	  if (cookie_type==COOKIE_GROUP)
+	  {
+	    if (l < HARD_IP_PER_GROUP) {
+	      strncpy(tmp_buffer,group->ip_allowed[l],4095);
+	    } else {
+	      snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
+	    }
+	    srcptr = endptr;
+	  } else { /* !COOKIE_GROUP */
+	    if (l < HARD_IP_PER_USER) {
+	      strncpy(tmp_buffer,user->ip_allowed[l],4095);
+	    } else {
+	      snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
+	    }
+	    srcptr = endptr;
 	  }
-	  srcptr = endptr;
 	} else {
 	  snprintf(tmp_buffer,4096,"Invalid ip index");
 	}
 	cookie = tmp_buffer;
 	cookielength = strlen(cookie);
-      }
+      } else
       /* ip */
       if (strncmp(srcptr,"ip",2)==0) {
         if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {
@@ -516,7 +612,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 2; /* strlen("ip"); */
-      }
+      } else
       /* flags */
       if (strncmp(srcptr,"flags",5)==0) {
 	if (user->flags && strlen(user->flags)>0) {
@@ -527,7 +623,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	cookie = tmp_buffer;
 	cookielength = strlen(cookie);
 	srcptr += 5; /* strlen("flags"); */
-      }
+      } else
       /* group */
       if (strncmp(srcptr,"group",5)==0) {
         wzd_group_t group, *gptr;
@@ -547,18 +643,21 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("group"); */
-      }
+      } else
       /* home */
       if (strncmp(srcptr,"home",4)==0) {
-        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {
-          cookie = user->rootpath;
+        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_HOME)) {
+	  if (cookie_type==COOKIE_GROUP)
+	    cookie = group->defaultpath;
+	  else
+	    cookie = user->rootpath;
         } else { /* user not allowed to see */
           strcpy(tmp_buffer,"- some where -");
           cookie = tmp_buffer;
         }
         cookielength = strlen(cookie);
         srcptr += 4; /* strlen("home"); */
-      }
+      } else
       /* lastcmd */
       if (strncmp(srcptr,"lastcmd",7)==0) {
 	strncpy(tmp_buffer,param_context->last_command,4095);
@@ -586,42 +685,51 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 7; /* strlen("lastcmd"); */
-      }
+      } else
       /* leechslots */
       if (strncmp(srcptr,"leechslots",10)==0) {
 	snprintf(tmp_buffer,4096,"%hu",user->leech_slots);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 10; /* strlen("leechslots"); */
-      }
+      } else
       /* maxdl */
       if (strncmp(srcptr,"maxdl",5)==0) {
-	snprintf(tmp_buffer,4096,"%ld",user->max_dl_speed);
+	if (cookie_type==COOKIE_GROUP)
+	  snprintf(tmp_buffer,4096,"%ld",group->max_dl_speed);
+	else
+	  snprintf(tmp_buffer,4096,"%ld",user->max_dl_speed);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("maxdl"); */
-      }
+      } else
       /* maxidle */
       if (strncmp(srcptr,"maxidle",7)==0) {
-	snprintf(tmp_buffer,4096,"%ld",user->max_idle_time);
+	if (cookie_type==COOKIE_GROUP)
+	  snprintf(tmp_buffer,4096,"%ld",group->max_idle_time);
+	else
+	  snprintf(tmp_buffer,4096,"%ld",user->max_idle_time);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 7; /* strlen("maxidle"); */
-      }
+      } else
       /* maxul */
       if (strncmp(srcptr,"maxul",5)==0) {
-	snprintf(tmp_buffer,4096,"%ld",user->max_ul_speed);
+	if (cookie_type==COOKIE_GROUP)
+	  snprintf(tmp_buffer,4096,"%ld",group->max_ul_speed);
+	else
+	  snprintf(tmp_buffer,4096,"%ld",user->max_ul_speed);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("maxul"); */
-      }
+      } else
       /* num_logins */
       if (strncmp(srcptr,"num_logins",10)==0) {
 	snprintf(tmp_buffer,4096,"%d",user->num_logins);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 10; /* strlen("num_logins"); */
-      }
+      } else
 #ifdef WZD_MULTIPROCESS
       /* pid */
       if (strncmp(srcptr,"pid",3)==0) {
@@ -631,7 +739,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	  cookielength = strlen(cookie);
 	  srcptr += 3; /* strlen("pid"); */
 	}
-      }
+      } else
 #endif /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTITHREAD
       /* pid */
@@ -642,15 +750,35 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	  cookielength = strlen(cookie);
 	  srcptr += 3; /* strlen("pid"); */
 	}
-      }
+      } else
 #endif /* WZD_MULTIPROCESS */
+      /* ratio */
+      if (strncmp(srcptr,"ratio",5)==0) {
+	if (cookie_type==COOKIE_GROUP)
+	{
+	  if (group->ratio)
+	    snprintf(tmp_buffer,4096,"1:%u",group->ratio);
+	  else
+	    strcpy(tmp_buffer,"unlimited");
+	}
+	else
+	{
+	  if (user->ratio)
+	    snprintf(tmp_buffer,4096,"1:%u",user->ratio);
+	  else
+	    strcpy(tmp_buffer,"unlimited");
+	}
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("ratio"); */
+      } else
       /* slots */
       if (strncmp(srcptr,"slots",5)==0) {
 	snprintf(tmp_buffer,4096,"%hu",user->user_slots);
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("slots"); */
-      }
+      } else
       /* speed */
       if (strncmp(srcptr,"speed",5)==0) {
         if (strncasecmp(param_context->last_command,"retr",4)==0) {
@@ -667,31 +795,106 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("speed"); */
-      }
+      } else
       /* tag */
       if (strncmp(srcptr,"tag",3)==0) {
-        if (strlen(user->tagline) > 0) {
-          cookie = user->tagline;
-        } else {
-          strcpy(tmp_buffer,"no tagline set");
-          cookie = tmp_buffer;
-        }
+	if (user->flags && strchr(user->flags,FLAG_DELETED)) {
+	  strcpy(tmp_buffer,"**DELETED**");
+	  cookie = tmp_buffer;
+	} else {
+	  if (strlen(user->tagline) > 0) {
+	    cookie = user->tagline;
+	  } else {
+	    strcpy(tmp_buffer,"no tagline set");
+	    cookie = tmp_buffer;
+	  }
+	}
         cookielength = strlen(cookie);
         srcptr += 3; /* strlen("tag"); */
-      }
-      /* total_dl */
+      } else
+      /* total_dl, total_dl2 */
       if (strncmp(srcptr,"total_dl",8)==0) {
-	snprintf(tmp_buffer,4096,"%ld",user->bytes_dl_total);
+	float val;
+	char c;
+	short convert=0;
+	if (*(srcptr+8)=='2') convert=1;
+	if (cookie_type==COOKIE_GROUP)
+	{
+	  int gid, i;
+	  unsigned long long total;
+	  wzd_user_t * loop_user;
+	  /* TODO iterate through users and sum */
+	  gid = param_context->userid;
+	  total = 0;
+	  for (i=0; i<HARD_DEF_USER_MAX; i++)
+	  {
+	    loop_user = GetUserByID(i);
+	    if (!loop_user) continue;
+	    if (is_user_in_group(loop_user,gid)==1)
+	    {
+	      total += loop_user->bytes_dl_total;
+	    }
+	  }
+	  if (convert) {
+	    val = (float)total;
+	    bytes_to_unit(&val,&c);
+	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
+	  } else
+	    snprintf(tmp_buffer,4096,"%lld",total);
+	} else {
+	  if (convert) {
+	    val = (float)user->bytes_dl_total;
+	    bytes_to_unit(&val,&c);
+	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
+	  } else
+	    snprintf(tmp_buffer,4096,"%lld",user->bytes_dl_total);
+	}
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 8; /* strlen("total_dl"); */
-      }
+	if (convert) srcptr++;
+      } else
       /* total_ul */
       if (strncmp(srcptr,"total_ul",8)==0) {
-	snprintf(tmp_buffer,4096,"%ld",user->bytes_ul_total);
+	float val;
+	char c;
+	short convert=0;
+	if (*(srcptr+8)=='2') convert=1;
+	if (cookie_type==COOKIE_GROUP)
+	{
+	  int gid, i;
+	  unsigned long long total;
+	  wzd_user_t * loop_user;
+	  /* TODO iterate through users and sum */
+	  gid = param_context->userid;
+	  total = 0;
+	  for (i=0; i<HARD_DEF_USER_MAX; i++)
+	  {
+	    loop_user = GetUserByID(i);
+	    if (!loop_user) continue;
+	    if (is_user_in_group(loop_user,gid)==1)
+	    {
+	      total += loop_user->bytes_ul_total;
+	    }
+	  }
+	  if (convert) {
+	    val = (float)total;
+	    bytes_to_unit(&val,&c);
+	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
+	  } else
+	    snprintf(tmp_buffer,4096,"%lld",total);
+	} else {
+	  if (convert) {
+	    val = (float)user->bytes_ul_total;
+	    bytes_to_unit(&val,&c);
+	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
+	  } else
+	    snprintf(tmp_buffer,4096,"%lld",user->bytes_ul_total);
+	}
 	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 8; /* strlen("total_ul"); */
+	cookielength = strlen(cookie);
+	srcptr += 8; /* strlen("total_ul"); */
+	if (convert) srcptr++;
       }
     } /* if param_context */
     /* end of cookies */
@@ -734,7 +937,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
   return 0;
 }
 
-/* print_file : read file, replace cookies and prints it
+/** print_file : read file, replace cookies and prints it
  * header (200-) MUST have been sent, and end (200 ) is NOT sent)
  */
 int print_file(const char *filename, int code, void * void_context)
@@ -778,7 +981,7 @@ int print_file(const char *filename, int code, void * void_context)
   return 0;
 }
 
-/* used to translate text to binary word for rights */
+/** used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text)
 {
   unsigned long word=0;
@@ -819,7 +1022,7 @@ unsigned long right_text2word(const char * text)
 }
 
 
-/* IP allowing */
+/** IP allowing */
 int ip_add(wzd_ip_t **list, const char *newip)
 {
   wzd_ip_t * new_ip_t, *insert_point;
@@ -849,7 +1052,7 @@ int ip_add(wzd_ip_t **list, const char *newip)
   return 0;
 }
 
-/* dst can be composed of wildcards */
+/** dst can be composed of wildcards */
 int my_str_compare(const char * src, const char *dst)
 {
   const char * ptr_src;
@@ -1171,7 +1374,7 @@ out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
   return 0;
 }
 
-/* wrappers to user list */
+/** wrappers to user list */
 wzd_user_t * GetUserByID(unsigned int id)
 {
   if (!mainConfig->user_list || id >= HARD_DEF_USER_MAX) return NULL;
@@ -1196,7 +1399,7 @@ wzd_user_t * GetUserByName(const char *name)
   return NULL;
 }
 
-/* wrappers to Group list */
+/** wrappers to Group list */
 wzd_group_t * GetGroupByID(unsigned int id)
 {
   if (!mainConfig->group_list || id >= HARD_DEF_GROUP_MAX ) return NULL;
@@ -1256,8 +1459,18 @@ unsigned int GetGroupIDByName(const char *name)
   return 0;
 }
 
+short is_user_in_group(wzd_user_t * user, int gid)
+{
+	int i;
 
-/* wrappers to context list */
+	if (!user || user->group_num<=0) return -1;
+	for (i=0; i<user->group_num; i++)
+		if (gid==user->groups[i]) return 1;
+	return 0;
+}
+
+
+/** wrappers to context list */
 void * GetMyContext(void)
 {
   int i;

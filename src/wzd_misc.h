@@ -1,9 +1,35 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
 unsigned long compute_hashval (const void *key, size_t keylen);
 
 char * time_to_str(time_t time);
+
+int bytes_to_unit(float *value, char *unit);
 
 void chop(char *s);
 
@@ -24,6 +50,9 @@ time_t lget_file_ctime(int fd);
 int safe_rename(const char *src, const char *dst);
 
 /* formats the message if multiline, e.g 220-hello\r\n220 End */
+/* if code is negative, the last line will NOT be formatted as the end
+ * of a normal ftp reply
+ */
 void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);
 void format_message(int code, unsigned int length, char *buffer, ...);
 
@@ -65,6 +94,8 @@ wzd_group_t * GetGroupByID(unsigned int id);
 wzd_group_t * GetGroupByName(const char *name);
 unsigned int GetUserIDByName(const char *name);
 unsigned int GetGroupIDByName(const char *name);
+
+short is_user_in_group(wzd_user_t * user, int gid);
 
 /* wrappers to context list */
 void * GetMyContext(void);
