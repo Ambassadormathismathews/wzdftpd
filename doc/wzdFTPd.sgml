@@ -6,6 +6,7 @@
 <!ENTITY cookies_reference SYSTEM "cookies_reference.sgml">
 <!ENTITY common_modules SYSTEM "common_modules.sgml">
 <!ENTITY common_backends SYSTEM "common_backends.sgml">
+<!ENTITY sitebot SYSTEM "sitebot.sgml">
 ]>
 <book>
   <title>wzdFTPd Documentation</title>
@@ -15,6 +16,7 @@
 &cookies_reference;
 &common_modules;
 &common_backends;
+&sitebot;
 
 <glossary>
 <glossentry><glossterm>foo</glossterm>

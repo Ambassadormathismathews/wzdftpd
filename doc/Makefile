@@ -1,4 +1,4 @@
-ALL_SGML_FILES=commands_reference.sgml common_backends.sgml common_modules.sgml cookies_reference.sgml installation.sgml wzdFTPd.sgml
+ALL_SGML_FILES=commands_reference.sgml common_backends.sgml common_modules.sgml cookies_reference.sgml installation.sgml sitebot.sgml wzdFTPd.sgml
 MAIN_SGML_FILE=wzdFTPd.sgml
 
 all: html

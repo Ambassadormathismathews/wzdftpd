@@ -4,11 +4,51 @@
 <sect1>
 <title>SFV module</title>
 
+<simplesect>
+<title>Description</title>
 <para>
-This modules comes with some utilities functions to handle sfv files. When a SFV
-file is uploaded, server will create <computeroutput>.missing</computeroutput>
-files.
+This modules comes with some utilities functions to handle sfv files.
 </para>
+<para>
+When a SFV file is uploaded, server will create <computeroutput>.missing</computeroutput> files.
+</para>
+<para>
+If the file is corrupted, a <computeroutput>.bad</computeroutput> file will be
+created.</para>
+<para>
+HINT: when uploading dirs, be sure to upload SFV file first. The server will
+automatically check files as they are uploaded, and update a progress bar
+to quickly see how many percent are done.</para>
+<para>
+NOTE to w_nd0ws users: although a (stupid) os can give you bad habits,
+files <emphasis>ARE CASE SENSITIVE !</emphasis></para>
+</simplesect>
+
+<simplesect>
+<title>What is a SFV file ?</title>
+<para>
+A SFV file is a small verification file added to dirs, that stores records
+about a file or group of files integrity. When you compare a SFV file against
+a group of rar files it will check those rar files and tell you if they are
+complete or if they are "broken".</para>
+<para>
+This is done by calculating a 32-bits checksum (*nix users already know
+md5 sums, this is similar - with a different algorithm).
+</para>
+</simplesect>
+
+<simplesect>
+<title>Available commands</title>
+<itemizedlist>
+<listitem><screen>site sfv check sfv_name</screen>
+<para>Checks the specified sfv file. All missing or bad files will be marked
+as usual.</para></listitem>
+<listitem><screen>site sfv create sfv_name</screen>
+<para>Creates a SFV file in current dir.
+</para></listitem>
+</itemizedlist>
+</simplesect>
+
 </sect1>
 
 </chapter>

@@ -4,7 +4,8 @@
 <para>
 <itemizedlist>
 <listitem><para>copy the config file and the executable in the install dir</para></listitem>
-<listitem><para>copy AT LEAST one backend in the same dir</para></listitem>
+<listitem><para>copy AT LEAST one backend in the same dir, and all its config
+files</para></listitem>
 <listitem><para>edit wzd.cfg
   The file is commented, you shouldn't need help - if you need, install serv-u</para></listitem>
 <listitem><para>run the .exe</para></listitem>

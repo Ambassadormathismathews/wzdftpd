@@ -2,14 +2,20 @@
 <title>Commands Reference</title>
 
 <simplesect>
-<title>site adduser &lt;user&gt; &lt;password&gt; &lt;homedir&gt; [&lt;backend&gt;]</title>
+<title>site adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;] [&lt;backend&gt;]</title>
 <para>
-Add a user, with no group and no allowed ip.
+Add a user, with and no allowed ip. If group is specified, user will be added to the group
+(Note: only siteops can add users to a different group than their own group), otherwise
+the main group of the current user will be used.
+</para>
+<para>
+User's homedir is determined using the value 'default_home' of the group.
 </para>
 <para>
 You MUST add an ip after.
-<screen>ex: site adduser toto mypassword /home/toto</screen>
+<screen>ex: site adduser toto mypassword anonymous</screen>
 </para>
+<para>If you are a gadmin, you can only add users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -21,6 +27,7 @@ beggining by <quote>127.</quote>
 </para>
 <para><emphasis>NOTE: ident is currently NOT supported, but is planned for next
 release</emphasis></para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -79,6 +86,7 @@ For flags info see <link linkend='table_flags'>Flags Table</link>.</entry></row>
 </tgroup>
 </informaltable>
 </para>
+<para>If you are a gadmin, you can only change users from your group (except homedir, flags, and groups).</para>
 </simplesect>
 
 <simplesect>
@@ -96,6 +104,8 @@ For flags info see <link linkend='table_flags'>Flags Table</link>.</entry></row>
 <row><entry>RIGHT_STOR</entry><entry>User can upload file (directory) or can overwrite (file)</entry></row>
 <row><entry>RIGHT_CWD</entry><entry>User can go into this directory</entry></row>
 <row><entry>RIGHT_RNFR</entry><entry>User can rename file</entry></row>
+<row><entry>RIGHT_MKDIR</entry><entry>User can create dir at current location</entry></row>
+<row><entry>RIGHT_RMDIR</entry><entry>User can delete dir at current location</entry></row>
 </tbody>
 </tgroup>
 </informaltable>
@@ -138,13 +148,7 @@ This will give dir1 to user <quote>toto</quote>,
 <screen>ex: site chpass toto newpassword</screen>
 <para>This will change the password to 'newpassword' for the user 'toto'.</para>
 <para>% denotes any password</para>
-</simplesect>
-
-<simplesect>
-<title>site chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]</title>
-<para>
-Add a user.
-</para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -164,6 +168,7 @@ This will remove the exact ip <quote>127.*</quote>, and not all ip
 beginning by <quote>127.</quote>
 </para>
 <para>If an user has no authorized ip, he cannot login</para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -176,6 +181,7 @@ Delete a user, may be readded with site READD
 This will set the flag DELETED (D) for the user 'toto'.
 In order to fully delete this user you will need to do a 'site purge'
 </para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect id='site_flags'>
@@ -198,10 +204,13 @@ first public group<superscript>*</superscript></entry></row>
 <row><entry>SEE_IP</entry><entry>s</entry><entry>User is allowed to see other's ip</entry></row>
 <row><entry>SEE_HOME</entry><entry>t</entry><entry>User is allowed to see other's home</entry></row>
 <row><entry>HIDDEN</entry><entry>H</entry><entry>User will not appear in site who</entry></row>
+<row><entry>TLS</entry><entry>k</entry><entry>User will is forced to use TLS/SSL connections</entry></row>
+<row><entry>ANONYMOUS</entry><entry>A</entry><entry>User cannot make any modifications</entry></row>
 </tbody>
 </tgroup>
 </informaltable>
 <para>*NOTE* If you have flag O then you do NOT want flag G</para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -226,6 +235,12 @@ will allow them to idle forever.</para>
 </simplesect>
 
 <simplesect>
+<title>site invite &lt;irc_nick&gt;</title>
+<para>Tells the sitebot to invite <emphasis>irc_nick</emphasis> on sitebot's channel.
+</para>
+</simplesect>
+
+<simplesect>
 <title>site kick &lt;user&gt;</title>
 <para>Kick a user off the site.</para>
 <screen>site kick toto</screen>
@@ -240,8 +255,9 @@ will allow them to idle forever.</para>
 </simplesect>
 
 <simplesect>
-<title>site purge &lt;user&gt;</title>
+<title>site purge [&lt;user&gt;]</title>
 <para>Remove deleted users, site READD will not work for purged users.</para>
+<para>If run without arguments, purge ALL deleted users</para>
 <screen>site purge toto</screen>
 <para>This will erase definitively user 'toto' (only if it has been deleted).</para>
 <para>If you are a gadmin, you can only purge users from your group (that is,
@@ -253,6 +269,7 @@ if you are giving access to this command in your config file).</para>
 <para>Re-add a user.</para>
 <screen>site readd toto</screen>
 <para>This will remove the DELETED flag for user 'toto'</para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -291,6 +308,7 @@ connection is not closed. You will need to start the server on the machine.
 <para>This will show your current tagline</para>
 <screen>site tagline my new tagline</screen>
 <para>This will set your tagline to 'my new tagline'</para>
+<para>If you are a gadmin, you can only change users from your group.</para>
 </simplesect>
 
 <simplesect>
@@ -306,6 +324,13 @@ connection is not closed. You will need to start the server on the machine.
 </simplesect>
 
 <!-- site utime is not documented -->
+
+<simplesect>
+<title>site uptime</title>
+<para>
+Display server uptime.
+</para>
+</simplesect>
 
 <simplesect>
 <title>site version</title>
