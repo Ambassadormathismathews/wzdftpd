@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <utime.h>
+#include <fcntl.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -27,6 +28,7 @@
 #include "wzd_file.h"
 #include "wzd_perm.h"
 #include "wzd_mod.h"
+#include "wzd_cache.h"
 
 
 extern int serverstop;
@@ -330,7 +332,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
   struct stat s;
   char buffer[1024];
   int ret;
-  FILE * fp;
+  struct wzd_cache_t * fp;
 
   if (strlen(filename)==0) {
     ret = send_message_with_args(501,context,"Tell the admin to configure his site correctly");
@@ -342,13 +344,13 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
     return;
   }
 
-  fp = fopen(filename,"r");
+  fp = wzd_cache_open(filename,O_RDONLY,0644);
   if (!fp) {
     ret = send_message_with_args(501,context,"Problem reading the file - check your config");
     return;
   }
 
-  if ( (fgets(buffer,1022,fp)) == NULL) {
+  if ( (wzd_cache_gets(fp,buffer,1022)) == NULL) {
     ret = send_message_with_args(501,context,"File is empty");
     return;
   }
@@ -363,7 +365,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       wzd_context_t * tab_context = context_list;
       for (i=0; i<256; i++) tab_line[i] = NULL;
       i=0;
-      while ( (fgets(buffer,1022,fp)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
+      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
 	tab_line[i] = malloc(1024);
 	strcpy(tab_line[i],buffer);
 	i++;
@@ -406,7 +408,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       wzd_context_t dummy_context;
       for (i=0; i<256; i++) tab_line[i] = NULL;
       i=0;
-      while ( (fgets(buffer,1022,fp)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
+      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
 	tab_line[i] = malloc(1024);
 	strcpy(tab_line[i],buffer);
 	i++;
@@ -448,9 +450,9 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
     } /* forallusers */
     ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
     send_message_raw(buffer,context);
-  } while ( (fgets(buffer,1022,fp)) != NULL);
+  } while ( (wzd_cache_gets(fp,buffer,1022)) != NULL);
 
-  fclose(fp);
+  wzd_cache_close(fp);
   send_message_raw("200 \r\n",context);
 }
 
