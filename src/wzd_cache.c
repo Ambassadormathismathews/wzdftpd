@@ -512,6 +512,9 @@ wzd_user_t * usercache_add(wzd_user_t * user)
 wzd_user_t * usercache_get( predicate_user_t p, void * arg )
 {
   unsigned int i;
+  
+  if (!cache_user_pool) return NULL;
+
   for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] != '\0') {
       /* test entry */

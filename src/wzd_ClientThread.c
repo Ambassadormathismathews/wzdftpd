@@ -25,17 +25,13 @@
  */
 
 #ifdef WIN32
+
 #define        INET_ADDRSTRLEN         16
 #define        INET6_ADDRSTRLEN        46
-#endif
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-#ifdef _MSC_VER
 #include <io.h>
-#endif
 
 #else
 
@@ -46,7 +42,7 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
-#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+#endif /* WIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1043,7 +1039,7 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
     if (path[strlen(path)-1]!='/') strcat(path,"/");
     strlcat(path,param,WZD_MAX_PATH);
   } else {
-    strcpy(cmd,param);
+    wzd_strncpy(cmd,param,WZD_MAX_PATH);
     if (checkpath(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
@@ -1076,7 +1072,7 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
   {
     char *ptr;
     wzd_section_t * section;
-    strcpy(path,buffer);
+    wzd_strncpy(path,buffer,WZD_MAX_PATH);
     ptr = strrchr(path,'/');
     if (ptr && ptr!=&path[0]) {
       *ptr='\0';

@@ -43,7 +43,6 @@ CREATE TABLE users (
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
-  ip_allowed TINYTEXT,
   ratio int(10) unsigned default NULL,
   user_slots int(10) unsigned default NULL,
   leech_slots int(10) unsigned default NULL,
@@ -54,8 +53,10 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+
+INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
 --
 -- Table structure for table `UGR` (User-Group Relations)
@@ -77,15 +78,18 @@ CREATE TABLE UserIP (
   PRIMARY KEY(ref,ip)
 ) TYPE=MyISAM;
 
-INSERT INTO UserIP VALUES(1,"foobar@localhost");
 INSERT INTO UserIP VALUES(1,"127.0.0.1");
+
+INSERT INTO UserIP VALUES(2,"foobar@localhost");
+INSERT INTO UserIP VALUES(2,"127.0.0.1");
 
 --
 -- hmm - moo, moo; I'm trying to insert references into UGR
 --
+INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
 
 -- insert novel into admin group (he's a good friend !)
-INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
+INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=2 AND groups.gid=1;
 
 
 --

@@ -5,9 +5,9 @@ bin_PROGRAMS = sitewho
 
 sitewho_SOURCES = sitewho.c
 
-sitewho_LDFLAGS = $(WZD_SSL_LIBS)
+sitewho_LDFLAGS = -no-undefined -L../../src -L../../src/.libs -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
-AM_CPPFLAGS = $(WZD_SSL_INCLUDES)
+AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
 if USE_ICC
 # Workaround for compilation with icc

@@ -394,7 +394,7 @@ wzd_user_t * GetUserByID(unsigned int id)
   unsigned int i=0;
   wzd_user_t *user, *user_return;
 
-  if (!mainConfig->user_list) return NULL;
+  if (!mainConfig || !mainConfig->user_list) return NULL;
 
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
@@ -430,7 +430,7 @@ wzd_user_t * GetUserByName(const char *name)
   unsigned int uid;
   wzd_user_t * user=NULL;
 
-  if (!mainConfig->user_list || !name || strlen(name)<=0) return NULL;
+  if (!mainConfig || !mainConfig->user_list || !name || strlen(name)<=0) return NULL;
 out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
 
 #ifdef BACKEND_STORAGE
@@ -509,7 +509,7 @@ wzd_group_t * GetGroupByID(unsigned int id)
   unsigned int i=0;
   wzd_group_t * group = NULL, * group_return;
 
-  if (!mainConfig->group_list) return NULL;
+  if (!mainConfig || !mainConfig->group_list) return NULL;
 
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
@@ -548,7 +548,7 @@ wzd_group_t * GetGroupByName(const char *name)
   unsigned int gid;
   wzd_group_t * group = NULL;
 
-  if (!mainConfig->group_list || !name || strlen(name)<=0) return NULL;
+  if (!mainConfig || !mainConfig->group_list || !name || strlen(name)<=0) return NULL;
 
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {

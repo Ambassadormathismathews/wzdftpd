@@ -58,7 +58,7 @@ static const wzd_user_t user_null = {
   0,         /* max_ul_speed; */
   0,         /* max_dl_speed; */
   0,         /* num_logins; */
-  { 0 },     /* ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH]; */
+  { { 0 } },     /* ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH]; */
   { 0 },     /* stats; */
   0,         /* credits; */
   0,         /* ratio; */
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
 	context = &context_list[i];
         id = context_list[i].userid;
 /*        user = &user_list[id];*/
-        user = find_id(user_list,id);
+        user = find_id(user_list,id); /* XXX replace with GetUserByID ? */
 	snprintf(hostip,18,"%d.%d.%d.%d",
 	    context->hostip[0],context->hostip[1],context->hostip[2],
 	    context->hostip[3]);
@@ -244,8 +244,8 @@ int main(int argc, char *argv[])
 	}
 
         fprintf(stdout,"|%15s|   %15s|%16s|%20s |\n",
-            user->username?user->username:"NULL",
-            user->username?user->tagline:"NULL",
+            (user && user->username)?user->username:"NULL",
+            (user && user->username)?user->tagline:"NULL",
 	    hostip,
 	    command_buffer);
 	if (strncasecmp(context->last_command,"retr",4)==0) {
