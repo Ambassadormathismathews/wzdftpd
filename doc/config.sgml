@@ -62,6 +62,17 @@ find its ip, +ip the server will perform DNS lookups</para>
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_force_shm_cleanup'><term>force_shm_cleanup (default:
+0)</term>
+<listitem>
+<para>Specify 1 here to automatically try to delete shm zone if existing.
+<screen>force_shm_cleanup = 1</screen>
+</para>
+<para><emphasis>IMPORTANT: This option is dangerous !</emphasis>. If you start server when
+another instance is running, you'll certainly go into problems.</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_hide_dotted_files'><term>hide_dotted_files (default:
 0)</term>
 <listitem>
@@ -164,7 +175,7 @@ to send signals to server.
 <para>The port to listen.
 <screen>port = 1321</screen>
 </para>
-<para><emphasis>IMPORTANT: undex linux, you need privileges to bind to a system
+<para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system
 port ( &lt; 1024 )</emphasis></para>
 </listitem>
 </varlistentry>
@@ -175,7 +186,7 @@ port ( &lt; 1024 )</emphasis></para>
 after binding port. This is usefull only if server is riunned by root
 <screen>server_uid = toto</screen>
 </para>
-<para><emphasis>IMPORTANT: undex linux, you need privileges to bind to a system
+<para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system
 port ( &lt; 1024 )</emphasis></para>
 </listitem>
 </varlistentry>

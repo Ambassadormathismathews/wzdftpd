@@ -7,7 +7,8 @@
 <simplesect>
 <title>Description</title>
 <para>
-This modules comes with some utilities functions to handle sfv files.
+This modules comes with some utilities functions to handle sfv files, and associated files (diz,
+zip, etc).
 </para>
 <para>
 When a SFV file is uploaded, server will create <computeroutput>.missing</computeroutput> files.
@@ -47,6 +48,30 @@ in your config file.
 </simplesect>
 
 <simplesect>
+<title>Parameters</title>
+<para>
+The following parameters are available, you can set them in the config file (don't forget the prefix
+<emphasis>param_</emphasis>).</para>
+<itemizedlist>
+<listitem><screen>sfv_progressmeter</screen>
+<para>This dir is created during the upload, when the release isn't complete, to indicate the
+progression.</para></listitem>
+<listitem><screen>sfv_del_progressmeter</screen>
+<para>This regex must match the progressmeter, and is used to find and delete it when the number of
+files has changed.
+</para></listitem>
+<listitem><screen>sfv_incomplete_indicator</screen>
+<para>This will be a simlink created to indicate that the release isn't complete.
+</para></listitem>
+<listitem><screen>sfv_other_completebar</screen>
+<para>This dir will be created when release is complete.
+</para></listitem>
+</itemizedlist>
+<para>e.g: <screen>param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]</screen>
+</para>
+</simplesect>
+
+<simplesect>
 <title>Features</title>
 <itemizedlist>
 <listitem><para>
@@ -65,6 +90,13 @@ percent.
 <listitem><para>
 A symbolic link is created to mark the upload as incomplete (and will be
 removed when complete).
+</para></listitem>
+<listitem><para>
+When a zip file is uploaded, it is checked, and marqued as bad if corrupted.
+</para></listitem>
+<listitem><para>
+When a diz file is uploaded, it is parsed, and the module tries to guess to number of files to be
+uploaded.
 </para></listitem>
 </itemizedlist>
 </simplesect>

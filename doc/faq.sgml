@@ -28,6 +28,11 @@ To remove a zone resulting from a crash (this should never happen :) just run
 To run multiples instance of a ftp server look at <link linkend='faq_multipleservers'>
 "Running multiples instances</link>.
 </para>
+<para>
+You can also set the option <link linkend='cfg_force_shm_cleanup'>
+<emphasis>force_shm_cleanup</emphasis></link> in the config file to
+automatically try to delete shm - this open is DANGEROUS !
+</para>
 </simplesect>
 
 <simplesect id='fas_shm2'>

@@ -91,6 +91,21 @@ units</entry></row>
 </tbody>
 </tgroup>
 </table>
+
+<table frame='all' id="cookies_other">
+<title>Other/General Cookies</title>
+<tgroup cols='2' align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Cookie</entry><entry>Description</entry></row>
+
+<row><entry>%sectionname</entry><entry>Name of current section</entry></row>
+<row><entry>%spacefree</entry><entry>Remaining space on device, converted in units</entry></row>
+<row><entry>%spacetotal</entry><entry>Total space on device, converted in units</entry></row>
+
+</tbody>
+</tgroup>
+</table>
+
 </para>
 
 
