@@ -424,6 +424,7 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   FILE *fp;
   struct wzd_file_t * file_cur;
   wzd_acl_line_t * acl_cur;
+  short has_spaces;
 
   file_cur = *pTabFiles;
 
@@ -435,7 +436,7 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   fp = fopen(permfile,"w"); /* overwrite any existing file */
   if (!fp) return -1;
 
-  /** \bug if file_cur->filename contains spaces, we MUST quote it when writing name */
+  /* if file_cur->filename contains spaces, we MUST quote it when writing name */
   while (file_cur) {
     if (file_cur->kind == FILE_LNK) {
       if (strchr( (char*)file_cur->data, ' ')) {
@@ -449,14 +450,23 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
     } else { /* not a link */
       /* first write owner if available */
       if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
-        snprintf(buffer,sizeof(buffer),"owner\t%s\t%s\t%s\t%lo\n",
-            file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
+        has_spaces = (strchr( (char*)file_cur->filename, ' ') != NULL);
+        if (has_spaces)
+          snprintf(buffer,sizeof(buffer),"owner\t'%s'\t%s\t%s\t%lo\n",
+              file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
+        else
+          snprintf(buffer,sizeof(buffer),"owner\t%s\t%s\t%s\t%lo\n",
+              file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
         (void)fwrite(buffer,strlen(buffer),1,fp);
       }
       acl_cur = file_cur->acl;
       while (acl_cur) {
-        snprintf(buffer,sizeof(buffer),"perm\t%s\t%s\t%c%c%c\n",
-            file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
+        if (has_spaces)
+          snprintf(buffer,sizeof(buffer),"perm\t'%s'\t%s\t%c%c%c\n",
+              file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
+        else
+          snprintf(buffer,sizeof(buffer),"perm\t%s\t%s\t%c%c%c\n",
+              file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
         (void)fwrite(buffer,strlen(buffer),1,fp);
         acl_cur = acl_cur->next_acl;
       }
