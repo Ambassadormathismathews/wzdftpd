@@ -37,6 +37,9 @@ void * wzd_malloc(size_t size);
 /** Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr);
 
+/** Copy with allocation */
+char * wzd_strdup(const char *s);
+
 #ifdef DEBUG
 
 /* debug file cache */

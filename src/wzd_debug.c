@@ -70,3 +70,8 @@ void wzd_free(void *ptr)
   free(ptr);
 }
 
+/** Copy with allocation */
+char * wzd_strdup(const char *s)
+{
+  return strdup(s);
+}

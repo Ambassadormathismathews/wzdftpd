@@ -27,6 +27,7 @@
 
 /* colors */
 
+#ifndef _MSC_VER
 #define CLR_BOLD	"[1m"
 
 #define	CLR_BLUE	"[34m"
@@ -35,6 +36,16 @@
 #define	CLR_RED		"[31m"
 
 #define	CLR_NOCOLOR	"[0m"
+#else
+#define CLR_BOLD	""
+
+#define	CLR_BLUE	""
+#define	CLR_CYAN	""
+#define	CLR_GREEN	""
+#define	CLR_RED		""
+
+#define	CLR_NOCOLOR	""
+#endif
 
 
 /* DEBUG & LOG */

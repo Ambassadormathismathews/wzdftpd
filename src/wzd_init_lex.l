@@ -65,6 +65,8 @@
 #include "wzd_ServerThread.h"
 #include "wzd_vfs.h"
 
+#include "wzd_debug.h"
+
 typedef enum {
   CFG_ID=256,
   CFG_IP_NUM,
@@ -264,7 +266,7 @@ int set_default_options(void)
   setlib_mainConfig(mainConfig);
 /*  setlib_mainConfig(&tempConfig);*/
 
-  tempConfig.pid_file = strdup("/var/run/wzdftpd.pid");
+  tempConfig.pid_file = wzd_strdup(WZD_DEFAULT_PIDFILE);
 
   tempConfig.config_filename=NULL;
 
@@ -305,7 +307,7 @@ printf("Clearing option syslog\n");
     CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif
 
-/*  tempConfig.logfilename = malloc(256);
+/*  tempConfig.logfilename = wzd_malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");*/
   tempConfig.logfilename = NULL;
 
@@ -360,7 +362,7 @@ printf("Clearing option syslog\n");
  * returns the end of line, or NULL
  * the buffer is dynamically allocated, you MUST free it after use
 */
-char * read_until_eol(int max_len)
+char * read_until_eol(unsigned int max_len)
 {
   char *buffer;
   char c;
@@ -369,7 +371,7 @@ char * read_until_eol(int max_len)
 
   if (max_len <= 0 || max_len > 1048576) return NULL;
   /* read til EOL */
-  buffer = malloc(max_len);
+  buffer = wzd_malloc(max_len);
   length = 0;
   end=buffer;
   while ( (c = input()) && c!=EOF && (c==' ' || c=='\t')) ; /* eat leading spaces */
@@ -378,7 +380,7 @@ char * read_until_eol(int max_len)
     *end++ = c;
     if (++length >= max_len) {
       out_err(LEVEL_HIGH,"line is too long (max %d chars)\n",max_len);
-      free(buffer);
+      wzd_free(buffer);
       return NULL;
     }
     c = input();
@@ -426,10 +428,14 @@ int cfg_read_backend(void)
 
   /* TODO XXX FIXME we should not use this, it forbids names with spaces */
   ptr = line;
-  name = strtok_r(line," \t\r\n",&ptr);
+  if (ptr[0]=='"') {
+    name = strtok_r(line,"\"",&ptr);
+  } else {
+    name = strtok_r(line," \t\r\n",&ptr);
+  }
   if (!name) {
     out_err(LEVEL_HIGH,"missing backend name\n");
-    free(line);
+    wzd_free(line);
     return 1;
   }
   predicate = strtok_r(NULL," \t\r\n",&ptr);
@@ -437,7 +443,7 @@ int cfg_read_backend(void)
     version = strtok_r(NULL," \t\r\n",&ptr);
   if (predicate && !version) {
     out_err(LEVEL_HIGH,"missing backend version\n");
-    free(line);
+    wzd_free(line);
     return 1;
   }
 
@@ -450,7 +456,7 @@ int cfg_read_backend(void)
       i=0;
     }
   }
-  free(line);
+  wzd_free(line);
   return i;
 }
 
@@ -475,9 +481,9 @@ int cfg_read_backend_param(const char *backendname)
 
   ret = 1;
   if (strcasecmp("plaintext",backendname)==0)
-  { tempConfig.backend.param = strdup(param); ret = 0; }
+  { tempConfig.backend.param = wzd_strdup(param); ret = 0; }
 
-  free (param);
+  wzd_free (param);
   return ret;
 }
 
@@ -488,11 +494,8 @@ int cfg_read_cronjob(void)
   char buffer[1024];
   char * command;
   char * line;
-  char c;
   char *end;
   unsigned int token;
-  unsigned long l;
-  unsigned int length;
   char *min,*hour,*day,*month,*day_of_week;
 
   token = yylex();
@@ -510,7 +513,7 @@ int cfg_read_cronjob(void)
    * remark: perhaps because strtok_r modifies the buffer ...
    */
   strncpy(buffer,line,1024);
-  free(line);
+  wzd_free(line);
   line = buffer;
 
   min = strtok_r(buffer," \t",&line);
@@ -861,7 +864,6 @@ int cfg_read_logfile(void)
 {
   unsigned int token;
   char * filename;
-  int fd;
 
   token = yylex();
   if (token!='=') {
@@ -1148,11 +1150,11 @@ int cfg_read_module(void)
     return 1;
   }
 
-  if (module_check(name)) { free(name); return 1; }
+  if (module_check(name)) { wzd_free(name); return 1; }
   /* add module to list */
-  if (module_add(&tempConfig.module,name)) { free(name); return 1; }
+  if (module_add(&tempConfig.module,name)) { wzd_free(name); return 1; }
 
-  free(name);
+  wzd_free(name);
   return 0;
 }
 
@@ -1178,7 +1180,7 @@ int cfg_read_param(const char *paramname)
 
   ret = server_set_param(paramname,data,strlen(data),&tempConfig.param_list);
 
-  free (data);
+  wzd_free (data);
   return ret;
 }
 
@@ -1335,7 +1337,9 @@ int cfg_read_pid_file(void)
 #ifndef _MSC_VER
     ret = kill(l,0);
 #else
-    ret = raise(l,0);
+/*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
+    ret = -1;
+	errno = ESRCH;
 #endif
     if (!ret || (ret==-1 && errno==EPERM)) {
       out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",filename);
@@ -1354,7 +1358,7 @@ int cfg_read_pid_file(void)
       return 1;
     }
   }
-  if (tempConfig.pid_file) free(tempConfig.pid_file);
+  if (tempConfig.pid_file) wzd_free(tempConfig.pid_file);
   tempConfig.pid_file = filename; /* will be freed at server exit */
 
   return 0;
@@ -1416,7 +1420,7 @@ int cfg_read_section(void)
   }
 
   strncpy(buffer,ptr,256);
-  free(ptr);
+  wzd_free(ptr);
 
   sectionname = strtok_r(buffer," \t\n\r",&ptr);
   if( !sectionname ) {
@@ -1551,7 +1555,7 @@ int cfg_read_sitefile(const char *type)
   if (strcasecmp("vfs",type)==0)
   { strncpy(tempConfig.site_config.file_vfs,filename,256); ret = 0; }
 
-  free (filename);
+  wzd_free (filename);
   return ret;
 }
 
@@ -1582,12 +1586,12 @@ int cfg_read_sitecmd(void)
 
   if (hook_add_custom_command(&tempConfig.hook,sitecmdname,command))
   {
-    free(sitecmdname);
-    free(command);
+    wzd_free(sitecmdname);
+    wzd_free(command);
     return 1;
   }
-  free(sitecmdname);
-  free(command);
+  wzd_free(sitecmdname);
+  wzd_free(command);
   return 0;
 }
 
@@ -1626,7 +1630,7 @@ int cfg_read_tls_certificate(void)
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
 #endif /* SSL_SUPPORT */
 
-  free(filename);
+  wzd_free(filename);
   return 0;
 }
 
@@ -1655,7 +1659,7 @@ int cfg_read_tls_cipher_list(void)
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
 #endif /* SSL_SUPPORT */
 
-  free(buffer);
+  wzd_free(buffer);
   return 0;
 }
 
@@ -1688,14 +1692,14 @@ int cfg_read_tls_mode(void)
     else
     {
       out_err(LEVEL_HIGH,"invalid mode\n");
-      free(buffer);
+      wzd_free(buffer);
       return 1;
     }
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
 #endif /* SSL_SUPPORT */
 
-  free(buffer);
+  wzd_free(buffer);
   return 0;
 }
 
@@ -1797,13 +1801,13 @@ int cfg_read_vfs(void)
   else
     ret = vfs_add(&tempConfig.vfs,virtual_path,physical_path);
   if (ret) {
-    free(buffer);
+    wzd_free(buffer);
     out_err(LEVEL_HIGH,"There was a problem adding vfs %s => %s\n",virtual_path,physical_path);
     out_err(LEVEL_HIGH,"Please check destination exists and you have correct permissions\n");
     return 1;
   }
 
-  free(buffer);
+  wzd_free(buffer);
   return 0;
 }
 
@@ -1875,9 +1879,9 @@ wzd_config_t * readConfigFile(const char *fileName)
 	  out_err(LEVEL_HIGH,"token too long\n");
 	  continue;
 	}
-	buf = strdup(yytext+strlen("backend_param_"));
+	buf = wzd_strdup(yytext+strlen("backend_param_"));
         ret = cfg_read_backend_param(buf);
-	free(buf);
+	wzd_free(buf);
       }
       break;
     case CFG_CRONJOB:
@@ -1957,9 +1961,9 @@ wzd_config_t * readConfigFile(const char *fileName)
 	  out_err(LEVEL_HIGH,"token too long\n");
 	  continue;
 	}
-	buf = strdup(yytext+strlen("param_"));
+	buf = wzd_strdup(yytext+strlen("param_"));
         ret = cfg_read_param(buf);
-	free(buf);
+	wzd_free(buf);
       }
       break;
 
@@ -1997,9 +2001,9 @@ wzd_config_t * readConfigFile(const char *fileName)
 	  out_err(LEVEL_HIGH,"token too long\n");
 	  continue;
 	}
-	buf = strdup(yytext+strlen("sitefile_"));
+	buf = wzd_strdup(yytext+strlen("sitefile_"));
         ret = cfg_read_sitefile(buf);
-	free(buf);
+	wzd_free(buf);
       }
       break;
     case CFG_TLS_CERT:
@@ -2057,7 +2061,7 @@ wzd_config_t * readConfigFile(const char *fileName)
 	  continue;
 	}
 	ret = do_permission_line(permission_name,permission_line);
-	free(permission_line);
+	wzd_free(permission_line);
       }
       break;
     default:

@@ -1064,7 +1064,7 @@ static void free_config(wzd_config_t * config)
   if (mainConfig->xferlog_fd != -1)
     xferlog_close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
-    free(mainConfig->xferlog_name);
+    wzd_free(mainConfig->xferlog_name);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
 #ifndef _MSC_VER
     closelog();
@@ -1073,11 +1073,11 @@ static void free_config(wzd_config_t * config)
   if (mainConfig->logfile)
     log_close();
   if (mainConfig->logfilename)
-    free(mainConfig->logfilename);
+    wzd_free(mainConfig->logfilename);
   if (mainConfig->config_filename)
-    free(mainConfig->config_filename);
+    wzd_free(mainConfig->config_filename);
   if (mainConfig->pid_file)
-    free(mainConfig->pid_file);
+    wzd_free(mainConfig->pid_file);
   wzd_shm_free(mainConfig_shm);
 #ifdef DEBUG
   mainConfig_shm = NULL;
@@ -1134,7 +1134,7 @@ void serverMainThreadExit(int retcode)
   free_messages();
 /*  free(context_list);*/
   /* FIXME should not be done here */
-  if (mainConfig->backend.param) free(mainConfig->backend.param);
+  if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
   wzd_sem_destroy(limiter_sem);
   wzd_shm_free(context_shm);
   context_list = NULL;

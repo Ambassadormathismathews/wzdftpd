@@ -91,6 +91,10 @@ char *backend_get_name(wzd_backend_t *backend)
 
 void backend_clear_struct(wzd_backend_t *backend)
 {
+  if (backend->param) {
+    wzd_free(backend->param);
+	backend->param = NULL;
+  }
   backend->name[0] = '\0';
   backend->handle = NULL;
   backend->back_validate_login = NULL;

@@ -1,3 +1,7 @@
+2003-12-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* visual: some bugfixes on malloc/free, ensure we can use windows-like paths
+
 2003-12-15  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* siteconfig: get bandwidth

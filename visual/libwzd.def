@@ -143,6 +143,7 @@ EXPORTS
 	wzd_shm_get
 	wzd_shm_read
 	wzd_shm_write
+	wzd_strdup
 	xferlog_close
 	xferlog_open
 	GetGroupByID

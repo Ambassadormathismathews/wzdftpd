@@ -413,6 +413,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       /* remove trailing / */
       if (value[strlen(value)-1] == '/' && strcmp(value,"/")!=0)
 	value[strlen(value)-1] = '\0';
+	  DIRNORM(value,strlen(value));
       strncpy(user_pool[user_count-1].rootpath,value,1024);
     }
     else if (strcmp("pass",varname)==0) {

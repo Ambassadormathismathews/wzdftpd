@@ -170,4 +170,9 @@
 
 #endif /* _MSC_VER */
 
+
+
+#define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
+
+
 #endif /* __WZD_TYPES__ */
