@@ -155,6 +155,34 @@ int group_ip_add(wzd_group_t * group, const char *newip)
   return 1; /* full */
 }
 
+void user_init_struct(wzd_user_t * user)
+{
+  register int i;
+
+  memset(user->username,0,HARD_USERNAME_LENGTH);
+  user->userpass[0]='\0';
+  user->rootpath[0]='\0';
+  user->tagline[0]='\0';
+  user->uid = -1;
+  memset(user->groups,0,256*sizeof(unsigned int));
+  memset(user->tagline,0,256);
+  user->max_idle_time = 0;
+  user->userperms = 0;
+  user->group_num = 0;
+  user->flags[0] = '\0';
+  user->max_ul_speed = 0;
+  user->max_dl_speed = 0;
+  user->num_logins = 0;
+  for (i=0; i<HARD_IP_PER_USER; i++)
+    user->ip_allowed[i][0] = '\0';
+  user->bytes_ul_total = 0;
+  user->bytes_dl_total = 0;
+  user->credits = 0;
+  user->ratio = 0;
+  user->user_slots = 0;
+  user->leech_slots = 0;
+}
+
 
 int write_user_file(void)
 {
@@ -293,6 +321,7 @@ int write_user_file(void)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
     fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].bytes_ul_total);
     fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].bytes_dl_total);
+    fprintf(file,"credits=%llu\n",user_pool[i].credits);
     if (user_pool[i].ratio)
       fprintf(file,"ratio=%d\n",user_pool[i].ratio);
     if (user_pool[i].num_logins)
@@ -380,21 +409,8 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
 	fprintf(stderr,"Too many users defined %d\n",user_count);
         continue;
       }
+      user_init_struct(&user_pool[user_count-1]);
       strncpy(user_pool[user_count-1].username,value,HARD_USERNAME_LENGTH-1);
-      user_pool[user_count-1].userperms = 0;
-      user_pool[user_count-1].uid = -1;
-      memset(user_pool[user_count-1].groups,0,256*sizeof(unsigned int));
-      user_pool[user_count-1].group_num = 0;
-      memset(user_pool[user_count-1].tagline,0,256);
-      user_pool[user_count-1].max_ul_speed = 0;
-      user_pool[user_count-1].max_dl_speed = 0;
-      user_pool[user_count-1].bytes_ul_total = 0;
-      user_pool[user_count-1].bytes_dl_total = 0;
-      user_pool[user_count-1].num_logins = 0;
-      user_pool[user_count-1].max_idle_time = 0;
-      user_pool[user_count-1].ratio = 0;
-      user_pool[user_count-1].user_slots = 0;
-      user_pool[user_count-1].leech_slots = 0;
       for (i=0; i<HARD_IP_PER_USER; i++)
         user_pool[user_count-1].ip_allowed[i][0] = '\0';
       user_pool[user_count-1].flags[0] = '\0';
@@ -485,6 +501,16 @@ fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
       }
       user_pool[user_count-1].bytes_dl_total = ul_num;
     } /* bytes_dl_total */
+    else if (strcmp("credits",varname)==0) {
+      if (!user_count) break;
+      ul_num = strtoull(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid credits %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].credits = ul_num;
+    } /* credits */
+
     else if (strcmp("num_logins",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
@@ -698,6 +724,7 @@ int read_files(const char *filename)
 /*  group_pool = malloc(256*sizeof(wzd_group_t));*/
 
   /* XXX We always add a user nobody and a group nogroup */
+  user_init_struct(&user_pool[0]);
   strcpy(user_pool[0].username,"nobody");
   strcpy(user_pool[0].userpass,"------");
   strcpy(user_pool[0].rootpath,"/no/home");
@@ -708,8 +735,6 @@ int read_files(const char *filename)
   user_pool[0].groups[0] = 0; /* 0 == nogroup ! */
   user_pool[0].max_ul_speed = 1; /* at this rate, even if you can download it will be ... slow ! */
   user_pool[0].max_dl_speed = 1;
-  user_pool[0].max_idle_time = 0;
-  user_pool[0].flags[0] = '\0';
   user_count++;
 
   strcpy(group_pool[0].groupname,"nogroup");
@@ -1053,6 +1078,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
     if (mod_type & _USER_BYTESUL) user_pool[count].bytes_ul_total = user->bytes_ul_total;
     if (mod_type & _USER_BYTESDL) user_pool[count].bytes_dl_total = user->bytes_dl_total;
+    if (mod_type & _USER_CREDITS) user_pool[count].credits = user->credits;
     if (mod_type & _USER_USERSLOTS) user_pool[count].user_slots = user->user_slots;
     if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
     if (mod_type & _USER_RATIO) user_pool[count].ratio = user->ratio;
