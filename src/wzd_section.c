@@ -119,6 +119,8 @@ int section_free(wzd_section_t **section_list)
     free(section->sectionmask);
     if (section->pathfilter)
     { regfree(section->pathfilter); free(section->pathfilter); }
+    if (section->sectionre)
+    { free(section->sectionre); }
     free(section);
     section = section_next;
   }

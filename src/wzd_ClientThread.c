@@ -2851,6 +2851,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 #endif
 
     /* strtok_r: to be reentrant ! */
+    ptr = buffer;
     token = strtok_r(buffer," \t\r\n",&ptr);
     command = identify_token(token);
 

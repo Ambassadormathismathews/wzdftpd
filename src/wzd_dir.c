@@ -261,6 +261,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
       vfs = vfs->next_vfs;
     } /* while (vfs) */
+    wzd_free(buffer_vfs);
   } /* add vfs entries */
 
   /* XXX add symlinks */
@@ -317,6 +318,7 @@ void dir_close(struct wzd_dir_t * dir)
 
   if (dir->dirname) free(dir->dirname);
   if (dir->first_entry) free_file_recursive(dir->first_entry);
+  free(dir);
 }
 
 

@@ -89,11 +89,11 @@ static wzd_context_t * current_context=NULL;
 static void do_tcl_help(wzd_context_t * context);
 
 /***** EVENT HOOKS *****/
-static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
+static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
 static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
 
 /***** PROTO HOOKS *****/
-static wzd_hook_reply_t tcl_hook_protocol(const char *file, const char *args);
+static int tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
 static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
