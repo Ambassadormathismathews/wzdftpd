@@ -34,7 +34,7 @@
 
 #define	incomplete_indicator	"../(incomplete)-%0"
 
-#define	progressmeter		"[WzD] - %3.0d%% Complete - [WzD]"
+#define	progressmeter		"[WzD] - %3d%% Complete - [WzD]"
 #define	del_progressmeter	"\\[.*] - ...% Complete - \\[WzD]"
 
 #define	other_completebar	"[WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]"
@@ -575,6 +575,8 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
       }
     }
   }
+
+  sfv_update_completebar(sfv,sfv_file,context);
 
   sfv_free(&sfv);
   return 0;
