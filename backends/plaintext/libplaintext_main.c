@@ -43,6 +43,7 @@
 #endif
 
 #include "wzd_backend.h"
+#include "wzd_misc.h"
 #include "wzd_debug.h"
 
 /*#define	USERS_FILE		"users"*/
@@ -1234,6 +1235,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_RATIO) user_pool[count].ratio = user->ratio;
   } else { /* user not found, add it */
 /*    fprintf(stderr,"Add user %s\n",name);*/
+    DIRNORM(user->rootpath,strlen(user->rootpath),0);
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
     if (strcasecmp(user->userpass,"%")==0) {
       /* special case: if user_pool[count].userpass == "%" then any pass
@@ -1295,7 +1297,10 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_MAX_DLS) group_pool[count].max_dl_speed = group->max_dl_speed;
     if (mod_type & _GROUP_RATIO) group_pool[count].ratio = group->ratio;
     if (mod_type & _GROUP_TAGLINE) strcpy(group_pool[count].tagline,group->tagline);
-    if (mod_type & _GROUP_DEFAULTPATH) strcpy(group_pool[count].defaultpath,group->defaultpath);
+    if (mod_type & _GROUP_DEFAULTPATH) {
+      DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
+      strcpy(group_pool[count].defaultpath,group->defaultpath);
+    }
     if (mod_type & _GROUP_NUMLOGINS) group_pool[count].num_logins = group->num_logins;
     if (mod_type & _GROUP_IP) {
       int i;
@@ -1304,6 +1309,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     }
   } else { /* group not found, add it */
     fprintf(stderr,"Add group %s\n",name);
+    DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
     memcpy(&group_pool[group_count],group,sizeof(wzd_group_t));
     group_pool[group_count].gid = find_free_gid(1);
     group_count++;
@@ -1337,7 +1343,7 @@ wzd_user_t * FCN_GET_USER(int uid)
     return (wzd_user_t*)uid_list;
   }
 
-  if (uid < 0 || uid >= user_count_max) return NULL;
+  if (uid < 0 || uid >= (int)user_count_max) return NULL;
   if (user_pool[uid].username[0] == '\0') return NULL;
   return &user_pool[uid];
 }
@@ -1360,7 +1366,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     return (wzd_group_t*)gid_list;
   }
 
-  if (gid < 0 || gid >= group_count_max) return NULL;
+  if (gid < 0 || gid >= (int)group_count_max) return NULL;
   if (group_pool[gid].groupname[0] == '\0') return NULL;
   return &group_pool[gid];
 }
