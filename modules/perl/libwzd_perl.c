@@ -103,6 +103,9 @@ static int perl_hook_protocol(const char *file, const char *args);
 
 /***** PERL commands ***/
 static XS(XS_wzd_test);
+static XS(XS_wzd_chgrp);
+static XS(XS_wzd_chmod);
+static XS(XS_wzd_chown);
 static XS(XS_wzd_ftp2sys);
 static XS(XS_wzd_killpath);
 static XS(XS_wzd_putlog);
@@ -129,7 +132,7 @@ static struct _slave_t _slaves[MAX_SLAVES];
 
 /***********************/
 MODULE_NAME(perl);
-MODULE_VERSION(101);
+MODULE_VERSION(102);
 
 /***********************/
 /* WZD_MODULE_INIT     */
@@ -321,6 +324,9 @@ static void xs_init(pTHX)
   newXS("DynaLoader::boot_DynaLoader", boot_DynaLoader, file);
 
   newXS("wzd::test", XS_wzd_test, "wzd");
+  newXS("wzd::chgrp", XS_wzd_chgrp, "wzd");
+  newXS("wzd::chmod", XS_wzd_chmod, "wzd");
+  newXS("wzd::chown", XS_wzd_chown, "wzd");
   newXS("wzd::ftp2sys", XS_wzd_ftp2sys, "wzd");
   newXS("wzd::killpath", XS_wzd_killpath, "wzd");
   newXS("wzd::putlog", XS_wzd_putlog, "wzd");
@@ -446,6 +452,126 @@ static XS(XS_wzd_test)
     printf("Hello from c (items: %d)\n",(int)items);
 
   XSRETURN_EMPTY;
+}
+
+static XS(XS_wzd_chgrp)
+{
+  char path[WZD_MAX_PATH+1];
+  char * groupname=NULL;
+  char * text;
+  int index;
+  dXSARGS;
+
+  if (!current_context) XSRETURN_UNDEF;
+  if (items < 2) XSRETURN_UNDEF;
+
+  /** \todo print error message */
+  if ( ! SvPOK(ST(0)) )
+    XSRETURN_UNDEF;
+  if ( ! SvPOK(ST(1)) )
+    XSRETURN_UNDEF;
+
+  groupname = SvPV_nolen(ST(0));
+
+  index = 1;
+  text = SvPV_nolen(ST(index));
+
+  if ( checkpath_new(text, path, current_context) ) {
+    out_log(LEVEL_INFO,"perl wzd::chgrp could not resolv path %s\n",text);
+    XSRETURN_UNDEF;
+  }
+  if (file_chown(path,NULL,groupname,current_context)) {
+    XSRETURN_NO;
+  }
+
+  XSRETURN_YES;
+}
+
+static XS(XS_wzd_chmod)
+{
+  char path[WZD_MAX_PATH+1];
+  char * text;
+  char * endptr;
+  int index;
+  char * mode;
+  unsigned long perms;
+  dXSARGS;
+
+  if (!current_context) XSRETURN_UNDEF;
+  if (items < 2) XSRETURN_UNDEF;
+
+  /** \todo print error message */
+  if ( ! (SvPOK(ST(0)) || SvIOK(ST(0))) )
+    XSRETURN_UNDEF;
+  if ( ! SvPOK(ST(1)) )
+    XSRETURN_UNDEF;
+
+  mode = SvPV_nolen(ST(0));
+  perms = strtoul(mode,&endptr,8);
+  if (endptr == mode) {
+    /** TODO try to convert from string rwxr-xr-x */
+    out_log(LEVEL_INFO,"perl wzd::chmod could not convert mode %s to octal number\n",mode);
+    XSRETURN_UNDEF;
+  }
+
+  index = 1;
+  text = SvPV_nolen(ST(index));
+
+  if ( checkpath_new(text, path, current_context) ) {
+    out_log(LEVEL_INFO,"perl wzd::chmod could not resolv path %s\n",text);
+    XSRETURN_UNDEF;
+  }
+  if (_setPerm(path,NULL,NULL,NULL,NULL,perms,current_context)) {
+    XSRETURN_NO;
+  }
+
+  XSRETURN_YES;
+}
+
+static XS(XS_wzd_chown)
+{
+  char path[WZD_MAX_PATH+1];
+  char * username=NULL, * groupname=NULL;
+  char * text;
+  char * ptr;
+  int index;
+  dXSARGS;
+
+  if (!current_context) XSRETURN_UNDEF;
+  if (items < 2) XSRETURN_UNDEF;
+
+  /** \todo print error message */
+  if ( ! SvPOK(ST(0)) )
+    XSRETURN_UNDEF;
+  if ( ! SvPOK(ST(1)) )
+    XSRETURN_UNDEF;
+
+  username = SvPV_nolen(ST(0));
+  if ((ptr = strchr(username,':'))) {
+    groupname = ptr+1;
+    if (ptr == username) { /* chown :group file */
+      username = NULL;
+    }
+    else {
+      *ptr = '\0';
+      /* from man chmod: If a colon or dot but no group name follows the user name, that user is made
+       * the owner of the files and the group of the files is  changed  to  that  user’s login group.
+       */
+    }
+  }
+
+  index = 1;
+  text = SvPV_nolen(ST(index));
+
+  if ( checkpath_new(text, path, current_context) ) {
+    out_log(LEVEL_INFO,"perl wzd::chown could not resolv path %s\n",text);
+    XSRETURN_UNDEF;
+  }
+  if (file_chown(path,username,groupname,current_context)) {
+    XSRETURN_NO;
+  }
+
+  XSRETURN_YES;
 }
 
 static XS(XS_wzd_ftp2sys)

@@ -1,3 +1,7 @@
+2005-02-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: perl: chmod, chgrp, chown
+
 2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- cvs commit TAG: rel-0-5-0
