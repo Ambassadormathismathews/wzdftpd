@@ -994,48 +994,67 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
 int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
-  wzd_string_t * command, * perm_name, * ptr;
+  wzd_string_t * command_name, * perm_name, * ptr;
   char perm_buffer[256];
   char buffer[2048];
   wzd_command_perm_t * current;
+  wzd_command_t * command;
   int ret;
 
-  command = str_tok(command_line," \t\r\n");
-  if (!command) {
+  command_name = str_tok(command_line," \t\r\n");
+  if (!command_name) {
     do_site_help("perm",context);
     return 1;
   }
   perm_name = str_tok(command_line," \t\r\n");
 
-  if (strcasecmp(str_tochar(command),"show")==0)
+  if (strcasecmp(str_tochar(command_name),"show")==0)
   {
-    str_deallocate(command);
+    str_deallocate(command_name);
     send_message_raw("200-\r\n",context);
     current = mainConfig->perm_list;
     if ( !perm_name ) {
       /* no argument: print all perms */
-      while (current) {
-        if ( !perm2str(current,perm_buffer,sizeof(perm_buffer)) )
-        {
-          snprintf( buffer, sizeof(buffer), " %s%s\r\n", current->command_name, perm_buffer);
-          send_message_raw(buffer,context);
+      List * list;
+      ListElmt * elmnt;
+
+      list = chtbl_extract(mainConfig->commands_list, NULL, NULL, (cmp_function)strcmp);
+
+      if (list) {
+        for (elmnt=list_head(list); elmnt; elmnt=list_next(elmnt)) {
+          command = list_data(elmnt);
+          if (command && !perm2str(command->perms,perm_buffer,sizeof(perm_buffer)) ) {
+            snprintf( buffer, sizeof(buffer), " %s%s\r\n", command->name, perm_buffer);
+            send_message_raw(buffer,context);
+          }
         }
-        current = current->next_perm;
+        list_destroy(list);
+        free(list);
       }
     } else {
       /* search on perms name */
       int found=0;
-      while (current) {
-        if ( !strncasecmp(str_tochar(perm_name),current->command_name,strlen(str_tochar(perm_name))) )
-        {
-          found=1;
-          if ( !perm2str(current,perm_buffer,sizeof(perm_buffer)) )
-          {
-            snprintf( buffer, sizeof(buffer), " %s%s\r\n", current->command_name, perm_buffer);
+      List * list;
+      ListElmt * elmnt;
+
+      int subcmp(const char * string, const char * substring)
+      {
+        return strncasecmp(string,substring,strlen(substring));
+      }
+
+      list = chtbl_extract(mainConfig->commands_list, (cmp_function)subcmp, str_tochar(perm_name), (cmp_function)strcmp);
+
+      if (list) {
+        if (list_size(list)>0) found=1;
+        for (elmnt=list_head(list); elmnt; elmnt=list_next(elmnt)) {
+          command = list_data(elmnt);
+          if (command && !perm2str(command->perms,perm_buffer,sizeof(perm_buffer)) ) {
+            snprintf( buffer, sizeof(buffer), " %s%s\r\n", command->name, perm_buffer);
             send_message_raw(buffer,context);
           }
         }
-        current = current->next_perm;
+        list_destroy(list);
+        free(list);
       }
       if (!found)
         send_message_raw(" permission not found\r\n",context);
@@ -1044,75 +1063,59 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     send_message_raw("200 \r\n",context);
     return 0;
   }
-  else if (strcasecmp(str_tochar(command),"change")==0)
+  else if (strcasecmp(str_tochar(command_name),"change")==0)
   {
-    str_deallocate(command);
+    str_deallocate(command_name);
     ptr = str_tok(command_line,"\r\n");
     if (!perm_name || !ptr) {
       do_site_help("perm",context);
       str_deallocate(perm_name);
       return 1;
     }
-    ret = perm_is_valid_perm(str_tochar(perm_name));
-    if (ret) {
-      send_message_with_args(501,context,"perm_name is invalid");
-      str_deallocate(perm_name); str_deallocate(ptr);
-      return 1;
-    }
-    if ( perm_remove(str_tochar(perm_name), mainConfig) ) {
-      send_message_with_args(501,context,"error, permission NOT deleted");
-      str_deallocate(perm_name); str_deallocate(ptr);
-      return 1;
-    }
-    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),&mainConfig->perm_list);
+
+    ret = commands_set_permission(mainConfig->commands_list,str_tochar(perm_name),str_tochar(ptr));
+
     str_deallocate(perm_name);
     str_deallocate(ptr);
-    if (ret) {send_message_with_args(501,context,"error adding permission"); return 1; }
+    if (ret) {send_message_with_args(501,context,"error changing permission"); return 1; }
     send_message_with_args(200,context,"command ok, permission changed");
     return -1;
   }
-  else if (strcasecmp(str_tochar(command),"remove")==0)
+  else if (strcasecmp(str_tochar(command_name),"remove")==0)
   {
-    str_deallocate(command);
+    str_deallocate(command_name);
     if (!perm_name) {
       do_site_help("perm",context);
       return 1;
     }
-    if ( perm_remove(str_tochar(perm_name), mainConfig) )
+    if ( commands_delete_permission(mainConfig->commands_list,perm_name) )
       send_message_with_args(501,context,"error, permission NOT deleted");
     else
       send_message_with_args(200,context,"command ok, permission deleted");
     str_deallocate(perm_name);
     return 0;
   }
-  else if (strcasecmp(str_tochar(command),"add")==0)
+  else if (strcasecmp(str_tochar(command_name),"add")==0)
   {
-    str_deallocate(command);
+    str_deallocate(command_name);
     ptr = str_tok(command_line,"\r\n");
     if (!perm_name || !ptr) {
       do_site_help("perm",context);
       str_deallocate(perm_name); str_deallocate(ptr);
       return 1;
     }
-    ret = perm_is_valid_perm(str_tochar(perm_name));
-    if (ret) {
-      send_message_with_args(501,context,"perm_name is invalid");
-      str_deallocate(perm_name); str_deallocate(ptr);
-      return 1;
-    }
-    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),&mainConfig->perm_list);
-    if (ret) {
-      send_message_with_args(501,context,"error adding permission");
-      str_deallocate(perm_name); str_deallocate(ptr);
-      return 1;
-    }
-    send_message_with_args(200,context,"command ok, permission added");
-    str_deallocate(perm_name); str_deallocate(ptr);
+
+    ret = commands_add_permission(mainConfig->commands_list,str_tochar(perm_name),str_tochar(ptr));
+
+    str_deallocate(perm_name);
+    str_deallocate(ptr);
+    if (ret) {send_message_with_args(501,context,"error adding permission"); return 1; }
+    send_message_with_args(200,context,"command ok, permission changed");
     return 0;
   }
 
   do_site_help("perm",context);
-  str_deallocate(command);
+  str_deallocate(command_name);
   str_deallocate(perm_name);
   return 0;
 }

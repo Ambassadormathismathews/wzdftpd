@@ -48,6 +48,7 @@ static void _command_free(wzd_command_t *command)
 {
   if (!command) return;
   free(command->name);
+  perm_free_recursive(command->perms);
   free(command);
 }
 
@@ -248,6 +249,29 @@ wzd_command_t * commands_find(CHTBL * _ctable, wzd_string_t *str)
 int commands_set_permission(CHTBL * _ctable, const char * permname, const char * permline)
 {
   wzd_command_t * command;
+  wzd_command_perm_t * old_perms;
+  wzd_string_t * str = STR(permname);
+
+  command = commands_find(_ctable,str);
+  str_deallocate(str);
+  if (!command) return -1;
+
+  old_perms = command->perms;
+  command->perms = NULL;
+
+  if ( ! perm_add_perm(permname, permline, &command->perms) ) {
+    perm_free_recursive(old_perms);
+    return 0;
+  } else {
+    perm_free_recursive(command->perms);
+    command->perms = old_perms;
+    return 1;
+  }
+}
+
+int commands_add_permission(CHTBL * _ctable, const char * permname, const char * permline)
+{
+  wzd_command_t * command;
   wzd_string_t * str = STR(permname);
 
   command = commands_find(_ctable,str);
@@ -262,5 +286,18 @@ int commands_check_permission(wzd_command_t * command, wzd_context_t * context)
   if (!command) return 0;
 
   return perm_check_perm(command->perms, context);
+}
+
+int commands_delete_permission(CHTBL * _ctable, wzd_string_t * str)
+{
+  wzd_command_t * command;
+
+  command = commands_find(_ctable,str);
+  if (!command) return 1;
+  
+  perm_free_recursive(command->perms);
+  command->perms = NULL;
+
+  return 0;
 }
 

@@ -128,3 +128,24 @@ int list_rem_next(List *list, ListElmt *element, void **data)
 
   return 0;
 }
+
+int list_ins_sorted(List *list, const void *data)
+{
+  ListElmt	*element;
+
+  /* head insertion */
+  if (list_size(list)==0)
+    return list_ins_next(list, NULL, data);
+
+  /* find last element matching sort function */
+  element = list->head;
+  if (list->test(element->data,data)>0) {
+    return list_ins_next(list, NULL, data);
+  }
+
+  while (element->next && element->next->data && list->test(element->next->data,data)<0) {
+    element = element->next;
+  }
+
+  return list_ins_next(list, element, data);
+}

@@ -416,12 +416,6 @@ int do_permission_line(const char *permname, const char *permline)
 {
   int ret;
 
-  ret = perm_is_valid_perm(permname);
-  if (ret) return 1;
-
-  ret = perm_add_perm(permname, permline,&tempConfig.perm_list);
-  if (ret) return 1;
-
   ret = commands_set_permission(tempConfig.commands_list, permname, permline);
   if (ret) return 1;
 

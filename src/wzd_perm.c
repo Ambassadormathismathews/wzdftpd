@@ -179,6 +179,8 @@ int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_len
   unsigned int length;
   wzd_command_perm_entry_t * entry;
 
+  if (!perm) return 1;
+
   /* parse current->entry_list */
   perm_buffer_ptr = perm_buffer;
   length=0;

@@ -3742,7 +3742,15 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
           continue;
         }
       }
-      /** \todo XXX FIXME check permission here */
+      /** For base FTP commands, the default permission (if not specified)
+       * is to ALLOW users to use command, unless restricted !
+       */
+      if (command->perms && commands_check_permission(command,context)) {
+        ret = send_message_with_args(501,context,"Permission Denied");
+        str_deallocate(token);
+        str_deallocate(command_buffer);
+        continue;
+      }
       ret = (*(command->command))(token,command_buffer,context);
       str_deallocate(token);
       str_deallocate(command_buffer);

@@ -52,6 +52,12 @@ void list_destroy(List *list);
 
 int list_ins_next(List *list, ListElmt *element, const void *data);
 
+/** \brief Sorted insertion
+ *
+ * Use List#test to insert data
+ */
+int list_ins_sorted(List *list, const void *data);
+
 int list_rem_next(List *list, ListElmt *element, void **data);
 
 #define list_size(list)	((list)->size)

@@ -246,3 +246,83 @@ int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), con
   return 1;
 }
 
+List * chtbl_extract(const CHTBL *htab, int (*match)(const void *, const void *), const void *arg, int (*sort)(const void *, const void *))
+{
+  unsigned int i;
+  List * return_list;
+
+  /* yes, that's a bit lame .. we define an internal function, dependant on the upper
+   * level function's parameter, to compare the key (and not the CHTBL_Elmnt !).
+   */
+  int sortf(const void *d1, const void *d2)
+  {
+    const char * key1 = ((CHTBL_Elmnt*)d1)->key;
+    const char * key2 = ((CHTBL_Elmnt*)d2)->key;
+    return (*sort)(key1,key2);
+  }
+
+  return_list = malloc(sizeof(List));
+  list_init(return_list,NULL);
+
+  if (sort) {
+    CHTBL_Elmnt *tbl_elmnt;
+    ListElmt * elmnt;
+    /* we sort on the key .. so we keep the complete struct on the first pass to
+     * realize the sorted insertion, and then we make a second pass to replace
+     * the struct by only the data
+     */
+    return_list->test = sortf;
+
+    for (i=0; i<htab->containers; i++)
+    {
+      List * list;
+
+      list = &htab->table[i];
+
+      for (elmnt=list_head(list); elmnt; elmnt=list_next(elmnt)) {
+        tbl_elmnt = list_data(elmnt);
+        if (!tbl_elmnt) continue;
+        if (match) {
+          if (!(*match)(tbl_elmnt->key, arg)) {
+            list_ins_next(return_list,list_tail(return_list),tbl_elmnt);
+          }
+        }
+        else {
+          list_ins_sorted(return_list,tbl_elmnt);
+        }
+      } /* for (list) */
+    } /* for (hash table) */
+
+    /* second pass */
+    for (elmnt=list_head(return_list); elmnt; elmnt=list_next(elmnt)) {
+      tbl_elmnt = list_data(elmnt);
+      if (tbl_elmnt)
+        elmnt->data = tbl_elmnt->data;
+    }
+  }
+  else { /* unsorted insertion */
+    for (i=0; i<htab->containers; i++)
+    {
+      CHTBL_Elmnt *tbl_elmnt;
+      List * list;
+      ListElmt * elmnt;
+
+      list = &htab->table[i];
+
+      for (elmnt=list_head(list); elmnt; elmnt=list_next(elmnt)) {
+        tbl_elmnt = list_data(elmnt);
+        if (!tbl_elmnt) continue;
+        if (match) {
+          if (!(*match)(tbl_elmnt->key, arg)) {
+            list_ins_next(return_list,list_tail(return_list),tbl_elmnt->data);
+          }
+        }
+        else
+          list_ins_next(return_list,list_tail(return_list),tbl_elmnt->data);
+      } /* for (list) */
+    } /* for (hash table) */
+  }
+
+  return return_list;
+}
+

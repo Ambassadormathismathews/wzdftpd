@@ -35,7 +35,7 @@ typedef enum {
 typedef struct wzd_command_perm_entry_t wzd_command_perm_entry_t;
 typedef struct wzd_command_perm_t wzd_command_perm_t;
 struct wzd_command_perm_entry_t {
-  wzd_cp_t cp; 
+  wzd_cp_t cp;
   char target[256];
   struct wzd_command_perm_entry_t * next_entry;
 };

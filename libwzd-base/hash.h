@@ -73,6 +73,17 @@ int chtbl_lookup(const CHTBL *htab, const void *key, void **data);
 
 int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), const void *arg, void **data);
 
+/** \brief Extract data from hash table and return sorted list
+ *
+ * Iterates though hash table data, and returns a List.
+ * If a sort function is provided, the List is sorted.
+ * If a match function is provided, only keys matching argument will be inserted.
+ * The match function must return 0 if the 2 elements are identical.
+ *
+ * The returned List must be freed using list_destroy() and free()
+ */
+List * chtbl_extract(const CHTBL *htab, int (*match)(const void *, const void *), const void *arg, int (*sort)(const void *, const void *));
+
 #define chtbl_size(htab) ((htab)->size)
 
 /*! @} */
