@@ -33,6 +33,7 @@
 #include <winsock2.h>
 #include <io.h>
 #include <direct.h> /* _mkdir */
+#include <sys/locking.h> /* _locking */
 #else
 #include <unistd.h>
 
@@ -373,7 +374,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
     if (!acl_cur) { /* ! in acl list */
       /* TODO check if user is owner or group of file, and use perms */
       {
-	int i;
+	unsigned int i;
 	wzd_group_t * group;
 /*	out_err(LEVEL_HIGH,"owner %s\n",file_cur->owner);*/
 /*	out_err(LEVEL_HIGH,"group %s\n",file_cur->group);*/
@@ -1068,7 +1069,6 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   char stripped_filename[BUFFER_LEN];
   char * ptr;
   int ret;
-  wzd_user_t * user;
   wzd_file_t * file_list=NULL, * file_cur;
   int neededlength, length;
   struct stat s;
@@ -1134,6 +1134,9 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   return GetUserByName("nobody");
 }
 
+/* if program crash, locks acquired by fcntl (POSIX) or _locking (VISUAL)
+ * are released, and then do are less annoying.
+ */
 int file_lock(int fd, short lock_mode)
 {
 #ifndef _MSC_VER
@@ -1146,7 +1149,8 @@ int file_lock(int fd, short lock_mode)
     return -1;
   }
 #else
-  /* FIXME VISUAL use LockFile() */
+  if (_locking(fd, LK_NBLCK, -1) == -1)
+	  return -1;
 #endif
   return 0;
 }
@@ -1163,7 +1167,8 @@ int file_unlock(int fd)
     return -1;
   }
 #else
-  /* FIXME VISUAL use UnlockFile() */
+  if (_locking(fd, LK_UNLCK, -1) == -1)
+	  return -1;
 #endif
   return 0;
 }
@@ -1182,7 +1187,10 @@ int file_islocked(int fd, short lock_mode)
   }
   if (lck.l_type == F_RDLCK || lck.l_type == F_WRLCK) return 1;
 #else
-  /* FIXME VISUAL use ???() */
+  if (_locking(fd, LK_NBLCK, -1) != -1) {
+	  _locking(fd, LK_UNLCK, -1);
+	  return -1;
+  }
 #endif
   return 0;
 }
