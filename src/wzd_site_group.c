@@ -791,7 +791,7 @@ void do_site_help_group(wzd_context_t * context)
   send_message_raw("action can be one of:\r\n",context);
   send_message_raw(" info       give group info\r\n",context);
   send_message_raw(" add        add a new group\r\n",context);
-  send_message_raw(" delele     delete a group\r\n",context);
+  send_message_raw(" delete     delete a group\r\n",context);
   send_message_raw(" rename     rename a group\r\n",context);
   send_message_raw(" stat       give group statistic\r\n",context);
   send_message_raw(" addip      add an IP for group\r\n",context);
