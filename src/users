@@ -13,7 +13,7 @@
 [GROUPS]
 privgroup	admin
 ip_allowed=127.0.0.1
-default_home=/home/pollux
+default_home=/home
 
 privgroup	users
 default_home=/home
