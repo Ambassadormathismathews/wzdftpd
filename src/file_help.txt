@@ -33,18 +33,19 @@
 | site deluser   | delete user                                  | r          |
 | site flags     | display user's flags                         | r,s,n,g    |
 |                |   site flags [user]                          |            |
-| site free      | show free space                              | r,s,n,g    |
+| site free      | show free space                              | all        |
 | site group     | perform group administration                 | siteop     |
 | site grpadd    | add a new group                              | siteop     |
 | site grpaddip  | add ip to a group                            | siteop     |
 | site grpdel    | delete group                                 | siteop     |
-| site help      | pfff what you are reading !                  | r,s,n,g    |
+| site help      | what you are reading !                       | all        |
 | site kick      | kick all connections from a user             | r          |
 | site kill      | kill a pid                                   | r          |
 | site idle      | display/set your tagline                     | r,s,n,g    |
 |                |   site tagline [new tagline]                 |            |
 | site invite    | tell bot to invite you on irc chan           | r          |
 |                |   site invite irc_nick                       |            |
+| site msg       | (show/delete/convert/new/append)             | siteop     |
 | site purge     | purge deleted user                           | r          |
 |                |   site purge [user]                          |            |
 | site readduser | readd a deleted user                         | r          |
@@ -53,8 +54,8 @@
 | site savecfg   | save server config                           | r          |
 | site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
 | site shutdown  | shutdown the server remotely                 | r          |
-| site uptime    | give you information about actual uptime of  |            |
-|                | this server                                  | r,s,n,g    |
+| site uptime    | give you information about actual uptime of  | all        |
+|                | this server                                  |            |
 | site user      | (username) show user info                    | r,s        |
 | site users     | give list of users on this server            | r          |
 | site version   | show server version                          | r,s,n,g    |

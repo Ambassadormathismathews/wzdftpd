@@ -342,11 +342,16 @@ typedef struct _wzd_param_t {
 #define SSL_CTX void
 #endif
 
-typedef enum { TLS_CLEAR, TLS_PRIV} ssl_data_t; /* data modes */
+typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
 
-typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT} tls_type_t; 
+typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t; 
 
-typedef enum { TLS_NONE, TLS_READ, TLS_WRITE} ssl_fd_mode_t; 
+typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t; 
+
+typedef enum {
+  WZD_INET4=1,
+  WZD_INET6=2
+} net_family_t;
 
 typedef struct {
   char          certificate[256];
@@ -396,6 +401,7 @@ typedef struct {
   int           controlfd;
   int           datafd;
   data_mode_t   datamode;
+  net_family_t  datafamily;
   unsigned long	pid_child;
   int	        portsock;
   int	        pasvsock;
@@ -500,27 +506,6 @@ extern wzd_context_t *	context_list;
 #define	LIST_TYPE_LONG		0x0001
 #define	LIST_SHOW_HIDDEN	0x0010
 typedef unsigned long list_type_t;
-
-/*********************** VERSION **************************/
-
-/* Version */
-/*#define	WZD_VERSION_NUM	"0.1rc2"*/
-
-#ifdef WZD_MULTIPROCESS
-#define	WZD_MP	" mp "
-#else /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTITHREAD
-#define	WZD_MP	" mt "
-#else
-#define	WZD_MP	" up "
-#endif /* WZD_MULTITHREAD */
-#endif /* WZD_MULTIPROCESS */
-
-#ifdef __CYGWIN__
-#define	WZD_VERSION_STR	"wzdftpd cygwin" WZD_MP WZD_VERSION_NUM
-#else /* __CYGWIN__ */
-#define	WZD_VERSION_STR	"wzdftpd linux" WZD_MP WZD_VERSION_NUM
-#endif /* __CYGWIN__ */
 
 
 #endif /* __WZD_STRUCTS__ */

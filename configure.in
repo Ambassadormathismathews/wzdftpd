@@ -223,7 +223,10 @@ AH_TEMPLATE([HAVE_STRTOK_R],
 AH_TEMPLATE([HAVE_STRTOULL],
             [System has the strtoull function.])
 
-BUILDNUM="`date +\"%Y%m%d\"`"
+WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
+AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
+AH_TEMPLATE([WZD_BUILD_NUM],
+            [Build number.])
 
 # 
 #  --------- 
@@ -245,17 +248,23 @@ AC_DEFINE_UNQUOTED(WZD_DEFAULT_CONF,"$default_config")
 AH_TEMPLATE([WZD_DEFAULT_CONF],
             [Default config file.])
 
+AC_DEFINE_UNQUOTED(WZD_VERSION_STR,"$PACKAGE_NAME $ac_cv_build_alias mt $PACKAGE_VERSION")
+
+AH_TEMPLATE([WZD_VERSION_STR],
+            [Version string])
+
 AC_SUBST(e_prefix)
 AC_SUBST(e_datadir)
 AC_SUBST(e_sysconfdir)
-AC_SUBST(BUILDNUM)
 AC_SUBST(CRYPT_FLAGS)
 AC_SUBST(DL_FLAGS)
 AC_SUBST(PTHREAD_FLAGS)
 AC_SUBST(SSL_CPPFLAGS)
 AC_SUBST(SSL_LDFLAGS)
 AC_SUBST(VERSION)
+AC_SUBST(WZD_BUILD_NUM)
 AC_SUBST(WZD_BUILD_OPTS)
+AC_SUBST(WZD_VERSION_STR)
 
 AC_CONFIG_FILES([Makefile
                  ac-helpers/Makefile

@@ -420,12 +420,20 @@
 #undef TIME_WITH_SYS_TIME
 
 /* 
+   Build number. */
+#undef WZD_BUILD_NUM
+
+/* 
    Build options. */
 #undef WZD_BUILD_OPTS
 
 /* 
    Default config file. */
 #undef WZD_DEFAULT_CONF
+
+/* 
+   Version string */
+#undef WZD_VERSION_STR
 
 /* 
    Define to 1 if `lex' declares `yytext' as

@@ -186,7 +186,7 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
     return entry;
   }
 
-  /* TODO compare entries with target (regexp powaa) and if same, simplify or warn */
+  /** \todo TODO compare entries with target (regexp powaa) and if same, simplify or warn */
 
   do {
     if (strcasecmp(entry->target,target)==0) {
@@ -223,7 +223,7 @@ wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd
   entry = command_perm->entry_list;
   if (!entry) return NULL;
 
-  /* TODO compare entries with target (regexp powaa) and if same, ok */
+  /** \todo TODO compare entries with target (regexp powaa) and if same, ok */
 
   do {
     entry_target = entry->target;
@@ -337,7 +337,7 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
   entry = command_perm->entry_list;
   if (!entry) return 1;
 
-  /* TODO compare entries with target (regexp powaa) and if same, ok */
+  /** \todo TODO compare entries with target (regexp powaa) and if same, ok */
 
   do {
     entry_target = entry->target;

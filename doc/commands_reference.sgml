@@ -665,7 +665,7 @@ Show users online.
 </varlistentry>
 
 <varlistentry id='xcrc'><term>
-xcrc "filename" [startpos length]
+xcrc "filename" [startpos length [start_crc]]
 </term>
 <listitem>
 <para>Gives CRC32 Checksum of the file</para>
@@ -674,6 +674,9 @@ xcrc "filename" [startpos length]
 <screen>xcrc "1mB" 100 1500</screen>
 <para>This will return the crc32 of the file, only on the portion starting at
 100, and on 1500 bytes.</para>
+<screen>xcrc "1mB" 100 1500 FE7F5BCE</screen>
+<para>This will do the same thing but with a starting crc of 0xFE7F5BCE
+</para>
 </listitem>
 </varlistentry>
 

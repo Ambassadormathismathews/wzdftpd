@@ -1,3 +1,15 @@
+2004-01-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* cookies: msg delete (remove dir_message)
+	* cookies: msg convert (rename a file to dir_message)
+	* cookies: msg new (replace dir_message with given line)
+	* cookies: msg append (append given line to dir_message)
+	* wzd_crc32.c: generate CRC32 on file portion
+	* wzd_md5.c: generate MD5 on file portion
+	* bugfix: XCRC / XMD5 without arg made server crash
+	* configure.in: WZD_VERSION_STR created at ./configure time and uses
+        autoconf macros
+
 2003-12-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* wzd_ServerThread.c: ident is checked by main thread before accepting connection

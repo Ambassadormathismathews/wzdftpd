@@ -1273,7 +1273,7 @@ void serverMainThreadProc(void *arg)
   /** \todo load stats ! */
   reset_stats(&mainConfig->stats);
 
-  out_log(LEVEL_HIGH,"%s started (build %lu)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
+  out_log(LEVEL_HIGH,"%s started (build %s)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
 
   /* now waiting for a connection */
   out_log(LEVEL_FLOOD,"Waiting for connections (main)\n");

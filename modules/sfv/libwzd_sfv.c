@@ -144,6 +144,7 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     return 0;
   }
   entry->size = s.st_size;
+  real_crc = 0;
   ret = calc_crc32(filename,&real_crc,0,-1);
   if (ret) return -1;
 
@@ -333,6 +334,7 @@ int sfv_create(const char * sfv_file)
     strcpy(ptr,dir_filename);
     if (stat(filename,&s) || S_ISDIR(s.st_mode))
 	  DIR_CONTINUE
+    crc = 0;
     thisret = calc_crc32(filename,&crc,0,-1);
     /* count_entries + 2 : +1 for the new line to add, +1 to terminate
        array by NULL */
@@ -420,6 +422,7 @@ int sfv_check(const char * sfv_file)
       ret += 0x1000;
       sfv.sfv_list[i]->state = SFV_MISSING;
     } else {
+      crc = 0;
       thisret = calc_crc32(filename,&crc,0,-1);
       if (thisret || crc != sfv.sfv_list[i]->crc) {
         ret ++;
@@ -1410,6 +1413,7 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
     /* error */
     return -1;
   }
+  real_crc = 0;
   ret = calc_crc32(filename,&real_crc,0,-1);
   if (ret) {
     sfv_free(&sfv);

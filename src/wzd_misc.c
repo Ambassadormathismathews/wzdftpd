@@ -397,7 +397,7 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
 }
 
 /** internal fct, rename files by copying data */
-int _int_rename(const char * src, const char *dst)
+static int _int_rename(const char * src, const char *dst)
 {
   struct stat s;
   int ret;

@@ -59,7 +59,7 @@ int fd_is_valid(int fd)
 }
 
 /* Memory allocation */
-void * wzd_malloc(size_t size)
+/*@null@*/ void * wzd_malloc(size_t size)
 {
   return (void*)malloc(size);
 }

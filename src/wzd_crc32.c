@@ -24,6 +24,11 @@
 
 #include <stdio.h>
 
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#endif
+
 /* CRC lookup table */
 static unsigned long crcs[256]={ 0x00000000,0x77073096,0xEE0E612C,0x990951BA,
 0x076DC419,0x706AF48F,0xE963A535,0x9E6495A3,0x0EDB8832,0x79DCB8A4,0xE0D5E91E,
@@ -68,22 +73,32 @@ static unsigned long crcs[256]={ 0x00000000,0x77073096,0xEE0E612C,0x990951BA,
  */
 int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, unsigned long length ) {
     FILE *in;           /* input file */
-    unsigned char buf[BUFSIZ]; /* pointer to the input buffer */
-    size_t i, j;        /* buffer positions*/
+    unsigned char *buf; /* pointer to the input buffer */
+    size_t i, j, len;   /* buffer positions*/
     int k;              /* generic integer */
     unsigned long tmpcrc=0xFFFFFFFF;
+
+    tmpcrc = ~*crc;
 
     /* open file */
     if((in = fopen(fname, "rb")) == NULL) return -1;
 
+    fseek(in,startpos,SEEK_SET);
+    len = MIN(length,BUFSIZ);
+    buf = (unsigned char *)malloc(BUFSIZ);
+
     /* loop through the file and calculate CRC */
-    while( (i=fread(buf, 1, BUFSIZ, in)) != 0 ){
-        for(j=0; j<i; j++){
-            k=(tmpcrc ^ buf[j]) & 0x000000FFL;
-            tmpcrc=((tmpcrc >> 8) & 0x00FFFFFFL) ^ crcs[k];
-        }
+    while( (i=fread(buf, 1, len, in)) != 0 ){
+      length -= i;
+      for(j=0; j<i; j++) {
+        k=(tmpcrc ^ buf[j]) & 0x000000FFL;
+        tmpcrc=((tmpcrc >> 8) & 0x00FFFFFFL) ^ crcs[k];
+      }
+      len = MIN(length,BUFSIZ);
+      if (len <= 0) break;
     }
     fclose(in);
+    free(buf);
     *crc=~tmpcrc; /* postconditioning */
     return 0;
 }

@@ -201,12 +201,12 @@ int send_message_raw(const char *msg, wzd_context_t * context)
 {
   int ret;
 
-/*#ifdef DEBUG
-if (buffer[strlen(buffer)-1]!='\n')
-  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+#ifdef DEBUG
+if (msg[strlen(msg)-1]!='\n')
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,msg);
 else
-  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
-#endif*/
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,msg);
+#endif
   ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;

@@ -38,7 +38,7 @@
 
 #include "wzd_debug.h"
 
-time_t cronjob_find_next_exec_date(time_t start, 
+static time_t cronjob_find_next_exec_date(time_t start, 
     char * minutes, char * hours, char * day_of_month,
     char * month, char * day_of_week)
 {

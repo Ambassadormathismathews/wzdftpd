@@ -1162,6 +1162,7 @@ void do_pasv(wzd_context_t * context)
     return;
   }
 
+  context->datafamily = WZD_INET4;
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
@@ -1184,6 +1185,75 @@ void do_pasv(wzd_context_t * context)
 }
 
 /*************** do_epsv *****************************/
+void do_eprt(char *param, wzd_context_t * context)
+{
+  int ret;
+  char sep;
+  char net_prt;
+  char * net_addr, * s_tcp_port;
+  char * ptr;
+  unsigned int tcp_port;
+  struct hostent * host;
+
+  if (context->pasvsock) {
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+  }
+  /* context->resume = 0; */
+  if (!param || strlen(param) <= 7) {
+    ret = send_message(502,context);
+    ret = send_message_with_args(501,context,"Invalid argument");
+    return;
+  }
+
+  sep = *param++;
+  net_prt = *param++;
+  if ( (*param++) != sep || (net_prt != '1' && net_prt != '2') ) {
+    ret = send_message_with_args(501,context,"Invalid argument");
+    return;
+  }
+
+  net_addr = param;
+  while (*param && (*param) != sep ) param++;
+  if ( !*param ) {
+    ret = send_message_with_args(501,context,"Invalid argument");
+    return;
+  }
+
+  *param = '\0';
+  param++;
+
+  s_tcp_port = param;
+  while (*param && (*param) != sep ) param++;
+  if ( !*param || *param != sep ) {
+    ret = send_message_with_args(501,context,"Invalid argument");
+    return;
+  }
+
+  *param = '\0';
+
+  tcp_port = strtoul(s_tcp_port,&ptr,0);
+  if (*ptr) {
+    ret = send_message_with_args(501,context,"Invalid port");
+    return;
+  }
+
+  /* resolve net_addr to context->dataip */
+  host = gethostbyname(net_addr);
+  if (!host) { ret = send_message_with_args(501,context,"Invalid host"); return; }
+  /* TODO XXX FIXME gethostbyname will NOT work without DNS server */
+  /** \todo copy address in numeric form to context->dataip,
+   * try to convert using inet_pton (provide implementation for some platforms ?)
+   * and explicitely prefix to IPv6-compatible if IPv4
+   */
+
+  context->dataport = tcp_port;
+  context->datafamily = net_prt - '1';
+
+  ret = send_message_with_args(200,context,"Command okay");
+}
+
+/*************** do_epsv *****************************/
 void do_epsv(wzd_context_t * context)
 {
   int ret;
@@ -1194,7 +1264,7 @@ void do_epsv(wzd_context_t * context)
   struct sockaddr_in6 sai6;
 #endif
   unsigned char *myip;
-  unsigned char pasv_bind_ip[4];
+  unsigned char pasv_bind_ip[16];
 
 #if !defined(IPV6_SUPPORT)
   size = sizeof(struct sockaddr_in);
@@ -1212,10 +1282,11 @@ void do_epsv(wzd_context_t * context)
 
   /* create socket */
 #if !defined(IPV6_SUPPORT)
-  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) < 0)
 #else
-  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) < 0) {
+  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) < 0)
 #endif
+  {
     context->pasvsock = -1;
     ret = send_message(425,context);
     return;
@@ -1224,16 +1295,17 @@ void do_epsv(wzd_context_t * context)
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
-    memcpy(pasv_bind_ip,myip,4);
+    memcpy(pasv_bind_ip,myip,sizeof(pasv_bind_ip));
   } else {
     /* do NOT send pasv_ip if used from private network */
+    /** \todo TODO XXX FIXME private networks are not the same in ipv6 */
     if (context->hostip[0]==10 ||
       (context->hostip[0] == 172 && context->hostip[1] == 16) ||
       (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
       (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
-      memcpy(pasv_bind_ip,myip,4);
+      memcpy(pasv_bind_ip,myip,sizeof(pasv_bind_ip));
     else
-      memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
+      memcpy(pasv_bind_ip,mainConfig->pasv_ip,sizeof(pasv_bind_ip));
   }
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
@@ -1290,8 +1362,10 @@ void do_epsv(wzd_context_t * context)
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
 #if !defined(IPV6_SUPPORT)
+  context->datafamily = WZD_INET4;
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
 #else
+  context->datafamily = WZD_INET6;
   {
     char buf[256];
     snprintf(buf,256,"227 Entering Passive Mode (|||%d|)\r\n",port);
@@ -1529,7 +1603,8 @@ int do_stor(char *param, wzd_context_t * context)
   }
 
   if (context->pasvsock < 0) { /* PORT ! */
-    /* IP-check needed (FXP ?!) */
+    /* \todo TODO IP-check needed (FXP ?!) */
+    /* \todo XXX FIXME only works with IPv4 */
     snprintf(cmd,2048,"%d.%d.%d.%d",
 	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
     addr = inet_addr(cmd);
@@ -1824,9 +1899,14 @@ void do_xcrc(char *param, wzd_context_t * context)
   char * ptest;
   struct stat s;
   int ret;
-  unsigned long crc;
+  unsigned long crc = 0;
   unsigned long startpos = 0;
   unsigned long length = (unsigned long)-1;
+
+  if (!param || strlen(param)==0) {
+    ret = send_message_with_args(501,context,"Syntax error");
+    return;
+  }
 
   /* get filename and args:
    * "filename" must be quoted
@@ -1852,6 +1932,11 @@ void do_xcrc(char *param, wzd_context_t * context)
       if (!ptest || ptest == ptr) {
         ret = send_message_with_args(501,context,"Syntax error");
         return;
+      } else { /* optional: read start checksum */
+        ptr = ptest;
+        crc = strtoul(ptr,&ptest,16);
+        if (!ptest || ptest == ptr)
+          crc = 0;
       }
     } else
       startpos = 0;
@@ -1896,6 +1981,14 @@ void do_xmd5(char *param, wzd_context_t * context)
   unsigned long length = (unsigned long)-1;
   unsigned int i;
 
+  if (!param || strlen(param)==0) {
+    ret = send_message_with_args(501,context,"Syntax error");
+    return;
+  }
+
+  for (i=0; i<16; i++)
+    crc[i] = 0;
+
   /* get filename and args:
    * "filename" must be quoted
    * startpos and length are optional
@@ -1920,6 +2013,11 @@ void do_xmd5(char *param, wzd_context_t * context)
       if (!ptest || ptest == ptr) {
         ret = send_message_with_args(501,context,"Syntax error");
         return;
+      } else { /* optional: read start checksum */
+        ptr = ptest;
+        strtomd5(ptr,&ptest,crc);
+        if (!ptest || ptest == ptr)
+          memset(crc,0,16);
       }
     } else
       startpos = 0;
@@ -2166,7 +2264,7 @@ int check_tls_forced(wzd_context_t * context)
 
 /*************** do_login_loop ***********************/
 
-int do_login_loop(wzd_context_t * context)
+static int do_login_loop(wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
@@ -2613,6 +2711,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
 
       context->dataport = ((p1&0xff)<<8) | (p2&0xff);
+      context->datafamily = WZD_INET4;
       ret = send_message_with_args(200,context,"Command okay");
 
       break;
@@ -2620,7 +2719,8 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       do_pasv(context);
       break;
     case TOK_EPRT:
-      ret = send_message_with_args(501,context,"Not yet implemented !");
+      param = strtok_r(NULL,"\r\n",&ptr);
+      do_eprt(param,context);
       break;
     case TOK_EPSV:
       do_epsv(context);

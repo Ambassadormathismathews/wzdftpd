@@ -85,8 +85,7 @@ extern short created_shm;
 
 void display_usage(void)
 {
-  fprintf(stderr,"%s build %lu (%s)\n",
-         WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+  fprintf(stderr,"%s build %s (%s)\n", WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
   fprintf(stderr, "\nusage: wzdftpd [arguments]\n");
   fprintf(stderr,"\narguments:\r\n");
 #ifdef HAVE_GETOPT
@@ -137,8 +136,8 @@ void cleanup_shm(void)
     if ((*ptr)=='#' || length<=1)       /* comment and empty lines */
       continue;
 
-    /* TODO if line contains a " and is not ended, it is a multi-line */
-    /* TODO replace special chars (\n,\t,\xxx,etc) */
+    /** \todo TODO if line contains a " and is not ended, it is a multi-line */
+    /** \todo TODO replace special chars (\\n,\\t,\\xxx,etc) */
 
     /* trim trailing space, because fgets keep a \n */
     while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
@@ -227,7 +226,7 @@ int main_parse_args(int argc, char **argv)
       stay_foreground = 1;
       break;
     case 'V':
-      fprintf(stderr,"%s build %lu (%s)\n",
+      fprintf(stderr,"%s build %s (%s)\n",
 	  WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
       return 1;
     }

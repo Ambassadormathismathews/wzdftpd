@@ -650,9 +650,11 @@ int do_site_invite(char *command_line, wzd_context_t * context)
 int do_site_msg(char *command_line, wzd_context_t * context)
 {
   int ret;
-  char * command, * ptr;
+  char * command, * ptr, * filename;
   char msg_file[2048];
+  char other_file[2048];
   unsigned int length;
+  struct stat s;
 
   ptr = command_line;
   command = strtok_r(command_line," \t\r\n",&ptr);
@@ -667,6 +669,7 @@ int do_site_msg(char *command_line, wzd_context_t * context)
   } else {
     length = strlen(msg_file);
     if (msg_file[length-1] != '/') msg_file[length++] = '/';
+    strncpy(other_file,msg_file,2048);
     strncpy(msg_file+length,mainConfig->dir_message,2048-length-1);
   }
 
@@ -675,12 +678,92 @@ int do_site_msg(char *command_line, wzd_context_t * context)
     do_site_print_file_raw(msg_file,context);
     return 0;
   }
+  else if (strcasecmp(command,"convert")==0)
+  {
+    filename = strtok_r(NULL,"\r\n",&ptr);
+    if (!filename) {
+      do_site_help("msg",context);
+      return 1;
+    }
+    strncpy(other_file+length,filename,2048-length-1);
+    if (stat(other_file,&s) || !S_ISREG(s.st_mode))
+    {
+      send_message_with_args(501,context,"inexistant file, or not a regular file");
+      return -1;
+    }
+    unlink(msg_file);
+    if (!safe_rename(other_file,msg_file))
+    {
+      send_message_with_args(200,context,"message file loaded");
+      return 0;
+    }
+    send_message_with_args(501,context,"error while renaming file");
+    return -1;
+  }
+  else if (strcasecmp(command,"delete")==0)
+  {
+    unlink(msg_file);
+    send_message_with_args(200,context,"message file deleted");
+    return 0;
+  }
+  else if (strcasecmp(command,"new")==0)
+  {
+    FILE * fp;
+    char * buf;
+    unsigned int length;
+    buf = strtok_r(NULL,"\r\n",&ptr);
+    if (!buf) {
+      do_site_help("msg",context);
+      return 1;
+    }
+    fp = fopen(msg_file,"w");
+    if (!fp) {
+      send_message_with_args(501,context,"unable to open message file for writing");
+      return 1;
+    }
+    length = strlen(buf);
+    if (length != fwrite(buf,1,length,fp)) {
+      fclose(fp);
+      send_message_with_args(501,context,"unable to write message");
+      return 1;
+    }
+    fclose(fp);
+    send_message_with_args(200,context,"message file written");
+    return 0;
+  }
+  else if (strcasecmp(command,"append")==0)
+  {
+    FILE * fp;
+    char * buf;
+    unsigned int length;
+    buf = strtok_r(NULL,"\r\n",&ptr);
+    if (!buf) {
+      do_site_help("msg",context);
+      return 1;
+    }
+    fp = fopen(msg_file,"a");
+    if (!fp) {
+      send_message_with_args(501,context,"unable to open message file for writing");
+      return 1;
+    }
+    length = strlen(buf);
+    if (length != fwrite(buf,1,length,fp)) {
+      fclose(fp);
+      send_message_with_args(501,context,"unable to write message");
+      return 1;
+    }
+    fclose(fp);
+    send_message_with_args(200,context,"message file written");
+    return 0;
+  }
 
   do_site_help("msg",context);
   return 0;
 }
 
 /********************* do_site_print_file ******************/
+/** Print filename to control connection. Cookies are replaced as usual.
+ */
 void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context)
 {
   wzd_cache_t * fp;
@@ -715,6 +798,8 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
 }
 
 /********************* do_site_print_file_raw **************/
+/** Print filename to control connection, without replacing cookies.
+ */
 void do_site_print_file_raw(const char *filename, wzd_context_t *context)
 {
   wzd_cache_t * fp;
@@ -821,6 +906,11 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
   /* signals received */
   /* voluntary context switches */
   /* involuntary context switches */
+
+  /* Number of opened files:
+   *  LINUX: read directory  /proc/`getpid()`/fd/
+   *    contains symlinks, destination is file
+   */
 
   if (getrlimit(RLIMIT_NOFILE,&rlim)<0) {
     send_message_raw("200- getrlimit(RLIMIT_NOFILE) failed !\r\n",context);
@@ -984,7 +1074,7 @@ int do_site_utime(char *command_line, wzd_context_t * context)
 int do_site_version(char * ignored, wzd_context_t * context)
 {
   char str[256];
-  snprintf(str,256,"%s build %lu (%s)\n",
+  snprintf(str,256,"%s build %s (%s)\n",
       WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
   send_message_with_args(200,context,str);
   return 0;
@@ -1115,7 +1205,7 @@ int do_site_vfsdel(char * command_line, wzd_context_t * context)
  *  tests missing
  *  return with directory opened ...
  */
-int do_internal_wipe(const char *filename, wzd_context_t * context)
+static int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
   struct stat s;
   int ret;
@@ -1164,16 +1254,7 @@ int do_internal_wipe(const char *filename, wzd_context_t * context)
       dir_filename = fileData.cFileName;
 #endif
       if (strcmp(dir_filename,".")==0 || strcmp(dir_filename,"..")==0)
-      {
-#ifdef _MSC_VER
-        if (!FindNextFile(dir,&fileData))
-        {
-          if (GetLastError() == ERROR_NO_MORE_FILES)
-            finished = 1;
-        }
-#endif
-        continue;
-      }
+        DIR_CONTINUE
       if (strlen(buffer)+strlen(dir_filename)>=1024) { closedir(dir); return 1; }
       strncpy(ptr,dir_filename,256);
 

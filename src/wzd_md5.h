@@ -30,6 +30,9 @@ typedef struct MD5Context MD5_CTX;
 /* FIXME VISUAL */
 #define MD5Name(x) (Good ## x)
 
+/* Read string and fills tab crc[16] */
+void strtomd5(char *ptr,char **ptest, unsigned char *crc);
+
 /* Calculates the md5 checksum of fname, and stores the result
  * in crc. Returns 0 on success, nonzero on error.
  */

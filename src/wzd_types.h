@@ -127,8 +127,8 @@
 /*********************** VERSION **************************/
 
 /* Version */
-#define       WZD_VERSION_NUM "0.1 visual"
-#define  WZD_BUILD_NUM 20031025
+#define       WZD_VERSION_NUM "0.2cvs visual"
+#define  WZD_BUILD_NUM 20040110
 #define  WZD_BUILD_OPTS  "visual"
 
 #ifdef WZD_MULTIPROCESS
@@ -141,11 +141,7 @@
 #endif /* WZD_MULTITHREAD */
 #endif /* WZD_MULTIPROCESS */
 
-#ifdef __CYGWIN__
-#define WZD_VERSION_STR "wzdftpd cygwin" WZD_MP WZD_VERSION_NUM
-#else /* __CYGWIN__ */
-#define WZD_VERSION_STR "wzdftpd linux" WZD_MP WZD_VERSION_NUM
-#endif /* __CYGWIN__ */
+#define WZD_VERSION_STR "wzdftpd " WZD_MP WZD_VERSION_NUM
 
 #define WZD_DEFAULT_CONF "wzd-win32.cfg"
 

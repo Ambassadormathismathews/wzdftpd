@@ -88,7 +88,7 @@ typedef struct _wzd_file_t {
   struct _wzd_file_t	*next_file;
 } wzd_file_t;
 
-int _default_perm(unsigned long wanted_right, wzd_user_t * user)
+static int _default_perm(unsigned long wanted_right, wzd_user_t * user)
 {
   return (( wanted_right & user->userperms ) == 0);
 }
@@ -936,16 +936,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
       if (strcmp(filename,".")==0 ||
           strcmp(filename,"..")==0 ||
           strcmp(filename,HARD_PERMFILE)==0) /* XXX hide perm file ! */
-	  {
-#ifdef _MSC_VER
-		if (!FindNextFile(dirfilter,&fileData))
-		{
-		  if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
-#endif
-        continue;
-	  }
+        DIR_CONTINUE
       closedir(dir);
       return 1; /* dir not empty */
     }

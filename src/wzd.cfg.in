@@ -279,6 +279,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_reload = +O
 -site_reopen = +O
 -site_rules = *
+-site_rusage = +O
 -site_savecfg = +O
 -site_sfv = *
 -site_shutdown = +O

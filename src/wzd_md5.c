@@ -21,6 +21,11 @@
 #include <string.h>
 #include "wzd_md5.h"
 
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#endif
+
 #ifndef HIGHFIRST
 #define byteReverse(buf, len)	/* Nothing */
 #else
@@ -255,28 +260,62 @@ void MD5Name(MD5Transform)(uint32 buf[4], uint32 const in[16])
 
 #endif
 
+
+/* Read string and fills tab crc[16] */
+void strtomd5(char *ptr,char **ptest, unsigned char *crc)
+{
+  int i =0;
+  register unsigned char c1, c2;
+
+  *ptest = ptr;
+  while ( (c1 = **ptest) ) {
+    if (c1 >= '0' && c1 <= '9') crc[i] = (c1-'0') << 4;
+    else if (c1 >= 'a' && c1 <= 'f') crc[i] = (c1-'a'+0xa) << 4;
+    else if (c1 >= 'A' && c1 <= 'F') crc[i] = (c1-'A'+0xa) << 4;
+    else if (isspace(c1)) { (*ptest)++; continue; }
+    else break;
+    (*ptest)++;
+    c2 = **ptest;
+    if (c2 >= '0' && c2 <= '9') crc[i++] += c2-'0';
+    else if (c2 >= 'a' && c2 <= 'f') crc[i++] += c2-'a'+0xa;
+    else if (c2 >= 'A' && c2 <= 'F') crc[i++] += c2-'A'+0xa;
+    else if (!isspace(c2)) break;
+    (*ptest)++;
+  }
+  if (i != 16) *ptest = NULL;
+}
+
+
 /* Calculates the md5 checksum of fname, and stores the result
  * in crc. Returns 0 on success, nonzero on error.
  */
 int calc_md5( const char *fname, unsigned char md5_crc[16], unsigned long startpos, unsigned long length )
 {
   FILE *in;           /* input file */
-  unsigned char buf[BUFSIZ]; /* pointer to the input buffer */
-  size_t i, j;        /* buffer positions*/
+  unsigned char *buf; /* pointer to the input buffer */
+  size_t i, j, len;   /* buffer positions*/
   int k;              /* generic integer */
   struct MD5Context crc;
 
   /* open file */
   if((in = fopen(fname, "rb")) == NULL) return -1;
 
+  fseek(in,startpos,SEEK_SET);
+  len = MIN(length,BUFSIZ);
+  buf = (unsigned char *)malloc(BUFSIZ);
+
   MD5Name(MD5Init(&crc));
   memset(md5_crc,0,16);
 
   /* loop through the file and calculate CRC */
-  while( (i=fread(buf, 1, BUFSIZ, in)) != 0 ){
+  while( (i=fread(buf, 1, len, in)) != 0 ){
+    length -= i;
     MD5Name(MD5Update(&crc,buf,i));
+    len = MIN(length,BUFSIZ);
+    if (len <= 0) break;
   }
   fclose(in);
+  free(buf);
   MD5Name(MD5Final(md5_crc,&crc));
   return 0;
 }
