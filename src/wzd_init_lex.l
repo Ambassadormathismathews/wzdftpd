@@ -1233,6 +1233,8 @@ int cfg_read_pid_file(void)
     unsigned long l,size;
     char buf[64];
     char *ptr;
+    int ret;
+
     size = read(fd,buf,64);
     if (size <= 0) {
       out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",filename);
@@ -1247,7 +1249,19 @@ int cfg_read_pid_file(void)
       return 1;
     }
     close(fd);
-    /* TODO XXX FIXME check no process is running with this pid */
+    /* check no process is running with this pid */
+    ret = kill(l,0);
+    if (!ret || (ret==-1 && errno==EPERM)) {
+      out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",filename);
+      return 1;
+    }
+    if ( !(ret==-1 && errno==ESRCH) ) {
+      out_err(LEVEL_CRITICAL,"Error: pid file: %s\n",filename);
+      out_err(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
+	  l, ret, errno, strerror(errno));
+      out_err(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
+      return 1;
+    }
     out_err(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",filename);
     if (unlink(filename)) {
       out_err(LEVEL_HIGH,"Could not remove pid_file (%s)\n",filename);
