@@ -12,6 +12,9 @@
 
 #define	MAX_LINE		1024
 
+/* IMPORTANT needed to check version */
+const char * module_version="121";
+
 wzd_user_t * user_pool;
 int user_count, user_count_max=0;
 
@@ -128,6 +131,8 @@ int group_ip_add(wzd_group_t * group, const char *newip)
 int write_user_file(void)
 {
   char filename[256];
+  char filenamenew[256];
+  char filenameold[256];
   FILE *file;
   int i,j;
   char buffer[4096];
@@ -145,10 +150,13 @@ int write_user_file(void)
     NULL /* you MUST keep this array NULL-ended ! */
   };
 
-  strcpy(filename,USERS_FILE);
-  strcat(filename,".NEW");
+  strcpy (filename,USERS_FILE);
+  strcpy (filenamenew,USERS_FILE);
+  strcat (filenamenew,".NEW");
+  strcpy (filenameold,USERS_FILE);
+  strcat (filenameold,".OLD");
 
-  file = fopen(filename,"w+");
+  file = fopen(filenamenew,"w+");
 
   i=0;
   while (file_header[i]) {
@@ -178,6 +186,7 @@ int write_user_file(void)
   fprintf(file,"[USERS]\n");
   for (i=0; i<user_count; i++)
   {
+    if (user_pool[i].username[0]=='\0') continue;
     if (strcmp(user_pool[i].username,"nobody")==0) continue;
     fprintf(file,"name=%s\n",user_pool[i].username);
     fprintf(file,"pass=%s\n",user_pool[i].userpass);
@@ -205,6 +214,8 @@ int write_user_file(void)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
+    if (user_pool[i].num_logins)
+      fprintf(file,"num_logins=%d\n",user_pool[i].num_logins);
     if (user_pool[i].max_idle_time)
       fprintf(file,"max_idle_time=%ld\n",user_pool[i].max_idle_time);
     if (user_pool[i].flags)
@@ -218,6 +229,12 @@ int write_user_file(void)
   fprintf(file,"\n");
 
   fclose(file);
+
+  /* and now, the (as most as possible) atomic operation for the userfile */
+  {
+    rename(filename,filenameold);
+    rename(filenamenew,filename);
+  }
 
   return 0;
 }
@@ -275,6 +292,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       memset(user_pool[user_count-1].tagline,0,256);
       user_pool[user_count-1].max_ul_speed = 0;
       user_pool[user_count-1].max_dl_speed = 0;
+      user_pool[user_count-1].num_logins = 0;
       user_pool[user_count-1].max_idle_time = 0;
       for (i=0; i<HARD_IP_PER_USER; i++)
         user_pool[user_count-1].ip_allowed[i][0] = '\0';
@@ -348,6 +366,15 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
       }
       user_pool[user_count-1].max_dl_speed = num;
     } /* max_ul_speed */
+    else if (strcmp("num_logins",varname)==0) {
+      if (!user_count) break;
+      num = strtol(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].num_logins = (unsigned short)num;
+    } /* else if (strcmp("num_logins",... */
     else if (strcmp("max_idle_time",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
@@ -565,6 +592,9 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
   user_pool = user_list;
   group_pool = group_list;
 
+  memset(user_pool,0,user_count_max*sizeof(wzd_user_t));
+  memset(group_pool,0,group_count_max*sizeof(wzd_group_t));
+
   ret = read_files();
 
   /* TODO check user definitions (no missing fields, etc) */
@@ -592,7 +622,14 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 
   count=0;
   found = 0;
+/*
   while (count<user_count) {
+    if (strcmp(login,user_pool[count].username)==0)
+      { found = 1; break; }
+    count++;
+  }
+*/
+  while (count<user_count_max) {
     if (strcmp(login,user_pool[count].username)==0)
       { found = 1; break; }
     count++;
@@ -624,8 +661,8 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
   count=0;
   found = 0;
-  while (count<user_count) {
-    if (strncmp(login,user_pool[count].username,strlen(user_pool[count].username))==0)
+  while (count<user_count_max) {
+    if (strcmp(login,user_pool[count].username)==0)
       { found = 1; break; }
     count++;
   }
@@ -689,7 +726,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
 
   count=0;
   found = 0;
-  while (count<user_count) {
+  while (count<user_count_max) {
     if (strcmp(name,user_pool[count].username)==0)
       { found = 1; break; }
     count++;
@@ -753,7 +790,7 @@ int FCN_CHPASS(const char *username, const char *new_pass)
 
   count=0;
   found = 0;
-  while (count<user_count) {
+  while (count<user_count_max) {
     if (strcmp(username,user_pool[count].username)==0)
       { found = 1; break; }
     count++;
@@ -780,7 +817,7 @@ fprintf(stderr,"User %s not found\n",username);
 }
 
 /* if user does not exist, add it */
-int FCN_MOD_USER(const char *name, wzd_user_t * user)
+int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   int count;
   int found;
@@ -789,7 +826,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user)
   
   count=0;
   found = 0;
-  while (count<user_count) {
+  while (count<user_count_max) {
     if (strcmp(name,user_pool[count].username)==0)
       { found = 1; break; }
     count++;
@@ -797,6 +834,45 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user)
 
   if (found) { /* user exist */
     fprintf(stderr,"User %s exist\n",name);
+    if (!user) { /* delete user permanently */
+      /* FIXME
+       * 1- it is not very stable
+       * 2- we do not decrement user_count ...
+       * 3- we can't shift all users, because contexts have id, and
+       *   in middle of functions it will cause unstability
+       */
+      memset(&user_pool[count],0,sizeof(wzd_user_t));
+      return 0;
+    }
+    if (mod_type & _USER_USERNAME) strcpy(user_pool[count].username,user->username);
+    if (mod_type & _USER_USERPASS) {
+      if (strcasecmp(user->userpass,"%")==0) {
+	strcpy(user_pool[count].userpass,user->userpass);
+      } else {
+	salt[0] = 'a' + (char)(rand()%26);
+	salt[1] = 'a' + (char)((rand()*72+3)%26);
+	cipher = crypt(user->userpass, salt);
+	strcpy(user_pool[count].userpass,cipher);
+      }
+    }
+    if (mod_type & _USER_ROOTPATH) strcpy(user_pool[count].rootpath,user->rootpath);
+    if (mod_type & _USER_TAGLINE) strcpy(user_pool[count].tagline,user->tagline);
+    if (mod_type & _USER_UID) user_pool[count].uid = user->uid;
+    if (mod_type & _USER_GROUPNUM) user_pool[count].group_num = user->group_num;
+    if (mod_type & _USER_IDLE) user_pool[count].max_idle_time = user->max_idle_time;
+    if (mod_type & _USER_GROUP) memcpy(user_pool[count].groups,user->groups,256);
+    if (mod_type & _USER_PERMS) user_pool[count].userperms = user->userperms;
+    if (mod_type & _USER_FLAGS) memcpy(user_pool[count].flags,user->flags,MAX_FLAGS_NUM);
+    if (mod_type & _USER_MAX_ULS) user_pool[count].max_ul_speed = user->max_ul_speed;
+    if (mod_type & _USER_MAX_DLS) user_pool[count].max_dl_speed = user->max_dl_speed;
+    if (mod_type & _USER_NUMLOGINS) user_pool[count].num_logins = user->num_logins;
+    if (mod_type & _USER_IP) {
+      int i;
+      for ( i=0; i<HARD_IP_PER_USER; i++ )
+	strcpy(user_pool[count].ip_allowed[i],user->ip_allowed[i]);
+    }
+    if (mod_type & _USER_BYTESUL) user_pool[count].bytes_ul_total = user->bytes_ul_total;
+    if (mod_type & _USER_BYTESDL) user_pool[count].bytes_dl_total = user->bytes_dl_total;
   } else { /* user not found, add it */
     fprintf(stderr,"Add user %s\n",name);
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
@@ -807,7 +883,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user)
       strcpy(user_pool[user_count].userpass,cipher);
     }
     user_count++;
-  }
+  } /* if (found) */
 
   return 0;
 }
