@@ -5,11 +5,11 @@ LIBWZD_AGE=0
 
 LT_VERSION_INFO=${LIBWZD_CURRENT}:${LIBWZD_REVISION}:${LIBWZD_AGE}
 
-lib_LTLIBRARIES = libwzd.la
+lib_LTLIBRARIES = libwzd_core.la
 
-libwzd_ladir = ${prefix}/include/wzdftpd
+libwzd_core_ladir = ${prefix}/include/wzdftpd
 
-libwzd_la_HEADERS =  \
+libwzd_core_la_HEADERS = \
 	wzd_action.h     \
 	wzd_all.h        \
 	wzd_backend.h    \
@@ -39,8 +39,8 @@ libwzd_la_HEADERS =  \
 	wzd_vars.h       \
 	wzd_vfs.h
 
-libwzd_la_SOURCES =  \
-	${libwzd_la_HEADERS} \
+libwzd_core_la_SOURCES = \
+	${libwzd_core_la_HEADERS} \
 	inet_ntop.c      \
 	inet_pton.c      \
 	wzd_action.c     \
@@ -70,9 +70,9 @@ libwzd_la_SOURCES =  \
 	wzd_vfs.c
 
 
-nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
+nodist_libwzd_core_la_SOURCES = wzd_cookie_lex.l
 
-libwzd_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERSION_INFO} -module -no-undefined
+libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERSION_INFO} -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 
@@ -109,9 +109,9 @@ wzdftpd_SOURCES =    \
 
 nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
-wzdftpd_DEPENDENCIES = libwzd.la
+wzdftpd_DEPENDENCIES = libwzd_core.la
 
-wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd_core $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 

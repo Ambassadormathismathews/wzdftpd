@@ -12,4 +12,4 @@ endif
 lib_LTLIBRARIES = libwzd_sfv.la
 
 libwzd_sfv_la_SOURCES = libwzd_sfv.c libwzd_sfv.h libwzd_sfv_zip.c libwzd_sfv_zip.h
-libwzd_sfv_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd $(EXTRA_ZLIB)
+libwzd_sfv_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd_core $(EXTRA_ZLIB)

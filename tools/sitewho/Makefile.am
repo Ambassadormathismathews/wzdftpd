@@ -5,7 +5,7 @@ bin_PROGRAMS = sitewho
 
 sitewho_SOURCES = sitewho.c
 
-sitewho_LDFLAGS = -no-undefined -L../../src -L../../src/.libs -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+sitewho_LDFLAGS = -no-undefined -L../../src -L../../src/.libs -lwzd_core $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 

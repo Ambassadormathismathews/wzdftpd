@@ -4,7 +4,7 @@ WZDFTPD_INCLUDE_DIR=/usr/include/wzdftpd
 WZDFTPD_LIB_DIR=/usr/lib
 
 CFLAGS=-g -DHAVE_INET_NTOP -DHAVE_INET_PTON -I$(WZDFTPD_INCLUDE_DIR)
-LDFLAGS=-L$(WZDFTPD_LIB_DIR) -lwzd
+LDFLAGS=-L$(WZDFTPD_LIB_DIR) -lwzd_core
 
 all: libwzd_test.so
 

@@ -1,7 +1,7 @@
 etc/*
 usr/sbin/wzdftpd
 usr/bin/site*
-usr/lib/libwzd.so.*
+usr/lib/libwzd_core.so.*
 usr/lib/wzdftpd/backends/libwzdplaintext.so
 usr/lib/wzdftpd/backends/libwzdpam.so
 usr/lib/wzdftpd/modules/libwzd_sfv.so

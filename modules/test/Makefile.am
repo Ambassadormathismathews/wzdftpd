@@ -10,4 +10,4 @@ EXTRA_DIST = libwzd_test.c Makefile.test
 #lib_LTLIBRARIES = libwzd_test.la
 #
 #libwzd_test_la_SOURCES = libwzd_test.c
-#libwzd_test_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd 
+#libwzd_test_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd_core 
