@@ -32,6 +32,7 @@ enum {
   UCOL_USERNAME,
   UCOL_USERPASS,
   UCOL_ROOTPATH,
+  UCOL_TAGLINE,
   UCOL_UID,
   UCOL_FLAGS,
   UCOL_MAX_IDLE_TIME,
@@ -51,6 +52,13 @@ enum {
   GCOL_GROUPNAME,
   GCOL_GID,
   GCOL_DEFAULTPATH,
+  GCOL_TAGLINE,
+  GCOL_GROUPPERMS,
+  GCOL_MAX_IDLE_TIME,
+  GCOL_NUM_LOGINS,
+  GCOL_MAX_UL_SPEED,
+  GCOL_MAX_DL_SPEED,
+  GCOL_RATIO,
 };
 
 enum {
@@ -66,5 +74,7 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
 
 /* basic syntax checking to avoid injections */
 int wzd_mysql_check_name(const char *name);
+
+char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
 #endif /* __LIBMYSQL__ */

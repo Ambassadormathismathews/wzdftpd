@@ -65,6 +65,7 @@ static int * wzd_mysql_get_group_list(void);
 
 
 
+
 void _wzd_mysql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
 {
   fprintf(stderr, "%s(%s):%d %s\n", filename, func_name, line, mysql_error(&mysql));
@@ -311,18 +312,6 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
   return uid;
 }
 
-int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
-{
-  // XXX: forgot about it while  wzd_group_t->gid is not implemented
-
-  return 0;
-}
-
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
-{
-  return 1;
-}
-
 int  FCN_COMMIT_CHANGES(void)
 {
   return 0;
@@ -465,6 +454,7 @@ wzd_user_t * FCN_GET_USER(int uid)
   return user;
 }
 
+
 wzd_group_t * FCN_GET_GROUP(int gid)
 {
   char *query;
@@ -472,6 +462,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
   MYSQL_ROW    row;
   int num_fields;
   wzd_group_t * group;
+  unsigned int i;
 
   if (gid == -2) return (wzd_group_t*)wzd_mysql_get_group_list();
 
@@ -511,6 +502,13 @@ wzd_group_t * FCN_GET_GROUP(int gid)
   }
   wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, row, GCOL_GROUPNAME);
   wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, row, GCOL_DEFAULTPATH);
+  wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, row, GCOL_TAGLINE);
+  wzd_row_get_ulong(&group->groupperms, row, GCOL_GROUPPERMS);
+  wzd_row_get_uint((unsigned int*)&group->max_idle_time, row, GCOL_MAX_IDLE_TIME);
+  if (wzd_row_get_uint(&i, row, GCOL_NUM_LOGINS)==0) group->num_logins = i;
+  wzd_row_get_ulong(&group->max_ul_speed, row, GCOL_MAX_UL_SPEED);
+  wzd_row_get_ulong(&group->max_dl_speed, row, GCOL_MAX_DL_SPEED);
+  wzd_row_get_uint(&group->ratio, row, GCOL_RATIO);
 
   mysql_free_result(res);
 

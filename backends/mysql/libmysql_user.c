@@ -41,7 +41,7 @@
 
 unsigned int user_get_ref(const char * name, unsigned int ref);
 
-static char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
+char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
 {
   if (strlen(query) + strlen(mod) +2 >= *query_length) {
       *query_length = strlen(query) + strlen(mod) + 256;

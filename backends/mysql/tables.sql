@@ -20,14 +20,21 @@ CREATE TABLE groups (
   ref INT(5) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   groupname TINYTEXT NOT NULL,
   gid int(10) unsigned NOT NULL default '0',
-  defaultpath TINYTEXT NOT NULL
+  defaultpath TINYTEXT NOT NULL,
+  tagline TINYTEXT default NULL,
+  groupperms int(10) unsigned default NULL,
+  max_idle_time int(10) unsigned default NULL
+  num_logins smallint(5) unsigned default NULL,
+  max_ul_speed double unsigned default NULL,
+  max_dl_speed double unsigned default NULL,
+  ratio int(10) unsigned default NULL
 ) TYPE=MyISAM;
 
 --
 -- Dumping data for table `groups`
 --
 
-INSERT INTO groups VALUES ('','admin',1,'/');
+INSERT INTO groups (groupname,gid,defaultpath,tagline) VALUES ('admin',1,'/','admin group');
 
 
 --
@@ -39,6 +46,7 @@ CREATE TABLE users (
   username TINYTEXT NOT NULL,
   userpass varchar(32) default NULL,
   rootpath TINYTEXT NOT NULL,
+  tagline TINYTEXT NOT NULL,
   uid int(10) unsigned NOT NULL,
   flags varchar(32) default NULL,
   max_idle_time int(10) unsigned NOT NULL,
@@ -57,10 +65,10 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
+INSERT INTO users VALUES ('','wzdftpd',NULL,'/','local admin',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
 
-INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
-INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
+INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',NULL,2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
+INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',NULL,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
 
 --
 -- Table structure for table `UGR` (User-Group Relations)
@@ -70,6 +78,16 @@ CREATE TABLE UGR (
   uref int(10) unsigned NOT NULL,
   gref int(10) unsigned NOT NULL,
   PRIMARY KEY(uref,gref)
+) TYPE=MyISAM;
+
+--
+-- Table structure for table `IP` (User/Group IPs)
+--
+
+CREATE TABLE GroupIP (
+  ref int(10) unsigned NOT NULL,
+  ip VARCHAR(255) NOT NULL,
+  PRIMARY KEY(ref,ip)
 ) TYPE=MyISAM;
 
 --

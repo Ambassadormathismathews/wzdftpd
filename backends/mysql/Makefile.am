@@ -6,6 +6,6 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/libwzd-base $(WZD
 lib_LTLIBRARIES = libwzdmysql.la
 
 #libwzdmysql_la_HEADERS = libmysql.h
-libwzdmysql_la_SOURCES = libmysql_main.c libmysql_user.c
+libwzdmysql_la_SOURCES = libmysql_main.c libmysql_user.c libmysql_group.c
 libwzdmysql_la_LDFLAGS = -no-undefined -avoid-version -module $(WZD_SSL_LIBS) @CRYPT_FLAGS@ $(WZD_MYSQL_LIBS) -lm -export-symbols-regex wzd_
 
