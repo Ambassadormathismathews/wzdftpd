@@ -8,7 +8,8 @@ int main(int argc, char **argv)
 {
   int ret;
   const char *msg = "site uptime";
-  char buffer[1024];
+  wzd_reply_t * reply;
+  char * buffer;
 
   wzd_parse_args(argc,argv);
   ret = wzd_init();
@@ -17,10 +18,20 @@ int main(int argc, char **argv)
     exit (1);
   }
 
-  ret = wzd_send_message(msg,strlen(msg),buffer,1024);
-  if (ret == 0) {
+  reply = wzd_send_message(msg,strlen(msg));
+  if (reply) {
+    printf("code: %d\n",reply->code);
+
+    if (reply->code != 200 || reply->data==NULL) {
+      wzd_free_reply(reply);
+      wzd_fini();
+      return 1;
+    }
+    buffer = reply->data[0];
     ret = strlen(buffer);
+
     if (ret <= 6 || strncmp(buffer,"200 ",4)) {
+      wzd_free_reply(reply);
       wzd_fini();
       return 1;
     }
@@ -28,6 +39,8 @@ int main(int argc, char **argv)
     while (ret > 0 && (buffer[ret-1]=='\r' || buffer[ret-1]=='\n'))
       buffer[ret-- -1] = '\0';
     printf("%s\n",buffer+4);
+
+    wzd_free_reply(reply);
   }
 
   wzd_fini();

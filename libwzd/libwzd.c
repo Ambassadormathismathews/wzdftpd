@@ -47,6 +47,7 @@
 # include <windows.h>
 #endif
 
+static int _has_code(const char *str);
 static int _connect_server(void);
 
 struct libwzd_config * _config=NULL;
@@ -102,6 +103,23 @@ int wzd_parse_args(int argc, char **argv)
   return 0;
 }
 
+
+void wzd_free_reply(wzd_reply_t *reply)
+{
+  int i;
+
+  if (!reply) return;
+
+  if (reply->data) {
+    for (i=0; reply->data[i]!=NULL; i++)
+      free(reply->data[i]);
+    free(reply->data);
+  }
+
+  free(reply);
+}
+
+
 /** parameters are still being defined */
 int wzd_init(void)
 {
@@ -131,7 +149,7 @@ int wzd_fini(void)
   if (_pass) { free(_pass); _pass = NULL; }
 
   if (_config) {
-    wzd_send_message("QUIT\r\n",6,NULL,0);
+    wzd_free_reply( wzd_send_message("QUIT\r\n",6) );
 #ifdef WIN32
     Sleep(100);
 #else
@@ -144,36 +162,76 @@ int wzd_fini(void)
   return 0;
 }
 
-int wzd_send_message(const char *message, int msg_length, char * reply, int reply_length)
+wzd_reply_t * wzd_send_message(const char *message, int msg_length)
 {
   int ret;
   char * buffer;
   int buffer_length;
+  wzd_reply_t * reply;
 
-  if (!_config) return -1;
-  if (_config->connector.mode == CNT_NONE) return -1;
-  if (!_config->connector.read || !_config->connector.write) return -1;
-  if (!message) return -1;
+  if (!_config) return NULL;
+  if (_config->connector.mode == CNT_NONE) return NULL;
+  if (!_config->connector.read || !_config->connector.write) return NULL;
+  if (!message) return NULL;
 
   /* check connection status ? */
 
   /* ensure last bytes of message are \r\n ? */
 
   ret = _config->connector.write(message,msg_length);
-  if (ret != msg_length) return -1;
+  if (ret != msg_length) return NULL;
 
-  buffer_length = (reply_length > 4096) ? reply_length : 4096;
+  buffer_length = 4096;
   buffer = malloc(buffer_length+1);
   buffer[0] = '\0';
   ret = _config->connector.read(buffer,buffer_length);
 
+  /* decode message if multi-line */
+  reply = malloc(sizeof(wzd_reply_t));
   if (reply) {
-    /* TODO XXX decode message in multi-line ? */
-    memcpy(reply,buffer,reply_length);
-    reply[reply_length]='\0';
+    int count;
+    int i;
+    char *ptr, *line;
+
+    reply->code = -1;
+
+    /* get reply code */
+    if (_has_code(buffer))
+    {
+      reply->code = (buffer[0]-'0')*100 + (buffer[1]-'0')*10 + (buffer[2]-'0');
+    }
+
+    /* how many lines in the reply ? */
+    for (count=1, i=0; buffer[i] != '\0'; i++)
+      if (buffer[i] == '\n') count++;
+
+    /* allocate array of char * and decode reply */
+    reply->data = malloc((count+1) * sizeof(char*));
+
+    /* XXX FIXME we should ignore first and last lines if they contains no info */
+    line = strtok_r(buffer,"\r\n",&ptr);
+    reply->data[0] = malloc(strlen(line)+1);
+    strncpy(reply->data[0],line,strlen(line)+1);
+    for (i=1; i<count; i++)
+    {
+      line = strtok_r(NULL,"\r\n",&ptr);
+      if (line)
+      {
+        reply->data[i] = malloc(strlen(line)+1);
+        if (_has_code(reply->data[i]))
+          strncpy(reply->data[i]+4,line,strlen(line)+1);
+        else
+          strncpy(reply->data[i],line,strlen(line)+1);
+      } else
+        reply->data[i] = NULL;
+    }
+
+    reply->data[count] = NULL;
   }
 
-  return 0;
+  free(buffer);
+
+  return reply;
 }
 
 /*************** STATIC *******************/
@@ -185,11 +243,23 @@ static int _connect_server(void)
   int ret;
 
   if (!_config) return -1;
-  
+
   /* 1- first, try named pipe ? */
   /* 2- try unix socket ? */
   /* 3- try socket ? */
   if ( (ret = server_try_socket()) >= 0 ) return ret;
 
   return -1; /* not connected */
+}
+
+static int _has_code(const char *str)
+{
+  if (!str || strlen(str)<4) return 0;
+
+  if ( str[0] >= '0' && str[0] <= '9'
+      && str[1] >= '0' && str[1] <= '9'
+      && str[2] >= '0' && str[2] <= '9')
+    return 1;
+
+  return 0;
 }

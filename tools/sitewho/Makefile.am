@@ -1,11 +1,12 @@
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/libwzd
 
 bin_PROGRAMS = sitewho
 
 sitewho_SOURCES = sitewho.c
 
-sitewho_LDFLAGS = -no-undefined -L../../src -L../../src/.libs -lwzd_core $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+sitewho_LDADD = $(top_srcdir)/libwzd/libwzd.la
+sitewho_LDFLAGS = -no-undefined $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 

@@ -151,7 +151,7 @@ server_try_socket_abort:
   _config->connector.disconnect();
   return -1;
 }
-  
+
 
 
 int socket_connect(const char *host, int port, const char *user, const char *pass)
@@ -232,7 +232,7 @@ int socket_read(char *buffer, int length)
 
   if (!_config) return -1;
   if (_config->sock < 0) return -1;
-  
+
   do {
     offset += ret;
 

@@ -31,6 +31,15 @@
 #ifndef __LIBWZD__
 #define __LIBWZD__
 
+typedef struct {
+  int code;
+  char **data;
+} wzd_reply_t;
+
+void wzd_free_reply(wzd_reply_t *reply);
+
+
+
 /* wzd_parse_args
  *
  * parse command line arguments to detect libwzd-specific switches
@@ -50,7 +59,7 @@ int wzd_fini(void);
  * 
  * buffer must be one-line, without CR or LF
  */
-int wzd_send_message(const char *buffer, int length, char * reply, int reply_length);
+wzd_reply_t * wzd_send_message(const char *buffer, int length);
 
 /* TODO missing functions:
  *
