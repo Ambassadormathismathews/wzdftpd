@@ -1,4 +1,4 @@
-PLATFORM := $(shell uname)
+include ../../src/Makefile.config
 
 TARGET=libwzdplaintext.so
 OBJS=libplaintext_main.o
@@ -25,6 +25,14 @@ all: debug
 
 intel:
 	$(MAKE) 'CC=icc' 'COMMON_FLAGS=-w1 -I../../src'
+
+install: release
+	install --mode=755 $(TARGET) $(DESTDIR); \
+	install --mode=660 ../../src/users $(DESTDIR)
+
+uninstall: release
+	rm -f  $(DESTDIR)/$(TARGET); \
+	rm -f $(DESTDIR)/users
 
 release: $(OBJS)
 ifeq ($(PLATFORM),Linux)

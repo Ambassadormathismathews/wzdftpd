@@ -1,4 +1,4 @@
-DATE_TAG:=$(shell date +"%Y%m%d")
+include src/Makefile.config
 
 SUBDIRS = src backends modules tools
 
@@ -10,6 +10,14 @@ all:
 
 release:
 	make recursive 'RECURSIVE_TARGET=release'
+
+install:
+	mkdir -p -m 755 $(DESTDIR); \
+	make recursive 'RECURSIVE_TARGET=install'
+
+uninstall:
+	make recursive 'RECURSIVE_TARGET=uninstall'; \
+	rmdir $(DESTDIR)
 
 clean:
 	make recursive 'RECURSIVE_TARGET=clean'

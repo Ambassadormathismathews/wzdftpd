@@ -1,3 +1,5 @@
+include ../src/Makefile.config
+
 SUBDIRS = plaintext
 
 debug:
@@ -8,6 +10,12 @@ all:
 
 release:
 	make recursive 'RECURSIVE_TARGET=release'
+
+install:
+	make recursive 'RECURSIVE_TARGET=install'
+
+uninstall:
+	make recursive 'RECURSIVE_TARGET=uninstall'
 
 clean:
 	make recursive 'RECURSIVE_TARGET=clean'
