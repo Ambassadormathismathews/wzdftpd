@@ -705,7 +705,9 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
+#if DEBUG
   out_err(LEVEL_FLOOD,"PARAM: '%s'\n",param);
+#endif
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
@@ -2371,6 +2373,10 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    }
 	    /* context->resume = 0; */
 	    token = strtok_r(NULL,"\r\n",&ptr);
+	    if (!token) {
+	      ret = send_message_with_args(501,context,"Invalid parameters");
+	      break;
+	    }
 	    if ((sscanf(token,"%d,%d,%d,%d,%d,%d",
 		    &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
 		    &p1,&p2))<6) {

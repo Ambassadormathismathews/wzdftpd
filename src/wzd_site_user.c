@@ -403,12 +403,12 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
 
 void do_site_help_addip(wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site addip <user> <ip>");
+  send_message_with_args(501,context,"site addip <user> <ip1> [<ip2> ...]");
 }
 
 /** site addip: adds an ip to a user
  *
- * addip &lt;user&gt; &lt;ip&gt;
+ * addip &lt;user&gt; &lt;ip1&gt; [&lt;ip2&gt; ...]
  */
 int do_site_addip(char *command_line, wzd_context_t * context)
 {
@@ -450,55 +450,60 @@ int do_site_addip(char *command_line, wzd_context_t * context)
     }
   }
 
-  /* check if ip is already present or included in list, or if it shadows one present */
-  for (i=0; i<HARD_IP_PER_USER; i++)
-  {
-    if (user.ip_allowed[i][0]=='\0') continue;
-    if (my_str_compare(ip,user.ip_allowed[i])==1) { /* ip is already included in list */
-      ret = send_message_with_args(501,context,"ip is already included in list");
+  do {
+
+    /* check if ip is already present or included in list, or if it shadows one present */
+    for (i=0; i<HARD_IP_PER_USER; i++)
+    {
+      if (user.ip_allowed[i][0]=='\0') continue;
+      if (my_str_compare(ip,user.ip_allowed[i])==1) { /* ip is already included in list */
+	ret = send_message_with_args(501,context,"ip is already included in list");
+	return 0;
+      }
+      if (my_str_compare(user.ip_allowed[i],ip)==1) { /* ip will shadow one ore more ip in list */
+	ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
+	return 0;
+      }
+    }
+
+    /* update user */
+    for (i=0; i<HARD_IP_PER_USER; i++)
+      if (user.ip_allowed[i][0]=='\0') break;
+
+    /* no more slots ? */
+    if (i==HARD_IP_PER_USER) {
+      ret = send_message_with_args(501,context,"No more slots available - either recompile with more slots, or use them more cleverly !");
       return 0;
     }
-    if (my_str_compare(user.ip_allowed[i],ip)==1) { /* ip will shadow one ore more ip in list */
-      ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
-      return 0;
-    }
-  }
+    /* TODO check ip validity */
+    strncpy(user.ip_allowed[i],ip,MAX_IP_LENGTH-1);
 
-  /* update user */
-  for (i=0; i<HARD_IP_PER_USER; i++)
-    if (user.ip_allowed[i][0]=='\0') break;
-
-  /* no more slots ? */
-  if (i==HARD_IP_PER_USER) {
-    ret = send_message_with_args(501,context,"No more slots available - either recompile with more slots, or use them more cleverly !");
-    return 0;
-  }
-  /* TODO check ip validity */
-  strncpy(user.ip_allowed[i],ip,MAX_IP_LENGTH-1);
+    ip = strtok_r(NULL," \t\r\n",&ptr);
+  } while (ip);
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
   backend_mod_user("plaintext",username,&user,_USER_IP);
 
-  ret = send_message_with_args(200,context,"User ip added");
+  ret = send_message_with_args(200,context,"User ip(s) added");
   return 0;
 }
 
 void do_site_help_delip(wzd_context_t * context)
 {
-  send_message_raw("501-Usage: site delip <user> <ip>\r\n",context);
-  send_message_raw("501  or: site delip <user> <slot_number> (get it with site user <user>)\r\n",context);
+  send_message_raw("501-Usage: site delip <user> <ip1> [<ip2> ...]\r\n",context);
+  send_message_raw("501  ip can be replaced by the slot_number (get it with site user <user>)\r\n",context);
 }
 
 /** site delip: removes ip from user
  *
- * delip &lt;user&gt; &lt;ip&gt;
+ * delip &lt;user&gt; &lt;ip1&gt; [&lt;ip2&gt; ...]
  *
- * delip &lt;user&gt; &lt;slot_number&gt;
+ * ip can be replaced by the slot_number
  */
 int do_site_delip(char *command_line, wzd_context_t * context)
 {
-  char *ptr;
+  char *ptr,*ptr_ul;
   char * username, *ip;
   int ret;
   wzd_user_t user, *me;
@@ -506,6 +511,7 @@ int do_site_delip(char *command_line, wzd_context_t * context)
   int i;
   unsigned long ul;
   short is_gadmin;
+  int found;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -537,39 +543,49 @@ int do_site_delip(char *command_line, wzd_context_t * context)
     }
   }
 
-  /* try to take argument as a slot number */
-  ul = strtoul(ip,&ptr,0);
-  if (*ptr=='\0') {
-    if (ul <= 0 || ul >= HARD_IP_PER_USER) {
-      ret = send_message_with_args(501,context,"Invalid ip slot number");
-      return 0;
-    }
-    ul--; /* to index slot number from 1 */
-    if (user.ip_allowed[ul][0] == '\0') {
-      ret = send_message_with_args(501,context,"Slot is already empty");
-      return 0;
-    }
-    user.ip_allowed[ul][0] = '\0';
-    backend_mod_user("plaintext",username,&user,_USER_IP);
-    ret = send_message_with_args(200,context,"User ip removed");
-    return 0;
-  } /* if (*ptr=='\0') */
+  do {
 
-  /* try to find ip in list */
-  for (i=0; i<HARD_IP_PER_USER; i++)
-  {
-    if (user.ip_allowed[i][0]=='\0') continue;
-    if (strcmp(ip,user.ip_allowed[i])==0) {
-      user.ip_allowed[i][0] = '\0';
-      /* commit to backend */
-      /* FIXME backend name hardcoded */
-      backend_mod_user("plaintext",username,&user,_USER_IP);
-      ret = send_message_with_args(200,context,"User ip removed");
-      return 0;
-    }
-  }
+    /* try to take argument as a slot number */
+    ul = strtoul(ip,&ptr_ul,0);
+    if (*ptr_ul=='\0') {
+      if (ul <= 0 || ul >= HARD_IP_PER_USER) {
+	ret = send_message_with_args(501,context,"Invalid ip slot number");
+	return 0;
+      }
+      ul--; /* to index slot number from 1 */
+      if (user.ip_allowed[ul][0] == '\0') {
+	ret = send_message_with_args(501,context,"Slot is already empty");
+	return 0;
+      }
+      user.ip_allowed[ul][0] = '\0';
+    } else { /* if (*ptr=='\0') */
 
-  ret = send_message_with_args(501,context,"IP not found");
+      /* try to find ip in list */
+      found = 0;
+      for (i=0; i<HARD_IP_PER_USER; i++)
+      {
+	if (user.ip_allowed[i][0]=='\0') continue;
+	if (strcmp(ip,user.ip_allowed[i])==0) {
+	  user.ip_allowed[i][0] = '\0';
+	  found = 1;
+	}
+      }
+
+      if (!found) {
+	char buffer[256];
+	snprintf(buffer,256,"IP %s not found",ip);
+	ret = send_message_with_args(501,context,buffer);
+	return 0;
+      }
+    } /* if (*ptr=='\0') */
+
+    ip = strtok_r(NULL," \t\r\n",&ptr);
+  } while (ip);
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  backend_mod_user("plaintext",username,&user,_USER_IP);
+  ret = send_message_with_args(200,context,"User ip(s) removed");
   return 0;
 }
 
