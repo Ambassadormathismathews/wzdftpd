@@ -3,8 +3,8 @@
 
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.2.2
-Release: 5
+Version: 0.2.3
+Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://wzdftpd.sourceforge.net
 Vendor: wzdftpd
@@ -58,7 +58,7 @@ This package requires either wzdftpd or wzdftpd-ssl to be installed.
 %setup -q
 
 %build
-./configure --prefix=/usr/local --enable-ipv6 --sysconfdir=%_sysconfdir
+./configure --prefix=/usr/local --enable-ipv6 --target=%{_target_cpu} --sysconfdir=%_sysconfdir
 
 make CFLAGS="$RPM_OPT_FLAGS"
 
@@ -157,12 +157,5 @@ rm -Rf $RPM_BUILD_ROOT
 ## Changelog
 
 %changelog
-* Tue Feb 17 2004 Chris Lount <mrlount@tiscali.co.uk>
-- Corrected uninstall problem
-
-* Mon Feb 16 2004 Chris Lount <mrlount@tiscali.co.uk>
-- Just some spec tidying
-
-* Sun Feb 15 2004 Chris Lount <mrlount@tiscali.co.uk>
+* Thu Feb 19 2004 Chris Lount <mrlount@tiscali.co.uk>
 - First binary release
-
