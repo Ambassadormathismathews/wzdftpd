@@ -10,6 +10,9 @@ void chop(char *s);
 /* returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina);
 
+/* returns info on device containing dir/file */
+int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_blocks, long *f_free);
+
 /* returns 1 if file is perm file */
 int is_perm_file(const char *filename);
 
@@ -27,7 +30,7 @@ void format_message(int code, unsigned int length, char *buffer, ...);
 /* Bandwidth limitation */
 
 wzd_bw_limiter * limiter_new(int maxspeed);
-void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check);
+void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check);
 void limiter_free(wzd_bw_limiter *l);
 
 /* cookies */

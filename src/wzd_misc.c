@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/vfs.h> /* statfs */
 
 /* speed up compilation */
 #define SSL     void
@@ -27,6 +28,7 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
+#include "wzd_ServerThread.h"
 
 #ifdef __CYGWIN__
 #define LONGBITS  0x20
@@ -116,6 +118,21 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 
   close(s);
   return 0;
+}
+
+/* returns info on device containing dir/file */
+int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_blocks, long *f_free)
+{
+  struct statfs fs;
+
+  if (statfs(file,&fs)==0) {
+    if (f_bsize) *f_bsize = fs.f_bsize;
+    if (f_type) *f_type = fs.f_type;
+    if (f_blocks) *f_blocks = fs.f_blocks;
+    if (f_free) *f_free = fs.f_bfree;
+    return 0;
+  }
+  return -1;
 }
 
 /* internal fct, rename files by copying data */
@@ -335,7 +352,7 @@ wzd_bw_limiter * limiter_new(int maxspeed)
   return l_new;
 }
 
-void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
+void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check)
 {
   struct timeval tv;
   struct timezone tz;
@@ -347,24 +364,30 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
   if (!l) return;
   if (l->maxspeed == 0) return;
 
+wzd_sem_lock(sem,1);
   l->bytes_transfered += byte_count;
+wzd_sem_unlock(sem,1);
 
   /* if at least 1 second of data is downloaded, assess the situation
    * and determine how much time to wait */
-  if ( (l->bytes_transfered >= l->maxspeed) || force_check )
-  {
+/*  if ( (l->bytes_transfered >= l->maxspeed) || force_check )
+  {*/
     gettimeofday( &tv, &tz );
     elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
     elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
     if (elapsed==(double)0) elapsed=0.01;
     bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);;
-  }
+/*  }*/
   if (bw_rate <= l->maxspeed) {
     return;
   }
   rate_ratio = (double)bw_rate / (double)l->maxspeed;
   pause_time = (rate_ratio - (double)1)*elapsed;
   usleep ((unsigned long)(pause_time * (double)1000000));
+/*  gettimeofday( &tv, &tz );
+  l->current_time.tv_sec = tv.tv_sec;
+  l->current_time.tv_usec = tv.tv_usec;
+  l->bytes_transfered = 0;*/
 }
 
 void limiter_free(wzd_bw_limiter *l)
@@ -594,7 +617,18 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
       /* pid */
       if (strncmp(srcptr,"pid",3)==0) {
 	if (context_user->flags && strchr(context_user->flags,FLAG_SITEOP)) {
-	  snprintf(tmp_buffer,4096,"%d",param_context->pid_child);
+	  snprintf(tmp_buffer,4096,"%ld",param_context->pid_child);
+	  cookie = tmp_buffer;
+	  cookielength = strlen(cookie);
+	  srcptr += 3; /* strlen("pid"); */
+	}
+      }
+#endif /* WZD_MULTIPROCESS */
+#ifdef WZD_MULTITHREAD
+      /* pid */
+      if (strncmp(srcptr,"pid",3)==0) {
+	if (context_user->flags && strchr(context_user->flags,FLAG_SITEOP)) {
+	  snprintf(tmp_buffer,4096,"%ld",param_context->pid_child);
 	  cookie = tmp_buffer;
 	  cookielength = strlen(cookie);
 	  srcptr += 3; /* strlen("pid"); */
@@ -628,6 +662,20 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         }
         cookielength = strlen(cookie);
         srcptr += 3; /* strlen("tag"); */
+      }
+      /* total_dl */
+      if (strncmp(srcptr,"total_dl",8)==0) {
+	snprintf(tmp_buffer,4096,"%ld",user->bytes_dl_total);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 8; /* strlen("total_dl"); */
+      }
+      /* total_ul */
+      if (strncmp(srcptr,"total_ul",8)==0) {
+	snprintf(tmp_buffer,4096,"%ld",user->bytes_ul_total);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 8; /* strlen("total_ul"); */
       }
     } /* if param_context */
     /* end of cookies */
@@ -707,8 +755,8 @@ int print_file(const char *filename, int code, void * void_context)
   do {
     ret = cookies_replace(buffer,1018,param,context); /* TODO test ret */
   /* XXX FIXME TODO */
-    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);
-/*    send_message_raw(complete_buffer,context);*/
+/*    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);*/
+    send_message_raw(complete_buffer,context);
   } while ( (fgets(buffer,1018,fp)) != NULL);
 
   return 0;
