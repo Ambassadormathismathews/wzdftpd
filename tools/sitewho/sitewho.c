@@ -54,6 +54,7 @@ int parse_args(int argc, char **argv)
 
 int main(int argc, char *argv[])
 {
+  char command_buffer[4096];
   int shmid;
   unsigned int length=0;
   char * datazone;
@@ -144,11 +145,17 @@ int main(int argc, char *argv[])
 	    context->hostip[3]);
 	/* XXX hide ip */
 	strcpy(hostip,"xxx.xxx.xxx.xxx");
+	/* XXX if command is a site command, hide arguments */
+	strncpy(command_buffer,context->last_command,4090);
+	if (strncasecmp(command_buffer,"SITE ",5)==0) {
+	  strcpy(command_buffer+5,"xxx");
+	}
+
         fprintf(stdout,"|%15s|   %15s|%16s|%20s |\n",
             user->username?user->username:"NULL",
             user->username?user->tagline:"NULL",
 	    hostip,
-	    context->last_command);
+	    command_buffer);
 	if (strncasecmp(context->last_command,"retr",4)==0) {
 	  fprintf(stdout,"|  %.1f kB/s  |\n",context->current_dl_limiter.current_speed/1024.f);
 	} else {
