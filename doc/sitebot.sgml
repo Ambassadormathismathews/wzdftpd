@@ -33,7 +33,7 @@ directory (ask kakao on IRC for these files until he put them on the forum ;)
 <title>Configuration</title>
 
 <para>
-Edit files wzdftpd.tcl <emphasis>CAREFULLY</emphasis>, each variable or section
+Edit file wzdftpd.tcl <emphasis>CAREFULLY</emphasis>, each variable or section
 is documented. You'll need to set paths of executables according to your
 config.
 </para>

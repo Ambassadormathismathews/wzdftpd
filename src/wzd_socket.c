@@ -568,11 +568,13 @@ int socket_wait_to_read(int sock, unsigned int timeout)
         out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %d %s\n",save_errno,strerror(save_errno));
         return -1;
       }
+#if 0
       if (FD_ISSET(sock,&wfds)) {
         if (save_errno == EINTR) continue;
         out_log(LEVEL_CRITICAL,"WTF, socket %d wants to write during socket_wait_to_read: %s\n",sock,strerror(save_errno));
         return -1;
       }
+#endif
       if (!FD_ISSET(sock,&rfds)) /* timeout */
         return 1;
       break;
@@ -619,11 +621,13 @@ int socket_wait_to_write(int sock, unsigned int timeout)
         out_log(LEVEL_CRITICAL,"Error during socket_wait_to_write: %d %s\n",save_errno,strerror(save_errno));
         return -1;
       }
+#if 0
       if (FD_ISSET(sock,&rfds)) {
         if (save_errno == EINTR) continue;
         out_log(LEVEL_CRITICAL,"WTF, socket %d wants to read during socket_wait_to_write: %s\n",sock,strerror(save_errno));
         return -1;
       }
+#endif
       if (!FD_ISSET(sock,&wfds)) /* timeout */
         return 1;
       break;
