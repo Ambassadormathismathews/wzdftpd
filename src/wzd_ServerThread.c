@@ -1,5 +1,7 @@
 #include "wzd.h"
 
+/*#define WZD_MULTITHREAD*/
+
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
@@ -8,6 +10,7 @@ void serverMainThreadExit(int);
 int serverstop;
 
 wzd_context_t *context_list;
+wzd_shm_t * context_shm;
 
 time_t server_start;
 
@@ -31,6 +34,41 @@ void cleanchild(int nr) {
   if (nr == context->pid_child) {
     context->pid_child = 0;
   }
+}
+
+void context_init(wzd_context_t * context)
+{
+  context->magic = 0;
+  context->controlfd = -1;
+  context->datafd = 0;
+  context->portsock = 0;
+  context->pasvsock = 0;
+  context->dataport=0;
+  context->resume = 0;
+  context->pid_child = 0;
+  context->datamode = DATA_PORT;
+  context->current_action.token = TOK_UNKNOWN;
+  context->current_limiter = NULL;
+}
+
+wzd_context_t * context_find_free(wzd_context_t * context_list)
+{
+  wzd_context_t * context=NULL;
+  int i=0;
+
+  while (i<HARD_USERLIMIT) {
+    if (context_list[i].magic == 0) {
+      return (context_list+i);
+    }
+#ifdef DEBUG
+    if (context_list[i].magic != CONTEXT_MAGIC) {
+fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",i);
+    }
+#endif /* DEBUG */
+    i++;
+  }
+
+  return context;
 }
 
 void login_new(int socket_accept_fd)
@@ -63,15 +101,17 @@ void login_new(int socket_accept_fd)
 
   /* start child process */
   /* 1. create new context */
-  context = malloc(sizeof(wzd_context_t));
+/*  context = malloc(sizeof(wzd_context_t));*/
+  context = context_find_free(context_list);
+  if (!context) {
+    out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
+    close(newsock);
+    return;
+  }
+
+  /* don't forget init is done before */
+  context->magic = CONTEXT_MAGIC;
   context->controlfd = newsock;
-  context->datafd = 0;
-  context->portsock = 0;
-  context->pasvsock = 0;
-  context->dataport=0;
-  context->resume = 0;
-  context->pid_child = 0;
-  context->datamode = DATA_PORT;
 
   /* switch to tls mode ? */
 #if SSL_SUPPORT
@@ -80,21 +120,52 @@ void login_new(int socket_accept_fd)
   context->ssl.data_mode = TLS_CLEAR;
 #endif
 
-/*  if (fork()==0) {
-    close (mainConfig.mainSocket);*/
+#ifdef WZD_MULTITHREAD
+  if (fork()==0) { /* child */
+    close (mainConfig.mainSocket);
+#endif
     clientThreadProc(context);
-/*  } else {
+#ifdef WZD_MULTITHREAD
+    exit (0);
+  } else { /* parent */
     close (newsock);
-  }*/
+  }
+#endif
 }
+
+
+/* IMPERATIVE STOP REQUEST - exit */
+void interrupt(int signum)
+{
+  /* closing properly ?! */
+#ifndef __CYGWIN__
+fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
+#else
+fprintf(stderr,"Received signal %d\n",signum);
+#endif
+  serverMainThreadExit(0);
+}
+
+
+/*********************** SERVER MAIN THREAD *****************************/
 
 void serverMainThreadProc(void *arg)
 {
   int ret;
   fd_set r;
   struct timeval tv;
+  int i;
 
-  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t)); /* FIXME 256 */
+/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
+  context_shm = wzd_shm_create(mainConfig.shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
+  if (context_shm == NULL) {
+    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig.shm_key);
+    exit(1);
+  }
+  context_list = context_shm->datazone;
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    context_init(context_list+i);
+  }
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (mainConfig.backend.handle == NULL) {
@@ -112,6 +183,10 @@ void serverMainThreadProc(void *arg)
   signal(SIGPIPE,SIG_IGN);
   signal(SIGCHLD,cleanchild);
 #endif
+
+  signal(SIGINT,interrupt);
+  signal(SIGTERM,interrupt);
+  signal(SIGKILL,interrupt);
 
   ret = mainConfig.mainSocket = socket_make(&mainConfig.port);
   if (ret == -1) {
@@ -136,7 +211,7 @@ void serverMainThreadProc(void *arg)
     switch (ret) {
     case -1: /* error */
       if (errno == EINTR) continue; /* retry */
-      out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%c\n",
+      out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%d\n",
         strerror(errno), __FILE__, __LINE__);
       serverMainThreadExit(-1);
       /* we abort, so we never returns */
@@ -161,6 +236,9 @@ void serverMainThreadExit(int retcode)
 #if SSL_SUPPORT
   tls_exit();
 #endif
-  free(context_list);
-	exit (retcode);
+/*  free(context_list);*/
+  limiter_free(mainConfig.limiter_ul);
+  limiter_free(mainConfig.limiter_dl);
+  wzd_shm_free(context_shm);
+  exit (retcode);
 }

@@ -46,7 +46,7 @@ int backend_validate(const char *backend)
   ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_VALIDATE_PASS);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_VALIDATE_RIGHT);
+  ptr = dlsym(handle,STR_FIND_USER);
   ret = ret & (ptr!=NULL);
   if (!ret) {
     out_log(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
@@ -91,7 +91,7 @@ int backend_init(const char *backend)
   ptr = init_fcn = dlsym(handle,STR_INIT);
   mainConfig.backend.back_validate_login = dlsym(handle,STR_VALIDATE_LOGIN);
   mainConfig.backend.back_validate_pass  = dlsym(handle,STR_VALIDATE_PASS);
-  mainConfig.backend.back_validate_right  = dlsym(handle,STR_VALIDATE_RIGHT);
+  mainConfig.backend.back_find_user  = dlsym(handle,STR_FIND_USER);
 
   if (ptr) {
     ret = (*init_fcn)();
@@ -99,7 +99,7 @@ int backend_init(const char *backend)
       mainConfig.backend.handle = NULL;
       mainConfig.backend.back_validate_login = NULL;
       mainConfig.backend.back_validate_pass = NULL;
-      mainConfig.backend.back_validate_right = NULL;
+      mainConfig.backend.back_find_user = NULL;
       dlclose(handle);
     }
   } else {
@@ -112,11 +112,11 @@ int backend_init(const char *backend)
   return ret;
 }
 
-int backend_chek_perm(wzd_user_t * user, wzd_perm_t perm, void * param)
+int backend_find_user(const char *name, wzd_user_t * user)
 {
   int ret;
 
-  ret = (*mainConfig.backend.back_validate_right)(user,perm,param);
+  ret = (*mainConfig.backend.back_find_user)(name,user);
 
   return ret;
 }

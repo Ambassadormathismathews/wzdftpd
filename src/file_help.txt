@@ -1,0 +1,14 @@
+.----------------------------------------------------------------------------.
+|                         »   S i T e     H e l P    «                       |
+.----------------.----------------------------------------------.------------.
+|    command     |                  description                 | users can  |
+.----------------.----------------------------------------------.------------.
+| site uptime    | give you information about actual uptime of  |            |
+|                | this server                                  | r,s,n,g    |
+| site who       | show who's online                            | r,s,n,g    |
+| site chmod     | change access rights on a file or directory  | r,s        |
+| site chown     | change the owner of a file or directory      | r,s        |
+| site shutdown  | shutdown the server remotely                 | r          |
+.----------------.----------------------------------------------.------------.
+| command : site help (r,s,n,g users) give you these informations            |
+.----------------------------------------------------------------------------.

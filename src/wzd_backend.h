@@ -20,7 +20,19 @@
 #define	RIGHT_RETR	0x00000002
 #define	RIGHT_STOR	0x00000004
 
+
+/* other rights - should not be used directly ! */
+#define	RIGHT_CWD	0x00010000
+#define	RIGHT_RNFR	0x00020000
+
 typedef unsigned long wzd_perm_t;
+
+typedef struct limiter
+{
+  int maxspeed;
+  struct timeval current_time;
+  int bytes_transfered;
+} wzd_bw_limiter;
 
 typedef struct {
   char			username[256];
@@ -30,6 +42,8 @@ typedef struct {
   struct timeval	max_idle_time;	/* not used yet */
   wzd_perm_t		perms;		/* not used yet */
   unsigned long		flags;		/* not used yet */
+  unsigned long		max_ul_speed;
+  unsigned long		max_dl_speed;	/* bytes / sec */
 } wzd_user_t;
 
 
@@ -37,7 +51,7 @@ typedef struct {
   void * handle;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
-  int (*back_validate_right) (wzd_user_t *, wzd_perm_t, void *);
+  int (*back_find_user) (const char *, wzd_user_t *);
 } wzd_backend_t;
 
 /* int FCN_INIT(void) */
@@ -52,15 +66,15 @@ typedef struct {
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
 
-/* int FCN_VALIDATE_RIGHT(wzd_user_t * user, wzd_perm_t wanted_perm, void * param) */
-#define	FCN_VALIDATE_RIGHT	wzd_validate_right
-#define	STR_VALIDATE_RIGHT	"wzd_validate_right"
+/* int FCN_FIND_USER(const char *name, wzd_user_t * user) */
+#define	FCN_FIND_USER		wzd_find_user
+#define	STR_FIND_USER	 	"wzd_find_user"
 
 
 int backend_validate(const char *backend);
 
 int backend_init(const char *backend);
 
-int backend_chek_perm(wzd_user_t * user, wzd_perm_t perm, void * param);
+int backend_find_user(const char *name, wzd_user_t * user);
 
 #endif /* __WZD_BACKEND__ */

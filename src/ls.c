@@ -47,7 +47,9 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   while ((entr=readdir(dir))!=NULL) {
     if (entr->d_name[0]=='.') {
       if (strcmp(entr->d_name,".")==0 ||
-	  strcmp(entr->d_name,"..")==0) {
+	  strcmp(entr->d_name,"..")==0 ||
+	  strcmp(entr->d_name,HARD_PERMFILE)==0) /* XXX hide perm file ! */
+	  {
 	continue;
       }
     }

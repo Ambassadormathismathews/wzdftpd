@@ -1,3 +1,25 @@
+# Jun, 24 2002
+- site commands that print files content: rules, help
+- first cookie ! (username)
+
+# Jun, 20 2002
+- new commands: allo (=noop), rnfr/rnto
+- shared memory implemented for windows
+
+# Jun, 18 2002
+- fixed bug allowing nonexistant file to be downloaded with a 0 size
+- permissions on command like site *, delete
+- trap signals interrupt, kill, etc. to end server properly
+- now using shared memory to store contexts
+- acls bugfixs
+
+# Jun, 12 2002
+- bandwidth upload / download limitation
+
+# Jun, 06 2002
+- permissions using .dirinfo files
+- hide .dirinfo on commands SIZE, MDTM, RETR, STOR
+
 # May, 29 2002
 - implementation of ssl: explicit, explicit_strict, port, data protection, buffer size
 - site uptime, site shutdown

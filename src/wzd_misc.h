@@ -9,5 +9,15 @@ void chop(char *s);
 void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);
 void format_message(int code, unsigned int length, char *buffer, ...);
 
+/* Bandwidth limitation */
+
+wzd_bw_limiter * limiter_new(int maxspeed);
+void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check);
+void limiter_free(wzd_bw_limiter *l);
+
+/* cookies */
+int cookies_replace(char * buffer, unsigned int buffersize, void * void_context);
+
+
 #endif /* __WZD_MISC__ */
 

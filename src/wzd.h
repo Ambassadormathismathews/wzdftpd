@@ -36,8 +36,13 @@
 
 /* must be first */
 #include "wzd_hardlimits.h"
+#include "wzd_shm.h"
+#include "wzd_structs.h"
 
 #include "wzd_backend.h"
+
+#include "wzd_action.h"
+#include "wzd_misc.h"
 
 #if SSL_SUPPORT
 typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
@@ -70,7 +75,13 @@ typedef enum {
   DATA_PASV
 } data_mode_t;
 
+/* important - must not be fffff or d0d0d0, etc.
+ * to make distinction with unallocated zone
+ */
+#define	CONTEXT_MAGIC	0x0aa87d45
+
 typedef struct {
+  unsigned long	magic;
   int           state;
   int           controlfd;
   int           datafd;
@@ -84,10 +95,16 @@ typedef struct {
   char          currentpath[2048];
   wzd_user_t    userinfo;
   xfer_t        current_xfer_type;
+  wzd_action_t	current_action;
+  char		last_command[2048];
+  wzd_bw_limiter * current_limiter;
 #if SSL_SUPPORT
   wzd_ssl_t   	ssl;
 #endif
 } wzd_context_t;
+
+
+void set_action(wzd_context_t * context, unsigned int token, const char *arg);
 
 typedef int (*read_fct_t)(int,char*,unsigned int,int,int,wzd_context_t *);
 typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,wzd_context_t *);
@@ -109,10 +126,15 @@ typedef struct {
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
 #endif
+  unsigned long	shm_key;
+  wzd_command_perm_t	* perm_list;
+  wzd_bw_limiter	* limiter_ul;
+  wzd_bw_limiter	* limiter_dl;
+  wzd_site_config_t	site_config;
 } wzd_config_t;
 
-extern wzd_config_t mainConfig;
-extern wzd_context_t *context_list;
+extern wzd_config_t	mainConfig;
+extern wzd_context_t *	context_list;
 
 
 /* DEBUG & LOG */
@@ -124,12 +146,14 @@ extern wzd_context_t *context_list;
 #define	LEVEL_CRITICAL	9
 
 
-#include "wzd_misc.h"
 #include "wzd_tls.h"
 #include "wzd_socket.h"
 #include "wzd_messages.h"
 #include "wzd_log.h"
+#include "wzd_file.h"
 #include "wzd_init.h"
+#include "wzd_data.h"
+#include "wzd_perm.h"
 #include "wzd_ServerThread.h"
 #include "wzd_ClientThread.h"
 #include "wzd_site.h"

@@ -26,10 +26,11 @@ void init_default_messages(void)
   msg_tab[258] = "%s %s";
 
   msg_tab[331] = "User %s okay, need password.";
-  msg_tab[350] = "Restarting at %ld. Send STORE or RETRIEVE.";
+  msg_tab[350] = "%s"; /* "Restarting at %ld. Send STORE or RETRIEVE.", or "OK, send RNTO" */
 
   msg_tab[421] = "%s"; /* Service not available, closing control connection. */
   msg_tab[425] = "Can't open data connection.";
+  msg_tab[426] = "Error occured, data connection closed.";
   msg_tab[451] = "Transmission error occured.";
   msg_tab[491] = "Data connection already active.";
 

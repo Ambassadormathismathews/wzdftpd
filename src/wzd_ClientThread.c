@@ -2,40 +2,6 @@
 
 #define BUFFER_LEN	4096
 
-#define	TOK_UNKNOWN	0
-#define	TOK_USER	1
-#define	TOK_PASS	2
-#define	TOK_AUTH	3
-#define	TOK_QUIT	4
-#define	TOK_TYPE	5
-#define	TOK_MODE	6
-#define	TOK_PORT	7
-#define	TOK_PASV	8
-#define	TOK_PWD		9
-#define	TOK_NOOP	10
-#define	TOK_SYST	11
-#define	TOK_CWD		12
-#define	TOK_CDUP	13
-#define	TOK_LIST	14
-#define	TOK_NLST	15
-#define	TOK_MKD		16
-#define	TOK_RMD		17
-#define	TOK_RETR	18
-#define	TOK_STOR	19
-#define	TOK_REST	20
-#define	TOK_MDTM	21
-#define	TOK_SIZE	22
-#define	TOK_DELE	23
-#define	TOK_ABOR	24
-
-#if SSL_SUPPORT
-#define	TOK_PBSZ	25
-#define	TOK_PROT	26
-#endif
-
-#define	TOK_SITE	27
-#define	TOK_FEAT	28
-
 /*************** identify_token **********************/
 
 int identify_token(const char *token)
@@ -99,6 +65,12 @@ int identify_token(const char *token)
     return TOK_SITE;
   if (strcasecmp("FEAT",token)==0)
     return TOK_FEAT;
+  if (strcasecmp("ALLO",token)==0)
+    return TOK_ALLO;
+  if (strcasecmp("RNFR",token)==0)
+    return TOK_RNFR;
+  if (strcasecmp("RNTO",token)==0)
+    return TOK_RNTO;
   return TOK_UNKNOWN;
 }
 
@@ -144,8 +116,8 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
 int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
 {
   int ret;
-fprintf(stderr,".");
-fflush(stderr);
+/*fprintf(stderr,".");
+fflush(stderr);*/
   ret = send(sock,msg,length,0);
 
   return ret;
@@ -183,6 +155,20 @@ fprintf(stderr,"I answer: %s\n",buffer);
   ret = (mainConfig.write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return 0;
+}
+
+/*************** send_message_raw ********************/
+
+int send_message_raw(const char *msg, wzd_context_t * context)
+{
+  int ret;
+
+#ifdef DEBUG
+fprintf(stderr,"I answer: %s\n",msg);
+#endif
+  ret = (mainConfig.write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
+
+  return ret;
 }
 
 /*************** getmyip *****************************/
@@ -256,6 +242,25 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   if (checkpath(wanted_path,path,context)) return 1;
   snprintf(allowed,2048,"%s/",context->userinfo.rootpath);
 
+
+  {
+    int ret;
+    int length;
+    char tmppath[4096];
+
+    strncpy(tmppath,path,4096);
+    /* remove trailing / */
+    length = strlen(tmppath);
+    if (length>1 && tmppath[length-1]=='/')
+      tmppath[length-1] = '\0';
+    ret = _checkPerm(tmppath,RIGHT_CWD,context);
+  
+    if (ret) { /* no access */
+      return 1;
+    }
+  }
+
+
   if (!stat(path,&buf)) {
     if (S_ISDIR(buf.st_mode))
       strncpy(context->currentpath,&path[strlen(allowed)-1],2048);
@@ -320,6 +325,9 @@ int waitaccept(wzd_context_t * context)
 
   close (context->pasvsock);
   context->pasvsock = sock;
+
+  context->datafd = sock;
+  context->datamode = DATA_PASV;
 
   return sock;
 }
@@ -430,7 +438,8 @@ printf("path before: '%s'\n",cmd);
 printf("path: '%s'\n",path);
 #endif
 
-  ret = backend_chek_perm(&context->userinfo,RIGHT_LIST,path); /* CHECK PERM */
+/*  ret = backend_chek_perm(&context->userinfo,RIGHT_LIST,path);*/ /* CHECK PERM */
+  ret = _checkPerm(path,RIGHT_LIST,context);
 
   if (ret) { /* no access */
     ret = send_message_with_args(550,context,"LIST","No access");
@@ -502,6 +511,19 @@ fprintf(stderr,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errn
   if (buffer[strlen(buffer)-1]=='/')
     buffer[strlen(buffer)-1]='\0';
 
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return 1;
+      }
+    }
+  }
+
   if (strcmp(path,buffer) != 0) {
 fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
     return 1;
@@ -509,11 +531,9 @@ fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
 
   ret = mkdir(buffer,0755); /* TODO umask ? - should have a variable here */
 
-#ifndef __CYGWIN__
   if (!ret) {
-    chown(buffer,context->userinfo.uid,-1);
+    file_chown(buffer,context->userinfo.username,NULL,context);
   }
-#endif
 
 #ifdef DEBUG
 fprintf(stderr,"mkdir returned %d (%s)\n",errno,strerror(errno));
@@ -613,19 +633,21 @@ int do_retr(char *param, wzd_context_t * context)
   char path[2048],cmd[2048];
   FILE *fp;
   unsigned long bytestot, bytesnow, byteslast;
-  struct timeval tv;
-  time_t tm_start,tm;
-  int n;
   unsigned long addr;
   int sock;
-  fd_set fds;
   int ret;
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock <= 0) && (context->dataport == 0))return 1;
+  if ((context->pasvsock <= 0) && (context->dataport == 0)) {
+    ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
+    return 1;
+  }
 
-  if (checkpath(param,path,context)) return 1;
+  if (checkpath(param,path,context)) {
+    ret = send_message_with_args(501,context,"Invalid file name");
+    return 1;
+  }
   
   if (context->pasvsock <= 0) { /* PORT ! */
     /* IP-check needed (FXP ?!) */
@@ -650,11 +672,27 @@ int do_retr(char *param, wzd_context_t * context)
     }
   }
 
+  context->datafd = sock;
+
   /* trailing / ? */
   if (path[strlen(path)-1]=='/')
     path[strlen(path)-1] = '\0';
 
-  if ((fp=fopen(path,"r"))==NULL) { /* XXX allow access to files being uploaded ? */
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return 1;
+      }
+    }
+  }
+
+  if ((fp=file_open(path,"r",RIGHT_RETR,context))==NULL) { /* XXX allow access to files being uploaded ? */
+    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
     close(sock);
     return 1;
   }
@@ -674,53 +712,16 @@ fprintf(stderr,"Download: User %s starts downloading %s (%ld bytes)\n",
   context->userinfo.username,param,bytestot);
 #endif
 
-  tm_start = time(NULL);
+  context->current_action.token = TOK_RETR;
+  strncpy(context->current_action.arg,path,4096);
+  context->current_action.current_file = fp;
+  context->current_action.bytesnow = 0;
+  context->current_action.tm_start = time(NULL);
 
-  while ((n=fread(cmd,1,sizeof(cmd),fp))>0) {
-    do {
-      FD_ZERO(&fds);
-      FD_SET(sock,&fds);
-      tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L;
-      if (select(sock+1,NULL,&fds,NULL,&tv)<=0) {
-#ifdef DEBUG
-fprintf(stderr,"Send timeout to client (user %s)\n",context->userinfo.username);
-#endif
-        fclose(fp);
-        close(sock);
-        return 1;
-      }
-    } while (!FD_ISSET(sock,&fds));
-
-  ret = (mainConfig.write_fct)(sock,cmd,n,0,HARD_XFER_TIMEOUT,context); /* FIXME test ret ! */
-  bytesnow += n;
-  /* TODO understand !!!!! */
-  if (bytesnow-byteslast > TRFMSG_INTERVAL) {
-    byteslast+=TRFMSG_INTERVAL;
-    tm=time(NULL);
-#ifdef DEBUG
-fprintf(stderr,"User %s, %ld / %ld kB (%ld %%) at %ld kB/s\n",context->userinfo.username,
-    bytesnow/1024,
-    bytestot/1024,
-    (((bytesnow>>7)*100)/(bytestot>>7)),
-    (bytesnow/(tm-tm_start))/1024
-    );
-#if 0
-fprintf(stderr,"User %s, %ld/%ldkB (%ld%%) at %ldkB/s\n",
-  context->userinfo.username,
-  bytesnow/1024,bytestot/1024,
-  (((bytesnow>>7)*100)/(bytestot>>7)),
-  (bytesnow/(tm-tm_start))/1024);
-#endif /* 0 */
-#endif
-    }
-  } /* while fread */
-
-  fclose(fp);
-#if SSL_SUPPORT
-  if (context->ssl.data_mode == TLS_PRIV)
-    ret = tls_close_data(context);
-#endif
-  ret = close(sock);
+  if (context->userinfo.max_dl_speed)
+    context->current_limiter = limiter_new(context->userinfo.max_dl_speed);
+  else
+    context->current_limiter = NULL;
 
   return 0;
 }
@@ -730,13 +731,9 @@ int do_stor(char *param, wzd_context_t * context)
 {
   char path[2048],path2[2048],cmd[2048];
   FILE *fp;
-  unsigned long bytestot, bytesnow, byteslast;
-  struct timeval tv;
-  time_t tm_start,tm;
-  int n;
+  unsigned long bytesnow, byteslast;
   unsigned long addr;
   int sock;
-  fd_set fds;
   int ret;
 
 /* TODO FIXME send all error or any in this function ! */
@@ -778,10 +775,24 @@ fprintf(stderr,"Resolved: %s\n",path);
   }
   /* END OF BUGFIX */
 
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return 1;
+      }
+    }
+  }
+
+
   /* overwrite protection */
   /* TODO make permissions per-dir + per-group + per-user ? */
 /*  if (context->userinfo.perms & PERM_OVERWRITE) {
-    fp=fopen(path,"r"),
+    fp=file_open(path,"r",RIGHT_STOR,context),
     if (!fp) {
       fclose(fp);
       return 2;
@@ -809,15 +820,16 @@ fprintf(stderr,"Resolved: %s\n",path);
     }
   }
 
-  if ((fp=fopen(path,"w"))==NULL) { /* XXX allow access to files being uploaded ? */
+  context->datafd = sock;
+
+  if ((fp=file_open(path,"w",RIGHT_STOR,context))==NULL) { /* XXX allow access to files being uploaded ? */
+    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
     close(sock);
     return 1;
   }
 
-#ifndef __CYGWIN__
   /* XXX - test: change owner while file is opened ?! XXX */
-  chown (path,context->userinfo.uid,-1);
-#endif
+  file_chown (path,context->userinfo.username,NULL,context);
 
   bytesnow = byteslast = 0;
   /* FIXME */
@@ -831,53 +843,16 @@ fprintf(stderr,"Download: User %s starts uploading %s\n",
   context->userinfo.username,param);
 #endif
 
-  tm_start = time(NULL);
+  context->current_action.token = TOK_STOR;
+  strncpy(context->current_action.arg,path,4096);
+  context->current_action.current_file = fp;
+  context->current_action.bytesnow = 0;
+  context->current_action.tm_start = time(NULL);
 
-  while (1) { /* i love while (1) and goto ;) */
-    FD_ZERO(&fds);
-    FD_SET(sock,&fds);
-    tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L;
-    if (select(sock+1,&fds,NULL,NULL,&tv)<=0) {
-#ifdef DEBUG
-fprintf(stderr,"Recv timeout from client (user %s)\n",context->userinfo.username);
-#endif
-      fclose(fp);
-      close(sock);
-      return 3;
-    } /* !if select */
-    if (FD_ISSET(sock,&fds)) {
-/*      n = recv(sock,cmd,sizeof(cmd),0); */
-      n = (mainConfig.read_fct)(sock,cmd,sizeof(cmd),0,HARD_XFER_TIMEOUT,context);
-        /* FIXME test ret ! */
-      /* FIXME rewrite following test */
-      if (n<=0) break; /* user closed conn, file complete ? should be ! */
-      fwrite(cmd,1,n,fp);
-      bytesnow += n;
-      /* TODO understand !!!!! */
-      if (bytesnow-byteslast > TRFMSG_INTERVAL) {
-        byteslast+=TRFMSG_INTERVAL;
-        tm=time(NULL);
-#ifdef DEBUG
-fprintf(stdout,"User %s, %ld/%ldkB (%ld%%) at %ldkB/s\n",
-  context->userinfo.username,
-  bytesnow/1024,bytestot/1024,
-  (((bytesnow>>7)*100)/(bytestot>>7)),
-  (bytesnow/(tm-tm_start))/1024);
-#endif
-      }
-    } /* !if FD_ISSET */
-  } /* !while (1) */
-
-  fclose(fp);
-#if SSL_SUPPORT
-  if (context->ssl.data_mode == TLS_PRIV)
-    ret = tls_close_data(context);
-#endif
-  ret = close(sock);
-
-#ifdef DEBUG
-fprintf(stderr,"Uploading %s finished\n",param);
-#endif
+  if (context->userinfo.max_ul_speed)
+    context->current_limiter = limiter_new(context->userinfo.max_ul_speed);
+  else
+    context->current_limiter = NULL;
 
   return 0;
 }
@@ -892,6 +867,20 @@ void do_mdtm(char *param, wzd_context_t * context)
   if (!checkpath(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return;
+      }
+    }
+  }
+
 
     if (stat(path,&s)==0) {
       strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
@@ -914,6 +903,20 @@ void do_size(char *param, wzd_context_t * context)
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return;
+      }
+    }
+  }
+
+
     if (stat(path,&s)==0) {
       snprintf(buffer,1024,"%ld",(long int)s.st_size);
       ret = send_message_with_args(213,context,buffer);
@@ -927,16 +930,79 @@ void do_size(char *param, wzd_context_t * context)
 int do_dele(char *param, wzd_context_t * context)
 {
   char path[2048];
+  int ret;
 
   if (!param || strlen(param)==0 || checkpath(param,path,context)) return 1;
 
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+  {
+    char * endfile;
+    endfile = path+(strlen(path)-strlen(HARD_PERMFILE));
+    if (strlen(path)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+      {
+        ret = send_message_with_args(501,context,"Go away bastard");
+        return 1;
+      }
+    }
+  }
+
 
 #ifdef DEBUG
 fprintf(stderr,"Removing file '%s'\n",path);
 #endif
 
   return unlink(path);
+}
+
+/*************** do_rnfr *****************************/
+void do_rnfr(const char *filename, wzd_context_t * context)
+{
+  char path[2048];
+  int ret;
+
+  if (!filename || strlen(filename)==0 || checkpath(filename,path,context)) {
+    ret = send_message_with_args(550,context,"RNFR","file does not exist");
+    return;
+  }
+
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+  context->current_action.token = TOK_RNFR;
+  strncpy(context->current_action.arg,path,4096);
+  context->current_action.current_file = NULL;
+  context->current_action.bytesnow = 0;
+  context->current_action.tm_start = time(NULL);
+
+  ret = send_message_with_args(350,context,"OK, send RNTO");
+}
+
+/*************** do_rnto *****************************/
+void do_rnto(const char *filename, wzd_context_t * context)
+{
+  char path[2048];
+  int ret;
+
+  if (!filename || strlen(filename)==0) {
+    ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
+    return;
+  }
+
+  checkpath(filename,path,context);
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+  context->current_action.token = TOK_UNKNOWN;
+  context->current_action.current_file = NULL;
+  context->current_action.bytesnow = 0;
+
+  ret = file_rename(context->current_action.arg,path,context);
+  if (ret) {
+    ret = send_message_with_args(550,context,"RNTO","command failed");
+  } else {
+    ret = send_message_with_args(250,context,"RNTO","command OK");
+  }
 }
 
 /*************** do_pass *****************************/
@@ -959,7 +1025,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   if (do_chdir(context->currentpath,context))
   {
     /* could not chdir to home !!!! */
-    out_log(LEVEL_CRITICAL,"Could not chdir to home '%', user '%s'\n",context->currentpath,context->userinfo.username);
+    out_log(LEVEL_CRITICAL,"Could not chdir to home '%s', user '%s'\n",context->currentpath,context->userinfo.username);
     return 1;
   }
 
@@ -1112,7 +1178,7 @@ int do_login(wzd_context_t * context)
 void clientThreadProc(void *arg)
 {
   struct timeval tv;
-  fd_set fds,efds;
+  fd_set fds_r,fds_w,efds;
   wzd_context_t	 * context;
   int p1,p2;
   unsigned long i,j;
@@ -1120,75 +1186,98 @@ void clientThreadProc(void *arg)
   char buffer2[BUFFER_LEN];
   char * param;
   int save_errno;
-	int sockfd;
-	int ret;
-	int exitclient;
-	char *token;
-	char *ptr;
-	int command;
+  int sockfd;
+  int ret;
+  int exitclient;
+  char *token;
+  char *ptr;
+  int command;
 
-	context = arg;
-	sockfd = context->controlfd;
+  context = arg;
+  sockfd = context->controlfd;
 	
-	out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
+  out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
 
-	ret = do_login(context);
+  ret = do_login(context);
 
-	if (ret) { /* USER not logged in */
-	  close (sockfd);
-	  out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
-	  return;
-	}
+  if (ret) { /* USER not logged in */
+    close (sockfd);
+    out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
+    return;
+  }
 
-        /* user+pass ok */
-        ret = send_message(230,context);
+  /* user+pass ok */
+  ret = send_message(230,context);
 
 
-	/* main loop */
-	exitclient=0;
+  /* main loop */
+  exitclient=0;
 
-	while (!exitclient) {
-	  save_errno = 666;
-	  memset(buffer,0,BUFFER_LEN);
-	  param=NULL;
+  while (!exitclient) {
+    save_errno = 666;
+    memset(buffer,0,BUFFER_LEN);
+    param=NULL;
     /* 1. read */
-    FD_ZERO(&fds);
-	  FD_ZERO(&efds);
-	  FD_SET(sockfd,&fds);
-	  FD_SET(sockfd,&efds);
-	  tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
-	  ret = select(sockfd+1,&fds,NULL,&efds,&tv);
-	  save_errno = errno;
-	  /* check timeout */
-	  check_timeout(context);
-	  if (FD_ISSET(sockfd,&efds)) {
-	    if (save_errno == EINTR) continue;
-	    out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));
-	    exit(1);
-	  }
-	  if (!FD_ISSET(sockfd,&fds))
-	  {	  
-	    continue;
-	  }
-/*	  ret = recv(sockfd,buffer,BUFFER_LEN,0);*/
-	  ret = (mainConfig.read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
+    FD_ZERO(&fds_r);
+    FD_ZERO(&fds_w);
+    FD_ZERO(&efds);
+    /* set control fd */
+    FD_SET(sockfd,&fds_r);
+    FD_SET(sockfd,&efds);
+    /* set data fd */
+    ret = data_set_fd(context,&fds_r,&fds_w,&efds);
+    if (sockfd > ret) ret = sockfd;
+
+    tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
+    ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);
+    save_errno = errno;
+    /* check timeout */
+    check_timeout(context);
+    if (FD_ISSET(sockfd,&efds)) {
+      if (save_errno == EINTR) continue;
+      out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));
+      continue;
+    }
+    ret = data_check_fd(context,&fds_r,&fds_w,&efds);
+    if (ret == -1) {
+      /* we had an error reading data connextion */
+    }
+
+    if (!FD_ISSET(sockfd,&fds_r)) {
+      /* we check for data iff control is not set - control is prior */
+      if (ret==1) {
+        if (context->current_action.token == TOK_UNKNOWN) {
+          /* we are receiving / sending data without RETR/STOR */
+          continue;
+        }
+        /* we have data ready */
+        ret = data_execute(context,&fds_r,&fds_w);
+        continue;
+      }
+      /* nothing to read */
+      /* XXX CHECK FOR TIMEOUT: control & data if needed */
+      continue;
+    }
+    ret = (mainConfig.read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
     if (ret==0) {
-	    out_log(LEVEL_INFO,"Host disconnected improperly!\n");
-	    exitclient=1;
-	    break;
-	  }
+      out_log(LEVEL_INFO,"Host disconnected improperly!\n");
+      exitclient=1;
+      break;
+    }
 
-	  if (buffer[0]=='\0') continue;
+    if (buffer[0]=='\0') continue;
 #ifdef DEBUG
 fprintf(stderr,"RAW: '%s'\n",buffer);
 #endif
 
-	  /* 2. get next token */
-	  ptr = &buffer[0];
-	  token = strtok_r(buffer," \t\r\n",&ptr);
-	  command = identify_token(token);
+    strncpy(context->last_command,buffer,2048);
+
+    /* 2. get next token */
+    ptr = &buffer[0];
+    token = strtok_r(buffer," \t\r\n",&ptr);
+    command = identify_token(token);
 
     context->state = command;
 
@@ -1236,6 +1325,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    context->resume = 0;
 	    ret = send_message_with_args(257,context,context->currentpath,"is current directory");
 	    break;
+	  case TOK_ALLO:
 	  case TOK_NOOP:
             ret = send_message_with_args(200,context,"Command okay");
 	    break;
@@ -1259,7 +1349,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      break;
 	    }
 	    if (do_chdir(param,context)) {
-	      ret = send_message_with_args(550,context,param,"No such file or directory.");
+	      ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
 	      break;
 	    }
 	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
@@ -1310,27 +1400,28 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    }
 	    break;
 	  case TOK_RETR:
-/*	    if (context->pid_child) {
+	    if (context->current_action.token != TOK_UNKNOWN) {
 	      ret = send_message(491,context);
 	      break;
-	    }*/
+	    }
 	    token = strtok_r(NULL,"\r\n",&ptr);
-/*	    if ((context->pid_child=fork())==0) {*/
-	      if (do_retr(token,context))
-	        ret = send_message_with_args(501,context,"RETR failed");
-	      else
-	        ret = send_message(226,context);
-/*	      exit(0);
-	    }*/
+	    do_retr(token,context);
+#if 0
+	    if (do_retr(token,context))
+	      ret = send_message_with_args(501,context,"RETR failed");
+	    else
+	      ret = send_message(226,context);
+#endif
 	    context->resume=0;
 	    break;
 	  case TOK_STOR:
-/*	    if (context->pid_child) {
+	    if (context->current_action.token != TOK_UNKNOWN) {
 	      ret = send_message(491,context);
 	      break;
-	    }*/
+	    }
 	    token = strtok_r(NULL,"\r\n",&ptr);
-/*	    if ((context->pid_child=fork())==0) {*/
+	    ret = do_stor(token,context);
+#if 0
 	      switch (do_stor(token,context)) {
 	      case 1:
 	        ret = send_message_with_args(501,context,"STOR failed");
@@ -1347,8 +1438,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	          context->userinfo.username, param);
 	        break;
 	      }
-/*	      exit(0);
-	    }*/
+#endif
 	    context->resume=0;
 	    break;
 	  case TOK_REST:
@@ -1356,7 +1446,9 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    j=0;
 	    i = sscanf(token,"%ld",&j);
 	    if (i>0 && j>=0) {
-	      ret = send_message_with_args(350,context,j);
+	      char buf[256];
+	      snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",j);
+	      ret = send_message_with_args(350,context,buf);
 	      context->resume = j;
 	    } else {
 	      ret = send_message_with_args(501,context,"Invalid REST marker");
@@ -1414,6 +1506,14 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST");
 #endif
 	    break;
+	  case TOK_RNFR:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    do_rnfr(token,context);
+	    break;
+	  case TOK_RNTO:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    do_rnto(token,context);
+	    break;
 	  default:
 	    ret = send_message(202,context);
 	    break;
@@ -1422,6 +1522,13 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 
 /*	Sleep(2000);*/
 
-	out_log(LEVEL_INFO,"Client dying (socket %d)\n",sockfd);
-	close(sockfd);
+  context->magic = 0;
+#ifdef DEBUG
+  if (context->current_limiter) {
+fprintf(stderr,"clientThread: limiter is NOT null at exit\n");
+  }
+#endif /* DEBUG */
+
+  out_log(LEVEL_INFO,"Client dying (socket %d)\n",sockfd);
+  close(sockfd);
 }

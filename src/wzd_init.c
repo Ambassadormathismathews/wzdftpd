@@ -11,6 +11,9 @@ int set_default_options(void)
   mainConfig.port = 21;
   mainConfig.max_threads=32;
 
+  mainConfig.limiter_ul = NULL;
+  mainConfig.limiter_dl = NULL;
+
   mainConfig.logfilename = malloc(256);
   strcpy(mainConfig.logfilename,"wzd.log");
 
@@ -20,6 +23,12 @@ int set_default_options(void)
   mainConfig.logfile = NULL;
 
   mainConfig.loglevel=LEVEL_LOWEST;
+
+  mainConfig.perm_list = NULL;
+
+  /* site config */
+  mainConfig.site_config.file_help[0] = '\0';
+  mainConfig.site_config.file_rules[0] = '\0';
 
 #if SSL_SUPPORT
   memset(mainConfig.tls_certificate,0,sizeof(mainConfig.tls_certificate));
@@ -31,78 +40,96 @@ int set_default_options(void)
   mainConfig.read_fct = clear_read;
   mainConfig.write_fct = clear_write;
 
+  mainConfig.shm_key = 0x1331c0d3;
+
   return 0;
 }
 
 int parseVariable(const char *varname, const char *value);
 
+
+int do_permission_line(const char *permname, const char *permline)
+{
+  int ret;
+
+  ret = perm_is_valid_perm(permname);
+  if (ret) return 1;
+
+  ret = perm_add_perm(permname, permline,&mainConfig);
+  if (ret) return 1;
+
+  return 0;
+}
+
+
 int readConfigFile(const char *fileName)
 {
-	int err;
-	FILE * configfile;
-	char buffer[BUFSIZE];
-	char varname[BUFSIZE];
-	char value[BUFSIZE];
-	char * ptr;
-	int length;
-	regex_t reg_line;
-	regmatch_t regmatch[3];
+  int err;
+  FILE * configfile;
+  char buffer[BUFSIZE];
+  char varname[BUFSIZE];
+  char value[BUFSIZE];
+  char * ptr;
+  int length;
+  regex_t reg_line;
+  regmatch_t regmatch[3];
 
-	init_default_messages();
-	set_default_options();
+  init_default_messages();
+  set_default_options();
 
-	configfile = fopen(fileName,"r");
-	if (!configfile)
-	  return 0;
+  configfile = fopen(fileName,"r");
+  if (!configfile)
+    return 0;
 
-	while (fgets(buffer,BUFSIZE,configfile))
-	{
-		ptr = buffer;
-		length = strlen(buffer); /* fgets put a '\0' at the end */
-		/* trim leading spaces */
-		while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
-		  ptr++;
-		if ((*ptr)=='#' || length<=1)	/* comment and empty lines */
-		  continue;
+  while (fgets(buffer,BUFSIZE,configfile))
+  {
+    ptr = buffer;
+    length = strlen(buffer); /* fgets put a '\0' at the end */
+    /* trim leading spaces */
+    while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
+      ptr++;
+    if ((*ptr)=='#' || length<=1)	/* comment and empty lines */
+      continue;
 
-		/* trim trailing space, because fgets keep a \n */
-		*(ptr+length-1) = '\0';
-		length--;
+    /* trim trailing space, because fgets keep a \n */
+    *(ptr+length-1) = '\0';
+    length--;
 
-		reg_line.re_nsub = 2;
-		err = regcomp (&reg_line, "^([a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
-		if (err) {
-		  out_log(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
-		  out_log(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
-		  exit (1);
-		}
+    reg_line.re_nsub = 2;
+    err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
+    if (err) {
+      out_log(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
+      out_log(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
+      exit (1);
+    }
 
-		err = regexec(&reg_line,ptr,3,regmatch,0);
-		if (err) {
-		  out_log(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
-		} else {
-		  memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
-		  varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
-		  memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
-		  value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
+    err = regexec(&reg_line,ptr,3,regmatch,0);
+    if (err) {
+      out_log(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
+    } else {
+      memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
+      varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
+      memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
+      value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
 
-		  err = parseVariable(varname,value);
-		  if (err) {
-		    out_log(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
-		  }
-		}
-	}
+      err = parseVariable(varname,value);
+      if (err) {
+        out_log(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
+      }
+    }
+  }
 	
 
 
-	fclose(configfile);
+  fclose(configfile);
 /*exit(1);*/
-	return 0;
+  return 0;
 }
 
 int parseVariable(const char *varname, const char *value)
 {
-  int i;
+  long i;
+  unsigned long l;
 
   /* PORT (int)
    * 2 remarks:
@@ -111,6 +138,7 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("port",varname)==0)
   {
+    errno = 0;
     i = strtol(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
@@ -127,6 +155,7 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("max_threads",varname)==0)
   {
+    errno = 0;
     i = strtol(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
@@ -154,6 +183,56 @@ int parseVariable(const char *varname, const char *value)
     }
     return i;
   }
+  /* MAX_UL_SPEED (unsigned long)
+   */
+  if (strcasecmp("max_ul_speed",varname)==0)
+  {
+    errno = 0;
+    l = strtol(value,(char**)NULL, 0);
+    if (errno==ERANGE)
+      return 1;
+    if (mainConfig.limiter_ul) {
+      out_log(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
+      return 1;
+    }
+    out_log(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
+    mainConfig.limiter_ul = limiter_new(l);
+    return 0;
+  }
+  /* MAX_DL_SPEED (unsigned long)
+   */
+  if (strcasecmp("max_dl_speed",varname)==0)
+  {
+    errno = 0;
+    l = strtol(value,(char**)NULL, 0);
+    if (errno==ERANGE)
+      return 1;
+    if (mainConfig.limiter_dl) {
+      out_log(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
+      return 1;
+    }
+    out_log(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
+    mainConfig.limiter_dl = limiter_new(l);
+    return 0;
+  }
+  /* SHM_KEY (unsigned long)
+   */
+  if (strcasecmp("shm_key",varname)==0)
+  {
+    errno = 0;
+    l = strtol(value,(char**)NULL, 0);
+    if (errno==ERANGE)
+      return 1;
+    out_log(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
+    mainConfig.shm_key = l;
+    return 0;
+  }
+  /* SITE CONFIG
+   */
+  if (strcasecmp("sitefile_rules",varname)==0)
+  { strncpy(mainConfig.site_config.file_rules,value,256); return 0; }
+  if (strcasecmp("sitefile_help",varname)==0)
+  { strncpy(mainConfig.site_config.file_help,value,256); return 0; }
 #if SSL_SUPPORT
   /* CERTIFICATES
    * absolute file name
@@ -190,5 +269,12 @@ int parseVariable(const char *varname, const char *value)
     return 0;
   }
 #endif
+  /* PERMISSIONS
+   */
+  if (varname[0] == '-')
+  {
+    varname++;
+    return do_permission_line(varname,value);
+  }
   return 1;
 }

@@ -14,8 +14,6 @@
 privgroup	admin
 privgroup	anonymous
 
-delete -admin
-
 # users definitions
 # users MUST begin by line name=<>
 [USERS]
@@ -25,19 +23,17 @@ home=/home/pollux
 pass=tobNnnhhJY2Fs
 uid=501
 groups=admin
-rights=0xff
+rights=0xffffffff
 
-name=anonymous
+name=guest
 home=/home/pollux/tmp
 pass=%
 uid=200
-groups=anonymous
+groups=nogroup
 rights=0x03
+max_dl_speed=100000
 
 # per hosts rights
 [HOSTS]
 all = *
 
-# per dir rights
-[RIGHTS]
-/ rwxrwxrwx

@@ -1,6 +1,32 @@
+## IN PROGRESS ##
+
+- rename chould change filename in permission file
+- hide some filenames in list: .dirinfo .dirmsg
+- modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
+  exist but path was converted
+- wzd_misc.c: access to limiter should be thread-safe !
+- shared memory: finish to implement windows part
+- bandwidth limit: add global limit / group limit
+- perms: implement permissions on global commands like delete, mkdir, site ...
+  these perms will complete per-user rights
+  3 modes of perms: user/group/flag
+- user/group: ALWAYS create a special user nobody and special group nogroup
+- modify acls to accept groupnames (instead of users), or wildcards (*)
+
+
 ## PRIORITY ##
 
+- cookies
+- ACL: ascendant recursion for permissions ? need to check if >= rootpath !
+- data connection: either management in a thread, either rewrite of
+   list, retr & stor
+- pass arguments for LIST
+- bandwith limitations: global / group / user
+    + possibility of relatives restrictions: 75g == 75 % of the group limit (for 1 user)
 - implement permissions
+- create a .dirinfo in each dir, to implement permissions
+- dir perms are useless now ?!
+- if no .dirinfo is found, use global dir reps ?
 - finish implementation of ssl: explicit, port, data protection, buffer size
 - invert args in strncmp in wzd_ClientThread.c (risk segfault if buffer = PAS\0 ?? )
 - specify PASV range
@@ -23,9 +49,11 @@
 
 ## I'LL THINK ABOUT IT ##
 
+- virtual directories
 - rolling range of ips, with change date:
    e.g during one week use ip 1, then 1 week ip 2, etc.
 - add quota
+- add size limit for directories
 - XCRC command
 - sfv checker
 - dupe checker

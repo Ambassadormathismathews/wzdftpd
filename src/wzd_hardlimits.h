@@ -14,4 +14,9 @@
 #define	HARD_USERLIMIT		256
 #define	HARD_MSG_LIMIT		1024
 
+
+
+#define	HARD_PERMFILE		".dirinfo"
+
+
 #endif /* __WZD_HARD_LIMITS__ */

@@ -13,7 +13,7 @@ COMMON_LIBS=
 
 OBJS=wzd_misc.o wzd_site.o wzd_socket.o wzd_backend.o wzd_messages.o \
   wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o \
-  ls.o
+  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o
 DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)
@@ -36,27 +36,21 @@ all: debug
 
 release: $(OBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS); \
-	sudo chown root $(EXEC); \
-	sudo chmod u+s $(EXEC)
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS);
 else
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
 endif
 
 debug: $(DOBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS); \
-	sudo chown root $(EXEC); \
-	sudo chmod u+s $(EXEC)
+	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS);
 else
 	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS)
 endif
 
 pedantic: $(POBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS); \
-	sudo chown root $(EXEC); \
-	sudo chmod u+s $(EXEC)
+	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS);
 else
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS)
 endif
