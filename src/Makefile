@@ -2,7 +2,7 @@ include Makefile.config
 
 WZD_BUILD_NUM=$(DATE_TAG)
 
-COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
+COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\" -DWZD_MULTIPROCESS=$(WZD_MULTIPROCESS)
 COMMON_LIBS=
 
 OBJS=wzd_site.o wzd_site_user.o wzd_socket.o \
@@ -17,7 +17,7 @@ CFLAGS=-O2 $(COMMON_CFLAGS)
 DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
 PCFLAGS=-g -DDEBUG $(COMMON_CFLAGS) -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
 
-LIBWZD_SOURCES = wzd_libmain.c wzd_log.c wzd_misc.c wzd_backend.c wzd_messages.c wzd_mod.c wzd_vfs.c
+LIBWZD_SOURCES = wzd_libmain.c wzd_log.c wzd_misc.c wzd_backend.c wzd_messages.c wzd_mod.c wzd_vfs.c wzd_cache.c
 LIBWZD_OBJS = $(LIBWZD_SOURCES:%.c=%.o)
 LIBWZD_DOBJS = $(LIBWZD_SOURCES:%.c=%.do)
 LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
@@ -53,7 +53,7 @@ all: debug
 install: release
 	install --mode=755 $(EXEC) $(LIBWZD) $(DESTDIR); \
 	install --mode=600 wzd.cfg $(DESTDIR); \
-	install --mode=644 file_{help,swho,user,rules,users,who}.txt $(DESTDIR)
+	install --mode=644 file_help.txt file_swho.txt file_user.txt file_rules.txt file_users.txt file_who.txt $(DESTDIR)
 
 uninstall:
 	rm -f $(DESTDIR)/file_{help,swho,user,rules,users,who}.txt; \
@@ -116,7 +116,7 @@ distclean: clean
 ###### dependancies
 deps:
 	rm -f Makefile.deps Makefile.deps2; \
-	for obj in $(SOURCES); do $(CC) -MM $$obj >> Makefile.deps; done; \
+	for obj in $(SOURCES) $(LIBWZD_SOURCES); do $(CC) -MM $$obj >> Makefile.deps; done; \
 	sed s/\.o:/\.do:/g Makefile.deps >> Makefile.deps2; \
 	sed s/\.o:/\.po:/g Makefile.deps >> Makefile.deps2; \
 	cat Makefile.deps2 >> Makefile.deps; \
