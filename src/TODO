@@ -8,7 +8,7 @@
 - unified command permissions:
   - create command hash table / OK
   - initialize commands before reading config file ? / OK
-  - add site commands
+  - add site commands / OK
   - add permissions from config file in hash table
 '********'
 - finish MLST

@@ -49,6 +49,8 @@ void list_destroy(List *list)
 {
   void *data;
 
+  if (!list) return;
+
   while (list_size(list) > 0) {
     if (list_rem_next(list,0,(void**)&data)==0 && list->destroy != NULL) {
       list->destroy(data);

@@ -402,6 +402,8 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   if (result >= str->allocated)
   {
     _str_set_min_size(str, result+1);
+    va_end(argptr);
+    va_start(argptr,format); /* note: ansi compatible version of va_start */
     result = vsnprintf(str->buffer, str->allocated, format, argptr);
   }
   str->length = result;
@@ -416,6 +418,8 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
        return -1;
      }
      _str_set_min_size(str,(str->allocated*150)/100);
+     va_end(argptr);
+     va_start(argptr,format); /* note: ansi compatible version of va_start */
      result = vsnprintf(str->buffer, str->allocated, format, argptr);
    }
    str->length = result;

@@ -1,3 +1,8 @@
+2005-01-12  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: server sending garbage on 64-bits platforms
+	* bugfix: libmysql.h missing, unable to compile mysql backend
+
 2005-01-07  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: all site commands converted to new format

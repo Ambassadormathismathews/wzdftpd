@@ -579,13 +579,22 @@ char * safe_vsnprintf(const char *format, va_list ap)
   int size = WORK_BUF_LEN;
   char * buffer = wzd_malloc(size);
   int result;
+  va_list ap2;
 
-  result = vsnprintf(buffer, size, format, ap);
+  /** vsnprintf modifies its last argument on some archs, we have to
+   * work on a copy of the va_list
+   */
+  va_copy(ap2,ap);
+
+  result = vsnprintf(buffer, size, format, ap2);
   if (result >= size)
   {
     buffer = wzd_realloc(buffer, result+1);
-    result = vsnprintf(buffer, result+1, format, ap);
+    va_end(ap2);
+    va_copy(ap2,ap);
+    result = vsnprintf(buffer, result+1, format, ap2);
   }
+  va_end(ap2);
 
   return buffer;
 }
