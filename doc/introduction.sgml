@@ -1,0 +1,88 @@
+<chapter>
+  <title>Introduction</title>
+
+<sect1>
+<title>Background</title>
+
+<para>
+wzdftpd is a ftp server designed to be modular, work under linux/win32, and to be
+entirely configurable online using SITE commands.
+</para>
+
+</sect1>
+
+<sect1>
+<title>Features</title>
+
+<para>
+wzdftpd offers the following features (and the list is constantly changing):
+
+<itemizedlist>
+<listitem><para>
+<emphasis>Simple</emphasis> configuration file, supporting inclusions
+</para></listitem>
+<listitem><para>Online administration, using SITE commands</para></listitem>
+<listitem><para>Backends to store users/groups in different structures</para></listitem>
+<listitem><para>Modules: internal, using shared librairies, or external
+(scripts/applications)</para></listitem>
+<listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
+<listitem><para>SSL/TLS support</para></listitem>
+<listitem><para>Server is designed to run as a non-privileged user to enfore
+security</para></listitem>
+<listitem><para>Cross devices operations (copy/move) (though can be slow)</para></listitem>
+<listitem><para>Logging support (compatible with the wu-ftpd standard)</para></listitem>
+<listitem><para>Designed for high performances: coded with C, multithreaded</para></listitem>
+</itemizedlist>
+
+</para>
+
+</sect1>
+
+<sect1>
+<title>Installation</title>
+
+<para>
+<itemizedlist>
+<listitem><para>copy the config file and the executable in the install dir</para></listitem>
+<listitem><para>copy AT LEAST one backend in the same dir, and all its config
+files</para></listitem>
+<listitem><para>edit wzd.cfg
+  The file is commented, you shouldn't need help - if you need, install serv-u</para></listitem>
+<listitem><para>run the .exe</para></listitem>
+<listitem><para>login for the first time FROM LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
+and create users</para></listitem>
+</itemizedlist>
+</para>
+
+<!--informaltable>
+<tgroup cols="1">
+<tbody>
+<row>
+<entry>foo</entry></row>
+<row><entry>bar</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+
+<table><title>bar</title>
+<tgroup cols="1">
+<tbody>
+<row><entry>bar</entry></row>
+</tbody>
+</tgroup>
+</table-->
+
+</sect1>
+
+<sect1>
+<title>Configuration</title>
+
+<para>
+Edit your config file.
+</para>
+
+</sect1>
+
+</chapter>
+
+

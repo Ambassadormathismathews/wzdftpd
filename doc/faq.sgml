@@ -1,0 +1,76 @@
+<chapter>
+  <title>FAQ</title>
+
+<simplesect id='faq_multipleservers'>
+<title>Can I run several servers on the same machine ?</title>
+<para>
+Yes ! You will need to have a separate config file for each instance (look the
+-f option), and to specify at least different ports & shm key in each config file.
+</para>
+<para>
+Remember wzdftp uses <emphasis>two</emphasis> shared memory zones, so do NOT
+specify consecutive keys.
+</para>
+</simplesect>
+
+<simplesect id='faq_shm'>
+<title>[Linux] Server dies with error 'CRITICAL: shm exists with selected shm_key
+xxxxxx'</title>
+<para>
+This means the server shared memory zone is already allocated, it can only
+happen in two cases: last execution crashed, or another server is running.
+</para>
+<para>
+To remove a zone resulting from a crash (this should never happen :) just run
+</para>
+<screen>wzdFTPd -d</screen>
+<para>
+To run multiples instance of a ftp server look at <link linkend='faq_multipleservers'>
+"Running multiples instances</link>.
+</para>
+</simplesect>
+
+<simplesect id='faq_tls1'>
+<title>When I start the server it displays no error but it isn't running (not
+present in the process list)</title>
+<para>
+Check your log file !
+</para>
+<para>
+If your server is compiled with TLS enabled, the most frequent error an invalid
+or absent certificate file. Error looks like:
+</para>
+<screen>
+SSL_CTX_use_certificate_file() error:0906D06C:PEM routines:PEM_read_bio:no start line
+TLS subsystem could not be initialized.
+</screen>
+</simplesect>
+
+<simplesect id='faq_customsite'>
+<title>How do I add a custom site command ?</title>
+<para>
+Add the definition to your config file:
+<screen>ex: site_cmd = my_free /usr/local/bin/free.sh</screen>
+</para>
+<para>You will also need to authorize users to use the command:
+<screen>ex: -site_my_free = *</screen>
+</para>
+</simplesect>
+
+<simplesect id='faq_server_uid'>
+<title>[Linux] When I run the server with uid 0 (root) it complains it can't open
+file 'users' or commit changes</title>
+<para>
+Make sure files 'users' and 'users.OLD' are owned by same uid as specified in the
+server_uid directive in the config file.
+</para>
+<screen>chown ftp users users.OLD</screen>
+<para>
+When running the server with root privileges, you can specify a server_uid line
+in the config file to drop root privileges after binding to port < 1024.
+Note that this server does not need root privileges to run, it is designed to
+work in restricted user-mode (this is REALLY more secure !).
+</para>
+</simplesect>
+
+</chapter>

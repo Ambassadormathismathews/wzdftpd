@@ -1,29 +1,35 @@
 <?xml version='1.0'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "docbook/dtd/xml/4.1.2/docbookx.dtd" [
-<!ENTITY installation SYSTEM "installation.sgml">
+<!ENTITY introduction SYSTEM "introduction.sgml">
 <!ENTITY commands_reference SYSTEM "commands_reference.sgml">
 <!ENTITY cookies_reference SYSTEM "cookies_reference.sgml">
 <!ENTITY common_modules SYSTEM "common_modules.sgml">
 <!ENTITY common_backends SYSTEM "common_backends.sgml">
 <!ENTITY sitebot SYSTEM "sitebot.sgml">
+<!ENTITY license SYSTEM "license.sgml">
+<!ENTITY faq SYSTEM "faq.sgml">
 ]>
 <book>
   <title>wzdFTPd Documentation</title>
 
-&installation;
+&introduction;
 &commands_reference;
 &cookies_reference;
 &common_modules;
 &common_backends;
 &sitebot;
+&faq;
+&license;
 
 <glossary>
-<glossentry><glossterm>foo</glossterm>
-<indexterm><primary>foo</primary></indexterm>
+<glossentry><glossterm>backend</glossterm>
+<indexterm><primary>backend</primary></indexterm>
 <glossdef>
 <para>
-Some appropriate definition goes here.
+A backend is a module which provides a layer between the server and the
+application that will store users and groups. It allows to use plain
+text files, directories(LDAP) or databases in the same convenient way.
 </para>
 </glossdef>
 </glossentry>
