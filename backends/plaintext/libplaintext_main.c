@@ -390,7 +390,7 @@ int read_section_users(FILE * file_user, char * line)
   char *ptr;
   unsigned long i;
 
-#if DEBUG
+#if 0
 fprintf(stderr,"Entering section USERS\n");
 #endif
   while ( (c = getc(file_user)) != EOF ) {
@@ -618,7 +618,7 @@ int read_section_groups(FILE * file_user, char * line)
   long num;
   int i;
 
-#if DEBUG
+#if 0
 fprintf(stderr,"Entering section GROUPS\n");
 #endif
   while ( (c = getc(file_user)) != EOF ) {
@@ -643,7 +643,7 @@ fprintf(stderr,"Entering section GROUPS\n");
 	fprintf(stderr,"privgroup should be followed by the group name !\n");
 	continue;
       }
-#if DEBUG
+#if 0
 fprintf(stderr,"Defining new private group %s\n",token);
 #endif
 /*
@@ -724,7 +724,7 @@ int read_section_hosts(FILE * file_user, char * line)
 {
   char c;
 
-#if DEBUG
+#if 0
 fprintf(stderr,"Entering section HOSTS\n");
 #endif
   while ( (c = getc(file_user)) != EOF ) {
