@@ -93,6 +93,7 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
   new_vfs->physical_dir = strdup(path);
   new_vfs->target = NULL;
   new_vfs->next_vfs = NULL;
+  new_vfs->prev_vfs = NULL;
 
   current_vfs = *vfs_list;
 
@@ -106,6 +107,7 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
   }
 
   current_vfs->next_vfs = new_vfs;
+  new_vfs->prev_vfs = current_vfs;
 
   return 0;
 }
@@ -128,6 +130,7 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   new_vfs->physical_dir = strdup(path);
   new_vfs->target = strdup(target);
   new_vfs->next_vfs = NULL;
+  new_vfs->prev_vfs = NULL;
 
   current_vfs = *vfs_list;
 
@@ -141,6 +144,7 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   }
 
   current_vfs->next_vfs = new_vfs;
+  new_vfs->prev_vfs = current_vfs;
 
   return 0;
 }
@@ -395,3 +399,33 @@ printf("Converted to: '%s'\n",path);
   return 0;
 }
 
+/* FIXME: does not yet support vfs */
+int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context)
+{
+  const char *ptr;
+  wzd_user_t * user;
+  wzd_vfs_t * vfs;
+  char buffer[4096];
+
+  user = GetUserByID(context->userid);
+  if (!user) return E_USER_IDONTEXIST;
+
+  strncpy(buffer,abs,4096);
+
+  vfs = mainConfig->vfs;
+  if (vfs) {
+    while (vfs->next_vfs) vfs = vfs->next_vfs;
+
+    if (buffer,vfs->physical_dir,strlen(vfs->physical_dir) == 0) {
+      
+    }
+  }
+
+  if (strncmp(buffer,user->rootpath,strlen(user->rootpath))) /* VFS */
+      return 1;
+
+  ptr = buffer + strlen(user->rootpath);
+  strncpy(rel,ptr,rel_len);
+
+  return 0;
+}
