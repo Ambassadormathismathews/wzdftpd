@@ -1,9 +1,10 @@
-PLATFORM:=$(shell uname)
-SUBDIRS =
+include ../src/Makefile.config
 
-ifeq ($(PLATFORM),Linux)
-SUBDIRS += sitewho
-endif
+SUBDIRS = sitewho siteuptime
+
+#ifeq ($(PLATFORM),Linux)
+#SUBDIRS += sitewho siteuptime
+#endif
 
 debug:
 	make recursive 'RECURSIVE_TARGET=debug'
@@ -13,6 +14,18 @@ all:
 
 release:
 	make recursive 'RECURSIVE_TARGET=release'
+
+install:
+	mkdir -p -m 755 $(DESTDIR)/tools; \
+	make recursive 'RECURSIVE_TARGET=install'
+
+installdebug:
+	mkdir -p -m 755 $(DESTDIR)-debug/tools; \
+	make recursive 'RECURSIVE_TARGET=installdebug'
+
+uninstall:
+	make recursive 'RECURSIVE_TARGET=uninstall'; \
+	rmdir $(DESTDIR)/tools;
 
 clean:
 	make recursive 'RECURSIVE_TARGET=clean'
