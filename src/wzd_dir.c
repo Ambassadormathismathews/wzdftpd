@@ -96,7 +96,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   snprintf(dirfilter,sizeof(dirfilter),"%s/*",name);
   if ((dir = FindFirstFile(dirfilter,&fileData)) == INVALID_HANDLE_VALUE) return NULL;
 #endif
-  
+
   if (name[strlen(name)-1] != '/') vfs_pad = 1;
 
   _dir = malloc(sizeof(struct wzd_dir_t));
@@ -175,7 +175,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
 
     if (!entry) { /* not listed in permission file */
-      
+
       /* if entry is a directory, we must query dir for more infos */
       strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
       if (lstat(buffer_file,&st)) {
@@ -212,7 +212,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       /* file exist AND is a symlink ?! */
     }
 
-    /** \todo sorted insertion */
+    /* sorted insertion */
     if (sorted) {
       file_insert_sorted(entry,&_dir->first_entry);
     } else {
@@ -224,7 +224,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   } /* for all directory entries */
   closedir(dir);
 
-  /* XXX add vfs entries */
+  /* add vfs entries */
   {
     char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
     while (vfs)
@@ -247,13 +247,16 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       { /* ok, we have a candidate. Now check if user is allowed to see it */
         ptr = buffer_vfs + strlen(name) + vfs_pad;
         if (strchr(ptr,'/')==NULL) {
-          entry = wzd_malloc(sizeof(struct wzd_file_t));
+          /* read vfs permissions, set to default if no permissions set */
+          entry = file_stat(vfs->physical_dir,context);
+          if (!entry) {
+            entry = wzd_malloc(sizeof(struct wzd_file_t));
+            entry->owner[0] = '\0';
+            entry->group[0] = '\0';
+            entry->permissions = mainConfig->umask;
+            entry->acl = NULL;
+          }
           strncpy(entry->filename,ptr,sizeof(entry->filename));
-          /** \todo FIXME read vfs permissions */
-          entry->owner[0] = '\0';
-          entry->group[0] = '\0';
-          entry->permissions = mainConfig->umask;
-          entry->acl = NULL;
           entry->kind = FILE_VFS;
           entry->data = wzd_strdup(vfs->physical_dir);
           entry->next_file = NULL;
@@ -261,7 +264,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       }
 
       if (entry) {
-        /** \todo sorted insertion */
+        /* sorted insertion */
         if (sorted) {
           file_insert_sorted(entry,&_dir->first_entry);
         } else {
@@ -275,7 +278,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     wzd_free(buffer_vfs);
   } /* add vfs entries */
 
-  /* XXX add symlinks */
+  /* add symlinks */
   {
     it = perm_list;
     itp = NULL;
@@ -297,7 +300,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
           it = itp;
         }
         entry->next_file = NULL;
-        /** \todo sorted insertion */
+        /* sorted insertion */
         if (sorted) {
           file_insert_sorted(entry,&_dir->first_entry);
         } else {
@@ -342,7 +345,7 @@ void dir_close(struct wzd_dir_t * dir)
 struct wzd_file_t * dir_read(struct wzd_dir_t * dir, wzd_context_t * context)
 {
   struct wzd_file_t * entry;
-  
+
   if (!dir || !dir->current_entry) return NULL;
   entry = dir->current_entry;
   dir->current_entry = entry->next_file;
@@ -504,7 +507,7 @@ char * path_simplify(char *filename)
     }
     pos++;
   }
-  
+
   if (pos2 == '\0')
   {
     filename[pos2] = '/';

@@ -1,4 +1,4 @@
-2004-09-28  Pierre Chifflier  <pollux@cpe.fr>
+2004-10-01  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: site chacl broken
 	* bugfix: segfault on idle timeout
@@ -9,6 +9,8 @@
 	* bugfix: could not get free space when using backslashes (closes: #0010)
 	* bugfix: user ip check fails if ip1 was deleted (closes: #0012)
 	* bugfix: crash using link remove -r with bad arguments (closes: #0013)
+	* bugfix: files with spaces corrupting .dirinfo (closes: #0014, #0015)
+	* bugfix: permissions changes not displayed for vfs (closes: #0017)
 	* feature: site chmod now accepts string version of permissions
 
 2004-09-13  Pierre Chifflier  <pollux@cpe.fr>

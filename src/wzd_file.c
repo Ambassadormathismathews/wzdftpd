@@ -662,7 +662,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   out_err(LEVEL_HIGH,"_checkPerm(%s,%ld,%s)\n",filename,wanted_right,user->username);
 #endif
 
-  strncpy(dir,filename,WZD_MAX_PATH); 
+  strncpy(dir,filename,WZD_MAX_PATH);
 
   if (user->flags && strchr(user->flags,FLAG_ANONYMOUS))
   {

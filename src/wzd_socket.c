@@ -436,7 +436,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
         return -1;
       }
       if (errno == WSAEWOULDBLOCK) {
-        out_log(LEVEL_INFO,"WSAEWOULDBLOCK (removed me: %s:%d)",__FILE__,__LINE__);
+        out_log(LEVEL_INFO,"WSAEWOULDBLOCK (removed me: %s:%d)\n",__FILE__,__LINE__);
         continue;
       }
       /* error */
