@@ -25,7 +25,7 @@
 #ifndef __WZD_SERVER_THREAD__
 #define __WZD_SERVER_THREAD__
 
-#include <wzd_mutex.h>
+#include "wzd_mutex.h"
 
 extern wzd_mutex_t * limiter_mutex;
 extern time_t server_time;

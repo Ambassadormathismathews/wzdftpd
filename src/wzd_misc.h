@@ -25,7 +25,7 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
-#include <wzd_mutex.h>
+#include "wzd_mutex.h"
 
 unsigned long compute_hashval (const void *key, size_t keylen);
 
