@@ -1,24 +1,35 @@
+2005-01-03  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: added pam authentication via libwzd-auth
+	* feature: added TLS client certificate check via libwzd-auth
+	* feature: new config directives tls_ca_file and tls_ca_path
+	* feature: backend plaintext use libwzd-auth
+	* bugfix: no timeout on read/write with gnutls
+	* bugfix: site color does not remove flag correctly
+	* bugfix: misc problems in SITE commands
+	* bugfix: memory leak in %if cookie
+
 004-12-18  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: cannot remove directories with message (closes: #0023)
 
-004-12-15  Pierre Chifflier  <pollux@cpe.fr>
+2004-12-15  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: new config directive 'tls_certificate_key'
 	* feature: new library libwzd-auth
 
-004-12-13  Pierre Chifflier  <pollux@cpe.fr>
+2004-12-13  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: removed server limitations for users/groups. The same has
 	to be done in backends to be fully effective.
 	* feature: removed limitations in backend plaintext
 	* feature: removed backend_storage
 
-004-12-10  Pierre Chifflier  <pollux@cpe.fr>
+2004-12-10  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: send_message functions rewritten to use safe strings
 
-004-12-08  Pierre Chifflier  <pollux@cpe.fr>
+2004-12-08  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: crash during site purge (closes: #0022)
 

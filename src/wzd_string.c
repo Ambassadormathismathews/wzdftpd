@@ -108,6 +108,15 @@ const char * str_tochar(const wzd_string_t *str)
   return (str)?str->buffer:NULL;
 }
 
+/** returns 1 if string exists and length is inside min and max (included)
+ */
+unsigned int str_checklength(const wzd_string_t *str, size_t min, size_t max)
+{
+  if (!str || !str->buffer) return 0;
+  if (strlen(str->buffer) < min || strlen(str->buffer) > max) return 0;
+  return 1;
+}
+
 wzd_string_t * str_dup(const wzd_string_t *src)
 {
   wzd_string_t * dst;
@@ -284,6 +293,11 @@ wzd_string_t * str_tok(wzd_string_t *str, const char *delim)
   char *ptr, *t;
   char * buffer;
 
+#ifdef DEBUG
+  if (!str)
+    out_log(LEVEL_HIGH,"str_tok called with NULL argument !\n");
+#endif
+
   if (!str || !str->buffer || str->length == 0) return NULL;
   if (!delim) return NULL;
 
@@ -303,6 +317,64 @@ wzd_string_t * str_tok(wzd_string_t *str, const char *delim)
   wzd_free(buffer);
 
   return token;
+}
+
+/** \brief str_read next token
+ * \return a pointer to the next token, or NULL if not found, or if there is \
+ * only whitespaces, or if quotes are unbalanced
+ * Read next token separated by a whitespace, except if string begins
+ * with a ' or ", in this case it searches the matching character.
+ * Note: input string is modified as a \\0 is written.
+ */
+wzd_string_t * str_read_token(wzd_string_t *str)
+{
+  char *tok, c;
+  char sep[2];
+  char *s;
+  char *ptr, *endptr;
+  wzd_string_t * str_ret=NULL;
+
+  if (!str || !str->buffer || str->length == 0) return NULL;
+
+  s = str->buffer;
+
+  if (s == NULL)
+  {
+    return NULL;
+  }
+
+  /* skip leading spaces */
+  while ( (c = *s) && isspace(c) ) s++;
+  if (*s == '\0') /* only whitespaces */
+  { return NULL; }
+
+  /* search for any whitespace or quote */
+  tok = strpbrk(s, " \t\r\n\"'");
+
+  if (!tok) {
+    str_ret = STR(str->buffer);
+    /* nothing, we return string */
+    str->length = 0;
+    str->buffer[0] = '\0';
+    return str_ret;
+  }
+
+  /* the first char is a quote ? */
+  if (*tok == '"' || *tok == '\'') {
+    sep[0] = *tok;
+    sep[1] = '\0';
+    if (!strchr(tok+1,*tok)) { /* unbalanced quotes */
+      return NULL;
+    }
+    /** \bug we can't have escaped characters */
+    ptr = strtok_r(tok, sep, &endptr);
+    str_ret = STR(ptr);
+    str->length = strlen(str->buffer);
+    return str_ret;
+  }
+
+  /* normal case, we search a whitespace */
+  return str_tok(str, " \t\r\n");
 }
 
 
@@ -358,11 +430,11 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   return result;
 }
 
+#ifdef HAVE_UTF8
 /** \brief Convert utf8 string to other charset
  * \note
  * Require unicode support
  */
-#ifdef HAVE_UTF8
 int str_utf8_to_local(wzd_string_t *str, const char * charset)
 {
   char * utf_buf;
@@ -389,8 +461,45 @@ int str_utf8_to_local(wzd_string_t *str, const char * charset)
 
   return 0;
 }
+
+/** \brief Convert charset to utf8 string
+ * \note
+ * Require unicode support
+ */
+int str_local_to_utf8(wzd_string_t *str, const char * charset)
+{
+  char * utf_buf;
+  size_t length;
+
+  if (!utf8_valid(str->buffer, str->length)) {
+    return -1;
+  }
+
+  length = strlen(str->buffer) + 10; /* we allocate more, small security */
+  utf_buf = wzd_malloc(length);
+
+  if (local_charset_to_utf8(str->buffer, utf_buf, length, charset))
+  {
+    /* error during conversion */
+    wzd_free(utf_buf);
+    return -1;
+  }
+
+  wzd_free(str->buffer);
+  str->buffer = utf_buf;
+  str->allocated = length;
+  str->length = strlen(utf_buf);
+
+  return 0;
+}
+
 #else
 int str_utf8_to_local(wzd_string_t *str, const char * charset)
+{
+  return -1;
+}
+
+int str_local_to_utf8(wzd_string_t *str, const char * charset)
 {
   return -1;
 }

@@ -468,18 +468,7 @@ typedef struct _context_t {
 
 /********************** COMMANDS **************************/
 
-typedef int (*wzd_function_command_t)(char *name, char *param, wzd_context_t *context);
-
-typedef struct _wzd_command_t {
-	
-  char *name;
-  unsigned int id;
-
-  wzd_function_command_t command;
-  wzd_function_command_t help_function;
-
-  struct _wzd_command_t * next_command;
-} wzd_command_t;
+#include "wzd_commands.h"
 
 /************************ MAIN CONFIG *********************/
 
@@ -539,7 +528,6 @@ typedef struct {
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
   unsigned long	shm_key;
-  wzd_command_t		* command_list;
   struct wzd_command_perm_t	* perm_list;
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;

@@ -43,6 +43,7 @@ typedef struct _wzd_acl_rule_t {
 
 /** @brief File: name, owner, permissions, etc. */
 struct wzd_file_t {
+  /** \todo replace with (char*) */
   char	filename[256];
   /** \todo replace with uid */
   char	owner[256];

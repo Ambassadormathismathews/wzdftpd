@@ -3,6 +3,22 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- #include <inttypes.h> and use PRIu64 for printf() with u64_t ( C99 ! )
+'********'
+- unified command permissions:
+  - create command hash table / OK
+  - initialize commands before reading config file ? / OK
+  - add site commands
+  - add permissions from config file in hash table
+'********'
+- finish MLST
+- implement MLSD
+'********'
+- md5_crypt not working ?? (last char is incorrect)
+'********'
+- check if 'dh_shlibdeps -L wzdftpd' would be better than ugly sed in
+  debian/rules
+'********'
 - use generic list definition when possible
 '********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=
@@ -15,8 +31,6 @@
 '********'
 - threads management:
   better use thread_id instead of pid_child in diplays, etc.
-'********'
-- implement MLSD
 '*******'
 - remove race conditions in stat/open
 '********'

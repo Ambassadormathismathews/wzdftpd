@@ -72,10 +72,10 @@ void do_site_help_grpadd(wzd_context_t * context)
  *
  * grpadd &lt;group&gt; [&lt;backend&gt;]
  */
-int do_site_grpadd(char *command_line, wzd_context_t * context)
+int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char *groupname, *homedir;
+  wzd_string_t *groupname;
+  char *homedir;
   int ret;
   wzd_user_t *me;
   wzd_group_t *mygroup=NULL, newgroup;
@@ -85,8 +85,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpadd(context);
     return 0;
@@ -94,8 +93,9 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   /* TODO read backend */
 
   /* check if group already exists */
-  if ( GetGroupIDByName(groupname) != -1 ) {
+  if ( GetGroupByName(str_tochar(groupname)) ) {
     ret = send_message_with_args(501,context,"Group already exists");
+    str_deallocate(groupname);
     return 0;
   }
 
@@ -106,6 +106,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   if (is_gadmin)
   {
     ret = send_message_with_args(501,context,"Gadmins can't add groups !");
+    str_deallocate(groupname);
     return 0;
   }
   mygroup = GetGroupByID(me->groups[0]);
@@ -119,12 +120,13 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
     struct stat s;
     if (stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
+      str_deallocate(groupname);
       return 0;
     }
   }
 
   /* create new group */
-  strncpy(newgroup.groupname,groupname,128);
+  strncpy(newgroup.groupname,str_tochar(groupname),sizeof(newgroup.groupname));
   strncpy(newgroup.defaultpath,homedir,WZD_MAX_PATH);
   newgroup.groupperms = 0;
   newgroup.max_idle_time = 0;
@@ -137,8 +139,9 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
     newgroup.ip_allowed[i][0]='\0';
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_group("plaintext",groupname,&newgroup,_GROUP_ALL);
+  ret = backend_mod_group(mainConfig->backend.name,str_tochar(groupname),&newgroup,_GROUP_ALL);
+
+  str_deallocate(groupname);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem adding group");
@@ -156,12 +159,11 @@ void do_site_help_grpdel(wzd_context_t * context)
 
 /** site grpdel: delete group
  *
- * grpdel &lt;group&gt; [&lt;backend&gt;]
+ * grpdel &lt;group&gt;
  */
-int do_site_grpdel(char *command_line, wzd_context_t * context)
+int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char * groupname;
+  wzd_string_t * groupname;
   int ret;
   wzd_user_t *me, *user;
   short is_gadmin;
@@ -177,8 +179,7 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpdel(context);
     return 0;
@@ -186,8 +187,9 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   /* TODO read backend */
 
   /* check if group already exists */
-  if ( !(gid=GetGroupIDByName(groupname)) ) {
+  if ( !(gid=GetGroupIDByName(str_tochar(groupname))) ) {
     ret = send_message_with_args(501,context,"Group does not exist");
+    str_deallocate(groupname);
     return 0;
   }
 
@@ -195,12 +197,9 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   if (is_gadmin)
   {
     ret = send_message_with_args(501,context,"Gadmin can't delete groups");
+    str_deallocate(groupname);
     return 0;
   }
-
-  /* commit changes to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_group("plaintext",groupname,NULL,_GROUP_ALL);
 
   send_message_raw("200-\r\n",context);
   /* iterate through user list and delete all references to group */
@@ -216,12 +215,12 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
          * changed
          */ 
         if (user->groups[0] == gid) {
-          snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
+          snprintf(buffer,sizeof(buffer),"200-WARNING %s main group is changed !\r\n",user->username);
           send_message_raw(buffer,context);
         }
         group_remove_user(user,gid);
         if (user->group_num == 0) {
-          snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
+          snprintf(buffer,sizeof(buffer),"200-WARNING %s has no group now !\r\n",user->username);
           send_message_raw(buffer,context);
         }
       }
@@ -229,6 +228,10 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
     wzd_free(uid_list);
   } /* if (uid_list) */
   /* TODO XXX FIXME delete users belonging only to this group ? */
+
+  /* commit changes to backend */
+  backend_mod_group(mainConfig->backend.name,str_tochar(groupname),NULL,_GROUP_ALL);
+  str_deallocate(groupname);
 
   ret = send_message_raw("200 Group deleted\r\n",context);
   return 0;
@@ -242,60 +245,59 @@ void do_site_help_grpren(wzd_context_t * context)
  *
  * grpren oldname newname
  */
-int do_site_grpren(char *command_line, wzd_context_t * context)
+int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char * groupname, *newgroupname;
+  wzd_string_t * groupname, *newgroupname;
   int ret;
   wzd_user_t *me;
   wzd_group_t group, *oldgroup;
-  int gid;
 /*  unsigned int ratio;*/
   short is_gadmin;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpren(context);
     return 0;
   }
-  newgroupname = strtok_r(NULL," \t\r\n",&ptr);
+  newgroupname = str_tok(command_line," \t\r\n");
   if (!newgroupname) {
     do_site_help_grpren(context);
+    str_deallocate(groupname);
     return 0;
   }
 
   /* check if group exists */
-  if ( (gid=GetGroupIDByName(groupname))==0 ) {
+  oldgroup = GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !oldgroup ) {
     ret = send_message_with_args(501,context,"Group does not exist");
-    return 0;
-  }
-  if ( (oldgroup=GetGroupByID(gid)) == NULL ) {
-    ret = send_message_with_args(501,context,"Error getting group info");
+    str_deallocate(newgroupname);
     return 0;
   }
   memcpy(&group,oldgroup,sizeof(wzd_group_t));
 
   /* check if group exists */
-  if ( (GetGroupIDByName(newgroupname))!=0 ) {
+  if ( (GetGroupByName(str_tochar(newgroupname))) ) {
     ret = send_message_with_args(501,context,"New group already exists");
+    str_deallocate(newgroupname);
     return 0;
   }
 
   if (is_gadmin)
   {
     ret = send_message_with_args(501,context,"GAdmins can't do that !");
+    str_deallocate(newgroupname);
     return 0;
   }
 
-  strncpy(group.groupname,newgroupname,sizeof(group.groupname));
+  strncpy(group.groupname,str_tochar(newgroupname),sizeof(group.groupname));
+  str_deallocate(newgroupname);
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_group("plaintext",groupname,&group,_GROUP_GROUPNAME);
+  ret = backend_mod_group(mainConfig->backend.name,oldgroup->groupname,&group,_GROUP_GROUPNAME);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -305,21 +307,21 @@ int do_site_grpren(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-int do_site_ginfo(char *command_line, wzd_context_t * context)
+int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char * ptr;
-  char * groupname;
+  wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help("ginfo",context);
     return 0;
   }
   /* check if group exists (note: we rely on cache to avoid memory leak here) */
-  if ( (group=GetGroupByName(groupname))==NULL ) {
+  group=GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -330,21 +332,21 @@ int do_site_ginfo(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-int do_site_gsinfo(char *command_line, wzd_context_t * context)
+int do_site_gsinfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char * ptr;
-  char * groupname;
+  wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help("gsinfo",context);
     return 0;
   }
   /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
+  group = GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -363,10 +365,9 @@ void do_site_help_grpaddip(wzd_context_t * context)
  *
  * grpaddip &lt;group&gt; &lt;ip&gt;
  */
-int do_site_grpaddip(char *command_line, wzd_context_t * context)
+int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char * groupname, *ip;
+  wzd_string_t * groupname, *ip;
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
@@ -376,20 +377,16 @@ int do_site_grpaddip(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpaddip(context);
-    return 0;
-  }
-  ip = strtok_r(NULL," \t\r\n",&ptr);
-  if (!ip) {
     do_site_help_grpaddip(context);
     return 0;
   }
 
   /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
+  group=GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -401,16 +398,24 @@ int do_site_grpaddip(char *command_line, wzd_context_t * context)
     return 0;
   }
 
+  ip = str_tok(command_line," \t\r\n");
+  if (!ip) {
+    do_site_help_grpaddip(context);
+    return 0;
+  }
+
   /* check if ip is already present or included in list, or if it shadows one present */
   for (i=0; i<HARD_IP_PER_GROUP; i++)
   {
     if (group->ip_allowed[i][0]=='\0') continue;
-    if (my_str_compare(ip,group->ip_allowed[i])==1) { /* ip is already included in list */
+    if (my_str_compare(str_tochar(ip),group->ip_allowed[i])==1) { /* ip is already included in list */
       ret = send_message_with_args(501,context,"ip is already included in list");
+      str_deallocate(ip);
       return 0;
     }
-    if (my_str_compare(group->ip_allowed[i],ip)==1) { /* ip will shadow one ore more ip in list */
+    if (my_str_compare(group->ip_allowed[i],str_tochar(ip))==1) { /* ip will shadow one ore more ip in list */
       ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
+      str_deallocate(ip);
       return 0;
     }
   }
@@ -422,16 +427,17 @@ int do_site_grpaddip(char *command_line, wzd_context_t * context)
   /* no more slots ? */
   if (i==HARD_IP_PER_GROUP) {
     ret = send_message_with_args(501,context,"No more slots available - either recompile with more slots, or use them more cleverly !");
+    str_deallocate(ip);
     return 0;
   }
   /* TODO check ip validity */
-  strncpy(group->ip_allowed[i],ip,MAX_IP_LENGTH-1);
+  strncpy(group->ip_allowed[i],str_tochar(ip),MAX_IP_LENGTH-1);
 
   /* commit to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_group("plaintext",groupname,group,_GROUP_IP);
+  backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_IP);
 
   ret = send_message_with_args(200,context,"Group ip added");
+  str_deallocate(ip);
   return 0;
 }
 
@@ -447,10 +453,10 @@ void do_site_help_grpdelip(wzd_context_t * context)
  *
  * grpdelip &lt;group&gt; &lt;slot_number&gt;
  */
-int do_site_grpdelip(char *command_line, wzd_context_t * context)
+int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * groupname, *ip;
+  wzd_string_t * groupname, *ip;
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
@@ -461,21 +467,22 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpdelip(context);
     return 0;
   }
-  ip = strtok_r(NULL," \t\r\n",&ptr);
-  if (!ip) {
-    do_site_help_grpdelip(context);
+  /* check if group exists */
+  group=GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
+    ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
 
-  /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
-    ret = send_message_with_args(501,context,"Group does not exist");
+  ip = str_tok(command_line," \t\r\n");
+  if (!ip) {
+    do_site_help_grpdelip(context);
     return 0;
   }
 
@@ -483,23 +490,26 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context)
   if (is_gadmin)
   {
     ret = send_message_with_args(501,context,"Gadmins can't do that !");
+    str_deallocate(ip);
     return 0;
   }
 
   /* try to take argument as a slot number */
-  ul = strtoul(ip,&ptr,0);
+  ul = strtoul(str_tochar(ip),&ptr,0);
   if (*ptr=='\0') {
     if (ul <= 0 || ul >= HARD_IP_PER_GROUP) {
       ret = send_message_with_args(501,context,"Invalid ip slot number");
+      str_deallocate(ip);
       return 0;
     }
+    str_deallocate(ip);
     ul--; /* to index slot number from 1 */
     if (group->ip_allowed[ul][0] == '\0') {
       ret = send_message_with_args(501,context,"Slot is already empty");
       return 0;
     }
     group->ip_allowed[ul][0] = '\0';
-    backend_mod_group("plaintext",groupname,group,_GROUP_IP);
+    backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_IP);
     ret = send_message_with_args(200,context,"Group ip removed");
     return 0;
   } /* if (*ptr=='\0') */
@@ -508,15 +518,17 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context)
   for (i=0; i<HARD_IP_PER_GROUP; i++)
   {
     if (group->ip_allowed[i][0]=='\0') continue;
-    if (strcmp(ip,group->ip_allowed[i])==0) {
+    if (strcmp(str_tochar(ip),group->ip_allowed[i])==0) {
       group->ip_allowed[i][0] = '\0';
       /* commit to backend */
       /* FIXME backend name hardcoded */
-      backend_mod_group("plaintext",groupname,group,_USER_IP);
+      backend_mod_group(mainConfig->backend.name,group->groupname,group,_USER_IP);
       ret = send_message_with_args(200,context,"Group ip removed");
+      str_deallocate(ip);
       return 0;
     }
   }
+  str_deallocate(ip);
 
   ret = send_message_with_args(501,context,"IP not found");
   return 0;
@@ -530,10 +542,10 @@ void do_site_help_grpratio(wzd_context_t * context)
  *
  * grpratio group ratio
  */
-int do_site_grpratio(char *command_line, wzd_context_t * context)
+int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * str_ratio, *groupname;
+  wzd_string_t * str_ratio, *groupname;
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
@@ -543,29 +555,32 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpratio(context);
     return 0;
   }
-  str_ratio = strtok_r(NULL," \t\r\n",&ptr);
+  /* check if group exists */
+  group=GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
+    ret = send_message_with_args(501,context,"Group does not exist");
+    return 0;
+  }
+
+  str_ratio = str_tok(command_line," \t\r\n");
   if (!str_ratio) {
     do_site_help_grpratio(context);
     return 0;
   }
 
-  /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
-    ret = send_message_with_args(501,context,"Group does not exist");
-    return 0;
-  }
-
-  ratio = strtoul(str_ratio,&ptr,0);
+  ratio = strtoul(str_tochar(str_ratio),&ptr,0);
   if (*ptr!='\0') {
     do_site_help_grpratio(context);
+    str_deallocate(str_ratio);
     return 0;
   }
+  str_deallocate(str_ratio);
 
   if (is_gadmin)
   {
@@ -576,8 +591,7 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
   group->ratio = ratio;
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_group("plaintext",groupname,group,_GROUP_RATIO);
+  ret = backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -591,26 +605,26 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
  *
  * grpkill group
  */
-int do_site_grpkill(char *command_line, wzd_context_t * context)
+int do_site_grpkill(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   ListElmt * elmnt;
   wzd_context_t * loop_context;
-  char * ptr;
-  char * groupname;
+  wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
   int found=0;
   wzd_user_t * user, * me;
 
   me = GetUserByID(context->userid);
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help("grpkill",context);
     return 0;
   }
   /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==NULL ) {
+  group=GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -655,10 +669,10 @@ void do_site_help_grpchange(wzd_context_t * context)
  *
  * grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_grpchange(char *command_line, wzd_context_t * context)
+int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * groupname, * field, * value;
+  wzd_string_t * groupname, * field, * value;
   unsigned long mod_type, ul;
   int ret;
   wzd_group_t * group;
@@ -666,30 +680,32 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
 
   me = GetUserByID(context->userid);
 
-  ptr = command_line;
   if (!command_line) {
     do_site_help_grpchange(context);
     return 0;
   }
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help_grpchange(context);
     return 0;
   }
-  field = strtok_r(NULL," \t\r\n",&ptr);
+  field = str_tok(command_line," \t\r\n");
   if (!field) {
     do_site_help_grpchange(context);
+    str_deallocate(groupname);
     return 0;
   }
-  value = read_token(NULL,&ptr);
+  value = str_tok(command_line,"\r\n");
   if (!value) {
     do_site_help_grpchange(context);
+    str_deallocate(groupname); str_deallocate(field);
     return 0;
   }
 
   /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
+  if ( (group=GetGroupByName(str_tochar(groupname)))==0 ) {
     ret = send_message_with_args(501,context,"Group does not exist");
+    str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
     return 0;
   }
 
@@ -697,75 +713,79 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
   mod_type = _USER_NOTHING;
 
   /* groupname */
-  if (strcmp(field,"name")==0) {
+  if (strcmp(str_tochar(field),"name")==0) {
     mod_type = _GROUP_GROUPNAME;
-    strncpy(group->groupname,value,255);
+    strncpy(group->groupname,str_tochar(value),255);
     /* NOTE: we do not need to iterate through users, group is referenced
      * by id, not by name
      */
   }
   /* tagline */
-  else if (strcmp(field,"tagline")==0) {
+  else if (strcmp(str_tochar(field),"tagline")==0) {
     mod_type = _GROUP_TAGLINE;
-    strncpy(group->tagline,value,255);
+    strncpy(group->tagline,str_tochar(value),255);
   }
   /* homedir */
-  else if (strcmp(field,"homedir")==0) {
+  else if (strcmp(str_tochar(field),"homedir")==0) {
     /* check if homedir exist */
     {
       struct stat s;
-      if (stat(value,&s) || !S_ISDIR(s.st_mode)) {
+      if (stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
         ret = send_message_with_args(501,context,"Homedir does not exist");
+        str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
         return 0;
       }
     }
     mod_type = _GROUP_DEFAULTPATH;
-    strncpy(group->defaultpath,value,WZD_MAX_PATH);
+    strncpy(group->defaultpath,str_tochar(value),WZD_MAX_PATH);
   }
   /* max_idle */
-  else if (strcmp(field,"max_idle")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"max_idle")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_IDLE; group->max_idle_time = ul; }
   }
   /* perms */
-  else if (strcmp(field,"perms")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"perms")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_GROUPPERMS; group->groupperms = ul; }
   }
   /* max_ul */
-  else if (strcmp(field,"max_ul")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"max_ul")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_MAX_ULS; group->max_ul_speed = ul; }
   }
   /* max_dl */
-  else if (strcmp(field,"max_dl")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"max_dl")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_MAX_DLS; group->max_dl_speed = ul; }
   }
   /* num_logins */
-  else if (strcmp(field,"num_logins")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"num_logins")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_NUMLOGINS; group->num_logins = (unsigned short)ul; }
   }
   /* ratio */
-  else if (strcmp(field,"ratio")==0) {
-    ul=strtoul(value,&ptr,0);
+  else if (strcmp(str_tochar(field),"ratio")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) {
       if ((!me->flags || !strchr(me->flags,FLAG_SITEOP)) && ul==0) {
         /* wants a leech access for group, but is not siteop */
         ret = send_message_with_args(501,context,"Only siteops can do that");
+        str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
         return 0;
       }
       mod_type = _GROUP_RATIO; group->ratio = ul;
     }
   }
   else {
+    str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
     ret = send_message_with_args(501,context,"syntax error, unknow field");
   }
 
   /* commit to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_group("plaintext",groupname,group,mod_type);
+  ret = backend_mod_group(mainConfig->backend.name,str_tochar(groupname),group,mod_type);
+
+  str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
 
   if (ret)
     ret = send_message_with_args(501,context,"Problem occured when committing");
@@ -796,48 +816,47 @@ void do_site_help_group(wzd_context_t * context)
 }
 
 /* regroup all group administration in one site command */
-int do_site_group(char *command_line, wzd_context_t * context)
+int do_site_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   
-  char * cmd, * ptr;
+  wzd_string_t * cmd;
   int ret;
   
   
-  ptr = command_line;
-  cmd = strtok_r(command_line," \t\r\n",&ptr);
+  cmd = str_tok(command_line," \t\r\n");
 
   if( cmd == NULL ) {
     do_site_help_group(context);
     return 0;
   }
   
-  ptr = strtok_r(NULL, "\r\n", &ptr);
-    
-  if(strcmp("info", cmd) == 0) {
-    do_site_gsinfo( ptr, context );
-  } else if(strcmp( "add", cmd) == 0) {
-    do_site_grpadd( ptr, context );
-  } else if(strcmp( "delete", cmd) == 0) {
-    do_site_grpdel( ptr, context );
-  } else if(strcmp( "rename", cmd) == 0) {
-    do_site_grpren( ptr, context );
-  } else if(strcmp( "stat", cmd) == 0) {
-    do_site_ginfo( ptr, context );
-  } else if(strcmp( "addip", cmd) == 0) {
-    do_site_grpaddip( ptr, context );
-  } else if(strcmp( "delip", cmd) == 0) {
-    do_site_grpdelip( ptr, context );
-  } else if(strcmp( "ratio", cmd) == 0) {
-    do_site_grpratio( ptr, context );
-  } else if(strcmp( "kill", cmd) == 0) {
-    do_site_grpkill( ptr, context );
-  } else if(strcmp( "change", cmd) == 0) {
-    do_site_grpchange( ptr, context );
-  } else if(strcmp( "list", cmd) == 0) {
+  if(strcmp("info", str_tochar(cmd)) == 0) {
+    do_site_gsinfo( cmd, command_line, context );
+  } else if(strcmp( "add", str_tochar(cmd)) == 0) {
+    do_site_grpadd( cmd, command_line, context );
+  } else if(strcmp( "delete", str_tochar(cmd)) == 0) {
+    do_site_grpdel( cmd, command_line, context );
+  } else if(strcmp( "rename", str_tochar(cmd)) == 0) {
+    do_site_grpren( cmd, command_line, context );
+  } else if(strcmp( "stat", str_tochar(cmd)) == 0) {
+    do_site_ginfo( cmd, command_line, context );
+  } else if(strcmp( "addip", str_tochar(cmd)) == 0) {
+    do_site_grpaddip( cmd, command_line, context );
+  } else if(strcmp( "delip", str_tochar(cmd)) == 0) {
+    do_site_grpdelip( cmd, command_line, context );
+  } else if(strcmp( "ratio", str_tochar(cmd)) == 0) {
+    do_site_grpratio( cmd, command_line, context );
+  } else if(strcmp( "kill", str_tochar(cmd)) == 0) {
+    do_site_grpkill( cmd, command_line, context );
+  } else if(strcmp( "change", str_tochar(cmd)) == 0) {
+    do_site_grpchange( cmd, command_line, context );
+  } else if(strcmp( "list", str_tochar(cmd)) == 0) {
     do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);
   } else {
     ret = send_message_with_args(501,context,"site group action invalid");
   }
+
+  str_deallocate(cmd);
 
   return 0;
 }

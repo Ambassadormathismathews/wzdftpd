@@ -42,6 +42,10 @@ wzd_string_t * str_fromchar(const char *str);
  */
 const char * str_tochar(const wzd_string_t *str);
 
+/** returns 1 if string exists and length is inside min and max (included)
+ */
+unsigned int str_checklength(const wzd_string_t *str, size_t min, size_t max);
+
 
 
 /** \brief returns a pointer to a new string which is a duplicate of the string src.
@@ -79,6 +83,15 @@ wzd_string_t * str_tolower(wzd_string_t *str);
  */
 wzd_string_t * str_tok(wzd_string_t *str, const char *delim);
 
+/** \brief str_read next token
+ * \return a pointer to the next token, or NULL if not found, or if there is \
+ * only whitespaces, or if quotes are unbalanced
+ * Read next token separated by a whitespace, except if string begins
+ * with a ' or ", in this case it searches the matching character.
+ * Note: input string is modified as a \0 is written.
+ */
+wzd_string_t * str_read_token(wzd_string_t *str);
+
 /** \brief Produce output according to format and variable number of arguments,
  * and write output to str.
  */
@@ -89,6 +102,12 @@ int str_sprintf(wzd_string_t *str, const char *format, ...);
  * Require unicode support
  */
 int str_utf8_to_local(wzd_string_t *str, const char * charset);
+
+/** \brief Convert charset to utf8 string
+ * \note
+ * Require unicode support
+ */
+int str_local_to_utf8(wzd_string_t *str, const char * charset);
 
 
 /******* XXX to be implemented XXX **********/

@@ -25,53 +25,116 @@
 #ifndef __WZD_ACTION__
 #define __WZD_ACTION__
 
-#define TOK_UNKNOWN     0
-#define TOK_USER        1
-#define TOK_PASS        2
-#define TOK_AUTH        3
-#define TOK_QUIT        4
-#define TOK_TYPE        5
-#define TOK_MODE        6
-#define TOK_PORT        7
-#define TOK_PASV        8
-#define TOK_PWD         9
-#define TOK_NOOP        10
-#define TOK_SYST        11
-#define TOK_CWD         12
-#define TOK_CDUP        13
-#define TOK_LIST        14
-#define TOK_NLST        15
-#define TOK_STAT        16
-#define TOK_MKD         17
-#define TOK_RMD         18
-#define TOK_RETR        19
-#define TOK_STOR        20
-#define TOK_REST        21
-#define TOK_MDTM        22
-#define TOK_SIZE        23
-#define TOK_DELE        24
-#define TOK_ABOR        25
+typedef enum {
+  TOK_UNKNOWN=0,
+  TOK_USER,
+  TOK_PASS,
+  TOK_AUTH,
+  TOK_QUIT,
+  TOK_TYPE,
+  TOK_MODE,
+  TOK_PORT,
+  TOK_PASV,
+  TOK_PWD,
+  TOK_NOOP,
+  TOK_SYST,
+  TOK_CWD,
+  TOK_CDUP,
+  TOK_LIST,
+  TOK_NLST,
+  TOK_STAT,
+  TOK_MKD,
+  TOK_RMD,
+  TOK_RETR,
+  TOK_STOR,
+  TOK_REST,
+  TOK_MDTM,
+  TOK_SIZE,
+  TOK_DELE,
+  TOK_ABOR,
 
-#define TOK_PBSZ        26
-#define TOK_PROT        27
+  TOK_PBSZ,
+  TOK_PROT,
 
-#define TOK_SITE        28
-#define TOK_FEAT        29
-#define	TOK_ALLO	30
-#define	TOK_RNFR	31
-#define	TOK_RNTO	32
-#define	TOK_APPE	33
+  TOK_SITE,
+  TOK_FEAT,
+  TOK_ALLO,
+  TOK_RNFR,
+  TOK_RNTO,
+  TOK_APPE,
+  
+  TOK_EPSV,
+  TOK_EPRT,
+  TOK_PRET,
+  
+  TOK_XCRC,
+  TOK_XMD5,
+  
+  TOK_OPTS,
+  
+  TOK_MLST,
+  TOK_MLSD,
 
-#define	TOK_EPSV	34
-#define	TOK_EPRT	35
-#define TOK_PRET        36
+  TOK_SITE_ADDIP=64,
+  TOK_SITE_ADDUSER,
+  TOK_SITE_BACKEND,
+  TOK_SITE_CHACL,
+  TOK_SITE_CHANGE,
+  TOK_SITE_CHANGEGRP,
+  TOK_SITE_CHECKPERM,
+  TOK_SITE_CHGRP,
+  TOK_SITE_CHMOD,
+  TOK_SITE_CHOWN,
+  TOK_SITE_CHPASS,
+  TOK_SITE_CHRATIO,
+  TOK_SITE_COLOR,
+  TOK_SITE_DELIP,
+  TOK_SITE_DELUSER,
+  TOK_SITE_FLAGS,
+  TOK_SITE_FREE,
+  TOK_SITE_GINFO,
+  TOK_SITE_GIVE,
+  TOK_SITE_GROUP,
+  TOK_SITE_GRPADD,
+  TOK_SITE_GRPADDIP,
+  TOK_SITE_GRPCHANGE,
+  TOK_SITE_GRPDEL,
+  TOK_SITE_GRPDELIP,
+  TOK_SITE_GRPKILL,
+  TOK_SITE_GRPRATIO,
+  TOK_SITE_GRPREN,
+  TOK_SITE_GSINFO,
+  TOK_SITE_IDLE,
+  TOK_SITE_INVITE,
+  TOK_SITE_KICK,
+  TOK_SITE_KILL,
+  TOK_SITE_KILLPATH,
+  TOK_SITE_LINK,
+  TOK_SITE_MSG,
+  TOK_SITE_PERM,
+  TOK_SITE_PURGE,
+  TOK_SITE_READD,
+  TOK_SITE_RELOAD,
+  TOK_SITE_RUSAGE,
+  TOK_SITE_SAVECFG,
+  TOK_SITE_SU,
+  TOK_SITE_TAGLINE,
+  TOK_SITE_TAKE,
+  TOK_SITE_TEST,
+  TOK_SITE_UNLOCK,
+  TOK_SITE_UTIME,
+  TOK_SITE_VARS,
+  TOK_SITE_VARS_GROUP,
+  TOK_SITE_VARS_USER,
+  TOK_SITE_VERSION,
+  TOK_SITE_VFSLS,
+  TOK_SITE_VFSADD,
+  TOK_SITE_VFSDEL,
+  TOK_SITE_WIPE,
+  
+  TOK_NOTHING=256,
+} wzd_token_t;
 
-#define TOK_XCRC        37
-#define TOK_XMD5        38
-
-#define TOK_OPTS        39
-
-#define	TOK_NOTHING	64
 
 struct last_file_t {
     char	name[WZD_MAX_PATH];

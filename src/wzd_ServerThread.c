@@ -835,6 +835,7 @@ static void server_login_accept(wzd_context_t * context)
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
         close(context->controlfd);
+        FD_UNREGISTER(context->controlfd,"Client socket");
         out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
         /* mark context as free */
         context->magic = 0;
@@ -1288,6 +1289,21 @@ void serverMainThreadProc(void *arg)
   /* do this _before_ loading config, config can use it ! */
   vars_shm_init();
 
+  /********* set up functions *******/
+  if (commands_init()) {
+    out_log(LEVEL_HIGH,"Could not set up functions\n");
+  }
+
+  if (commands_add_defaults()) {
+    out_log(LEVEL_HIGH,"Could not set up default functions\n");
+  }
+
+  /****** set up site functions *****/
+  if (site_init(mainConfig)) {
+    out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
+  }
+
+
   if (server_switch_to_config(mainConfig))
   {
     serverMainThreadExit(-1);
@@ -1300,15 +1316,6 @@ void serverMainThreadProc(void *arg)
   /* clear ident list */
   list_init(&server_ident_list, free);
 
-  /********* set up functions *******/
-  if (command_list_init(&(mainConfig->command_list))) {
-    out_log(LEVEL_HIGH,"Could not set up functions\n");
-  }
-
-  /****** set up site functions *****/
-  if (site_init(mainConfig)) {
-    out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
-  }
 
   /********** set up crontab ********/
   cronjob_add(&crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
@@ -1530,7 +1537,6 @@ void serverMainThreadExit(int retcode)
   vfs_free(&mainConfig->vfs);
   perm_free_recursive(mainConfig->perm_list);
   site_cleanup(mainConfig);
-  command_list_cleanup(&mainConfig->command_list);
   free_messages();
   usercache_fini();
 /*  free(context_list);*/
@@ -1542,6 +1548,7 @@ void serverMainThreadExit(int retcode)
   if (context_shm) wzd_shm_free(context_shm);
 #endif
 
+  commands_fini();
   list_destroy(&server_ident_list);
   list_destroy(context_list);
   wzd_free(context_list);

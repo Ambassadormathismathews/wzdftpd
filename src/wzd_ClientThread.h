@@ -25,6 +25,8 @@
 #ifndef __WZD_CLIENT_THREAD__
 #define __WZD_CLIENT_THREAD__
 
+#include "wzd_string.h"
+
 int clear_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 int clear_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
@@ -32,12 +34,7 @@ void * clientThreadProc(void *arg);
 
 void client_die(wzd_context_t * context);
 
-int command_list_init(wzd_command_t **list);
-int command_list_add(wzd_command_t **list, const char *name, wzd_function_command_t fct, wzd_function_command_t helper);
-void command_list_cleanup(wzd_command_t **list);
-wzd_command_t * command_list_find(const char *name);
-
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
+#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 #define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"
 #else
@@ -51,5 +48,36 @@ wzd_command_t * command_list_find(const char *name);
 #endif
 
 #define SUPPORTED_FEATURES (TEMP_FEAT2 "End")
+
+
+
+int do_type(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_port(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_pasv(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_eprt(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_epsv(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_abor(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_print_message(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_rnfr(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_rnto(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_cwd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_list(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_stat(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_mkdir(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_rmdir(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_retr(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_stor(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_rest(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_xcrc(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_xmd5(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_quit(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
 #endif /* __WZD_CLIENT_THREAD__ */

@@ -84,6 +84,81 @@ void tls_auth_data_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 }
 
 
+static int _tls_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+#ifdef DEBUG
+  out_log(LEVEL_FLOOD,"_tls_verify_callback (%d, %p)\n",preverify_ok,x509_ctx);
+#endif
+
+  return 1;
+}
+
+static int _tls_X509NameCmp(X509_NAME **a, X509_NAME **b)
+{
+  return(X509_NAME_cmp(*a, *b));
+}
+
+static void _tls_push_ca_list(STACK_OF(X509_NAME) *ca_list, const char *ca_file)
+{
+  STACK_OF(X509_NAME) *sk;
+  int i;
+
+  if (!(sk = SSL_load_client_CA_file(ca_file))) return;
+
+  for (i=0; i<sk_X509_NAME_num(sk); i++) {
+    char name_buf[256];
+    X509_NAME *name;
+    
+    name = sk_X509_NAME_value(sk, i);
+    fprintf(stderr,"CA certificate: %s\n",X509_NAME_oneline(name, name_buf, sizeof(name_buf)));
+
+    /*
+     * note that SSL_load_client_CA_file() checks for duplicates,
+     * but since we call it multiple times when reading a directory
+     * we must also check for duplicates ourselves.
+     */
+
+    if (sk_X509_NAME_find(ca_list, name) < 0) {
+      /* this will be freed when ca_list is */
+      sk_X509_NAME_push(ca_list, name);
+    }
+    else {
+      /* need to free this ourselves, else it will leak */
+      X509_NAME_free(name);
+    }
+  }
+
+  sk_X509_NAME_free(sk);
+}
+
+static STACK_OF(X509_NAME) * _tls_init_ca_list(const char *ca_file, const char *ca_path)
+{
+  STACK_OF(X509_NAME) * ca_list;
+
+  /* sorted order */
+  ca_list = sk_X509_NAME_new(_tls_X509NameCmp);
+
+  if (ca_file) {
+    _tls_push_ca_list(ca_list,ca_file);
+  }
+
+  /*
+   * Process CA certificate path files
+   */
+  if (ca_path) {
+    /* parse directory and call _tls_push_ca_list(ca_list,ca_file)
+     * for each entry
+     */
+  }
+
+  /*
+   * Cleanup
+   */
+  sk_X509_NAME_set_cmp_func(ca_list, NULL);
+
+  return ca_list;
+}
+
 /*************** tls_init ****************************/
 
 int tls_init(void)
@@ -92,18 +167,22 @@ int tls_init(void)
   SSL_CTX * tls_ctx;
   char * tls_certificate;
   char * tls_certificate_key;
+  char * tls_ca_file=NULL, * tls_ca_path=NULL;
 
   if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
   {
     out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
     return 1;
   }
+  /* ignore errors */
+  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
+  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
 
   ERR_load_ERR_strings();
   SSL_load_error_strings();	/* readable error messages */
   SSL_library_init();		/* initialize library */
 
-  mainConfig->tls_ctx = tls_ctx = SSL_CTX_new(SSLv23_method());
+  mainConfig->tls_ctx = tls_ctx = SSL_CTX_new(SSLv23_server_method());
   if (!tls_ctx) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_new() %s\r\n",(char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
@@ -143,6 +222,30 @@ int tls_init(void)
     SSL_CTX_free(tls_ctx);
     mainConfig->tls_ctx = NULL;
     return 1;
+  }
+
+  SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_PEER, _tls_verify_callback);
+
+  if (tls_ca_file || tls_ca_path) {
+    STACK_OF(X509_NAME) * ca_list;
+
+    if (!SSL_CTX_load_verify_locations(tls_ctx, tls_ca_file, tls_ca_path))
+    {
+      out_log(LEVEL_CRITICAL,"SSL_CTX_load_verify_locations(%s,%s) %s\n", tls_ca_file, tls_ca_path, (char *)ERR_error_string(ERR_get_error(), NULL));
+      SSL_CTX_free(tls_ctx);
+      mainConfig->tls_ctx = NULL;
+      return 1;
+    }
+
+    ca_list = _tls_init_ca_list(tls_ca_file,tls_ca_path);
+    if (!ca_list) {
+      out_log(LEVEL_CRITICAL,"_tls_init_ca_list(%s,%s) %s\n", tls_ca_file, tls_ca_path, (char *)ERR_error_string(ERR_get_error(), NULL));
+      SSL_CTX_free(tls_ctx);
+      mainConfig->tls_ctx = NULL;
+      return 1;
+    }
+
+    SSL_CTX_set_client_CA_list(tls_ctx, (STACK *)ca_list);
   }
 
   SSL_CTX_set_session_cache_mode(tls_ctx, SSL_SESS_CACHE_CLIENT);
@@ -353,7 +456,7 @@ int tls_auth_cont(wzd_context_t * context)
     status = SSL_accept(ssl);
     sslerr = SSL_get_error(ssl,status);
     if (status == 1) {
-      out_log(LEVEL_FLOOD,"control connection succesfully switched to ssl\n");
+      out_log(LEVEL_FLOOD,"control connection succesfully switched to ssl (cipher: %s)\n",SSL_get_cipher(ssl));
       ret = 1;
       break;
     } else {
@@ -575,7 +678,7 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #include <fcntl.h>
 
 
-#define DH_BITS 1024
+#define DH_BITS 768
 
 
 #include "wzd_structs.h"
@@ -612,12 +715,16 @@ int tls_init(void)
 {
   char * tls_certificate;
   char * tls_certificate_key;
+  char * tls_ca_file=NULL, * tls_ca_path=NULL;
 
   if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
   {
     out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
     return 1;
   }
+  /* ignore errors */
+  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
+  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
 
   /* The order matters.
    */
@@ -626,8 +733,10 @@ int tls_init(void)
 
   /** \todo TODO XXX move this code to global init ? */
   gnutls_certificate_allocate_credentials(&x509_cred);
-  gnutls_certificate_set_x509_trust_file(x509_cred, tls_certificate,
-      GNUTLS_X509_FMT_PEM);
+  if (tls_ca_file) {
+    gnutls_certificate_set_x509_trust_file(x509_cred, tls_ca_file,
+        GNUTLS_X509_FMT_PEM);
+  }
 
 /*
   gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
@@ -857,6 +966,7 @@ int tls_close_data(wzd_context_t * context)
 
 int tls_free(wzd_context_t * context)
 {
+  out_log(LEVEL_HIGH,"tls_free\n");
   tls_close_data(context);
   if (context->tls.session) {
     gnutls_deinit( *(gnutls_session*)context->tls.session );
@@ -869,19 +979,56 @@ int tls_free(wzd_context_t * context)
 int tls_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   wzd_context_t * context = vcontext;
-  int ret=0;
+  int ret=0, r;
+  fd_set fd_r;
+  struct timeval tv;
+  gnutls_session * session;
+  int alert;
+
+  if (sock == context->controlfd)
+    session = context->tls.session;
+  else
+    session = context->tls.data_session;
 
   do {
-    if (sock == context->controlfd)
-      ret = gnutls_record_recv(*((gnutls_session*)context->tls.session), msg, length);
-    else
-      ret = gnutls_record_recv(*((gnutls_session*)context->tls.data_session), msg, length);
+    ret = gnutls_record_recv(*session, msg, length);
+    if (ret >= 0) return ret;
 
     if (gnutls_error_is_fatal(ret)) {
-      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d(%s)\n",ret,gnutls_strerror(ret));
+      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d (%s)\n",ret,gnutls_strerror(ret));
       return -1;
     }
-  } while ( (ret==GNUTLS_E_INTERRUPTED) || (ret==GNUTLS_E_AGAIN) );
+    switch(ret) {
+      case GNUTLS_E_INTERRUPTED:
+      case GNUTLS_E_AGAIN:
+        FD_ZERO(&fd_r);
+        FD_SET(sock,&fd_r);
+        tv.tv_sec = timeout;
+        tv.tv_usec = 0;
+
+        if (timeout) {
+          r = select(sock+1,&fd_r,NULL,NULL,&tv);
+          if (r <= 0) return -1;
+        }
+
+        continue;
+      case GNUTLS_E_WARNING_ALERT_RECEIVED:
+      case GNUTLS_E_FATAL_ALERT_RECEIVED:
+        alert = gnutls_alert_get (*session);
+        out_log(LEVEL_INFO,"* Received alert [%d]: %s\n", alert,
+            gnutls_alert_get_name(alert));
+        return -1;
+      case GNUTLS_E_REHANDSHAKE:
+        out_log(LEVEL_HIGH,"* Received re-handshake request (gnutls)\n");
+        out_log(LEVEL_HIGH,"* Report this to authors !\n");
+        return -1;
+      default:
+        if (ret < 0) {
+          out_log(LEVEL_HIGH,"* unhandled error (%d)\n",ret);
+          return -1;
+        }
+    }
+  } while (1);
 
   return ret;
 }
@@ -889,19 +1036,50 @@ int tls_read(int sock, char *msg, size_t length, int flags, unsigned int timeout
 int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   wzd_context_t * context = vcontext;
-  int ret=0;
+  int ret=0, r;
+  fd_set fd_w;
+  struct timeval tv;
+  gnutls_session * session;
+  int alert;
+
+  if (sock == context->controlfd)
+    session = context->tls.session;
+  else
+    session = context->tls.data_session;
 
   do {
-    if (sock == context->controlfd)
-      ret = gnutls_record_send(*((gnutls_session*)context->tls.session), msg, length);
-    else
-      ret = gnutls_record_send(*((gnutls_session*)context->tls.data_session), msg, length);
+    ret = gnutls_record_send(*session, msg, length);
+    if (ret >= 0) return ret;
 
     if (gnutls_error_is_fatal(ret)) {
-      out_log(LEVEL_HIGH,"gnutls_record_send returned %d(%s)\n",ret,gnutls_strerror(ret));
+      out_log(LEVEL_HIGH,"gnutls_record_send returned %d (%s)\n",ret,gnutls_strerror(ret));
       return -1;
     }
-  } while ( (ret==GNUTLS_E_INTERRUPTED) || (ret==GNUTLS_E_AGAIN) );
+    switch(ret) {
+      case GNUTLS_E_AGAIN:
+      case GNUTLS_E_INTERRUPTED:
+
+        FD_ZERO(&fd_w);
+        FD_SET(sock,&fd_w);
+        tv.tv_sec = timeout;
+        tv.tv_usec = 0;
+
+        r = select(sock+1,NULL,&fd_w,NULL,&tv);
+        if (r <= 0) return -1;
+
+        continue;
+      case GNUTLS_E_WARNING_ALERT_RECEIVED:
+      case GNUTLS_E_FATAL_ALERT_RECEIVED:
+        alert = gnutls_alert_get (*session);
+        out_log(LEVEL_INFO,"* Received alert [%d]: %s\n", alert,
+            gnutls_alert_get_name(alert));
+        return -1;
+      case GNUTLS_E_REHANDSHAKE:
+        out_log(LEVEL_HIGH,"* Received re-handshake request (gnutls)\n");
+        out_log(LEVEL_HIGH,"* Report this to authors !\n");
+        return -1;
+    }
+  } while (1);
 
   return ret;
 }

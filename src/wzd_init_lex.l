@@ -248,6 +248,8 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
 
+  if (!strcmp(word,"tls_ca_file")) return CFG_KEYWORD;
+  if (!strcmp(word,"tls_ca_path")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_certificate")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_certificate_key")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_cipher_list")) return CFG_KEYWORD;
@@ -306,7 +308,6 @@ int set_default_options(void)
   tempConfig.login_pre_ip_allowed = NULL;
   tempConfig.login_pre_ip_denied = NULL;
 
-  tempConfig.command_list = NULL;
   tempConfig.vfs = NULL;
 
   tempConfig.dir_message = NULL;

@@ -218,23 +218,20 @@ void do_site_help_deluser(wzd_context_t * context)
 
 /** site deluser: delete user
  *
- * deluser &lt;user&gt; [&lt;backend&gt;]
+ * deluser &lt;user&gt;
  */
-int do_site_deluser(char *command_line, wzd_context_t * context)
+int do_site_deluser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char * username;
+  wzd_string_t * username;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   int length;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_deluser(context);
     return 0;
@@ -242,7 +239,9 @@ int do_site_deluser(char *command_line, wzd_context_t * context)
   /* TODO read backend */
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
@@ -250,7 +249,7 @@ int do_site_deluser(char *command_line, wzd_context_t * context)
   /* GAdmin ? */
   if (is_gadmin)
   {
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0])
     {
       ret = send_message_with_args(501,context,"You can't delete this user");
       return 0;
@@ -258,21 +257,20 @@ int do_site_deluser(char *command_line, wzd_context_t * context)
   }
 
   /* mark user as deleted */
-  if (strchr(user.flags,FLAG_DELETED)) {
+  if (strchr(user->flags,FLAG_DELETED)) {
     ret = send_message_with_args(501,context,"User already marked as deleted");
     return 0;
   }
-  length = strlen(user.flags);
+  length = strlen(user->flags);
   if (length+1 >= MAX_FLAGS_NUM) {
     ret = send_message_with_args(501,context,"Too many flags for user");
     return 0;
   }
-  user.flags[length] = FLAG_DELETED;
-  user.flags[length+1] = '\0';
+  user->flags[length] = FLAG_DELETED;
+  user->flags[length+1] = '\0';
 
   /* commit changes to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,_USER_FLAGS);
+  backend_mod_user(mainConfig->backend.name,user->username,user,_USER_FLAGS);
 
   ret = send_message_with_args(200,context,"User deleted");
   return 0;
@@ -285,12 +283,12 @@ void do_site_help_readduser(wzd_context_t * context)
 
 /** site readduser: undelete user
  *
- * readduser &lt;user&gt; [&lt;backend&gt;]
+ * readduser &lt;user&gt;
  */
-int do_site_readduser(char *command_line, wzd_context_t * context)
+int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * username;
+  wzd_string_t * username;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -300,19 +298,19 @@ int do_site_readduser(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_readduser(context);
     return 0;
   }
-  /* TODO read backend */
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exist");
+    str_deallocate(username);
     return 0;
   }
+  str_deallocate(username);
 
   /* GAdmin ? */
   if (is_gadmin)
@@ -337,8 +335,7 @@ int do_site_readduser(char *command_line, wzd_context_t * context)
   }
 
   /* commit changes to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,_USER_FLAGS);
+  backend_mod_user(mainConfig->backend.name,user.username,&user,_USER_FLAGS);
 
   ret = send_message_with_args(200,context,"User undeleted");
   return 0;
@@ -348,33 +345,34 @@ int do_site_readduser(char *command_line, wzd_context_t * context)
  *
  * purge [&lt;user&gt;] [&lt;backend&gt;]
  */
-int do_site_purgeuser(char *command_line, wzd_context_t * context)
+int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
 {
-  char *ptr;
-  char * username;
+  wzd_string_t * username;
   int ret;
   wzd_user_t user, * me;
   int uid;
   short is_gadmin;
+  const char *ptr;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(param," \t\r\n");
 
   /* TODO read backend */
 
   if (username) { /* case 1: name was given */
     /* check if user already exists */
-    if ( backend_find_user(username,&user,&uid) ) {
+    if ( backend_find_user(str_tochar(username),&user,&uid) ) {
       ret = send_message_with_args(501,context,"User does not exist");
+      str_deallocate(username);
       return 0;
     }
 
     /* unmark user as deleted */
     if ( (ptr = strchr(user.flags,FLAG_DELETED)) == NULL ) {
       ret = send_message_with_args(501,context,"User is not marked as deleted");
+      str_deallocate(username);
       return 0;
     }
 
@@ -383,13 +381,15 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
     {
       if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
         ret = send_message_with_args(501,context,"You can't purge this user (GAdmin limits)");
+        str_deallocate(username);
         return 0;
       }
     }
 
     /* commit changes to backend */
     /* FIXME backend name hardcoded */
-    backend_mod_user("plaintext",username,NULL,_USER_ALL);
+    backend_mod_user(mainConfig->backend.name,str_tochar(username),NULL,_USER_ALL);
+    str_deallocate(username);
   } else { /* if (username) */
     /* TODO iterate users and purge those marked as deleted */
     unsigned int i;
@@ -526,13 +526,12 @@ void do_site_help_delip(wzd_context_t * context)
  *
  * ip can be replaced by the slot_number
  */
-int do_site_delip(char *command_line, wzd_context_t * context)
+int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr,*ptr_ul;
-  char * username, *ip;
+  char *ptr_ul;
+  wzd_string_t * username, *ip;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   int i;
   unsigned long ul;
   short is_gadmin;
@@ -541,20 +540,15 @@ int do_site_delip(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_delip(context);
     return 0;
   }
-  ip = strtok_r(NULL," \t\r\n",&ptr);
-  if (!ip) {
-    do_site_help_delip(context);
-    return 0;
-  }
-
   /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
@@ -562,54 +556,64 @@ int do_site_delip(char *command_line, wzd_context_t * context)
   /* GAdmin ? */
   if (is_gadmin)
   {
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
       ret = send_message_with_args(501,context,"You can't change this user");
       return 0;
     }
   }
 
+  ip = str_tok(command_line," \t\r\n");
+  if (!ip) {
+    do_site_help_delip(context);
+    return 0;
+  }
+
   do {
 
     /* try to take argument as a slot number */
-    ul = strtoul(ip,&ptr_ul,0);
+    ul = strtoul(str_tochar(ip),&ptr_ul,0);
     if (*ptr_ul=='\0') {
       if (ul <= 0 || ul >= HARD_IP_PER_USER) {
         ret = send_message_with_args(501,context,"Invalid ip slot number");
+        str_deallocate(ip);
         return 0;
       }
+      str_deallocate(ip);
       ul--; /* to index slot number from 1 */
-      if (user.ip_allowed[ul][0] == '\0') {
+      if (user->ip_allowed[ul][0] == '\0') {
         ret = send_message_with_args(501,context,"Slot is already empty");
         return 0;
       }
-      user.ip_allowed[ul][0] = '\0';
+      user->ip_allowed[ul][0] = '\0';
     } else { /* if (*ptr=='\0') */
 
       /* try to find ip in list */
       found = 0;
       for (i=0; i<HARD_IP_PER_USER; i++)
       {
-        if (user.ip_allowed[i][0]=='\0') continue;
-        if (strcmp(ip,user.ip_allowed[i])==0) {
-          user.ip_allowed[i][0] = '\0';
+        if (user->ip_allowed[i][0]=='\0') continue;
+        if (strcmp(str_tochar(ip),user->ip_allowed[i])==0) {
+          user->ip_allowed[i][0] = '\0';
           found = 1;
         }
       }
 
       if (!found) {
         char buffer[256];
-        snprintf(buffer,256,"IP %s not found",ip);
+        snprintf(buffer,256,"IP %s not found",str_tochar(ip));
         ret = send_message_with_args(501,context,buffer);
+        str_deallocate(ip);
         return 0;
       }
+      str_deallocate(ip);
     } /* if (*ptr=='\0') */
 
-    ip = strtok_r(NULL," \t\r\n",&ptr);
+    ip = str_tok(command_line," \t\r\n");
   } while (ip);
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,_USER_IP);
+  backend_mod_user("plaintext",user->username,user,_USER_IP);
   ret = send_message_with_args(200,context,"User ip(s) removed");
   return 0;
 }
@@ -619,7 +623,7 @@ int do_site_delip(char *command_line, wzd_context_t * context)
  *
  * change color
  */
-int do_site_color(char *command_line, wzd_context_t * context)
+int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
 {
   wzd_user_t * me;
   char * src_ptr, *dst_ptr;
@@ -631,10 +635,10 @@ int do_site_color(char *command_line, wzd_context_t * context)
   found=0;
   src_ptr = me->flags;
   dst_ptr = new_flags;
-  for (i=0; *src_ptr && i<MAX_FLAGS_NUM; i++,src_ptr++,dst_ptr++)
+  for (i=0; *src_ptr && i<MAX_FLAGS_NUM; i++,src_ptr++)
   {
     if ( *src_ptr==FLAG_COLOR) { found=1; continue; }
-    *dst_ptr = *src_ptr;
+    *dst_ptr++ = *src_ptr;
   }
   if (!found) {
     *dst_ptr++ = FLAG_COLOR;
@@ -1009,10 +1013,10 @@ void do_site_help_chratio(wzd_context_t * context)
  *
  * chratio user ratio
  */
-int do_site_chratio(char *command_line, wzd_context_t * context)
+int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char * str_ratio, *username;
+  char *ptr=NULL;
+  wzd_string_t * str_ratio, *username;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -1022,29 +1026,33 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_chratio(context);
     return 0;
   }
-  str_ratio = strtok_r(NULL," \t\r\n",&ptr);
+  str_ratio = str_tok(command_line," \t\r\n");
   if (!str_ratio) {
     do_site_help_chratio(context);
+    str_deallocate(username);
     return 0;
   }
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
+    str_deallocate(username); str_deallocate(str_ratio);
     return 0;
   }
 
-  ratio = strtoul(str_ratio,&ptr,0);
+  ratio = strtoul(str_tochar(str_ratio),&ptr,0);
+
   if (*ptr!='\0') {
     do_site_help_chratio(context);
+    str_deallocate(username);
     return 0;
   }
+  str_deallocate(str_ratio);
 
   /* TODO find user group or take current user */
   if (is_gadmin)
@@ -1053,6 +1061,7 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
     if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
     {
       ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
+      str_deallocate(username);
       return 0;
     }
   }
@@ -1062,6 +1071,7 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
   {
     if (me->leech_slots == 0) {
       ret = send_message_with_args(501,context,"No more slots available");
+      str_deallocate(username); str_deallocate(str_ratio);
       return 0;
     }
   }
@@ -1070,7 +1080,7 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
 
   /* add it to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",username,&user,_USER_RATIO);
+  ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -1084,6 +1094,7 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
     }
     ret = send_message_with_args(200,context,"User ratio changed");
   }
+  str_deallocate(username);
   return 0;
 }
 
@@ -1093,32 +1104,32 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
  *
  * flags &lt;user&gt; &lt;newflags&gt;
  */
-int do_site_flags(char *command_line, wzd_context_t * context)
+int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
-  char *ptr;
-  char * username, * newflags = NULL;
+  wzd_string_t *newflags = NULL;
+  wzd_string_t * username = NULL;
   int ret;
   wzd_user_t user;
   int uid;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
-    username = GetUserByID(context->userid)->username;
+    username = STR(GetUserByID(context->userid)->username);
   }
   if (username) {
-    newflags = strtok_r(NULL," \t\r\n",&ptr);
+    newflags = str_tok(command_line," \t\r\n");
   }
 
   /* check if user exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exist");
+    str_deallocate(username); str_deallocate(newflags);
     return 0;
   }
 
   if (!newflags) {
-    snprintf(buffer,1023,"Flags for %s:  %s",username,user.flags);
+    snprintf(buffer,1023,"Flags for %s: %s",str_tochar(username),user.flags);
 
     ret = send_message_with_args(200,context,buffer);
   } else {
@@ -1132,28 +1143,32 @@ int do_site_flags(char *command_line, wzd_context_t * context)
     {
       if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
         ret = send_message_with_args(501,context,"You can't change this user");
+        str_deallocate(username); str_deallocate(newflags);
         return 0;
       }
     }
     /* authorized ? */
     if (!strchr(me->flags,FLAG_SITEOP)) {
       ret = send_message_with_args(501,context,"You can't change flags for other users");
+      str_deallocate(username); str_deallocate(newflags);
       return 0;
     }
 
-    if (_user_changeflags(&user,newflags)) {
+    if (_user_changeflags(&user,str_tochar(newflags))) {
       ret = send_message_with_args(501,context,"Error occurred changing flags");
+      str_deallocate(username); str_deallocate(newflags);
       return 0;
     }
     /* commit to backend */
     /* FIXME backend name hardcoded */
-    ret = backend_mod_user("plaintext",username,&user,_USER_FLAGS);
+    ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_FLAGS);
     if (!ret)
       ret = send_message_with_args(200,context,"Flags changed");
     else
       ret = send_message_with_args(501,context,"Flags changed, but error committing changes to backend");
   }
 
+  str_deallocate(username); str_deallocate(newflags);
   return 0;
 }
 
@@ -1163,42 +1178,40 @@ int do_site_flags(char *command_line, wzd_context_t * context)
  *
  * NOTE: you need to be siteop to change your idletime
  */
-int do_site_idle(char *command_line, wzd_context_t * context)
+int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   char *ptr;
-  char * username;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t * user;
   unsigned long idletime;
 
   /* get our info */
-  username = GetUserByID(context->userid)->username;
+  user = GetUserByID(context->userid);
   /* check if user exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( !user ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
     return 0;
   }
 
-  if (*command_line != '\0') {
-    if (!user.flags || !strchr(user.flags,FLAG_SITEOP)) {
+  if (command_line && strlen(str_tochar(command_line))>0) {
+    if (!user->flags || !strchr(user->flags,FLAG_SITEOP)) {
       ret = send_message_with_args(501,context,"You do not have the rights to do that !");
       return 0;
     }
-    idletime = strtoul(command_line,&ptr,0);
+    idletime = strtoul(str_tochar(command_line),&ptr,0);
     if (*ptr!='\0' || idletime > 7200) { /* XXX hard max idle value of 7200s */
       ret = send_message_with_args(501,context,"Invalid value - Usage: site idle [<idletime>]");
       return 0;
     }
-    user.max_idle_time = idletime;
+    user->max_idle_time = idletime;
     /* commit to backend */
     /* FIXME backend name hardcoded */
-    backend_mod_user("plaintext",username,&user,_USER_IDLE);
+    backend_mod_user("plaintext",user->username,user,_USER_IDLE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
-    snprintf(buffer,1023,"Your idle time is %u",user.max_idle_time);
+    snprintf(buffer,1023,"Your idle time is %u",user->max_idle_time);
   } /* if (*command_line != '\0') */
 
   ret = send_message_with_args(200,context,buffer);
@@ -1209,39 +1222,29 @@ int do_site_idle(char *command_line, wzd_context_t * context)
  *
  * tagline [&lt;tagline&gt;]
  */
-int do_site_tagline(char *command_line, wzd_context_t * context)
+int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
-  char *ptr;
-  char * username;
-  char * tagline;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t * user;
 
   /* get our info */
-  username = GetUserByID(context->userid)->username;
+  user = GetUserByID(context->userid);
   /* check if user exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( !user ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
     return 0;
   }
 
-  if (*command_line != '\0') {
-    ptr = command_line;
-    tagline = strtok_r(command_line,"\r\n",&ptr);
-    if (!tagline) {
-      ret = send_message_with_args(501,context,"Usage: site tagline [<tagline>]");
-      return 0;
-    }
-    strncpy(user.tagline,tagline,255);
+  if (command_line && strlen(str_tochar(command_line))>0) {
+    strncpy(user->tagline,str_tochar(command_line),255);
     /* commit to backend */
     /* FIXME backend name hardcoded */
-    backend_mod_user("plaintext",username,&user,_USER_TAGLINE);
+    backend_mod_user("plaintext",user->username,user,_USER_TAGLINE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
-    snprintf(buffer,1023,"Your tagline is %s",user.tagline);
+    snprintf(buffer,1023,"Your tagline is %s",user->tagline);
   } /* if (*command_line != '\0') */
 
   ret = send_message_with_args(200,context,buffer);
@@ -1253,13 +1256,13 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
  *
  * kill &lt;pid&gt;
  */
-int do_site_kill(char *command_line, wzd_context_t * context)
+int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
 {
   char *ptr;
   int ret;
   unsigned long pid;
 
-  pid = strtoul(command_line,&ptr,0);
+  pid = strtoul(str_tochar(param),&ptr,0);
   if (*ptr!='\0') {
     ret = send_message_with_args(501,context,"Usage: site kill <pid>");
     return 0;
@@ -1287,30 +1290,35 @@ int do_site_kill(char *command_line, wzd_context_t * context)
  *
  * kick &lt;user&gt;
  */
-int do_site_kick(char *command_line, wzd_context_t * context)
+int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
 {
-  char *username, *test_username;
-  char *ptr;
+  wzd_string_t *_username;
+  const char *username, *test_username;
   int ret;
   int found = 0;
   wzd_user_t user;
   int uid;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
+  _username = str_tok(param," \t\r\n");
+  if (!_username) {
     ret = send_message_with_args(501,context,"Usage: site kick <user>");
     return 0;
   }
+  username = str_tochar(_username);
   /* check if user  exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exist");
+    str_deallocate(_username);
     return 0;
   }
 
   /* preliminary check: i can't kill myself */
   test_username = GetUserByID(context->userid)->username;
-  if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
+  if (strcmp(username,test_username)==0) {
+    ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+    str_deallocate(_username);
+    return 0;
+  }
 
   /* kill'em all ! */
   {
@@ -1322,7 +1330,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
         test_username = GetUserByID(loop_context->userid)->username;
         if (strcmp(username,test_username)==0) {
           found = 1;
-          kill_child(loop_context->pid_child,context);
+          kill_child_new(loop_context->pid_child,context);
         }
       }
     } /* for all contexts */
@@ -1330,6 +1338,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
   if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
+  str_deallocate(_username);
   return 0;
 }
 
@@ -1338,26 +1347,26 @@ int do_site_kick(char *command_line, wzd_context_t * context)
  *
  * killpath &lt;path&gt;
  */
-int do_site_killpath(char *command_line, wzd_context_t * context)
+int do_site_killpath(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *path, *realpath;
-  char *ptr;
+  char *realpath;
+  wzd_string_t *path;
   int ret;
 
-  ptr = command_line;
-  path = strtok_r(command_line,"\r\n",&ptr);
+  path = str_tok(command_line,"\r\n");
   if (!path) {
     ret = send_message_with_args(501,context,"Usage: site killpath <path>");
     return 0;
   }
 
   realpath = malloc(WZD_MAX_PATH+1);
-  if (checkpath_new(path,realpath,context)) {
+  if (checkpath_new(str_tochar(path),realpath,context)) {
     ret = E_FILE_NOEXIST;
   } else {
     ret = killpath(realpath,context);
   }
   free(realpath);
+  str_deallocate(path);
 
   switch (ret) {
     case E_FILE_NOEXIST:
@@ -1392,10 +1401,10 @@ void do_site_help_give(wzd_context_t * context)
  *
  * give user kbytes
  */
-int do_site_give(char *command_line, wzd_context_t * context)
+int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * str_give, *username;
+  wzd_string_t * str_give, *username;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -1405,29 +1414,32 @@ int do_site_give(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_give(context);
     return 0;
   }
-  str_give = strtok_r(NULL," \t\r\n",&ptr);
+  str_give = str_tok(command_line," \t\r\n");
   if (!str_give) {
     do_site_help_give(context);
+    str_deallocate(username);
     return 0;
   }
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
+    str_deallocate(username); str_deallocate(str_give);
     return 0;
   }
 
-  kbytes = strtoull(str_give,&ptr,0);
+  kbytes = strtoull(str_tochar(str_give),&ptr,0);
   if (*ptr!='\0') {
     do_site_help_give(context);
+    str_deallocate(username); str_deallocate(str_give);
     return 0;
   }
+  str_deallocate(str_give);
   kbytes *= 1024;
 
 #if 0
@@ -1446,6 +1458,7 @@ int do_site_give(char *command_line, wzd_context_t * context)
   /* check user credits */
   if (me->credits && me->credits < kbytes) {
     ret = send_message_with_args(501,context,"You don't have enough credits !");
+    str_deallocate(username);
     return 0;
   }
 
@@ -1455,13 +1468,14 @@ int do_site_give(char *command_line, wzd_context_t * context)
 
   /* add it to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",username,&user,_USER_CREDITS);
+  ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
     ret = send_message_with_args(200,context,"Credits given");
   }
+  str_deallocate(username);
   return 0;
 }
 
@@ -1474,10 +1488,10 @@ void do_site_help_take(wzd_context_t * context)
  *
  * take user kbytes
  */
-int do_site_take(char *command_line, wzd_context_t * context)
+int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * str_take, *username;
+  wzd_string_t * str_take, *username;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -1487,29 +1501,32 @@ int do_site_take(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_take(context);
     return 0;
   }
-  str_take = strtok_r(NULL," \t\r\n",&ptr);
+  str_take = str_tok(command_line," \t\r\n");
   if (!str_take) {
     do_site_help_take(context);
+    str_deallocate(username);
     return 0;
   }
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
+    str_deallocate(username); str_deallocate(str_take);
     return 0;
   }
 
-  kbytes = strtoull(str_take,&ptr,0);
+  kbytes = strtoull(str_tochar(str_take),&ptr,0);
   if (*ptr!='\0') {
     do_site_help_take(context);
+    str_deallocate(username); str_deallocate(str_take);
     return 0;
   }
+  str_deallocate(str_take);
   kbytes *= 1024;
 
 #if 0
@@ -1528,6 +1545,7 @@ int do_site_take(char *command_line, wzd_context_t * context)
   /* check user credits */
   if (user.ratio==0) {
     ret = send_message_with_args(501,context,"User has unlimited credits !");
+    str_deallocate(username);
     return 0;
   }
 
@@ -1537,14 +1555,14 @@ int do_site_take(char *command_line, wzd_context_t * context)
     user.credits = 0;
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",username,&user,_USER_CREDITS);
+  ret = backend_mod_user(mainConfig->backend.name,str_tochar(username),&user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
     ret = send_message_with_args(200,context,"Credits removed");
   }
+  str_deallocate(username);
   return 0;
 }
 
@@ -1558,10 +1576,9 @@ void do_site_help_su(wzd_context_t * context)
  *
  * su user
  */
-int do_site_su(char *command_line, wzd_context_t * context)
+int do_site_su(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
-  char *username;
+  wzd_string_t *username;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -1570,21 +1587,22 @@ int do_site_su(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help_su(context);
     return 0;
   }
 
   /* check if user already exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
+    str_deallocate(username);
     return 0;
   }
+  str_deallocate(username);
 
   /* for now, this command is strictly restricted to siteops */
-  if (me && me->flags && strchr(me->flags,FLAG_SITEOP)) {
+  if (!me || !me->flags || !strchr(me->flags,FLAG_SITEOP)) {
     ret = send_message_with_args(501,context,"You can't use this command, you are not siteop!");
     return 0;
   }
@@ -1672,17 +1690,19 @@ static int _user_changeflags(wzd_user_t * user, const char *newflags)
   }
   else if (newflags[0] == '-') {
     /* flag removal */
-    if ( (ptr = strchr(user->flags,newflags[1])) == NULL ) {
-      return -1;
+    /** remove all flags from newflags */
+    while ( (++newflags)[0] != '\0') {
+      if ( (ptr = strchr(user->flags,newflags[0])) == NULL ) {
+        continue;
+      }
+      if (*(ptr+1)) {
+        length = strlen(ptr+1);
+        memmove(ptr,ptr+1,length);
+        *(ptr+length) = '\0';
+      } else {
+        *ptr = '\0';
+      }
     }
-    if (*(ptr+1)) {
-      length = strlen(ptr+1);
-      memmove(ptr,ptr+1,length);
-      *(ptr+length) = '\0';
-    } else {
-      *ptr = '\0';
-    }
-    /** \todo XXX if strlen(newflags) > 1, remove ALL flags from newflags */
 
     return 0;
   }

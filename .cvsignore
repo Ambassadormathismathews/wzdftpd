@@ -11,6 +11,10 @@ config.status
 config.sub
 configure
 depcomp
+GPATH
+GRTAGS
+GSYMS
+GTAGS
 install
 libtool
 ltmain.sh

@@ -25,22 +25,22 @@
 #ifndef __WZD_SITE_GROUP__
 #define __WZD_SITE_GROUP__
 
-int do_site_group(char *command_line, wzd_context_t * context);
-int do_site_grpadd(char *command_line, wzd_context_t * context);
-int do_site_grpdel(char *command_line, wzd_context_t * context);
-int do_site_grpren(char *command_line, wzd_context_t * context);
+int do_site_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_ginfo(char *command_line, wzd_context_t * context);
-int do_site_gsinfo(char *command_line, wzd_context_t * context);
+int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_gsinfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_grpaddip(char *command_line, wzd_context_t * context);
-int do_site_grpdelip(char *command_line, wzd_context_t * context);
+int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_grpratio(char *command_line, wzd_context_t * context);
+int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_grpchange(char *command_line, wzd_context_t * context);
+int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_grpkill(char *command_line, wzd_context_t * context);
+int do_site_grpkill(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
 #if 0
 int do_site_kick(char *command_line, wzd_context_t * context);

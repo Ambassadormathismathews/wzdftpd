@@ -69,6 +69,7 @@
 #include "wzd_vfs.h"
 #include "wzd_crc32.h"
 #include "wzd_file.h"
+#include "wzd_perm.h"
 #include "wzd_ratio.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
@@ -115,6 +116,8 @@ int identify_token(char *token)
       case STRTOINT('c','d','u','p'): return TOK_CDUP;
       case STRTOINT('l','i','s','t'): return TOK_LIST;
       case STRTOINT('n','l','s','t'): return TOK_NLST;
+      case STRTOINT('m','l','s','t'): return TOK_MLST;
+      case STRTOINT('m','l','s','d'): return TOK_MLSD;
       case STRTOINT('m','k','d','\0'): return TOK_MKD;
       case STRTOINT('r','m','d','\0'): return TOK_RMD;
       case STRTOINT('r','e','t','r'): return TOK_RETR;
@@ -302,6 +305,13 @@ void client_die(wzd_context_t * context)
 {
   int ret;
 
+  if (context->magic != CONTEXT_MAGIC) {
+#ifdef DEBUG
+out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
+#endif
+    return;
+  }
+
   /* close opened files */
   if (context->current_action.current_file >= 0) {
     file_unlock(context->current_action.current_file);
@@ -318,9 +328,6 @@ void client_die(wzd_context_t * context)
   END_FORALL_HOOKS
 
 #ifdef DEBUG
-    if (context->magic != CONTEXT_MAGIC) {
-out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
-    }
 /*  if (context->current_limiter) {
 out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   }*/
@@ -457,7 +464,7 @@ int check_timeout(wzd_context_t * context)
               delay
               );
         }
-        client_die(context);
+        context->exitclient = 1;
 #ifdef WZD_MULTIPROCESS
         exit(0);
 #else /* WZD_MULTIPROCESS */
@@ -589,6 +596,7 @@ int waitaccept(wzd_context_t * context)
   if (context->ssl.data_mode == TLS_PRIV) {
     int ret;
     ret = tls_init_datamode(sock, context);
+    /* FIXME check return */
   }
 #endif
 
@@ -699,12 +707,13 @@ int list_callback(unsigned int sock, wzd_context_t * context, char *line)
 
 /*************** do_list *****************************/
 
-int do_list(char *name, char *param, wzd_context_t * context)
+int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,sock,n;
   char nullch[8];
   char * cmask;
+  const char * param;
   wzd_user_t * user;
   list_type_t listtype;
 
@@ -712,11 +721,12 @@ int do_list(char *name, char *param, wzd_context_t * context)
 
   if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
 
-  if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
+  if (!str_checklength(arg, 0, WZD_MAX_PATH-10))
   {
     ret = send_message_with_args(501,context,"Argument or parameter too big.");
     return E_PARAM_BIG;
   }
+  param = str_tochar(arg);
 
   if (context->pasvsock < 0 && context->dataport == 0)
   {
@@ -728,7 +738,7 @@ int do_list(char *name, char *param, wzd_context_t * context)
     return E_XFER_PROGRESS;
   }
 
-  if (strcasecmp(name,"nlst")==0)
+  if (strcasecmp(str_tochar(name),"nlst")==0)
     listtype = LIST_TYPE_SHORT;
   else
     listtype = LIST_TYPE_LONG;
@@ -869,13 +879,180 @@ printf("path: '%s'\n",path);
   return E_OK;
 }
 
-/*************** do_stat *****************************/
-int do_opts(char *name, char *param, wzd_context_t * context)
+
+/* filename must be an ABSOLUTE path */
+int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t * context)
 {
+  struct wzd_file_t * file_info;
   char *ptr;
+  struct stat s;
+  wzd_string_t *temp;
+  const char *type;
+
+  if (!filename  || !buffer) return -1;
+
+  ptr = strrchr(filename,'/');
+  if (!ptr) return -1;
+  if (ptr+1 != '\0') ptr++;
+
+  if (stat(filename,&s)) return -1;
+
+  temp = str_allocate();
+
+  str_sprintf(buffer," ");
+
+  /* XXX build info */
+  file_info = file_stat(filename,context);
+
+  /* Type=... */
+  if (file_info) {
+    switch (file_info->kind) {
+      case FILE_REG:
+        type = "file"; break;
+      case FILE_DIR:
+        type = "dir"; break;
+      case FILE_LNK:
+        type = "OS.unix=slink"; break;
+      case FILE_VFS:
+        type = "OS.wzdftpd=vfs"; break;
+      default:
+        type = "unknown"; break;
+    }
+  } else {
+    switch (s.st_mode & S_IFMT) {
+      case S_IFREG:
+        type = "file"; break;
+      case S_IFDIR:
+        type = "dir"; break;
+      default:
+        type = "unknown"; break;
+    }
+  }
+  str_sprintf(temp," Type=%s;",type);
+  str_append(buffer,str_tochar(temp));
+
+  /* Size=... */
+  {
+#ifndef WIN32
+    str_sprintf(temp," Size=%llu;",(u64_t)s.st_size);
+#else
+    str_sprintf(temp," Size=%I64u;",(u64_t)s.st_size);
+#endif
+    str_append(buffer,str_tochar(temp));
+  }
+
+  /* Modify=... */
+  {
+    char tm[32];
+    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
+
+    str_sprintf(temp," Modify=%s;",tm);
+    str_append(buffer,str_tochar(temp));
+  }
+
+#if 0
+  /* Perm=... */
+  {
+    str_sprintf(temp," Perm=");
+    /* "a" / "c" / "d" / "e" / "f" /
+     * "l" / "m" / "p" / "r" / "w"
+     */
+    str_append(buffer,str_tochar(temp));
+  }
+#endif
+
+  /* Unique=... */
+  {
+    str_sprintf(temp," Unique=%llu;",(u64_t)s.st_ino);
+    str_append(buffer,str_tochar(temp));
+  }
+
+  /* End, append name */
+  str_append(buffer," ");
+  str_append(buffer,ptr);
+
+  free_file_recursive(file_info);
+  str_deallocate(temp);
+
+  return 0;
+}
+
+/*************** do_mlsd *****************************/
+
+int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int ret;
+  wzd_user_t * user;
+
+  user = GetUserByID(context->userid);
+
+  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+
+  ret = send_message_with_args(501,context,"Not yet implemented.");
+
+  return E_OK;
+}
+
+/*************** do_mlst *****************************/
+
+int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int ret;
+  wzd_user_t * user;
+  char * path;
+  wzd_string_t * str;
+
+  user = GetUserByID(context->userid);
+
+  /* stat has the same behaviour as LIST */
+  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+
+  if (!str_checklength(param, 1, WZD_MAX_PATH-10))
+  {
+    ret = send_message_with_args(501,context,"Argument or parameter too big.");
+    return E_PARAM_BIG;
+  }
+
+  context->state = STATE_COMMAND;
+
+  path = wzd_malloc(WZD_MAX_PATH+1);
+  if (checkpath_new(str_tochar(param),path,context)) {
+    ret = send_message_with_args(550,context,"incorrect file name");
+    wzd_free(path);
+    return E_PARAM_INVALID;
+  }
+
+  str = str_allocate();
+  if (mlst_single_file(path, str, context)) {
+    ret = send_message_with_args(501,context,"Error occured");
+    wzd_free(path);
+    str_deallocate(str);
+    return E_PARAM_INVALID;
+  }
+
+  str_append(str,"\r\n");
+
+
+  send_message_raw("250- Listing %s\r\n",context); /* XXX %s <- param */
+  send_message_raw(str_tochar(str),context);
+
+  ret = send_message_raw("250 End\r\n",context);
+
+  context->idle_time_start = time(NULL);
+  context->state = STATE_UNKNOWN;
+
+  wzd_free(path);
+
+  return E_OK;
+}
+
+/*************** do_opts *****************************/
+int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  const char *ptr;
   int ret;
 
-  ptr = param;
+  ptr = str_tochar(param);
 
   if (strncasecmp(ptr,"UTF8",4)==0)
   {
@@ -907,12 +1084,13 @@ label_opts_error:
 
 /*************** do_stat *****************************/
 
-int do_stat(char *name, char *param, wzd_context_t * context)
+int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,sock,n;
   char nullch[8];
   char * cmask;
+  const char *param;
   wzd_user_t * user;
   list_type_t listtype;
   ssl_data_t old_data_mode;
@@ -922,11 +1100,12 @@ int do_stat(char *name, char *param, wzd_context_t * context)
   /* stat has the same behaviour as LIST */
   if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
 
-  if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
+  if (!str_checklength(arg, 1, WZD_MAX_PATH-10))
   {
     ret = send_message_with_args(501,context,"Argument or parameter too big.");
     return E_PARAM_BIG;
   }
+  param = str_tochar(arg);
 
   listtype = LIST_TYPE_LONG;
 
@@ -1045,12 +1224,20 @@ printf("path: '%s'\n",path);
 
 /*************** do_mkdir ****************************/
 
-int do_mkdir(char *name, char *param, wzd_context_t * context)
+int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char  * cmd = NULL, * path = NULL;
   char * buffer = NULL;
   int ret;
   wzd_user_t * user;
+  const char *param;
+
+  if (!str_checklength(arg,1,WZD_MAX_PATH-1))
+  {
+    ret = send_message_with_args(501,context,"invalid path");
+    return E_PARAM_INVALID;
+  }
+  param = str_tochar(arg);
 
   cmd = wzd_malloc(WZD_MAX_PATH+1);
   path = wzd_malloc(WZD_MAX_PATH+1);
@@ -1059,8 +1246,6 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
 
   if ( !(user->userperms & RIGHT_MKDIR) ) { ret = E_NOPERM; goto label_error_mkdir; }
 
-  if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_mkdir; }
-  if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_mkdir; }
   if (strcmp(param,"/")==0) { ret = E_WRONGPATH; goto label_error_mkdir; }
 
   if (param[0] != '/') {
@@ -1194,19 +1379,25 @@ label_error_mkdir:
 
 /*************** do_rmdir ****************************/
 
-int do_rmdir(char *name, char * param, wzd_context_t * context)
+int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
   struct stat s;
   int ret;
   wzd_user_t * user;
+  const char *param;
+
+  if (!str_checklength(arg,1,WZD_MAX_PATH-1))
+  {
+    ret = send_message_with_args(501,context,"invalid path");
+    return E_PARAM_INVALID;
+  }
+  param = str_tochar(arg);
 
   user = GetUserByID(context->userid);
 
   if ( !(user->userperms & RIGHT_RMDIR) ) { ret = E_NOPERM;; goto label_error_rmdir; }
 
-  if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_rmdir; }
-  if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_rmdir; }
 
   if (checkpath_new(param,path,context)) { ret = E_WRONGPATH; goto label_error_rmdir; }
 
@@ -1285,7 +1476,7 @@ label_error_rmdir:
 }
 
 /*************** do_port *****************************/
-int do_port(char *name, char *args, wzd_context_t * context)
+int do_port(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 {
   int a0,a1,a2,a3;
   unsigned int p1, p2;
@@ -1299,7 +1490,7 @@ int do_port(char *name, char *args, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Invalid parameters");
     return E_PARAM_NULL;
   }
-  if ((sscanf(args,"%d,%d,%d,%d,%d,%d",
+  if ((sscanf(str_tochar(args),"%d,%d,%d,%d,%d,%d",
           &a0,&a1,&a2,&a3,
           &p1,&p2))<6) {
     ret = send_message(502,context);
@@ -1318,7 +1509,7 @@ int do_port(char *name, char *args, wzd_context_t * context)
 }
 
 /*************** do_pasv *****************************/
-int do_pasv(char *name, char *args, wzd_context_t * context)
+int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 {
   int ret;
   unsigned long addr;
@@ -1458,7 +1649,7 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
 }
 
 /*************** do_eprt *****************************/
-int do_eprt(char *name, char *param, wzd_context_t * context)
+int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
 #if defined(IPV6_SUPPORT)
   int ret;
@@ -1469,22 +1660,26 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   unsigned int tcp_port;
   struct in_addr addr4;
   struct in6_addr addr6;
+  char * param;
 
   if (context->pasvsock) {
     socket_close(context->pasvsock);
     context->pasvsock = -1;
   }
   /* context->resume = 0; */
-  if (!param || strlen(param) <= 7) {
+  if (!arg || strlen(str_tochar(arg)) <= 7) {
     ret = send_message(502,context);
     ret = send_message_with_args(501,context,"Invalid argument");
     return E_PARAM_INVALID;
   }
 
+  param = strdup(str_tochar(arg));
+
   sep = *param++;
   net_prt = *param++;
   if ( (*param++) != sep || (net_prt != '1' && net_prt != '2') ) {
     ret = send_message_with_args(501,context,"Invalid argument");
+    free(param);
     return E_PARAM_INVALID;
   }
 
@@ -1492,6 +1687,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   while (*param && (*param) != sep ) param++;
   if ( !*param ) {
     ret = send_message_with_args(501,context,"Invalid argument");
+    free(param);
     return E_PARAM_INVALID;
   }
 
@@ -1502,6 +1698,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   while (*param && (*param) != sep ) param++;
   if ( !*param || *param != sep ) {
     ret = send_message_with_args(501,context,"Invalid argument");
+    free(param);
     return E_PARAM_INVALID;
   }
 
@@ -1510,6 +1707,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   tcp_port = strtoul(s_tcp_port,&ptr,0);
   if (*ptr) {
     ret = send_message_with_args(501,context,"Invalid port");
+    free(param);
     return E_PARAM_INVALID;
   }
 
@@ -1519,6 +1717,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
     if ( (ret=inet_pton(AF_INET,net_addr,&addr4)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
+      free(param);
       return E_PARAM_INVALID;
     }
     memcpy(context->dataip,(const char *)addr4.s_addr,4);
@@ -1527,12 +1726,14 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
     if ( (ret=inet_pton(AF_INET6,net_addr,&addr6)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
+      free(param);
       return E_PARAM_INVALID;
     }
     memcpy(context->dataip,addr6.s6_addr,16);
     break;
   default:
     ret = send_message_with_args(501,context,"Invalid protocol");
+    free(param);
     return E_PARAM_INVALID;
   }
 
@@ -1540,6 +1741,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
   context->dataport = tcp_port;
   context->datafamily = net_prt - '0';
 
+  free(param);
   ret = send_message_with_args(200,context,"Command okay");
 #else /* defined(IPV6_SUPPORT) */
   send_message(202,context);
@@ -1548,7 +1750,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_epsv *****************************/
-int do_epsv(char *name, char *arg, wzd_context_t * context)
+int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   unsigned int size,port;
@@ -1688,7 +1890,7 @@ int do_epsv(char *name, char *arg, wzd_context_t * context)
 }
 
 /*************** do_retr *****************************/
-int do_retr(char *name, char *param, wzd_context_t * context)
+int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int fd;
@@ -1696,7 +1898,9 @@ int do_retr(char *name, char *param, wzd_context_t * context)
   int sock;
   int ret;
   wzd_user_t * user;
+  const char *param;
 
+  param = str_tochar(arg);
   user = GetUserByID(context->userid);
 
   if ( !(user->userperms & RIGHT_RETR) ) return E_NOPERM;
@@ -1840,7 +2044,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_stor *****************************/
-int do_stor(char *name, char *param, wzd_context_t * context)
+int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
   int fd;
@@ -1848,6 +2052,9 @@ int do_stor(char *name, char *param, wzd_context_t * context)
   int sock;
   int ret;
   wzd_user_t * user;
+  const char *param;
+
+  param = str_tochar(arg);
 
   user = GetUserByID(context->userid);
 
@@ -1892,6 +2099,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
 
   /* TODO call checkpath again ? see do_mkdir */
 
+#if 0
   /* TODO understand !!! */
   /* BUGFIX */
   if ((ret=readlink(path,path2,sizeof(path2)-1)) >= 0) {
@@ -1909,6 +2117,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
     }
   }
   /* END OF BUGFIX */
+#endif /* 0 */
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
@@ -1940,7 +2149,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
       return 2;
     }
   }*/
-  if (strcasecmp(name,"appe")==0)
+  if (strcasecmp(str_tochar(name),"appe")==0)
     context->resume = (unsigned long)-1;
 
   if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
@@ -2028,18 +2237,18 @@ int do_stor(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_mdtm *****************************/
-int do_mdtm(char *name, char *param, wzd_context_t * context)
+int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], tm[32];
   struct stat s;
   int ret;
 
-  if (!param || strlen(param)>=WZD_MAX_PATH) {
+  if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
     ret = send_message_with_args(501,context,"Incorrect argument");
     return E_PARAM_INVALID;
   }
 
-  if (!checkpath_new(param,path,context)) {
+  if (!checkpath_new(str_tochar(param),path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
@@ -2061,18 +2270,18 @@ int do_mdtm(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_size *****************************/
-int do_size(char *name, char *param, wzd_context_t * context)
+int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
   struct stat s;
   int ret;
 
-  if (!param || strlen(param)>=WZD_MAX_PATH) {
+  if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
     ret = send_message_with_args(501,context,"Incorrect argument");
     return E_PARAM_INVALID;
   }
-  if (!checkpath_new(param,path,context)) {
+  if (!checkpath_new(str_tochar(param),path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
@@ -2094,7 +2303,7 @@ int do_size(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_abor *****************************/
-int do_abor(char *name, char *arg, wzd_context_t * context)
+int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
@@ -2156,12 +2365,14 @@ int do_abor(char *name, char *arg, wzd_context_t * context)
 }
 
 /*************** do_cwd ******************************/
-int do_cwd(char *name, char *param, wzd_context_t * context)
+int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
+  const char *param;
 
+  param = str_tochar(arg);
   context->resume = 0;
-  if (strcmp(name,"cdup")==0) param="..";
+  if (strcmp(str_tochar(name),"cdup")==0) param="..";
 
   if (!param) {
     param = "/";
@@ -2197,7 +2408,7 @@ int do_cwd(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_dele *****************************/
-int do_dele(char *name, char *param, wzd_context_t * context)
+int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2205,7 +2416,7 @@ int do_dele(char *name, char *param, wzd_context_t * context)
   u64_t file_size;
   wzd_user_t * user, * owner;
 
-  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH || checkpath_new(param,path,context)) {
+  if (!str_checklength(param,1,WZD_MAX_PATH-1) || checkpath_new(str_tochar(param),path,context)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
@@ -2280,7 +2491,7 @@ int do_dele(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_pret *****************************/
-int do_pret(char *name, char *param, wzd_context_t * context)
+int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
 
@@ -2296,13 +2507,13 @@ int do_pret(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_print_message ********************/
-int do_print_message(char *name, char *filename, wzd_context_t * context)
+int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 {
   int cmd;
   int ret;
   char buffer[WZD_BUFFER_LEN];
 
-  cmd = identify_token(name);
+  cmd = identify_token((char*)str_tochar(name));
   switch (cmd) {
     case TOK_PWD:
       context->resume = 0;
@@ -2329,9 +2540,12 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_prot *****************************/
-int do_prot(char *name, char *arg, wzd_context_t * context)
+int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
+  const char *arg;
+
+  arg = str_tochar(param);
   /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
   if (strcasecmp("P",arg)==0)
     context->ssl.data_mode = TLS_PRIV;
@@ -2344,10 +2558,15 @@ int do_prot(char *name, char *arg, wzd_context_t * context)
   ret = send_message_with_args(200,context,"PROT command OK");
   return E_OK;
 }
+#else
+int do_prot(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+{
+  return E_PARAM_INVALID;
+}
 #endif
 
 /*************** do_quit *****************************/
-int do_quit(char *name, char *arg, wzd_context_t * context)
+int do_quit(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
 
@@ -2384,7 +2603,7 @@ int do_quit(char *name, char *arg, wzd_context_t * context)
 }
 
 /*************** do_rest *****************************/
-int do_rest(char *name, char *arg, wzd_context_t * context)
+int do_rest(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   unsigned long ul;
@@ -2395,7 +2614,7 @@ int do_rest(char *name, char *arg, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
   ul=0;
-  i = sscanf(arg,"%lu",&ul);
+  i = sscanf(str_tochar(arg),"%lu",&ul);
   if (i>0) {
     char buf[256];
     snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",ul);
@@ -2409,7 +2628,7 @@ int do_rest(char *name, char *arg, wzd_context_t * context)
 }
 
 /*************** do_rnfr *****************************/
-int do_rnfr(char *name, char *filename, wzd_context_t * context)
+int do_rnfr(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2423,7 +2642,7 @@ int do_rnfr(char *name, char *filename, wzd_context_t * context)
   }
 
 
-  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath_new(filename,path,context)) {
+  if (!filename || strlen(str_tochar(filename))==0 || strlen(str_tochar(filename))>=WZD_MAX_PATH || checkpath_new(str_tochar(filename),path,context)) {
     ret = send_message_with_args(550,context,"RNFR","file does not exist");
     return E_FILE_NOEXIST;
   }
@@ -2447,7 +2666,7 @@ int do_rnfr(char *name, char *filename, wzd_context_t * context)
 }
 
 /*************** do_rnto *****************************/
-int do_rnto(char *name, char *filename, wzd_context_t * context)
+int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2461,7 +2680,7 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
   }
 
 
-  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH) {
+  if (!filename || strlen(str_tochar(filename))==0 || strlen(str_tochar(filename))>=WZD_MAX_PATH) {
     ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
     return E_PARAM_INVALID;
   }
@@ -2470,7 +2689,7 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-  checkpath_new(filename,path,context);
+  checkpath_new(str_tochar(filename),path,context);
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
@@ -2493,7 +2712,7 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
 }
 
 /*************** do_type *****************************/
-int do_type(char *name, char *param, wzd_context_t * context)
+int do_type(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
 
@@ -2502,9 +2721,9 @@ int do_type(char *name, char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Invalid TYPE marker");
     return E_PARAM_INVALID;
   }
-  if (strcasecmp(param,"I")==0)
+  if (strcasecmp(str_tochar(param),"I")==0)
     context->current_xfer_type = BINARY;
-  else if (strcasecmp(param,"A")==0)
+  else if (strcasecmp(str_tochar(param),"A")==0)
     context->current_xfer_type = ASCII;
   else {
     ret = send_message(502,context);
@@ -2515,22 +2734,24 @@ int do_type(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_xcrc *****************************/
-int do_xcrc(char *name, char *param, wzd_context_t * context)
+int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
-  char * ptr;
+  const char * ptr;
   char * ptest;
   struct stat s;
   int ret;
   unsigned long crc = 0;
   unsigned long startpos = 0;
   unsigned long length = (unsigned long)-1;
+  const char *param;
 
-  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
+  if (!str_checklength(arg,1,WZD_MAX_PATH-1)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
+  param = str_tochar(arg);
 
   /* get filename and args:
    * "filename" must be quoted
@@ -2592,11 +2813,11 @@ int do_xcrc(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_xmd5 *****************************/
-int do_xmd5(char *name, char *param, wzd_context_t * context)
+int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
-  char * ptr;
+  const char * ptr;
   char * ptest;
   struct stat s;
   int ret;
@@ -2605,11 +2826,13 @@ int do_xmd5(char *name, char *param, wzd_context_t * context)
   unsigned long startpos = 0;
   unsigned long length = (unsigned long)-1;
   unsigned int i;
+  const char *param;
 
-  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
+  if (!str_checklength(arg,1,WZD_MAX_PATH-1)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
+  param = str_tochar(arg);
 
   for (i=0; i<16; i++)
     crc[i] = 0;
@@ -2640,7 +2863,7 @@ int do_xmd5(char *name, char *param, wzd_context_t * context)
         return E_PARAM_INVALID;
       } else { /* optional: read start checksum */
         ptr = ptest;
-        strtomd5(ptr,&ptest,crc);
+        strtomd5((char*)ptr,&ptest,crc);
         if (!ptest || ptest == ptr)
           memset(crc,0,16);
       }
@@ -3041,11 +3264,22 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       break;
 #endif
     case TOK_FEAT:
-      ret = do_print_message("feat",NULL,context);
+      {
+        wzd_string_t * str = STR("feat");
+        ret = do_print_message(str,NULL,context);
+        str_deallocate(str);
+      }
       break;
     case TOK_OPTS:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      ret = do_opts("opts",token,context);
+      {
+        wzd_string_t *s1, *s2;
+        token = strtok_r(NULL,"\r\n",&ptr);
+        s1 = STR("opts");
+        s2 = STR(token);
+        ret = do_opts(s1,s2,context);
+        str_deallocate(s1);
+        str_deallocate(s2);
+      }
       break;
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
@@ -3308,24 +3542,49 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
       command = NULL;
     else
     {
-      str_tolower(token);
-      command = command_list_find(str_tochar(token));
+      command = commands_find(token);
     }
 
     if (command) {
-      ret = (*(command->command))(str_tochar(token),str_tochar(command_buffer),context);
+      /* if command is SITE,
+       * get next command, and strcat it with a _
+       */
+      if (command->id == TOK_SITE) {
+        wzd_string_t * site_command;
+        wzd_command_t * command_real;
+
+        site_command = str_tok(command_buffer," \t");
+        if (site_command) {
+          str_append(str_append(token,"_"),str_tochar(site_command));
+          str_tolower(token);
+          str_deallocate(site_command);
+        }
+
+        command_real = commands_find(token);
+        if (command_real) command = command_real;
+
+        if (perm_check(str_tochar(token),context,mainConfig) == 1) {
+          ret = send_message_with_args(501,context,"Permission Denied");
+          str_deallocate(token);
+          str_deallocate(command_buffer);
+          continue;
+        }
+      }
+      ret = (*(command->command))(token,command_buffer,context);
+      str_deallocate(token);
+      str_deallocate(command_buffer);
       continue;
     } else {
       ret = send_message(202,context);
     }
 
     str_deallocate(token);
+    str_deallocate(command_buffer);
 
   } /* while (!exitclient) */
 
 /*	Sleep(2000);*/
 
-  str_deallocate(command_buffer);
   free(buffer);
 
 #ifdef WZD_MULTITHREAD
@@ -3344,118 +3603,4 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
   return NULL;
 }
 
-
-
-
-/*************** init_command_list *******************/
-
-#define NEW_STD_COMMAND(s_name,s_function,s_help_function,s_id) \
-  command = wzd_malloc(sizeof(wzd_command_t)); \
-  command->name = wzd_strdup(#s_name); \
-  command->id = s_id; \
-  command->command = s_function; \
-  command->help_function = s_help_function; \
-  command->next_command = NULL \
-  , command
-
-int command_list_init(wzd_command_t **list)
-{
-  wzd_command_t *command, *last_command;
-
-  last_command = (*list) = NEW_STD_COMMAND(site,do_site,NULL,TOK_SITE);
-  last_command->next_command = NEW_STD_COMMAND(type,do_type,NULL,TOK_TYPE); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(port,do_port,NULL,TOK_PORT); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(pasv,do_pasv,NULL,TOK_PASV); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(eprt,do_eprt,NULL,TOK_EPRT); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(epsv,do_epsv,NULL,TOK_EPSV); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(abor,do_abor,NULL,TOK_ABOR); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(pwd,do_print_message,NULL,TOK_PWD); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(allo,do_print_message,NULL,TOK_ALLO); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(feat,do_print_message,NULL,TOK_FEAT); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(noop,do_print_message,NULL,TOK_NOOP); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(syst,do_print_message,NULL,TOK_SYST); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(rnfr,do_rnfr,NULL,TOK_RNFR); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(rnto,do_rnto,NULL,TOK_RNTO); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(cdup,do_cwd,NULL,TOK_CDUP); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(cwd,do_cwd,NULL,TOK_CWD); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(list,do_list,NULL,TOK_LIST); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(nlst,do_list,NULL,TOK_NLST); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(stat,do_stat,NULL,TOK_STAT); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(mkd,do_mkdir,NULL,TOK_MKD); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(rmd,do_rmdir,NULL,TOK_RMD); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(retr,do_retr,NULL,TOK_RETR); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(stor,do_stor,NULL,TOK_STOR); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(appe,do_stor,NULL,TOK_APPE); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(rest,do_rest,NULL,TOK_REST); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(mdtm,do_mdtm,NULL,TOK_MDTM); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(size,do_size,NULL,TOK_SIZE); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(dele,do_dele,NULL,TOK_DELE); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(pret,do_pret,NULL,TOK_PRET); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(xcrc,do_xcrc,NULL,TOK_XCRC); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(xmd5,do_xmd5,NULL,TOK_XMD5); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(opts,do_opts,NULL,TOK_OPTS); last_command = last_command->next_command;
-  last_command->next_command = NEW_STD_COMMAND(quit,do_quit,NULL,TOK_QUIT); last_command = last_command->next_command;
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  last_command->next_command = NEW_STD_COMMAND(prot,do_prot,NULL,TOK_PROT); last_command = last_command->next_command;
-#endif
-
-  return 0;
-}
-
-int command_list_add(wzd_command_t **list, const char *name, wzd_function_command_t fct, wzd_function_command_t helper)
-{
-  wzd_command_t * new_command, *current;
-
-  new_command = wzd_malloc(sizeof(wzd_command_t));
-  if (!new_command) return 1;
-  new_command->name = strdup(name);
-  new_command->command = fct;
-  new_command->help_function = helper;
-  new_command->next_command = NULL;
-
-  current = *list;
-
-  if (!current) {
-    *list = new_command;
-    return 0;
-  }
-
-  /* tail insertion */
-  while (current->next_command)
-    current = current->next_command;
-
-  current->next_command = new_command;
-
-  return 0;
-}
-
-void command_list_cleanup(wzd_command_t **list)
-{
-  wzd_command_t * next, *current;
-
-  current = *list;
-
-  while (current)
-  {
-    next = current->next_command;
-    wzd_free(current->name);
-    wzd_free(current);
-    current = next;
-  }
-  *list = NULL;
-}
-
-wzd_command_t * command_list_find(const char *name)
-{
-  wzd_command_t * current;
-
-  current = mainConfig->command_list;
-  while(current)
-  {
-    if (strcasecmp(current->name,name)==0) return current;
-    current = current->next_command;
-  }
-
-  return NULL;
-}
 

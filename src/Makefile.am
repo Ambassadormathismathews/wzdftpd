@@ -14,6 +14,7 @@ libwzd_core_la_HEADERS = \
 	wzd_all.h        \
 	wzd_backend.h    \
 	wzd_cache.h      \
+	wzd_commands.h   \
 	wzd_crc32.h  	 \
 	wzd_crontab.h	 \
 	wzd_debug.h      \
@@ -45,6 +46,7 @@ libwzd_core_la_SOURCES = \
 	wzd_all.c        \
 	wzd_backend.c    \
 	wzd_cache.c      \
+	wzd_commands.c   \
 	wzd_crc32.c      \
 	wzd_crontab.c    \
 	wzd_debug.c      \

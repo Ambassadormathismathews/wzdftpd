@@ -337,6 +337,8 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
+#include <stdio.h>
+
 
 
 
