@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
@@ -39,7 +63,10 @@
 #include "wzd_perm.h"
 #include "wzd_socket.h"
 #include "wzd_mod.h"
+#include "wzd_cache.h"
 #include "wzd_crontab.h"
+#include "wzd_messages.h"
+#include "wzd_site.h"
 
 
 /************ PROTOTYPES ***********/
@@ -134,7 +161,7 @@ void context_init(wzd_context_t * context)
   context->current_ul_limiter.bytes_transfered = 0;
   context->current_dl_limiter.maxspeed = 0;
   context->current_dl_limiter.bytes_transfered = 0;
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   context->ssl.obj = NULL;
   context->ssl.data_ssl = NULL;
 #endif
@@ -170,7 +197,7 @@ void reset_stats(wzd_server_stat_t * stats)
   stats->num_childs = 0;
 }
 
-/* returns 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
+/** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
 int global_check_ip_allowed(int userip[4])
 {
   char ip[30];
@@ -189,7 +216,7 @@ int global_check_ip_allowed(int userip[4])
   return -1;
 }
 
-/* called when SIGHUP received, need to restart the main server
+/** called when SIGHUP received, need to restart the main server
  * (and re-read config file)
  * Currently loggued users are NOT kicked
  */
@@ -223,7 +250,7 @@ void server_restart(int signum)
     /* mainSocket will be modified later */
     mainConfig->port = config->port;
     mainConfig->pasv_low_range = config->pasv_low_range;
-    mainConfig->pasv_up_range = config->pasv_up_range;
+    mainConfig->pasv_high_range = config->pasv_high_range;
     memcpy(mainConfig->pasv_ip,config->pasv_ip,4);
     mainConfig->login_pre_ip_check = config->login_pre_ip_check;
     /* reload pre-ip lists */
@@ -232,7 +259,7 @@ void server_restart(int signum)
     mainConfig->vfs = config->vfs;
     /* do not touch hooks */
     /* do not touch modules */
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
     /* what can we do with ssl ? */
     /* reload certificate ? */
 #endif
@@ -313,8 +340,7 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port)
   out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
 }
 
-/* int check_server_dynamic_ip(void)
- * checks if dynamic ip has changed, and rebind main socket if true
+/* checks if dynamic ip has changed, and rebind main socket if true
  */
 int check_server_dynamic_ip(void)
 {
@@ -419,8 +445,7 @@ int check_server_dynamic_ip(void)
 }
 
 
-/* void login_new(int socket_accept_fd)
- *
+/*
  * checks if login sequence can start, creates new context, etc
  */
 void login_new(int socket_accept_fd)
@@ -533,7 +558,7 @@ void login_new(int socket_accept_fd)
     context->hostip[3] = userip[3];
 
     /* switch to tls mode ? */
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
 	close(newsock);
@@ -585,7 +610,7 @@ void login_new(int socket_accept_fd)
 }
 
 
-/* IMPERATIVE STOP REQUEST - exit */
+/** IMPERATIVE STOP REQUEST - exit */
 void interrupt(int signum)
 {
   int ret;
@@ -606,7 +631,7 @@ fprintf(stderr,"Received signal %d\n",signum);
 }
 
 #ifdef WZD_MULTIPROCESS
-/* STOP REQUEST - child part */
+/** STOP REQUEST - child part */
 void child_interrupt(int signum)
 {
   wzd_context_t * context;
@@ -631,7 +656,7 @@ void child_interrupt(int signum)
 #endif
       client_die(&context_list[i]);
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
       tls_free(&context_list[i]);
 #endif
       break;
@@ -781,6 +806,11 @@ void serverMainThreadProc(void *arg)
     serverMainThreadExit(-1);
   }
 
+  /****** set up site functions *****/
+  if (site_init(mainConfig)) {
+    out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
+  }
+
   /********** set up crontab ********/
   cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);
 
@@ -878,15 +908,22 @@ void free_config(wzd_config_t * config)
     current_ip = next_ip;
   }
 
+  close(mainConfig->xferlog_fd);
+  free(mainConfig->xferlog_name);
   fclose(mainConfig->logfile);
+  free(mainConfig->logfilename);
+  free(mainConfig->config_filename);
   wzd_shm_free(mainConfig_shm);
+#ifdef DEBUG
+  mainConfig_shm = NULL;
+#endif
 }
 
 void serverMainThreadExit(int retcode)
 {
   out_log(LEVEL_INFO,"Server exiting, retcode %d\n",retcode);
 	close(mainConfig->mainSocket);
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   tls_exit();
 #endif
 #ifdef WZD_MULTITHREAD
@@ -904,7 +941,7 @@ void serverMainThreadExit(int retcode)
 #endif
 /*	client_die(&context_list[i]);*/
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
 /*	tls_free(&context_list[i]);*/
 #endif
       }
@@ -913,10 +950,17 @@ void serverMainThreadExit(int retcode)
 #endif
   /* we need to wait for child threads to be effectively dead */
   sleep(1);
+  wzd_cache_purge();
   hook_free(&mainConfig->hook);
+  module_free(&mainConfig->module);
+  cronjob_free(&crontab);
   vfs_free(&mainConfig->vfs);
   perm_free_recursive(mainConfig->perm_list);
+  site_cleanup(mainConfig);
+  free_messages();
 /*  free(context_list);*/
+  /* FIXME should not be done here */
+  if (mainConfig->backend.param) free(mainConfig->backend.param);
   wzd_sem_destroy(limiter_sem);
   wzd_shm_free(context_shm);
   context_list = NULL;
