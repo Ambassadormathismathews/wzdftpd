@@ -412,6 +412,10 @@ char *stripdir(char * dir, char *buf, int maxlen)
     if (*in == '/' || !*in)
     {
       if (ldots == 1 || ldots == 2) {
+        if (!*in) {
+          if (out-ldots<=dir || *(out-ldots-1) != '/')
+            ldots = 0;
+        }
         while (ldots > 0 && --out > buf)
         {
           if (*out == '/')
