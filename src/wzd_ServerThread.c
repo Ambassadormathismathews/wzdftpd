@@ -1633,25 +1633,15 @@ void serverMainThreadExit(int retcode)
     FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
   }
 #ifdef WZD_MULTITHREAD
-#ifndef _MSC_VER
   /* kill all childs threads */
   if (context_list)
   {
-    int i;
-    int ret;
+    unsigned int i;
     for (i=0; i<HARD_USERLIMIT; i++)
     {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-        ret = pthread_cancel(context_list[i].pid_child);
-#ifdef DEBUG
-        fprintf(stderr,"Killing child %lu - returned %d\n",context_list[i].pid_child,ret);
-#endif
-/*	client_die(&context_list[i]);*/
-
-      }
+      context_list[i].exitclient = 1;
     }
   }
-#endif /* _MSC_VER */
 #endif
   /* we need to wait for child threads to be effectively dead */
 #ifndef _MSC_VER
