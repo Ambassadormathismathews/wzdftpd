@@ -6,7 +6,7 @@ dnl Usage:
 dnl AM_PATH_WZD([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl
 dnl Example:
-dnl AM_PATH_WZD(0.3.0, , AC_MSG_ERROR([*** wzdftpd >= 0.3.0 not installed - please install first ***]))
+dnl AM_PATH_WZD(0.4.0, , AC_MSG_ERROR([*** wzdftpd >= 0.4.0 not installed - please install first ***]))
 dnl
 dnl Defines WZD_CFLAGS, WZD_LIBS  WZD_VERSION
 dnl
@@ -79,7 +79,7 @@ if test x$wzd_config_prefix != x; then
 fi
 
 AC_PATH_PROG(WZD_CONFIG, wzd-config, no)
-min_wzd_version=ifelse([$1], ,0.3.0, $1)
+min_wzd_version=ifelse([$1], ,0.4.0, $1)
 
 if test "$WZD_CONFIG" = "no"; then
     no_wzd=yes
