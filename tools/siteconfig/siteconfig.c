@@ -34,6 +34,7 @@
 #include "wzd_libmain.h"
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 /*#include <wzd_shm.h>*/
+#include "wzd_vars.h"
 
 #define	SHM_KEY	0x1331c0d3
 
@@ -76,31 +77,6 @@ char *time_to_str(time_t time)
 }
 #endif
 
-unsigned long get_bandwidth(void)
-{
-  char buffer[256];
-  unsigned long bandwidth=0;
-  unsigned int i;
-  unsigned int id;
-  wzd_user_t * user;
-  wzd_context_t * context;
-
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    if (context_list[i].magic == CONTEXT_MAGIC) {
-      context = &context_list[i];
-      id = context_list[i].userid;
-      user = &user_list[id];
-      if (strncasecmp(context->last_command,"retr",4)==0) {
-        bandwidth += (unsigned long)context->current_dl_limiter.current_speed;
-      }
-      if (strncasecmp(context->last_command,"stor",4)==0) {
-        bandwidth += (unsigned long)context->current_ul_limiter.current_speed;
-      }
-    } /* if CONTEXT_MAGIC */
-  } /* forall contexts */
-
-  return bandwidth;
-}
 
 void usage(const char *progname)
 {
@@ -157,25 +133,33 @@ int parse_args(int argc, char **argv)
 void print_config(wzd_config_t * config)
 {
   time_t t;
+  char buffer[1024];
 
   if (config->site_closed) {
     printf("Server is CLOSED\n");
   }
 
-  printf("Max threads allowed: %d\n",config->max_threads);
+  if (vars_get("max_threads",buffer,1024,config)) return;
+  printf("Max threads allowed: %s\n",buffer);
 
-  printf("Port: %d\n",config->port);
+  if (vars_get("port",buffer,1024,config)) return;
+  printf("Port: %s\n",buffer);
 
-  printf("Passive Range: %d -> %d\n",config->pasv_low_range,config->pasv_high_range);
+  if (vars_get("pasv_low",buffer,1024,config)) return;
+  printf("Passive Range: %s",buffer);
+  if (vars_get("pasv_low",buffer,1024,config)) return;
+  printf(" -> %s\n",buffer);
 
-  printf("Max dl speed: %d\n",config->global_dl_limiter.maxspeed);
-  printf("Max ul speed: %d\n",config->global_ul_limiter.maxspeed);
+  if (vars_get("max_dl",buffer,1024,config)) return;
+  printf("Max dl speed: %s\n",buffer);
+  if (vars_get("max_ul",buffer,1024,config)) return;
+  printf("Max ul speed: %s\n",buffer);
   
-  printf("Loglevel: %s\n",loglevel2str(config->loglevel));
+  if (vars_get("loglevel",buffer,1024,config)) return;
+  printf("loglevel: %s\n",buffer);
 
-  time(&t);
-  t = t - config->server_start;
-  printf("Uptime: %s\n",time_to_str(t));
+  if (vars_get("uptime",buffer,1024,config)) return;
+  printf("Uptime: %s\n",buffer);
 }
 
 void help_request_get(void)
@@ -187,6 +171,7 @@ void help_request_get(void)
 int request_get(const char *arg)
 {
   time_t t;
+  char buffer[1024];
 
   if (!arg || strlen(arg)<=0) return -1;
 
@@ -194,43 +179,8 @@ int request_get(const char *arg)
     print_config(config);
     return 0;
   }
-  if (strcasecmp(arg,"bw")==0) {
-    printf("%lu\n",get_bandwidth());
-    return 0;
-  }
-  if (strcasecmp(arg,"max_threads")==0) {
-    printf("%d\n",config->max_threads);
-    return 0;
-  }
-  if (strcasecmp(arg,"port")==0) {
-    printf("%d\n",config->port);
-    return 0;
-  }
-  if (strcasecmp(arg,"max_dl")==0) {
-    printf("%d\n",config->global_dl_limiter.maxspeed);
-    return 0;
-  }
-  if (strcasecmp(arg,"max_ul")==0) {
-    printf("%d\n",config->global_ul_limiter.maxspeed);
-    return 0;
-  }
-  if (strcasecmp(arg,"loglevel")==0) {
-    printf("%s\n",loglevel2str(config->loglevel));
-    return 0;
-  }
-  if (strcasecmp(arg,"pasv_low")==0) {
-    printf("%d\n",config->pasv_low_range);
-    return 0;
-  }
-  if (strcasecmp(arg,"pasv_high")==0) {
-    printf("%d\n",config->pasv_high_range);
-    return 0;
-  }
-  if (strcasecmp(arg,"uptime")==0) {
-    time(&t);
-    t = t - config->server_start;
-
-    printf("%s\n",time_to_str(t));
+  if (vars_get(arg,buffer,1024,config)==0) {
+    printf("%s\n",buffer);
     return 0;
   }
 
@@ -252,17 +202,11 @@ int request_set(const char *arg, const char *value)
 
   if (!arg || strlen(arg)<=0) return -1;
 
-  if (strcasecmp(arg,"loglevel")==0) {
-    i = str2loglevel(value);
-    if (i==-1) {
-      printf("Invalid level\n");
-      return 1;
-    }
-    config->loglevel = i;
-    return 0;
-  }
   if (strcasecmp(arg,"serverstop")==0) {
     if (strcmp(value,"1")==0) config->serverstop=1;
+    return 0;
+  }
+  if (vars_set(arg,(void*)value,strlen(value),config)==0) {
     return 0;
   }
 

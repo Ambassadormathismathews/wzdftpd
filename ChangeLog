@@ -2,6 +2,10 @@
 
 	* feature: custom site commands and hooks (cscripts) now use cookies as arguments
 	* doc: new section on custom commands
+	* wzd_misc.c: new function get_bandwidth()
+	* feature: get/set server variables (wzd_vars.c, wzd_vars.h)
+	* siteconfig: use new api to server variables
+	* tcl: use new api to server variables, function tcl_vars
 
 2004-03-04  Pierre Chifflier  <pollux@wzdftpd.net>
 

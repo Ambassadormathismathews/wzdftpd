@@ -39,6 +39,9 @@
  * In the future, we'll try to solve this problem managing several Tcl_Interp vars ...
  */
 
+/* URL: http://aspn.activestate.com/ASPN/docs/ActiveTcl/tcl/tcl_13_contents.htm
+ */
+
 #include <stdio.h>
 
 #ifdef _MSC_VER
@@ -72,6 +75,9 @@
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
+#include "wzd_vars.h" /* needed to access variables */
+
+#include "wzd_debug.h"
 
 /***** Private vars ****/
 static Tcl_Interp * interp=NULL;
@@ -92,6 +98,7 @@ static int tcl_hook_protocol(const char *file, const char *args);
 /***** TCL commands ****/
 static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 
 
 /***********************/
@@ -106,6 +113,7 @@ int WZD_MODULE_INIT(void)
   }
   Tcl_CreateCommand(interp,"send_message",tcl_send_message,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
   hook_add_protocol("tcl:",4,&tcl_hook_protocol);
   out_log(LEVEL_INFO,"TCL module loaded\n");
@@ -230,3 +238,34 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
 
   return TCL_OK;
 }
+
+static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char *s;
+  int ret;
+  char *buffer;
+
+  if (argc <= 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  Tcl_ResetResult(interp);
+
+  if (!strcmp(argv[1],"get")) {
+    buffer = wzd_malloc(1024);
+
+    ret = vars_get(argv[2],buffer,1024,getlib_mainConfig());
+    if (!ret)
+      Tcl_SetResult(interp, buffer, (Tcl_FreeProc *)&wzd_free);
+    else
+    {
+      wzd_free(buffer);
+      return TCL_ERROR;
+    }
+  } else if (!strcmp(argv[1],"set")) {
+    ret = vars_set(argv[2],(void*)argv[3],1024,getlib_mainConfig());
+    return (ret)?TCL_ERROR:TCL_OK;
+  }
+
+  return TCL_OK;
+}
+

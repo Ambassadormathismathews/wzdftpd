@@ -79,6 +79,7 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...);
 
 /* Bandwidth limitation */
 
+unsigned long get_bandwidth(void);
 wzd_bw_limiter * limiter_new(int maxspeed);
 void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check);
 void limiter_free(wzd_bw_limiter *l);

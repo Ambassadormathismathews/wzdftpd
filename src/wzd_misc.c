@@ -664,6 +664,34 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...)
 
 
 /************* BANDWIDTH LIMITATION *********/
+
+unsigned long get_bandwidth(void)
+{
+  char buffer[256];
+  unsigned long bandwidth=0;
+  unsigned int i;
+  unsigned int id;
+  wzd_user_t * user;
+  wzd_context_t * context;
+
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    if (context_list[i].magic == CONTEXT_MAGIC) {
+      context = &context_list[i];
+      id = context_list[i].userid;
+      user = GetUserByID(id);
+      if (strncasecmp(context->last_command,"retr",4)==0) {
+        bandwidth += (unsigned long)context->current_dl_limiter.current_speed;
+      }
+      if (strncasecmp(context->last_command,"stor",4)==0) {
+        bandwidth += (unsigned long)context->current_ul_limiter.current_speed;
+      }
+    } /* if CONTEXT_MAGIC */
+  } /* forall contexts */
+
+  return bandwidth;
+}
+
+
 wzd_bw_limiter * limiter_new(int maxspeed)
 {
   wzd_bw_limiter *l_new;

@@ -51,6 +51,7 @@ EXPORTS
 	file_unlock
 	file_write
 	free_messages
+        get_bandwidth
 	get_device_info
 	get_system_ip
 	getlib_contextList
@@ -129,6 +130,8 @@ EXPORTS
 	time_to_str
 	user_ip_add
 	user_ip_inlist
+	vars_get
+	vars_set
 	vfs_add
 	vfs_add_restricted
 	vfs_free
