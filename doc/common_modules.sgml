@@ -204,6 +204,12 @@ Use the 'get' method to read variables, the 'set' method to
 change variables (you need to provide a new value).</para>
 <para>See <link linkend="vars_group">Group variables</link>
 </para></listitem>
+
+<listitem><screen>vars_group new groupname</screen>
+<para>Use this function to create a new group.
+</para>
+</listitem>
+
 <listitem><screen>vars_user get/set username variable_name [value]</screen>
 <para>This function gives access to user variables.
 Use the 'get' method to read variables, the 'set' method to
@@ -349,6 +355,12 @@ Use the 'get' method to read variables, the 'set' method to
 change variables (you need to provide a new value).</para>
 <para>See <link linkend="vars_group">Group variables</link>
 </para></listitem>
+
+<listitem><screen>wzd::vars_group "new", groupname</screen>
+<para>Use this function to create a new group.
+</para>
+</listitem>
+
 <listitem><screen>wzd::vars_user "get"/"set", username, variable_name [, value]</screen>
 <para>This function gives access to user variables.
 Use the 'get' method to read variables, the 'set' method to
