@@ -1,0 +1,10 @@
+From 0.4.x to 0.5:
+
+The server does no more use shm, so you can remove the 'shm_key' and
+'force_shm_cleanup' in config file.
+You may want to add 'logdir' in your config file.
+
+Prefix '+' in front of ip addresses is no more needed in config file.
+
+You should also restrict the new command 'SITE SU' to siteops:
+-site_su = +O

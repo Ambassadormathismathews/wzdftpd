@@ -27,7 +27,7 @@
 
 char * section_getname(wzd_section_t * section);
 
-int section_add(wzd_section_t **section_list, char *name, char *mask, const char *filter);
+int section_add(wzd_section_t **section_list, const char *name, const char *mask, const char *filter);
 
 int section_free(wzd_section_t **section_list);
 

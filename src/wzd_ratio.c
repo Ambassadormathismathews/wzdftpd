@@ -62,6 +62,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
   u64_t needed=0;
 
   me = GetUserByID(context->userid);
+  if (!me) return -1;
 
   if (!me->ratio) return 0;
   credits = ratio_get_credits(me);

@@ -13,7 +13,7 @@ m4macro_DATA = wzd.m4
 
 EXTRA_DIST = bootstrap \
 	Permissions.ReadMeFirst \
-	TLS.ReadMeFirst wzd_tls.cnf \
+	TLS.ReadMeFirst wzd_tls.cnf UPGRADING \
 	$(m4macro_DATA)
 
 doxy:

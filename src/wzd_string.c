@@ -166,6 +166,7 @@ wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src)
   if (src->buffer) {
     memcpy(dst->buffer,src->buffer,src->length);
     dst->buffer[src->length] = '\0';
+    dst->length = src->length;
   }
 
   return dst;
@@ -238,13 +239,14 @@ wzd_string_t * str_trim_left(wzd_string_t *str)
     ++i;
   }
 
-  if (i==0) {
+  if (i!=0) {
     unsigned int j=0;
     for (;i!=str->length;i++)
     {
       str->buffer[j++] = str->buffer[i];
     }
-    str->length -= i;
+    str->length = j;
+    str->buffer[j] = '\0';
   }
 
   return str;
