@@ -59,6 +59,8 @@
 
 #include "wzd_debug.h"
 
+static int _format_date(time_t time, char * buffer, size_t length);
+
 int list_match(char *,char *);
 
 int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, char *buffer, size_t *buffer_len,
@@ -102,9 +104,6 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
   char * buffer_ptr;
   size_t length;
   struct stat st;
-  time_t timeval;
-  struct tm *ntime;
-  int i;
   unsigned long watchdog=0;
 
   if (!directory || strlen(directory)<1) return 0;
@@ -170,25 +169,17 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
     };
 
     /* date */
-    timeval = time(NULL);
-    ntime = localtime(&timeval);
-    i = ntime->tm_year;
-
-    ntime = localtime(&st.st_mtime);
-
-    if (ntime->tm_year==i)
-      (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-    else (void)strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+    _format_date(st.st_mtime, datestr, sizeof(datestr));
 
     /* permissions */
 
-    if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
+    if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
       !S_ISREG(st.st_mode)) {
       /* destination does not exist */
       out_log(LEVEL_FLOOD, "list: strange file %s\n", file->filename);
       memset(&st, 0, sizeof(struct stat));
     };
-    
+
     if (S_ISLNK(st.st_mode)) {
       char linkbuf[256];
       int linksize;
@@ -626,12 +617,12 @@ int list_match(char *str,char *mask) {
   /* character per character matching */
   do {
     if (mask[i]=='*') return guess_star(str,mask+1);
-    
+
     if (mask[i]=='?') {
       if (str[i]!=0) continue;
       else return 0;
     }
-    
+
     if (mask[i]!=str[i]) return 0;
 
   } while (mask[++i]!=0);
@@ -661,3 +652,41 @@ int main(int argc,char **argv) {
   }
 }
 #endif
+
+/* kind of strftime, but not locale-dependant
+ * ctime returns a string like:
+ * Wed Jun 30 21:49:08 1993
+ *     ^^^^^^
+ *     this is what we keep
+ *
+ * If file is older than one year, we do not show hour, but print the year
+ */
+static int _format_date(time_t t, char * buffer, size_t length)
+{
+  char * date;
+  int b=0, i;
+
+  if (length < 10) return -1;
+
+  /** \bug FIXME localtime is NOT reentrant ! */
+  date = ctime(&t);
+  if (!date) return -1;
+
+  for (i=4; i<11; i++)
+    buffer[b++] = date[i];
+
+#define YEARSEC 365*24*60*60
+
+  if (t + YEARSEC > time(NULL))
+    for (i=11; i<16; i++)
+      buffer[b++] = date[i];
+  else {
+    buffer[b++] = ' ';
+    for (i=20; i<24; i++)
+      buffer[b++] = date[i];
+  }
+  buffer[b++] = '\0';
+
+  return 0;
+}
+
