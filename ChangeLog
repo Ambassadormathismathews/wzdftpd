@@ -1,6 +1,7 @@
-2004-08-24  Pierre Chifflier  <pollux@cpe.fr>
+2004-08-25  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: changed EPSV reply code to 229 (to be RFC-compliant)
+	* bugfix: avoid segfault on freebsd when kernel has no shm support
 
 2004-08-14  Pierre Chifflier  <pollux@cpe.fr>
 

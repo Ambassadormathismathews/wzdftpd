@@ -1327,6 +1327,10 @@ void serverMainThreadProc(void *arg)
   signal(SIGHUP,server_restart);
 #endif
 
+#ifdef SIGSYS
+  signal(SIGSYS,interrupt);
+#endif /* SIGSYS */
+
 #if defined(POSIX) && ! defined(BSD) /* NO, winblows is NOT posix ! */
   /* set fork() limit */
   {
