@@ -181,6 +181,7 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
   va_start(argptr,context); /* note: ansi compatible version of va_start */
 /*  v_format_message(code,BUFFER_LEN,buffer,argptr);*/
   v_format_message(code,&length,&buffer,argptr);
+  va_end (argptr);
 #ifdef DEBUG
 if (buffer[strlen(buffer)-1]!='\n')
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);

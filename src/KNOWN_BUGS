@@ -33,3 +33,65 @@ drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO
     -> rm -rf .autom4te.cache/
 
 - FreeBSD: listening to an IPv6 socket does NOT listen to the same IPv4 socket !
+
+- ia64 build:
+
+wzd_backend.c: In function `GetUserByID':
+wzd_backend.c:399: warning: cast to pointer from integer of different size
+wzd_backend.c: In function `GetGroupByID':
+wzd_backend.c:514: warning: cast to pointer from integer of different size
+
+wzd_cache.c: In function `predicate_uid':
+wzd_cache.c:434: warning: cast from pointer to integer of different size
+wzd_cache.c: In function `predicate_gid':
+wzd_cache.c:444: warning: cast from pointer to integer of different size
+
+wzd_vars.c: In function `vars_user_get':
+wzd_vars.c:174: warning: long long unsigned int format, u_int64_t arg (arg 4)
+wzd_vars.c: In function `vars_user_new':
+wzd_vars.c:427: warning: `group' might be used uninitialized in this function
+
+wzd_cookie_lex.l: In function `cookie_parse_buffer':
+wzd_cookie_lex.l:1069: warning: long long int format, u_int64_t arg (arg 4)
+wzd_cookie_lex.l:1106: warning: long long int format, u_int64_t arg (arg 4)
+wzd_cookie_lex.l:1140: warning: long long unsigned int format, u_int64_t arg
+(arg 4)
+wzd_cookie_lex.l:1307: warning: long long int format, u_int64_t arg (arg 4)
+wzd_cookie_lex.l:1661: warning: long long int format, u_int64_t arg (arg 4)
+wzd_cookie_lex.l:1685: warning: long long int format, u_int64_t arg (arg 4)
+
+ls.c: In function `list':
+ls.c:135: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:148: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:248: warning: long long unsigned int format, long unsigned int arg (arg 17)
+ls.c:250: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:254: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c: In function `old_list':
+ls.c:390: warning: long long unsigned int format, long unsigned int arg (arg 17)
+ls.c:414: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:463: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:554: warning: long long unsigned int format, long unsigned int arg (arg 17)
+ls.c:576: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+ls.c:589: warning: passing arg 5 of `list_call_wrapper' from incompatible pointer type
+
+wzd_socket.c: In function `socket_make':
+wzd_socket.c:163: warning: passing arg 3 of `getsockname' from incompatible pointer type
+wzd_socket.c: In function `socket_accept':
+wzd_socket.c:244: warning: passing arg 3 of `accept' from incompatible pointer type
+wzd_socket.c: In function `socket_connect':
+wzd_socket.c:314: warning: passing arg 3 of `getsockname' from incompatible pointer type
+
+libplaintext_main.c: In function `write_user_file':
+libplaintext_main.c:336: warning: long long unsigned int format, u_int64_t arg (arg 3)
+libplaintext_main.c:337: warning: long long unsigned int format, u_int64_t arg (arg 3)
+libplaintext_main.c:338: warning: long long unsigned int format, u_int64_t arg (arg 3)
+
+libmysql_main.c: In function `wzd_validate_pass':
+libmysql_main.c:259: warning: implicit declaration of function `crypt'
+libmysql_main.c:259: warning: cast to pointer from integer of different size
+
+libwzd_sfv.c: In function `_sfv_convert_cookies':
+libwzd_sfv.c:721: warning: field precision is not type int (arg 3)
+libwzd_sfv.c:733: warning: field precision is not type int (arg 3)
+
+

@@ -705,6 +705,7 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...)
   va_start(argptr,pbuffer); /* note: ansi compatible version of va_start */
 
   v_format_message(code,plength,pbuffer,argptr);
+  va_end (argptr);
 }
 
 

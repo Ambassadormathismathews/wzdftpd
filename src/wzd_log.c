@@ -115,6 +115,7 @@ void out_log(int level,const char *fmt,...)
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vsnprintf(buffer,1023,fmt,argptr);
       syslog(prior,"%s",buffer);
+      va_end (argptr);
 
     } else
 #endif /* _MSC_VER */
@@ -168,11 +169,17 @@ void out_log(int level,const char *fmt,...)
         vfprintf(stderr,new_format,argptr);
         fflush(stderr);
       }
+      /* we have to re-set argptr, on certain implementations
+       * vfprintf can modify it (debian-ppc for ex)
+       */
+      va_end (argptr);
+      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
 #endif
       if (mainConfig->logfile) {
         vfprintf(mainConfig->logfile,fmt,argptr);
         fflush(mainConfig->logfile);
       }
+      va_end (argptr);
     } /* syslog */
   } /* > loglevel ? */
 }
@@ -219,6 +226,7 @@ void out_err(int level, const char *fmt,...)
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vsnprintf(buffer,1023,fmt,argptr);
       syslog(prior,"%s",buffer);
+      va_end (argptr);
 
     } else
 #endif /* _MSC_VER */
@@ -258,6 +266,7 @@ void out_err(int level, const char *fmt,...)
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vfprintf(stderr,new_format,argptr);
       fflush(stderr);
+      va_end (argptr);
       /*  }*/
     } /* syslog */
   } /* > loglevel ? */
@@ -345,6 +354,7 @@ void log_message(const char *event, const char *fmt, ...)
       buffer
       );
   fflush(mainConfig->logfile);
+  va_end (argptr);
 }
 
 int str2loglevel(const char *s)

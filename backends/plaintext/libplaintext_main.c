@@ -402,7 +402,7 @@ static int read_section_users(FILE * file_user, char * line)
 #if 0
 fprintf(stderr,"Entering section USERS\n");
 #endif
-  while ( (c = getc(file_user)) != EOF ) {
+  while ( (c = getc(file_user)) != (char)EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
     if (c == '[') { /* another section */
@@ -632,7 +632,7 @@ static int read_section_groups(FILE * file_user, char * line)
 #if 0
 fprintf(stderr,"Entering section GROUPS\n");
 #endif
-  while ( (c = getc(file_user)) != EOF ) {
+  while ( (c = getc(file_user)) != (char)EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
     if (c == '[') { /* another section */
@@ -757,7 +757,7 @@ static int read_section_hosts(FILE * file_user, char * line)
 #if 0
 fprintf(stderr,"Entering section HOSTS\n");
 #endif
-  while ( (c = getc(file_user)) != EOF ) {
+  while ( (c = getc(file_user)) != (char)EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
     if (c == '[') { /* another section */
@@ -797,6 +797,11 @@ static int read_files(const char *filename)
   }
 
   line = malloc(MAX_LINE);
+  if (!line) {
+    fprintf(stderr,"Could not malloc %d bytes (%s:%d)\n",
+        MAX_LINE,__FILE__,__LINE__);
+    return -1;
+  }
 
   /* prepare regexp */
   reg_line.re_nsub = 2;

@@ -383,8 +383,8 @@ char * read_until_eol(unsigned int max_len)
   buffer = wzd_malloc(max_len);
   length = 0;
   end=buffer;
-  while ( (c = input()) && c!=EOF && (c==' ' || c=='\t')) ; /* eat leading spaces */
-  while ( c && c!=EOF && c!='\r' && c!='\n')
+  while ( (c = input()) && c!=(char)EOF && (c==' ' || c=='\t')) ; /* eat leading spaces */
+  while ( c && c!=(char)EOF && c!='\r' && c!='\n')
   {
     *end++ = c;
     if (++length >= max_len) {
@@ -601,7 +601,7 @@ int cfg_read_cscript(void)
   /* read til EOL */
   length = 0;
   end=command;
-  while ( (c = input()) && c!=EOF && c!='\r' && c!='\n')
+  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
   {
     *end++ = c;
     if (++length >= 1024) {
@@ -700,7 +700,7 @@ int cfg_read_dir_message(void)
   /* read til EOL */
   length = 0;
   end=filename;
-  while ( (c = input()) && c!=EOF && c!='\r' && c!='\n')
+  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
   {
     *end++ = c;
     if (++length >= 256) {
@@ -967,7 +967,7 @@ int cfg_read_login_pre_ip_allow(void)
   /* read til EOL */
   length = 0;
   end=ip;
-  while ( (c = input()) && c!=EOF && c!='\r' && c!='\n')
+  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
   {
     *end++ = c;
     if (++length >= MAX_IP_LENGTH) {
@@ -1036,7 +1036,7 @@ int cfg_read_login_pre_ip_deny(void)
   /* read til EOL */
   length = 0;
   end=ip;
-  while ( (c = input()) && c!=EOF && c!='\r' && c!='\n')
+  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
   {
     *end++ = c;
     if (++length >= MAX_IP_LENGTH) {
