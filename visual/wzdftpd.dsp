@@ -42,7 +42,8 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /D "NDEBUG" /D "WZD_MULTITHREAD" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
+# ADD CPP /nologo /W3 /GX /O2 /D "NDEBUG" /D "WZD_MULTITHREAD" /D "SSL_SUPPORT" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /c
+# SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
 BSC32=bscmake.exe
@@ -107,6 +108,16 @@ SOURCE=..\src\wzd_init_lex.c
 SOURCE=..\src\wzd_init_lex.l
 
 !IF  "$(CFG)" == "wzdftpd - Win32 Release"
+
+# Begin Custom Build
+InputDir=\HOMEDIR\wzdftpd\src
+InputPath=..\src\wzd_init_lex.l
+InputName=wzd_init_lex
+
+"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	.\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
+
+# End Custom Build
 
 !ELSEIF  "$(CFG)" == "wzdftpd - Win32 Debug"
 

@@ -178,7 +178,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
 {
   char * buffer, *token, *ptr;
   char c;
-  int i;
+  unsigned int i;
   short negate;
   wzd_group_t * group;
 
@@ -229,8 +229,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
 int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_context_t * context)
 {
   char buffer_vfs[4096];
-  char * ptr_in, * ptr_out;
-  unsigned int length, needed;
+  char * ptr_out;
   wzd_user_t *user;
 
   user=GetUserByID(context->userid);

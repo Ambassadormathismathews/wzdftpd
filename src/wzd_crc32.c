@@ -23,6 +23,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef MAX
 #define MAX(x,y) ((x) > (y) ? (x) : (y))

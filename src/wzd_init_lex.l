@@ -299,7 +299,7 @@ int set_default_options(void)
   tempConfig.server_opts = 0;
 
 #if !defined(DEBUG)
-#if !defined(__CYGWIN__)
+#if !defined(_WIN32)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif /* __CYGWIN__ */
 #else /* DEBUG */

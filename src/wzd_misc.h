@@ -33,7 +33,7 @@ int bytes_to_unit(float *value, char *unit);
 
 void chop(char *s);
 
-int split_filename(const char *filename, char *path, char *stripped_filename, int pathlen, int filelen);
+int split_filename(const char *filename, char *path, char *stripped_filename, int pathlen, unsigned int filelen);
 
 /* returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina);
@@ -123,8 +123,8 @@ wzd_group_t * GetGroupByName(const char *name);
 unsigned int GetUserIDByName(const char *name);
 unsigned int GetGroupIDByName(const char *name);
 
-short is_user_in_group(wzd_user_t * user, int gid);
-int group_remove_user(wzd_user_t * user, int gid);
+short is_user_in_group(wzd_user_t * user, unsigned int gid);
+int group_remove_user(wzd_user_t * user, unsigned int gid);
 
 /* wrappers to context list */
 void * GetMyContext(void);

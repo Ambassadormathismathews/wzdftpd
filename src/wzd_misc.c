@@ -192,7 +192,7 @@ void chop(char *s)
 }
 
 int split_filename(const char *filename, char *path, char *stripped_filename,
-    int pathlen, int filelen)
+    int pathlen, unsigned int filelen)
 {
   char *ptr;
 
@@ -902,7 +902,7 @@ int my_str_compare(const char * src, const char *dst)
 /* lower only characters in A-Z ! */
 void ascii_lower(char * s, unsigned int length)
 {
-  register int i=0;
+  register unsigned int i=0;
   while (i<length) {
     if (s[i] >= 'A' && s[i] <= 'Z') {
       s[i] |= 0x20;
@@ -915,7 +915,7 @@ void ascii_lower(char * s, unsigned int length)
 /* replace all \ with / and lower string */
 void win_normalize(char * s, unsigned int length)
 {
-  register int i=0;
+  register unsigned int i=0;
   while (i<length) {
     if (s[i] >= 'A' && s[i] <= 'Z') {
       s[i] |= 0x20;
@@ -1338,9 +1338,9 @@ unsigned int GetGroupIDByName(const char *name)
   return 0;
 }
 
-short is_user_in_group(wzd_user_t * user, int gid)
+short is_user_in_group(wzd_user_t * user, unsigned int gid)
 {
-	int i;
+	unsigned int i;
 
 	if (!user || user->group_num<=0) return -1;
 	for (i=0; i<user->group_num; i++)
@@ -1349,10 +1349,10 @@ short is_user_in_group(wzd_user_t * user, int gid)
 }
 
 
-int group_remove_user(wzd_user_t * user, int gid)
+int group_remove_user(wzd_user_t * user, unsigned int gid)
 {
-  int i;
-  int idx=-1;
+  unsigned int i;
+  unsigned int idx=(unsigned int)-1;
 
   if (!user || user->group_num<=0) return -1;
   for (i=0; i<user->group_num; i++)
@@ -1361,7 +1361,7 @@ int group_remove_user(wzd_user_t * user, int gid)
       idx = i;
     }
   }
-  if (idx==-1) return -1;
+  if (idx==(unsigned int)-1) return -1;
 
   for (i=idx; i<user->group_num; i++)
   {

@@ -224,12 +224,9 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 /** force update of specific file, only if present in cache */
 void wzd_cache_update(const char *file)
 {
-  wzd_cache_t * cache;
   wzd_internal_cache_t * c;
   struct stat s;
   unsigned long hash;
-  unsigned int length, ret;
-  int fd;
 
   hash = compute_hashval(file,strlen(file));
 /*  out_err(LEVEL_FLOOD,"HASH %s: %lu\n",file,hash);*/

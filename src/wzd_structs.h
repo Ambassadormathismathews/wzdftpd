@@ -101,7 +101,7 @@ typedef unsigned long wzd_perm_t;
  */
 typedef struct limiter
 {
-  int maxspeed;
+  unsigned int maxspeed;
 #ifndef _MSC_VER
   struct timeval current_time;
 #else

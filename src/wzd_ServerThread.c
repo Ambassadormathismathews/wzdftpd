@@ -1116,6 +1116,7 @@ void serverMainThreadProc(void *arg)
   }
 #endif /* POSIX */
 
+#ifndef _WIN32
 #if defined(DEBUG) && !defined(__CYGWIN__)
   signal(SIGSEGV,server_crashed);
 #else
@@ -1128,6 +1129,7 @@ void serverMainThreadProc(void *arg)
     setrlimit(RLIMIT_CORE, &rlim);
   }
 #endif
+#endif /* _WIN32 */
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   /* Start Winsock up */
