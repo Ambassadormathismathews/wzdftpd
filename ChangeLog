@@ -1,3 +1,7 @@
+2005-03-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: don't try to write empty buffer in LIST
+
 2005-03-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added simple test suite (unit tests)

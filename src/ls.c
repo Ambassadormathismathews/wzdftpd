@@ -75,7 +75,8 @@ int list_call_wrapper(fd_t sock, wzd_context_t *context, char *line, char *buffe
   size_t length;
   if (!line) { /* request to flush */
 /*out_err(LEVEL_CRITICAL,"Flushing buffer (%ld bytes)\n",*buffer_len);*/
-    if (!callback(sock,context,buffer)) return 1;
+    if (buffer && buffer[0]!='\0')
+      if (!callback(sock,context,buffer)) return 1;
     return 0;
   }
   length = strlen(line);
