@@ -1781,7 +1781,7 @@ int do_site(char *command_line, wzd_context_t * context)
     /* custom site commands */
     if (hook->opt && hook->external_command && strcasecmp(hook->opt,token)==0) {
       send_message_raw("200-\r\n",context);
-      ret = hook_call_custom(context,hook,command_line+strlen(token)+1);
+      ret = hook_call_custom(context,hook,200);
       if (!ret) {
         ret = send_message_with_args(200,context,"SITE command ok");
       } else {

@@ -52,7 +52,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
   wzd_user_t * me;
   u64_t credits;
   struct stat s;
-  unsigned long needed=0;
+  u64_t needed=0;
 
   me = GetUserByID(context->userid);
 

@@ -107,7 +107,8 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   wzd_internal_cache_t * c;
   struct stat s;
   unsigned long hash;
-  unsigned int length, ret;
+  unsigned int ret;
+  unsigned long length;
   int fd;
 
   hash = compute_hashval(file,strlen(file));
@@ -158,7 +159,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  length = s.st_size;
+  length = (unsigned long)s.st_size;
   if (length > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;
@@ -203,7 +204,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  length = s.st_size;
+  length = (unsigned long)s.st_size;
   if (length > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;

@@ -13,7 +13,7 @@ typedef struct {
   char *        filename;
   unsigned long crc;
   unsigned int	state;
-  unsigned long	size;
+  u64_t	size;
 } wzd_sfv_entry;
 
 typedef struct {

@@ -346,7 +346,7 @@ int sfv_create(const char * sfv_file)
     sfv.sfv_list[count_entries]->crc = crc;
     sfv.sfv_list[count_entries]->filename = strdup(dir_filename);
     sfv.sfv_list[count_entries]->state = SFV_OK;
-    sfv.sfv_list[count_entries]->state = s.st_size;
+    sfv.sfv_list[count_entries]->size = s.st_size;
     count_entries++;
 	DIR_CONTINUE
   } /* while ((entr=readdir(dir))!=NULL) */

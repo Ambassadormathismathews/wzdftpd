@@ -222,7 +222,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
               (int)st.st_nlink,
               user->username,
               "ftp",
-              (u64_t)st.st_size,
+              st.st_size,
               datestr,
               ptr);
 #endif
@@ -385,7 +385,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
             (int)st.st_nlink,
             (owner)?owner->username:"unknown",
             "ftp",
-            (u64_t)st.st_size,
+            st.st_size,
             datestr,
             buffer_name);
 #endif

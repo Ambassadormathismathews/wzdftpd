@@ -110,7 +110,9 @@
 #define getcwd	_getcwd
 
 /* FIXME this will surely have some effects ... */
-#define lstat	stat
+#define fstat _fstati64
+#define lstat	_stati64
+#define stat  _stati64
 
 #define mkdir(filename,mode)	_mkdir(filename)
 #define closedir	FindClose

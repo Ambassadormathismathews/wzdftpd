@@ -928,6 +928,10 @@ int do_mkdir(char *param, wzd_context_t * context)
     }
   }
 
+  context->current_action.token = TOK_MKD;
+  strncpy(context->current_action.arg,buffer,HARD_LAST_COMMAND_LENGTH);
+  context->current_action.current_file = 0;
+
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
   if (ret) {
@@ -939,7 +943,15 @@ int do_mkdir(char *param, wzd_context_t * context)
     }
     file_chown(buffer,user->username,groupname,context);
 
-    if (param[0] != '/') {
+    FORALL_HOOKS(EVENT_MKDIR)
+      typedef int (*mkdir_hook)(unsigned long, const char*);
+      if (hook->hook)
+        ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,buffer);
+      if (hook->external_command)
+        ret = hook_call_external(hook,257);
+    END_FORALL_HOOKS
+
+  if (param[0] != '/') {
       strcpy(buffer,context->currentpath);
       strlcat(buffer,"/",WZD_MAX_PATH);
       strlcat(buffer,param,WZD_MAX_PATH);
@@ -1732,7 +1744,7 @@ int do_dele(char *param, wzd_context_t * context)
   char path[WZD_MAX_PATH];
   int ret;
   struct stat s;
-  off_t file_size;
+  u64_t file_size;
   wzd_user_t * user, * owner;
 
   if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH || checkpath(param,path,context)) {
@@ -2520,7 +2532,7 @@ void * clientThreadProc(void *arg)
     if (hook->hook)
       ret = (*(login_hook)hook->hook)(EVENT_LOGIN,user->username);
     if (hook->external_command)
-      ret = hook_call_external(hook,user->username);
+      ret = hook_call_external(hook,230);
   END_FORALL_HOOKS
   ret = send_message(230,context);
 
@@ -2775,15 +2787,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         /* TODO check perms !! */
         switch (do_mkdir(token,context)) { 
         case E_OK: /* success */
-          FORALL_HOOKS(EVENT_MKDIR)
-            typedef int (*mkdir_hook)(unsigned long, const char*);
-          if (hook->hook)
-            ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,token);
-          if (hook->external_command)
-            ret = hook_call_external(hook,token);
-          END_FORALL_HOOKS
-
-            ret = send_message_with_args(257,context,token,"created");
+          ret = send_message_with_args(257,context,token,"created");
           break;
         case E_FILE_FORBIDDEN:
           ret = send_message_with_args(553,context,"forbidden !");
@@ -2813,9 +2817,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
             if (hook->hook)
               ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
             if (hook->external_command)
-              ret = hook_call_external(hook,token);
+              ret = hook_call_external(hook,258);
             END_FORALL_HOOKS
-              ret = send_message_with_args(258,context,buffer2,"");
+            ret = send_message_with_args(258,context,buffer2,"");
             break;
           case E_NOTDIR:
             ret = send_message_with_args(553,context,"not a directory");

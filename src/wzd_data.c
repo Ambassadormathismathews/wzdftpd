@@ -210,7 +210,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         if (hook->hook)
           ret = (*(login_hook)hook->hook)(EVENT_POSTDOWNLOAD,user->username,context->current_action.arg);
         else
-          ret = hook_call_external(hook,NULL);
+          ret = hook_call_external(hook,226);
       END_FORALL_HOOKS
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
@@ -261,7 +261,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         if (hook->hook)
           ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
         else
-          ret = hook_call_external(hook,NULL);
+          ret = hook_call_external(hook,226);
       END_FORALL_HOOKS
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);

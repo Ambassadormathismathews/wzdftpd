@@ -185,10 +185,16 @@ static int tcl_hook_protocol(const char *file, const char *args)
   const char *s;
   int ret;
   wzd_context_t * context;
+  unsigned int reply_code;
 
   current_context = context = GetMyContext();
+  reply_code = hook_get_current_reply_code();
+  {
+    char buffer[5];
+    snprintf(buffer,5,"%u",reply_code);
+    Tcl_SetVar(interp,TCL_REPLY_CODE,buffer,TCL_GLOBAL_ONLY);
+  }
   Tcl_SetVar(interp,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
-  Tcl_SetVar(interp,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
   Tcl_SetVar(interp,TCL_ARGS,args,TCL_GLOBAL_ONLY);
 
   ret = Tcl_EvalFile(interp, file);

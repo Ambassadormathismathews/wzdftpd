@@ -69,6 +69,7 @@ EXPORTS
 	hook_call_external
 	hook_free
 	hook_free_protocols
+	hook_get_current_reply_code
 	hook_remove
 	inet_ntop
 	inet_pton

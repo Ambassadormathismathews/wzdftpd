@@ -79,7 +79,7 @@ static unsigned int find_directive(const char *name)
   int i=0;
 
   while (i<D_NUM) {
-    if (strcasecmp(tab_directives[i],name)==0) return i+1;
+    if (strncasecmp(tab_directives[i],name,strlen(tab_directives[i]))==0) return i+1;
     i++;
   }
   return D_NONE;
@@ -609,11 +609,16 @@ fprintf(stderr,"Entering section GROUPS\n");
     while ( line[strlen(line)-1] == '\r' || line[strlen(line)-1] == '\n')
       line[strlen(line)-1] = '\0'; /* clear trailing \n */
     /* read config directive name */
+    /* NO NO NO if we use strtok, we will certainly destroy line if a space is present ! */
+#if 0
     token = strtok(line," \t");
     if (!token) continue;
-    directive = find_directive(token);
+#endif
+    directive = find_directive(line);
     switch (directive) {
     case D_PRIVGROUP:
+      token = strtok(line," \t");
+      if (!token) continue;
       token = strtok(NULL,"\n");
       if (!token) {
 	fprintf(stderr,"privgroup should be followed by the group name !\n");

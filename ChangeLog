@@ -1,3 +1,12 @@
+2004-04-01  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: %filepath not accessible in event MKDIR
+	* bugfix: another try to get correct size for big files on win32
+	* bugfix: group homedir containing spaces or tabs destroyed
+	at server start (plaintext)
+	* bugfix: error in sfv create (size was stored in state)
+	* feature: moved file sizes to 64 bits
+
 2004-03-30  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: file cookies not working for POSTUPLOAD event

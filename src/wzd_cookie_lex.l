@@ -653,10 +653,17 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     case COOKIE_FILEPATH:
       get_cookie_format(yytext,&padding);
       if (context) {
-        if (context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR)
+        switch (context->current_action.token) {
+        case TOK_RETR:
+        case TOK_STOR:
           snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
-        else
+          break;
+        case TOK_MKD:
+          snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
+          break;
+        default:
           snprintf(internalbuffer,IBUFSIZE,"(null)");
+        }
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"filepath");

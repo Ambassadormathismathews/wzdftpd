@@ -95,6 +95,7 @@ typedef struct _protocol_handler_t {
 } protocol_handler_t;
 
 static protocol_handler_t * proto_handler_list=NULL;
+static unsigned int _reply_code;
 
 int hook_add_protocol(const char *signature, unsigned int sig_len, int (*handler)(const char *, const char *))
 {
@@ -304,7 +305,7 @@ int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
 }
 
 /** hook_call_custom: custom site commands */
-int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args)
+int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int code)
 {
   char buffer[1024];
   FILE *command_output;
@@ -313,7 +314,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
-  if (args && l_command+strlen(args)>=1022) return 1;
+  if (l_command>=1022) return 1;
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
@@ -325,13 +326,13 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   l_command = strlen(buffer);
   while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
     buffer[--l_command] = '\0';
+  _reply_code = code;
   /* we can use protocol hooks here */
   proto = hook_check_protocol(buffer);
   if (proto)
   {
     /* we need to reformat args */
     char *buffer_args;
-    /* TODO if *(buffer+proto->siglen == '"') search matching " */
     if ( *(buffer+proto->siglen) == '"' ) { /* search matching " */
       buffer_args = strchr(buffer+proto->siglen+1,'"');
       *buffer_args++ = '\0'; /* eat trailing " */
@@ -348,8 +349,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   }
   else
   {
-    *(buffer+l_command++) = ' ';
-    if (args) strcpy(buffer+l_command,args);
+/*    *(buffer+l_command++) = ' ';*/
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -365,16 +365,17 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
 }
 
 /** hook_call_external: events */
-int hook_call_external(wzd_hook_t *hook, const char *args)
+int hook_call_external(wzd_hook_t *hook, unsigned int code)
 {
   char buffer[1024];
+  char *buffer_args;
   FILE *command_output;
   unsigned int l_command;
   protocol_handler_t * proto;
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
-  if (args && l_command+strlen(args)>=1022) return 1;
+  if (l_command>=1022) return 1;
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
@@ -386,13 +387,12 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   l_command = strlen(buffer);
   while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
     buffer[--l_command] = '\0';
+  _reply_code = code;
   /* we can use protocol hooks here */
   proto = hook_check_protocol(buffer);
   if (proto)
   {
     /* we need to reformat args */
-    char *buffer_args;
-    /* TODO if *(buffer+proto->siglen == '"') search matching " */
     if ( *(buffer+proto->siglen) == '"' ) { /* search matching " */
       buffer_args = strchr(buffer+proto->siglen+1,'"');
       *buffer_args++ = '\0'; /* eat trailing " */
@@ -409,8 +409,7 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   }
   else
   {
-    *(buffer+l_command++) = ' ';
-    if (args) strcpy(buffer+l_command,args);
+/*    *(buffer+l_command++) = ' ';*/
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -702,4 +701,9 @@ void module_free(wzd_module_t ** module_list)
   }
 
   *module_list = NULL;
+}
+
+unsigned int hook_get_current_reply_code(void)
+{
+  return _reply_code;
 }

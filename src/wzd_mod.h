@@ -42,8 +42,9 @@ void hook_free_protocols(void);
 /** remove hook from list */
 int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook);
 
-int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args);
-int hook_call_external(wzd_hook_t *hook, const char *args);
+int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int code);
+int hook_call_external(wzd_hook_t *hook, unsigned int code);
+unsigned int hook_get_current_reply_code(void);
 
 char * event2str(const unsigned long mask);
 unsigned long str2event(const char *s);
