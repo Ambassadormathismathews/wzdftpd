@@ -223,6 +223,10 @@ SOURCE=..\src\wzd_strtoull.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_vars.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_vfs.c
 # End Source File
 # End Group
@@ -308,6 +312,10 @@ SOURCE=..\src\wzd_strtok_r.h
 # Begin Source File
 
 SOURCE=..\src\wzd_strtoull.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_vars.h
 # End Source File
 # Begin Source File
 
