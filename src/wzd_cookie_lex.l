@@ -484,6 +484,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	  }
 	  current_user = user;
 	} /* allgroupmembers */
+        free(tmpbuf);
       }
       break;
 /*** GROUP cookies ***/

@@ -16,6 +16,8 @@ libwzd_la_SOURCES =  \
 	wzd_misc.h      \
 	wzd_backend.c   \
 	wzd_backend.h   \
+	wzd_debug.c     \
+	wzd_debug.h     \
 	wzd_messages.c  \
 	wzd_messages.h  \
 	wzd_mod.c       \

@@ -295,8 +295,9 @@ int set_default_options(void)
     CFG_CLEAR_USE_SYSLOG(&tempConfig);
 #endif
 
-  tempConfig.logfilename = malloc(256);
-  strcpy(tempConfig.logfilename,"wzd.log");
+/*  tempConfig.logfilename = malloc(256);
+  strcpy(tempConfig.logfilename,"wzd.log");*/
+  tempConfig.logfilename = NULL;
 
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;
 

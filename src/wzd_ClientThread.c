@@ -55,6 +55,7 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_data.h"
+#include "wzd_debug.h"
 #include "wzd_messages.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
@@ -2212,7 +2213,7 @@ void * clientThreadProc(void *arg)
     FD_ZERO(&efds);
     /* set control fd */
 #ifdef DEBUG
-    if (sockfd<0) {
+    if (sockfd<0 || !fd_is_valid(sockfd)) {
       fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
 	  sockfd,__FILE__,__LINE__);
       exitclient=1;
