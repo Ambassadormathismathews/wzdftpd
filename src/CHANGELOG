@@ -1,5 +1,7 @@
+#--- cvs commit TAG: rel-0-1rc5
 # Sep, 03 2003
 - call fini function when unloading backend
+- fix build on cygwin
 
 # Aug, 28 2003
 - added some debug stuff

@@ -21,9 +21,9 @@ ip = *
 #dynamic_ip = 1
 
 # Listen port (default: 21)
-# IMPORTANT: under linux, you'll need privileges to bind to a system port
+# IMPORTANT: under unix, you'll need privileges to bind to a system port
 # ( < 1024 )
-port = 6969
+#port = 6969
 
 # PASV range (default: 1025->65536)
 # specify this iff you want to get a specific range
@@ -32,12 +32,12 @@ pasv_high_range  = 3000
 #pasv_ip = 62.xxx.xxx.xxx
 #pasv_ip = 134.xxx.xx.xx
 
-# linux only: server will drop privileges to a user after binding port
+# unix only: server will drop privileges to a user after binding port
 # you can specify a user login name
 # This will only be used if run by root !
 #server_uid = pollux
 
-# linux only: file where pid of server will be stored
+# unix only: file where pid of server will be stored
 # (default: /var/run/wzdftpd.pid)
 # this is used by init.d script
 pid_file = @e_datadir@/@PACKAGE@/wzdftpd.pid
