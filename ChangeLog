@@ -1,3 +1,12 @@
+2004-05-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new server vars to manipulate user data
+	* bugfix: unable to create dirs inside symlinks
+	* bugfix: custom site commands causing segfault
+	* bugfix: unused strange file descriptor on certificate (wzd_init_lex.l)
+	* bugfix: EVENT_LOGOUT sent twice
+	* tcl: each client now run commands in a separate slave interpreter
+
 2004-05-09  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: system path management rewritten from scratch (obsoletes: checkpath)

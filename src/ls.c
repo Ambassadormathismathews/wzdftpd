@@ -151,7 +151,12 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
         break;
     }
 
-    if (lstat(ptr_to_buffer,&st)) continue;
+    if (lstat(ptr_to_buffer,&st)) {
+      /* destination does not exist */
+      out_log(LEVEL_FLOOD, "list: broken file %s -> %s\n", file->filename, ptr_to_buffer);
+      memset(&st, 0, sizeof(struct stat));
+      st.st_mode = S_IFREG;
+    };
 
     /* date */
     timeval = time(NULL);
@@ -167,8 +172,11 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
     /* permissions */
 
     if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
-        !S_ISREG(st.st_mode))
-      continue;
+      !S_ISREG(st.st_mode)) {
+      /* destination does not exist */
+      out_log(LEVEL_FLOOD, "list: strange file %s\n", file->filename);
+      memset(&st, 0, sizeof(struct stat));
+    };
     
     if (S_ISLNK(st.st_mode)) {
       char linkbuf[256];
@@ -180,6 +188,14 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
       }
       else
         snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> (INEXISTANT FILE)",file->filename);
+    } else if (file->kind == FILE_LNK) {
+      /** \bug file->data is an absolute path ... */
+      if (st.st_ctime != 0) {
+        snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> %s",file->filename,(char*)file->data);
+      }
+      else {
+        snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> (INEXISTANT FILE) %s",file->filename, (char*)file->data);
+      }
     } else {
       strncpy(buffer_name,file->filename,sizeof(buffer_name)-1);
       if (strlen(file->filename)<sizeof(buffer_name)) buffer_name[strlen(file->filename)]='\0';
@@ -203,7 +219,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 #else
     sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
 #endif
-        S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+        (S_ISLNK(st.st_mode) || (file->kind==FILE_LNK))? 'l' : S_ISDIR(st.st_mode) ? 'd' : '-',
         file->permissions & S_IRUSR ? 'r' : '-',
         file->permissions & S_IWUSR ? 'w' : '-',
         file->permissions & S_IXUSR ? 'x' : '-',

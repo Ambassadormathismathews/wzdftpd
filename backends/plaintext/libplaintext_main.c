@@ -1178,6 +1178,8 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     user_count++;
   } /* if (found) */
 
+  write_user_file();
+
   return 0;
 }
 
@@ -1229,6 +1231,8 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     memcpy(&group_pool[group_count],group,sizeof(wzd_group_t));
     group_count++;
   } /* if (found) */
+
+  write_user_file();
 
   return 0;
 }

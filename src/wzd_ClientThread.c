@@ -333,13 +333,9 @@ void client_die(wzd_context_t * context)
   int ret;
 
   FORALL_HOOKS(EVENT_LOGOUT)
-    typedef int (*login_hook)(unsigned long, const char*);
-#ifdef BACKEND_STORAGE
+    typedef int (*login_hook)(unsigned long, wzd_context_t*, const char*);
     if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
-#endif
-    if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
+      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT, context, GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
 #if 0

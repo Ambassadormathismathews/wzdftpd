@@ -202,6 +202,10 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       }
     } /* not listed in permission file */
 
+    if (entry->kind == 3) {
+      /* file exist AND is a symlink ?! */
+    }
+
     /** \todo sorted insertion */
     if (sorted) {
       file_insert_sorted(entry,&_dir->first_entry);
@@ -291,6 +295,10 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       else
       {
         /** \todo warn user, useless entries in perm file. clean up ? */
+        if (strcmp(it->filename,".") &&
+          strcmp(it->filename,"..") &&
+          ! is_hidden_file(it->filename) )
+            out_log(LEVEL_FLOOD, "permission file for %s: useless entry %s\n", name, it->filename);
       }
       itp = it;
       it = it->next_file;

@@ -1296,7 +1296,6 @@ int cfg_read_pid_file(void)
 {
   unsigned int token;
   char * filename;
-  int fd;
 
   token = yylex();
   if (token!='=') {
@@ -1309,53 +1308,6 @@ int cfg_read_pid_file(void)
     return 1;
   }
 
-  fd = open(filename,O_RDONLY,0644);
-  if (fd != -1)
-  {
-    unsigned long l,size;
-    char buf[64];
-    char *ptr;
-    int ret;
-
-    size = read(fd,buf,64);
-    if (size <= 0) {
-      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",filename);
-      close(fd);
-      return 1;
-    }
-    l = strtoul(buf,&ptr,10);
-    if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
-    {
-      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",filename);
-      close(fd);
-      return 1;
-    }
-    close(fd);
-    /* check no process is running with this pid */
-#ifndef _MSC_VER
-    ret = kill(l,0);
-#else
-/*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
-    ret = -1;
-    errno = ESRCH;
-#endif
-    if (!ret || (ret==-1 && errno==EPERM)) {
-      out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",filename);
-      return 1;
-    }
-    if ( !(ret==-1 && errno==ESRCH) ) {
-      out_err(LEVEL_CRITICAL,"Error: pid file: %s\n",filename);
-      out_err(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
-          l, ret, errno, strerror(errno));
-      out_err(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
-      return 1;
-    }
-    out_err(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",filename);
-    if (unlink(filename)) {
-      out_err(LEVEL_HIGH,"Could not remove pid_file (%s)\n",filename);
-      return 1;
-    }
-  }
   if (tempConfig.pid_file) wzd_free(tempConfig.pid_file);
   tempConfig.pid_file = filename; /* will be freed at server exit */
 
@@ -1604,7 +1556,6 @@ int cfg_read_tls_certificate(void)
 {
   unsigned int token;
   char * filename;
-  int fd;
 
   token = yylex();
   if (token!='=') {
@@ -1618,14 +1569,6 @@ int cfg_read_tls_certificate(void)
   }
 
 #ifdef HAVE_OPENSSL
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
-#else /* ! BSD */
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, 0600);
-#endif /* BSD */
-  if (fd == -1)
-    return 1;
-
   strcpy(tempConfig.tls_certificate,filename);
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
@@ -1819,7 +1762,6 @@ int cfg_read_xferlog(void)
 {
   unsigned int token;
   char * filename;
-  int fd;
 
   token = yylex();
   if (token!='=') {
@@ -1832,14 +1774,7 @@ int cfg_read_xferlog(void)
     return 1;
   }
 
-  fd = xferlog_open(filename,0600);
-  if (fd == -1)
-  {
-    out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n",filename);
-    return 1;
-  }
   tempConfig.xferlog_name = filename; /* will be freed at server exit */
-  tempConfig.xferlog_fd = fd;
 
   return 0;
 }

@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040513
+AppVerName=wzdftpd 0.4cvs-20040514
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040513
+OutputBaseFilename=wzdftpd-0.4cvs-20040514
 ShowLanguageDialog=yes
 
 [Tasks]

@@ -1131,13 +1131,39 @@ int softlink_create(const char *target, const char *linkname)
   char *ptr;
   struct wzd_file_t * perm_list=NULL, * file_cur;
   int ret;
+  struct stat s;
+
+  if (stat(target,&s)) { /* target does not exist ?! */
+    out_err(LEVEL_FLOOD, "symlink: source does not exist (%s)\n", target);
+    return -1;
+  }
+  if (stat(linkname,&s) != -1) { /* linkname already exist ?! */
+    out_err(LEVEL_FLOOD, "symlink: destination already exists (%s)\n", linkname);
+    return -1;
+  }
 
   /* get permission file */
-
   strncpy(perm_filename,linkname,WZD_MAX_PATH);
   REMOVE_TRAILING_SLASH(perm_filename);
 
   ptr = strrchr(perm_filename,'/');
+  if (!ptr) return -1;
+  {
+    /* check that dir exist */
+    if (ptr != perm_filename
+#ifdef WIN32
+      && ptr[-1] != ':'
+#endif
+      )
+    {
+      *ptr = '\0';
+      if (stat(perm_filename,&s)) {
+        out_err(LEVEL_FLOOD, "symlink: destination directory does not exist (%s)\n", perm_filename);
+        return -1;
+      }
+      *ptr = '/';
+    }
+  }
   ptr++; /* position is just after last / */
   strncpy(stripped_filename, ptr, WZD_MAX_PATH);
   strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));
@@ -1204,7 +1230,8 @@ int softlink_remove(const char *linkname)
     if ( !file_cur || file_cur->kind != FILE_LNK )
     {
       free_file_recursive(perm_list);
-      return -1;
+      out_err(LEVEL_FLOOD, "symlink: trying to remove something that is not a link (%s)\n", linkname);
+     return -1;
     }
 
     file_cur = remove_file(stripped_filename, &perm_list);
@@ -1323,6 +1350,10 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
   return ret;
 }
 
+/** @brief remove directory.
+ *
+ * dirname must be an absolute path
+ */
 int file_rmdir(const char *dirname, wzd_context_t * context)
 {
   int ret;
@@ -1582,9 +1613,11 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   struct wzd_file_t * file_list=NULL, * file_cur, *file;
   int neededlength, length;
   struct stat s;
+  int nx=0;
 
-  if (stat(filename,&s))
-    return NULL;
+  /** \bug no no no, it can be a symlink or a vfs ! */
+/*  if (stat(filename,&s))
+    return NULL;*/
 
   file = NULL;
 
@@ -1596,13 +1629,26 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   ptr = strrchr(perm_filename,'/');
   if (!ptr || *(ptr+1)=='\0') return NULL;
 
-  if (S_ISDIR(s.st_mode)) { /* isdir */
-    strcpy(stripped_filename,".");
-  } else { /* ! isdir */
+  if (!stat(filename,&s)) {
+    if (S_ISDIR(s.st_mode)) { /* isdir */
+      strcpy(stripped_filename,".");
+    } else { /* ! isdir */
+      ptr = strrchr(perm_filename,'/');
+      if (ptr) {
+        strcpy(stripped_filename,ptr+1);
+        *ptr = 0;
+      }
+    }
+  } else { /* ! exists */
+    nx = 1;
     ptr = strrchr(perm_filename,'/');
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
       *ptr = 0;
+      if (stat(perm_filename,&s)) {
+        out_err(LEVEL_FLOOD, "symlink: destination directory does not exist (%s)\n", perm_filename);
+        return (struct wzd_file_t *)-1;
+      }
     }
   } /* ! isdir */
 
@@ -1622,20 +1668,15 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   }
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
-  /* remove name in perm file !! */
   if ( ! readPermFile(perm_filename,&file_list) ) {
     /* we have a permission file */
-    file_cur = file_list;
-    while (file_cur)
-    {
-      if (strcmp(stripped_filename,file_cur->filename)==0) {
-        file = file_deep_copy(file_cur);
-        break;
-      }
-      file_cur = file_cur->next_file;
-    }
+    file_cur = find_file(stripped_filename, file_list);
+    if (file_cur)
+      file = file_deep_copy(file_cur);
     free_file_recursive(file_list);
   }
+
+  if (!file && nx) return (struct wzd_file_t*)-1;
 
   return file;
 }

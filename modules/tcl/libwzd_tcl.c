@@ -88,6 +88,7 @@
 /***** Private vars ****/
 static Tcl_Interp * interp=NULL;
 static wzd_context_t * current_context=NULL;
+
 #define TCL_ARGS        "wzd_args"
 #define TCL_CURRENT_USER "wzd_current_user"
 #define TCL_REPLY_CODE  "wzd_reply_code"
@@ -98,6 +99,7 @@ static void do_tcl_help(wzd_context_t * context);
 
 /***** EVENT HOOKS *****/
 static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
+static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
 
 /***** PROTO HOOKS *****/
 static int tcl_hook_protocol(const char *file, const char *args);
@@ -111,6 +113,9 @@ static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *a
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+
+/***** slaves *****/
+static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context);
 
 
 /***********************/
@@ -147,6 +152,7 @@ int WZD_MODULE_INIT(void)
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
+  hook_add(&getlib_mainConfig()->hook,EVENT_LOGOUT,(void_fct)&tcl_hook_logout);
   hook_add_protocol("tcl:",4,&tcl_hook_protocol);
   out_log(LEVEL_INFO,"TCL module loaded\n");
   return 0;
@@ -168,20 +174,24 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
     if (!args || strlen(args)==0) { do_tcl_help(context); return 0; }
     {
       Tcl_Obj * TempObj;
+      Tcl_Interp * slave = NULL;
       const char *s;
       wzd_user_t * user;
       int ret;
 
+      slave = _tcl_getslave(interp, context);
+      if (!slave) return 0;
+
       current_context = context;
       user = GetUserByID(context->userid);
-      Tcl_SetVar(interp,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
-      Tcl_SetVar(interp,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
-      Tcl_SetVar(interp,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
+      Tcl_SetVar(slave,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
+      Tcl_SetVar(slave,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
+      Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
       TempObj = Tcl_NewStringObj(args,-1);
-      ret = Tcl_EvalObj(interp, TempObj);
+      ret = Tcl_EvalObj(slave, TempObj);
       /* XXX FIXME should we call Tcl_DecrRefCount() ? */
       current_context = NULL;
-      s = Tcl_GetVar(interp,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
+      s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
       if (!s || *s!='1') {
         if (ret != TCL_OK)
           send_message_with_args(501,context,"Error in TCL command");
@@ -193,6 +203,21 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
   return 0;
 }
 
+static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, const char *username)
+{
+  Tcl_Interp * slave = NULL;
+
+  char buffer[64];
+  snprintf(buffer, 64, "%p", context);
+
+  if ( (slave = Tcl_GetSlave(interp, buffer)) )
+  {
+    Tcl_DeleteInterp(slave);
+  }
+
+  return 0;
+}
+
 static int tcl_hook_protocol(const char *file, const char *args)
 {
   const char *s;
@@ -200,26 +225,31 @@ static int tcl_hook_protocol(const char *file, const char *args)
   wzd_context_t * context;
   wzd_user_t * user;
   unsigned int reply_code;
+  Tcl_Interp * slave = NULL;
 
   current_context = context = GetMyContext();
   user = GetUserByID(context->userid);
   reply_code = hook_get_current_reply_code();
+
+  slave = _tcl_getslave(interp, context);
+  if (!slave) return 0;
+
   {
     char buffer[5];
     snprintf(buffer,5,"%u",reply_code);
-    Tcl_SetVar(interp,TCL_REPLY_CODE,buffer,TCL_GLOBAL_ONLY);
+    Tcl_SetVar(slave,TCL_REPLY_CODE,buffer,TCL_GLOBAL_ONLY);
   }
-  Tcl_SetVar(interp,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
-  Tcl_SetVar(interp,TCL_ARGS,args,TCL_GLOBAL_ONLY);
-  Tcl_SetVar(interp,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
+  Tcl_SetVar(slave,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
+  Tcl_SetVar(slave,TCL_ARGS,args,TCL_GLOBAL_ONLY);
+  Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
 
-  ret = Tcl_EvalFile(interp, file);
+  ret = Tcl_EvalFile(slave, file);
 
   /* XXX FIXME should we call Tcl_DecrRefCount() ? */
   current_context = NULL;
-  Tcl_UnsetVar(interp,TCL_ARGS,TCL_GLOBAL_ONLY);
-  Tcl_UnsetVar(interp,TCL_CURRENT_USER,TCL_GLOBAL_ONLY);
-  s = Tcl_GetVar(interp,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
+  Tcl_UnsetVar(slave,TCL_ARGS,TCL_GLOBAL_ONLY);
+  Tcl_UnsetVar(slave,TCL_CURRENT_USER,TCL_GLOBAL_ONLY);
+  s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
 #if 0
   if (!s || *s!='1') {
     if (ret != TCL_OK)
@@ -238,6 +268,40 @@ static void do_tcl_help(wzd_context_t * context)
   send_message_raw("501-tcl commands\r\n",context);
   send_message_raw("501- site tcl <tcl_command>\r\n",context);
   send_message_raw("501 \r\n",context);
+}
+
+/***** slaves *****/
+/** @brief return slave for current context.
+ *
+ * create the slave interpreter if needed
+ *
+ * \bug on user logout or timeout we need to destroy slave
+ */
+static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
+{
+  Tcl_Interp * slave = NULL;
+
+  char buffer[64];
+  snprintf(buffer, 64, "%p", context);
+
+  if ( (slave = Tcl_GetSlave(interp, buffer)) )
+    return slave;
+
+  if ( (slave = Tcl_CreateSlave(interp, buffer, 0)) ) {
+    int ret;
+    ret = Tcl_CreateAlias(slave, "ftp2sys", interp, "ftp2sys", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "putlog", interp, "putlog", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "send_message", interp, "send_message", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "send_message_raw", interp, "send_message_raw", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "stat", interp, "stat", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "vars", interp, "vars", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "vars_user", interp, "vars_user", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "vfs", interp, "vfs", 0, NULL);
+
+    return slave;
+  }
+
+  return NULL;
 }
 
 
@@ -265,10 +329,12 @@ static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char 
   char *ptr;
   unsigned long level;
 
-  if (argc != 3) return TCL_ERROR;
+  if (argc < 3) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
   /** \todo XXX we could format the string using argv[2,] */
+
+  /* replace cookies ? */
 
   level = strtoul(argv[1],&ptr,0);
   if (*ptr!='\0') return TCL_ERROR;
@@ -316,26 +382,37 @@ static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *a
   char * buffer;
   struct wzd_file_t * file;
 
-  if (argc != 2) return TCL_ERROR;
+  if (argc < 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if ( checkpath_new(argv[1], path, current_context) ) {
-    wzd_free(path);
-    return TCL_ERROR;
+  /* use checkpath, we don't want to resolve links */
+  if (!strcmp(argv[1],"-r") || !strcmp(argv[1],"--real")) {
+    /* ex: vfs read -r c:\real */
+    if (argc < 3) return TCL_ERROR;
+    strncpy(path, argv[2], WZD_MAX_PATH);
+  } else {
+    if ( checkpath(argv[1], path, current_context) ) {
+      wzd_free(path);
+      return TCL_ERROR;
+    }
   }
+  REMOVE_TRAILING_SLASH(path);
   file = file_stat(path, current_context);
   wzd_free(path);
   buffer = wzd_malloc(256);
 
-  if (file) {
+  if (file == (struct wzd_file_t *)-1) {
+    buffer[0] = '\0';
+  } else if (file) {
     snprintf(buffer,256,"%s/%s/%o", file->owner, file->group, file->permissions);
   } else {
     /* we know nothing about this file */
     snprintf(buffer,256,"%s/%s/%o", "unknown", "unknown", 0755);
   }
 
-  free_file_recursive(file);
+  if (file && file != (struct wzd_file_t*)-1)
+    free_file_recursive(file);
 
   Tcl_SetResult(interp, buffer, (Tcl_FreeProc *)&wzd_free);
 
@@ -415,17 +492,39 @@ static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const ch
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
   int ret;
+  char buffer_real[WZD_MAX_PATH+1];
   char buffer_link[WZD_MAX_PATH+1];
+  int pos1, pos2;
 
   if (argc <= 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
   /* XXX all following commands wants an absolute path */
   if (!strcmp(argv[1],"mkdir")) {
-    ret = file_mkdir(argv[2],0755,current_context);
+    pos1 = 2;
+    if (!strcmp(argv[pos1],"-r") || !strcmp(argv[pos1],"--real")) {
+      /* ex: vfs link mkdir -r c:\real */
+      pos1++;
+      if (argc <= pos1) return TCL_ERROR;
+      strncpy(buffer_real, argv[pos1], sizeof(buffer_real));
+    } else {
+      if (checkpath_new(argv[pos1],buffer_real,current_context) != E_FILE_NOEXIST)
+        return TCL_ERROR;
+    }
+    ret = file_mkdir(buffer_real, 0755, current_context); /** \todo remove hardcoded umask */
   }
   else if (!strcmp(argv[1],"rmdir")) {
-    ret = file_rmdir(argv[2],current_context);
+    pos1 = 2;
+    if (!strcmp(argv[pos1],"-r") || !strcmp(argv[pos1],"--real")) {
+      /* ex: vfs link mkdir -r c:\real */
+      pos1++;
+      if (argc <= pos1) return TCL_ERROR;
+      strncpy(buffer_real, argv[pos1], sizeof(buffer_real));
+    } else {
+      if (checkpath_new(argv[pos1],buffer_real,current_context) != E_FILE_NOEXIST)
+        return TCL_ERROR;
+    }
+    ret = file_rmdir(buffer_real,current_context);
   }
   else if (!strcmp(argv[1],"read")) {
     return tcl_stat(data, interp, argc-1, argv+1); /* pass through tcl_stat */
@@ -434,19 +533,31 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
     /* TODO move this code to symlink_create ? */
     if (argc <= 3) return TCL_ERROR;
     if (!strcmp(argv[2],"create")) {
-      if (!strcmp(argv[3],"-f")) { /* ex: vfs link create -f c:\real linkname */
-        if (argc <= 5) return TCL_ERROR;
-        if (checkpath_new(argv[5],buffer_link,current_context) != E_FILE_NOEXIST)
+      pos1 = 3; /* position of existing dir */
+      pos2 = 4; /* position of link name */
+      if (argc <= 4) return TCL_ERROR;
+      if (!strcmp(argv[pos1],"-r") || !strcmp(argv[pos1],"--real")) {
+        /* ex: vfs link create -r c:\real linkname */
+        pos1++; pos2++;
+        if (argc <= pos2) return TCL_ERROR;
+        strncpy(buffer_link, argv[pos1], sizeof(buffer_link));
+      } else {
+        if (checkpath_new(argv[pos1],buffer_link,current_context) != E_FILE_NOEXIST)
           return TCL_ERROR;
-        ret = symlink_create(argv[4],buffer_link);
-      } else { /* ex: vfs link create /path/from/ftproot linkname */
-        char buffer_real[WZD_MAX_PATH+1];
-        if (argc <= 4) return TCL_ERROR;
-        if (checkpath_new(argv[4],buffer_link,current_context) != E_FILE_NOEXIST)
-          return TCL_ERROR;
-        if (checkpath_new(argv[3],buffer_real,current_context)) return TCL_ERROR;
-        ret = symlink_create(buffer_real,buffer_link);
       }
+      if (!strcmp(argv[pos2],"-r") || !strcmp(argv[pos2],"--real")) {
+        /* ex: vfs link create -r c:\real linkname */
+        pos2++;
+        if (argc <= pos2) return TCL_ERROR;
+        strncpy(buffer_real, argv[pos2], sizeof(buffer_link));
+      } else {
+        if (checkpath_new(argv[pos2],buffer_real,current_context) != 0)
+          return TCL_ERROR;
+      }
+
+      REMOVE_TRAILING_SLASH(buffer_link);
+      REMOVE_TRAILING_SLASH(buffer_real);
+      ret = symlink_create(buffer_real,buffer_link);
     }
     else if (!strcmp(argv[2],"remove")) {
       /* we need to convert arg to the link name, _without_ converting the last

@@ -101,6 +101,8 @@ int check_server_dynamic_ip(void);
 int commit_backend(void);
 void server_rebind(const unsigned char *new_ip, unsigned int new_port);
 
+int server_switch_to_config(wzd_config_t *config);
+
 /************ VARS *****************/
 wzd_config_t *	mainConfig;
 wzd_shm_t *	mainConfig_shm;
@@ -297,6 +299,8 @@ void server_restart(int signum)
     vfs_free(&mainConfig->vfs);
     mainConfig->vfs = config->vfs;
     /* do not touch hooks */
+    hook_free(&mainConfig->hook);
+    mainConfig->hook = config->hook;
     /* do not touch modules */
 #ifdef HAVE_OPENSSL
     /* what can we do with ssl ? */
@@ -1050,6 +1054,218 @@ void server_crashed(int signum)
 #endif
 }
 
+/** \brief load config from structure to effective running config
+ */
+int server_switch_to_config(wzd_config_t *config)
+{
+  int fd;
+  int backend_storage;
+  int i;
+  unsigned int length=0, size_context, size_user, size_group;
+  int ret;
+
+  ret = config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads);
+  if (ret == -1) {
+    out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
+      __FILE__, __LINE__);
+    out_err(LEVEL_CRITICAL,"Could not create main socket - check log for more infos\n");
+    return -1;
+  }
+  FD_REGISTER(ret,"Server listening socket");
+  {
+    int one=1;
+
+    if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+      out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+      return -1;
+    }
+  }
+
+#if 0
+  /* set up control named pipe */
+#ifndef _MSC_VER
+#else /* _MSC_VER */
+
+#define PIPE_BUFSIZE 4096
+  {
+    HANDLE hpipe;
+    LPTSTR pipeName = "\\\\.\\pipe\\wzdftpd";
+    int fdp;
+
+    hpipe = CreateNamedPipe(
+      pipeName,
+      PIPE_ACCESS_DUPLEX, /* read/write access */
+      PIPE_TYPE_MESSAGE |
+      PIPE_READMODE_MESSAGE |
+      PIPE_NOWAIT,
+      PIPE_UNLIMITED_INSTANCES,
+      PIPE_BUFSIZE,     /* output buffer size */
+      PIPE_BUFSIZE,     /* input buffer size */
+      NMPWAIT_USE_DEFAULT_WAIT,
+      NULL);
+
+    if (hpipe == INVALID_HANDLE_VALUE) {
+      out_log(LEVEL_HIGH,"Could not create pipe");
+    }
+
+    fdp = _open_osfhandle((long)hpipe,0);
+    out_log(LEVEL_FLOOD,"Named pipe created, fd: %d\n",fdp);
+
+    CloseHandle(hpipe);
+  }
+#endif /* _MSC_VER */
+#endif
+
+#ifndef WIN32
+  /* if running as root, we must give up root rigths for security */
+  {
+    /* effective uid if 0 if run as root or setuid */
+    if (geteuid() == 0) {
+      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",getlib_server_uid(),getuid());
+      setuid(getlib_server_uid());
+    }
+  }
+#endif /* WIN32 */
+
+  /* creates pid file */
+  {
+    char buf[64];
+#ifndef WIN32
+    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+#else
+    /* ignore if file exists for visual version ... */
+    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT,0644);
+#endif
+    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
+    if (fd==-1) {
+      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",mainConfig->pid_file,strerror(errno));
+      if (created_shm) {
+        free_config(mainConfig);
+      }
+      exit(1);
+    }
+    ret = write(fd,buf,strlen(buf));
+    close(fd);
+  }
+
+
+/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
+  size_context = HARD_USERLIMIT*sizeof(wzd_context_t);
+  size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+  size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
+  length = size_context + size_user + size_group;
+  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
+  if (context_shm == NULL) {
+    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
+    exit(1);
+  }
+  context_list = context_shm->datazone;
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    context_init(context_list+i);
+  }
+#ifndef _MSC_VER
+  mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+#else
+  mainConfig->user_list = (wzd_user_t*)((char*)context_list + size_context);
+  mainConfig->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
+#endif
+
+#ifdef WIN32
+  /* cygwin sux ... shared library variables are NOT set correctly
+   * on dlopenín'
+   * remember me to slap the one who told me to make this prog portable ... oops
+   * it's me °_°
+   */
+  setlib_mainConfig(mainConfig);
+  setlib_contextList(context_list);
+#endif /* WIN32 */
+
+
+  /* create limiter sem */
+  limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
+
+  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
+  if (mainConfig->backend.name[0] == '\0') {
+    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
+    serverMainThreadExit(-1);
+  }
+  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
+      mainConfig->group_list,HARD_DEF_GROUP_MAX);
+  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
+  if (ret || mainConfig->backend.handle == NULL) {
+    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
+    serverMainThreadExit(-1);
+  }
+
+  if (config->xferlog_name) {
+    fd = xferlog_open(config->xferlog_name, 0600);
+    if (fd == -1)
+    {
+      out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n", config->xferlog_name);
+      return 1;
+    }
+    config->xferlog_fd = fd;
+  }
+
+
+  if (!config->pid_file) return -1;
+  fd = open(config->pid_file, O_RDONLY, 0644);
+  if (fd != -1)
+  {
+    unsigned long l,size;
+    char buf[64];
+    char *ptr;
+    int ret;
+
+    size = read(fd,buf,64);
+    if (size <= 0) {
+      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+      close(fd);
+      return 1;
+    }
+    l = strtoul(buf,&ptr,10);
+    if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
+    {
+      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+      close(fd);
+      return 1;
+    }
+    close(fd);
+    /* check no process is running with this pid */
+#ifndef _MSC_VER
+    ret = kill(l,0);
+#else
+/*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
+    ret = -1;
+    errno = ESRCH;
+#endif
+    if (!ret || (ret==-1 && errno==EPERM)) {
+      out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",config->pid_file);
+      return 1;
+    }
+    if ( !(ret==-1 && errno==ESRCH) ) {
+      out_err(LEVEL_CRITICAL,"Error: pid file: %s\n",config->pid_file);
+      out_err(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
+          l, ret, errno, strerror(errno));
+      out_err(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
+      return 1;
+    }
+    out_err(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",config->pid_file);
+    if (unlink(config->pid_file)) {
+      out_err(LEVEL_HIGH,"Could not remove pid_file (%s)\n",config->pid_file);
+      return 1;
+    }
+  }
+
+
+
+
+
+  return 0;
+}
+
+
 /************************************************************************/
 /*********************** SERVER MAIN THREAD *****************************/
 /************************************************************************/
@@ -1060,9 +1276,6 @@ void serverMainThreadProc(void *arg)
   fd_set r_fds, w_fds, e_fds;
   int maxfd;
   struct timeval tv;
-  int i;
-  unsigned int length=0, size_context, size_user, size_group;
-  int backend_storage;
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   WSADATA wsaData;
   int nCode;
@@ -1124,150 +1337,12 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
-  ret = mainConfig->mainSocket = socket_make((const char *)mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
-  if (ret == -1) {
-    out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
-      __FILE__, __LINE__);
-    out_err(LEVEL_CRITICAL,"Could not create main socket - check log for more infos\n");
-    /* TODO XXX FIXME we should not exit like this, for at this point context_list
-     * and limiter_sem are not allocated ... juste clean up config, but be carefull
-     * another instance is not just runnning
-     */
-    module_free(&mainConfig->module);
-    free_config(mainConfig);
-    exit(-1);
-  }
-  FD_REGISTER(ret,"Server listening socket");
+  if (server_switch_to_config(mainConfig))
   {
-    int one=1;
-
-    if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
-      out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
-      /* TODO XXX FIXME we should not exit like this, for at this point context_list
-       * and limiter_sem are not allocated ... juste clean up config, but be carefull
-       * another instance is not just runnning
-       */
-      close(ret);
-      free_config(mainConfig);
-      exit(-1);
-    }
-  }
-
-#if 0
-  /* set up control named pipe */
-#ifndef _MSC_VER
-#else /* _MSC_VER */
-
-#define PIPE_BUFSIZE 4096
-  {
-    HANDLE hpipe;
-    LPTSTR pipeName = "\\\\.\\pipe\\wzdftpd";
-    int fdp;
-
-    hpipe = CreateNamedPipe(
-      pipeName,
-      PIPE_ACCESS_DUPLEX, /* read/write access */
-      PIPE_TYPE_MESSAGE |
-      PIPE_READMODE_MESSAGE |
-      PIPE_NOWAIT,
-      PIPE_UNLIMITED_INSTANCES,
-      PIPE_BUFSIZE,     /* output buffer size */
-      PIPE_BUFSIZE,     /* input buffer size */
-      NMPWAIT_USE_DEFAULT_WAIT,
-      NULL);
-
-    if (hpipe == INVALID_HANDLE_VALUE) {
-      out_log(LEVEL_HIGH,"Could not create pipe");
-    }
-
-    fdp = _open_osfhandle((long)hpipe,0);
-    out_log(LEVEL_FLOOD,"Named pipe created, fd: %d\n",fdp);
-
-    CloseHandle(hpipe);
-  }
-#endif /* _MSC_VER */
-#endif
-
-#ifndef WIN32
-  /* if running as root, we must give up root rigths for security */
-  {
-    /* effective uid if 0 if run as root or setuid */
-    if (geteuid() == 0) {
-      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",getlib_server_uid(),getuid());
-      setuid(getlib_server_uid());
-    }
-  }
-#endif /* __CYGWIN__ */
-
-  /* creates pid file */
-  {
-    int fd;
-    char buf[64];
-#ifndef _MSC_VER
-    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
-#else
-    /* ignore if file exists for visual version ... */
-    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT,0644);
-#endif
-    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
-    if (fd==-1) {
-      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",mainConfig->pid_file,strerror(errno));
-      if (created_shm) {
-        free_config(mainConfig);
-      }
-      exit(1);
-    }
-    ret = write(fd,buf,strlen(buf));
-    close(fd);
-  }
-
-/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  size_context = HARD_USERLIMIT*sizeof(wzd_context_t);
-  size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
-  size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
-  length = size_context + size_user + size_group;
-  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
-  if (context_shm == NULL) {
-    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
-    exit(1);
-  }
-  context_list = context_shm->datazone;
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    context_init(context_list+i);
-  }
-#ifndef _MSC_VER
-  mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
-#else
-  mainConfig->user_list = (wzd_user_t*)((char*)context_list + size_context);
-  mainConfig->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
-#endif
-
-#ifdef WIN32
-  /* cygwin sux ... shared library variables are NOT set correctly
-   * on dlopenín'
-   * remember me to slap the one who told me to make this prog portable ... oops
-   * it's me °_°
-   */
-  setlib_mainConfig(mainConfig);
-  setlib_contextList(context_list);
-#endif /* WIN32 */
-
-  /* create limiter sem */
-  limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
-
-  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (mainConfig->backend.name[0] == '\0') {
-    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     serverMainThreadExit(-1);
   }
-  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
-      mainConfig->group_list,HARD_DEF_GROUP_MAX);
-  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (ret || mainConfig->backend.handle == NULL) {
-    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    serverMainThreadExit(-1);
-  }
+
+
 
   /* clear ident list */
   server_ident_list[0] = -1;
@@ -1482,8 +1557,8 @@ void serverMainThreadExit(int retcode)
 /*  free(context_list);*/
   /* FIXME should not be done here */
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
-  wzd_sem_destroy(limiter_sem);
-  wzd_shm_free(context_shm);
+  if (limiter_sem) wzd_sem_destroy(limiter_sem);
+  if (context_shm) wzd_shm_free(context_shm);
   context_list = NULL;
 
   wzd_debug_fini();
