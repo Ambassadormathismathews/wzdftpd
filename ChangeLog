@@ -4,6 +4,7 @@
 	* feature: perl warnings and errors are logged to a file
 	* feature: tcl: chmod, chgrp, chown
 	* bugfix: site_cmd not working
+	* bugfix: remove context after client exit
 
 2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>
 

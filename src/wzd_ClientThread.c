@@ -23,6 +23,12 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file wzd_ClientThread.h
+ * \brief Main loop of wzdftpd client.
+ *
+ * This file contains the code which is executed by threads, and
+ * most of the core FTP functions (see RFC 959).
+ */
 
 #include "wzd_all.h"
 
@@ -94,6 +100,11 @@
 
 #define STRTOINT(a,b,c,d) (((a)<<24) + ((b)<<16) + ((c)<<8) + (d))
 
+/** \brief Fast token identification function.
+ *
+ * Converts the string into an integer and return the corresponding
+ * identifier. Luckily, all FTP commands are no more than 4 characters.
+ */
 int identify_token(char *token)
 {
   unsigned int length;
@@ -154,7 +165,7 @@ int identify_token(char *token)
     }
   }
 
-  /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
+  /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
    * and wait the next command
@@ -172,6 +183,11 @@ int identify_token(char *token)
 
 /*************** clear_read **************************/
 
+/** \brief Non-blocking read function
+ *
+ * Try to read length bytes in non-blocking mode for timeout seconds
+ * max. If timeout is null, performs a blocking read.
+ */
 int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
@@ -216,6 +232,11 @@ int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int time
 
 /*************** clear_write *************************/
 
+/** \brief Non-blocking write function
+ *
+ * Try to write length bytes in non-blocking mode for timeout seconds
+ * max. If timeout is null, performs a blocking write.
+ */
 int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
@@ -306,7 +327,11 @@ unsigned char * getmyip(int sock)
 }
 
 /***************** client_die ************************/
-
+/** \brief Cleanup code
+ *
+ * Called whenever a connection with a client is closed (for any reason).
+ * Closes all files/sockets.
+ */
 void client_die(wzd_context_t * context)
 {
   int ret;
@@ -355,19 +380,19 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
     context->pasvsock = -1;
   }
   if (context->datafd != (fd_t)-1) {
-	/** \bug TODO: if TLS, shutdown TLS before closing data connection */
+    /* if TLS, shutdown TLS before closing data connection */
+    tls_close_data(context);
     socket_close(context->datafd);
     FD_UNREGISTER(context->datafd,"Client data fd");
   }
   context->datafd = -1;
-  /** \bug TODO: if TLS, shutdown TLS before closing control connection */
+  /* if TLS, shutdown TLS before closing control connection */
+  tls_free(context);
   socket_close(context->controlfd);
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
 
-  wzd_mutex_lock(server_mutex);
-  context->magic = 0;
-  wzd_mutex_unlock(server_mutex);
+  context_remove(context_list,context);
 }
 
 /*************** check_timeout ***********************/
@@ -1927,6 +1952,12 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_retr *****************************/
+/** \brief Prepares a data retrieval transfer.
+ *
+ * Ensures that a data connection is available, checks user permissions,
+ * sends EVENT_PREDOWNLOAD, and opens file.
+ * The real transfer is handled by data_execute().
+ */
 int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
@@ -3435,6 +3466,21 @@ static int do_login(wzd_context_t * context)
 /*****************************************************/
 /*************** client main proc ********************/
 /*****************************************************/
+/** @brief Client main loop
+ *
+ * Calls do_login(context) to handle the login, and then enters the main
+ * loop.
+ *
+ * Each loop consist of checking if the control connection is ready for
+ * reading, and if data connection is ready for reading/writing. If both
+ * are ready, the control connection is always handled first.
+ * Data are handled in the separate function data_execute().
+ *
+ * Control data are first translated to current charset if needed, then the
+ * first token is parsed and sent to commands_find() to identify the command.
+ *
+ * The exit is done using client_die().
+ */
 void * clientThreadProc(void *arg)
 {
   struct timeval tv;
@@ -3725,9 +3771,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
   client_die(context);
 #endif /* WZD_MULTITHREAD */
 
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  tls_free(context);
-#endif
   return NULL;
 }
 
