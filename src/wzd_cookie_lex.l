@@ -72,6 +72,8 @@
 
 #include "wzd_messages.h"
 
+#include "wzd_debug.h"
+
 typedef enum {
   COOKIE=257,
   COOKIE_EOL,
@@ -322,7 +324,8 @@ void get_cookie_format(const char *cookie, int * padding)
   }
 }
 
-int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context)
+int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group,
+wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 {
   wzd_user_t * me;
   char send_buffer[MAX_SEND_BUFFERSIZE];
@@ -339,6 +342,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
   unsigned long long total;
   unsigned int send_buffer_ptr=0;
   unsigned short use_colors=0;
+  char * out_buffer_ptr;
 
   if (!context) return -1;
   me = GetUserByID(context->userid);
@@ -358,6 +362,8 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 
   current_user = user;
   current_group = group;
+
+  out_buffer_ptr = out_buffer;
 
   while (cookie=yylex())
   {
@@ -403,14 +409,27 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	/* flush buffer before executing 'for' loop */
 /*	printf("flushing buffer on [31mIF[0m\n");*/
 	/* flush buffer */
-	send_buffer[send_buffer_ptr]='\0';
-	send_message_raw(send_buffer,context);
-	send_buffer_ptr=0;
+        if (out_buffer) {
+          unsigned int l = send_buffer_ptr;
+          if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+            out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+            l = out_buffer_len - 1;
+          }
+          memcpy(out_buffer_ptr,send_buffer,l);
+          out_buffer_ptr[l] = '\0';
+          out_buffer_ptr += l;
+        } else {
+          send_buffer[send_buffer_ptr]='\0';
+          send_message_raw(send_buffer,context);
+          send_buffer_ptr=0;
+        }
 	/* test if() condition */
 	/* TODO XXX FIXME more checks needed ! */
 	if (condition[0] == '+') {
 	  if (current_user->flags && strchr(user->flags,condition[1]))
-	    cookie_parse_buffer(tmpbuf,current_user,current_group,context);
+	    cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
 	}
       }
       break;
@@ -452,9 +471,22 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	/* flush buffer before executing 'for' loop */
 /*	printf("flushing buffer on [31mFOR[0m\n");*/
 	/* flush buffer */
-	send_buffer[send_buffer_ptr]='\0';
-	send_message_raw(send_buffer,context);
-	send_buffer_ptr=0;
+        if (out_buffer) {
+          unsigned int l = send_buffer_ptr;
+          if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+            out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+            l = out_buffer_len - 1;
+          }
+          memcpy(out_buffer_ptr,send_buffer,l);
+          out_buffer_ptr[l] = '\0';
+          out_buffer_ptr += l;
+        } else {
+          send_buffer[send_buffer_ptr]='\0';
+          send_message_raw(send_buffer,context);
+          send_buffer_ptr=0;
+        }
 	/* execute for loop */
 	if (strcmp(condition,"allusersconnected")==0)
 	{
@@ -472,7 +504,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 		    && !strchr(me->flags,FLAG_SITEOP)
 		    && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
 		  continue;
-		cookie_parse_buffer(tmpbuf,loop_user,current_group,context);
+                if (out_buffer)
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                else
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
 	      }
 	    }
 	  }
@@ -487,7 +522,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	    loop_user = GetUserByID(i);
 	    current_user = loop_user;
 	    if (loop_user->username[0] != '\0') {
-	      cookie_parse_buffer(tmpbuf,loop_user,current_group,context);
+              if (out_buffer)
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+              else
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
 	    }
 	  }
 	  current_user = user;
@@ -500,7 +538,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	    loop_group = GetGroupByID(i);
 	    current_group = loop_group;
 	    if (loop_group->groupname[0] != '\0') {
-	      cookie_parse_buffer(tmpbuf,current_user,loop_group,context);
+              if (out_buffer)
+                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+              else
+                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
 	    }
 	  }
 	  current_group = group;
@@ -516,7 +557,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	      loop_user = GetUserByID(i);
 	      current_user = loop_user;
 	      if (loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
-		cookie_parse_buffer(tmpbuf,loop_user,current_group,context);
+                if (out_buffer)
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                else
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
 	      }
 	    }
 	  }
@@ -527,7 +571,10 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
     current_vfs = mainConfig->vfs;
     while(current_vfs)
     {
-      cookie_parse_buffer(tmpbuf,current_user,current_group,context);
+      if (out_buffer)
+        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+      else
+        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
       current_vfs = current_vfs->next_vfs;
     }
   } /* allvfs */
@@ -1120,37 +1167,55 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
     case COOKIE_ENDFOR:
       printf("!! endfor outside a for loop !!\n");
       continue;
-    case COOKIE_INVALID:
-      printf("[31mInvalid cookie ![0m\n");
-      continue;
+    case COOKIE_INVALID: /* e.g This can be an explicit %s */
+      snprintf(internalbuffer,IBUFSIZE,"%%%s",yytext);
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_EOL:
       cookie_ptr = "\r\n";
       cookie_length = 2;
       strncpy(send_buffer+send_buffer_ptr,cookie_ptr,cookie_length);
       send_buffer_ptr += cookie_length;
       if (send_buffer_ptr >= MIN_SEND_BUFFERSIZE) {
-/*	printf("flushing buffer on [31mEOL[0m\n");*/
+#ifdef WZD_DBG_COOKIES
+	printf("flushing buffer on [31mEOL[0m\n");
+#endif
 	/* flush buffer */
-	send_buffer[send_buffer_ptr]='\0';
-	send_message_raw(send_buffer,context);
-	send_buffer_ptr=0;
+        if (out_buffer) {
+          unsigned int l = send_buffer_ptr;
+          if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+            out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+            l = out_buffer_len - 1;
+          }
+          memcpy(out_buffer_ptr,send_buffer,l);
+          out_buffer_ptr[l] = '\0';
+          out_buffer_ptr += l;
+          out_buffer_len -= l;
+        } else {
+          send_buffer[send_buffer_ptr]='\0';
+          send_message_raw(send_buffer,context);
+        }
+        send_buffer_ptr=0;
       }
       continue;
     case COOKIE_VFSVIRTUAL:
       get_cookie_format(yytext,&padding);
       if (current_vfs)
-  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->virtual_dir);
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->virtual_dir);
       else
-  snprintf(internalbuffer,IBUFSIZE,"virtual_dir");
+        snprintf(internalbuffer,IBUFSIZE,"virtual_dir");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
     case COOKIE_VFSPHYSICAL:
       get_cookie_format(yytext,&padding);
       if (current_vfs)
-  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->physical_dir);
+        snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->physical_dir);
       else
-  snprintf(internalbuffer,IBUFSIZE,"physical_dir");
+        snprintf(internalbuffer,IBUFSIZE,"physical_dir");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1159,13 +1224,13 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       if (current_vfs)
       {
         if (current_vfs->target)
-  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->target);
+          snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->target);
         else
-  snprintf(internalbuffer,IBUFSIZE,"not restricted");
+          snprintf(internalbuffer,IBUFSIZE,"not restricted");
       }
 
       else
-  snprintf(internalbuffer,IBUFSIZE,"target");
+        snprintf(internalbuffer,IBUFSIZE,"target");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1188,11 +1253,27 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       fflush(stdout);*/
       /* bufferize and send only complete lines */
       if (send_buffer_ptr + cookie_length >= MAX_SEND_BUFFERSIZE) {
-/*	printf("flushing buffer on [31mBUFFER OVERFLOW[0m\n");*/
+#ifdef WZD_DBG_COOKIES
+	printf("flushing buffer on [31mBUFFER OVERFLOW[0m\n");
+#endif
 	/* flush buffer */
-	send_buffer[send_buffer_ptr]='\0';
-	send_message_raw(send_buffer,context);
-	send_buffer_ptr=0;
+        if (out_buffer) {
+          unsigned int l = send_buffer_ptr;
+          if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+            out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+            l = out_buffer_len - 1;
+          }
+          memcpy(out_buffer_ptr,send_buffer,l);
+          out_buffer_ptr[l] = '\0';
+          out_buffer_ptr += l;
+          out_buffer_len -= l;
+        } else {
+          send_buffer[send_buffer_ptr]='\0';
+          send_message_raw(send_buffer,context);
+        }
+        send_buffer_ptr=0;
       }
       strncpy(send_buffer+send_buffer_ptr,cookie_ptr,cookie_length);
       send_buffer_ptr += cookie_length;
@@ -1206,7 +1287,9 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
     yy_switch_to_buffer(include_stack[cookie_include_stack_ptr] );
   }
 
-/*  printf("flushing buffer on [31mEOF[0m\n");*/
+#ifdef WZD_DBG_COOKIES
+  printf("flushing buffer on [31mEOF[0m (%d)\n",send_buffer_ptr);
+#endif
   /* flush buffer */
   if (send_buffer_ptr) {
     if (send_buffer_ptr>2) {
@@ -1220,7 +1303,24 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       send_buffer_ptr += strlen("\r\n");
     }
     send_buffer[send_buffer_ptr]='\0';
-    send_message_raw(send_buffer,context);
+    if (out_buffer) {
+      unsigned int l = send_buffer_ptr;
+      if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+        out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+        l = out_buffer_len - 1;
+      }
+      memcpy(out_buffer_ptr,send_buffer,l);
+      out_buffer_ptr[l] = '\0';
+      out_buffer_ptr += l;
+      out_buffer_len -= l;
+#ifdef WZD_DBG_COOKIES
+        out_err(LEVEL_HIGH,"buffer length %d (%d)",strlen(out_buffer),out_buffer_len);
+#endif
+    } else {
+      send_message_raw(send_buffer,context);
+    }
     send_buffer_ptr=0;
   }
 

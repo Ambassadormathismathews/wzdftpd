@@ -82,7 +82,7 @@ current objectives:
    vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|
    vfs = |/cygdrive/e/sons/mp3/pouet|/cygdrive/d/adobe|
 - Load modules : .so + try to load win DLLs (using win API ...)
-- cookies
+- more cookies
 - anti-hammering: per ip/user, ban time
 - special flag to start server and connect to existing shm without
   creating/blanking it (goal: replace exe instance by another on the fly)

@@ -1107,5 +1107,10 @@ void serverMainThreadExit(int retcode)
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
   WSACleanup();
 #endif
+#ifdef DEBUG
+  /* reset color, there can be some bad control codes ... */
+  fprintf(stdout,"%s",CLR_NOCOLOR);
+  fprintf(stderr,"%s",CLR_NOCOLOR);
+#endif
   exit (retcode);
 }

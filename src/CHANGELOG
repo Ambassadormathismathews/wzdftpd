@@ -1,3 +1,8 @@
+# Nov, 14 2003
+- cookies can be used inside messages and ftp replies
+- bugfix: more checks on size for messages > 1024 bytes
+- function cookie_parse_buffer modified to parse buffer without sending data
+
 # Nov, 10 2003
 - sfv module: zip files are checked after upload, using the zlib for decompression
     (note: multipart zip files are not supported)

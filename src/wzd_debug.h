@@ -36,6 +36,9 @@ int fd_is_valid(int fd);
 /* debug file cache */
 /*#define WZD_DBG_CACHE*/
 
+/* debug cookies parsing code */
+/*#define WZD_DBG_COOKIES*/
+
 /* debug crontab */
 /*#define WZD_DBG_CRONTAB*/
 

@@ -597,13 +597,19 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   char *ptr;
   unsigned int size;
   char work_buf[WORK_BUF_LEN];
+  char cookies_buf[WORK_BUF_LEN];
   char is_terminated=1;
   int must_free;
+  int ret;
+  wzd_user_t * user;
+  wzd_group_t * group;
+  wzd_context_t * context;
   /* XXX 4096 should ALWAYS be >= length */
+  char * old_buffer = buffer;
 
 #ifdef DEBUG
   if (length > WORK_BUF_LEN) {
-    fprintf(stderr,"*** WARNING *** message too long, will be truncated\n");
+    out_err(LEVEL_HIGH,"*** WARNING *** message too long, will be truncated\n");
     length = WORK_BUF_LEN;
   }
 #endif
@@ -616,8 +622,15 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   msg = getMessage(code,&must_free);
   ptr = work_buf;
 
-  /* first, format message */
-  vsnprintf(work_buf,WORK_BUF_LEN,msg,argptr);
+  context = GetMyContext();
+  user = GetUserByID(context->userid);
+  group = GetGroupByID(user->groups[0]);
+
+  /* first, replace cookies */
+  ret = cookie_parse_buffer(msg, user, group, context, cookies_buf, WORK_BUF_LEN);
+  
+  /* then format message */
+  vsnprintf(work_buf,WORK_BUF_LEN,cookies_buf,argptr);
 
   if (must_free) {
     free ( (char*)msg );
@@ -660,17 +673,31 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
       /* find next token */
       token2 = strtok_r(NULL,"\r\n",&ptr);
       if (!token2) {
+        /* check size for BOF here ! */
+/*fprintf(stderr,"last: remaining %d (written %d, wants %d)\n",length,strlen(old_buffer),size+6);*/
+        if (size+6 >= length) {
+          out_err(LEVEL_CRITICAL,"Mayday, we're running into a BOF (%s:%d)\n",__FILE__,__LINE__);
+          snprintf(old_buffer,20,"%d Truncated\r\n",code);
+          break;
+        }
 	if (is_terminated) /* no more line, remove the - */
 	  snprintf(buffer,length,"%d %s\r\n",code,token);
 	else
 	  snprintf(buffer,length,"%d-%s\r\n",code,token);
         break;
       }
+      /* check remaining size */
+      /* check size for BOF here ! */
+/*fprintf(stderr,"remaining %d (written %d, wants %d)\n",length,strlen(old_buffer),size+2);*/
+      if (size+2 >= length) {
+        out_err(LEVEL_CRITICAL,"Mayday, we're running into a BOF (%s:%d)\n",__FILE__,__LINE__);
+        snprintf(old_buffer,20,"%d Truncated\r\n",code);
+        break;
+      }
       /* copy line into out buffer */
       snprintf(buffer,length,"%s\r\n",token);
       /* adjust length */
       length = length - size - 2;
-      /* check remaining size */
       /* adjust buffer position */
       buffer = buffer + size + 2;
       /* loop */
@@ -785,7 +812,7 @@ int print_file(const char *filename, int code, void * void_context)
 
   param = NULL;
   do {
-    ret = cookie_parse_buffer(buffer,NULL,NULL,context); /* TODO test ret */
+    ret = cookie_parse_buffer(buffer,NULL,NULL,context,NULL,0); /* TODO test ret */
   /* XXX FIXME TODO */
 /*    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);*/
     send_message_raw(complete_buffer,context);

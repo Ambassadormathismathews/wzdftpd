@@ -80,7 +80,7 @@ void limiter_free(wzd_bw_limiter *l);
 
 /* cookies */
 /* defined in wzd_cookie_lex.l */
-int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context);
+int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len);
 
 /* print_file : read file, replace cookies and prints it
  * header (200-) MUST have been sent, and end (200 ) is NOT sent)

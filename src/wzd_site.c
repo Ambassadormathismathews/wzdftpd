@@ -598,7 +598,7 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   /* send header */
   send_message_raw("200-\r\n",context);
 
-  cookie_parse_buffer(file_buffer,user,group,context);
+  cookie_parse_buffer(file_buffer,user,group,context,NULL,0);
 
   wzd_cache_close(fp);
 
