@@ -1,5 +1,5 @@
 
-libexecdir = /usr/modules
+libexecdir = ${pkgdatadir}/modules
 
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
