@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,8 +52,9 @@ void do_site_help_adduser(wzd_context_t * context)
   send_message_with_args(501,context,"site adduser <user> <password> [<group>] [<backend>]");
 }
 
-/* site adduser: adds a new user
- * adduser <user> <password> <homedir> [<backend>]
+/** site adduser: adds a new user
+ *
+ * adduser &lt;user&gt; &lt;password&gt; &lt;homedir&gt; [&lt;backend&gt;]
  */
 int do_site_adduser(char *command_line, wzd_context_t * context)
 {
@@ -40,6 +65,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   wzd_group_t * group=NULL;
   int uid;
   int i;
+  unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -106,6 +132,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   if (group) {
     homedir = group->defaultpath;
     groupname = group->groupname;
+    ratio = group->ratio;
   } else {
     /* XXX FIXME we should abort here */
     ret = send_message_with_args(501,context,"I can't find a default_home in your groups - contact the sysadmin");
@@ -141,6 +168,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
     user.ip_allowed[i][0]='\0';
   user.bytes_ul_total=0;
   user.bytes_dl_total=0;
+  user.ratio = ratio;
   user.user_slots=0;
   user.leech_slots=0;
 
@@ -162,8 +190,9 @@ void do_site_help_deluser(wzd_context_t * context)
   send_message_with_args(501,context,"site deluser <user> [<backend>]");
 }
 
-/* site deluser: delete user
- * deluser <user> [<backend>]
+/** site deluser: delete user
+ *
+ * deluser &lt;user&gt; [&lt;backend&gt;]
  */
 int do_site_deluser(char *command_line, wzd_context_t * context)
 {
@@ -228,8 +257,9 @@ void do_site_help_readduser(wzd_context_t * context)
   send_message_with_args(501,context,"site readduser <user> [<backend>]");
 }
 
-/* site readduser: undelete user
- * readduser <user> [<backend>]
+/** site readduser: undelete user
+ *
+ * readduser &lt;user&gt; [&lt;backend&gt;]
  */
 int do_site_readduser(char *command_line, wzd_context_t * context)
 {
@@ -288,8 +318,9 @@ int do_site_readduser(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site purge: delete user permanently
- * purge [<user>] [<backend>]
+/** site purge: delete user permanently
+ *
+ * purge [&lt;user&gt;] [&lt;backend&gt;]
  */
 int do_site_purgeuser(char *command_line, wzd_context_t * context)
 {
@@ -368,8 +399,9 @@ void do_site_help_addip(wzd_context_t * context)
   send_message_with_args(501,context,"site addip <user> <ip>");
 }
 
-/* site addip: adds an ip to a user
- * addip <user> <ip>
+/** site addip: adds an ip to a user
+ *
+ * addip &lt;user&gt; &lt;ip&gt;
  */
 int do_site_addip(char *command_line, wzd_context_t * context)
 {
@@ -451,9 +483,11 @@ void do_site_help_delip(wzd_context_t * context)
   send_message_raw("501  or: site delip <user> <slot_number> (get it with site user <user>)\r\n",context);
 }
 
-/* site delip: removes ip from user
- * delip <user> <ip>
- * delip <user> <slot_number>
+/** site delip: removes ip from user
+ *
+ * delip &lt;user&gt; &lt;ip&gt;
+ *
+ * delip &lt;user&gt; &lt;slot_number&gt;
  */
 int do_site_delip(char *command_line, wzd_context_t * context)
 {
@@ -545,6 +579,7 @@ void do_site_help_change(wzd_context_t * context)
   send_message_raw(" flags       changes user flags\r\n",context);
   send_message_raw(" max_ul      changes maximum upload speed\r\n",context);
   send_message_raw(" max_dl      changes maximum download speed\r\n",context);
+  send_message_raw(" ratio       changes user ratio\r\n",context);
   send_message_raw(" num_logins  changes maximum simultaneous logins allowed\r\n",context);
   send_message_raw(" user_slots  changes allowed user slots (for GAdmins)\r\n",context);
   send_message_raw(" leech_slots changes allowed leech slots (for GAdmins)\r\n",context);
@@ -552,8 +587,9 @@ void do_site_help_change(wzd_context_t * context)
   send_message_raw("501 site change aborted\r\n",context);
 }
 
-/* site change: change a field for a user
- * change <user> <field> <value>
+/** site change: change a field for a user
+ *
+ * change &lt;user&gt; &lt;field&gt; &lt;value&gt;
  */
 int do_site_change(char *command_line, wzd_context_t * context)
 {
@@ -561,6 +597,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   char * username, * field, * value;
   unsigned long mod_type;
   unsigned long ul;
+  unsigned int oldratio;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -605,17 +642,17 @@ int do_site_change(char *command_line, wzd_context_t * context)
   /* find modification type */
   mod_type = _USER_NOTHING;
 
-  /** username (?) **/
+  /* username (?) */
   if (strcmp(field,"name")==0) {
     mod_type = _USER_USERNAME;
     strncpy(user.username,value,255);
   }
-  /** pass **/
+  /* pass */
   else if (strcmp(field,"pass")==0) {
     mod_type = _USER_USERPASS;
     strncpy(user.userpass,value,255);
   }
-  /** homedir **/
+  /* homedir */
   else if (strcmp(field,"homedir")==0) {
     /* GAdmin ? */
     if (is_gadmin) {
@@ -633,13 +670,13 @@ int do_site_change(char *command_line, wzd_context_t * context)
     mod_type = _USER_ROOTPATH;
     strncpy(user.rootpath,value,1023);
   }
-  /** tagline **/
+  /* tagline */
   else if (strcmp(field,"tagline")==0) {
     mod_type = _USER_TAGLINE;
     strncpy(user.tagline,value,255);
   }
-  /** uid **/ /* FIXME useless ? */
-  /** group **/ /* add or remove group */
+  /* uid */ /* FIXME useless ? */
+  /* group */ /* add or remove group */
   else if (strcmp(field,"group")==0) {
     wzd_group_t group;
     int groupid;
@@ -671,17 +708,17 @@ int do_site_change(char *command_line, wzd_context_t * context)
     } /* if (newgroupid != -1) */
     mod_type = _USER_GROUP | _USER_GROUPNUM;
   }
-  /** max_idle **/
+  /* max_idle */
   else if (strcmp(field,"max_idle")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_IDLE; user.max_idle_time = ul; }
   }
-  /** perms **/
+  /* perms */
   else if (strcmp(field,"perms")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_IDLE; user.userperms = ul;} 
   }
-  /** flags **/ /* TODO accept modifications style +f or -f */
+  /* flags */ /* TODO accept modifications style +f or -f */
   else if (strcmp(field,"flags")==0) {
     /* GAdmin ? */
     if (is_gadmin) {
@@ -691,22 +728,36 @@ int do_site_change(char *command_line, wzd_context_t * context)
     mod_type = _USER_FLAGS;
     strncpy(user.flags,value,MAX_FLAGS_NUM-1);
   }
-  /** max_ul **/
+  /* max_ul */
   else if (strcmp(field,"max_ul")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_MAX_ULS; user.max_ul_speed = ul; }
   }
-  /** max_dl **/
+  /* max_dl */
   else if (strcmp(field,"max_dl")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_MAX_DLS; user.max_dl_speed = ul; }
   }
-  /** num_logins **/
+  /* num_logins */
   else if (strcmp(field,"num_logins")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_NUMLOGINS; user.num_logins = ul; }
   }
-  /** user_slots **/
+  /* ratio */
+  else if (strcmp(field,"ratio")==0) {
+    ul=strtoul(value,&ptr,0);
+    if (!*ptr) {
+      if (is_gadmin && ul==0) { /* GAdmin wants to add a leech access */
+	if (me->leech_slots == 0) {
+	  ret = send_message_with_args(501,context,"No more leech slots available");
+	  return 0;
+	}
+      }
+      oldratio = user.ratio;
+      mod_type = _USER_RATIO; user.ratio = ul;
+    }
+  }
+  /* user_slots */
   else if (strcmp(field,"user_slots")==0) {
     /* GAdmin ? */
     if (is_gadmin) {
@@ -717,7 +768,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
     /* TODO compare with USHORT_MAX */
     if (!*ptr) { mod_type = _USER_USERSLOTS; user.user_slots = (unsigned short)ul; }
   }
-  /** leech_slots **/
+  /* leech_slots */
   else if (strcmp(field,"leech_slots")==0) {
     /* GAdmin ? */
     if (is_gadmin) {
@@ -728,11 +779,24 @@ int do_site_change(char *command_line, wzd_context_t * context)
     /* TODO compare with USHORT_MAX */
     if (!*ptr) { mod_type = _USER_LEECHSLOTS; user.leech_slots = (unsigned short)ul; }
   }
-  /** bytes_ul and bytes_dl should never be changed ... */
+  /* bytes_ul and bytes_dl should never be changed ... */
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,mod_type);
+  ret = backend_mod_user("plaintext",username,&user,mod_type);
+
+  if (!ret && is_gadmin) {
+    if ( mod_type & _USER_RATIO ) {
+      if (user.ratio==0) {
+	/* gadmin added a leech access */
+	me->leech_slots--;
+      }
+     if (oldratio==0 && user.ratio) {
+	/* gadmin removed a leech access */
+	me->leech_slots++;
+      }
+    }
+  }
 
   ret = send_message_with_args(200,context,"User field change successfull");
   return 0;
@@ -746,8 +810,9 @@ void do_site_help_chgrp(wzd_context_t * context)
   send_message_raw("501 site chgrp aborted\r\n",context);
 }
 
-/* site chgrp: add/remove user from group
- * chgrp <user> <group1> [<group2> ...]
+/** site chgrp: add/remove user from group
+ *
+ * chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
  */
 int do_site_chgrp(char *command_line, wzd_context_t * context)
 {
@@ -823,8 +888,100 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site flags: display a user's flags
- * flags <user>
+
+
+void do_site_help_chratio(wzd_context_t * context)
+{
+  send_message_with_args(501,context,"site chratio <user> <ratio>");
+}
+
+/** site chratio: change user ratio
+ *
+ * chratio user ratio
+ */
+int do_site_chratio(char *command_line, wzd_context_t * context)
+{
+  char *ptr;
+  char * str_ratio, *username;
+  int ret;
+  wzd_user_t user, *me;
+  int uid;
+  unsigned int ratio, oldratio;
+  short is_gadmin;
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+  ptr = command_line;
+  username = strtok_r(command_line," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help_chratio(context);
+    return 0;
+  }
+  str_ratio = strtok_r(NULL," \t\r\n",&ptr);
+  if (!str_ratio) {
+    do_site_help_chratio(context);
+    return 0;
+  }
+
+  /* check if user already exists */
+  if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return 0;
+  }
+
+  ratio = strtoul(str_ratio,&ptr,0);
+  if (*ptr!='\0') {
+    do_site_help_chratio(context);
+    return 0;
+  }
+
+  /* TODO find user group or take current user */
+  if (is_gadmin)
+  {
+    /* GAdmins cannot change user from different group */
+    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    {
+      ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
+      return 0;
+    }
+  }
+
+  /* Gadmin ? */
+  if (is_gadmin && ratio==0)
+  {
+    if (me->leech_slots == 0) {
+      ret = send_message_with_args(501,context,"No more slots available");
+      return 0;
+    }
+  }
+  oldratio = user.ratio;
+  user.ratio = ratio;
+
+  /* add it to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext",username,&user,_USER_RATIO);
+
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem changing value");
+  } else {
+    /* adjust slot counter for gadmin */
+    if (is_gadmin) {
+      if (!ratio)
+	me->leech_slots--;
+      if (!oldratio && ratio)
+	me->leech_slots++;
+    }
+    ret = send_message_with_args(200,context,"User ratio changed");
+  }
+  return 0;
+}
+
+
+
+/** site flags: display a user's flags
+ *
+ * flags &lt;user&gt;
  */
 int do_site_flags(char *command_line, wzd_context_t * context)
 {
@@ -858,8 +1015,10 @@ int do_site_flags(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site idle: display/set your idle time (per-session only, unless commited)
- * idle [<idletime>]
+/** site idle: display/set your idle time (per-session only, unless commited)
+ *
+ * idle [&lt;idletime&gt;]
+ *
  * NOTE: you need to be siteop to change your idletime
  */
 int do_site_idle(char *command_line, wzd_context_t * context)
@@ -909,8 +1068,9 @@ int do_site_idle(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site tagline: display/set your tagline (per-session only, unless commited)
- * tagline [<tagline>]
+/** site tagline: display/set your tagline (per-session only, unless commited)
+ *
+ * tagline [&lt;tagline&gt;]
  */
 int do_site_tagline(char *command_line, wzd_context_t * context)
 {
@@ -958,8 +1118,9 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
 
 
 #ifdef WZD_MULTIPROCESS
-/* site kill: kill a PID
- * kill <pid>
+/** site kill: kill a PID
+ *
+ * kill &lt;pid&gt;
  */
 int do_site_kill(char *command_line, wzd_context_t * context)
 {
@@ -994,8 +1155,9 @@ int do_site_kill(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site kick: kick off a user from the site (killing all its connections)
- * kick <user>
+/** site kick: kick off a user from the site (killing all its connections)
+ *
+ * kick &lt;user&gt;
  */
 int do_site_kick(char *command_line, wzd_context_t * context)
 {
@@ -1055,8 +1217,9 @@ int do_site_kick(char *command_line, wzd_context_t * context)
 #else /* WZD_MULTIPROCESS */
 
 #ifdef WZD_MULTITHREAD
-/* site kill: kill a PID
- * kill <pid>
+/** site kill: kill a PID
+ *
+ * kill &lt;pid&gt;
  */
 int do_site_kill(char *command_line, wzd_context_t * context)
 {
@@ -1091,8 +1254,9 @@ int do_site_kill(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-/* site kick: kick off a user from the site (killing all its connections)
- * kick <user>
+/** site kick: kick off a user from the site (killing all its connections)
+ *
+ * kick &lt;user&gt;
  */
 int do_site_kick(char *command_line, wzd_context_t * context)
 {
