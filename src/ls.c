@@ -222,11 +222,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
 	    !S_ISREG(st.st_mode)) continue;
 
-#if BSD
-	{
-	  char buf2[20];
-	  sprintf(buf2,"%13ld",s.st_size);
-	  sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %s %s %s\r\n",
+	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
 		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
 		st.st_mode & S_IRUSR ? 'r' : '-',
 		st.st_mode & S_IWUSR ? 'w' : '-',
@@ -240,29 +236,9 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		(int)st.st_nlink,
 		user->username,
 		"ftp",
-		buf2,
+		(unsigned long long)st.st_size,
 		datestr,
 		entr->d_name);
-	}
-#else
-	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13ld %s %s\r\n",
-		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-		st.st_mode & S_IRUSR ? 'r' : '-',
-		st.st_mode & S_IWUSR ? 'w' : '-',
-		st.st_mode & S_IXUSR ? 'x' : '-',
-		st.st_mode & S_IRGRP ? 'r' : '-',
-		st.st_mode & S_IWGRP ? 'w' : '-',
-		st.st_mode & S_IXGRP ? 'x' : '-',
-		st.st_mode & S_IROTH ? 'r' : '-',
-		st.st_mode & S_IWOTH ? 'w' : '-',
-		st.st_mode & S_IXOTH ? 'x' : '-',
-		(int)st.st_nlink,
-		user->username,
-		"ftp",
-		st.st_size,
-		datestr,
-		entr->d_name);
-#endif
 
 /*        if (!callback(sock,context,line)) break;*/
 	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
