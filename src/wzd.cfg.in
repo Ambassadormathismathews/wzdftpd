@@ -105,13 +105,13 @@ tls_certificate = @prefix@/etc/wzdftpd/wzd.pem
 #    you can use explicit mode with normal (clear) mode
 #  explicit_strict: server will start in clear mode, but will accept ONLY logins switched to ssl
 #  implicit: server starts in ssl mode, no clear connection is possible
-tls_mode = explicit
+#tls_mode = explicit
 
 # cipher list (default: ALL)
-# you should not use this option or lett "ALL" unless you know
+# you should not use this option or let "ALL" unless you know
 # what you are doing
 # see openssl ciphers, man openssl(1)
-tls_cipher_list = ALL
+#tls_cipher_list = ALL
 
 # /TLS
 
@@ -162,7 +162,7 @@ module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
 ##### SECTIONS
 # sections are used to define local server properties
 # order *IS* important (first matching section is taken)
-section = ALL /* ^([][A-Za-z0-9_.'() \t-])*$
+section = ALL /* ^([][A-Za-z0-9_.'() \t-+])*$
 
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands

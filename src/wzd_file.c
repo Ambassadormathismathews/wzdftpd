@@ -310,6 +310,9 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
 
   fclose(fp);
 
+  /* force cache update */
+  wzd_cache_update(permfile);
+
   return 0;
 }
 
@@ -871,6 +874,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
+  struct stat s;
   
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
@@ -881,6 +885,10 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 
   ret = _checkPerm(dirname,RIGHT_RMDIR,user);
   if (ret) return -1;
+
+  /* is a directory ? */
+  if (stat(dirname,&s)) return -1;
+  if (!S_ISDIR(s.st_mode)) return -1;
 
   /* is dir empty ? */
   {
@@ -987,7 +995,7 @@ int file_remove(const char *filename, wzd_context_t * context)
       return -1;
 
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
-
+  perm_filename[length+neededlength]='\0';
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {

@@ -938,9 +938,9 @@ int do_rmdir(char * param, wzd_context_t * context)
   struct stat s;
   int ret;
 
-  if (!param || !param[0]) return 1;
+  if (!param || !param[0]) return E_PARAM_NULL;
 
-  if (checkpath(param,path,context)) return 1;
+  if (checkpath(param,path,context)) return E_WRONGPATH;
 
   /* if path is / terminated, lstat will return the dir itself in case
    * of a symlink
@@ -950,11 +950,11 @@ int do_rmdir(char * param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    send_message_with_args(501,context,"Go away bastard");
-    return 1;
+    return E_FILE_FORBIDDEN;
   }
 
-  if (lstat(path,&s)) return 1;
+  if (lstat(path,&s)) return E_FILE_NOEXIST;
+  if (!S_ISDIR(s.st_mode)) return E_NOTDIR;
 
   /* check permissions */
   ret = file_rmdir(path,context);
@@ -1610,11 +1610,15 @@ int do_dele(char *param, wzd_context_t * context)
     return 1;
   }
 
-  if (stat(path,&s)) {
+  if (lstat(path,&s)) {
     /* non-existent file ? */
     ret = send_message_with_args(501,context,"File does not exist");
     return 1;
-  } 
+  }
+  if (S_ISDIR(s.st_mode)) {
+    ret = send_message_with_args(501,context,"This is a directory !");
+    return 1;
+  }
   if (S_ISREG(s.st_mode))
     file_size = s.st_size;
   else
@@ -2470,11 +2474,8 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
             char buffer2[BUFFER_LEN];
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    /* TODO check perms !! */
-	    if (do_rmdir(token,context)) { /* CAUTION : do_rmdir handle the case token==NULL or strlen(token)==0 ! */
-	      snprintf(buffer2,BUFFER_LEN-1,"could not delete dir '%s'",(token)?token:"(NULL)");
-	      ret = send_message_with_args(553,context,buffer2);
-	    } else {
-	      /* success */
+	    switch (do_rmdir(token,context)) {
+	    case E_OK: /* success */
 	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
               FORALL_HOOKS(EVENT_RMDIR)
                 typedef int (*rmdir_hook)(unsigned long, const char*);
@@ -2484,6 +2485,16 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 		  ret = hook_call_external(hook,token);
               END_FORALL_HOOKS
 	      ret = send_message_with_args(258,context,buffer2,"");
+	      break;
+	    case E_NOTDIR:
+	      ret = send_message_with_args(553,context,"not a directory");
+	      break;
+	    case E_FILE_FORBIDDEN:
+	      ret = send_message_with_args(553,context,"forbidden !");
+	      break;
+	    default:
+	      snprintf(buffer2,BUFFER_LEN-1,"could not delete dir '%s'",(token)?token:"(NULL)");
+	      ret = send_message_with_args(553,context,buffer2);
 	    }
 	    context->idle_time_start = time(NULL);
 	    break;

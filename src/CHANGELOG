@@ -1,3 +1,12 @@
+# May, 23 2003
+- bugfix: permission file not correctly updated if several modifications
+  happens in the same second (mtime field in filesystem is not updated)
+- many enhancements in error messages
+- symlinks to nonexistant files are now displayed
+- symlinks are now displayed as 'name -> target' in LIST
+- sfv: progressmeter is shown after uploading the sfv file
+- doc updated (installation, config, sfv module)
+
 # May, 21 2003
 - fixed supid bug were fields were not correctly initialized when creating
   new user

@@ -37,6 +37,8 @@ typedef enum {
 
   E_WRONGPATH,		/**< path is invalid */
 
+  E_NOTDIR,		/**< not a directory */
+
   E_TIMEOUT,		/**< timeout on control connection */
   E_DATATIMEOUT,	/**< timeout on data connection */
 

@@ -87,6 +87,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   /*  char fullpath[1024];*/
   char line[1024+80];
   char datestr[128];
+  char buffer_name[256];
   int dirlen,i;
   time_t timeval;
   struct stat st;
@@ -203,7 +204,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
 	if (strlen(entr->d_name)+dirlen>=1024) continue;  /* sorry ... */
 	strcpy(filename+dirlen,entr->d_name);
-	if (stat(filename,&st)<0) continue;
+	if (lstat(filename,&st)<0) continue;
 
 	/* date */
 
@@ -222,6 +223,20 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
 	    !S_ISREG(st.st_mode)) continue;
 
+	if (S_ISLNK(st.st_mode)) {
+	  char linkbuf[256];
+	  int linksize;
+	  linksize = readlink(filename,linkbuf,255);
+	  if (linksize > 0)
+	    snprintf(buffer_name,255,"%s -> %s",entr->d_name,linkbuf);
+	  else
+	    snprintf(buffer_name,255,"%s -> (INEXISTANT FILE)",entr->d_name);
+	} else {
+	  strncpy(buffer_name,entr->d_name,255);
+	  if (strlen(entr->d_name)<256) buffer_name[strlen(entr->d_name)]='\0';
+	  else buffer_name[255] = '\0';
+	}
+
 	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
 		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
 		st.st_mode & S_IRUSR ? 'r' : '-',
@@ -238,7 +253,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		"ftp",
 		(unsigned long long)st.st_size,
 		datestr,
-		entr->d_name);
+		buffer_name);
 
 /*        if (!callback(sock,context,line)) break;*/
 	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
