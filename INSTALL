@@ -2,6 +2,11 @@ This is a small set of directives for building wzdFTPd
 
 Prerequisites:
 
+All:
+automake (>= 1.5)
+autoconf
+libtool
+
 Linux:
 * a C compiler (tested with gcc-2.9x, gcc-3.1, gcc-3.2 and icc)
 * if you want ssl support, openssl-devel headers and libs
@@ -14,20 +19,21 @@ Windows:
 
 All paths are relative to rep wzdFTPd (root)
 
-1)
-Edit src/Makefile.config
+1) Generate configure script:
+aclocal
+automake (if automake complains about some files, run automake -a)
+autoconf
 
-2) If you have have a precent install, clean it by
-make distclean
+2) Configure
+./configure [args]
+(./configure --help to know args, common args are: --enable-ssl, --enable-debug and
+--enable-winsock and --prefix
 
-3) Build dependancies:
-make deps
+3) Build executable and backends / modules
+make
 
-4) If you just copied files from cvs or similar, check symlinks:
-make check_symlinks
-
-5) Build executable and backends / modules
-make release
+4) Install
+make install
 
 6) Executable can be found in src
 The _MINIMUM_ installation is composed of:
@@ -39,7 +45,3 @@ The _MINIMUM_ installation is composed of:
 
 You can add modules
 
-7) Restrictions:
-+ The exe and the lib MUST be in the same dir (if you want to change this you need
-  to change the src/Makefile, search for rpath
-+ Backends and modules can be in separate dirs, you'll need to change config file
