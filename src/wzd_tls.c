@@ -24,8 +24,10 @@
 
 #ifdef SSL_SUPPORT
 
-#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#else
+#include <dlfcn.h>
 #endif
 
 #include <openssl/ssl.h>
@@ -33,9 +35,7 @@
 #include <openssl/err.h>
 
 #include <string.h>
-#include <sys/time.h>
 #include <fcntl.h>
-#include <dlfcn.h>
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
@@ -530,7 +530,7 @@ int tls_auth_cont(wzd_context_t * context)
   SSL_set_accept_state(ssl);
   fd = SSL_get_fd(ssl);
   /* ensure socket is non-blocking */
-#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     {
     unsigned long noBlock=1;
     ioctlsocket(fd,FIONBIO,&noBlock);
@@ -643,7 +643,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 
   SSL_set_cipher_list(context->ssl.data_ssl, mainConfig->tls_cipher_list);
 
-#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   {
     unsigned long noBlock=1;
     ioctlsocket(sock,FIONBIO,&noBlock);

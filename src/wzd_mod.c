@@ -287,7 +287,11 @@ int module_check(const char *filename)
   int ret;
 
   if (!filename || filename[0]=='\0') return -1;
+#ifndef _MSC_VER
   if (filename[0] == '/')
+#else
+  if (filename[0] == '/' || filename[1] == ':')
+#endif
     strncpy(path,filename,1023);
   else
   { /* relative path */
@@ -325,7 +329,12 @@ int module_check(const char *filename)
 
   /* check basic functions */
   ptr = dlsym(handle,DL_PREFIX STR_MODULE_INIT);
-  if ((error = dlerror()) != NULL) {
+#ifndef _MSC_VER
+  if ((error = dlerror()) != NULL)
+#else
+  if ( !ptr )
+#endif
+  {
     out_err(LEVEL_HIGH,"Unable to find function WZD_MODULE_INIT in module %s\n%s\n",filename,error);
     dlclose(handle);
     return 1;
@@ -411,7 +420,12 @@ int module_load(wzd_module_t *module)
 
   f_init = (fcn_module_init)dlsym(handle,DL_PREFIX STR_MODULE_INIT);
 #ifdef DEBUG
-  if ((error = dlerror()) != NULL) {
+#ifndef _MSC_VER
+  if ((error = dlerror()) != NULL)
+#else
+  if ( !f_init )
+#endif
+  {
     out_log(LEVEL_CRITICAL,"Unable to find function WZD_MODULE_INIT in module %s\n%s\n",filename,error);
     out_log(LEVEL_CRITICAL,"THIS SHOULD HAVE BEEN CHECKED BEFORE !\n");
     dlclose(handle);

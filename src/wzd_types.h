@@ -74,6 +74,18 @@
 #define S_IWOTH S_IWRITE
 #define S_IXOTH S_IEXEC
 
+#define DIR_CONTINUE \
+	  { \
+		if (!FindNextFile(dir,&fileData)) \
+		{ \
+		  if (GetLastError() == ERROR_NO_MORE_FILES) \
+		    finished = 1; \
+		} \
+        continue; \
+      }
+
+
+
 #define chmod	_chmod
 
 #define dlopen(filename,dummy)	LoadLibrary(filename)
@@ -144,6 +156,8 @@
 /* unsigned int, 64 bits: u64_t */
 #define u64_t u_int64_t
 #include <sys/time.h> /* struct timeval */
+
+#define DIR_CONTINUE continue;
 
 #endif /* _MSC_VER */
 

@@ -36,14 +36,11 @@
 #endif /* BSD */
 #include <sys/time.h>
 #include <regex.h>
-
-#include <wzd_backend.h>
 #else
 #include "../../visual/gnu_regex_dist/regex.h"
-
-#include "../../src/wzd_backend.h"
 #endif
 
+#include "wzd_backend.h"
 
 /*#define	USERS_FILE		"users"*/
 

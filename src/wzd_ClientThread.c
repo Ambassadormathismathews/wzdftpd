@@ -1129,7 +1129,7 @@ void do_pasv(wzd_context_t * context)
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
-    sai.sin_port = htons(port);
+    sai.sin_port = htons((unsigned short)port);
     /* XXX TODO FIXME bind to specific address works, but not for NAT */
     /* XXX TODO FIXME always bind to 'myip' ?! */
     addr = INADDR_ANY;
@@ -1238,7 +1238,7 @@ void do_epsv(wzd_context_t * context)
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
-    sai.sin_port = htons(port);
+    sai.sin_port = htons((unsigned short)port);
     /* XXX TODO FIXME bind to specific address works, but not for NAT */
     /* XXX TODO FIXME always bind to 'myip' ?! */
     addr = INADDR_ANY;

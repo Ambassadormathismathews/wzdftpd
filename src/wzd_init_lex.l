@@ -1613,7 +1613,7 @@ int cfg_read_tls_certificate(void)
   }
 
 #ifdef SSL_SUPPORT
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
 #else /* ! BSD */
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, 0600);
