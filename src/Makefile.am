@@ -74,7 +74,7 @@ wzdftpd_SOURCES =    \
 	wzd_tls.h          \
 	wzd_init_lex.l
 
-wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ -lpthread @LEXLIB@ @DL_FLAGS@
+wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ @PTHREAD_FLAGS@ @LEXLIB@ @DL_FLAGS@
 
 AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_BUILD_NUM=@BUILDNUM@ -DWZD_VERSION_NUM=\"@VERSION@\" -DWZD_MULTITHREAD -D_REENTRANT
 

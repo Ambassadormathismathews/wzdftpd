@@ -45,7 +45,7 @@
 
 #ifdef WZD_MULTITHREAD
 
-#ifndef __CYGWIN__
+#if !defined(__CYGWIN__)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif /* __CYGWIN__ */

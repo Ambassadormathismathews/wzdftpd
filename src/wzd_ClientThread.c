@@ -867,7 +867,7 @@ int do_mkdir(char *param, wzd_context_t * context)
     buffer[strlen(buffer)-1]='\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return 1;
   }
@@ -937,7 +937,7 @@ int do_rmdir(char * param, wzd_context_t * context)
     path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     send_message_with_args(501,context,"Go away bastard");
     return 1;
   }
@@ -1267,7 +1267,7 @@ int do_retr(char *param, wzd_context_t * context)
     path[strlen(path)-1] = '\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return 1;
   }
@@ -1416,7 +1416,7 @@ int do_stor(char *param, wzd_context_t * context)
   /* END OF BUGFIX */
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return 1;
   }
@@ -1528,7 +1528,7 @@ void do_mdtm(char *param, wzd_context_t * context)
       path[strlen(path)-1]='\0';
 
     /* deny retrieve to permissions file */
-    if (is_perm_file(path)) {
+    if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
       return;
     }
@@ -1555,7 +1555,7 @@ void do_size(char *param, wzd_context_t * context)
       path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
-    if (is_perm_file(path)) {
+    if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
       return;
     }
@@ -1593,7 +1593,7 @@ int do_dele(char *param, wzd_context_t * context)
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return 1;
   }
@@ -1655,7 +1655,7 @@ void do_rnfr(const char *filename, wzd_context_t * context)
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return;
   }
@@ -1684,7 +1684,7 @@ void do_rnto(const char *filename, wzd_context_t * context)
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
-  if (is_perm_file(path)) {
+  if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return;
   }
@@ -1722,6 +1722,14 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
     /* pass was not accepted */
     return 1;  /* FIXME - abort thread */
   }
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+  user = GetUserByID(context->userid);
+
   /* normalize rootpath */
 
 /*  if (!realpath(context->userinfo.rootpath,buffer)) return 1;
@@ -1732,7 +1740,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   if (do_chdir(context->currentpath,context))
   {
     /* could not chdir to home !!!! */
-    out_log(LEVEL_CRITICAL,"Could not chdir to home '%s', user '%s'\n",context->currentpath,user->username);
+    out_log(LEVEL_CRITICAL,"Could not chdir to home '%s' (root: '%s'), user '%s'\n",context->currentpath,user->rootpath,user->username);
     return 2;
   }
 

@@ -1,3 +1,11 @@
+# Apr, 29 2003
+- fixed bug: server segfault if homedir does not exist
+- patch to run on FreeBSD
+
+#--- cvs commit TAG: rel-0-1rc4
+# Apr, 25 2003
+- do not send multiple 501 answers when STOR or RETR fails
+
 # Apr, 24 2003
 - specific error message when server can't go to user homedir at login
 - possibility to hide files beginning by '.' ('hide_dotted_files')

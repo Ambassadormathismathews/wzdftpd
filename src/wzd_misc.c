@@ -51,9 +51,10 @@
 # define __SWORD_TYPE   int
 #endif /* __INTEL_COMPILER */
 
+#include <sys/param.h>
+
 #ifdef BSD
 /* statfs */
-#include <sys/param.h>
 #include <sys/mount.h>
 #else
 #include <sys/vfs.h> /* statfs */
@@ -637,6 +638,7 @@ wzd_sem_unlock(sem,1);
     l->current_speed = (float)((double)l->bytes_transfered / elapsed);
     bw_rate = (unsigned int)l->current_speed;
 /*  }*/
+/*fprintf(stderr,"speed: %d max:%d\n",bw_rate,l->maxspeed);*/
   if (l->maxspeed == 0 || bw_rate <= l->maxspeed) {
     return;
   }
