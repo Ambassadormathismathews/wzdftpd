@@ -1372,11 +1372,11 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   return E_OK;
 
 label_error_mkdir:
+  snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s'",(param)?param:"(NULL)");
+  send_message_with_args(553,context,buffer);
   wzd_free(buffer);
   wzd_free(path);
   wzd_free(cmd);
-  snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s'",(param)?param:"(NULL)");
-  send_message_with_args(553,context,buffer);
   return ret;
 }
 
