@@ -112,7 +112,7 @@ int check_auth(const char *user, const char *data, const char *challenge)
     return checkpass_md5(data,challenge+strlen(AUTH_SIG_MD5));
 
   if (strncmp(challenge,AUTH_SIG_PAM,strlen(AUTH_SIG_PAM))==0)
-    return checkpass_pam(user,challenge+strlen(AUTH_SIG_PAM));
+    return checkpass_pam(user,data);
   if (strncmp(challenge,AUTH_SIG_CERT,strlen(AUTH_SIG_CERT))==0)
     return check_certificate(user,challenge+strlen(AUTH_SIG_CERT));
 
