@@ -49,13 +49,6 @@
 #define EINPROGRESS  WSAEINPROGRESS
 #define ENOTCONN     WSAENOTCONN
 
-#ifndef IN6_IS_ADDR_V4MAPPED
-#define IN6_IS_ADDR_V4MAPPED(a) \
-	((((const ULONG *)(a))[0] == 0) \
-	&& (((const ULONG *)(a))[1] == 0) \
-	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
-#endif
-
 #define in6_addr in_addr6 /* funny ! */
 
 #define F_RDLCK 0 /* Read lock. */
@@ -188,6 +181,19 @@
 #else
 #define CURRENT_AF AF_INET
 #endif
+
+#ifdef __OpenBSD__
+#undef IN6_IS_ADDR_V4MAPPED
+#define ULONG uint32_t
+#endif
+
+#ifndef IN6_IS_ADDR_V4MAPPED
+#define IN6_IS_ADDR_V4MAPPED(a) \
+	((((const ULONG *)(a))[0] == 0) \
+	&& (((const ULONG *)(a))[1] == 0) \
+	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
+#endif
+
 
 #ifndef MAX
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
