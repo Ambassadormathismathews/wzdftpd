@@ -107,9 +107,9 @@ typedef struct limiter
 
 /**************** COMMANDS PERMISSIONS ********************/
 typedef enum {
-  CP_USER,
-  CP_GROUP,
-  CP_FLAG
+  CPERM_USER,
+  CPERM_GROUP,
+  CPERM_FLAG
 } wzd_cp_t;
 
 /* opaque struct */
@@ -148,7 +148,7 @@ typedef struct _wzd_vfs_t {
 
   char	* target;
 
-  struct _wzd_vfs_t	* next_vfs;
+  struct _wzd_vfs_t	* prev_vfs, * next_vfs;
 } wzd_vfs_t;
 
 /*********************** DATA *****************************/

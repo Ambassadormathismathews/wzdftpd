@@ -280,16 +280,16 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
     }
     switch (c) {
     case '=':
-      cp = CP_USER;
+      cp = CPERM_USER;
       break;
     case '-':
-      cp = CP_GROUP;
+      cp = CPERM_GROUP;
       break;
     case '+':
-      cp = CP_FLAG;
+      cp = CPERM_FLAG;
       break;
     case '*':
-      cp = CP_USER;
+      cp = CPERM_USER;
       token--;
       break;
     default:
@@ -352,16 +352,16 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
     }
     if (entry_target[0] == '*') return (negate) ? 1 : 0;
     switch (entry->cp) {
-      case CP_USER:
+      case CPERM_USER:
 	if (strcasecmp(entry_target,user->username)==0) return (negate) ? 1 : 0;
 	break;
-      case CP_GROUP:
+      case CPERM_GROUP:
 	for (i=0; i<user->group_num; i++) {
 	  group = GetGroupByID(user->groups[i]);
 	  if (strcasecmp(entry_target,group->groupname)==0) return (negate) ? 1 : 0;
 	}
 	break;
-      case CP_FLAG:
+      case CPERM_FLAG:
 	if (user->flags && strchr(user->flags,*entry_target)) return (negate) ? 1 : 0;
 	break;
     }
