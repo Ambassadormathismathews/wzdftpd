@@ -1238,6 +1238,7 @@ int softlink_create(const char *target, const char *linkname)
   strncpy(stripped_filename, ptr, WZD_MAX_PATH);
   strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));
 
+  WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
   /* read perm file */
   ret = readPermFile(perm_filename,&perm_list);
 
@@ -1250,6 +1251,7 @@ int softlink_create(const char *target, const char *linkname)
       /* error, an entry already exists with the same name */
       out_err(LEVEL_FLOOD, "symlink: link already exists here (%s)\n", perm_filename);
       free_file_recursive(perm_list);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
       return EEXIST;
     }
     file_cur = add_new_file(stripped_filename, 0, 0, &perm_list);
@@ -1268,6 +1270,7 @@ int softlink_create(const char *target, const char *linkname)
 
   free_file_recursive(perm_list);
   perm_list = NULL;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
 
   return 0;
 }
