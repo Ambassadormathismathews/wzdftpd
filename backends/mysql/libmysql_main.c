@@ -32,9 +32,6 @@
 # define inline __inline
 #else /* !_MSC_VER */
 #include <unistd.h>
-#ifndef BSD
-#include <crypt.h>
-#endif /* BSD */
 #endif
 
 #include <mysql.h>

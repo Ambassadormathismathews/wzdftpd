@@ -44,7 +44,7 @@ void wzd_free_reply(wzd_reply_t *reply);
  *
  * parse command line arguments to detect libwzd-specific switches
  */
-int wzd_parse_args(int argc, char **argv);
+int wzd_parse_args(int argc, const char **argv);
 
 /* wzd_init: connect to server
  * 

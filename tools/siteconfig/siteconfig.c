@@ -6,7 +6,7 @@
 
 char *msg = NULL;
 
-void siteconfig_parse_args(int argc, char **argv)
+void siteconfig_parse_args(int argc, const char **argv)
 {
   int optindex;
 
@@ -28,7 +28,7 @@ void siteconfig_parse_args(int argc, char **argv)
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   int ret;
   wzd_reply_t * reply;

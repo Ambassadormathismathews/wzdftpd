@@ -4,7 +4,7 @@
 
 #include <libwzd.h>
 
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   const char *msg = "site who";
   int ret;

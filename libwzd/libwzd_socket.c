@@ -71,7 +71,7 @@ int socket_tls_switch(void);
 
 int server_try_socket(void)
 {
-  char * buffer;
+  char * buffer=NULL;
   int ret;
 
   if (!_config) return -1;
@@ -87,7 +87,7 @@ int server_try_socket(void)
 
   /* connected */
   _config->sock = _config->connector.connect(_config->host,_config->port,_config->user,_config->pass);
-  if (!_config->sock) goto server_try_socket_abort;
+  if (_config->sock < 0) goto server_try_socket_abort;
 
   buffer = malloc(1024);
 
@@ -145,7 +145,7 @@ int server_try_socket(void)
 
 server_try_socket_abort:
 #ifdef DEBUG
-  printf("error (last message was: [%s]\n",buffer);
+  printf("error (last message was: [%s]\n",buffer?buffer:"(null)");
 #endif
   free(buffer);
   _config->connector.disconnect();

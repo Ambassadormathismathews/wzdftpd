@@ -67,7 +67,7 @@ static unsigned long _options = 0;
  * TODO we should find a way for user application to add arguments,
  * using hooks
  */
-int wzd_parse_args(int argc, char **argv)
+int wzd_parse_args(int argc, const char **argv)
 {
   int optindex;
   int opt;
@@ -75,7 +75,7 @@ int wzd_parse_args(int argc, char **argv)
   int i;
   int found;
   int option_is_long;
-  char * optarg;
+  const char * optarg;
 
   struct option_t {
     char * long_option;
