@@ -292,8 +292,13 @@ wzd_string_t * str_tok(wzd_string_t *str, const char *delim)
 
   token = STR(t);
   if (t) {
-    str->length = strlen(ptr);
-    wzd_strncpy(str->buffer, ptr, str->length+1);
+    if (ptr) {
+      str->length = strlen(ptr);
+      wzd_strncpy(str->buffer, ptr, str->length+1);
+    } else {
+      str->length = 0;
+      str->buffer[0] = '\0';
+    }
   }
   wzd_free(buffer);
 
@@ -320,6 +325,7 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   va_start(argptr,format); /* note: ansi compatible version of va_start */
 
   result = vsnprintf(str->buffer, str->allocated, format, argptr);
+#ifndef WIN32
   if (result < 0) return result;
   if (result >= str->allocated)
   {
@@ -327,6 +333,25 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
     result = vsnprintf(str->buffer, str->allocated, format, argptr);
   }
   str->length = result;
+#else /* WIN32 */
+  /* windows is crap, once again
+   * vsnprintf does not return the number that should be been allocated,
+   * it always return -1 if the buffer is not large enough
+   */
+   while (result < 0)
+   {
+     if (str->allocated >= 1024000) {
+       return -1;
+     }
+     _str_set_min_size(str,(str->allocated*150)/100);
+     result = vsnprintf(str->buffer, str->allocated, format, argptr);
+   }
+   str->length = result;
+   if ((u32_t)result == str->allocated) {
+    _str_set_min_size(str, result+1);
+    str->buffer[str->length] = '\0';
+   }
+#endif
 
   va_end (argptr);
 

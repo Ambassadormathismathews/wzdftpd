@@ -421,7 +421,6 @@ static int write_user_file(void)
     /* write ALL groups */
     /* TODO check buffer overflow */
     if (loop_user->group_num>0) {
-      int index;
       /** FIXME does not work, we must find group by gid */
       loop_group = _get_group_from_gid(loop_user->groups[0]);
       if (!loop_user) {
@@ -434,7 +433,7 @@ static int write_user_file(void)
         for (j=1; j<loop_user->group_num; j++) {
           strcat(buffer,",");
           loop_group = _get_group_from_gid(loop_user->groups[j]);
-          if (index == -1) {
+          if (!loop_group) {
             /* FIXME warn user */
 #ifdef DEBUG
         fprintf(stderr,"Invalid group %u for user %s\n",loop_user->groups[j],loop_user->username);

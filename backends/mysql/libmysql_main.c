@@ -626,7 +626,7 @@ static int * wzd_mysql_get_user_list(void)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  uid_list = (int*)wzd_malloc((num_rows+1)*sizeof(int));
+  uid_list = (int*)wzd_malloc(((u32_t)num_rows+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
@@ -669,7 +669,7 @@ static int * wzd_mysql_get_group_list(void)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  gid_list = (int*)wzd_malloc((num_rows+1)*sizeof(int));
+  gid_list = (int*)wzd_malloc(((u32_t)num_rows+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {

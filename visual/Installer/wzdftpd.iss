@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.5cvs-20041004
+AppVerName=wzdftpd 0.5cvs-20041214
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.5cvs-20041004
+OutputBaseFilename=wzdftpd-0.5cvs-20041214
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -31,6 +31,7 @@ ShowLanguageDialog=yes
 [Dirs]
 
 Name: "{app}\etc"
+Name: "{app}\extra"
 Name: "{app}\logs"
 Name: "{app}\ftproot"
 Name: "{app}\modules"
@@ -63,6 +64,10 @@ Source: ..\wzd.cfg; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 
 Source: ..\backends\plaintext\release\libwzd_plaintext.dll; DestDir: {app}\backends; Flags: ignoreversion
 Source: ..\users; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
+
+Source: ..\backends\mysql\release\libwzd_mysql.dll; DestDir: {app}\backends; Flags: ignoreversion
+Source: ..\..\backends\mysql\tables.sql; DestDir: {app}\extra; Flags: ignoreversion
+Source: ..\..\backends\mysql\dropall.sql; DestDir: {app}\extra; Flags: ignoreversion
 
 Source: ..\modules\perl\release\libwzd_perl.dll; DestDir: {app}\modules; Flags: ignoreversion
 Source: ..\modules\sfv\release\libwzd_sfv.dll; DestDir: {app}\modules; Flags: ignoreversion
