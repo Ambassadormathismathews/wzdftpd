@@ -1045,6 +1045,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"CHECKPERM",&do_site_checkperm)) return 1;
   if (site_command_add(&config->site_list,"CHGRP",&do_site_chgrp)) return 1;
   if (site_command_add(&config->site_list,"CHMOD",&do_site_chmod)) return 1;
+  if (site_command_add(&config->site_list,"CHOWN",&do_site_chown)) return 1;
   if (site_command_add(&config->site_list,"CHPASS",&do_site_chpass)) return 1;
   if (site_command_add(&config->site_list,"CHRATIO",&do_site_chratio)) return 1;
   /* do_site_close ? */
