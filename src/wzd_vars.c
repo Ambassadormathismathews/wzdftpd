@@ -56,6 +56,8 @@
 #include "wzd_log.h"
 #include "wzd_mutex.h"
 
+#include "wzd_ServerThread.h" /* limiter_mutex */
+
 #include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
@@ -127,6 +129,7 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
 {
   int i;
   unsigned long ul;
+  char *ptr;
 
   if (!data || !config) return 1;
 
@@ -149,6 +152,24 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
     }
     config->loglevel = i;
     return 0;
+  }
+  if (strcasecmp(varname,"max_dl")==0) {
+    ul = strtoul(data,&ptr,0);
+    if (ptr && *ptr == '\0') {
+      wzd_mutex_lock(limiter_mutex);
+      config->global_dl_limiter.maxspeed = ul;
+      wzd_mutex_unlock(limiter_mutex);
+      return 0;
+    }
+  }
+  if (strcasecmp(varname,"max_ul")==0) {
+    ul = strtoul(data,&ptr,0);
+    if (ptr && *ptr == '\0') {
+      wzd_mutex_lock(limiter_mutex);
+      config->global_ul_limiter.maxspeed = ul;
+      wzd_mutex_unlock(limiter_mutex);
+      return 0;
+    }
   }
   if (strcasecmp(varname,"pasv_low")==0) {
     ul = strtoul(data,NULL,0);
