@@ -831,11 +831,14 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
     out_log(LEVEL_NORMAL,"Could not get lock info\n");
   }
   else {
-    if ( (mode & O_WRONLY) && is_locked) {
-      close(fd);
-/*      fprintf(stderr,"Can't open %s in write mode, locked !\n",filename);*/
-      return -1;
-    }
+    if ( mode & O_WRONLY ) {
+	  if (is_locked) {
+        close(fd);
+/*        fprintf(stderr,"Can't open %s in write mode, locked !\n",filename);*/
+        return -1;
+	  }
+	  file_lock(fd,F_WRLCK);
+	}
     else {
       if (is_locked) {
 /*	fprintf(stderr,"%s is locked, trying to read\n",filename);*/
@@ -1139,6 +1142,9 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
  */
 int file_lock(int fd, short lock_mode)
 {
+#ifdef WZD_DBG_LOCK
+fprintf(stderr,"Locking file %d\n",fd);
+#endif
 #ifndef _MSC_VER
   struct flock lck;
   lck.l_type = lock_mode;
@@ -1157,6 +1163,9 @@ int file_lock(int fd, short lock_mode)
 
 int file_unlock(int fd)
 {
+#ifdef WZD_DBG_LOCK
+fprintf(stderr,"Unlocking file %d\n",fd);
+#endif
 #ifndef _MSC_VER
   struct flock lck;
   lck.l_type = F_UNLCK;
@@ -1175,6 +1184,9 @@ int file_unlock(int fd)
 
 int file_islocked(int fd, short lock_mode)
 {
+#ifdef WZD_DBG_LOCK
+fprintf(stderr,"Testing lock for file %d\n",fd);
+#endif
 #ifndef _MSC_VER
   struct flock lck;
   lck.l_type = lock_mode;
@@ -1189,6 +1201,9 @@ int file_islocked(int fd, short lock_mode)
 #else
   if (_locking(fd, LK_NBLCK, -1) != -1) {
 	  _locking(fd, LK_UNLCK, -1);
+	  return 0;
+  } else {
+	  if (errno == EACCES) return 1;
 	  return -1;
   }
 #endif

@@ -581,7 +581,7 @@ void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list a
     free ( (char*)msg );
   }
 
-  length = (strlen(work_buf)*150)/100 + 10; /* empirical ratio: after/before interpreting cookies */
+  length = (strlen(work_buf)*150)/100 + 11; /* empirical ratio: after/before interpreting cookies */
   buffer = malloc(length);
   *pbuffer = buffer;
   *plength = length;

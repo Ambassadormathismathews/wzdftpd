@@ -155,7 +155,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 
   switch (action) {
   case TOK_RETR:
-    n = read(context->current_action.current_file,buffer,sizeof(buffer));
+    n = file_read(context->current_action.current_file,buffer,sizeof(buffer));
     if (n>0) {
 #ifdef SSL_SUPPORT
       if (context->ssl.data_mode == TLS_CLEAR)
@@ -214,7 +214,9 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
       n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
-      write(context->current_action.current_file,buffer,n);
+	  if (file_write(context->current_action.current_file,buffer,n) != n) {
+	    out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
+	  }
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_ul,n,0);*/
       limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_sem,n,0);
@@ -226,7 +228,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->idle_time_data_start = time(NULL);
     } else { /* consider it is finished */
       file_unlock(context->current_action.current_file);
-      close(context->current_action.current_file);
+      file_close(context->current_action.current_file,context);
 
       out_xferlog(context,1 /* complete */);
       /* we increment the counter of uploaded files at the end

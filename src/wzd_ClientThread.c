@@ -1416,6 +1416,8 @@ int do_retr(char *param, wzd_context_t * context)
 
   /* get length */
   bytestot = lseek(fd,0,SEEK_END);
+  if (bytestot == -1) /* happens with 0-length files */
+	  bytestot = 0;
   bytesnow = byteslast=context->resume;
 
   if (context->pasvsock < 0) { /* PORT ! */

@@ -321,24 +321,26 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     }
     if (c->current_location >= cache->datasize) return NULL;
     memcpy(buffer,cache->data+c->current_location,size_to_read);
-    c->current_location += size_to_read;
+/*    c->current_location += size_to_read;*/
     while (--size>0 && (_c=(*ptr++)) != EOF)
     {
       if ( (*dst++ = _c)=='\n' )
-	break;
+        break;
       if ( --size_to_read == 0 ) {
-	size_to_read = (size<4096)?size:4096;
-/*	ret = read(fd,buffer,size_to_read);*/
-	if (c->current_location + size_to_read > cache->datasize) {
-	  size_to_read = cache->datasize - c->current_location; /* XXX -1 ? */
-	}
-	if (c->current_location >= cache->datasize) return NULL;
-	memcpy(buffer,cache->data+c->current_location,size_to_read);
-	c->current_location += size_to_read;
-	ptr = buffer;
-/*	if (ret < 0) return NULL;*/
-      }
+        size_to_read = (size<4096)?size:4096;
+/*	      ret = read(fd,buffer,size_to_read);*/
+        if (c->current_location + size_to_read > cache->datasize) {
+          size_to_read = cache->datasize - c->current_location; /* XXX -1 ? */
+		}
+      if (c->current_location + size_to_read > cache->datasize) return NULL;
+      memcpy(buffer,cache->data+c->current_location,size_to_read);
+/*      c->current_location += size_to_read;*/
+      ptr = buffer;
+	  break;
+/*      if (ret < 0) return NULL;*/
+	  }
     }
+    c->current_location += size_to_read;
     *dst=0;
     if (_c==EOF && ptr==buf) return NULL;
 /*    lseek(fd,position + (dst-buf), SEEK_SET );*/
