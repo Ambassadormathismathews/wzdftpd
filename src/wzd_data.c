@@ -209,12 +209,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
           ret = (*(login_hook)hook->hook)(EVENT_POSTDOWNLOAD,user->username,context->current_action.arg);
-        else {
-          char argbuf[1024];
-          /* TODO XXX FIXME what happens if filename contains spaces ? :) */
-          snprintf(argbuf,1024,"%s %s",user->username,context->current_action.arg);
-          ret = hook_call_external(hook,argbuf);
-        }
+        else
+          ret = hook_call_external(hook,NULL);
       END_FORALL_HOOKS
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
@@ -264,12 +260,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
           ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-        else {
-          char argbuf[1024];
-          /* TODO XXX FIXME what happens if filename contains spaces ? :) */
-/*          snprintf(argbuf,1024,"%s %s",user->username,context->current_action.arg);*/
+        else
           ret = hook_call_external(hook,NULL);
-        }
       END_FORALL_HOOKS
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
