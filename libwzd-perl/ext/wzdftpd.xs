@@ -21,6 +21,7 @@ wzd_init(host="localhost",port=21,user="wzdftpd",pass="wzdftpd")
     const char *	user
     const char *	pass
   CODE:
+  {
     const char * 	horrible_tab[64];
     unsigned int	horrible_index=0;
     char 		intbuf[64];
@@ -47,6 +48,7 @@ wzd_init(host="localhost",port=21,user="wzdftpd",pass="wzdftpd")
     wzd_parse_args(horrible_index,horrible_tab);
 
     RETVAL = (!wzd_init());
+  }
   OUTPUT:
     RETVAL
 
