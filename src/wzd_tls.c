@@ -37,13 +37,14 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 
-#include "wzd_debug.h"
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
 #include "wzd_tls.h"
 
 #include "wzd_messages.h"
+
+#include "wzd_debug.h"
 
 
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT

@@ -133,9 +133,9 @@ int send_message(int code, wzd_context_t * context)
   format_message(code,BUFFER_LEN,buffer);
 #ifdef DEBUG
 if (buffer[strlen(buffer)-1]!='\n')
-  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
 else
-  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,buffer);
 #endif
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 /*  sprintf(buffer,"%3d \r\n",code);
@@ -156,9 +156,9 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
   v_format_message(code,BUFFER_LEN,buffer,argptr);
 #ifdef DEBUG
 if (buffer[strlen(buffer)-1]!='\n')
-  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
 else
-  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,buffer);
 #endif
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 

@@ -482,11 +482,12 @@ static void save_sections (FILE *file)
   fprintf( file, "# the simplest section is: ALL /* *\n");
   fprintf( file, "# order *IS* important (first matching section is taken)\n");
   fprintf( file, "#   that means the more generic section should be the last\n");
-  fprintf( file, "#section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$\n");
+  fprintf( file, "#section = ALL /* ^([]\\[A-Za-z0-9_.'() \\t+-])*$\n");
 
   
   /* FIXME why wzd_section_t is opaque ? */
   /* FIXME in the same time, change \t to \\t ? */
+  /* TODO XXX FIXME it is no more opaque ! */
 
 #if 0
   current = mainConfig->section_list;
@@ -576,6 +577,7 @@ static void save_cronjobs (FILE *file)
   fprintf( file, "#cronjob = 5 * 2 * * /bin/cleanup.sh\n");
   
   /* TODO/FIXME/XXX new opaque structure */ 
+  /* TODO XXX FIXME no more opaque ! */
 
 #if 0
   current = crontab;
@@ -635,6 +637,7 @@ static void save_permissions (FILE *file)
   fprintf( file, "#-delete = -admin\n");
 
   /* XXX opaque struct !!!! */
+  /* TODO XXX FIXME no more opaque ! */
 
   fprintf( file, "  \n");
 }

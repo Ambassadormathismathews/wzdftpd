@@ -57,6 +57,8 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
+#include "wzd_debug.h"
+
 #define MAX_CACHE_FILE_LEN	32768
 
 typedef struct wzd_internal_cache_t wzd_internal_cache_t;
@@ -124,6 +126,9 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
       /* REFRESH */
       /* need refresh */
 /*      out_err(LEVEL_FLOOD,"cache entry need refresh\n");*/
+#ifdef WZD_DBG_CACHE
+      out_err(LEVEL_HIGH,"Cache REFRESH %s\n",file);
+#endif
       return wzd_cache_refresh(c,file,flags,mode);
     }
     /* HIT */
@@ -131,11 +136,17 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     cache = malloc(sizeof(wzd_cache_t));
     cache->current_location = 0;
     cache->cache = c;
-/*    out_err(LEVEL_FLOOD,"Cache hit for file %s\n",file);*/
+#ifdef WZD_DBG_CACHE
+    out_err(LEVEL_FLOOD,"Cache HIT %s\n",file);
+#endif
     return cache;
   }
 
   /* MISS */
+#ifdef WZD_DBG_CACHE
+  out_err(LEVEL_FLOOD,"Cache MISS %s\n",file);
+#endif
+
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
 

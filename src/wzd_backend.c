@@ -263,7 +263,8 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_USER);
   mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
-  strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);
+  if (backend != mainConfig->backend.name) /* strings must not overlap */
+    strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);
 
   if (ptr) {
     ret = (*init_fcn)(backend_storage, user_list, user_max, group_list, group_max, mainConfig->backend.param);

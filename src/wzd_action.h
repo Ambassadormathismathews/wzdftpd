@@ -62,6 +62,7 @@
 #define	TOK_APPE	32
 
 #define	TOK_EPSV	33
+#define	TOK_EPRT	34
 
 #define	TOK_NOTHING	64
 

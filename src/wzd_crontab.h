@@ -25,8 +25,19 @@
 #ifndef __WZD_CRONTAB__
 #define __WZD_CRONTAB__
 
-struct wzd_cronjob_t;
 typedef struct wzd_cronjob_t wzd_cronjob_t;
+struct wzd_cronjob_t {
+  int (*fn)(void);
+  char * command;
+  char minutes[32];
+  char hours[32];
+  char day_of_month[32];
+  char month[32];
+  char day_of_week[32];
+  time_t next_run;
+  wzd_cronjob_t * next_cronjob;
+};
+
 
 int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
     char * minutes, char * hours, char * day_of_month,

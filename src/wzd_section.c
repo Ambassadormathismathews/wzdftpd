@@ -45,15 +45,6 @@
 #include "wzd_log.h"
 
 
-struct wzd_section_t {
-  char *        sectionname;
-  char *        sectionmask;
-
-  regex_t *	pathfilter;
-
-  struct wzd_section_t * next_section;
-};
-
 char * section_getname(wzd_section_t * section)
 {
   if (section) return section->sectionname;

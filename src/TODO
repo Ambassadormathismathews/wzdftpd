@@ -1,5 +1,6 @@
 ## IN PROGRESS ##
 
+- use 'rats','splint' for security audit
 
 '********'
 - replace 'extern unsigned int wzd_server_uid' (wzd_init_lex.l) with
@@ -9,6 +10,7 @@
   -- pem name _must_ be written in win-form when using winsock+tls
 '********'
 - getmyip does not seems to work with ipv6 ...
+- ipv6: RFC 2428 ?
 '********'
 - configure: --enable-internal-sfv || remove wzd_crc32.c file from sources (disable internal
   sfv)
@@ -26,14 +28,6 @@
 - To Be Documented :
   -- if root run server, must use server_uid + chown users, user.OLD to
      server_uid
-'********'
-- fix (small) leaks:
-    + a handle (??)		(12 bytes :)
-==4220== 16 bytes in 1 blocks are still reachable in loss record 3 of 16
-==4220==    at 0x4003DC04: calloc (vg_clientfuncs.c:239)
-==4220==    by 0x402411F2: (within /lib/libdl-2.3.1.so)
-==4220==    by 0x40241836: dlopen (in /lib/libdl-2.3.1.so)
-==4220==    by 0x402946CD: backend_validate (wzd_backend.c:80)
 '********'
 - ratio: weekly allotment
   -- modify crontab to accept dates (each day/week/month at specified time) / OK
@@ -108,6 +102,7 @@ current objectives:
 - dir perms are useless now ?!
 - finish implementation of ssl: explicit, port, data protection, buffer size
 - give choice between hard/soft chroot
+- option to enable/disable FXP to certain users
 
 
 ## NORMAL ##

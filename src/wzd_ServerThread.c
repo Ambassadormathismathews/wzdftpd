@@ -82,6 +82,8 @@
 #include "wzd_messages.h"
 #include "wzd_site.h"
 
+#include "wzd_debug.h"
+
 
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
@@ -816,6 +818,7 @@ void serverMainThreadProc(void *arg)
      * and limiter_sem are not allocated ... juste clean up config, but be carefull
      * another instance is not just runnning
      */
+    module_free(&mainConfig->module);
     free_config(mainConfig);
     exit(-1);
   }

@@ -1,3 +1,15 @@
+# Oct, 15 2003
+- bugfix: waiting PASV sockets not closed when client dies
+- some work on ipv6
+- win32: --enable-winsock is now yes by default
+- some structures are no more opaque, so we'll save the config file in a near future !
+- mpatrol support to debug/find leaks/profile application
+- some more facilities to debug cache/crontab/perms
+
+# Oct, 11 2003
+- bugfix: opened files/dirs not closed on sfv checker (closes: Too Many Opened Files
+  after several uploads, all platforms)
+
 # Oct, 01 2003
 - bugfix: spaces at end of USER and PASS lines were removed
 - ssl: use SSL_CTX_use_certificate_chain_file instead of SSL_CTX_use_certificate_file

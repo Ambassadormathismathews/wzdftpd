@@ -115,6 +115,18 @@ typedef enum {
 /* opaque struct */
 typedef struct wzd_command_perm_entry_t wzd_command_perm_entry_t;
 typedef struct wzd_command_perm_t wzd_command_perm_t;
+struct wzd_command_perm_entry_t {
+  wzd_cp_t cp; 
+  char target[256];
+  struct wzd_command_perm_entry_t * next_entry;
+};
+
+struct wzd_command_perm_t {
+  char  command_name[256];
+  wzd_command_perm_entry_t * entry_list;
+  struct wzd_command_perm_t * next_perm;
+};
+
 
 /*********************** SITE *****************************/
 
@@ -289,6 +301,16 @@ typedef struct _wzd_module_t {
 
 /* opaque struct */
 typedef struct wzd_section_t wzd_section_t;
+struct wzd_section_t {
+  char *        sectionname;
+  char *        sectionmask;
+
+/*  regex_t *	pathfilter;*/
+  void *	pathfilter;
+
+  struct wzd_section_t * next_section;
+};
+
 
 /************************** SFV ***************************/
 

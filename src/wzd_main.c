@@ -66,6 +66,8 @@
 #include "wzd_ServerThread.h"
 #include "wzd_opts.h"
 
+#include "wzd_debug.h"
+
 char configfile_name[256];
 int stay_foreground=0;
 

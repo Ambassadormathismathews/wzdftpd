@@ -79,89 +79,104 @@
 
 #define BUFFER_LEN	4096
 
+static inline void _ascii_lower(char * s, unsigned int length)
+{
+  register int i=0;
+  while (i<length) {
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      s[i] |= 0x20;
+    }
+    i++;
+  }
+}
+
 /*************** identify_token **********************/
 
-int identify_token(const char *token)
+int identify_token(char *token)
 {
-  if (!token || strlen(token)==0)
+  unsigned int length;
+  if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
+  _ascii_lower(token,length);
 /* TODO order the following by probability order */
-  if (strcasecmp("USER",token)==0)
+  if (strcmp("user",token)==0)
     return TOK_USER;
-  if (strcasecmp("PASS",token)==0)
+  if (strcmp("pass",token)==0)
     return TOK_PASS;
-  if (strcasecmp("AUTH",token)==0)
+  if (strcmp("auth",token)==0)
     return TOK_AUTH;
-  if (strcasecmp("QUIT",token)==0)
+  if (strcmp("quit",token)==0)
     return TOK_QUIT;
-  if (strcasecmp("TYPE",token)==0)
+  if (strcmp("type",token)==0)
     return TOK_TYPE;
-  if (strcasecmp("MODE",token)==0)
+  if (strcmp("mode",token)==0)
     return TOK_MODE;
-  if (strcasecmp("PORT",token)==0)
+  if (strcmp("port",token)==0)
     return TOK_PORT;
-  if (strcasecmp("PASV",token)==0)
+  if (strcmp("pasv",token)==0)
     return TOK_PASV;
-  if (strcasecmp("PWD",token)==0)
+  if (strcmp("pwd",token)==0)
     return TOK_PWD;
-  if (strcasecmp("NOOP",token)==0)
+  if (strcmp("noop",token)==0)
     return TOK_NOOP;
-  if (strcasecmp("SYST",token)==0)
+  if (strcmp("syst",token)==0)
     return TOK_SYST;
-  if (strcasecmp("CWD",token)==0)
+  if (strcmp("cwd",token)==0)
     return TOK_CWD;
-  if (strcasecmp("CDUP",token)==0)
+  if (strcmp("cdup",token)==0)
     return TOK_CDUP;
-  if (strcasecmp("LIST",token)==0)
+  if (strcmp("list",token)==0)
     return TOK_LIST;
-  if (strcasecmp("NLST",token)==0)
+  if (strcmp("nlst",token)==0)
     return TOK_NLST;
-  if (strcasecmp("MKD",token)==0)
+  if (strcmp("mkd",token)==0)
     return TOK_MKD;
-  if (strcasecmp("RMD",token)==0)
+  if (strcmp("rmd",token)==0)
     return TOK_RMD;
-  if (strcasecmp("RETR",token)==0)
+  if (strcmp("retr",token)==0)
     return TOK_RETR;
-  if (strcasecmp("STOR",token)==0)
+  if (strcmp("stor",token)==0)
     return TOK_STOR;
-  if (strcasecmp("APPE",token)==0)
+  if (strcmp("appe",token)==0)
     return TOK_APPE;
-  if (strcasecmp("REST",token)==0)
+  if (strcmp("rest",token)==0)
     return TOK_REST;
-  if (strcasecmp("MDTM",token)==0)
+  if (strcmp("mdtm",token)==0)
     return TOK_MDTM;
-  if (strcasecmp("SIZE",token)==0)
+  if (strcmp("size",token)==0)
     return TOK_SIZE;
-  if (strcasecmp("DELE",token)==0)
+  if (strcmp("dele",token)==0)
     return TOK_DELE;
-  if (strcasecmp("ABOR",token)==0)
+  if (strcmp("abor",token)==0)
     return TOK_ABOR;
 #ifdef SSL_SUPPORT
-  if (strcasecmp("PBSZ",token)==0)
+  if (strcmp("pbsz",token)==0)
     return TOK_PBSZ;
-  if (strcasecmp("PROT",token)==0)
+  if (strcmp("prot",token)==0)
     return TOK_PROT;
 #endif
-  if (strcasecmp("SITE",token)==0)
+  if (strcmp("site",token)==0)
     return TOK_SITE;
-  if (strcasecmp("FEAT",token)==0)
+  if (strcmp("feat",token)==0)
     return TOK_FEAT;
-  if (strcasecmp("ALLO",token)==0)
+  if (strcmp("allo",token)==0)
     return TOK_ALLO;
-  if (strcasecmp("RNFR",token)==0)
+  if (strcmp("rnfr",token)==0)
     return TOK_RNFR;
-  if (strcasecmp("RNTO",token)==0)
+  if (strcmp("rnto",token)==0)
     return TOK_RNTO;
-  if (strcasecmp("ABOR",token)==0)
+  if (strcmp("abor",token)==0)
     return TOK_ABOR;
-  if (strcasecmp("EPSV",token)==0)
+  if (strcmp("epsv",token)==0)
     return TOK_EPSV;
+  if (strcmp("eprt",token)==0)
+    return TOK_EPRT;
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
    * and wait the next command
    */
-  if (strcasecmp("\xff\xf2",token)==0)
+  if (strcmp("\xff\xf2",token)==0)
     return TOK_NOTHING;
   return TOK_UNKNOWN;
 }
@@ -328,6 +343,12 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   context->magic = 0;
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
+  /* close existing pasv connections */
+  if (context->pasvsock >= 0) {
+    socket_close(context->pasvsock);
+/*    port = context->pasvsock+1; *//* FIXME force change of socket */
+    context->pasvsock = -1;
+  }
   if (context->datafd >= 0)
     socket_close(context->datafd);
   context->datafd = -1;
@@ -372,7 +393,8 @@ int check_timeout(wzd_context_t * context)
        */
       FORALL_HOOKS(EVENT_POSTUPLOAD)
 	typedef int (*upload_hook)(unsigned long, const char*, const char *);
-	ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+        if (hook->hook)
+          ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
       END_FORALL_HOOKS
       close(context->current_action.current_file);
       context->current_action.current_file = 0;
@@ -2013,7 +2035,7 @@ int do_login_loop(wzd_context_t * context)
     }
 
 #ifdef DEBUG
-out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
+out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
 #endif
 
     /* XXX strtok_r: to be reentrant ! */
@@ -2347,7 +2369,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     }
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
-out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
+out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
 #endif
 
     /* 2. get next token */
@@ -2423,6 +2445,9 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	  case TOK_PASV:
 	    do_pasv(context);
 	    break;
+          case TOK_EPRT:
+            ret = send_message_with_args(501,context,"Not yet implemented !");
+            break;
 	  case TOK_EPSV:
 	    do_epsv(context);
 	    break;
@@ -2655,7 +2680,8 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 		 */
 		FORALL_HOOKS(EVENT_POSTUPLOAD)
 		  typedef int (*upload_hook)(unsigned long, const char*, const char *);
-		  ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+                  if (hook->hook)
+                    ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
 		END_FORALL_HOOKS
 	      }
               context->current_action.current_file = 0;

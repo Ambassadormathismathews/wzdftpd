@@ -27,9 +27,27 @@
 
 %{
 
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#include <w32api/ws2tcpip.h>
+
+#else
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <netdb.h> /* gethostbyaddr */
+
 #ifdef __CYGWIN__
-#include <w32api/windows.h>
-#else /* __CYGWIN__ */
+#define        INET_ADDRSTRLEN         16
+#define        INET6_ADDRSTRLEN        46
+#endif
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
+#ifndef __CYGWIN__
 # include <sys/types.h>
 # include <sys/ipc.h>
 # include <sys/shm.h>
@@ -42,10 +60,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>  /* gethostbyname() */
 
 /* speed up compilation */
 #define SSL void
@@ -777,9 +791,14 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       {
 	/* check FLAG_SEE_IP for self */
 	if (me->flags && strchr(me->flags,FLAG_SEE_IP)) {
-	  snprintf(internalbuffer,IBUFSIZE,"%d.%d.%d.%d",current_context->hostip[0],
+#if !defined(IPV6_SUPPORT)
+  inet_ntop(AF_INET,current_context->hostip,internalbuffer,INET_ADDRSTRLEN);
+#else
+  inet_ntop(AF_INET6,current_context->hostip,internalbuffer,INET6_ADDRSTRLEN);
+#endif
+/*	  snprintf(internalbuffer,IBUFSIZE,"%d.%d.%d.%d",current_context->hostip[0],
 	      current_context->hostip[1],current_context->hostip[2],
-	      current_context->hostip[3]);
+	      current_context->hostip[3]);*/
 	} else { /* not allowed to see */
 	  snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
 	}

@@ -83,6 +83,10 @@
 #include <values.h>
 #endif
 
+
+#include "wzd_debug.h"
+
+
 /** Compute the hash value for the given string.  The algorithm
  * is taken from [Aho,Sethi,Ullman], modified to reduce the number of
  * collisions for short strings with very varied bit patterns.

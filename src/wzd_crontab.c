@@ -37,17 +37,7 @@
 #include "wzd_log.h"
 #include "wzd_crontab.h"
 
-struct wzd_cronjob_t {
-  int (*fn)(void);
-  char * command;
-  char minutes[32];
-  char hours[32];
-  char day_of_month[32];
-  char month[32];
-  char day_of_week[32];
-  time_t next_run;
-  wzd_cronjob_t * next_cronjob;
-};
+#include "wzd_debug.h"
 
 time_t cronjob_find_next_exec_date(time_t start, 
     char * minutes, char * hours, char * day_of_month,
@@ -167,6 +157,10 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
   if (!fn && !command) return 1;
   if (fn && command) return 1;
 
+#ifdef WZD_DBG_CRONTAB
+  out_err(LEVEL_HIGH,"adding job %s\n",command);
+#endif
+
   new = malloc(sizeof(wzd_cronjob_t));
   new->fn = fn;
   new->command = command?strdup(command):NULL;
@@ -180,8 +174,10 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
       month,day_of_week);
   new->next_cronjob = NULL;
 
-/*  out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
-  out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&new->next_run));*/
+#ifdef WZD_DBG_CRONTAB
+  out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
+  out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&new->next_run));
+#endif
 
   if (current==NULL) { /* first insertion */
     *crontab = new;
@@ -221,6 +217,10 @@ int cronjob_run(wzd_cronjob_t ** crontab)
       }
       job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
 	  job->day_of_month, job->month, job->day_of_week);
+#ifdef WZD_DBG_CRONTAB
+      out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
+      out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&job->next_run));
+#endif
     }
     job = job->next_cronjob;
   }

@@ -46,18 +46,6 @@
 
 #define BUFFER_LEN	2048
 
-struct wzd_command_perm_entry_t {
-  wzd_cp_t cp; 
-  char target[256];
-  struct wzd_command_perm_entry_t * next_entry;
-};
-
-struct wzd_command_perm_t {
-  char  command_name[256];
-  wzd_command_perm_entry_t * entry_list;
-  struct wzd_command_perm_t * next_perm;
-};
-
 
 const char * perm_tab[] = {
   "site",

@@ -59,6 +59,9 @@
 #endif
 
 
+#include "wzd_debug.h"
+
+
 #define BUFFER_LEN	4096
 
 /************ PRIVATE FUNCTIONS **************/
@@ -491,6 +494,10 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
 
   if (!filename || filename[0] == '\0')
     return -1;
+
+#ifdef WZD_DBG_PERMS
+  out_err(LEVEL_HIGH,"_checkPerm(%s,%ld,%s)\n",filename,wanted_right,user->username);
+#endif
 
   strncpy(dir,filename,BUFFER_LEN); 
 
