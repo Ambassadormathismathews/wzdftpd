@@ -754,6 +754,35 @@ Display server version.
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_vfsadd'>
+<term>site vfsadd |/ftp/vfsroot|/physical/path| [auth]</term>
+<listitem>
+<para>Add new VFS entry.
+See <link linkend='vfs'>Virtual File System section</link> for details.
+</para>
+<screen>site vfsadd |/home/ftp/etc|/etc/| +O</screen>
+<para><emphasis>The new entry is NOT saved to config file !</emphasis></para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_vfsdel'>
+<term>site vfsdel /ftp/vfsroot</term>
+<listitem>
+<para>Remove a VFS entry.
+</para>
+<screen>site vfsdel /home/ftp/etc</screen>
+<para><emphasis>Changes are NOT saved to config file !</emphasis></para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_vfsls'>
+<term>site vfsls</term>
+<listitem>
+<para>List VFS entries.
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_who'><term>
 site who
 </term>
