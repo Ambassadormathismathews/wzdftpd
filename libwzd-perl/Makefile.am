@@ -4,10 +4,10 @@ EXTRA_DIST = ext/Makefile.PL.in ext/ppport.h ext/wzdftpd.pm ext/wzdftpd.xs
 PERL_MAKE_OPTIONS = PREFIX=${e_prefix} SITEPREFIX=${e_prefix}
 
 ext: ext/Makefile ext/wzdftpd.pm ../libwzd/libwzd.la
-	cd ext && $(MAKE)
+	cd ext && $(MAKE) LD_RUN_PATH=""
 
 ext/Makefile: ext/Makefile.PL ext/wzdftpd.pm ext/wzdftpd.xs
-	cd ext && $(PERL) Makefile.PL $(PERLFLAGS) $(PERL_MAKE_OPTIONS)
+	cd ext && $(PERL) Makefile.PL $(PERLFLAGS) $(PERL_MAKE_OPTIONS) INSTALLDIRS=vendor
 
 
 all-local: ext
