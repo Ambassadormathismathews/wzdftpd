@@ -84,7 +84,7 @@ do
       done
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
 	echo "Running libtoolize..."
-	libtoolize --force --copy || abort "libtoolize"
+	libtoolize --force --copy --automake || abort "libtoolize"
       fi
       echo "Running aclocal $aclocalinclude ..."
       aclocal $aclocalinclude || abort "aclocal"
@@ -93,20 +93,20 @@ do
 	autoheader || abort "autoheader"
       fi
       echo "Running automake --gnu $am_opt ..."
-      automake --add-missing --gnu $am_opt || abort "automake"
+      automake --add-missing --copy --gnu $am_opt || abort "automake"
       echo "Running autoconf ..."
       autoconf || abort "autoconf"
+ 
+#      conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
+
+      if test x$NOCONFIGURE = x; then
+	echo Running $srcdir/configure $conf_flags "$@" ...
+	$srcdir/configure $conf_flags "$@" \
+	&& echo Now type \`make\' to compile $PKG_NAME || abort "configure"
+      else
+	echo Skipping configure process.
+      fi
     )
   fi
 done
-
-#conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
-
-if test x$NOCONFIGURE = x; then
-  echo Running $srcdir/configure $conf_flags "$@" ...
-  $srcdir/configure $conf_flags "$@" \
-  && echo Now type \`make\' to compile $PKG_NAME || abort "configure"
-else
-  echo Skipping configure process.
-fi
 
