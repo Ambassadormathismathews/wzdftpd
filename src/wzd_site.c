@@ -358,7 +358,7 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
 
 int do_site_chgrp(char *command_line, wzd_context_t * context)
 {
-  char buffer[BUFFER_LEN];
+  char * buffer;
   char * ptr;
   char * groupname, *filename;
   int ret;
@@ -376,6 +376,8 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
     return 1;
   }
 
+  buffer = malloc(WZD_MAX_PATH+1);
+
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
@@ -384,9 +386,10 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
     _setPerm(buffer,0,0,groupname,0,(unsigned long)-1,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"group changed to '%s'",groupname);
+  snprintf(buffer,WZD_MAX_PATH,"group changed to '%s'",groupname);
   ret = send_message_with_args(200,context,buffer);
 
+  free(buffer);
   return 0;
 }
 
@@ -395,7 +398,7 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
  */
 int do_site_chmod(char *command_line, wzd_context_t * context)
 {
-  char buffer[BUFFER_LEN];
+  char * buffer;
   char * ptr;
   char * mode, *filename;
   int ret;
@@ -415,25 +418,44 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
     return 1;
   }
   long_perms = strtoul(mode,&endptr,8);
-/*  if (endptr != mode) {
-    snprintf(str_perms,63,"%c%c%c",
-      (long_perms & 01) ? 'r' : '-',
-      (long_perms & 02) ? 'w' : '-',
-      (long_perms & 04) ? 'x' : '-'
-    );
-  } else
-    strncpy(str_perms,mode,63);*/
+
+  if (endptr == mode) {
+    unsigned short error = 0, i;
+    unsigned int mask = 1 << 8;
+    /* try to read perm in text mode ? */
+    long_perms = 0;
+    for (i = 0; i<3; i++) {
+      if (*mode == 'r') { long_perms += mask; }
+      else if (*mode != '-') { error = 1; break; }
+      mask >>= 1; mode++;
+      if (*mode == 'w') { long_perms += mask; }
+      else if (*mode != '-') { error = 1; break; }
+      mask >>= 1; mode++;
+      if (*mode == 'x') { long_perms += mask; }
+      else if (*mode != '-') { error = 1; break; }
+      mask >>= 1; mode++;
+    }
+
+    if (error) {
+      ret = send_message_with_args(501,context,"Invalid permission");
+      return 0;
+    }
+  }
+
+  buffer = malloc(WZD_MAX_PATH+1);
 
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+    if (checkpath_new(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    _setPerm(buffer,username,0,0,str_perms,(unsigned long)-1,context);*/
     _setPerm(buffer,0,0,0,0,long_perms,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"mode changed to '%lo'",long_perms);
+  snprintf(buffer,WZD_MAX_PATH,"mode changed to '%lo'",long_perms);
   ret = send_message_with_args(200,context,buffer);
+
+  free(buffer);
   return 0;
 }
 
@@ -443,7 +465,7 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
 
 int do_site_chown(char *command_line, wzd_context_t * context)
 {
-  char buffer[BUFFER_LEN];
+  char * buffer;
   char * ptr;
   char * username, *filename;
   int ret;
@@ -462,17 +484,20 @@ int do_site_chown(char *command_line, wzd_context_t * context)
     return 1;
   }
 
+  buffer = malloc(WZD_MAX_PATH+1);
+
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+    if (checkpath_new(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
     _setPerm(buffer,0,username,0,0,(unsigned long)-1,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"owner changed to '%s'",username);
+  snprintf(buffer,WZD_MAX_PATH,"owner changed to '%s'",username);
   ret = send_message_with_args(200,context,buffer);
 
+  free(buffer);
   return 0;
 }
 
@@ -491,7 +516,7 @@ int do_site_chpass(char *command_line, wzd_context_t * context)
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
-  
+
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
@@ -537,16 +562,15 @@ int do_site_chpass(char *command_line, wzd_context_t * context)
 int do_site_checkperm(char * commandline, wzd_context_t * context)
 {
   unsigned long word;
-  char buffer[BUFFER_LEN];
+  char * buffer;
   char *username, *filename, *perms;
   char *ptr;
   wzd_user_t userstruct, *userptr;
   int uid;
 
-  strncpy(buffer,commandline,BUFFER_LEN-1);
-  ptr = &buffer[0];
-  
-  username = strtok_r(buffer," \t\r\n",&ptr);
+  ptr = commandline;
+
+  username = strtok_r(commandline," \t\r\n",&ptr);
   if (!username) { do_site_help("checkperm",context); return 1; }
   filename = strtok_r(NULL," \t\r\n",&ptr);
   if (!filename) { do_site_help("checkperm",context); return 1; }
@@ -566,21 +590,25 @@ int do_site_checkperm(char * commandline, wzd_context_t * context)
   if (uid == -1) userptr = &userstruct;
   else userptr = GetUserByID(uid);
 
+  buffer = malloc(WZD_MAX_PATH+1);
+
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(filename,buffer,context)) {
     send_message_with_args(501,context,"file does not exist");
+    free(buffer);
     return 1;
   }
- 
+
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
 
   if (_checkPerm(buffer,word,userptr)==0) {
-    strcpy(buffer,"right ok");
+    wzd_strncpy(buffer,"right ok",WZD_MAX_PATH);
   } else {
-    strcpy(buffer,"refused");
+    wzd_strncpy(buffer,"refused",WZD_MAX_PATH);
   }
-  
+
   send_message_with_args(200,context,buffer);
+  free(buffer);
   return 0;
 }
 
@@ -590,7 +618,7 @@ int do_site_checkperm(char * commandline, wzd_context_t * context)
 
 int do_site_free(char *command_line, wzd_context_t * context)
 {
-  char buffer[2048];
+  char * buffer;
   int ret;
 /*  char * ptr;
   char * sectionname;
@@ -598,7 +626,7 @@ int do_site_free(char *command_line, wzd_context_t * context)
   int uid;
   wzd_context_t user_context;*/
   long f_type, f_bsize, f_blocks, f_free;
-  float free,total;
+  float freeb,totalb;
   char unit;
 
 /*  ptr = command_line;
@@ -608,32 +636,36 @@ int do_site_free(char *command_line, wzd_context_t * context)
     return;
   }*/
 
+  buffer = malloc(WZD_MAX_PATH+1);
+
   if (checkpath_new(".",buffer,context)) {
     send_message_with_args(501,context,". does not exist ?!");
+    free(buffer);
     return -1;
   }
 
   ret = get_device_info(buffer,&f_type, &f_bsize, &f_blocks, &f_free);
 
   unit='k';
-  free = f_free*(f_bsize/1024.f);
-  total = f_blocks*(f_bsize/1024.f);
+  freeb = f_free*(f_bsize/1024.f);
+  totalb = f_blocks*(f_bsize/1024.f);
 
-  if (total > 1000.f) {
+  if (totalb > 1000.f) {
     unit='M';
-    free /= 1024.f;
-    total /= 1024.f;
+    freeb /= 1024.f;
+    totalb /= 1024.f;
   }
-  if (total > 1000.f) {
+  if (totalb > 1000.f) {
     unit='G';
-    free /= 1024.f;
-    total /= 1024.f;
+    freeb /= 1024.f;
+    totalb /= 1024.f;
   }
 
-  snprintf(buffer,2047,"[FREE] + [current dir: %.2f / %.2f %c] -",free,total,unit);
+  snprintf(buffer,WZD_MAX_PATH,"[FREE] + [current dir: %.2f / %.2f %c] -",freeb,totalb,unit);
 
   ret = send_message_with_args(200,context,buffer);
 
+  free(buffer);
   return 0;
 }
 
