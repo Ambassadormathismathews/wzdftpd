@@ -1046,10 +1046,13 @@ printf("path: '%s'\n",path);
 
 int do_mkdir(char *name, char *param, wzd_context_t * context)
 {
-  char cmd[WZD_MAX_PATH], path[WZD_MAX_PATH];
-  char buffer[WZD_MAX_PATH];
+  char  * cmd = NULL, * path = NULL;
+  char * buffer = NULL;
   int ret;
   wzd_user_t * user;
+
+  cmd = wzd_malloc(WZD_MAX_PATH+1);
+  path = wzd_malloc(WZD_MAX_PATH+1);
 
   user = GetUserByID(context->userid);
 
@@ -1072,6 +1075,7 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
   }
   REMOVE_TRAILING_SLASH(path);
 
+  buffer = wzd_malloc(WZD_MAX_PATH+1);
   ret = checkpath_new(param,buffer,context);
   if (ret != E_FILE_NOEXIST) goto label_error_mkdir;
 
@@ -1087,6 +1091,9 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
+    wzd_free(buffer);
+    wzd_free(path);
+    wzd_free(cmd);
     ret = send_message_with_args(553,context,"forbidden !");
     return E_FILE_FORBIDDEN;
   }
@@ -1169,10 +1176,16 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
         );
   }
   context->idle_time_start = time(NULL);
+  wzd_free(buffer);
+  wzd_free(path);
+  wzd_free(cmd);
 
   return E_OK;
 
 label_error_mkdir:
+  wzd_free(buffer);
+  wzd_free(path);
+  wzd_free(cmd);
   snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s'",(param)?param:"(NULL)");
   send_message_with_args(553,context,buffer);
   return ret;
