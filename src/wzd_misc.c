@@ -788,8 +788,8 @@ wzd_mutex_unlock(mutex);
     elapsed += (tv.tv_usec - l->current_time.tv_usec);
 #else
     _ftime(&tb);
-    elapsed = (double) (tb.time - l->current_time.time) * 1000000;
-    elapsed += (double) (tb.millitm - l->current_time.millitm) * 1000;
+    elapsed = (tb.time - l->current_time.time) * 1000000;
+    elapsed += (tb.millitm - l->current_time.millitm) * 1000;
 #endif
     if (elapsed==0) elapsed=1;
 /*    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);*/

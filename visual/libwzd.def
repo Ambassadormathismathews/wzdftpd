@@ -9,6 +9,7 @@ EXPORTS
 	backend_find_group
 	backend_find_user
 	backend_get_name
+	backend_get_user
 	backend_get_version
 	backend_init
 	backend_inuse
@@ -87,6 +88,8 @@ EXPORTS
 	is_hidden_file
 	is_perm_file
 	is_user_in_group
+	kill_child_new
+	killpath
 	limiter_add_bytes
 	limiter_free
 	limiter_new
