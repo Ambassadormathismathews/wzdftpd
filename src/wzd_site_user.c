@@ -1070,8 +1070,8 @@ int do_site_flags(char *command_line, wzd_context_t * context)
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
@@ -1107,8 +1107,8 @@ int do_site_idle(char *command_line, wzd_context_t * context)
   unsigned long idletime;
 
   /* get our info */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
@@ -1158,8 +1158,8 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
   int uid;
 
   /* get our info */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
@@ -1253,8 +1253,8 @@ int do_site_kick(char *command_line, wzd_context_t * context)
   }
 
   /* preliminary check: i can't kill myself */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     test_username = context->userinfo.username;
   } else 
 #endif
@@ -1266,8 +1266,8 @@ int do_site_kick(char *command_line, wzd_context_t * context)
     int i=0;
     while (i<HARD_USERLIMIT) {
       if (context_list[i].magic == CONTEXT_MAGIC) {
-#if BACKEND_STORAGE
-	if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+	if (mainConfig->backend.backend_storage==1) {
 	  test_username = context_list[i].userinfo.username;
 	} else 
 #endif

@@ -2220,7 +2220,7 @@ int check_tls_forced(wzd_context_t * context)
   int i;*/
 
 #ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -2485,7 +2485,7 @@ void * clientThreadProc(void *arg)
   }
 
 #ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+  if (mainConfig->backend.backend_storage==1) {
     user = GetUserByID(context->userid);
   } else
 #endif

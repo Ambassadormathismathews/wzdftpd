@@ -275,6 +275,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_kill = +O
 -site_link = +O
 -site_msg = +O
+-site_perm = +O
 -site_purge = +O +G
 -site_readd = +O +G
 -site_reload = +O

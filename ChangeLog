@@ -1,3 +1,10 @@
+2004-03-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* vars: new server vars hide_dotted_files, deny_access_files_uploaded
+	* site: new command 'SITE PERM' (Work in Progress !)
+	* bugfix: parameters works only for backend 'plaintext'
+	* mysql: arguments are parsed correctly now
+
 2004-03-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: segfault when reading permissions in config file

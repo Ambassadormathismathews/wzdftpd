@@ -99,7 +99,7 @@ int su_conv(int num_msg, const struct pam_message **msg, struct pam_response **r
 
 
 
-int FCN_INIT(int *backend_storage, void *arg)
+int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void *arg)
 {
   *backend_storage = 1;
 

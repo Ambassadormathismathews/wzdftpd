@@ -474,7 +474,8 @@ int cfg_read_backend_param(const char *backendname)
   }
 
   ret = 1;
-  if (strcasecmp("plaintext",backendname)==0)
+  /* \todo XXX FIXME compare name to backend */
+/*  if (strcasecmp("plaintext",backendname)==0)*/
   { tempConfig.backend.param = wzd_strdup(param); ret = 0; }
 
   wzd_free (param);

@@ -823,6 +823,96 @@ int do_site_msg(char *command_line, wzd_context_t * context)
   return 0;
 }
 
+/********************* do_site_perm ************************/
+/** perm: show
+ *       add perm_name perms
+ *       change perm_name perms
+ *       delete perm_name
+ */
+int do_site_perm(char *command_line, wzd_context_t * context)
+{
+/*  int ret;*/
+  char * command, * ptr, * filename;
+  char * perm_name;
+  char perm_buffer[256], *perm_buffer_ptr;
+  char buffer[2048];
+  unsigned int length;
+  wzd_command_perm_t * current;
+  wzd_command_perm_entry_t * entry;
+
+  ptr = command_line;
+  command = strtok_r(command_line," \t\r\n",&ptr);
+  if (!command) {
+    do_site_help("perm",context);
+    return 1;
+  }
+  perm_name = strtok_r(NULL," \t\r\n",&ptr);
+
+  if (strcasecmp(command,"show")==0)
+  {
+    send_message_raw("200-\r\n",context);
+    current = mainConfig->perm_list;
+    /** \todo replace that with search on perms name*/
+    while (current) {
+      /* parse current->entry_list */
+      perm_buffer_ptr = perm_buffer;
+      length=0;
+      entry = current->entry_list;
+      while (entry) {
+        *perm_buffer_ptr++ = ' ';
+        length ++;
+        if (strcmp(entry->target,"*")!=0) {
+          switch(entry->cp) {
+            case CPERM_USER: *perm_buffer_ptr++ = '='; break;
+            case CPERM_GROUP: *perm_buffer_ptr++ = '-'; break;
+            case CPERM_FLAG: *perm_buffer_ptr++ = '+'; break;
+          }
+          length ++;
+        }
+        strncpy(perm_buffer_ptr,entry->target,256-length);
+        length += strlen(perm_buffer_ptr);
+        perm_buffer_ptr = perm_buffer+length;
+        entry = entry->next_entry;
+      }
+      perm_buffer[length]='\0';
+      snprintf( buffer, sizeof(buffer), "200- %s%s\r\n", current->command_name, perm_buffer);
+      send_message_raw(buffer,context);
+      current = current->next_perm;
+    }
+    send_message_raw("200 \r\n",context);
+    return 0;
+  }
+  else if (strcasecmp(command,"convert")==0)
+  {
+    if (!perm_name) {
+      do_site_help("perm",context);
+      return 1;
+    }
+    return -1;
+  }
+  else if (strcasecmp(command,"delete")==0)
+  {
+    if (!perm_name) {
+      do_site_help("perm",context);
+      return 1;
+    }
+    send_message_with_args(200,context,"message file deleted");
+    return 0;
+  }
+  else if (strcasecmp(command,"new")==0)
+  {
+    if (!perm_name) {
+      do_site_help("perm",context);
+      return 1;
+    }
+    return 0;
+  }
+
+  do_site_help("perm",context);
+  return 0;
+}
+
+
 /********************* do_site_print_file ******************/
 /** Print filename to control connection. Cookies are replaced as usual.
  */
@@ -1104,8 +1194,8 @@ int do_site_utime(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -1536,6 +1626,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"KILL",&do_site_kill)) return 1;
   if (site_command_add(&config->site_list,"LINK",&do_site_link)) return 1;
   if (site_command_add(&config->site_list,"MSG",&do_site_msg)) return 1;
+  if (site_command_add(&config->site_list,"PERM",&do_site_perm)) return 1;
   if (site_command_add(&config->site_list,"PURGE",&do_site_purgeuser)) return 1;
   if (site_command_add(&config->site_list,"READD",&do_site_readduser)) return 1;
   if (site_command_add(&config->site_list,"RELOAD",&do_site_reload)) return 1;

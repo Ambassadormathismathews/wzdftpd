@@ -877,8 +877,8 @@ int do_site_flags(char *command_line, wzd_context_t * context)
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
@@ -912,8 +912,8 @@ int do_site_idle(char *command_line, wzd_context_t * context)
   unsigned long idletime;
 
   /* get our info */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
@@ -962,8 +962,8 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
   int uid;
 
   /* get our info */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     username = context->userinfo.username;
   } else 
 #endif
