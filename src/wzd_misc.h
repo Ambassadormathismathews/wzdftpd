@@ -25,6 +25,8 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
+#include "../config.h"
+
 unsigned long compute_hashval (const void *key, size_t keylen);
 
 char * time_to_str(time_t time);
