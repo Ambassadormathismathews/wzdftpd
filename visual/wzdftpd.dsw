@@ -45,6 +45,51 @@ Package=<4>
 
 ###############################################################################
 
+Project: "siteconfig"=.\TOOLS\siteconfig\siteconfig.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "siteuptime"=.\TOOLS\siteuptime\siteuptime.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "sitewho"=.\TOOLS\sitewho\sitewho.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "wzdftpd"=.\wzdftpd.dsp - Package Owner=<4>
 
 Package=<5>

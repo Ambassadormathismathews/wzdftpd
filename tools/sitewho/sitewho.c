@@ -1,19 +1,26 @@
-#ifdef __CYGWIN__
-#include <w32api/windows.h>
-#else /* __CYGWIN__ */
-# include <sys/types.h>
-# include <sys/ipc.h>
-# include <sys/shm.h>
-#endif /* __CYGWIN__ */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#include <winsock2.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+
+#else
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /*#include <wzd.h>*/
 
@@ -35,6 +42,10 @@ unsigned long key;
 /* FIXME ... this is an unresolved symbol */
 unsigned int wzd_server_uid;
 
+#ifdef _MSC_VER /* FIXME VISUAL */
+  int optind;
+#endif
+
 
 void usage(const char *progname)
 {
@@ -47,6 +58,7 @@ int parse_args(int argc, char **argv)
   unsigned long l;
   char *ptr;
   
+#ifndef _MSC_VER /* FIXME VISUAL */
    /* please keep options ordered ! */
   while ((opt=getopt(argc, argv, "hk:")) != -1) {
     switch (opt) {
@@ -63,6 +75,26 @@ int parse_args(int argc, char **argv)
       break;
     }
   }
+#else /* _MSC_VER */
+  optind = 1;
+  while (optind < argc)
+  {
+	  if (argv[optind][0] == '-') {
+		if (argv[optind][1] == 'h') { usage(argv[0]); return 1; }
+		else if (argv[optind][1] == 'k') {
+		  if (optind + 1 >= argc) { usage(argv[0]); return 1; }
+          l = strtoul(argv[optind+1],&ptr,0);
+          if (*ptr != '\0') { usage(argv[0]); return 1; }
+          key = l;
+		  optind += 2;
+		}
+		else { usage(argv[0]); return 1; }
+	  }
+	  else {
+		  break;
+	  }
+  }
+#endif /* _MSC_VER */
 
   return 0;
 }
@@ -79,7 +111,7 @@ int main(int argc, char *argv[])
   wzd_group_t * group_list;
   int i,found=0;
 /*  wzd_shm_t * shm;*/
-#ifdef __CYGWIN__
+#ifdef WIN32
   void * handle;
   char name[256];
 #endif
@@ -96,7 +128,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   sprintf(name,"%lu",key);
   handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (handle == NULL)
@@ -114,7 +146,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   datazone = MapViewOfFile(handle,FILE_MAP_ALL_ACCESS,0, 0, 0);
   if (datazone == NULL)
 #else
@@ -130,8 +162,13 @@ int main(int argc, char *argv[])
   context_list = (wzd_context_t*)datazone;
   i = HARD_USERLIMIT;
   i = HARD_USERLIMIT*sizeof (wzd_context_t);
+#ifndef _MSC_VER
   user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t)); 
+  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+#else
+  user_list = (char*)context_list + HARD_USERLIMIT*sizeof(wzd_context_t);
+  group_list = (char*)context_list + HARD_USERLIMIT*sizeof(wzd_context_t) + HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+#endif
 
   /* find non-empty contexts */
   for (i=0; i<HARD_USERLIMIT; i++) {
@@ -187,7 +224,7 @@ int main(int argc, char *argv[])
     fprintf(stdout,"|---------------.------------------.----------------.---------------------|\n");
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   CloseHandle(handle);
 #else
   shmdt(datazone);

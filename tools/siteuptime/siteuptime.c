@@ -1,19 +1,25 @@
-#ifdef __CYGWIN__
-#include <w32api/windows.h>
-#else /* __CYGWIN__ */
-# include <sys/types.h>
-# include <sys/ipc.h>
-# include <sys/shm.h>
-#endif /* __CYGWIN__ */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#include <winsock2.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+
+#else
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /*#include "wzd.h"*/
 
@@ -31,6 +37,10 @@
 #define	SHM_KEY	0x1331c0d3
 
 unsigned long key;
+
+#ifdef _MSC_VER /* FIXME VISUAL */
+  int optind;
+#endif
 
 
 char *time_to_str(time_t time)
@@ -68,6 +78,7 @@ int parse_args(int argc, char **argv)
   unsigned long l;
   char *ptr;
 
+#ifndef _MSC_VER /* FIXME VISUAL */
    /* please keep options ordered ! */
   while ((opt=getopt(argc, argv, "hk:")) != -1) {
     switch (opt) {
@@ -84,6 +95,26 @@ int parse_args(int argc, char **argv)
       break;
     }
   }
+#else /* _MSC_VER */
+  optind = 1;
+  while (optind < argc)
+  {
+	  if (argv[optind][0] == '-') {
+		if (argv[optind][1] == 'h') { usage(argv[0]); return 1; }
+		else if (argv[optind][1] == 'k') {
+		  if (optind + 1 >= argc) { usage(argv[0]); return 1; }
+          l = strtoul(argv[optind+1],&ptr,0);
+          if (*ptr != '\0') { usage(argv[0]); return 1; }
+          key = l;
+		  optind += 2;
+		}
+		else { usage(argv[0]); return 1; }
+	  }
+	  else {
+		  break;
+	  }
+  }
+#endif /* _MSC_VER */
   
   return 0;
 }
@@ -93,7 +124,7 @@ int main(int argc, char *argv[])
   int shmid;
   wzd_config_t * config;
   time_t t;
-#ifdef __CYGWIN__
+#ifdef WIN32
   void * handle;
   char name[256];
 #endif
@@ -106,7 +137,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   sprintf(name,"%lu",key-1);
   handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (handle == NULL)
@@ -122,7 +153,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   config = MapViewOfFile(handle,FILE_MAP_ALL_ACCESS,0, 0, 0);
   if (config == NULL)
 #else
@@ -138,7 +169,7 @@ int main(int argc, char *argv[])
   t = t - config->server_start;
   printf("Uptime: %s\n",time_to_str(t));
 
-#ifdef  __CYGWIN__
+#ifdef  WIN32
   CloseHandle(handle);
 #else
   shmdt(config);

@@ -1,3 +1,7 @@
+2004-01-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* visual: added tools
+
 2004-01-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* ipv6: fix ip formatting in log file

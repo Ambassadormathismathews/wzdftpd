@@ -1,19 +1,26 @@
-#ifdef __CYGWIN__
-#include <w32api/windows.h>
-#else /* __CYGWIN__ */
-# include <sys/types.h>
-# include <sys/ipc.h>
-# include <sys/shm.h>
-#endif /* __CYGWIN__ */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#include <winsock2.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+
+#else
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /*#include <wzd.h>*/
 
@@ -39,6 +46,10 @@ wzd_config_t * config;
 wzd_context_t * context_list;
 wzd_user_t * user_list;
 wzd_group_t * group_list;
+
+#ifdef _MSC_VER /* FIXME VISUAL */
+  int optind;
+#endif
 
 #ifndef __CYGWIN__
 char *time_to_str(time_t time); /* defined in wzd_misc.c */
@@ -83,10 +94,10 @@ unsigned long get_bandwidth(void)
       id = context_list[i].userid;
       user = &user_list[id];
       if (strncasecmp(context->last_command,"retr",4)==0) {
-        bandwidth += context->current_dl_limiter.current_speed;
+        bandwidth += (unsigned long)context->current_dl_limiter.current_speed;
       }
       if (strncasecmp(context->last_command,"stor",4)==0) {
-        bandwidth += context->current_ul_limiter.current_speed;
+        bandwidth += (unsigned long)context->current_ul_limiter.current_speed;
       }
     } /* if CONTEXT_MAGIC */
   } /* forall contexts */
@@ -105,6 +116,7 @@ int parse_args(int argc, char **argv)
   unsigned long l;
   char *ptr;
 
+#ifndef _MSC_VER /* FIXME VISUAL */
    /* please keep options ordered ! */
   while ((opt=getopt(argc, argv, "hk:")) != -1) {
     switch (opt) {
@@ -121,6 +133,26 @@ int parse_args(int argc, char **argv)
       break;
     }
   }
+#else /* _MSC_VER */
+  optind = 1;
+  while (optind < argc)
+  {
+	  if (argv[optind][0] == '-') {
+		if (argv[optind][1] == 'h') { usage(argv[0]); return 1; }
+		else if (argv[optind][1] == 'k') {
+		  if (optind + 1 >= argc) { usage(argv[0]); return 1; }
+          l = strtoul(argv[optind+1],&ptr,0);
+          if (*ptr != '\0') { usage(argv[0]); return 1; }
+          key = l;
+		  optind += 2;
+		}
+		else { usage(argv[0]); return 1; }
+	  }
+	  else {
+		  break;
+	  }
+  }
+#endif /* _MSC_VER */
   
   return 0;
 }
@@ -246,11 +278,12 @@ int request_set(const char *arg, const char *value)
 int main(int argc, char *argv[])
 {
   char * datazone;
-  int shmid;
   unsigned int i;
-#ifdef __CYGWIN__
+#ifdef WIN32
   void * handle;
   char name[256];
+#else
+  int shmid;
 #endif
 
   /* default values */
@@ -261,7 +294,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   sprintf(name,"%lu",key-1);
   handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (handle == NULL)
@@ -277,7 +310,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   config = MapViewOfFile(handle,FILE_MAP_ALL_ACCESS,0, 0, 0);
   if (config == NULL)
 #else
@@ -289,7 +322,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   sprintf(name,"%lu",key);
   handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (handle == NULL)
@@ -307,7 +340,7 @@ int main(int argc, char *argv[])
     return -1;
   }
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   datazone = MapViewOfFile(handle,FILE_MAP_ALL_ACCESS,0, 0, 0);
   if (datazone == NULL)
 #else
@@ -323,8 +356,13 @@ int main(int argc, char *argv[])
   context_list = (wzd_context_t*)datazone;
   i = HARD_USERLIMIT;
   i = HARD_USERLIMIT*sizeof (wzd_context_t);
+#ifndef _MSC_VER
   user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t)); 
+  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+#else
+  user_list = (char*)context_list + HARD_USERLIMIT*sizeof(wzd_context_t);
+  group_list = (char*)context_list + HARD_USERLIMIT*sizeof(wzd_context_t) + HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+#endif
 
 
   /************ begin user part *************************/
@@ -333,6 +371,7 @@ int main(int argc, char *argv[])
     usage(argv[0]);
     exit(1);
   }
+
   if (strcasecmp(argv[optind],"get")==0) {
     request_get(argv[optind+1]);
   }
@@ -350,7 +389,7 @@ int main(int argc, char *argv[])
 
   /************ end user part ***************************/
 
-#ifdef  __CYGWIN__
+#ifdef  WIN32
   CloseHandle(handle);
 #else
   shmdt(config);
