@@ -21,6 +21,8 @@ Description: A portable, modular, not user-friendly ftp server
  .
  It includes several authentication backends, is easily scriptable and provides
  a powerful event-driven system to extend server.
+ .
+ For more informations, see http://www.wzdftpd.net/
 
 Package: wzdftpd-back-mysql
 Architecture: any

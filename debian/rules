@@ -144,6 +144,8 @@ binary-common:
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
+	# Avoid wzdftpd dependancy on wzdftpd (thanks to dh_shlibdeps)
+	sed -i -e 's/, wzdftpd (= [0-9.-]*)//' $(CURDIR)/debian/wzdftpd.substvars
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
