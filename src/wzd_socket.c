@@ -84,11 +84,12 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
 {
   struct hostent * host;
   int ret=-1;
+  int sz = MIN(length,sizeof(host->h_addr_list));
 
   wzd_mutex_lock(server_mutex);
   host = gethostbyname(name);
   if (host) {
-    memcpy(buffer, host->h_addr, length);
+    memcpy(buffer, host->h_addr, sz);
     ret = 0;
   }
   wzd_mutex_unlock(server_mutex);

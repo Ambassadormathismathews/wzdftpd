@@ -1,10 +1,11 @@
-2005-02-01  Pierre Chifflier  <pollux@cpe.fr>
+2005-02-04  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: new commands SSCN and CPSV, used for secure FXP
 	* feature: errors in TCL module are catched and put in a log file
 	* bugfix: file descriptors not closed on ident connections
 	* bugfix: file descriptors not closed in win32 version
 	* bugfix: dynamic_ip not working
+	* bugfix: FXP not working when using PORT in clear mode
 
 2005-01-28  Pierre Chifflier  <pollux@cpe.fr>
 

@@ -656,12 +656,13 @@ int waitconnect(wzd_context_t * context)
     }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-    if (context->ssl.data_mode == TLS_PRIV)
+    if (context->ssl.data_mode == TLS_PRIV) {
       ret = tls_init_datamode(sock, context);
       if (ret) {
         send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
         return -1;
       }
+    }
 #endif
 
   } /* context->datafamily == WZD_INET4 */
@@ -680,12 +681,13 @@ int waitconnect(wzd_context_t * context)
     }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-    if (context->ssl.data_mode == TLS_PRIV)
+    if (context->ssl.data_mode == TLS_PRIV) {
       ret = tls_init_datamode(sock, context);
       if (ret) {
         send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
         return -1;
       }
+    }
 #endif
 
   } /* context->datafamily == WZD_INET6 */
