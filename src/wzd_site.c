@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +47,7 @@
 #include "wzd_misc.h"
 #include "wzd_messages.h"
 #include "wzd_site.h"
+#include "wzd_site_group.h"
 #include "wzd_site_user.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
@@ -36,9 +61,18 @@ extern time_t server_start;
 
 #define	BUFFER_LEN	4096
 
+typedef int (*site_fct_t)(char *cl, wzd_context_t *context);
+
+struct wzd_site_fct_t {
+  char *name;
+  site_fct_t fct;
+
+  struct wzd_site_fct_t * next_site_fct;
+};
+
 /********************* do_site_test ************************/
 
-void do_site_test(const char *command, wzd_context_t * context)
+int do_site_test(char *command, wzd_context_t * context)
 {
   int ret;
 
@@ -70,6 +104,7 @@ void do_site_test(const char *command, wzd_context_t * context)
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
   ret = send_message_with_args(200,context,"TEST command ok");
+  return 0;
 }
 
 /********************* do_site_help ************************/
@@ -129,9 +164,9 @@ void do_site_help(const char *site_command, wzd_context_t * context)
 }
 
 /********************* do_site_backend *********************/
-/* backend: close / reload / init / commit
+/** backend: close / reload / init / commit
  */
-void do_site_backend(char *command_line, wzd_context_t * context)
+int do_site_backend(char *command_line, wzd_context_t * context)
 {
   char * ptr;
   char * command, *name;
@@ -141,12 +176,12 @@ void do_site_backend(char *command_line, wzd_context_t * context)
   command = strtok_r(command_line," \t\r\n",&ptr);
   if (!command) {
     do_site_help("backend",context);
-    return;
+    return 1;
   }
   name = strtok_r(NULL," \t\r\n",&ptr);
   if (!name) {
     do_site_help("backend",context);
-    return;
+    return 1;
   }
   if (strcasecmp(command,"close")==0) {
     ret = backend_close(name);
@@ -155,7 +190,7 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     } else {
       ret = send_message_with_args(200,context,"Backend close successfully");
     }
-    return;
+    return 0;
   } /* close */
   if (strcasecmp(command,"init")==0) {
     int backend_storage;
@@ -165,7 +200,7 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     } else {
       ret = send_message_with_args(200,context,"Backend loaded successfully");
     }
-    return;
+    return 0;
   } /* init */
   if (strcasecmp(command,"reload")==0) {
     ret = backend_reload(name);
@@ -174,7 +209,7 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     } else {
       ret = send_message_with_args(200,context,"Backend reloaded successfully");
     }
-    return;
+    return 0;
   } /* reload */
   if (strcasecmp(command,"commit")==0) {
     ret = backend_commit_changes(name);
@@ -183,16 +218,17 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     } else {
       ret = send_message_with_args(200,context,"Backend commited successfully");
     }
-    return;
+    return 0;
   } /* commit */
   do_site_help("backend",context);
+  return 0;
 }
 
 /********************* do_site_chacl ***********************/
-/* chacl: user mode file1 [file2 ...]
+/** chacl: user mode file1 [file2 ...]
  */
 
-void do_site_chacl(char *command_line, wzd_context_t * context)
+int do_site_chacl(char *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
@@ -208,22 +244,22 @@ void do_site_chacl(char *command_line, wzd_context_t * context)
   username = strtok_r(NULL," \t\r\n",&ptr);
   if (!username) {
     do_site_help("chacl",context);
-    return;
+    return 1;
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
-    return;
+    return 1;
   }
   mode = strtok_r(NULL," \t\r\n",&ptr);
   if (!mode) {
     do_site_help("chacl",context);
-    return;
+    return 1;
   }
   /* TODO check that mode is ok */
   if (strlen(mode) > 15) {
     do_site_help("chacl",context);
-    return;
+    return 1;
   }
   long_perms = strtoul(mode,&endptr,8);
   if (endptr != mode) {
@@ -245,13 +281,13 @@ void do_site_chacl(char *command_line, wzd_context_t * context)
 
   snprintf(buffer,BUFFER_LEN,"CHACL: '%s'",command_line);
   ret = send_message_with_args(200,context,buffer);
+  return 0;
 }
 
 /********************* do_site_chmod ***********************/
-/* chmod: mode file1 [file2 ...]
+/** chmod: mode file1 [file2 ...]
  */
-
-void do_site_chmod(char *command_line, wzd_context_t * context)
+int do_site_chmod(char *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
@@ -265,12 +301,12 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
   mode = strtok_r(command_line," \t\r\n",&ptr);
   if (!mode) {
     do_site_help("chmod",context);
-    return;
+    return 1;
   }
   /* TODO check that mode is ok */
   if (strlen(mode) > 15) {
     do_site_help("chmod",context);
-    return;
+    return 1;
   }
   long_perms = strtoul(mode,&endptr,8);
 /*  if (endptr != mode) {
@@ -292,10 +328,11 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
 
   snprintf(buffer,BUFFER_LEN,"CHMOD: '%s'",command_line);
   ret = send_message_with_args(200,context,buffer);
+  return 0;
 }
 
 /********************* do_site_chown ***********************/
-/* chown: user file1 [file2 ...]
+/** chown: user file1 [file2 ...]
  */
 
 void do_site_chown(char *command_line, wzd_context_t * context)
@@ -332,10 +369,9 @@ void do_site_chown(char *command_line, wzd_context_t * context)
 }
 
 /********************* do_site_chpass **********************/
-/* chpass: user new_pass
+/** chpass: user new_pass
  */
-
-void do_site_chpass(char *command_line, wzd_context_t * context)
+int do_site_chpass(char *command_line, wzd_context_t * context)
 {
   char * ptr;
   char * username, *new_pass;
@@ -351,12 +387,12 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
     do_site_help("chpass",context);
-    return;
+    return 1;
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
-    return;
+    return 1;
   }
 
   /* GAdmin ? */
@@ -364,14 +400,14 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
   {
     if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
       ret = send_message_with_args(501,context,"You can't change this user");
-      return ;
+      return 1;
     }
   }
 
   new_pass = strtok_r(NULL," \t\r\n",&ptr);
   if (!new_pass) {
     do_site_help("chpass",context);
-    return;
+    return 1;
   }
 
   ret = backend_chpass(username,new_pass);
@@ -380,10 +416,11 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(501,context,"An error occurred during password change");
   else
     ret = send_message_with_args(200,context,"Password changed, don't forget to commit changes");
+  return 0;
 }
 
 /********************* do_site_checkperm *******************/
-void do_site_checkperm(const char * commandline, wzd_context_t * context)
+int do_site_checkperm(char * commandline, wzd_context_t * context)
 {
   unsigned long word;
   char buffer[BUFFER_LEN];
@@ -396,21 +433,21 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   ptr = &buffer[0];
   
   username = strtok_r(buffer," \t\r\n",&ptr);
-  if (!username) { do_site_help("checkperm",context); return; }
+  if (!username) { do_site_help("checkperm",context); return 1; }
   filename = strtok_r(NULL," \t\r\n",&ptr);
-  if (!filename) { do_site_help("checkperm",context); return; }
+  if (!filename) { do_site_help("checkperm",context); return 1; }
   perms = strtok_r(NULL,"\r\n",&ptr);
-  if (!perms) { do_site_help("checkperm",context); return; }
+  if (!perms) { do_site_help("checkperm",context); return 1; }
 
   word = right_text2word(perms);
   if (word == 0) {
     send_message_with_args(501,context,"Invalid permission");
-    return;
+    return 1;
   }
 
   if (backend_find_user(username,&userstruct,&uid)) {
     send_message_with_args(501,context,"User does not exist");
-    return;
+    return 1;
   }
   if (uid == -1) userptr = &userstruct;
   else userptr = GetUserByID(uid);
@@ -418,7 +455,7 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(filename,buffer,context)) {
     send_message_with_args(501,context,"file does not exist");
-    return;
+    return 1;
   }
  
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
@@ -430,10 +467,11 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   }
   
   send_message_with_args(200,context,buffer);
+  return 0;
 }
 
 /********************* do_site_free ************************/
-/* free sectionname
+/** free sectionname
  */
 
 int do_site_free(char *command_line, wzd_context_t * context)
@@ -486,10 +524,9 @@ int do_site_free(char *command_line, wzd_context_t * context)
 }
 
 /********************* do_site_invite **********************/
-/* invite: ircnick
+/** invite: ircnick
  */
-
-void do_site_invite(char *command_line, wzd_context_t * context)
+int do_site_invite(char *command_line, wzd_context_t * context)
 {
   char * ptr;
   char * ircnick;
@@ -502,7 +539,7 @@ void do_site_invite(char *command_line, wzd_context_t * context)
   ircnick = strtok_r(command_line," \t\r\n",&ptr);
   if (!ircnick) {
     do_site_help("invite",context);
-    return;
+    return 1;
   }
   /* TODO check that user is allowed to be invited ? */
   user = GetUserByID(context->userid);
@@ -518,6 +555,7 @@ void do_site_invite(char *command_line, wzd_context_t * context)
       ircnick);
 
   ret = send_message_with_args(200,context,"SITE INVITE command ok");
+  return 0;
 }
 
 
@@ -529,7 +567,11 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
   char buffer[1024];
   int ret;
   struct wzd_cache_t * fp;
-  wzd_user_t *user;
+  wzd_user_t *user, *me;
+	short is_gadmin;
+
+	me = GetUserByID(context->userid);
+	is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
   if (strlen(filename)==0) {
     ret = send_message_with_args(501,context,"Tell the admin to configure his site correctly");
@@ -599,6 +641,56 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       }
       continue;
     } else /* forallusersconnected */
+
+    if (strncmp(buffer,"%forallgroupmembers",strlen("%forallgroupmembers"))==0) {
+      char * tab_line[256];
+      int i, j;
+      int gid;
+      wzd_context_t dummy_context;
+
+      if (!me->group_num) {continue;}
+      /* we verify here that param (void*) is really a context (magic ?) */
+      if ( ((wzd_context_t*)param)->magic != CONTEXT_MAGIC ) {
+#ifdef DEBUG
+	out_err(LEVEL_CRITICAL,"*** TRYING TO CAST A WRONG POINTER *** %s:%d\n",__FILE__,__LINE__);
+#endif
+	continue;
+      }
+      gid = ((wzd_context_t*)param)->userid; /* yes, I know ! */
+
+      for (i=0; i<256; i++) tab_line[i] = NULL;
+      i=0;
+      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
+	tab_line[i] = malloc(1024);
+	strcpy(tab_line[i],buffer);
+	i++;
+      } /* while */
+      i=0;
+      while (i<HARD_DEF_USER_MAX) {
+	if (GetUserByID(i)->username[0] != '\0') {
+	  /* TODO find if user is in group */
+	  if (is_user_in_group(GetUserByID(i),gid)==1)
+	  {
+	    dummy_context.userid = i;
+	    j=0;
+	    while (tab_line[j]) {
+	      memcpy(buffer,tab_line[j],1024);
+	      ret = cookies_replace(buffer,1024,&dummy_context,context); /* TODO test ret */
+	      send_message_raw(buffer,context);
+	      j++;
+	    }
+	  }
+	} /* is user in group */
+	i++;
+      } /* while */
+      j=0;
+      while (tab_line[j]) {
+	free(tab_line[j]);
+	tab_line[j] = NULL;
+      }
+      continue;
+    } else /* forallgroupmembers */
+
     if (strncmp(buffer,"%forallusers",strlen("%forallusers"))==0) {
       char * tab_line[256];
       int i, j;
@@ -686,7 +778,9 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
   send_message_raw("200 \r\n",context);
 }
 
-void do_site_reload(wzd_context_t * context)
+/********************* do_site_reload **********************/
+
+int do_site_reload(char * ignored, wzd_context_t * context)
 {
   int ret;
   pid_t pid;
@@ -699,7 +793,7 @@ void do_site_reload(wzd_context_t * context)
 #endif
   if (pid <2) {
     ret = send_message_with_args(501,context,"ARG ! Getting invalid pid ?!");
-    return;
+    return 1;
   }
   out_log(LEVEL_CRITICAL,"Target pid: %d\n",pid);
 
@@ -710,6 +804,7 @@ void do_site_reload(wzd_context_t * context)
   else
     snprintf(buffer,255,"200 kill returned ok\r\n");
   ret = send_message_raw(buffer,context);
+  return 0;
 }
 
 #if 0
@@ -770,7 +865,7 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
 #endif /* 0 */
 
 /********************* do_site_user ************************/
-/* user username
+/** user username
  */
 
 void do_site_user(char *command_line, wzd_context_t * context)
@@ -807,11 +902,11 @@ void do_site_user(char *command_line, wzd_context_t * context)
 }
 
 /********************* do_site_utime ***********************/
-/* utime filename YYYYMMDDhhmmss YYYYMMDDhhmmss YYYYMMDDhhmmss UTC
+/** utime filename YYYYMMDDhhmmss YYYYMMDDhhmmss YYYYMMDDhhmmss UTC
  * change acess time, modification time, modification of status of a file
  */
 
-void do_site_utime(char *command_line, wzd_context_t * context)
+int do_site_utime(char *command_line, wzd_context_t * context)
 {
   extern char *strptime (__const char *__restrict __s,
     __const char *__restrict __fmt, struct tm *__tp);
@@ -836,69 +931,174 @@ void do_site_utime(char *command_line, wzd_context_t * context)
   filename = strtok_r(command_line," \t\r\n",&ptr);
   if (!filename) {
     do_site_help("utime",context);
-    return;
+    return 1; 
   }
   new_atime = strtok_r(NULL," \t\r\n",&ptr);
   if (!new_atime) {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   new_mtime = strtok_r(NULL," \t\r\n",&ptr);
   if (!new_mtime) {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   new_ctime = strtok_r(NULL," \t\r\n",&ptr);
   if (!new_ctime) {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   timezone = strtok_r(NULL," \t\r\n",&ptr);
   if (!timezone) {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   /* TODO check that timezone is UTC */
   ptr=strptime(new_atime,"%Y%m%d%H%M%S",&tm_atime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   ptr=strptime(new_mtime,"%Y%m%d%H%M%S",&tm_mtime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   /* TODO ctime is useless in *nix systems ... */
   ptr=strptime(new_ctime,"%Y%m%d%H%M%S",&tm_ctime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
-    return;
+    return 1;
   }
   utime_buf.actime = mktime(&tm_atime);
   utime_buf.modtime = mktime(&tm_mtime);
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(filename,buffer,context)) { /* path is NOT ok ! */
     ret = send_message_with_args(501,context,"File does not exists");
-    return;
+    return 1;
   }
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   ret = _checkPerm(buffer,RIGHT_RNFR,user);  
   if (ret) {
     ret = send_message_with_args(501,context,"Access denied");
-    return;
+    return 1;
   }
 
   ret = utime(buffer,&utime_buf);
 
   ret = send_message_with_args(200,context,"UTIME command ok");
+  return 0;
 }
 
 /********************* do_site_version *********************/
 
-void do_site_version(wzd_context_t * context)
+int do_site_version(char * ignored, wzd_context_t * context)
 {
   send_message_with_args(200,context,WZD_VERSION_STR);
+  return 0;
+}
+
+/********************* site_init ***************************/
+int site_command_add(wzd_site_fct_t **site_list, const char *name, site_fct_t fct)
+{
+  wzd_site_fct_t * new_site, *current;
+
+  new_site = malloc(sizeof(wzd_site_fct_t));
+  if (!new_site) return 1;
+  new_site->name = strdup(name);
+  new_site->fct = fct;
+  new_site->next_site_fct = NULL;
+
+  current = *site_list;
+
+  if (!current) {
+    *site_list = new_site;
+    return 0;
+  }
+
+  /* tail insertion */
+  while (current->next_site_fct)
+    current = current->next_site_fct;
+
+  current->next_site_fct = new_site;
+
+  return 0;
+}
+
+void site_cleanup(wzd_config_t * config)
+{
+  wzd_site_fct_t * next, *current;
+
+  current = mainConfig->site_list;
+
+  while (current)
+  {
+    next = current->next_site_fct;
+    free(current->name);
+    free(current);
+    current = next;
+  }
+  mainConfig->site_list = NULL;
+}
+
+site_fct_t site_find(const char *name)
+{
+  wzd_site_fct_t * current;
+
+  current = mainConfig->site_list;
+  while(current)
+  {
+    if (strcasecmp(current->name,name)==0) return current->fct;
+    current = current->next_site_fct;
+  }
+
+  return NULL;
+}
+
+int site_init(wzd_config_t * config)
+{
+  if (site_command_add(&config->site_list,"ADDUSER",&do_site_adduser)) return 1;
+  if (site_command_add(&config->site_list,"ADDIP",&do_site_addip)) return 1;
+  if (site_command_add(&config->site_list,"BACKEND",&do_site_backend)) return 1;
+  if (site_command_add(&config->site_list,"CHANGE",&do_site_change)) return 1;
+  if (site_command_add(&config->site_list,"CHACL",&do_site_chacl)) return 1;
+  if (site_command_add(&config->site_list,"CHECKPERM",&do_site_checkperm)) return 1;
+  if (site_command_add(&config->site_list,"CHGRP",&do_site_chgrp)) return 1;
+  if (site_command_add(&config->site_list,"CHMOD",&do_site_chmod)) return 1;
+  if (site_command_add(&config->site_list,"CHPASS",&do_site_chpass)) return 1;
+  if (site_command_add(&config->site_list,"CHRATIO",&do_site_chratio)) return 1;
+  /* do_site_close ? */
+  if (site_command_add(&config->site_list,"DELIP",&do_site_delip)) return 1;
+  if (site_command_add(&config->site_list,"DELUSER",&do_site_deluser)) return 1;
+  if (site_command_add(&config->site_list,"FLAGS",&do_site_flags)) return 1;
+  if (site_command_add(&config->site_list,"FREE",&do_site_free)) return 1;
+  if (site_command_add(&config->site_list,"GINFO",&do_site_ginfo)) return 1;
+  if (site_command_add(&config->site_list,"GRPADD",&do_site_grpadd)) return 1;
+  if (site_command_add(&config->site_list,"GRPADDIP",&do_site_grpaddip)) return 1;
+  if (site_command_add(&config->site_list,"GRPDEL",&do_site_grpdel)) return 1;
+  if (site_command_add(&config->site_list,"GRPDELIP",&do_site_grpdelip)) return 1;
+  if (site_command_add(&config->site_list,"GRPRATIO",&do_site_grpratio)) return 1;
+  if (site_command_add(&config->site_list,"GSINFO",&do_site_gsinfo)) return 1;
+  if (site_command_add(&config->site_list,"IDLE",&do_site_idle)) return 1;
+  if (site_command_add(&config->site_list,"INVITE",&do_site_invite)) return 1;
+  if (site_command_add(&config->site_list,"KICK",&do_site_kick)) return 1;
+  if (site_command_add(&config->site_list,"KILL",&do_site_kill)) return 1;
+  if (site_command_add(&config->site_list,"PURGE",&do_site_purgeuser)) return 1;
+  if (site_command_add(&config->site_list,"READD",&do_site_readduser)) return 1;
+  if (site_command_add(&config->site_list,"RELOAD",&do_site_reload)) return 1;
+  /* reopen */
+  /* rules */
+  /* swho */
+  if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
+  if (site_command_add(&config->site_list,"TEST",&do_site_test)) return 1;
+  /* user */
+  /* users */
+  if (site_command_add(&config->site_list,"UTIME",&do_site_utime)) return 1;
+  if (site_command_add(&config->site_list,"VERSION",&do_site_version)) return 1;
+  /* who */
+  /* uptime */
+  /* shutdown */
+  return 0;
 }
 
 /********************* do_site *****************************/
@@ -908,6 +1108,7 @@ int do_site(char *command_line, wzd_context_t * context)
   char buffer[4096];
   char *token, *ptr;
   int ret=0;
+  site_fct_t fct;
   
   token = ptr = command_line;
   token = strtok_r(command_line," \t\r\n",&ptr);
@@ -935,6 +1136,12 @@ int do_site(char *command_line, wzd_context_t * context)
     }
   }
 
+  fct = site_find(token);
+
+  if (fct)
+    return (*fct)(command_line+strlen(token)+1,context);
+
+#if 0
 /******************* ADDUSER ********************/
   if (strcasecmp(token,"ADDUSER")==0) {
     return do_site_adduser(command_line+8,context); /* 8 = strlen("adduser")+1 */
@@ -981,6 +1188,18 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_chpass(command_line+7,context); /* 7 = strlen("chpass")+1 */
     return 0;
   } else
+/******************** RATIO *********************/
+  if (strcasecmp(token,"CHRATIO")==0) {
+    return do_site_chratio(command_line+8,context); /* 8 = strlen("chratio")+1 */
+  } else
+#endif
+/******************** CLOSE *********************/
+  if (strcasecmp(token,"CLOSE")==0) {
+    mainConfig->site_closed = 1;
+    ret = send_message_with_args(250,context,"SITE:","server is now closed");
+    return 0;
+  } else
+#if 0
 /******************** DELIP *********************/
   if (strcasecmp(token,"DELIP")==0) {
     return do_site_delip(command_line+6,context); /* 6 = strlen("delip")+1 */
@@ -997,12 +1216,42 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"FREE")==0) {
     return do_site_free(command_line+5,context); /* 5 = strlen("free")+1 */
   } else
+/******************* GINFO **********************/
+  if (strcasecmp(token,"GINFO")==0) {
+    return do_site_ginfo(command_line+6,context); /* 6 = strlen("ginfo")+1 */
+  } else
+/******************* GRPADD *********************/
+  if (strcasecmp(token,"GRPADD")==0) {
+    return do_site_grpadd(command_line+7,context); /* 7 = strlen("grpadd")+1 */
+  } else
+/******************* GRPADDIP *******************/
+  if (strcasecmp(token,"GRPADDIP")==0) {
+    return do_site_grpaddip(command_line+9,context); /* 9 = strlen("grpaddip")+1 */
+  } else
+/******************* GRPDEL *********************/
+  if (strcasecmp(token,"GRPDEL")==0) {
+    return do_site_grpdel(command_line+7,context); /* 7 = strlen("grpdel")+1 */
+  } else
+/******************* GRPDELIP *******************/
+  if (strcasecmp(token,"GRPDELIP")==0) {
+    return do_site_grpdelip(command_line+9,context); /* 9 = strlen("grpdelip")+1 */
+  } else
+/******************* GRPRATIO *******************/
+  if (strcasecmp(token,"GRPRATIO")==0) {
+    return do_site_grpratio(command_line+9,context); /* 9 = strlen("grpratio")+1 */
+  } else
+/******************* GSINFO *********************/
+  if (strcasecmp(token,"GSINFO")==0) {
+    return do_site_gsinfo(command_line+7,context); /* 7 = strlen("gsinfo")+1 */
+  } else
+#endif
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
     /* TODO check if there are arguments, and call specific help */
     do_site_print_file(mainConfig->site_config.file_help,NULL,context);
     return 0;
   } else
+#if 0
 /******************* IDLE ***********************/
   if (strcasecmp(token,"IDLE")==0) {
     return do_site_idle(command_line+5,context); /* 5 = strlen("idle")+1 */
@@ -1033,6 +1282,13 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_reload(context); /* 7 = strlen("reload")+1 */
     return 0;
   } else
+#endif
+/******************** REOPEN ********************/
+  if (strcasecmp(token,"REOPEN")==0) {
+    mainConfig->site_closed = 0;
+    ret = send_message_with_args(250,context,"SITE:","server is now opened");
+    return 0;
+  } else
 /******************* RULES **********************/
   if (strcasecmp(token,"RULES")==0) {
     do_site_print_file(mainConfig->site_config.file_rules,NULL,context);
@@ -1044,7 +1300,6 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_sfv(command_line+4,context); /* 4 = strlen("sfv")+1 */
     return 0;
   } else
-#endif /* 0 */
 /******************* SWHO ***********************/
   if (strcasecmp(token,"SWHO")==0) {
     do_site_print_file(mainConfig->site_config.file_swho,NULL,context);
@@ -1059,6 +1314,7 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_test(command_line+5,context); /* 5 = strlen("test")+1 */
     return 0;
   } else
+#endif /* 0 */
 /******************* USER ***********************/
   if (strcasecmp(token,"USER")==0) {
     do_site_user(command_line+5,context); /* 5 = strlen("user")+1 */
@@ -1069,6 +1325,7 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_print_file(mainConfig->site_config.file_users,NULL,context);
     return 0;
   } else
+#if 0
 /******************* UTIME **********************/
   if (strcasecmp(token,"UTIME")==0) {
     do_site_utime(command_line+6,context); /* 6 = strlen("utime")+1 */
@@ -1076,9 +1333,10 @@ int do_site(char *command_line, wzd_context_t * context)
   } else
 /******************* VERSION ********************/
   if (strcasecmp(token,"VERSION")==0) {
-    do_site_version(context); /* 8 = strlen("version")+1 */
+    do_site_version(NULL,context); /* 8 = strlen("version")+1 */
     return 0;
   } else
+#endif /* 0 */
 /******************* WHO ************************/
   if (strcasecmp(token,"WHO")==0) {
     do_site_print_file(mainConfig->site_config.file_who,NULL,context);
@@ -1092,8 +1350,8 @@ int do_site(char *command_line, wzd_context_t * context)
     snprintf(buffer,4096,"Uptime: %s",time_to_str(t));
     ret = send_message_with_args(200,context,buffer);
     return 0;
-/******************* SHUTDOWN *******************/
   }
+/******************* SHUTDOWN *******************/
 #ifndef WZD_MULTITHREAD
   else if (strcasecmp(token,"SHUTDOWN")==0) {
     mainConfig->serverstop = 1;
@@ -1114,6 +1372,17 @@ int do_site(char *command_line, wzd_context_t * context)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
     if (hook->hook)
       ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
+    /* custom site commands */
+    if (hook->opt && hook->external_command && strcasecmp(hook->opt,token)==0) {
+      send_message_raw("200-\r\n",context);
+      ret = hook_call_custom(context,hook,command_line+strlen(token)+1);
+      if (!ret) {
+	ret = send_message_with_args(200,context,"SITE command ok");
+      } else {
+	ret = send_message_with_args(200,context,"SITE command failed");
+      }
+      return 0; /* there can be only one site command ! */
+    }
   END_FORALL_HOOKS
 
   if (ret)
