@@ -1,3 +1,50 @@
+#--- cvs commit
+# Apr, 03 2003
+- vfs: added a permission field, which allow per user/group/flag vfs
+  (using same syntax as for site commands)
+- backend plaintext: block signals when writing users file, to avoid being interrupted
+  while writing (double-ctrl+c malediction)
+
+# Mar, 25 2003
+- complete rewrite of config file analyser to use flex
+- site commands handling rewritten
+- write footer informations (space left on device, stats on upload/download) after LIST
+- v_format_message modified to avoid sending message end mark if code
+  is negative
+- added custom site commands
+- added message customization support in config file
+- enhanced cache implementation, with maximum size to cache and
+  hit/miss/refresh mechanism
+- site grpadd (adds a new group), grpdel, grpaddip, grpdelip, gsinfo, grpratio, ginfo
+- new cookies: forallgroupmembers, groupname, groupratio, grouptotal_ul/dl,
+  grouphome, groupmaxidle, groupmaxdl/ul, groupip_allow[0-7]
+- new cookies: usertotal_ul2/dl2 convert number to units (T/G/M/k/b) before dislay
+- when user is deleted his tagline is replaced by '**DELETED**' in cookies
+- updated doc !
+- new directive 'backend_param_plaintext' to give users file to backend
+- rename message_file to dir_message
+- fixed CRITICAL bug, server crash when login with (null) username or pass
+- fixed IMPORTANT bug in cookies_replace function, testing cookie value
+  after modifying it (not in the switch/case way)
+- fixed IMPORTANT bug in plaintext backend: crash whith input 'privgroup '
+
+# Mar, 20 2003
+- changed default compiler to gcc (was gcc-3.2) for linux
+- more checks on string length
+- reduction of buffer size for some variables (lighter in memory !)
+- fixed MANY potentials small problems (leaks/corruptions) using the
+  valgrind debugger to detect
+- renamed pasv_up_range to pasv_high_range
+- first implementation of external hooks (aka cscript)
+- site close/reopen: temporarily close the server except for siteops (e.g for
+  maintenance)
+
+# Mar, 10 2003
+- changed stats ul/dl type from unsigned long to unsigned long long
+- cookie: ratio
+- users file directive: ratio (users/groups)
+- site chratio (change user ratio)
+
 #--- cvs commit TAG: rel-0-1rc3
 # Mar, 05 2003
 - new command: APPE (append with create)

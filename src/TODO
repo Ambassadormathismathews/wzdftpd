@@ -2,17 +2,51 @@
 
 
 '********'
-- give back slots to GAdmins if deleting user
+- finish cache implementation
 '********'
-- site close (temporarily close server for maintainance)
+- convert strings analysis in do_site_print_file to a lex file
+'********'
+- write a proper way to modify banner(220) / welcome_msg(230) / goodbye_msg
+ ++ add possibility to use multi-line directives in .cfg and/or
+    use files for messages (message_230 = +my_file.txt)
+  (221)!
+'********'
+- group management SITE commands: grpkill
+  -- max simultaneous group members
+'********'
+- To Be Documented :
+  -- if root run server, must use server_uid + chown users, user.OLD to
+     server_uid
+'********'
+- fix (small) leaks:
+    + a handle (??)		(12 bytes :)
+==4220== 16 bytes in 1 blocks are still reachable in loss record 3 of 16
+==4220==    at 0x4003DC04: calloc (vg_clientfuncs.c:239)
+==4220==    by 0x402411F2: (within /lib/libdl-2.3.1.so)
+==4220==    by 0x40241836: dlopen (in /lib/libdl-2.3.1.so)
+==4220==    by 0x402946CD: backend_validate (wzd_backend.c:80)
+'********'
+- ratio: weekly allotment
+  -- modify crontab to accept dates (each day/week/month at specified time)
+'********'
+- give back slots to GAdmins if deleting user
+  -- need to store info on who created user
 '********'
 - implement recursive chown/chmod
 '********'
 - implement group flags
 '********'
-- implement hooks to external programs
-'********'
 - stats on ul/dl
+  -- number of files uploaded/downloaded
+'********'
+- vfs: add regexp 'restriction' in wzd_vfs_t to implement per user/group vfs ?
+  -- use same permissions type as for SITE commands
+'********'
+- plaintext: when writing users file, block signals ...
+'********'
+- sfv checker:
+  verify zip integrity
+  extract .diz info
 '********'
 
 
@@ -27,6 +61,8 @@ current objectives:
 '********'
 
 - avoid sending multiples "250-" to be rfc-compliant (message file + answer)
+
+- display correct permissions on ls
 
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
@@ -47,6 +83,8 @@ current objectives:
 
 ## PRIORITY ##
 
+- define a mask for dir creation to force directory names styles
+  (and avoid directory locking ;) path-filter
 - Sub-vfs work, but need to put the physical path after the first node
   e.g:
    vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|
@@ -76,11 +114,9 @@ current objectives:
 
 ## NORMAL ##
 
-- implement 'site purge' without arguments
 - multiple binds / restricted binds: bind to only specified ip(s)
 - change / add / remove vfs with site commands
 - global config flag to close server except for users having this flag
-- 'include' directive in wzd.cfg: ability to split config file
 - message system for users: site msg and/or inline messages
 - add random in PASV port choose, to avoid always using the same
     will be REALLY usefull if we use fork()
@@ -88,6 +124,7 @@ _ possibility to link a backend statically (instead of dll)
 - option : check certificate
 - option : check CA for certificate
 - option : check certificate only at login (not at port/pasv)
+- reward mechanism for top ten winners (credits/slots/...)
 
 ## I'LL THINK ABOUT IT ##
 
