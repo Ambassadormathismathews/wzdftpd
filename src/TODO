@@ -5,8 +5,6 @@
 - create section "cygwin" in doc to document tls & co
   -- pem name _must_ be written in win-form when using winsock+tls
 '********'
-- site addip should accept several ip specified on one line
-'********'
 - getmyip does not seems to work with ipv6 ...
 '********'
 - configure: --enable-internal-sfv || remove wzd_crc32.c file from sources (disable internal

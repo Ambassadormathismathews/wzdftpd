@@ -1,3 +1,12 @@
+# Jun, 12 2003
+- fixed segfault when PORT command has no arguments (Roman Bogorodskiy
+  <bogorodskiy@inbox.ru>)
+- bugfix: configure called with no --prefix= replace ${prefix} by NONE
+
+# Jun, 03 2003
+- sfv module: announce when release is complete
+- site addip and delip can take several ip on one line
+
 # May, 31 2003
 - fixed potential bug with syslog()
 - index slot number from 1 in site delip and grpdelip
