@@ -36,7 +36,6 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
   -- pem name _must_ be written in win-form when using winsock+tls
 '********'
 - getmyip does not seems to work with ipv6 ...
-- ipv6: RFC 2428
 '********'
 - permissions: siteop always have all perms on files (wzd_perm.c) / OK
   and gadmins on their group files

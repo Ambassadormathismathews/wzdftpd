@@ -2060,6 +2060,7 @@ wzd_config_t * readConfigFile(const char *fileName)
 	  out_err(LEVEL_HIGH,"Line too long\n");
 	  continue;
 	}
+        ascii_lower(permission_name,strlen(permission_name));
 	ret = do_permission_line(permission_name,permission_line);
 	wzd_free(permission_line);
       }

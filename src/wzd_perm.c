@@ -134,7 +134,8 @@ wzd_command_perm_t * perm_find_create(const char *commandname, wzd_config_t * co
 
   perm = config->perm_list;
   do {
-    if (strcasecmp(perm->command_name,commandname)==0) {
+    /* we use strcmp because commandname is lowered in wzd_init_lex.l (readConfigFile, case '-') */
+    if (strcmp(perm->command_name,commandname)==0) {
       return perm;
     }
     perm = perm->next_perm;
@@ -253,11 +254,15 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   wzd_cp_t cp;
   char c;
   int negate;
+  unsigned int length;
 
   if (!permname || !permline) return 1;
   if (!strlen(permname) || !strlen(permline)) return 1;
 
-  strncpy(buffer,permline,BUFFER_LEN);
+  /* about 2x faster than strncpy ! (mainly because strlen(permline) << BUFFER_LEN) */
+  if ( (length = strlen(permline)) >= BUFFER_LEN) return 1;
+  memcpy(buffer,permline,length);
+  buffer[length] = '\0';
 
   /* find the perm */
   command_perm = perm_find_create(permname,config);

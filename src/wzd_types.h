@@ -182,7 +182,7 @@
 #define CURRENT_AF AF_INET
 #endif
 
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__FreeBSD__)
 #undef IN6_IS_ADDR_V4MAPPED
 #define ULONG uint32_t
 #endif

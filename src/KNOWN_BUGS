@@ -24,3 +24,10 @@ drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO
 
 - rename dir1/dirname dir2/ does not work,
   rename dir1/dirname dir2/dirname is ok - is it expected ?
+
+- FreeBSD (at least 5.2): ./autogen.sh fails with error ltconfig: No such file or directory
+  -> solution: this is a conflict in several libtool installation - install ONE version !
+
+- FreeBSD: ./autogen.sh conplains it cannot find autoconf/libtool
+  -> solution: go to /usr/local/bin and create symlinks autoconf -> autoconf257, libtool -> libtool15,
+    libtoolize -> libtoolize15
