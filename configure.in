@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 
-PACKAGE=wzdFTPd
+PACKAGE=wzdftpd
 VERSION=0.1rc4
 
 # Set to 0 if you don't want SSL
@@ -28,7 +28,7 @@ VERSION=0.1rc4
 AC_PREREQ(2.57)
 AC_INIT(PACKAGE, VERSION, chifflier@cpe.fr)
 AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
-AM_INIT_AUTOMAKE(wzdFTPd,0.1rc4,no-define)
+AM_INIT_AUTOMAKE(wzdftpd,0.1rc4,no-define)
 #AM_CONFIG_HEADER([config.h])
 
 # Checks for programs.
@@ -73,6 +73,7 @@ AC_CONFIG_FILES([Makefile
                  modules/sfv/Makefile
                  modules/test/Makefile
                  src/Makefile
+                 src/wzd.cfg
                  tools/Makefile
                  tools/siteuptime/Makefile
                  tools/sitewho/Makefile])
