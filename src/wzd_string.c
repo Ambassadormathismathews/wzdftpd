@@ -66,6 +66,7 @@ wzd_string_t * str_allocate(void)
 void str_deallocate(wzd_string_t *st)
 {
   if (st) {
+    wzd_free(st->buffer);
 #ifdef DEBUG
     memset(st,0xab,sizeof(wzd_string_t));
 #endif
@@ -136,8 +137,9 @@ wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src)
     out_err(LEVEL_CRITICAL,"invalid string (%s) at %s:%d\n",src->buffer,__FILE__,__LINE__);
     return NULL;
   }
-  if ( (dst->length >= dst->allocated) ||
-       (dst->length != strlen(dst->buffer)) )
+  if ( dst->buffer &&
+      ((dst->length >= dst->allocated) ||
+       (dst->length != strlen(dst->buffer))) )
   {
     out_err(LEVEL_CRITICAL,"invalid string (%s) at %s:%d\n",dst->buffer,__FILE__,__LINE__);
     return NULL;
@@ -152,6 +154,62 @@ wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src)
 
   return dst;
 }
+
+/* str_append
+ * append 'tail' to string pointed to by str
+ */
+wzd_string_t * str_append(wzd_string_t * str, const char *tail)
+{
+  size_t length;
+
+  if (!str) return NULL;
+  if (!tail) return str;
+
+  length = strlen(tail);
+
+  _str_set_min_size(str,str->length + length + 1);
+  if (str->buffer) {
+    memcpy(str->buffer + str->length, tail, length);
+    str->length += length;
+    str->buffer[str->length] = '\0';
+  }
+
+  return str;
+}
+
+
+
+
+/* str_sprintf
+ * Produce output according to format and variable number of arguments,
+ * and write output to str.
+ */
+int str_sprintf(wzd_string_t *str, const char *format, ...)
+{
+  va_list argptr;
+  int result;
+
+  if (!str) return -1;
+  if (!format) return -1;
+
+  if (!str->buffer)
+    _str_set_min_size(str,strlen(format)+1);
+
+  va_start(argptr,format); /* note: ansi compatible version of va_start */
+
+  result = vsnprintf(str->buffer, str->allocated, format, argptr);
+  if (result < 0) return result;
+  if (result >= str->allocated)
+  {
+    _str_set_min_size(str, result+1);
+    result = vsnprintf(str->buffer, str->allocated, format, argptr);
+  }
+
+  va_end (argptr);
+
+  return result;
+}
+
 
 
 

@@ -453,11 +453,11 @@ int is_hidden_file(const char *filename)
   if (ptr) {
     if (strcasecmp(ptr+1,HARD_PERMFILE)==0) return 1;
     if (*(ptr+1)=='.' && CFG_GET_OPTION(mainConfig,CFG_OPT_HIDE_DOTTED_FILES)) return 1;
-    if (mainConfig->dir_message[0]!='\0' && strcasecmp(ptr+1,mainConfig->dir_message)==0) return 1;
+    if (mainConfig->dir_message && strcasecmp(ptr+1,mainConfig->dir_message)==0) return 1;
   } else {
     if (strcasecmp(filename,HARD_PERMFILE)==0) return 1;
     if (filename[0]=='.' && CFG_GET_OPTION(mainConfig,CFG_OPT_HIDE_DOTTED_FILES)) return 1;
-    if (mainConfig->dir_message[0]!='\0' && strcasecmp(filename,mainConfig->dir_message)==0) return 1;
+    if (mainConfig->dir_message && strcasecmp(filename,mainConfig->dir_message)==0) return 1;
   }
   return 0;
 }

@@ -307,7 +307,7 @@ int set_default_options(void)
   tempConfig.command_list = NULL;
   tempConfig.vfs = NULL;
 
-  tempConfig.dir_message[0] = 0;
+  tempConfig.dir_message = NULL;
 
   tempConfig.server_opts = 0;
 
@@ -702,7 +702,7 @@ int cfg_read_dir_message(void)
   end = filename;
   while (*end && (*end==' ' || *end=='\t')) end++;
 
-  strncpy(tempConfig.dir_message,end,sizeof(tempConfig.dir_message));
+  tempConfig.dir_message = wzd_strdup(end);
 
   if (chtbl_insert((CHTBL*)tempConfig.htab, "dir_message", wzd_strdup(end), NULL, NULL, wzd_free))
     ; /* error */

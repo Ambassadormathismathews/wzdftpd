@@ -1199,6 +1199,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       int length;
       unsigned int size;
 
+      if (!mainConfig->dir_message) {
+        cookie_ptr = internalbuffer;
+        cookie_length = 0;
+        break;
+      }
+
       if (checkpath_new(".",buffer,context)) {
         snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
         cookie_ptr = internalbuffer;

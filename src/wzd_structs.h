@@ -519,7 +519,7 @@ typedef struct {
   int		loglevel;
   char *        logdir;
   unsigned int  umask;
-  char		dir_message[256];
+  char *	dir_message;
   unsigned int	mainSocket;
   int		controlfd; /**< external control: named pipe, unix socket, or socket */
   unsigned char	ip[MAX_IP_LENGTH];

@@ -800,6 +800,11 @@ int do_site_msg(char *command_line, wzd_context_t * context)
     return 1;
   }
 
+  if (!mainConfig->dir_message) {
+    send_message_with_args(501,context,"no dir_message defined in config");
+    return 1;
+  }
+
   if (checkpath_new(".",msg_file,context)) {
     send_message_with_args(501,context,". does not exist ?!");
     return 1;

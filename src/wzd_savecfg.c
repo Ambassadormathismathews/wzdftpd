@@ -172,7 +172,7 @@ static void save_dirmessage (FILE *file)
   WZD_ASSERT_VOID( file != NULL );
   fprintf( file, "# the name of the file in each dir that should be added to every answer\n");
   fprintf( file, "#dir_message = .message\n");
-  if (mainConfig->dir_message[0])
+  if (mainConfig->dir_message)
     fprintf( file, "dir_message = %s\n", mainConfig->dir_message);
   fprintf( file, "\n");
 }

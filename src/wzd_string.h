@@ -57,15 +57,31 @@ wzd_string_t * str_dup(const wzd_string_t *src);
  */
 wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src);
 
+/* str_append
+ * append 'tail' to string pointed to by str
+ */
+wzd_string_t * str_append(wzd_string_t * str, const char *tail);
+
+
+
+/* str_sprintf
+ * Produce output according to format and variable number of arguments,
+ * and write output to str.
+ */
+int str_sprintf(wzd_string_t *str, const char *format, ...);
 
 
 /******* XXX to be implemented XXX **********/
-wzd_string_t * str_append(wzd_string_t * str, const char *tail);
 wzd_string_t * str_prepend(wzd_string_t * str, const char *head);
 
 wzd_string_t * str_trim(wzd_string_t * str);
 
-int str_sprintf(wzd_string_t *str, const char *format, ...);
+/* str_tok
+ * Extract token from string str
+ *  !! str is modified !!
+ */
+wzd_string_t * str_tok(wzd_string_t *str, const char *delim);
+
 
 #endif /* __WZD_STRING__ */
 

@@ -173,6 +173,7 @@ static void context_init(wzd_context_t * context)
   context->datamode = DATA_PORT;
   context->current_action.current_file = -1;
   context->current_action.token = TOK_UNKNOWN;
+  memset(&context->last_file,0,sizeof(context->last_file));
   context->connection_flags = 0;
   context->data_buffer = NULL;
 /*  context->current_limiter = NULL;*/
@@ -1455,6 +1456,8 @@ static void free_config(wzd_config_t * config)
     wzd_free(mainConfig->config_filename);
   if (mainConfig->pid_file)
     wzd_free(mainConfig->pid_file);
+  if (mainConfig->dir_message)
+    wzd_free(mainConfig->dir_message);
 
   wzd_free(mainConfig->site_config.file_ginfo);
   mainConfig->site_config.file_ginfo = NULL;
