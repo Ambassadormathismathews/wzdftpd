@@ -15,6 +15,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <dlfcn.h>
+#include <pthread.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -32,6 +34,7 @@
 #include "wzd_vfs.h"
 #include "wzd_socket.h"
 #include "wzd_mod.h"
+#include "wzd_crontab.h"
 
 
 /************ PROTOTYPES ***********/
@@ -41,7 +44,7 @@ void serverMainThreadExit(int);
 void child_interrupt(int signum);
 void reset_stats(wzd_server_stat_t * stats);
 
-void check_server_dynamic_ip(void);
+int check_server_dynamic_ip(void);
 void server_rebind(const unsigned char *new_ip, unsigned int new_port);
 
 /************ VARS *****************/
@@ -51,7 +54,13 @@ wzd_shm_t *	mainConfig_shm;
 wzd_context_t *	context_list;
 wzd_shm_t *	context_shm;
 
+wzd_sem_t	limiter_sem;
+
+wzd_cronjob_t	* crontab;
+
 time_t server_start;
+
+unsigned int wzd_server_uid;
 
 
 /************ PUBLIC **************/
@@ -109,6 +118,7 @@ void context_init(wzd_context_t * context)
   context->pid_child = 0;
   context->datamode = DATA_PORT;
   context->current_action.token = TOK_UNKNOWN;
+  context->connection_flags = 0;
 /*  context->current_limiter = NULL;*/
   context->current_ul_limiter.maxspeed = 0;
   context->current_ul_limiter.bytes_transfered = 0;
@@ -292,10 +302,10 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port)
   out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
 }
 
-/* void check_server_dynamic_ip(void)
+/* int check_server_dynamic_ip(void)
  * checks if dynamic ip has changed, and rebind main socket if true
  */
-void check_server_dynamic_ip(void)
+int check_server_dynamic_ip(void)
 {
   struct sockaddr_in sa_current, sa_config;
   unsigned int size;
@@ -303,9 +313,9 @@ void check_server_dynamic_ip(void)
   const unsigned char * str_ip_config;
   const unsigned char * str_ip_pasv;
 
-  if (!mainConfig->dynamic_ip || strlen(mainConfig->dynamic_ip)<=0) return;
+  if (!mainConfig->dynamic_ip || strlen(mainConfig->dynamic_ip)<=0) return 0;
 
-  if (strcmp(mainConfig->dynamic_ip,"0")==0) return;
+  if (strcmp(mainConfig->dynamic_ip,"0")==0) return 0;
 
   /* 1- get my ip */
   size = sizeof(struct sockaddr_in);
@@ -326,7 +336,7 @@ void check_server_dynamic_ip(void)
     if (ret < 0) {
       out_err(LEVEL_HIGH,"get_system_ip FAILED %s:%d\n",
 	  __FILE__,__LINE__);
-      return;
+      return -1;
     }
 /*    out_log(LEVEL_CRITICAL,"SYSTEM IP: %s\n",inet_ntoa(addr_current));*/
     sa_config.sin_addr.s_addr = addr_current.s_addr;
@@ -350,7 +360,7 @@ void check_server_dynamic_ip(void)
 	if( (host_info = gethostbyname(ip)) == NULL)
 	{
 	  out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",ip,__FILE__,__LINE__);
-	  return;
+	  return -1;
 	}
 	memcpy(&sa_config.sin_addr, host_info->h_addr, host_info->h_length);
       }
@@ -390,6 +400,7 @@ void check_server_dynamic_ip(void)
       mainConfig->pasv_ip[3] = str_ip_config[3];
     }
   }
+  return 0;
 }
 
 
@@ -510,8 +521,16 @@ void login_new(int socket_accept_fd)
 
     /* switch to tls mode ? */
 #if SSL_SUPPORT
-    if (mainConfig->tls_type == TLS_IMPLICIT)
-      tls_auth("SSL",context);
+    if (mainConfig->tls_type == TLS_IMPLICIT) {
+      if (tls_auth("SSL",context)) {
+	close(newsock);
+	out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %d.%d.%d.%d\n", userip[0],userip[1],userip[2],userip[3]);
+	/* mark context as free */
+	context->magic = 0;
+	return;
+      }
+      context->connection_flags |= CONNECTION_TLS;
+    }
     context->ssl.data_mode = TLS_CLEAR;
 #endif
 
@@ -520,8 +539,31 @@ void login_new(int socket_accept_fd)
     mainConfig->stats.num_childs++;
 
     context->pid_child = getpid();
-#endif
+#else /* WZD_MULTIPROCESS */
+#ifdef WZD_MULTITHREAD
+    {
+      pthread_t thread;
+      pthread_attr_t thread_attr;
+      int ret;
+
+      ret = pthread_attr_init(&thread_attr);
+      if (ret) {
+	out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
+	return;
+      }
+      if (pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED)) {
+	out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
+	return;
+      }
+      ret = pthread_create(&thread,NULL,clientThreadProc,context);
+      context->pid_child = (unsigned long)thread;
+      out_err(LEVEL_CRITICAL,"Thread created !\n");
+      pthread_attr_destroy(&thread_attr); /* not needed anymore */
+    }
+#else /* WZD_MULTITHREAD */
     clientThreadProc(context);
+#endif /* WZD_MULTITHREAD */
+#endif /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTIPROCESS
     exit (0);
   } else { /* parent */
@@ -534,6 +576,7 @@ void login_new(int socket_accept_fd)
 /* IMPERATIVE STOP REQUEST - exit */
 void interrupt(int signum)
 {
+  int ret;
   /* closing properly ?! */
 #ifdef DEBUG
 #ifndef __CYGWIN__
@@ -542,6 +585,11 @@ fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
 fprintf(stderr,"Received signal %d\n",signum);
 #endif
 #endif
+  /* commit backend changes */
+  ret = backend_commit_changes(mainConfig->backend.name);
+  if (ret) {
+    out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
+  }
   serverMainThreadExit(0);
 }
 
@@ -583,7 +631,9 @@ void child_interrupt(int signum)
 #endif /* WZD_MULTIPROCESS */
 
 
+/************************************************************************/
 /*********************** SERVER MAIN THREAD *****************************/
+/************************************************************************/
 
 void serverMainThreadProc(void *arg)
 {
@@ -593,7 +643,6 @@ void serverMainThreadProc(void *arg)
   int i;
   unsigned int length=0;
   int backend_storage;
-  time_t time_ip_start, time_now;
 
   /* catch broken pipe ! */
 #ifdef __SVR4
@@ -644,12 +693,10 @@ void serverMainThreadProc(void *arg)
 #ifndef __CYGWIN__
   /* if running as root, we must give up root rigths for security */
   {
-    uid_t run_uid=1000; /* XXX FIXME change uid value, read it from command line / config file ... */
-
     /* effective uid if 0 if run as root or setuid */
     if (geteuid() == 0) {
-      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",run_uid,getuid());
-      setuid(run_uid);
+      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",wzd_server_uid,getuid());
+      setuid(wzd_server_uid);
     }
   }
 #endif /* __CYGWIN__ */
@@ -670,11 +717,13 @@ void serverMainThreadProc(void *arg)
   mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
+  /* create limiter sem */
+  limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
+
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (mainConfig->backend.name[0] == '\0') {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     serverMainThreadExit(-1);
-/*    exit (1);*/
   }
   ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
       mainConfig->group_list,HARD_DEF_GROUP_MAX);
@@ -682,8 +731,10 @@ void serverMainThreadProc(void *arg)
   if (ret || mainConfig->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     serverMainThreadExit(-1);
-/*    exit (1);*/
   }
+
+  /********** set up crontab ********/
+/*  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);*/
 
   /********** init modules **********/
   {
@@ -699,7 +750,6 @@ void serverMainThreadProc(void *arg)
 
   /* sets start time, for uptime */
   time(&server_start);
-  time_ip_start = server_start;
 
   /* reset stats TODO load stats ! */
   reset_stats(&mainConfig->stats);
@@ -739,16 +789,16 @@ void serverMainThreadProc(void *arg)
     }
 
     /* check cron jobs */
-    time(&time_now);
-    if ( (time_now - time_ip_start) > HARD_DYNAMIC_IP_INTVL)
-    {
-      time_ip_start += HARD_DYNAMIC_IP_INTVL;
-      check_server_dynamic_ip();
-    }
+    cronjob_run(&crontab);
 
   } /* while (!serverstop) */
 
 
+  /* commit backend changes */
+  ret = backend_commit_changes(mainConfig->backend.name);
+  if (ret) {
+    out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
+  }
   serverMainThreadExit(0);
 }
 
@@ -789,6 +839,7 @@ void serverMainThreadExit(int retcode)
   hook_free(&mainConfig->hook);
   vfs_free(&mainConfig->vfs);
 /*  free(context_list);*/
+  wzd_sem_destroy(limiter_sem);
   wzd_shm_free(context_shm);
   /* free(mainConfig); */
   free_config(mainConfig);
