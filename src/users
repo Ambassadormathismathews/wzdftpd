@@ -13,16 +13,21 @@
 [GROUPS]
 privgroup	admin
 ip_allowed=127.0.0.1
+default_home=/home/pollux
+
+privgroup	users
+default_home=/home/pollux/TODEL/wzdftpd-root
 
 privgroup	anonymous
 max_idle_time=10
+default_home=/home/pollux/TODEL/wzdftpd-root
 
 # users definitions
 # users MUST begin by line name=<>
 [USERS]
 name=pollux
 pass=tobNnnhhJY2Fs
-home=/home/pollux
+home=/home/pollux/TODEL/wzdftpd-root
 uid=501
 groups=admin
 rights=0xffffffff
@@ -32,13 +37,12 @@ ip_allowed=+pollux.no-ip.org
 ip_allowed=*
 ip_allowed=134.214.71.84
 ip_allowed=10.0.0.10
-max_dl_speed=204800
-bytes_ul_total=7742
-bytes_dl_total=0
-flags=OIstHk
+bytes_ul_total=78512705
+bytes_dl_total=1058767184
+flags=OIstH
 
 name=wzdftpd
-pass=UZWwpILn1i4QI
+pass=Oz1iHGIgV8HIQ
 home=/
 uid=0
 groups=admin
@@ -52,16 +56,27 @@ flags=OIstH
 
 name=guest
 pass=%
-home=/var/tmp
+home=/tmp
 uid=200
-groups=nogroup
+groups=anonymous
 rights=0x10003
 ip_allowed=*
-max_dl_speed=100000
+max_dl_speed=20480
+bytes_ul_total=0
+bytes_dl_total=1918812
+num_logins=2
+
+name=gadmin
+pass=yX8sb90MNTHDE
+home=/home/pollux/TODEL/wzdftpd-root
+uid=0
+groups=users
+rights=0xffffffff
+ip_allowed=127.0.0.1
 bytes_ul_total=0
 bytes_dl_total=0
-num_logins=2
-max_idle_time=90
+flags=G
+user_slots=3
 
 # per hosts rights
 [HOSTS]
