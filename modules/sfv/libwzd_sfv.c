@@ -908,6 +908,37 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	  remove(buffer);
 	}
       }
+      {
+	wzd_context_t * context;
+	wzd_user_t * user;
+	char * groupname=NULL;
+	char buffer[2048];
+	char *ptr;
+
+	context = GetMyContext();
+	user = GetUserByID(context->userid);
+	strncpy(buffer,context->currentpath,2048);
+	len = strlen(buffer);
+	if (buffer[len-1] != '/') {
+	  buffer[len++]='/';
+	  buffer[len]='\0';
+	}
+	strncpy(buffer+len,context->last_command+5,2048-len);
+	ptr = strrchr(buffer,'/');
+	if (!ptr) return;
+	*ptr='\0';
+	if (user->group_num>0) {
+	  wzd_group_t * group;
+	  group = GetGroupByID(user->groups[0]);
+	  if (group) groupname = group->groupname;
+	}
+	log_message("COMPLETE","\"%s\" \"%s\" \"%s\" \"%s\"",
+	    buffer, /* ftp-absolute path */
+	    user->username,
+	    (groupname)?groupname:"No Group",
+	    user->tagline
+	    );
+      }
     } else { /* incomplete */
       snprintf(buffer,255,progressmeter,(int)percent);
 
