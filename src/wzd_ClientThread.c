@@ -1300,6 +1300,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   cmd = wzd_malloc(WZD_MAX_PATH+1);
   path = wzd_malloc(WZD_MAX_PATH+1);
+  buffer = wzd_malloc(WZD_MAX_PATH+1);
 
   user = GetUserByID(context->userid);
 
@@ -1320,7 +1321,6 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   REMOVE_TRAILING_SLASH(path);
 
-  buffer = wzd_malloc(WZD_MAX_PATH+1);
   ret = checkpath_new(param,buffer,context);
   if (ret != E_FILE_NOEXIST) goto label_error_mkdir;
 
@@ -1415,7 +1415,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       strcpy(buffer,param);
     }
     stripdir(buffer,path,WZD_MAX_PATH-1);
-    
+
     log_message("NEWDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
         path, /* ftp-absolute path */
         user->username,

@@ -1,3 +1,7 @@
+2005-03-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: mkd command crashes the server if user doesn't have RIGHT_MKDIR (Closes: #0031)
+
 2005-03-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: unresolved symbols when compiling without TLS
