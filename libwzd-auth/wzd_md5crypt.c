@@ -141,7 +141,7 @@ char * md5_crypt(const char *pw, const char *salt)
 char * md5_hash_r(const char *pw, char * out, size_t len)
 {
   MD5_DIGEST digest;
-  int j;
+  unsigned int j;
 
   if (!pw) return NULL;
   if (len <= 2*sizeof(digest)) return NULL;
