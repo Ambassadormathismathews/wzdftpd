@@ -1,3 +1,9 @@
+2004-03-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: file cookies not working for POSTUPLOAD event
+	* bugfix: problems calling tcl script with arguments
+	* feature: added vars_user_{get,set} and interface in tcl
+
 2004-03-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: first service implementation (visual): register/unregister, start/stop

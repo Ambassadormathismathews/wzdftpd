@@ -41,6 +41,10 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     snprintf(data,datalength,"%lu",get_bandwidth());
     return 0;
   }
+  if (strcmp(varname,"login_pre_ip_check")==0) {
+    snprintf(data,datalength,"%d",config->login_pre_ip_check);
+    return 0;
+  }
   if (strcmp(varname,"loglevel")==0) {
     snprintf(data,datalength,"%s",loglevel2str(config->loglevel));
     return 0;
@@ -108,5 +112,50 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
     config->loglevel = i;
     return 0;
   }
+  return 1;
+}
+
+int vars_user_get(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  wzd_user_t * user;
+
+  if (!username || !varname) return 1;
+
+  user = GetUserByName(username);
+  if (!user) return 1;
+
+  if (strcasecmp(varname,"home")==0) {
+    snprintf(data,datalength,"%s",user->rootpath);
+    return 0;
+  }
+  if (strcasecmp(varname,"maxdl")==0) {
+    snprintf(data,datalength,"%ld",user->max_dl_speed);
+    return 0;
+  }
+  if (strcasecmp(varname,"maxul")==0) {
+    snprintf(data,datalength,"%ld",user->max_ul_speed);
+    return 0;
+  }
+  if (strcasecmp(varname,"name")==0) {
+    snprintf(data,datalength,"%s",user->username);
+    return 0;
+  }
+  if (strcasecmp(varname,"tag")==0) {
+    snprintf(data,datalength,"%s",user->tagline);
+    return 0;
+  }
+
+  return 1;
+}
+
+int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  wzd_user_t * user;
+
+  if (!username || !varname) return 1;
+
+  user = GetUserByName(username);
+  if (!user) return 1;
+
   return 1;
 }

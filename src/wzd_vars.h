@@ -35,4 +35,14 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
  */
 int vars_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
 
+/** fills data with varname content (from user), max size: datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_user_get(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
+/** change varname (from user) with data contents size of data is datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
 #endif /* __WZD_VARS__ */

@@ -1149,6 +1149,41 @@ void serverMainThreadProc(void *arg)
     }
   }
 
+#if 0
+  /* set up control named pipe */
+#ifndef _MSC_VER
+#else /* _MSC_VER */
+
+#define PIPE_BUFSIZE 4096
+  {
+    HANDLE hpipe;
+    LPTSTR pipeName = "\\\\.\\pipe\\wzdftpd";
+    int fdp;
+
+    hpipe = CreateNamedPipe(
+      pipeName,
+      PIPE_ACCESS_DUPLEX, /* read/write access */
+      PIPE_TYPE_MESSAGE |
+      PIPE_READMODE_MESSAGE |
+      PIPE_NOWAIT,
+      PIPE_UNLIMITED_INSTANCES,
+      PIPE_BUFSIZE,     /* output buffer size */
+      PIPE_BUFSIZE,     /* input buffer size */
+      NMPWAIT_USE_DEFAULT_WAIT,
+      NULL);
+
+    if (hpipe == INVALID_HANDLE_VALUE) {
+      out_log(LEVEL_HIGH,"Could not create pipe");
+    }
+
+    fdp = _open_osfhandle((long)hpipe,0);
+    out_log(LEVEL_FLOOD,"Named pipe created, fd: %d\n",fdp);
+
+    CloseHandle(hpipe);
+  }
+#endif /* _MSC_VER */
+#endif
+
 #ifndef WIN32
   /* if running as root, we must give up root rigths for security */
   {

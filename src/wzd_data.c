@@ -252,7 +252,6 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
-      context->current_action.token = TOK_UNKNOWN;
       context->state = STATE_COMMAND;
       data_close(context);
       ret = send_message(226,context);
@@ -272,6 +271,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
           ret = hook_call_external(hook,argbuf);
         }
       END_FORALL_HOOKS
+      context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
     }
     break;

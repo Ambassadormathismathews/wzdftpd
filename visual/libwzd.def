@@ -133,6 +133,8 @@ EXPORTS
 	user_ip_inlist
 	vars_get
 	vars_set
+	vars_user_get
+	vars_user_set
 	vfs_add
 	vfs_add_restricted
 	vfs_free
