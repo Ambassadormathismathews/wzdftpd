@@ -174,6 +174,26 @@ static int group_ip_add(wzd_group_t * group, const char *newip)
   return 1; /* full */
 }
 
+static int _get_index_from_uid(unsigned int uid)
+{
+  unsigned int i;
+
+  for (i=0; i<user_count_max; i++) {
+    if (user_pool[i].uid == uid) return i;
+  }
+  return -1;
+}
+
+static int _get_index_from_gid(unsigned int gid)
+{
+  unsigned int i;
+
+  for (i=0; i<group_count_max; i++) {
+    if (group_pool[i].gid == gid) return i;
+  }
+  return -1;
+}
+
 static void user_init_struct(wzd_user_t * user)
 {
   register int i;
@@ -335,12 +355,24 @@ static int write_user_file(void)
     /* write ALL groups */
     /* TODO check buffer overflow */
     if (user_pool[i].group_num>0) {
-      strcpy(buffer,group_pool[user_pool[i].groups[0]].groupname);
-      for (j=1; j<user_pool[i].group_num; j++) {
-        strcat(buffer,",");
-        strcat(buffer,group_pool[user_pool[i].groups[j]].groupname);
+      int index;
+      /** FIXME does not work, we must find group by gid */
+      index = _get_index_from_gid(user_pool[i].groups[0]);
+      if (index == -1) {
+        /* FIXME warn user */
+      } else {
+        strcpy(buffer,group_pool[index].groupname);
+        for (j=1; j<user_pool[i].group_num; j++) {
+          strcat(buffer,",");
+          index = _get_index_from_gid(user_pool[i].groups[j]);
+          if (index == -1) {
+            /* FIXME warn user */
+          } else {
+            strcat(buffer,group_pool[index].groupname);
+          }
+        }
+        fprintf(file,"groups=%s\n",buffer);
       }
-      fprintf(file,"groups=%s\n",buffer);
     }
     fprintf(file,"rights=0x%lx\n",user_pool[i].userperms);
     if (strlen(user_pool[i].tagline)>0)
