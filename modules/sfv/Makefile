@@ -29,6 +29,9 @@ intel:
 install: release
 	install --mode=755 $(TARGET) $(DESTDIR)
 
+installdebug: debug
+	install --mode=755 $(TARGET) $(DESTDIR)-debug
+
 uninstall: release
 	rm -f $(DESTDIR)/$(TARGET)
 

@@ -30,6 +30,10 @@ install: release
 	install --mode=755 $(TARGET) $(DESTDIR); \
 	install --mode=660 ../../src/users $(DESTDIR)
 
+installdebug: debug
+	install --mode=755 $(TARGET) $(DESTDIR)-debug; \
+	install --mode=660 ../../src/users $(DESTDIR)-debug
+
 uninstall: release
 	rm -f  $(DESTDIR)/$(TARGET); \
 	rm -f $(DESTDIR)/users

@@ -14,6 +14,9 @@ release:
 install:
 	make recursive 'RECURSIVE_TARGET=install'
 
+installdebug:
+	make recursive 'RECURSIVE_TARGET=installdebug'
+
 uninstall:
 	make recursive 'RECURSIVE_TARGET=uninstall'
 

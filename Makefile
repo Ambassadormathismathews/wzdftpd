@@ -15,6 +15,10 @@ install:
 	mkdir -p -m 755 $(DESTDIR); \
 	make recursive 'RECURSIVE_TARGET=install'
 
+installdebug:
+	mkdir -p -m 755 $(DESTDIR)-debug; \
+	make recursive 'RECURSIVE_TARGET=installdebug'
+
 uninstall:
 	make recursive 'RECURSIVE_TARGET=uninstall'; \
 	rmdir $(DESTDIR)
