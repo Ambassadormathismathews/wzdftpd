@@ -1,3 +1,23 @@
 - winsock version: ctrl+c is not handled instantaneously, but only after an
   interruptible function is called in main loop (printf,login, etc)
  consequence: ctrl+c is only handled next time a client tries to log in
+
+- after a kill the data connection of the killer seems corrupted:
+---> SITE kill 16386
+<--- 200 KILL signal sent
+200 KILL signal sent
+lftp pollux@localhost:/> ls
+---> PASV
+<--- 227 Entering Passive Mode (127,0,0,1,9,196)
+---- Connexion du socket de données à (127.0.0.1) port 2500
+---> LIST
+<--- 501 No data connection available.
+---- Fermeture du socket de données
+ls: L'accès a échoué: 501 No data connection available.
+lftp pollux@localhost:/> ls
+---> PASV
+<--- 227 Entering Passive Mode (127,0,0,1,9,197)
+---- Connexion du socket de données à (127.0.0.1) port 2501
+---> LIST
+<--- 150 Status OK, about to open data connection.
+
