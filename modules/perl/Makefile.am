@@ -1,0 +1,9 @@
+
+libdir = ${pkgdatadir}/modules
+
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src $(WZD_PERL_INCLUDES)
+
+lib_LTLIBRARIES = libwzd_perl.la
+
+libwzd_perl_la_SOURCES = libwzd_perl.c
+libwzd_perl_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd $(WZD_PERL_LIBS)

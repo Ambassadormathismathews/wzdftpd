@@ -13,25 +13,29 @@ if HAVE_JW
 all: html
 
 html: wzdftpd-doc/index.html
+php: wzdftpd-doc/index.php
 
 pdf: wzdftpd-doc/wzdftpd.pdf
 
 html-online: html
 	./fix_css.sh wzdftpd-doc
 
-php: $(ALL_SGML_FILES) $(HTML_DEPS) wzd_custom.dsl
-	$(JW) -d wzd_custom.dsl#html -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
+php-online: php
+	./fix_css.sh wzdftpd-doc
+
+wzdftpd-doc/index.php: $(ALL_SGML_FILES) $(HTML_DEPS) wzd_custom.dsl
+	$(JW) -d wzd_custom.dsl#php -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
 
 wzdftpd-doc/index.html: $(ALL_SGML_FILES) $(HTML_DEPS)
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
-	$(JW) -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
+	$(JW) -d wzd_custom.dsl#html -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
 
 wzdftpd-doc/wzdftpd.pdf: $(ALL_SGML_FILES)
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
 	$(JW) -o wzdftpd-doc -b pdf $(MAIN_SGML_FILE)
 
 clean:
-	rm -f wzdftpd-doc/*.html wzdftpd-doc/*.pdf wzdftpd-doc/*.out
+	rm -f wzdftpd-doc/*.html wzdftpd-doc/*.php wzdftpd-doc/*.pdf wzdftpd-doc/*.out
 
 distclean: clean
 

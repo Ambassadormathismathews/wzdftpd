@@ -2964,6 +2964,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     case TOK_FEAT:
       ret = do_print_message("feat",NULL,context);
       break;
+    case TOK_OPTS:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      ret = do_opts("opts",token,context);
+      break;
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
       ret = send_message_with_args(530,context,"Invalid login sequence");

@@ -16,6 +16,14 @@
 (define %section-autolabel% #t)
 (define (toc-depth nd) 3)
 
+(define %root-filename% "index")   ;; name for the root html file
+(define %use-id-as-filename% #t)   ;; if #t uses ID value, if present, as filename
+                                   ;;   otherwise a code is used to indicate level
+                                   ;;   of chunk, and general element number
+                                   ;;   (nth element in the document)
+(define use-output-dir #f)         ;; output in separate directory?
+(define %output-dir% "HTML")       ;; if output in directory, it's called HTML
+
 </style-specification-body>
 </style-specification>
 
@@ -26,18 +34,26 @@
 ;; HTML Parameters
 ;; Call: jade -d wzd_custom.dsl#html
 
-(define %root-filename% "index")   ;; name for the root html file
-(define %html-ext% ".html")         ;; default extension for html output files
+(define %html-ext% ".html")        ;; default extension for html output files
 (define %html-prefix% "")	   ;; prefix for all filenames generated (except root)
-(define %use-id-as-filename% #t)   ;; if #t uses ID value, if present, as filename
-                                   ;;   otherwise a code is used to indicate level
-                                   ;;   of chunk, and general element number
-                                   ;;   (nth element in the document)
-(define use-output-dir #f)         ;; output in separate directory?
-(define %output-dir% "HTML")       ;; if output in directory, it's called HTML
 
 
 </style-specification-body>
 </style-specification>
+
+<style-specification id="php" use="utils">
+<style-specification-body>
+
+;; ===================================================================
+;; HTML Parameters
+;; Call: jade -d wzd_custom.dsl#php
+
+(define %html-ext% ".php")         ;; default extension for html output files
+(define %html-prefix% "")	   ;; prefix for all filenames generated (except root)
+
+
+</style-specification-body>
+</style-specification>
+
 <external-specification id="docbook" document="html-ss">
 </style-sheet>

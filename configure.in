@@ -19,6 +19,7 @@ sinclude(ac-helpers/berkeley-db.m4)
 sinclude(ac-helpers/mysql.m4)
 sinclude(ac-helpers/openssl.m4)
 sinclude(ac-helpers/pam.m4)
+sinclude(ac-helpers/perl.m4)
 sinclude(ac-helpers/pgsql.m4)
 sinclude(ac-helpers/tcl.m4)
 sinclude(ac-helpers/unicode.m4)
@@ -85,6 +86,7 @@ AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_LIB_OPENSSL(0,9,6,2)
 WZD_LIB_PAM
+WZD_LIB_PERL
 WZD_LIB_MYSQL
 WZD_LIB_PGSQL
 WZD_LIB_TCL
@@ -138,6 +140,7 @@ fi
 
 AC_MSG_CHECKING(whether to build ipv6 support)
 
+wzd_have_ipv6=no
 AC_ARG_ENABLE(ipv6, [  --enable-ipv6           enable ipv6 support (EXPERIMENTAL)],
     if eval "test x$enable_ipv6 = xyes"; then
       AC_MSG_RESULT(yes)
@@ -193,6 +196,7 @@ AH_TEMPLATE([WZD_BUILD_OPTS],
 
 AM_CONDITIONAL([HAVE_MYSQL], [test "$wzd_have_mysql" = "yes"])
 AM_CONDITIONAL([HAVE_PAM], [test "$wzd_have_pam" = "yes"])
+AM_CONDITIONAL([HAVE_PERL], [test "$wzd_have_perl" = "yes"])
 AM_CONDITIONAL([HAVE_TCL], [test "$wzd_have_tcl" = "yes"])
 
 WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
@@ -254,6 +258,7 @@ AC_CONFIG_FILES([Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
                  modules/Makefile
+                 modules/perl/Makefile
                  modules/sfv/Makefile
                  modules/tcl/Makefile
                  modules/test/Makefile
@@ -264,4 +269,27 @@ AC_CONFIG_FILES([Makefile
                  tools/siteuptime/Makefile
                  tools/sitewho/Makefile])
 AC_OUTPUT
+
+
+# print summary
+cat << EOF
+
+Here is a short summary of what I've found on your system :
+
+  core options:
+       debug: $enable_debug
+       IPv6:  $enable_ipv6
+       SSL:   $wzd_lib_openssl
+       UTF-8: $enable_utf8
+
+  backends:
+       MySQL: $wzd_have_mysql
+       PAM:   $wzd_have_pam
+
+  modules:
+       Perl:  $wzd_have_perl
+       SFV:   yes
+       TCL:   $wzd_have_tcl
+
+EOF
 

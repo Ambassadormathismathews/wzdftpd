@@ -1,3 +1,12 @@
+2004-05-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new module: PERL
+	* configure.in: display summary of detected options at end of configure
+	* doc: modifications to allow generation of php
+	* bugfix: allow OPTS command in login sequence to please lftp
+	* bugfix: memory leaks in TCL module
+	* bugfix: fixed compilation for linux when enabling UTF-8
+
 2004-05-15  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new server vars to manipulate user data

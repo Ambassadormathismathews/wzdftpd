@@ -33,16 +33,21 @@
 # include <windows.h>
 #endif
 
-#if HAVE_LANGINFO_CODESET
-# include <langinfo.h>
-#endif
-
 #include "wzd_structs.h"
 
 #include "wzd_log.h"
 #include "wzd_utf8.h"
 
 #include "wzd_debug.h"
+
+#ifdef HAVE_ICONV
+# include <iconv.h>
+#endif
+
+#if HAVE_LANGINFO_CODESET
+# include <langinfo.h>
+#endif
+
 
 #ifdef BSD
 #define	DL_ARG	DL_LAZY

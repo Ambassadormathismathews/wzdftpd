@@ -34,15 +34,6 @@
  * I should use locks and/or use interpreter slaves
  */
 
-/* README
- *
- * The tcl interpreter is shared between all clients, it means all data
- * created by one user can be accessed by another.
- * This can cause some security problems, so be carefull to who you give TCL access.
- *
- * In the future, we'll try to solve this problem managing several Tcl_Interp vars ...
- */
-
 /* URL: http://aspn.activestate.com/ASPN/docs/ActiveTcl/tcl/tcl_13_contents.htm
  */
 
@@ -376,6 +367,7 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
   cookie_parse_buffer(argv[1],user,group,current_context,ptr,4096);
 
   ret = send_message_raw(ptr,current_context);
+  free(ptr);
 
   return TCL_OK;
 }
@@ -393,7 +385,7 @@ static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *a
   /* use checkpath, we don't want to resolve links */
   if (!strcmp(argv[1],"-r") || !strcmp(argv[1],"--real")) {
     /* ex: vfs read -r c:\real */
-    if (argc < 3) return TCL_ERROR;
+    if (argc < 3) { wzd_free(path); return TCL_ERROR; }
     strncpy(path, argv[2], WZD_MAX_PATH);
   } else {
     if ( checkpath(argv[1], path, current_context) ) {
@@ -568,7 +560,7 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
       if (argc <= pos1) return TCL_ERROR;
       strncpy(buffer_real, argv[pos1], sizeof(buffer_real));
     } else {
-      if (checkpath_new(argv[pos1],buffer_real,current_context) != E_FILE_NOEXIST)
+      if (checkpath_new(argv[pos1],buffer_real,current_context))
         return TCL_ERROR;
     }
     ret = file_rmdir(buffer_real,current_context);
