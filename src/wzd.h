@@ -1,7 +1,8 @@
 #ifndef __WZD__
 #define __WZD__
 
-#define WZD_MULTIPROCESS
+/*#define WZD_MULTIPROCESS*/
+/* XXX THIS DOES NO MORE WORKS !!! edit Makefile.config */
 
 #include <stdio.h>
 #include <stdlib.h>
