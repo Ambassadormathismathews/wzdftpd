@@ -227,8 +227,10 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	  char linkbuf[256];
 	  int linksize;
 	  linksize = readlink(filename,linkbuf,255);
-	  if (linksize > 0)
+	  if (linksize > 0) {
+	    linkbuf[linksize]='\0';
 	    snprintf(buffer_name,255,"%s -> %s",entr->d_name,linkbuf);
+	  }
 	  else
 	    snprintf(buffer_name,255,"%s -> (INEXISTANT FILE)",entr->d_name);
 	} else {
