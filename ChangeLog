@@ -1,3 +1,9 @@
+2004-01-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-2
+
+	* feature: site unlock file
+
 2004-01-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: incorrect order of arguments in ident request

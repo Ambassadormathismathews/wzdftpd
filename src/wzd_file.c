@@ -1210,6 +1210,38 @@ fprintf(stderr,"Testing lock for file %d\n",fd);
   return 0;
 }
 
+int file_force_unlock(const char *file)
+{
+  int fd;
+#ifdef WZD_DBG_LOCK
+fprintf(stderr,"Forcing unlock file %s\n",file);
+#endif
+
+  fd = open(file,O_RDWR);
+  if (fd < 0) return -1;
+  
+#ifndef _MSC_VER
+  {
+    struct flock lck;
+    lck.l_type = F_UNLCK;
+    lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
+    lck.l_start = 0;
+    lck.l_len = 0;
+    if (fcntl(fd, F_SETLK, &lck) < 0) {
+      close(fd);
+      return -1;
+    }
+  }
+#else
+  if (_locking(fd, LK_UNLCK, -1) == -1)
+  {
+    close(fd);
+    return -1;
+  }
+#endif
+  close(fd);
+  return 0;
+}
 
 /* wrappers just to keep things in same memory zones */
 int file_read(int fd,void *data,unsigned int length)

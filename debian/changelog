@@ -1,3 +1,9 @@
+wzdftpd (0.2-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- pollux <pollux@wzdftpd.net>  Mon, 26 Jan 2004 14:02:36 +0100
+
 wzdftpd (0.1-1) unstable; urgency=low
 
   * New upstream release

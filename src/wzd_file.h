@@ -52,6 +52,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 int file_lock(int fd, short lock_mode);
 int file_unlock(int fd);
 int file_islocked(int fd, short lock_mode);
+int file_force_unlock(const char *file);
 
 /* low-level func */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);

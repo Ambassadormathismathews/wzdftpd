@@ -6,17 +6,8 @@
 #WZD_MULTIPROCESS=1
 #WZD_MULTITHREAD=1
 
-# Uncomment if you prefer sfv checker compiled in the exe
-# + reduces the number of files
-# - cannot be reloaded dynamically
-#
-# NOTE : as an evidence, it would be _stupid_ to enable internal sfv and
-#   sfv module at the same time, so check your .cfg ...
-#INTERNAL_SFV=1
-
-
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.2cvs, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.2, pollux@wzdftpd.net)
 
 #AC_CANONICAL_HOST
 
@@ -24,7 +15,7 @@ AC_INIT(wzdftpd, 0.2cvs, pollux@wzdftpd.net)
 AC_CANONICAL_TARGET
 AC_CYGWIN
 
-AM_INIT_AUTOMAKE(wzdftpd,0.2cvs,no-define)
+AM_INIT_AUTOMAKE(wzdftpd,0.2,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -57,11 +48,12 @@ AC_PROG_MAKE_SET
 
 dnl not building static libraries makes compilation fail on *bsd !
 dnl AC_DISABLE_STATIC
-if eval "test x$CYGWIN != xyes"; then
-  CXX=no
-  #F77=no
-  #GCJ=no
-fi
+dnl following also fails on *BSD
+#if eval "test x$CYGWIN != xyes"; then
+#  CXX=no
+#  #F77=no
+#  #GCJ=no
+#fi
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 

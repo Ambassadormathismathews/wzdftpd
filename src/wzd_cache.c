@@ -164,7 +164,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   } else {
     c->data = malloc(length);
     if ( (ret=read(fd,c->data,length)) != length ) {
-      out_err(LEVEL_FLOOD,"Read only %ld bytes\n",ret);
+      out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",ret,length);
     }
     c->datasize = length;
     /* we can close the fd here */

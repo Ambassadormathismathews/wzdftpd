@@ -941,6 +941,47 @@ int do_site_savecfg(char *command_line, wzd_context_t * context)
 	return 0;
 }
 
+/********************* do_site_unlock **********************/
+/** unlock: file1 [file2 ...]
+ */
+
+int do_site_unlock(char *command_line, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * filename;
+  int ret;
+
+  ptr = command_line;
+  filename = strtok_r(command_line," \t\r\n",&ptr);
+  if (!filename) {
+    do_site_help("unlock",context);
+    return 1;
+  }
+
+  do
+  {
+    /* convert file to absolute path, remember file_unlock wants ABSOLUTE paths ! */
+    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
+
+    /* we need to use open() directly because file_open uses file_islocked ... */
+    ret = file_force_unlock(buffer);
+    if (ret < 0) {
+      break;
+    }
+  }
+  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) );
+
+  if (ret == 0) {
+    ret = send_message_with_args(200,context,"file(s) unlocked");
+  } else {
+    snprintf(buffer,BUFFER_LEN,"UNLOCK FAILED on file: '%s'",filename);
+    ret = send_message_with_args(501,context,buffer);
+  }
+
+  return 0;
+}
 /********************* do_site_user ************************/
 /** user username
  */
@@ -1441,6 +1482,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
   if (site_command_add(&config->site_list,"TAKE",&do_site_take)) return 1;
   if (site_command_add(&config->site_list,"TEST",&do_site_test)) return 1;
+  if (site_command_add(&config->site_list,"UNLOCK",&do_site_unlock)) return 1;
   /* user */
   /* users */
   if (site_command_add(&config->site_list,"UTIME",&do_site_utime)) return 1;

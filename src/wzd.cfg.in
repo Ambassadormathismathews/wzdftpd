@@ -286,6 +286,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_swho = +O
 -site_tagline = !=guest *
 -site_take = +O
+-site_unlock = +O
 -site_uptime = *
 -site_user = +O +G
 -site_users = -admin
