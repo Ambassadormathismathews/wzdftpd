@@ -73,9 +73,9 @@ wzdftpd_SOURCES =    \
 	wzd_tls.h          \
   wzd_init_lex.l
 
-wzdftpd_LDFLAGS = -lwzd -lssl -lpthread -lfl
+wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ -lpthread -lfl -ldl
 
-AM_CPPFLAGS = -DSSL_SUPPORT=1 -DWZD_BUILD_NUM=20030331 -DWZD_VERSION_NUM=\"0.1rc4\" -DWZD_MULTITHREAD -D_REENTRANT
+AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_BUILD_NUM=@BUILDNUM@ -DWZD_VERSION_NUM=\"@VERSION@\" -DWZD_MULTITHREAD -D_REENTRANT
 
 dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
@@ -84,3 +84,10 @@ dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 sysconfdir = ${prefix}/etc/wzdftpd
 
 dist_sysconf_DATA = wzd.cfg wzd.pem users
+
+install-data-hook:
+	${INSTALL_PROGRAM} -m 775 -d @datadir@/wzdftpd/logs
+
+uninstall-hook:
+	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs
+
