@@ -601,6 +601,10 @@ static void save_custommessages (FILE *file)
   if (file==NULL) return;
   fprintf( file, "##### CUSTOM MESSAGES\n");
   fprintf( file, "# You can modify custom ftp replies here\n");
+  fprintf( file, "# Define message like that if on one line:\n");
+  fprintf( file, "#   message_<num> = My custom message\n");
+  fprintf( file, "# You can also use files to include messages:\n");
+  fprintf( file, "#   message_num = +/path/to/file\n");
   fprintf( file, "# I STRONGLY recommend to leave messages 227 (pasv reply), 250 (cwd) untouched\n");
   fprintf( file, "# most interesting messages are:\n");
   fprintf( file, "#  220 (banner), 230 (welcome message), 221 (logout)\n");

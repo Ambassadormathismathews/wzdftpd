@@ -3,8 +3,6 @@
 - use 'rats','splint' for security audit
 
 '********'
-- BUG get_message has a memory leak when returning a file
-'********'
 - v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
   220- ... 220 command ok (easier !)
 '********'

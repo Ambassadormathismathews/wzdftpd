@@ -109,7 +109,7 @@ void free_messages(void)
   }
 }
 
-const char * getMessage(int code)
+const char * getMessage(int code, int *must_free)
 {
   const char * ptr;
   char * file_buffer;
@@ -117,6 +117,7 @@ const char * getMessage(int code)
 
   if (code < 0 || code > HARD_MSG_LIMIT)
     return DEFAULT_MSG;
+  *must_free = 0;
   ptr = msg_tab[code];
   if (!ptr || strlen(ptr)==0) return DEFAULT_MSG;
   if (ptr[0]=='+') { /* returns file content */
@@ -132,7 +133,7 @@ const char * getMessage(int code)
     }
     file_buffer[filesize]='\0';
     wzd_cache_close(fp);
-    /* XXX FIXME memory will never be freed ! */
+    *must_free = 1;
     return file_buffer;
   }
   return ptr;

@@ -598,6 +598,7 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
   unsigned int size;
   char work_buf[WORK_BUF_LEN];
   char is_terminated=1;
+  int must_free;
   /* XXX 4096 should ALWAYS be >= length */
 
 #ifdef DEBUG
@@ -612,11 +613,15 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
     code = abs(code);
   }
 
-  msg = getMessage(code);
+  msg = getMessage(code,&must_free);
   ptr = work_buf;
 
   /* first, format message */
   vsnprintf(work_buf,WORK_BUF_LEN,msg,argptr);
+
+  if (must_free) {
+    free ( (char*)msg );
+  }
 
   /* adjust size, we will need more space to put the code and \r\n */
   length -= 7;

@@ -216,6 +216,10 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 
 ##### CUSTOM MESSAGES
 # You can modify custom ftp replies here
+# Define message like that if on one line:
+#   message_<num> = My custom message
+# You can also use files to include messages:
+#   message_num = +/path/to/file
 # I STRONGLY recommend to leave messages 227 (pasv reply), 250 (cwd) untouched
 # most interesting messages are:
 #  220 (banner), 230 (welcome message), 221 (logout)
@@ -275,7 +279,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_savecfg = +O
 -site_sfv = *
 -site_shutdown = +O
--site_swho = -admin
+-site_swho = +O
 -site_tagline = !=guest *
 -site_take = +O
 -site_uptime = *
@@ -290,5 +294,5 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_vfsdel = +O
 
 # REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
--site_my_free = *
--site_test = =pollux
+#-site_my_free = *
+#-site_test = =pollux
