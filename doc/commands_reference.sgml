@@ -197,7 +197,7 @@ This will give dir1 to user <quote>toto</quote>,
 </varlistentry>
 
 <varlistentry id='site_chpass'><term>
-site chpass &lt;user&gt; &lt;password&gt;
+site chpass [&lt;user&gt;] &lt;password&gt;
 </term>
 <listitem>
 <para>Change user password.</para>
@@ -205,6 +205,8 @@ site chpass &lt;user&gt; &lt;password&gt;
 <para>This will change the password to 'newpassword' for the user 'toto'.</para>
 <para>% denotes any password</para>
 <para>If you are a gadmin, you can only change users from your group.</para>
+<para>If no user name is specified, it changes your own password.</para>
+<screen>ex: site chpass newpassword</screen>
 </listitem>
 </varlistentry>
 

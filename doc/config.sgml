@@ -407,10 +407,19 @@ user names.
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_server_gid'><term>server_gid (default: none)</term>
+<listitem>
+<para>Change the group ID of the server after binding port.
+This is usefull only if server is runned by root
+<screen>server_gid = users</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_server_uid'><term>server_uid (default: none)</term>
 <listitem>
 <para>[Linux] Server will drop privileges and change its uid to server_uid
-after binding port. This is usefull only if server is riunned by root
+after binding port. This is usefull only if server is runned by root
 <screen>server_uid = toto</screen>
 </para>
 <para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system
