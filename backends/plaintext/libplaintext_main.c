@@ -1235,6 +1235,22 @@ int  FCN_COMMIT_CHANGES(void)
 
 wzd_user_t * FCN_GET_USER(int uid)
 {
+  if (uid == -2) {
+    int * uid_list = NULL;
+    unsigned int i, index;
+
+    uid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+    i = index = 0;
+    while (i < user_count_max) {
+      if (user_pool[i].username[0]!='\0' && user_pool[i].uid!=-1)
+        uid_list[index++] = user_pool[i].uid;
+      i++;
+    }
+    uid_list[i] = -1;
+
+    return (wzd_user_t*)uid_list;
+  }
+
   if (uid < 0 || uid >= user_count_max) return NULL;
   if (user_pool[uid].username[0] == '\0') return NULL;
   return &user_pool[uid];
@@ -1242,6 +1258,22 @@ wzd_user_t * FCN_GET_USER(int uid)
 
 wzd_group_t * FCN_GET_GROUP(int gid)
 {
+  if (gid == -2) {
+    int * gid_list = NULL;
+    unsigned int i, index;
+
+    gid_list = (int*)wzd_malloc(HARD_DEF_GROUP_MAX*sizeof(int));
+    i = index = 0;
+    while (i < group_count_max) {
+      if (group_pool[i].groupname[0]!='\0' && group_pool[i].gid!=-1)
+        gid_list[index++] = group_pool[i].gid;
+      i++;
+    }
+    gid_list[i] = -1;
+
+    return (wzd_group_t*)gid_list;
+  }
+
   if (gid < 0 || gid >= group_count_max) return NULL;
   if (group_pool[gid].groupname[0] == '\0') return NULL;
   return &group_pool[gid];

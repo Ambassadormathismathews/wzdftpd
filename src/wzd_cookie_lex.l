@@ -620,54 +620,70 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allusers")==0)
       {
         wzd_user_t * loop_user;
-        for (i=0; i<=32767; i++) /** \todo XXX this is horrible ! */
-        {
-          loop_user = GetUserByID(i);
-          current_user = loop_user;
-          if (loop_user && loop_user->username[0] != '\0') {
-            if (out_buffer)
-              cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-            else
-              cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
-          }
-        }
-        current_user = user;
-      } /* allusers */
-      else if (strcmp(condition,"allgroups")==0)
-      {
-        wzd_group_t * loop_group;
-        for (i=0; i<=32767; i++) /** \todo XXX this is horrible ! */
-        {
-          loop_group = GetGroupByID(i);
-          current_group = loop_group;
-          if (loop_group && loop_group->groupname[0] != '\0') {
-            if (out_buffer)
-              cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-            else
-              cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
-          }
-        }
-        current_group = group;
-      } /* allgroups */
-      else if (strcmp(condition,"allgroupmembers")==0)
-      {
-        wzd_user_t * loop_user;
-        int gid;
-        if (current_group) {
-          gid = GetGroupIDByName(current_group->groupname);
-          for (i=0; i<32767; i++) /** \todo XXX þhis is horrible ! */
+        int * uid_list;
+        uid_list = (int*)backend_get_user(-2);
+        if (uid_list) {
+          for (i=0; uid_list[i] >= 0; i++)
           {
-            loop_user = GetUserByID(i);
+            loop_user = GetUserByID(uid_list[i]);
             current_user = loop_user;
-            if (loop_user && loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
+            if (loop_user && loop_user->username[0] != '\0') {
               if (out_buffer)
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
             }
           }
+          current_user = user;
+          wzd_free(uid_list);
         }
-        current_user = user;
+      } /* allusers */
+      else if (strcmp(condition,"allgroups")==0)
+      {
+        wzd_group_t * loop_group;
+        int * gid_list;
+        gid_list = (int*)backend_get_group(-2);
+        if (gid_list) {
+          for (i=0; gid_list[i] >= 0; i++)
+          {
+            loop_group = GetGroupByID(gid_list[i]);
+            current_group = loop_group;
+            if (loop_group && loop_group->groupname[0] != '\0') {
+              if (out_buffer)
+                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+              else
+                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
+            }
+          }
+          current_group = group;
+          wzd_free(gid_list);
+        }
+      } /* allgroups */
+      else if (strcmp(condition,"allgroupmembers")==0)
+      {
+        wzd_user_t * loop_user;
+        int gid;
+        if (current_group) {
+          int * uid_list;
+
+          uid_list = (int*)backend_get_user(-2);
+          if (uid_list) {
+            gid = GetGroupIDByName(current_group->groupname);
+            for (i=0; uid_list[i] >= 0; i++)
+            {
+              loop_user = GetUserByID(uid_list[i]);
+              current_user = loop_user;
+              if (loop_user && loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
+                if (out_buffer)
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                else
+                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+              }
+            }
+            wzd_free(uid_list);
+          }
+          current_user = user;
+        }
       } /* allgroupmembers */
       else if (strcmp(condition,"allvfs")==0)
       {

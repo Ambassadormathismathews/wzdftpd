@@ -76,6 +76,9 @@ static inline int wzd_row_get_long(long *dst, MYSQL_ROW row, unsigned int index)
 static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index);
 
+static int * wzd_mysql_get_user_list(void);
+static int * wzd_mysql_get_group_list(void);
+
 
 
 
@@ -368,6 +371,8 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_user_t * user;
   unsigned int i,j;
 
+  if (uid == -2) return (wzd_user_t*)wzd_mysql_get_user_list();
+
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE uid='%d'", uid);
 
@@ -485,13 +490,16 @@ wzd_user_t * FCN_GET_USER(int uid)
 
 wzd_group_t * FCN_GET_GROUP(int gid)
 {
-  char *query = (char *)malloc(512);
+  char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row, end_row;
   int num_fields;
   wzd_group_t * group;
   unsigned int i;
 
+  if (gid == -2) return (wzd_group_t*)wzd_mysql_get_group_list();
+
+  query = malloc(512);
   snprintf(query, 512, "SELECT * FROM groups WHERE gid='%d'", gid);
 
   if (mysql_query(&mysql, query) != 0) { 
@@ -604,5 +612,82 @@ static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned 
   }
 
   return 1;
+}
+
+
+static int * wzd_mysql_get_user_list(void)
+{
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row, end_row;
+  int * uid_list;
+  unsigned int index, i;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT uid FROM users");
+
+  if (mysql_query(&mysql, query) != 0) { 
+    free(query);
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  uid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+
+  index = 0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
+    uid_list[index++] = (int)i;
+  }
+
+
+  mysql_free_result(res);
+  free(query);
+
+  return uid_list;
+}
+
+static int * wzd_mysql_get_group_list(void)
+{
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row, end_row;
+  int * gid_list;
+  unsigned int index, i;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT gid FROM groups");
+
+  if (mysql_query(&mysql, query) != 0) { 
+    free(query);
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  gid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+
+  index = 0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
+    gid_list[index++] = (int)i;
+  }
+
+
+  mysql_free_result(res);
+  free(query);
+
+  return gid_list;
 }
 
