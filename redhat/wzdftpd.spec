@@ -3,7 +3,7 @@
 
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.5.0
+Version: 0.5.1
 Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://www.wzdftpd.net
@@ -160,6 +160,9 @@ rm -Rf $RPM_BUILD_ROOT
 ## Changelog
 
 %changelog
+* Mon Mar 07 2005 Pierre Chifflier <chifflier@cpe.fr>
+- New upstream release
+
 * Mon Feb 21 2005 Pierre Chifflier <chifflier@cpe.fr>
 - New upstream release
 

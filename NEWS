@@ -1,5 +1,13 @@
    NEWS file for wzdftpd
 
+0.5.0: March 07 2005
+
+Fixed problems with configuration (pasv_ip, site_cmd not working, max_ul and
+max_dl not saved for groups). A memory leak has been fixed after client log
+out. chown, chgrp and chmod has been added to perl and tcl modules, as well as a
+log for perl. An incompatibility between OpenSSL and GnuTLS is also probably
+solved. Some unit tests have also been added to the project.
+
 0.5.0: February 21 2005
 
 Many changes: no more shared memory ! (and associated error messages ), the

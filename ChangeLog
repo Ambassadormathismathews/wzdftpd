@@ -1,3 +1,7 @@
+2005-03-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-5-1
+
 2005-03-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: don't try to write empty buffer in LIST

@@ -1,3 +1,9 @@
+wzdftpd (0.5.1-1) unstable; urgency=low
+
+  * New upstream version (Closes: #294534)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  xxx
+
 wzdftpd (0.5.0-1) unstable; urgency=low
 
   * New upstream version
