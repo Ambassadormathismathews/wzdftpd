@@ -1279,7 +1279,7 @@ int do_retr(char *param, wzd_context_t * context)
   }
 
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
-    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
+    ret = send_message_with_args(550,context,param,"nonexistant file or permission denied");
 /*    socket_close(sock);*/
     return 1;
   }
@@ -1806,7 +1806,7 @@ int do_user(const char *username, wzd_context_t * context)
     /* we substract 1, because the current login attempt is counted */
     count--;
 
-    out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);
+/*    out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);*/
 
     if (count >= me->num_logins) return 2;
     /* >= and not ==, because it two attempts are issued simultaneously, count > num_logins ! */

@@ -781,6 +781,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   int fd;
   int ret;
   wzd_user_t * user;
+  short is_locked;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
@@ -795,43 +796,35 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
     ret = _checkPerm(filename,RIGHT_RETR,user);
   if (ret)
     return -1;
-  
-  /* IMPORTANT NOTE: we can't use flock/lockf because cygwin does not
-   * implement it.
-   * fcntl allow lock manipulations ONLY if opened in read-write mode ...
-   * so untile we have a better solution, we need to open files
-   * two times, with the risk of race conditions ...
-   */
-  /* lock state detection */
-  fd = open(filename,O_RDWR,0666);
 
-  /* when opened in write mode, lock file */
-  if (fd != -1) {
-    /* first politely ask if we can get lock */
-    if ( file_islocked(fd,F_WRLCK) ) {
-      /* already locked by some file */
+  fd = open(filename,mode,0666);
+  if (fd == -1) {
+    fprintf(stderr,"Can't open %s,errno %d : %s\n",filename,errno,strerror(errno));
+    return -1;
+  }
+
+  is_locked = file_islocked(fd,F_WRLCK);
+
+  if (is_locked == -1) {
+    out_log(LEVEL_NORMAL,"Could not get lock info\n");
+  }
+  else {
+    if ( (mode & O_WRONLY) && is_locked) {
       close(fd);
+/*      fprintf(stderr,"Can't open %s in write mode, locked !\n",filename);*/
       return -1;
     }
-    if ( (file_lock(fd,F_RDLCK))==-1 ) {
-      out_log(LEVEL_HIGH,"Could not lock file %s\n",filename);
-      close(fd);
-      return -1;
-    }
-  } else { /* ! O_RDWR */
-    /* test if file does not exist, but we are going to create it */
-    if (! (mode & O_WRONLY)) {
-      /* if file is locked, it is currently being uploaded */
-      if ( CFG_GET_DENY_ACCESS_FILES_UPLOADED(mainConfig) && file_islocked(fd,F_WRLCK) ) {
-	close(fd);
-	return -1;
-	/* FIXME TODO what to do now ? */
+    else {
+      if (is_locked) {
+/*	fprintf(stderr,"%s is locked, trying to read\n",filename);*/
+	if ( CFG_GET_DENY_ACCESS_FILES_UPLOADED(mainConfig) ) {
+	  close(fd);
+	  return -1;
+	}
       }
     }
-  } /* O_RDWR */
+  }
 
-  close(fd);
-  fd = open(filename,mode,0666);
   return fd;
 }
 
@@ -1110,13 +1103,11 @@ int file_islocked(int fd, short lock_mode)
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
   lck.l_start = 0;
   lck.l_len = 0;
-  if (fcntl(fd, F_SETLK, &lck) < 0) {
-    return 1;
-  }
-  lck.l_type = F_UNLCK;
-  if (fcntl(fd, F_SETLK, &lck) == -1) {
+
+  if (fcntl(fd, F_GETLK, &lck) < 0) {
     return -1;
   }
+  if (lck.l_type == F_RDLCK || lck.l_type == F_WRLCK) return 1;
   return 0;
 }
 

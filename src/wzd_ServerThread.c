@@ -973,12 +973,18 @@ void free_config(wzd_config_t * config)
     current_ip = next_ip;
   }
 
-  close(mainConfig->xferlog_fd);
-  free(mainConfig->xferlog_name);
-  fclose(mainConfig->logfile);
-  free(mainConfig->logfilename);
-  free(mainConfig->config_filename);
-  free(mainConfig->pid_file);
+  if (mainConfig->xferlog_fd != -1)
+    close(mainConfig->xferlog_fd);
+  if (mainConfig->xferlog_name)
+    free(mainConfig->xferlog_name);
+  if (mainConfig->logfile)
+    fclose(mainConfig->logfile);
+  if (mainConfig->logfilename)
+    free(mainConfig->logfilename);
+  if (mainConfig->config_filename)
+    free(mainConfig->config_filename);
+  if (mainConfig->pid_file)
+    free(mainConfig->pid_file);
   wzd_shm_free(mainConfig_shm);
 #ifdef DEBUG
   mainConfig_shm = NULL;
