@@ -31,7 +31,6 @@ libwzd_core_la_HEADERS = \
 	wzd_perm.h       \
 	wzd_section.h    \
 	wzd_shm.h        \
-	wzd_strlcat.h    \
 	wzd_strtok_r.h   \
 	wzd_structs.h    \
 	wzd_types.h      \
@@ -63,7 +62,6 @@ libwzd_core_la_SOURCES = \
 	wzd_perm.c       \
 	wzd_section.c    \
 	wzd_shm.c        \
-	wzd_strlcat.c    \
 	wzd_strtok_r.c   \
 	wzd_utf8.c       \
 	wzd_vars.c       \
@@ -72,17 +70,14 @@ libwzd_core_la_SOURCES = \
 
 nodist_libwzd_core_la_SOURCES = wzd_cookie_lex.l
 
+libwzd_core_la_LIBADD = ../libwzd-base/libwzd_base.la
 libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERSION_INFO} -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 
 wzdftpd_SOURCES =    \
-	list.c             \
-	list.h             \
 	ls.c               \
 	ls.h               \
-	stack.c            \
-	stack.h            \
 	wzd_ClientThread.c \
 	wzd_ClientThread.h \
 	wzd_data.c         \

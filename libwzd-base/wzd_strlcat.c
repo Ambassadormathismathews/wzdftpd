@@ -24,7 +24,9 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#include "wzd_all.h"
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#endif
 
 #include <string.h>
 
@@ -79,7 +81,7 @@ size_t strlcat(char *dst, const char *src, size_t size)
      */
     n += strlen(dst);
   }
-  
+
   return n;
 }
 

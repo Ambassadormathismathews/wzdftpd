@@ -62,7 +62,7 @@ typedef size_t ssize_t;
 #define LOG_EMERG	0
 #define LOG_ALERT	1
 #define LOG_CRIT	2
-#define	LOG_ERR		3
+#define LOG_ERR		3
 #define LOG_WARNING	4
 #define LOG_NOTICE	5
 #define LOG_INFO	6
@@ -335,7 +335,9 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
 
 
-#include "wzd_strlcat.h"
+#ifndef HAVE_STRLCAT
+size_t strlcat(char *dst, const char *src, size_t size);
+#endif
 
 
 #endif /* __WZD_TYPES__ */

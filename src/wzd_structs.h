@@ -91,6 +91,8 @@ typedef enum {
 #define RIGHT_RETR      0x00000002
 #define RIGHT_STOR      0x00000004
 
+#define RIGHT_DELE      0x00000010
+
 
 /* other rights - should not be used directly ! */
 #define RIGHT_CWD       0x00010000

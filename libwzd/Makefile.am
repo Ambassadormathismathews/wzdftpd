@@ -21,6 +21,7 @@ libwzd_la_SOURCES = \
 	libwzd_socket.c \
 	libwzd_tls.c
 
+libwzd_la_LIBADD = ../libwzd-base/libwzd_base.la
 libwzd_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ $(WZD_SSL_LIBS) -version-info ${LT_VERSION_INFO} -module -no-undefined -export-symbols-regex wzd_
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
