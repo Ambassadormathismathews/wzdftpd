@@ -148,6 +148,10 @@ SOURCE=..\src\wzd_debug.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_dir.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_file.c
 # End Source File
 # Begin Source File
@@ -229,6 +233,10 @@ SOURCE=..\src\wzd_crypt.h
 # Begin Source File
 
 SOURCE=..\src\wzd_debug.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_dir.h
 # End Source File
 # Begin Source File
 

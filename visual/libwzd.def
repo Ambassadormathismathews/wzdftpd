@@ -30,6 +30,9 @@ EXPORTS
 	cronjob_free
 	cronjob_run
 	crypt
+	dir_getbasename
+	dir_getdirname
+	dir_gettrailingname
 	encrypt
 	event2str
 	fd_is_valid
