@@ -22,28 +22,13 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_CRONTAB__
-#define __WZD_CRONTAB__
+#ifndef __WZD_UTF8__
+#define __WZD_UTF8__
 
-typedef struct wzd_cronjob_t wzd_cronjob_t;
-struct wzd_cronjob_t {
-  struct _wzd_hook_t * hook;
-  char minutes[32];
-  char hours[32];
-  char day_of_month[32];
-  char month[32];
-  char day_of_week[32];
-  time_t next_run;
-  wzd_cronjob_t * next_cronjob;
-};
+const char * charset_detect_local(void);
 
+int local_charset_to_utf8(void);
 
-int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
-    char * minutes, char * hours, char * day_of_month,
-    char * month, char * day_of_week);
+int utf8_to_local_charset(void);
 
-void cronjob_free(wzd_cronjob_t ** crontab);
-
-int cronjob_run(wzd_cronjob_t ** crontab);
-
-#endif /* __WZD_CRONTAB__ */
+#endif /* __WZD_UTF8__ */

@@ -7,12 +7,44 @@
 <para>This section describes how to create a new module in C.</para>
 
 <simplesect>
+<title>Internals</title>
+
+<para>You must add the following headers to your source code:
+<programlisting>#include &lt;wzd_structs.h&gt;
+#include &lt;wzd_mod.h&gt;</programlisting>
+</para>
+
+<para>The module must provide a function with the following prototype:
+<programlisting>int WZD_MODULE_INIT(void);</programlisting>
+This function will be called when module is loaded, so you can initialize
+all data needed by module here.
+If you want to register <link linkend='gloss_hook'>hooks</link>,
+you must do it at this point, using function
+<programlisting>hook_add(config, mask, hook)</programlisting>
+
+You can also register a new <link linkend='gloss_proto'>protocol</link> using:
+<programlisting>hook_add_protocol("sig:",sig_length,function);</programlisting>
+
+One optional function can be declared to clean up all data used by module, and
+will be called when module is unloaded, with the following prototype:
+<programlisting>void WZD_MODULE_CLOSE(void)</programlisting>
+</para>
+
+<para><emphasis>NOTE: </emphasis>as always as possible, you should declare all
+your functions and global variables as 'static', to avoid possible clashes with
+names of other modules
+</para>
+
+</simplesect>
+
+<simplesect>
 <title>Prerequisites</title>
 <para>
 You need the following to compile and use new modules for wzdftpd:
 </para>
 <itemizedlist>
-<listitem><para>A working version of wzdftpd compiled from sources.</para></listitem>
+<listitem><para>A working version of wzdftpd compiled from sources
+<emphasis>or</emphasis> the wzdftpd-dev package for your distribution.</para></listitem>
 </itemizedlist>
 
 </simplesect>
@@ -24,9 +56,27 @@ You need the following to compile and use new modules for wzdftpd:
 
 </simplesect>
 
+<simplesect>
+<title>License considerations</title>
+
+<para>wzdftpd is distributed under <link linkend='license'>GPL</link>.
+That <emphasis>clearly</emphasis> means that you <emphasis>MUST</emphasis> distribute
+your module under GPL, if you intend to distribute it (license covers distribution, and
+it means you must give source to people, or give them access, when you distribute them
+your module).</para>
+<para>This is an intentional behaviour, keep in mind that using wzdfptd you can benefit
+from a big amount of functions, and that it has taken much time to do it. The only
+contribution that is asked in exchange is to make your work accessible, so others
+can benefit it.</para>
+<para>If these terms of license are not suitable for you, then you cannot use kernel-level
+modules. However, you can use <link linkend='external_modules'>external modules</link>
+without any license restriction.</para>
+
+</simplesect>
+
 </sect1>
 
-<sect1>
+<sect1 id='external_modules'>
 <title>External modules</title>
 
 <para>This sections describes how to develop an external module, which must be an

@@ -2,6 +2,7 @@
 |                         »   G r O u P   I n F o    «                       |
 .----------------\----------------------------------------------/------------.
 |  groupname     : %40.groupname                  |
+|  Tag line      : %55.grouptag   |
 |  gid           : %40.groupid                  |
 |  Ratio         : %40.groupratio                  |
 |  Home dir      : %55.grouphome   |

@@ -102,6 +102,7 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
 static int tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
+static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
@@ -134,6 +135,7 @@ int WZD_MODULE_INIT(void)
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
     return -1;
   }
+  Tcl_CreateCommand(interp,"putlog",tcl_putlog,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message",tcl_send_message,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
@@ -235,6 +237,25 @@ static void do_tcl_help(wzd_context_t * context)
 
 
 /******* TCL functions ********/
+
+static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char *ptr;
+  unsigned long level;
+
+  if (argc != 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  /** \todo XXX we could format the string using argv[2,] */
+
+  level = strtoul(argv[1],&ptr,0);
+  if ( *ptr=='\0') return TCL_ERROR;
+
+  out_log( (int)level, argv[2] );
+
+  return TCL_OK;
+}
+
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
   int ret;

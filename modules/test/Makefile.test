@@ -1,0 +1,18 @@
+CC=gcc
+
+WZDFTPD_INCLUDE_DIR=/usr/include/wzdftpd
+WZDFTPD_LIB_DIR=/usr/lib
+
+CFLAGS=-g -DHAVE_INET_NTOP -DHAVE_INET_PTON -I$(WZDFTPD_INCLUDE_DIR)
+LDFLAGS=-L$(WZDFTPD_LIB_DIR) -lwzd
+
+all: libwzd_test.so
+
+libwzd_test.so: libwzd_test.o
+	$(CC) -shared -o $@ $< $(LDFLAGS)
+
+libwzd_test.o: libwzd_test.c
+	$(CC) -c $< $(CFLAGS)
+
+clean:
+	rm -f libwzd_test.so libwzd_test.o

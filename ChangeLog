@@ -1,3 +1,18 @@
+2004-04-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: log file empty on win32 (except if forcing use_syslog = 0)
+	* bugfix: user can now see its own home
+	* tcl: command putlog
+	* feature: group tagline, cookie %grouptag
+	* cookies: %lastfile{name,size,speed,time}
+
+2004-04-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: LIST not working for / , and symlinks destination not shown
+	* features: crontab now use hook system and allows protocols, etc.
+	* features: added wzd_utf8.{c,h} (reserved for future UTF-8 extension)
+	* doc: update on module development, TCL module
+
 2004-04-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: moved some structs into their proper headers

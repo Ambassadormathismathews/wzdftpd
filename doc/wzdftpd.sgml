@@ -44,6 +44,35 @@ text files, directories(LDAP) or databases in the same convenient way.
 </glossdef>
 </glossentry>
 
+<glossentry id='gloss_hook'><glossterm>hook</glossterm>
+<indexterm><primary>hook</primary></indexterm>
+<glossdef>
+<para>
+A hook is a function or a program, which is called when an associated
+event happends.
+</para>
+</glossdef>
+</glossentry>
+
+<glossentry id='gloss_proto'><glossterm>protocol</glossterm>
+<indexterm><primary>protocol</primary></indexterm>
+<glossdef>
+<para>
+A protocol is used at every point where you can use a function or the name of
+a program (exemple: on events). A protocol is a specific way of running the command,
+and are often managed by plugins.
+</para>
+<para>
+Exemple:
+<programlisting>
+tcl:/path/to/script.tcl
+</programlisting>
+is the line corresponding to a file name, to be executed with the 'tcl' protocol.
+In this cas, it means the internal TCL interpreter will handle execution.
+</para>
+</glossdef>
+</glossentry>
+
 <glossentry id='gloss_tls_mode'><glossterm>tls modes</glossterm>
 <indexterm><primary>tls_mode</primary></indexterm>
 <glossdef>

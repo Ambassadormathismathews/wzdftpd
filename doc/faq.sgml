@@ -32,7 +32,7 @@ To run multiples instance of a ftp server look at <link linkend='faq_multipleser
 <para>
 You can also set the option <link linkend='cfg_force_shm_cleanup'>
 <emphasis>force_shm_cleanup</emphasis></link> in the config file to
-automatically try to delete shm - this open is DANGEROUS !
+automatically try to delete shm - this option can be DANGEROUS !
 </para>
 </simplesect>
 
@@ -91,6 +91,28 @@ When running the server with root privileges, you can specify a server_uid line
 in the config file to drop root privileges after binding to port < 1024.
 Note that this server does not need root privileges to run, it is designed to
 work in restricted user-mode (this is REALLY more secure !).
+</para>
+</simplesect>
+
+<simplesect id='faq_fxp'>
+<title>Site to site transfer (aka FXP) does not work !</title>
+<para>
+Before ANY complaint, please check that there are no firewall (hardware and/or
+software) between the two servers. Keep in mind that most of the time FXP and
+TLS are highly incompatible: firewall open dynamic ports by watching connection,
+and trying to detect usage of PORT or PASV commands. If you run in TLS mode,
+it is EVIDENT that the firewall will never detect the command (the connection
+is encrypted), thus won't open dynamic ports.
+</para>
+<para>
+NAT (Network Address Translation) can also be a cause of problems, please check
+that the IP addresses send during port negotiation are correct.
+</para>
+<para>
+When FXP fails, try to reverse passive and active sides of transfer: in FXP,
+one server is in PASV mode, the other in PORT mode. Sometimes the connection
+can fail in one direction and not in the other (often an effect of firewalls
+or NAT).
 </para>
 </simplesect>
 

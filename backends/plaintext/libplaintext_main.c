@@ -261,6 +261,8 @@ static int write_user_file(void)
       fprintf(file,"max_idle_time=%ld\n",group_pool[i].max_idle_time);
     if (group_pool[i].num_logins)
       fprintf(file,"num_logins=%d\n",group_pool[i].num_logins);
+    if (strlen(group_pool[i].tagline)>0)
+      fprintf(file,"tagline=%s\n",group_pool[i].tagline);
     fprintf(file,"gid=%d\n",group_pool[i].gid);
     for (j=0; j<HARD_IP_PER_GROUP; j++)
     {
@@ -648,6 +650,7 @@ fprintf(stderr,"Defining new private group %s\n",token);
       group_pool[group_count-1].max_idle_time = 0;
       group_pool[group_count-1].num_logins = 0;
       group_pool[group_count-1].defaultpath[0] = 0;
+      group_pool[group_count-1].tagline[0] = '\0';
       for (i=0; i<HARD_IP_PER_GROUP; i++)
         group_pool[group_count-1].ip_allowed[i][0] = '\0';
       break;
@@ -705,6 +708,9 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
 	}
 	group_pool[group_count-1].ratio = num;
       } /* else if (strcmp("ratio",... */
+      else if (strcmp("tagline",varname)==0) {
+        strncpy(group_pool[group_count-1].tagline,value,256);
+      } /* tagline */
       break;
     default:
 fprintf(stderr,"Houston, we have a problem\n");
@@ -1152,6 +1158,23 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       cipher = crypt(user->userpass, salt);
       strncpy(user_pool[user_count].userpass,cipher,MAX_PASS_LENGTH-1);
     }
+    /* find a free uid */
+    {
+      unsigned int uid = 0;
+      int uid_is_free = 0;
+      int i;
+
+      while (!uid_is_free) {
+        for (i=0; i<user_count; i++)
+        {
+          if (user_pool[user_count].uid == uid) { uid_is_free=1; break; }
+        }
+        uid ++;
+        if (uid == (unsigned int)-1) return 1; /* we have too many users ! */
+      }
+      user_pool[user_count].uid = uid;
+    }
+    
     user_count++;
   } /* if (found) */
 
@@ -1193,6 +1216,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_MAX_ULS) group_pool[count].max_ul_speed = group->max_ul_speed;
     if (mod_type & _GROUP_MAX_DLS) group_pool[count].max_dl_speed = group->max_dl_speed;
     if (mod_type & _GROUP_RATIO) group_pool[count].ratio = group->ratio;
+    if (mod_type & _GROUP_TAGLINE) strcpy(group_pool[count].tagline,group->tagline);
     if (mod_type & _GROUP_DEFAULTPATH) strcpy(group_pool[count].defaultpath,group->defaultpath);
     if (mod_type & _GROUP_NUMLOGINS) group_pool[count].num_logins = group->num_logins;
     if (mod_type & _GROUP_IP) {

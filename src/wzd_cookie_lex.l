@@ -108,10 +108,16 @@ typedef enum {
   COOKIE_GROUPNAME,
   COOKIE_GROUPNUM_LOGINS,
   COOKIE_GROUPRATIO,
+  COOKIE_GROUPTAG,
   COOKIE_GROUPTOTAL_DL,
   COOKIE_GROUPTOTAL_DL2,
   COOKIE_GROUPTOTAL_UL,
   COOKIE_GROUPTOTAL_UL2,
+
+  COOKIE_LASTFILENAME,
+  COOKIE_LASTFILESIZE,
+  COOKIE_LASTFILESPEED,
+  COOKIE_LASTFILETIME,
 
   COOKIE_MSG,
 
@@ -193,6 +199,7 @@ IF_END		"%endif"{NL}
 C_START		"%"
 C_FILE		([0-9]+".")?"file"
 C_GROUP		([0-9]+".")?"group"
+C_LASTFILE	([0-9]+".")?"lastfile"
 C_USER		([0-9]+".")?"user"
 C_VFS    ([0-9]+".")?"vfs"
 
@@ -295,10 +302,16 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_GROUP}name		BEGIN(INITIAL); return COOKIE_GROUPNAME;
 <sc_cook>{C_GROUP}num_logins	BEGIN(INITIAL); return COOKIE_GROUPNUM_LOGINS;
 <sc_cook>{C_GROUP}ratio		BEGIN(INITIAL); return COOKIE_GROUPRATIO;
+<sc_cook>{C_GROUP}tag		BEGIN(INITIAL); return COOKIE_GROUPTAG;
 <sc_cook>{C_GROUP}total_dl2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL2;
 <sc_cook>{C_GROUP}total_dl	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL;
 <sc_cook>{C_GROUP}total_ul2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL2;
 <sc_cook>{C_GROUP}total_ul	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL;
+
+<sc_cook>{C_LASTFILE}name	BEGIN(INITIAL); return COOKIE_LASTFILENAME;
+<sc_cook>{C_LASTFILE}size	BEGIN(INITIAL); return COOKIE_LASTFILESIZE;
+<sc_cook>{C_LASTFILE}speed	BEGIN(INITIAL); return COOKIE_LASTFILESPEED;
+<sc_cook>{C_LASTFILE}time	BEGIN(INITIAL); return COOKIE_LASTFILETIME;
 
 <sc_cook>msg                    BEGIN(INITIAL); return COOKIE_MSG;
 
@@ -381,10 +394,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   wzd_context_t * real_context;
 
   if (!context) return -1;
-  me = GetUserByID(context->userid);
-  if (!me) return -1;
   real_context = GetMyContext();
   if (!real_context) return -1;
+  me = GetUserByID(real_context->userid);
+  if (!me) return -1;
 
   if (me->flags && strchr(me->flags,FLAG_COLOR)) use_colors=1;
 
@@ -786,6 +799,19 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
+    case COOKIE_GROUPTAG:
+      get_cookie_format(yytext,&padding);
+      if (current_group) {
+        if (strlen(current_group->tagline)>0)
+          snprintf(internalbuffer,IBUFSIZE,"%s",current_group->tagline);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"no tagline set");
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"grouptag");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_GROUPTOTAL_DL2:
       convert=1;
     case COOKIE_GROUPTOTAL_DL:
@@ -859,6 +885,69 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       convert=0;
+      break;
+/*** LAST FILE cookies ***/
+    case COOKIE_LASTFILENAME:
+      get_cookie_format(yytext,&padding);
+      if (context) {
+        switch (context->last_file.token) {
+        case TOK_RETR:
+        case TOK_STOR:
+          snprintf(internalbuffer,IBUFSIZE,"%s",context->last_file.name);
+          break;
+        case TOK_MKD:
+          snprintf(internalbuffer,IBUFSIZE,"%s",context->last_file.name);
+          break;
+        default:
+          snprintf(internalbuffer,IBUFSIZE,"(null)");
+        }
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"lastfilename");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_LASTFILESIZE:
+      get_cookie_format(yytext,&padding);
+      if (context)
+        /* use 64 bits here */
+#ifndef WIN32
+        snprintf(internalbuffer,IBUFSIZE,"%llu",(context->last_file.name[0]!='\0')?context->last_file.size:0);
+#else
+        snprintf(internalbuffer,IBUFSIZE,"%I64u",(context->last_file.name[0]!='\0')?context->last_file.size:0);
+#endif
+      else
+        snprintf(internalbuffer,IBUFSIZE,"lastfilesize");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_LASTFILESPEED:
+      get_cookie_format(yytext,&padding);
+      if (context)
+      {
+      /* XXX FIXME assume there is at least 1 sec of download */
+      /** \todo convert to kB/s ? */
+        if (context->last_file.name[0]!='\0')
+          snprintf(internalbuffer,IBUFSIZE,"%.1f",
+            (context->last_file.time!=0) ? 
+              ((context->last_file.size/(float)context->last_file.time)) :
+              (float)context->last_file.size);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"0");
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"lastfilespeed");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_LASTFILETIME:
+      get_cookie_format(yytext,&padding);
+      if (context)
+        snprintf(internalbuffer,IBUFSIZE,"%lu",(context->last_file.name[0]!='\0')?context->last_file.time:0);
+      else
+        snprintf(internalbuffer,IBUFSIZE,"lastfiletime");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
       break;
 /*** FILES cookies ***/
     case COOKIE_MSG:
@@ -1044,10 +1133,13 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     case COOKIE_USERHOME:
       get_cookie_format(yytext,&padding);
       if (current_user) {
+        wzd_user_t * user = NULL;
         /* check FLAG_SEE_HOME for self */
-        if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
+        if (real_context) user = GetUserByID(real_context->userid);
+        if ( (user && strcmp(current_user->username,user->username)==0 ) || /* self */
+          (me->flags && strchr(me->flags,FLAG_SEE_HOME))) /* authorized */
           snprintf(internalbuffer,IBUFSIZE,"%s",current_user->rootpath);
-        } else /* not allowed to see */
+        else /* not allowed to see */
           snprintf(internalbuffer,IBUFSIZE,"- some where -");
       }
       else
@@ -1206,8 +1298,12 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (context) {
         char dev_buffer[WZD_MAX_PATH+1];
+        wzd_user_t * user = NULL;
+
+        if (real_context) user = GetUserByID(real_context->userid);
         /* check FLAG_SEE_HOME for self */
-        if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
+        if ( (user && strcmp(me->username,user->username)==0) ||
+          (me->flags && strchr(me->flags,FLAG_SEE_HOME))) {
           if (checkpath(context->currentpath,dev_buffer,context)) {
             snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
           } else {

@@ -159,8 +159,12 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
 #endif
 
   new = malloc(sizeof(wzd_cronjob_t));
-  new->fn = fn;
-  new->command = command?strdup(command):NULL;
+  new->hook = malloc(sizeof(struct _wzd_hook_t));
+  new->hook->mask = EVENT_CRONTAB;
+  new->hook->opt = NULL;
+  new->hook->hook = fn;
+  new->hook->external_command = command?strdup(command):NULL;
+  new->hook->next_hook = NULL;
   strncpy(new->minutes,minutes,32);
   strncpy(new->hours,hours,32);
   strncpy(new->day_of_month,day_of_month,32);
@@ -191,30 +195,24 @@ int cronjob_run(wzd_cronjob_t ** crontab)
 {
   wzd_cronjob_t * job = *crontab;
   time_t now;
+  int ret;
 
   time(&now);
   while (job) {
     if ( now >= job->next_run )
     {
       /* run job */
-      if (job->fn) {
-        (job->fn)();
-      } else {
-        char buffer[1024];
-        FILE * command_output;
-        if ( (command_output = popen(job->command,"r")) == NULL ) {
-          out_log(LEVEL_HIGH,"Cronjob command '%s': unable to popen\n",job->command);
-          return 1;
-        }
-        while (fgets(buffer,1023,command_output) != NULL)
-        {
-          out_log(LEVEL_INFO,"cronjob: %s\n",buffer);
-        }
-        pclose(command_output);
+      typedef int (*cronjob_hook)(unsigned long, const char *, const char*);
+      if (job->hook->hook)
+        ret = (*(cronjob_hook)job->hook->hook)(EVENT_CRONTAB,NULL,job->hook->opt);
+      else {
+        if (job->hook->external_command)
+          ret = hook_call_external(job->hook,-1);
       }
       job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
           job->day_of_month, job->month, job->day_of_week);
 #ifdef WZD_DBG_CRONTAB
+      out_err(LEVEL_CRITICAL,"Exec'ed %s\n",job->hook->external_command);
       out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
       out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&job->next_run));
 #endif
@@ -234,10 +232,12 @@ void cronjob_free(wzd_cronjob_t ** crontab)
   while (current_job) {
     next_job = current_job->next_cronjob;
 
-    if (current_job->command)
-     free(current_job->command);
+    if (current_job->hook->external_command)
+      free(current_job->hook->external_command);
+    if (current_job->hook)
+      free(current_job->hook);
 #ifdef DEBUG
-    current_job->fn = NULL;
+    current_job->hook = NULL;
     current_job->next_cronjob = NULL;
 #endif /* DEBUG */
     free(current_job);

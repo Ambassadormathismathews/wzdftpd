@@ -90,6 +90,7 @@ typedef struct {
 #define	_GROUP_IP		1<<6
 #define	_GROUP_DEFAULTPATH	1<<7
 #define	_GROUP_NUMLOGINS	1<<8
+#define	_GROUP_TAGLINE		1<<9
 #define _GROUP_ALL	0xffffffff
 
 /* int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void * arg) */

@@ -83,6 +83,7 @@ num</entry></row>
 <row><entry>%groupnum_logins</entry><entry>Max number of members connected at
 the same time</entry></row>
 <row><entry>%groupratio</entry><entry>Default ratio, or unlimited</entry></row>
+<row><entry>%grouptag</entry><entry>Group tagline</entry></row>
 <row><entry>%grouptotal_dl</entry><entry>Total bytes downloaded</entry></row>
 <row><entry>%grouptotal_dl2</entry><entry>Total bytes downloaded, converted in
 units</entry></row>

@@ -105,7 +105,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
   struct tm *ntime;
   int i;
 
-  if (!directory || strlen(directory)<=1) return 0;
+  if (!directory || strlen(directory)<1) return 0;
 
   memset(send_buffer,0,HARD_LS_BUFFERSIZE);
   send_buffer_len = 0;
@@ -172,7 +172,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
     if (S_ISLNK(st.st_mode)) {
       char linkbuf[256];
       int linksize;
-      linksize = readlink(file->filename,linkbuf,sizeof(linkbuf)-1);
+      linksize = readlink(ptr_to_buffer,linkbuf,sizeof(linkbuf)-1);
       if (linksize > 0) {
         linkbuf[linksize]='\0';
         snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> %s",file->filename,linkbuf);

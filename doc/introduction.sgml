@@ -18,6 +18,8 @@ entirely configurable online using SITE commands.
 wzdftpd offers the following features (and the list is constantly changing):
 
 <itemizedlist>
+<listitem><para>Free - wzdftpd is distributed under the <link linkend='license'>GPL</link></para></listitem>
+<listitem><para>RFC compliant !</para></listitem>
 <listitem><para>
 Server runs in user mode, thus does not need root privileges - on the other
 way, it is not designed to use system users permissions, it uses its own
@@ -27,11 +29,15 @@ user database and permissions.
 <emphasis>Simple</emphasis> configuration file, supporting inclusions
 </para></listitem>
 <listitem><para>Online administration, using SITE commands</para></listitem>
-<listitem><para>Backends to store users/groups in different structures</para></listitem>
+<listitem><para><link linkend='gloss_backend'>Backends</link> to store users/groups in different structures</para></listitem>
 <listitem><para>Modules: internal, using shared librairies, or external
-(scripts/applications)</para></listitem>
+(scripts/applications), and <link linkend='gloss_proto'>protocols</link></para></listitem>
+<listitem><para>Powerfull event system</para></listitem>
+<listitem><para>Jobs scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
 <listitem><para>SSL/TLS support</para></listitem>
+<listitem><para>IPv6 support (experimental)</para></listitem>
+<listitem><para>win32: can auto-register as a service, unregister, start/stop</para></listitem>
 <listitem><para>Server is designed to run as a non-privileged user to enforce
 security</para></listitem>
 <listitem><para>Server can detect ip changes (dynamic ips) and set ip and
@@ -135,6 +141,7 @@ After that, you have to:
 <listitem><para>login for the first time FROM LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
 and create users and groups using SITE commande (<link linkend='site_adduser'>
 site adduser</link> and <link linkend='site_grpadd'>site grpadd</link>).
+See <link linkend='ex_add_user'>exemple of user creation</link>.
 </para></listitem>
 </itemizedlist>
 </para>

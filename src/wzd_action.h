@@ -71,6 +71,13 @@
 
 #define	TOK_NOTHING	64
 
+struct last_file_t {
+    char	name[WZD_MAX_PATH];
+    time_t	time;
+    u64_t	size;
+    unsigned int token;
+};
+
 typedef struct {
   unsigned int	token;
   char		arg[HARD_LAST_COMMAND_LENGTH];

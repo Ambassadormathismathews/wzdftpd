@@ -147,7 +147,7 @@ static void save_serveruid (FILE *file)
   {
     struct passwd * p;
 #warning "FIXME server does not always have a uid"
-    p = getpwuid (wzd_server_uid);
+    p = getpwuid (getlib_server_uid());
     if (p!=NULL)
       fprintf( file, "server_uid = %s\n", p->pw_name );
   }
@@ -587,14 +587,14 @@ static void save_cronjobs (FILE *file)
   
   current = crontab;
   while (current) {
-    if ( ! current->fn ) {
+    if ( current->hook && ! current->hook->hook ) {
       fprintf( file, "cronjob = %s %s %s %s %s %s\n",
           current->minutes,
           current->hours,
           current->day_of_month,
           current->month,
           current->day_of_week,
-          current->command
+          current->hook->hook
           );
     }
     current = current->next_cronjob;

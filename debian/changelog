@@ -1,3 +1,9 @@
+wzdftpd (0.3.1-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- pollux <pollux@wzdftpd.net>  Tue, 27 Apr 2004 09:56:59 +0200
+
 wzdftpd (0.3-4) unstable; urgency=low
 
   * put log files in proper place

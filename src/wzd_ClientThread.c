@@ -734,13 +734,17 @@ int do_list(char *name, char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
   }
+  if (context->state == STATE_XFER) {
+    ret = send_message(491,context);
+    return E_XFER_PROGRESS;
+  }
+
   if (strcasecmp(name,"nlst")==0)
     listtype = LIST_TYPE_SHORT;
   else
     listtype = LIST_TYPE_LONG;
 
   context->resume = 0;
-  context->state = STATE_XFER;
 
   strcpy(nullch,".");
   mask[0] = '\0';
@@ -845,6 +849,7 @@ printf("path: '%s'\n",path);
   }
   FD_REGISTER(sock,"Client LIST socket");
 
+  context->state = STATE_XFER;
 
   if (strlen(mask)==0) strcpy(mask,"*");
 
@@ -2970,6 +2975,8 @@ void * clientThreadProc(void *arg)
 
   context = arg;
   sockfd = context->controlfd;
+  context->last_file.name[0] = '\0';
+  context->last_file.token = TOK_UNKNOWN;
 
 #ifdef _MSC_VER
   context->thread_id = GetCurrentThreadId();

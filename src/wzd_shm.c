@@ -290,7 +290,7 @@ wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
   if (!shm) return NULL;
 
   if (geteuid()==0) {
-    setreuid(-1,wzd_server_uid);
+    setreuid(-1,getlib_server_uid());
     have_set_uid = 1;
   }
 

@@ -34,7 +34,7 @@
 
 #include <netdb.h>
 
-#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+#endif /* _MSC_VER */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,20 +113,12 @@ wzd_cronjob_t	* crontab;
 
 /*time_t server_start;*/
 
-/*unsigned int wzd_server_uid;*/
-
 short created_shm=0;
 
 
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
-#ifndef DEBUG
-  close(0);
-  close(1);
-  close(2);
-#endif
-
   serverMainThreadProc(0);
 
   return 0;
@@ -1139,6 +1131,7 @@ void serverMainThreadProc(void *arg)
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
+    out_err(LEVEL_CRITICAL,"Could not create main socket - check log for more infos\n");
     /* TODO XXX FIXME we should not exit like this, for at this point context_list
      * and limiter_sem are not allocated ... juste clean up config, but be carefull
      * another instance is not just runnning
@@ -1221,7 +1214,7 @@ void serverMainThreadProc(void *arg)
 #endif
     snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
     if (fd==-1) {
-      fprintf(stderr,"Unable to open pid file %s\n",strerror(errno));
+      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",mainConfig->pid_file,strerror(errno));
       if (created_shm) {
         free_config(mainConfig);
       }
@@ -1310,6 +1303,13 @@ void serverMainThreadProc(void *arg)
     }
   }
 
+  /********** daemon mode ***********/
+#ifndef DEBUG
+  close(0);
+  close(1);
+  close(2);
+#endif
+
   out_log(LEVEL_INFO,"Process %d ok\n",getpid());
 
   /* sets start time, for uptime */
@@ -1341,6 +1341,8 @@ void serverMainThreadProc(void *arg)
 #endif
 
     time (&server_time);
+    out_err(LEVEL_FLOOD,".");
+    fflush(stderr);
     
     switch (ret) {
     case -1: /* error */

@@ -128,7 +128,8 @@ This module has an embedded TCL interpreter, and offers several
 facilities based on TCL language.
 </para>
 <para>
-The main feature is to add a protocol for hooks, it means that
+The main feature is to add a <link linkend='gloss_proto'>protocol</link>
+for hooks, it means that
 instead of giving the path to an executable (or script) in a
 <link linkend="cfg_cscript">csript directive</link> or in a
 <link linkend="cfg_site_cmd">custom site command</link>, you can
@@ -157,9 +158,16 @@ or in the same directory), or module loading will fail.
 <simplesect>
 <title>Available TCL commands and variables</title>
 <itemizedlist>
+<listitem><screen>putlog level "message"</screen>
+<para>Put the message in log file, only if level is greater or equal to
+the current loglevel. level is an integer in range 0 to 10, 0 is the
+lowest level (reserved to debug) and 10 is reserved to critical error
+messages. default level is 5
+<screen>putlog 5 "zipscript: file is corrupted"</screen>
+</para></listitem>
 <listitem><screen>send_message</screen>
 <para>Use the string given in argument to send reply to client.
-</para><para>This function can be called only once.
+</para><para>You should send one line at a time.
 </para></listitem>
 <listitem><screen>send_message_raw</screen>
 <para>Sends the string given in argument to client, without
@@ -182,6 +190,14 @@ change variables (you need to provide a new value).</para>
 <para>Note that this concern variables for user definition, and not
 for connected users: for example, you can't get the current ip (this
 has a sense only for connected users).
+</para></listitem>
+<listitem><screen>vfs mkdir/rmdir dirname</screen>
+<para>Create or remove a directory.
+Directory name <emphasis>must</emphasis> be an absolute path !.
+</para></listitem>
+<listitem><screen>vfs symlink create/remove [dirname] linkname</screen>
+<para>Create or remove a symbolink link.
+Directory name <emphasis>must</emphasis> be an absolute path !.
 </para></listitem>
 <listitem><screen>wzd_reply_code</screen>
 <para>Use this variable contains the current reply code used

@@ -379,8 +379,8 @@ int hook_call_external(wzd_hook_t *hook, unsigned int code)
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
-    wzd_user_t * user = GetUserByID(context->userid);
-    wzd_group_t * group = GetGroupByID(user->groups[0]);
+    wzd_user_t * user = context ? GetUserByID(context->userid) : NULL;
+    wzd_group_t * group = context ? GetGroupByID(user->groups[0]) : NULL;
 
     cookie_parse_buffer(hook->external_command,user,group,context,buffer,sizeof(buffer));
   }

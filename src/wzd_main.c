@@ -73,6 +73,7 @@
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
 #include "wzd_opts.h"
+#include "wzd_utf8.h"
 
 #include "wzd_debug.h"
 
@@ -391,6 +392,8 @@ int main(int argc, char **argv)
 #endif
   }
 
+  charset_detect_local();
+
   if (!stay_foreground) {
 #ifndef _MSC_VER
     forkresult = fork();
@@ -409,7 +412,7 @@ int main(int argc, char **argv)
 
   /* not really usefull, but will also initialize var if not used :) */
 #ifndef WIN32
-  wzd_server_uid = geteuid();
+  setlib_server_uid(geteuid());
 #endif
 
   config = NULL;
@@ -477,17 +480,15 @@ int main(int argc, char **argv)
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 
+#ifndef WIN32
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
-#ifndef _MSC_VER
     openlog("wzdftpd", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_FTP);
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
-#else
-    out_err(LEVEL_HIGH,"Syslog is NOT supported by platform !");
+  } else
 #endif
-  }
-  else {
+  {
     if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
     {
       out_err(LEVEL_CRITICAL,"Could not open log file.\n");

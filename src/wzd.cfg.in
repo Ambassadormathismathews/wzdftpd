@@ -164,7 +164,7 @@ login_pre_ip_allowed = -*.xxx.fr
 # modules are dynamic libraries
 # order *IS* important
 #module = @e_datadir@/@PACKAGE@/modules/libwzd_test.so
-module = @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so
+#module = @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so
 #module = @e_datadir@/@PACKAGE@/modules/libwzd_tcl.so
 
 param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]

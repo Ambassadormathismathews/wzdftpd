@@ -86,5 +86,24 @@ AC_DEFUN(WZD_LIB_UNICODE,
     AC_DEFINE(HAVE_WC_FUNCS,1,[ Define if you are using the system's wchar_t functions. ])
   fi
 
+  WZD_LANGINFO_CODESET
+
 dnl  AC_SUBST(WZD_PGSQL_LIBS)
+])
+
+AC_DEFUN([WZD_LANGINFO_CODESET],
+[
+  AC_CHECK_HEADERS(langinfo.h)
+  AC_CHECK_FUNCS(nl_langinfo)
+
+  AC_CACHE_CHECK([for nl_langinfo and CODESET], wzd_cv_langinfo_codeset,
+    [AC_TRY_LINK([#include <langinfo.h>],
+      [char* cs = nl_langinfo(CODESET);],
+      wzd_cv_langinfo_codeset=yes,
+      wzd_cv_langinfo_codeset=no)
+    ])
+  if test $wzd_cv_langinfo_codeset = yes; then
+    AC_DEFINE(HAVE_LANGINFO_CODESET, 1,
+      [Define if you have <langinfo.h> and nl_langinfo(CODESET).])
+  fi
 ])

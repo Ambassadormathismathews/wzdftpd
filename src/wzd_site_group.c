@@ -127,6 +127,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   newgroup.max_ul_speed = 0;
   newgroup.ratio = 0;
   newgroup.num_logins = 0;
+  newgroup.tagline[0] = '\0';
   for (i=0; i<HARD_IP_PER_GROUP; i++)
     newgroup.ip_allowed[i][0]='\0';
 
@@ -668,6 +669,7 @@ void do_site_help_grpchange(wzd_context_t * context)
   send_message_raw("501-site grpchange <group> <field> <value>\r\n",context);
   send_message_raw("field can be one of:\r\n",context);
   send_message_raw(" name        changes the group name\r\n",context);
+  send_message_raw(" tagline     changes the group tagline\r\n",context);
   send_message_raw(" homedir     changes group's default dir\r\n",context);
   send_message_raw(" max_idle    changes idle time\r\n",context);
   send_message_raw(" perms       changes default group permissions\r\n",context);
@@ -732,6 +734,11 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
     /* NOTE: we do not need to iterate through users, group is referenced
      * by id, not by name
      */
+  }
+  /* tagline */
+  else if (strcmp(field,"tagline")==0) {
+    mod_type = _GROUP_TAGLINE;
+    strncpy(group.tagline,value,255);
   }
   /* homedir */
   else if (strcmp(field,"homedir")==0) {

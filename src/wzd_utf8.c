@@ -29,32 +29,55 @@
 
 #include "wzd_structs.h"
 
-#include "wzd_libmain.h"
-#include "wzd_log.h"
+#if HAVE_LANGINFO_CODESET
+# include <langinfo.h>
+#endif
 
-wzd_config_t *  mainConfig;
-wzd_context_t * context_list;
-static int _wzd_server_uid;
+#include "wzd_utf8.h"
 
-wzd_config_t * getlib_mainConfig(void)
-{ return mainConfig; }
+#include "wzd_debug.h"
 
-void setlib_mainConfig(wzd_config_t *c)
-{ mainConfig = c; }
-
-wzd_context_t * getlib_contextList(void)
-{ return context_list; }
-
-void setlib_contextList(wzd_context_t *c)
-{ context_list = c; }
-
-int getlib_server_uid(void)
-{ return _wzd_server_uid; }
-
-void setlib_server_uid(int uid)
-{ _wzd_server_uid = uid; }
-
-void libtest(void)
+const char * charset_detect_local(void)
 {
-  out_log(LEVEL_CRITICAL,"TEST LIB OK\n");
+  char * codeset = NULL;
+#ifdef HAVE_UTF8
+
+#if !(defined WIN32)
+
+# if HAVE_LANGINFO_CODESET
+
+  /* should be very common now */
+  codeset = nl_langinfo (CODESET);
+
+# else
+
+  const char * locale = NULL;
+
+  /* on old systems, use getenv */
+  locale = getenv("LC_ALL");
+  if (locale == NULL || locale[0] == '\0')
+  {
+    locale = getenv("LC_CTYPE");
+    if (locale == NULL || locale[0] == '\0')
+      locale = getenv("LANG");
+  }
+  codeset = locale; /* something like language_COUNTRY.charset */
+  
+  /* we need to try to translate that into an understandable
+   * codeset for iconv (see `iconv --list`)
+   */
+  
+# endif
+ 
+#else /* !WIN32 */
+  static char buf[2 + 10 + 1];
+
+  /* win32 has a function returning the locale's codepage as a number */
+  sprintf (buf, "CP%u", GetACP());
+  codeset = buf;
+
+#endif /* !WIN32 */
+
+#endif /* HAVE_UTF8 */
+  return codeset;
 }

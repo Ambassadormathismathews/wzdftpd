@@ -216,6 +216,7 @@ typedef struct {
 typedef struct {
   unsigned int          gid;
   char                  groupname[128];
+  char                  tagline[256];
   wzd_perm_t            groupperms;
   time_t		max_idle_time;
   unsigned short	num_logins;	/**< number of simultaneous logins allowed */
@@ -307,6 +308,7 @@ typedef struct _wzd_module_t {
 #define	EVENT_RMDIR		0x00000200
 
 #define	EVENT_SITE		0x00010000
+#define	EVENT_CRONTAB		0x00100000
 
 /************************ SECTIONS ************************/
 
@@ -425,6 +427,7 @@ typedef struct {
   unsigned int	userid;
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
+  struct last_file_t	last_file;
   char		last_command[HARD_LAST_COMMAND_LENGTH];
 /*  wzd_bw_limiter * current_limiter;*/
   wzd_bw_limiter current_ul_limiter;

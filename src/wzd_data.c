@@ -69,6 +69,17 @@
 
 #include "wzd_debug.h"
 
+void update_last_file(wzd_context_t * context)
+{
+  strncpy(context->last_file.name,context->current_action.arg,WZD_MAX_PATH);
+  context->last_file.size = context->current_action.bytesnow; /* size */
+  if (server_time > context->current_action.tm_start)
+    context->last_file.time = (server_time - context->current_action.tm_start); /* size */
+  else
+    context->last_file.time = 0;
+  context->last_file.token = context->current_action.token;
+}
+
 void data_close(wzd_context_t * context)
 {
   int ret;
@@ -198,6 +209,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
 
       out_xferlog(context,1 /* complete */);
+      update_last_file(context);
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
@@ -251,6 +263,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       FD_UNREGISTER(context->current_action.current_file,"Client file (STOR)");
 
       out_xferlog(context,1 /* complete */);
+      update_last_file(context);
       /* we increment the counter of uploaded files at the end
        * of the upload
        */
