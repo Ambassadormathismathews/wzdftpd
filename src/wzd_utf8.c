@@ -44,8 +44,6 @@
 
 #include "wzd_debug.h"
 
-#ifdef HAVE_UTF8
-
 #ifdef BSD
 #define	DL_ARG	DL_LAZY
 #else
@@ -68,6 +66,9 @@ static void * _iconv_lib_handle = NULL;
 static fn_iconv_t _iconv_fn_iconv = NULL;
 static fn_iconv_open_t _iconv_fn_iconv_open = NULL;
 static fn_iconv_close_t _iconv_fn_iconv_close = NULL;
+
+
+#ifdef HAVE_UTF8
 
 static void _iconv_openlib(void)
 {
