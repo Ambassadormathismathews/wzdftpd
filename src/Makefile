@@ -2,7 +2,7 @@ include Makefile.config
 
 WZD_BUILD_NUM=$(DATE_TAG)
 
-COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\" -DWZD_MULTIPROCESS=$(WZD_MULTIPROCESS)
+COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
 COMMON_LIBS=
 
 OBJS=wzd_site.o wzd_site_user.o wzd_socket.o \
@@ -25,6 +25,10 @@ LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
 ifeq ($(SSL_SUPPORT),1)
 OBJS += wzd_tls.o
 COMMON_LIBS += -lssl
+endif
+
+ifeq ($(WZD_MULTIPROCESS),1)
+COMMON_CFLAGS += -DWZD_MULTIPROCESS
 endif
 
 ifeq ($(INTERNAL_SFV),1)
@@ -116,7 +120,7 @@ distclean: clean
 ###### dependancies
 deps:
 	rm -f Makefile.deps Makefile.deps2; \
-	for obj in $(SOURCES) $(LIBWZD_SOURCES); do $(CC) -MM $$obj >> Makefile.deps; done; \
+	for obj in $(SOURCES) $(LIBWZD_SOURCES); do $(CC) -MM $$obj $(COMMON_CFLAGS) >> Makefile.deps; done; \
 	sed s/\.o:/\.do:/g Makefile.deps >> Makefile.deps2; \
 	sed s/\.o:/\.po:/g Makefile.deps >> Makefile.deps2; \
 	cat Makefile.deps2 >> Makefile.deps; \
