@@ -193,7 +193,7 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   /* TODO read backend */
 
   /* check if group already exists */
-  if ( !(gid=GetGroupIDByName(str_tochar(groupname))) ) {
+  if ( (gid=GetGroupIDByName(str_tochar(groupname))) == (unsigned int)-1 ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     str_deallocate(groupname);
     return 0;
