@@ -1,10 +1,10 @@
 ## IN PROGRESS ##
 
-- BUG when deleting a dir / file on top of a vfs, .dirinfo is not deleted in the correct dir
+- avoid sending multiples "250-" to be rfc-compliant (message file + answer)
+
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
 - per dir global permissions (to pass over rootpath)
-- LINUX: drop privileges after binding port
 - lock files when writing (to avoid concurrent writes)
 - VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
 - use options in ls
@@ -29,6 +29,9 @@
 - Load modules : .so + try to load win DLLs (using win API ...)
 - cookies
 - anti-hammering: per ip/user, ban time
+- special flag to start server and connect to existing shm without
+  creating/blanking it (goal: replace exe instance by another on the fly)
+- implement a crontab to schedule tasks
 - per-dir msg / default msg; SITE commands:
     * site DIRMSG new_msg
     * site APPENDMSG new_line
@@ -51,6 +54,7 @@
 - multiple binds / restricted binds: bind to only specified ip(s)
 - change / add / remove vfs with site commands
 - add detection of ip for dynamic ip
+- global config flag to close server except for users having this flag
 - 'include' directive in wzd.cfg: ability to split config file
 - message system for users: site msg and/or inline messages
 - add random in PASV port choose, to avoid always using the same

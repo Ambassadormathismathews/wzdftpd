@@ -151,61 +151,13 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
       }
       if (!FD_ISSET(sock,&fds)) /* timeout */
       {
-	out_log(LEVEL_CRITICAL,"Timeout during send\n");
+        out_log(LEVEL_CRITICAL,"Timeout during send\n");
         return 0;
       }
       break;
     }
     ret = send(sock,msg,length,0);
   } /* timeout */
-
-  return ret;
-}
-
-/*************** send_message ************************/
-
-int send_message(int code, wzd_context_t * context)
-{
-  char buffer[BUFFER_LEN];
-  int ret;
-
-  format_message(code,BUFFER_LEN,buffer);
-#ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",buffer);
-#endif
-  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
-
-  return ret;
-}
-
-/*************** send_message_with_args **************/
-
-int send_message_with_args(int code, wzd_context_t * context, ...)
-{
-  va_list argptr;
-  char buffer[BUFFER_LEN];
-  int ret;
-
-  va_start(argptr,context); /* note: ansi compatible version of va_start */
-  v_format_message(code,BUFFER_LEN,buffer,argptr);
-#ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",buffer);
-#endif
-  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
-
-  return 0;
-}
-
-/*************** send_message_raw ********************/
-
-int send_message_raw(const char *msg, wzd_context_t * context)
-{
-  int ret;
-
-/*#ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",msg);
-#endif*/
-  ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -250,12 +202,12 @@ void client_die(wzd_context_t * context)
 #endif
 
 #ifdef DEBUG
-  if (context->current_limiter) {
+/*  if (context->current_limiter) {
 out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
-  }
+  }*/
 #endif
 
-  limiter_free(context->current_limiter);
+/*  limiter_free(context->current_limiter);*/
   context->magic = 0;
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
@@ -302,8 +254,8 @@ int check_timeout(wzd_context_t * context)
       context->current_action.token = TOK_UNKNOWN;
       data_close(context);
       ret = send_message(426,context);
-      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;
+/*      limiter_free(context->current_limiter);
+      context->current_limiter = NULL;*/
     }
   }
 
@@ -349,119 +301,6 @@ int check_timeout(wzd_context_t * context)
     } /* if max_idle_time*/
   }
 
-  return 0;
-}
-
-/*************** checkpath ***************************/
-
-char *stripdir(char * dir, char *buf, int maxlen)
-{
-  char * in, * out;
-  char * last; 
-  int ldots;
-        
-  in   = dir;
-  out  = buf;
-  last = buf + maxlen;
-  ldots = 0; 
-  *out  = 0;
-        
-  if (*in != '/') {
-    if (getcwd(buf, maxlen - 2) ) {
-      out = buf + strlen(buf) - 1;
-      if (*out != '/') *(++out) = '/';
-      out++;
-    }       
-    else
-      return NULL;
-  }               
-
-  while (out < last) {
-    *out = *in;
-
-    if (*in == '/')
-    {
-      while (*(++in) == '/') ;
-        in--;
-    }
-
-    if (*in == '/' || !*in)
-    {
-      if (ldots == 1 || ldots == 2) {
-        while (ldots > 0 && --out > buf)
-        {
-          if (*out == '/')
-            ldots--;
-        }
-        *(out+1) = 0;
-      }
-      ldots = 0;
-
-    } else if (*in == '.') {
-      ldots++;
-    } else {
-      ldots = 0;
-    }
-
-    out++;
-
-    if (!*in)
-      break;
-                        
-    in++;
-  }       
-        
-  if (*in) {
-    errno = ENOMEM;
-    return NULL;
-  }       
-        
-  while (--out != buf && (*out == '/' || !*out)) *out=0;
-    return buf;
-}       
-
-
-int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
-{
-  char allowed[2048];
-  char cmd[2048];
-  
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 0) {
-    sprintf(allowed,"%s/",context->userinfo.rootpath);
-    sprintf(cmd,"%s%s",context->userinfo.rootpath,context->currentpath);
-  } else
-#endif
-  {
-    sprintf(allowed,"%s/",mainConfig->user_list[context->userid].rootpath);
-    sprintf(cmd,"%s%s",mainConfig->user_list[context->userid].rootpath,context->currentpath);
-  }
-  if (cmd[strlen(cmd)-1] != '/')
-    strcat(cmd,"/");
-  if (wanted_path) {
-    if (wanted_path[0]!='/') {
-      strcat(cmd,wanted_path);
-    } else {
-      strcpy(cmd,allowed);
-      strcat(cmd,wanted_path+1);
-    } 
-  } 
-/*#ifdef DEBUG
-printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
-#endif*/
-/*  if (!realpath(cmd,path)) return 1;*/
-  if (!stripdir(cmd,path,2048)) return 1;
-/*#ifdef DEBUG
-printf("Converted to: '%s'\n",path);
-#endif*/
-  if (path[strlen(path)-1] != '/')
-    strcat(path,"/");
-  strcpy(cmd,path);
-  cmd[strlen(allowed)]='\0';
-  /* check if user is allowed to even see the path */
-  if (strncmp(cmd,allowed,strlen(allowed))) return 1;
-  /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,2048);
   return 0;
 }
 
@@ -522,7 +361,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   else return 1;
 
 #ifdef DEBUG
-printf("current path: '%s'\n",context->currentpath);
+out_err(LEVEL_INFO,"current path: '%s'\n",context->currentpath);
 #endif
 
   return 0;
@@ -729,14 +568,18 @@ fprintf(stderr,"PARAM: '%s'\n",param);
 
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
     {
+      char *ptr;
       if (strrchr(cmd,'/')) { /* probably not in current path - need to readjust path */
 	if (strrchr(cmd,'/') > strrchr(cmd,'*')) {
 	  /* char / is AFTER *, dir style: toto / * / .., we refuse */
           ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
           return 1;
 	}
-	strncpy(cmd,strrchr(cmd,'/')+1,2048);
-	*strrchr(cmd,'/') = '\0';
+	ptr = strrchr(cmd,'/');
+	strncpy(cmd,ptr+1,2048);
+	*ptr = '\0';
+//	strncpy(cmd,strrchr(cmd,'/')+1,2048);
+//	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
 	strcpy(mask,cmd);
 	cmd[0] = '\0';
@@ -1071,9 +914,9 @@ int do_retr(char *param, wzd_context_t * context)
     return 1;
   }
 
-  if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==0) { /* XXX allow access to files being uploaded ? */
+  if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-    close(sock);
+/*    close(sock);*/
     return 1;
   }
 
@@ -1125,10 +968,19 @@ int do_retr(char *param, wzd_context_t * context)
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
 
-  if (user->max_dl_speed)
+/*  if (user->max_dl_speed)
     context->current_limiter = limiter_new(user->max_dl_speed);
   else
-    context->current_limiter = NULL;
+    context->current_limiter = NULL;*/
+
+  if (user->max_dl_speed)
+  {
+    context->current_dl_limiter.maxspeed = user->max_dl_speed;
+    context->current_dl_limiter.bytes_transfered = 0;
+    gettimeofday(&context->current_dl_limiter.current_time,NULL);
+  }
+  else
+    context->current_dl_limiter.maxspeed = 0;
 
   return 0;
 }
@@ -1213,9 +1065,9 @@ fprintf(stderr,"Resolved: %s\n",path);
       return 2;
     }*/
 
-  if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==0) { /* XXX allow access to files being uploaded ? */
+  if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-    close(sock);
+/*    close(sock);*/
     return 1;
   }
 
@@ -1274,10 +1126,19 @@ fprintf(stderr,"Download: User %s starts uploading %s\n",
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
 
-  if (user->max_ul_speed)
+/*  if (user->max_ul_speed)
     context->current_limiter = limiter_new(user->max_ul_speed);
   else
-    context->current_limiter = NULL;
+    context->current_limiter = NULL;*/
+
+  if (user->max_ul_speed)
+  {
+    context->current_ul_limiter.maxspeed = user->max_ul_speed;
+    context->current_ul_limiter.bytes_transfered = 0;
+    gettimeofday(&context->current_ul_limiter.current_time,NULL);
+  }
+  else
+    context->current_ul_limiter.maxspeed = 0;
 
   return 0;
 }
@@ -1516,7 +1377,7 @@ int do_login_loop(wzd_context_t * context)
   char buffer[BUFFER_LEN];
   char * ptr;
   char * token;
-  char * username;
+  char * username=0;
   int ret;
   int user_ok=0, pass_ok=0;
 #if SSL_SUPPORT
@@ -1845,6 +1706,8 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    }
 	    /* avoir error if current is "/" and action is ".." */
 	    if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
+	      /* TODO print message file */
+	      print_file("/home/pollux/.message",250,context);
 	      ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	      break;
 	    }
@@ -1852,6 +1715,8 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
 	      break;
 	    }
+	      /* TODO print message file */
+            print_file("/home/pollux/.message",250,context);
 	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	    break;
 	  case TOK_LIST:

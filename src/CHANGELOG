@@ -1,3 +1,37 @@
+# Dec, 02 2002
+- site adduser: what do you think it can be for ?
+  site adduser user pass homedir [backend]
+
+# Nov, 30 2002
+- server start debug messages prints on stderr (we cannot use out_log neither
+  in init nor in modules/backend loading, because mainConfig is NOT filled
+- this allow to read another config file with the same function
+- server reloads .cfg when receiving SIGHUP, allowing to change all parameters
+  inline, except backends (separate command), hooks and modules (to be done ...)
+- site reload: sends SIGHUP to parent (multiprocess) or self, to reload config
+
+# Nov, 26 2002
+- site utime: change access/modification time of a file
+- separation of code in an exe and a dynamic lib
+- SFV checker is now a separated module
+
+# Oct, 27 2002
+- cookie: speed (show speed of UL/DL, or nothing if not xfering)
+
+# Oct, 25 2002
+- bugfix: failed binding to port (e.g missing permissions) cause segfault (linux)
+
+# Oct, 14 2002
+- bugfix: could not remove dir at root of a vfs path
+    (missing / in permfile path)
+
+# Oct, 11 2002
+- bugfix: CRITICAL fixed problem with file globbing attack
+    e.g "ls */../*/../*/../*/../*/../*/../*/../*/../*/../*/../*/../*/../*"
+- bugfix: when using wildcards in LIST, pattern was not matched to
+    vfs names
+- linux: If run by root or setuid, drops privileges after binding port
+
 #--- cvs commit TAG: rel-0-1rc1
 # Oct, 10 2002
 - bugfix: CRITICAL functions mkdir/rmdir do not check permissions and creates/removes path

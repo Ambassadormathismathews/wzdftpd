@@ -41,7 +41,7 @@ int socket_make(int *port, int nListen)
   sai.sin_port = htons(*port); /* any port */
 
   if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))) {
-    out_log(LEVEL_CRITICAL,"Could not bind sock %s:%d\n", __FILE__, __LINE__);
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
     close(sock);
     return -1;
   }

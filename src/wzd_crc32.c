@@ -151,7 +151,7 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   char buf[BUFSIZ];
   char * ptr;
   char *err_ptr;
-  size_t i;
+/*  size_t i;*/
   int count_comments=0, count_entries=0;
   int length;
 
@@ -163,7 +163,7 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   sfv->sfv_list = malloc(50*sizeof(wzd_sfv_entry*));
 
   while ( fgets(buf,BUFSIZ-1,in) != NULL) {
-    if (i == -1) return -1;
+/*    if (i == -1) return -1;*/
     ptr = buf;
     length = strlen(buf); /* fgets put a '\0' at the end */
     /* trim trailing space, because fgets keep a \n */

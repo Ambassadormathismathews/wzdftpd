@@ -69,7 +69,11 @@ void context_init(wzd_context_t * context)
   context->pid_child = 0;
   context->datamode = DATA_PORT;
   context->current_action.token = TOK_UNKNOWN;
-  context->current_limiter = NULL;
+/*  context->current_limiter = NULL;*/
+  context->current_ul_limiter.maxspeed = 0;
+  context->current_ul_limiter.bytes_transfered = 0;
+  context->current_dl_limiter.maxspeed = 0;
+  context->current_dl_limiter.bytes_transfered = 0;
 #if SSL_SUPPORT
   context->ssl.obj = NULL;
   context->ssl.data_ssl = NULL;
@@ -119,6 +123,84 @@ int global_check_ip_allowed(int userip[4])
   return -1;
 }
 
+/* called when SIGHUP received, need to restart the main server
+ * (and re-read config file)
+ * Currently loggued users are NOT kicked
+ */
+void server_restart(int signum)
+{
+  wzd_config_t * config;
+  int sock;
+  int rebind=0;
+
+  fprintf(stderr,"Sighup received\n");
+
+  /* 1- Re-read config file, abort if error */
+  config = readConfigFile("wzd.cfg"); /* XXX */
+  if (!config) return;
+
+  /* 2- Shutdown existing socket */
+  if (config->port != mainConfig->port) {
+    sock = mainConfig->mainSocket;
+    close(sock);
+    rebind = 1;
+  }
+  
+  /* 3- Copy new config */
+  {
+    /* do not touch serverstop */
+    /* do not touch backend */
+    mainConfig->max_threads = config->max_threads;
+    /* do not touch logfile */
+    mainConfig->loglevel = config->loglevel;
+    /* do not touch messagefile */
+    /* mainSocket will be modified later */
+    mainConfig->port = config->port;
+    mainConfig->pasv_low_range = config->pasv_low_range;
+    mainConfig->pasv_up_range = config->pasv_up_range;
+    memcpy(mainConfig->pasv_ip,config->pasv_ip,4);
+    mainConfig->login_pre_ip_check = config->login_pre_ip_check;
+    /* reload pre-ip lists */
+    /* reload vfs lists */
+    vfs_free(&mainConfig->vfs);
+    mainConfig->vfs = config->vfs;
+    /* do not touch hooks */
+    /* do not touch modules */
+#if SSL_SUPPORT
+    /* what can we do with ssl ? */
+    /* reload certificate ? */
+#endif
+    /* we currently do NOT support shm_key dynamic change */
+    /* reload permission list ?? */
+    /* reload global_ul_limiter ?? */
+    /* reload global_dl_limiter ?? */
+    mainConfig->site_config = config->site_config;
+    /* do not touch user_list */
+    /* do not touch group list */
+  }
+  
+  /* 4- Re-open server */
+
+  /* create socket iff different ports ! */
+  if (rebind) {
+    sock = mainConfig->mainSocket = socket_make(&mainConfig->port,5);
+    if (sock == -1) {
+      out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
+	  __FILE__, __LINE__);
+      serverMainThreadExit(-1);
+    }
+    {
+      int one=1;
+
+      if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+	out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+	serverMainThreadExit(-1);
+      }
+    }
+    out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
+  }
+}
+
 void login_new(int socket_accept_fd)
 {
   unsigned long remote_host;
@@ -153,7 +235,7 @@ void login_new(int socket_accept_fd)
         global_check_ip_allowed(userip)<=0) { /* IP was rejected */
     /* FIXME we should not be in raw mode here ... */
     char * reject_msg = "421-Your ip was rejected\r\n";
-    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,context);
+    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,NULL);
     close(newsock);
     out_log(LEVEL_HIGH,"Failed login from %d.%d.%d.%d: global ip rejected\n",
       userip[0],userip[1],userip[2],userip[3]);
@@ -175,6 +257,7 @@ void login_new(int socket_accept_fd)
       exit(1);
     }
     mainConfig = mainConfig_shm->datazone;
+    setlib_mainConfig(mainConfig);
     context_shm = wzd_shm_create(shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
     if (context_shm == NULL) {
       out_err(LEVEL_CRITICAL,"I can't open context shm ! (child)\n");
@@ -268,32 +351,6 @@ void serverMainThreadProc(void *arg)
   unsigned int length=0;
   int backend_storage;
 
-/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  length += HARD_USERLIMIT*sizeof(wzd_context_t);
-  length += HARD_DEF_USER_MAX*sizeof(wzd_user_t);
-  length += HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
-  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
-  if (context_shm == NULL) {
-    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
-    exit(1);
-  }
-  context_list = context_shm->datazone;
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    context_init(context_list+i);
-  }
-  mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
-
-  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
-      mainConfig->group_list,HARD_DEF_GROUP_MAX);
-  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (ret || mainConfig->backend.handle == NULL) {
-    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    exit (1);
-  }
-
-  out_log(LEVEL_INFO,"Process %d ok\n",getpid());
-
   /* catch broken pipe ! */
 #ifdef __SVR4
   sigignore(SIGPIPE);
@@ -306,6 +363,8 @@ void serverMainThreadProc(void *arg)
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
   signal(SIGKILL,interrupt);
+
+  signal(SIGHUP,server_restart);
 
 #ifdef POSIX /* NO, winblows is NOT posix ! */
   /* set fork() limit */
@@ -334,9 +393,58 @@ void serverMainThreadProc(void *arg)
 
     if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
       out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
-      exit(1);
+      serverMainThreadExit(-1);
     }
   }
+
+#ifndef __CYGWIN__
+  /* if running as root, we must give up root rigths for security */
+  {
+    uid_t run_uid=1000; /* XXX FIXME change uid value, read it from command line / config file ... */
+
+    /* effective uid if 0 if run as root or setuid */
+    if (geteuid() == 0) {
+      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",run_uid,getuid());
+      setuid(run_uid);
+    }
+  }
+#endif /* __CYGWIN__ */
+
+/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
+  length += HARD_USERLIMIT*sizeof(wzd_context_t);
+  length += HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+  length += HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
+  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
+  if (context_shm == NULL) {
+    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
+    exit(1);
+  }
+  context_list = context_shm->datazone;
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    context_init(context_list+i);
+  }
+  mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+
+  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
+      mainConfig->group_list,HARD_DEF_GROUP_MAX);
+  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
+  if (ret || mainConfig->backend.handle == NULL) {
+    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
+    exit (1);
+  }
+
+  /********** init modules **********/
+  {
+    wzd_module_t *module;
+    module = mainConfig->module;
+    while (module) {
+      ret = module_load(module);
+      module = module->next_module;
+    }
+  }
+
+  out_log(LEVEL_INFO,"Process %d ok\n",getpid());
 
   /* sets start time, for uptime */
   time(&server_start);
@@ -356,6 +464,11 @@ void serverMainThreadProc(void *arg)
     switch (ret) {
     case -1: /* error */
       if (errno == EINTR) continue; /* retry */
+      if (errno == EBADF) {
+	out_log(LEVEL_CRITICAL,"Bad file descriptor %d\n",
+	    mainConfig->mainSocket);
+	serverMainThreadExit(-1);
+      }
       out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%d\n",
         strerror(errno), __FILE__, __LINE__);
       serverMainThreadExit(-1);

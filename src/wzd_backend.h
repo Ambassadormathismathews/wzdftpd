@@ -86,6 +86,11 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
 
 int backend_chpass(const char *username, const char *new_pass);
 
+/* if user does not exist, add it */
+int backend_mod_user(const char *backend, const char *name, wzd_user_t * user);
+
 int backend_commit_changes(const char *backend);
+
+int backend_inuse(const char *backend);
 
 #endif /* __WZD_BACKEND__ */

@@ -2,6 +2,8 @@
 
 #define DEFAULT_MSG	"No message for this code"
 
+#define BUFFER_LEN	4096
+
 const char *msg_tab[HARD_MSG_LIMIT];
 
 void init_default_messages(void)
@@ -56,3 +58,52 @@ const char * getMessage(int code)
 void setMessage(const char *newMessage, int code)
 {
 }
+
+/*************** send_message ************************/
+
+int send_message(int code, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  int ret;
+
+  format_message(code,BUFFER_LEN,buffer);
+#ifdef DEBUG
+fprintf(stderr,"I answer: %s\n",buffer);
+#endif
+  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+
+  return ret;
+}
+
+/*************** send_message_with_args **************/
+
+int send_message_with_args(int code, wzd_context_t * context, ...)
+{
+  va_list argptr;
+  char buffer[BUFFER_LEN];
+  int ret;
+
+  va_start(argptr,context); /* note: ansi compatible version of va_start */
+  v_format_message(code,BUFFER_LEN,buffer,argptr);
+#ifdef DEBUG
+fprintf(stderr,"I answer: %s\n",buffer);
+#endif
+  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+
+  return 0;
+}
+
+/*************** send_message_raw ********************/
+
+int send_message_raw(const char *msg, wzd_context_t * context)
+{
+  int ret;
+
+/*#ifdef DEBUG
+fprintf(stderr,"I answer: %s\n",msg);
+#endif*/
+  ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
+
+  return ret;
+}
+

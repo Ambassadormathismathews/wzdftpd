@@ -34,6 +34,38 @@ void chop(char *s)
     *r = '\0';
 }
 
+/* internal fct, rename files by copying data */
+int _int_rename(const char * src, const char *dst)
+{
+#if 0
+  char buffer[32768];
+  int fd_from, fd_to;
+  struct stat s;
+
+  if (lstat(src,&s)) return -1;
+
+  if (S_ISREG(s.st_mode))
+  {
+  }
+#endif
+  return 0;
+}
+
+/* renames file/dir, if on different fs then moves recursively */
+int safe_rename(const char *src, const char *dst)
+{
+  int ret;
+
+  ret = rename(src,dst);
+  if (ret == -1 && errno == EXDEV)
+  {
+    fprintf(stderr,"Cross device move\n");
+    ret = _int_rename(src,dst);
+  }
+  
+  return ret;
+}
+
 /* returns 1 if file is perm file */
 int is_perm_file(const char *filename)
 {
@@ -75,6 +107,16 @@ void v_format_message(int code, unsigned int length, char *buffer, va_list argpt
 
   /* adjust size, we will need more space to put the code and \r\n */
   length -= 7;
+
+  /* remove trailing garbage */
+  {
+    char * ptr = work_buf;
+    unsigned int length = strlen(ptr);
+    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
+       *(ptr+length-1) = '\0';
+       length--;
+    }
+  }
   
   if (!strpbrk(work_buf,"\r\n")) { /* simple case, msg on one line */
     snprintf(buffer,length,"%d %s\r\n",code,work_buf);
@@ -155,6 +197,8 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
     gettimeofday( &tv, &tz );
     dif = (tv.tv_sec - l->current_time.tv_sec) * 1000
       + (tv.tv_usec - l->current_time.tv_usec) / 1000;
+/*fprintf(mainConfig->logfile,"%d %ld %.1f\n",l->bytes_transfered,dif,(l->bytes_transfered)/1024.f);*/
+    l->current_speed = l->bytes_transfered;
     dif = (((1000L * l->bytes_transfered) / l->maxspeed) - dif) * 1000L;
 
     /* if usleep takes too long, this will compensate by
@@ -164,7 +208,6 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
     memcpy(&(l->current_time), &tv, sizeof(struct timeval));
     l->current_time.tv_usec += (dif % 1000000);
     l->current_time.tv_sec += (dif / 1000000);
-fprintf(stderr,"dif: %ld\n",dif);
     if (dif > 0)
       usleep(dif);
     l->bytes_transfered = 0;
@@ -347,11 +390,24 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	strncpy(tmp_buffer,param_context->last_command,4095);
 	/* modify special commands, to not appear explicit */
 	if (strncasecmp(tmp_buffer,"site",4)==0) {
-	  char * ptr;
+/*	  char * ptr;
 	  ptr = strpbrk(tmp_buffer+5," \t");
 	  if (ptr) {
 	    memset(ptr+1,'x',strlen(tmp_buffer)-(ptr-tmp_buffer+1));
-	  }
+	  }*/
+	  strcpy(tmp_buffer,"SITE command");
+	}
+	else if (strncasecmp(tmp_buffer,"retr",4)==0) {
+	  char *fname;
+	  fname = strrchr(param_context->current_action.arg,'/')+1;
+	  if (fname==NULL || *fname=='\0') fname = param_context->current_action.arg;
+	  snprintf(tmp_buffer,4095,"DL: %s",fname);
+	}
+	else if (strncasecmp(tmp_buffer,"stor",4)==0) {
+	  char *fname;
+	  fname = strrchr(param_context->current_action.arg,'/')+1;
+	  if (fname==NULL || *fname=='\0') fname = param_context->current_action.arg;
+	  snprintf(tmp_buffer,4095,"UL: %s",fname);
 	}
         cookie = tmp_buffer;
         cookielength = strlen(cookie);
@@ -377,6 +433,23 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	cookie = tmp_buffer;
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("maxul"); */
+      }
+      /* speed */
+      if (strncmp(srcptr,"speed",5)==0) {
+        if (strncasecmp(param_context->last_command,"retr",4)==0) {
+          snprintf(tmp_buffer,4095,"%.1f kB/s",param_context->current_dl_limiter.current_speed/1024.f);
+        }
+        else {
+	  if (strncasecmp(param_context->last_command,"stor",4)==0) {
+            snprintf(tmp_buffer,4095,"%.1f kB/s",param_context->current_ul_limiter.current_speed/1024.f);
+          }
+          else {
+	    tmp_buffer[0] = '\0'; /* if not DL/UL, do not show speed */
+	  }
+	}
+        cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("speed"); */
       }
       /* tag */
       if (strncmp(srcptr,"tag",3)==0) {
@@ -430,6 +503,49 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
   return 0;
 }
 
+/* print_file : read file, replace cookies and prints it
+ * header (200-) MUST have been sent, and end (200 ) is NOT sent)
+ */
+int print_file(const char *filename, int code, void * void_context)
+{
+  wzd_context_t * context = void_context;
+  void * param;
+  struct stat s;
+  char complete_buffer[1024];
+  char * buffer = complete_buffer + 4;
+  int ret;
+  FILE *fp;
+
+  if (strlen(filename)==0) {
+    out_log(LEVEL_HIGH,"Trying to print file (null) with code %d\n",code);
+    return 1;
+  }
+  if (stat(filename,&s)==-1) {
+    out_log(LEVEL_HIGH,"File %s does not exist (code %d)\n",filename,code);
+    return 1;
+  }
+  fp = fopen(filename,"r");
+  if (!fp) {
+    out_log(LEVEL_HIGH,"Problem opening file %s (code %d)\n",filename,code);
+    return 1;
+  }
+  
+  snprintf(complete_buffer,5,"%3d-",code);
+  if ( (fgets(buffer,1018,fp))==NULL ) {
+    out_log(LEVEL_HIGH,"File %s is empty (code %d)\n",filename,code);
+    return 1;
+  }
+
+  param = NULL;
+  do {
+    ret = cookies_replace(buffer,1018,param,context); /* TODO test ret */
+  /* XXX FIXME TODO */
+    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);
+/*    send_message_raw(complete_buffer,context);*/
+  } while ( (fgets(buffer,1018,fp)) != NULL);
+
+  return 0;
+}
 
 /* used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text)

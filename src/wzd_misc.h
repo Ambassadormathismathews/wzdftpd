@@ -8,6 +8,9 @@ void chop(char *s);
 /* returns 1 if file is perm file */
 int is_perm_file(const char *filename);
 
+/* renames file/dir, if on different fs then moves recursively */
+int safe_rename(const char *src, const char *dst);
+
 /* formats the message if multiline, e.g 220-hello\r\n220 End */
 void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);
 void format_message(int code, unsigned int length, char *buffer, ...);
@@ -20,6 +23,11 @@ void limiter_free(wzd_bw_limiter *l);
 
 /* cookies */
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context);
+
+/* print_file : read file, replace cookies and prints it
+ * header (200-) MUST have been sent, and end (200 ) is NOT sent)
+ */
+int print_file(const char *filename, int code, void * void_context);
 
 /* used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text);

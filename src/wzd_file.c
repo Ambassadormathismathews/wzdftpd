@@ -313,7 +313,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
     file_list = NULL;
     return ret; /* stupid right asked */
   } else { /* ! in file_list */
-    /* FIXME XXX search in parent dirs ???????? XXX FIXME */
+    /* FIXME XXX search in parent dirs ???????? - group perms XXX FIXME */
     free_file_recursive(file_list);
     file_list = NULL;
     return _default_perm(wanted_right,user);
@@ -694,6 +694,8 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 
     /* remove permission file */
     strcpy(path_perm,dirname); /* path is already ended by / */
+    if (path_perm[strlen(path_perm)-1] != '/')
+      strcat(path_perm,"/");
     strcat(path_perm,HARD_PERMFILE);
     unlink(path_perm);
   }
@@ -743,7 +745,7 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   /* change file name in perm file !! */
   ret = _movePerm(old_filename,new_filename,0,0,context);
   
-  ret = rename(old_filename,new_filename);
+  ret = safe_rename(old_filename,new_filename);
   if (ret==-1) {
 #ifdef DEBUG
 fprintf(stderr,"rename error %d (%s)\n", errno, strerror(errno));

@@ -85,9 +85,15 @@ wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
   wzd_shm_t *shm;
   semun_t u_semun;
   unsigned short array[1];
+  int have_set_uid=0;
 
   shm = malloc(sizeof(wzd_shm_t));
   if (!shm) return NULL;
+
+  if (geteuid()==0) {
+    setreuid(-1,1000); /* XXX FIXME */
+    have_set_uid = 1;
+  }
 
   shm->datazone = NULL;
   shm->shmid = shmget((key_t)key,size,IPC_CREAT | IPC_EXCL | 0600 );
@@ -102,6 +108,7 @@ fprintf(stderr,"CRITICAL: shm exists with selected shm_key 0x%lx - check your co
 fprintf(stderr,"CRITICAL: could not shmget, key %lu, size %d - errno is %d (%s)\n",
     key,size,errno,strerror(errno));
     }
+    if (have_set_uid) setreuid(-1,0); /* become root again */
     return NULL;
   }
 
@@ -109,20 +116,26 @@ fprintf(stderr,"CRITICAL: could not shmget, key %lu, size %d - errno is %d (%s)\
   if (shm->datazone == (void*)-1) {
 fprintf(stderr,"CRITICAL: could not shmat, key %lu, size %d - errno is %d (%s)\n",
     key,size,errno,strerror(errno));
+    if (have_set_uid) setreuid(-1,0); /* become root again */
     shmctl(shm->shmid,IPC_RMID,NULL);
     return NULL;
   }
 
   shm->semid = semget((key_t)key,1,0);
+
   if ( ! (shm->semid==-1 && errno==ENOENT) ) {
 fprintf(stderr,"CRITICAL: sem exists with selected sem_key 0x%lx - check your config file\n",key);
+    if (have_set_uid) setreuid(-1,0); /* become root again */
     shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);
     return NULL;
   }
+
   shm->semid = semget((key_t)key,1,IPC_CREAT|IPC_EXCL|0600);
+
   if (shm->semid == -1) {
 fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
+    if (have_set_uid) setreuid(-1,0); /* become root again */
     shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);
     return NULL;
@@ -133,11 +146,13 @@ fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,er
   u_semun.array = array;
   if (semctl(shm->semid,0,SETALL,u_semun)<0) {
 fprintf(stderr,"CRITICAL: could not set sem value, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
+    if (have_set_uid) setreuid(-1,0); /* become root again */
     shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);
     return NULL;
   }
 
+  if (have_set_uid) setreuid(-1,0); /* become root again */
   return shm;
 }
 
@@ -151,6 +166,8 @@ wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 int wzd_shm_read(wzd_shm_t * shm, void * data, int size, int offset)
 {
   struct sembuf s;
+
+  if (!shm) return -1;
 
   /* get sem : P() */
   s.sem_num = 0;
@@ -185,6 +202,8 @@ int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset)
 {
   struct sembuf s;
 
+  if (!shm) return -1;
+
   /* get sem : P() */
   s.sem_num = 0;
   s.sem_op = -1;
@@ -216,6 +235,8 @@ fprintf(stderr,"CRITICAL: could not restore sem value, sem %d - errno is %d (%s)
 /* destroys shm */
 void wzd_shm_free(wzd_shm_t * shm)
 {
+  if (!shm) return;
+
   semctl(shm->semid,IPC_RMID,0);
   shmdt(shm->datazone);
   shmctl(shm->shmid,IPC_RMID,NULL);

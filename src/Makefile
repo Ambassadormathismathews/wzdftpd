@@ -2,21 +2,14 @@ include Makefile.config
 
 PLATFORM:=$(shell uname)
 
-ifeq ($(PLATFORM),Linux)
-CC=gcc-3.2
-else
-CC=gcc
-endif
-
 WZD_BUILD_NUM:=$(shell date +"%Y%m%d")
 
-COMMON_CFLAGS=-Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)
+COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)
 COMMON_LIBS=
 
-OBJS=wzd_misc.o wzd_site.o wzd_socket.o wzd_backend.o wzd_messages.o \
-  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o \
-  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o wzd_crc32.o \
-  wzd_mod.o wzd_vfs.o
+OBJS=wzd_site.o wzd_site_user.o wzd_socket.o \
+  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_main.o \
+  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o
 DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)
@@ -25,12 +18,34 @@ WINLIBS=$(COMMON_LIBS) -lcrypto
 CFLAGS=-O2 $(COMMON_CFLAGS)
 DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
 PCFLAGS=-g -DDEBUG $(COMMON_CFLAGS) -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
-EXEC=wzdFTPd.exe
+
+LIBWZD_SOURCES = wzd_libmain.c wzd_log.c wzd_misc.c wzd_backend.c wzd_messages.c wzd_mod.c wzd_vfs.c
+LIBWZD_OBJS = $(LIBWZD_SOURCES:%.c=%.o)
+LIBWZD_DOBJS = $(LIBWZD_SOURCES:%.c=%.do)
+LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
 
 ifeq ($(SSL_SUPPORT),1)
 OBJS += wzd_tls.o
 COMMON_LIBS += -lssl
 endif
+
+ifeq ($(INTERNAL_SFV),1)
+OBJS += wzd_crc32.o
+COMMON_CFLAGS += -DINTERNAL_SFV=1
+endif
+
+ifeq ($(PLATFORM),Linux)
+CC=gcc-3.2
+LIBWZD = libwzd.so
+EXEC=wzdFTPd
+COMMON_LIBS += -L. -lwzd -Wl,-rpath,.
+else
+CC=gcc
+LIBWZD = libwzd.dll
+EXEC=wzdFTPd.exe
+COMMON_LIBS += -L. -llibwzd -Wl,-rpath,.
+endif
+EXTRALIBS = $(LIBWZD)
 
 
 .SUFFIXES: .c .o .do .po
@@ -38,34 +53,46 @@ endif
 all: debug
 
 intel:
-	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT)'
+	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)'
 
-release: $(OBJS)
+intel_release:
+	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)' release
+
+release: $(OBJS) $(EXTRALIBS)
 ifeq ($(PLATFORM),Linux)
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 else
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
 endif
 
-debug: $(DOBJS)
+debug: $(DOBJS) $(EXTRALIBS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS)
+	$(CC) -o $(EXEC) $(DOBJS) $(LIBS)
 else
-	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS)
+	$(CC) -o $(EXEC) $(DOBJS) $(WINLIBS)
 endif
 
-pedantic: $(POBJS)
+pedantic: $(POBJS) $(EXTRALIBS)
 ifeq ($(PLATFORM),Linux)
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS)
 else
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS)
 endif
 
+$(LIBWZD): $(LIBWZD_DOBJS)
+	$(CC) -shared -o $@ $^
+
+check_symlinks:
+	rm -f libwzdplaintext.so libwzd_sfv.so libwzd_test.so; \
+	if [ -d ../backends/plaintext ]; then ln -s ../backends/plaintext/libwzdplaintext.so; fi; \
+	if [ -d ../modules/sfv ]; then ln -s ../modules/sfv/libwzd_sfv.so; fi; \
+	if [ -d ../modules/test ]; then ln -s ../modules/test/libwzd_test.so; fi
+
 clean:
 	rm -f *.o *.do *.po *~ core
 
 distclean: clean
-	rm -f $(EXEC)
+	rm -f $(EXEC) $(LIBWZD)
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<

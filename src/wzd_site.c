@@ -14,6 +14,7 @@ void do_site_test(const char *command, wzd_context_t * context)
 /*  backend_commit_changes();*/
 /*if (context->userinfo.flags)
   out_err(LEVEL_CRITICAL,"FLAGS '%s'\n",context->userinfo.flags);*/
+#if 0
   {
     wzd_sfv_file sfv;
     char buffer[BUFFER_LEN];
@@ -26,6 +27,9 @@ void do_site_test(const char *command, wzd_context_t * context)
       ret = sfv_check(buffer);
     }
   }
+#endif
+  libtest();
+  ret = 0;
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
@@ -366,6 +370,33 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
   send_message_raw("200 \r\n",context);
 }
 
+void do_site_reload(wzd_context_t * context)
+{
+  int ret;
+  pid_t pid;
+  char buffer[256];
+
+#ifdef WZD_MULTIPROCESS
+  pid = getppid();
+#else
+  pid = getpid();
+#endif
+  if (pid <2) {
+    ret = send_message_with_args(501,context,"ARG ! Getting invalid pid ?!");
+    return;
+  }
+  out_log(LEVEL_CRITICAL,"Target pid: %d\n",pid);
+
+  ret = send_message_raw("200-Sending SIGHUP to main server, waiting for result\r\n",context);
+  ret = kill(pid,SIGHUP);
+  if (ret)
+    snprintf(buffer,255,"200 ERROR kill returned %d (%s)\r\n",ret,strerror(errno));
+  else
+    snprintf(buffer,255,"200 kill returned ok\r\n");
+  ret = send_message_raw(buffer,context);
+}
+
+#if 0
 /********************* do_site_sfv *************************/
 /* sfv: add / check / create
  */
@@ -420,6 +451,7 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
   
   sfv_free(&sfv);
 }
+#endif /* 0 */
 
 /********************* do_site_user ************************/
 /* user username
@@ -454,6 +486,94 @@ void do_site_user(char *command_line, wzd_context_t * context)
   do_site_print_file(mainConfig->site_config.file_user,&user_context,context);
 /*#endif
   do_site_print_file(mainConfig->site_config.file_user,&mainConfig->user_list[uid],context);*/
+}
+
+/********************* do_site_utime ***********************/
+/* utime filename YYYYMMDDhhmmss YYYYMMDDhhmmss YYYYMMDDhhmmss UTC
+ * change acess time, modification time, modification of status of a file
+ */
+
+void do_site_utime(char *command_line, wzd_context_t * context)
+{
+  extern char *strptime (__const char *__restrict __s,
+    __const char *__restrict __fmt, struct tm *__tp);
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * filename;
+  char * new_atime, * new_mtime, * new_ctime;
+  struct tm tm_atime, tm_mtime, tm_ctime;
+  struct utimbuf utime_buf;
+  char * timezone;
+  int ret;
+  wzd_user_t * user;
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
+
+  ptr = command_line;
+  filename = strtok_r(command_line," \t\r\n",&ptr);
+  if (!filename) {
+    do_site_help("utime",context);
+    return;
+  }
+  new_atime = strtok_r(NULL," \t\r\n",&ptr);
+  if (!new_atime) {
+    do_site_help("utime",context);
+    return;
+  }
+  new_mtime = strtok_r(NULL," \t\r\n",&ptr);
+  if (!new_mtime) {
+    do_site_help("utime",context);
+    return;
+  }
+  new_ctime = strtok_r(NULL," \t\r\n",&ptr);
+  if (!new_ctime) {
+    do_site_help("utime",context);
+    return;
+  }
+  timezone = strtok_r(NULL," \t\r\n",&ptr);
+  if (!timezone) {
+    do_site_help("utime",context);
+    return;
+  }
+  /* TODO check that timezone is UTC */
+  ptr=strptime(new_atime,"%Y%m%d%H%M%S",&tm_atime);
+  if (ptr == NULL || *ptr != '\0') {
+    do_site_help("utime",context);
+    return;
+  }
+  ptr=strptime(new_mtime,"%Y%m%d%H%M%S",&tm_mtime);
+  if (ptr == NULL || *ptr != '\0') {
+    do_site_help("utime",context);
+    return;
+  }
+  /* TODO ctime is useless in *nix systems ... */
+  ptr=strptime(new_ctime,"%Y%m%d%H%M%S",&tm_ctime);
+  if (ptr == NULL || *ptr != '\0') {
+    do_site_help("utime",context);
+    return;
+  }
+  utime_buf.actime = mktime(&tm_atime);
+  utime_buf.modtime = mktime(&tm_mtime);
+  /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+  if (checkpath(filename,buffer,context)) { /* path is NOT ok ! */
+    ret = send_message_with_args(501,context,"File does not exists");
+    return;
+  }
+  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+  ret = _checkPerm(buffer,RIGHT_RNFR,user);  
+  if (ret) {
+    ret = send_message_with_args(501,context,"Access denied");
+    return;
+  }
+
+  ret = utime(buffer,&utime_buf);
+
+  ret = send_message_with_args(200,context,"UTIME command ok");
 }
 
 /********************* do_site_version *********************/
@@ -497,6 +617,10 @@ int do_site(char *command_line, wzd_context_t * context)
     }
   }
 
+/******************* ADDUSER ********************/
+  if (strcasecmp(token,"ADDUSER")==0) {
+    return do_site_adduser(command_line+8,context); /* 8 = strlen("adduser")+1 */
+  } else
 /******************* BACKEND ********************/
   if (strcasecmp(token,"BACKEND")==0) {
     do_site_backend(command_line+8,context); /* 8 = strlen("backend")+1 */
@@ -527,16 +651,23 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_print_file(mainConfig->site_config.file_help,NULL,context);
     return 0;
   } else
+/******************* RELOAD *********************/
+  if (strcasecmp(token,"RELOAD")==0) {
+    do_site_reload(context); /* 7 = strlen("reload")+1 */
+    return 0;
+  } else
 /******************* RULES **********************/
   if (strcasecmp(token,"RULES")==0) {
     do_site_print_file(mainConfig->site_config.file_rules,NULL,context);
     return 0;
   } else
+#if 0
 /********************* SFV **********************/
   if (strcasecmp(token,"SFV")==0) {
     do_site_sfv(command_line+4,context); /* 4 = strlen("sfv")+1 */
     return 0;
   } else
+#endif /* 0 */
 /******************* TEST ***********************/
   if (strcasecmp(token,"TEST")==0) {
     do_site_test(command_line+5,context); /* 5 = strlen("test")+1 */
@@ -545,6 +676,11 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************* USER ***********************/
   if (strcasecmp(token,"USER")==0) {
     do_site_user(command_line+5,context); /* 5 = strlen("user")+1 */
+    return 0;
+  } else
+/******************* UTIME **********************/
+  if (strcasecmp(token,"UTIME")==0) {
+    do_site_utime(command_line+6,context); /* 6 = strlen("utime")+1 */
     return 0;
   } else
 /******************* VERSION ********************/
@@ -573,7 +709,13 @@ int do_site(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  ret = send_message_with_args(250,context,"SITE","command unknown, ok");
+  FORALL_HOOKS(EVENT_SITE)
+    typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
+    ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
+  END_FORALL_HOOKS
+
+  if (ret)
+    ret = send_message_with_args(250,context,"SITE","command unknown, ok");
 
   return 0;
 }

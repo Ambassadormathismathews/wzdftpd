@@ -25,6 +25,7 @@ typedef struct limiter
   int maxspeed;
   struct timeval current_time;
   int bytes_transfered;
+  float current_speed;
 } wzd_bw_limiter;
 
 /**************** COMMANDS PERMISSIONS ********************/
@@ -126,6 +127,14 @@ typedef struct _wzd_hook_t {
   struct _wzd_hook_t	*next_hook;
 } wzd_hook_t;
 
+typedef struct _wzd_module_t {
+  char *	name;
+
+  void *	handle;
+
+  struct _wzd_module_t	*next_module;
+} wzd_module_t;
+
 /* defined in binary, combine with OR (|) */
 
 #define	EVENT_LOGIN		0x00000001
@@ -136,6 +145,8 @@ typedef struct _wzd_hook_t {
 #define	EVENT_POSTDOWNLOAD	0x00000080
 
 #define	EVENT_MKDIR		0x00000100
+
+#define	EVENT_SITE		0x00010000
 
 /************************** SFV ***************************/
 

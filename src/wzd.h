@@ -1,7 +1,7 @@
 #ifndef __WZD__
 #define __WZD__
 
-#define WZD_MULTIPROCESS
+/*#define WZD_MULTIPROCESS*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,8 +28,10 @@
 #define Sleep(x)	usleep((x)*1000)
 
 #include <sys/wait.h>
+/*define _XOPEN_SOURCE*/
 #include <time.h>
 #include <sys/time.h>
+#include <utime.h>
 #include <sys/stat.h>
 #include <pthread.h>
 #include <dlfcn.h>
@@ -113,7 +115,9 @@ typedef struct {
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
   char		last_command[2048];
-  wzd_bw_limiter * current_limiter;
+/*  wzd_bw_limiter * current_limiter;*/
+  wzd_bw_limiter current_ul_limiter;
+  wzd_bw_limiter current_dl_limiter;
   time_t	idle_time_start;
   time_t	idle_time_data_start;
 #if SSL_SUPPORT
@@ -132,6 +136,7 @@ typedef struct {
   char *	logfilemode;
   FILE *	logfile;
   int		loglevel;
+  char		messagefile[256]; /* useless */
   int		mainSocket;
   int		port;
   unsigned long	pasv_low_range;
@@ -142,6 +147,7 @@ typedef struct {
   wzd_ip_t	*login_pre_ip_denied;
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
+  wzd_module_t	*module;
 #if SSL_SUPPORT
   char		tls_certificate[256];
   char          tls_cipher_list[256];
@@ -183,14 +189,17 @@ extern wzd_context_t *	context_list;
 #include "wzd_perm.h"
 #include "wzd_mod.h"
 #include "wzd_vfs.h"
+#if INTERNAL_SFV
 #include "wzd_crc32.h"
+#endif
 #include "wzd_ServerThread.h"
 #include "wzd_ClientThread.h"
+#include "wzd_site_user.h"
 #include "wzd_site.h"
 #include "ls.h"
 
 /* Version */
-#define	WZD_VERSION_NUM	"0.1" 
+#define	WZD_VERSION_NUM	"0.1rc2"
 
 #ifdef WZD_MULTIPROCESS
 #define	WZD_MP	" mp "
@@ -203,5 +212,7 @@ extern wzd_context_t *	context_list;
 #else /* __CYGWIN__ */
 #define	WZD_VERSION_STR	"wzdFTPd linux" WZD_MP WZD_VERSION_NUM
 #endif /* __CYGWIN__ */
+
+#include "wzd_libmain.h"
 
 #endif /* __WZD__ */

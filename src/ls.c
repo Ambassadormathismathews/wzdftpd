@@ -90,6 +90,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	    vfs = vfs->next_vfs;
 	    continue;
 	  }
+	if (!list_match(ptr,mask)) { vfs = vfs->next_vfs; continue; }
         /* date */
         
         timeval=time(NULL);

@@ -269,9 +269,9 @@ int tls_auth_cont(wzd_context_t * context)
         context->ssl.ssl_fd_mode = TLS_WRITE;
         break;
       default:
-        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
-          ERR_error_string(SSL_get_error(context->ssl.obj,ret),NULL));
-        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
+        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
+          ERR_error_string(SSL_get_error(context->ssl.obj,status),NULL));
+        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
   	  ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }

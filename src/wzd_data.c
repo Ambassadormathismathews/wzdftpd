@@ -96,14 +96,16 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 	data_close(context);
 	ret = send_message(426,context);
 out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
-	limiter_free(context->current_limiter);
-	context->current_limiter = NULL;
+/*	limiter_free(context->current_limiter);
+	context->current_limiter = NULL;*/
 	return 1;
       }
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_dl,n,0);*/
       limiter_add_bytes(&mainConfig->global_dl_limiter,n,0);
-      limiter_add_bytes(context->current_limiter,n,0);
+      limiter_add_bytes(&context->current_dl_limiter,n,0);
+/*      limiter_add_bytes(context->current_limiter,n,0);*/
+      user->bytes_dl_total += n;
       context->idle_time_data_start = time(NULL);
     } else { /* end */
       close(context->current_action.current_file);
@@ -113,8 +115,8 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       data_close(context);
       ret = send_message(226,context);
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
-      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;
+/*      limiter_free(context->current_limiter);
+      context->current_limiter = NULL;*/
     }
     break;
   case TOK_STOR:
@@ -129,7 +131,9 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_ul,n,0);*/
       limiter_add_bytes(&mainConfig->global_ul_limiter,n,0);
-      limiter_add_bytes(context->current_limiter,n,0);
+      limiter_add_bytes(&context->current_ul_limiter,n,0);
+/*      limiter_add_bytes(context->current_limiter,n,0);*/
+      user->bytes_ul_total += n;
       context->idle_time_data_start = time(NULL);
     } else { /* consider it is finished */
       close(context->current_action.current_file);
@@ -139,8 +143,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       data_close(context);
       ret = send_message(226,context);
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
-      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;
+/*      limiter_free(context->current_limiter);
+      context->current_limiter = NULL;*/
       FORALL_HOOKS(EVENT_POSTUPLOAD)
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);

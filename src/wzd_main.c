@@ -121,6 +121,7 @@ int main(int argc, char **argv)
 {
   int ret;
   int forkresult;
+  wzd_config_t * config;
 
 #if DEBUG
   stay_foreground = 1;
@@ -142,7 +143,30 @@ int main(int argc, char **argv)
       exit(0);
   }
 
-  ret = readConfigFile("wzd.cfg"); /* XXX */
+  /* initialize random seed */
+  srand((int)(time(NULL)+0x13313043));
+
+  config = NULL;
+  config = readConfigFile("wzd.cfg"); /* XXX */
+  
+  if (!config) {
+    out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");
+    exit(1);
+  }
+
+  mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
+  if (mainConfig_shm == NULL) {
+    /* 2nd chance */
+    wzd_shm_cleanup(config->shm_key-1);
+    mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
+    if (mainConfig_shm == NULL) {
+      fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
+      exit(1);
+    }
+  }
+  mainConfig = mainConfig_shm->datazone;
+  setlib_mainConfig(mainConfig);
+  memcpy(mainConfig,config,sizeof(wzd_config_t));
 
   mainConfig->logfile = fopen(mainConfig->logfilename,mainConfig->logfilemode);
 

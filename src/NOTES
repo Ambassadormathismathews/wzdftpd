@@ -5,6 +5,10 @@
 - As long as all clients will be forked, we can always use chroot for childs -
   and NOT for parent
 
+CVS:
+
+Releases are tagged with tag of form: rel-0-1rc1
+
 BACKEND:
 
 if backend_storage is 0, the main prog will allocate shared memory for users

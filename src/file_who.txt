@@ -12,6 +12,6 @@
 |   login       |    group    |      ip         |                            |
 .---------------.-------------.----------------------------------------------.
 %forallusersconnected
-| %14.username| %12.usergroup| %15.userip | %27.userlastcmd|
+| %14.username| %12.usergroup| %15.userip | %17.userlastcmd%10.userspeed|
 %endfor
 .----------------------------------------------------------------------------.

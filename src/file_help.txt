@@ -20,7 +20,11 @@
 | site checkperm | checks access for a user on a file/dir       | r,s        |
 |                | site checkperm user file rights              | r,s        |
 | site user      | (username) show user info                    | r,s        |
+| site adduser   | add a new user                               | r          |
+|                | IMPORTANT you MUST commit changes in backend |            |
+|                | site adduser user pass homedir [backend]     |            |
 | site shutdown  | shutdown the server remotely                 | r          |
+| site reload    | reloads server config                        | r          |
 | site backend   | (init/close/reload/commit) backend_name      | r          |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |

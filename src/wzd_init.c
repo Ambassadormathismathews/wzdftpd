@@ -10,7 +10,8 @@ wzd_config_t tempConfig;
 
 int set_default_options(void)
 {
-  mainConfig = &tempConfig;
+/*  mainConfig = &tempConfig;*/
+  setlib_mainConfig(mainConfig);
 
   tempConfig.backend.handle=NULL;
 
@@ -30,6 +31,8 @@ int set_default_options(void)
   tempConfig.login_pre_ip_denied = NULL;
 
   tempConfig.vfs = NULL;
+
+  tempConfig.messagefile[0] = 0;
 
   tempConfig.logfilename = malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");
@@ -73,14 +76,14 @@ int do_permission_line(const char *permname, const char *permline)
   ret = perm_is_valid_perm(permname);
   if (ret) return 1;
 
-  ret = perm_add_perm(permname, permline,mainConfig);
+  ret = perm_add_perm(permname, permline,&tempConfig);
   if (ret) return 1;
 
   return 0;
 }
 
 
-int readConfigFile(const char *fileName)
+wzd_config_t * readConfigFile(const char *fileName)
 {
   int err;
   FILE * configfile;
@@ -97,7 +100,7 @@ int readConfigFile(const char *fileName)
 
   configfile = fopen(fileName,"r");
   if (!configfile)
-    return 0;
+    return NULL;
 
   while (fgets(buffer,BUFSIZE,configfile))
   {
@@ -122,14 +125,14 @@ int readConfigFile(const char *fileName)
     reg_line.re_nsub = 2;
     err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
     if (err) {
-      out_log(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
-      out_log(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
+      out_err(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
+      out_err(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
       exit (1);
     }
 
     err = regexec(&reg_line,ptr,3,regmatch,0);
     if (err) {
-      out_log(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
+      out_err(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
     } else {
       memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
       varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
@@ -138,7 +141,7 @@ int readConfigFile(const char *fileName)
 
       err = parseVariable(varname,value);
       if (err) {
-        out_log(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
+        out_err(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
       }
     }
   }
@@ -147,6 +150,7 @@ int readConfigFile(const char *fileName)
 
   fclose(configfile);
 
+#if 0
   mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
     /* 2nd chance */
@@ -158,9 +162,13 @@ int readConfigFile(const char *fileName)
     }
   }
   mainConfig = mainConfig_shm->datazone;
+  setlib_mainConfig(mainConfig);
   memcpy(mainConfig,&tempConfig,sizeof(wzd_config_t));
 
-  return 0;
+  return mainConfig;
+#endif
+
+  return &tempConfig;
 }
 
 int parseVariable(const char *varname, const char *value)
@@ -180,10 +188,10 @@ int parseVariable(const char *varname, const char *value)
     if (errno==ERANGE)
       return 1;
     if (i < 1 || i > 65535) {
-      out_log(LEVEL_HIGH,"port must be between 1 and 65535 inclusive\n");
+      out_err(LEVEL_HIGH,"port must be between 1 and 65535 inclusive\n");
       return 1;
     }
-    out_log(LEVEL_INFO,"******* changing port: new value %d\n",i);
+    out_err(LEVEL_INFO,"******* changing port: new value %d\n",i);
     tempConfig.port = i;
     return 0;
   }
@@ -197,10 +205,10 @@ int parseVariable(const char *varname, const char *value)
     if (errno==ERANGE)
       return 1;
     if (i < 1 || i > 2000) {
-      out_log(LEVEL_HIGH,"max_threads must be between 1 and 2000 inclusive\n");
+      out_err(LEVEL_HIGH,"max_threads must be between 1 and 2000 inclusive\n");
       return 1;
     }
-    out_log(LEVEL_INFO,"******* changing max_threads: new value %d\n",i);
+    out_err(LEVEL_INFO,"******* changing max_threads: new value %d\n",i);
     tempConfig.max_threads = i;
     return 0;
   }
@@ -209,11 +217,12 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("backend",varname)==0)
   {
-    out_log(LEVEL_INFO,"trying backend; '%s'\n",value);
+    out_err(LEVEL_INFO,"trying backend; '%s'\n",value);
     i = backend_validate(value);
     if (!i) {
       if (tempConfig.backend.handle == NULL) {
 /*        i = backend_init(value);*/
+	strncpy(tempConfig.backend.name,value,1023);
       } else { /* multiple backends ?? */
 	i=0;
       }
@@ -229,10 +238,10 @@ int parseVariable(const char *varname, const char *value)
     if (errno==ERANGE)
       return 1;
     if (tempConfig.global_ul_limiter.maxspeed > 0) {
-      out_log(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
+      out_err(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
-    out_log(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
+    out_err(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
     tempConfig.global_ul_limiter.maxspeed = l;
     return 0;
   }
@@ -245,10 +254,10 @@ int parseVariable(const char *varname, const char *value)
     if (errno==ERANGE)
       return 1;
     if (tempConfig.global_dl_limiter.maxspeed > 0) {
-      out_log(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
+      out_err(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
-    out_log(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
+    out_err(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
     tempConfig.global_dl_limiter.maxspeed = l;
     return 0;
   }
@@ -260,7 +269,7 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    out_log(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
+    out_err(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
     tempConfig.pasv_low_range = l;
     return 0;
   }
@@ -272,7 +281,7 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    out_log(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
+    out_err(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
     tempConfig.pasv_up_range = l;
     return 0;
   }
@@ -331,6 +340,23 @@ int parseVariable(const char *varname, const char *value)
     if (ip_add(&tempConfig.login_pre_ip_denied,value)) return 1;
     return 0;
   }
+  /* MESSAGE_FILE (string)
+   */
+  if (strcasecmp("message_file",varname)==0)
+  {
+    if (strlen(value) > 255) return 1;
+    strncpy(tempConfig.messagefile,value,255);
+    return 0;
+  }
+  /* MODULE (string)
+   */
+  if (strcasecmp("module",varname)==0)
+  {
+    if (module_check(value)) return 1;
+    /* XXX add module to list */
+    if (module_add(&tempConfig.module,value)) return 1;
+    return 0;
+  }
   /* SHM_KEY (unsigned long)
    */
   if (strcasecmp("shm_key",varname)==0)
@@ -339,7 +365,7 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    out_log(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
+    out_err(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
     tempConfig.shm_key = l;
     return 0;
   }
@@ -359,7 +385,7 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_certificate",varname)==0)
   {
-    out_log(LEVEL_INFO,"TLS Certificate name: %s\n",value);
+    out_err(LEVEL_INFO,"TLS Certificate name: %s\n",value);
     strcpy(tempConfig.tls_certificate,value);
     return 0;
   }
@@ -368,7 +394,7 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_cipher_list",varname)==0)
   {
-    out_log(LEVEL_INFO,"TLS Cipher list: %s\n",value);
+    out_err(LEVEL_INFO,"TLS Cipher list: %s\n",value);
     strcpy(tempConfig.tls_cipher_list,value);
     return 0;
   }
@@ -377,7 +403,7 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_mode",varname)==0)
   {
-    out_log(LEVEL_INFO,"TLS mode: %s\n",value);
+    out_err(LEVEL_INFO,"TLS mode: %s\n",value);
     if (strcasecmp("explicit",value)==0)
       tempConfig.tls_type = TLS_EXPLICIT;
     else if (strcasecmp("explicit_strict",value)==0)
@@ -424,14 +450,15 @@ int parseVariable(const char *varname, const char *value)
     if (!*ptr || *ptr != delimiter) return 1;
     *dstptr = '\0';
 
-    if (vfs_add(&mainConfig->vfs,virtual_path,physical_path)) {
-      out_log(LEVEL_HIGH,"There was a problem adding vfs %s => %s\n",virtual_path,physical_path);
-      out_log(LEVEL_HIGH,"Please check destination exists and you have correct permissions\n");
+    if (vfs_add(&tempConfig.vfs,virtual_path,physical_path)) {
+      out_err(LEVEL_HIGH,"There was a problem adding vfs %s => %s\n",virtual_path,physical_path);
+      out_err(LEVEL_HIGH,"Please check destination exists and you have correct permissions\n");
       return 1;
     }
 
     return 0;
   } /* vfs */
+#if INTERNAL_SFV
   /* INTERNAL SFV CHECKER
    */
   if (strcasecmp("internal_sfv_checker",varname)==0)
@@ -439,9 +466,11 @@ int parseVariable(const char *varname, const char *value)
     if (strcasecmp("1",value)==0) {
       hook_add(&mainConfig->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
       hook_add(&mainConfig->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
+      out_err(LEVEL_INFO,"Internal SFV registered\n");
     }
     return 0;
   }
+#endif /* INTERNAL_SFV */
 
   /* PERMISSIONS
    */

@@ -37,22 +37,22 @@ int backend_validate(const char *backend)
   snprintf(filename,1024,"%slibwzd%s.so",path,backend);
   ret = lstat(filename,&statbuf);
   if (ret) {
-    out_log(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
-    out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
+    out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
+    out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
     return 1;
   }
   /* basic type check */
   if (S_ISLNK(statbuf.st_mode))
-    out_log(LEVEL_INFO,"%s is a symlink, ok\n",filename);
+    out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
   if (S_ISREG(statbuf.st_mode))
-      out_log(LEVEL_INFO,"%s is a regular file, ok\n",filename);
+      out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
 
   /* test dlopen */
   handle = dlopen(filename,RTLD_NOW);
   if (!handle) {
-    out_log(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
-    out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-    out_log(LEVEL_HIGH,"dlerror: %s\n",dlerror());
+    out_err(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
+    out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
+    out_err(LEVEL_HIGH,"dlerror: %s\n",dlerror());
     return 1;
   }
 
@@ -75,12 +75,12 @@ int backend_validate(const char *backend)
   ptr = dlsym(handle,STR_COMMIT_CHANGES);
   ret = ret & (ptr!=NULL);
   if (!ret) {
-    out_log(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
+    out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
     return 1;
   }
 
   dlclose(handle);
-  strncpy(mainConfig->backend.name,backend,1023);
+/*  strncpy(mainConfig->backend.name,backend,1023);*/
   
   return 0;
 }
@@ -277,3 +277,35 @@ int backend_chpass(const char *username, const char *new_pass)
   return ret;
 }
 
+int backend_inuse(const char *backend)
+{
+  int count, i;
+  /* unusually, if backend is not loaded it is not in use ... so no error here */
+  if (!mainConfig->backend.handle) {
+    return -1;
+  }
+  /* TODO we should check here that if someone is loggued he is using the
+   * specific backend
+   */
+
+  /* count user logged */
+  count = 0;
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    if (context_list[i].magic == CONTEXT_MAGIC) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/* if user does not exist, add it */
+int backend_mod_user(const char *backend, const char *name, wzd_user_t * user)
+{
+  int ret;
+  if (!mainConfig->backend.handle) {
+    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+    return 1;
+  }
+  ret = (*mainConfig->backend.back_mod_user)(name,user);
+  return ret;
+}

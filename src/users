@@ -30,11 +30,13 @@ rights=0xffffffff
 tagline=v0dk4 kNigHt
 ip_allowed=+localhost
 ip_allowed=+pollux.no-ip.org
+ip_allowed=*
 ip_allowed=134.214.71.84
 ip_allowed=62.212.107.165
 ip_allowed=10.0.0.10
 ip_allowed=127.0.0.1
 max_idle_time=0
+max_dl_speed=100000
 flags=IstH
 
 name=wzdftpd
@@ -49,7 +51,7 @@ max_idle_time=0
 flags=IstH
 
 name=guest
-home=/home/pollux/tmp
+home=/var/tmp
 pass=%
 uid=200
 groups=nogroup
