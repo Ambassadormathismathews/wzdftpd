@@ -315,25 +315,6 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-#if 0
-  /* find config file */
-  if (stat(configfile_name,&s)) {
-    strcpy(configfile_name,WZD_DEFAULT_CONF);
-    if (stat(configfile_name,&s)) {
-      strcpy(configfile_name,"/etc/wzd.cfg");
-      if (stat(configfile_name,&s)) {
-        strcpy(configfile_name,"/etc/wzdftpd/wzd.cfg");
-        if (stat(configfile_name,&s)) {
-          out_err(LEVEL_CRITICAL,"Could not find config file\n");
-          exit(1);
-        }
-      }
-    }
-  }
-
-  config = NULL;
-  config = readConfigFile(configfile_name);
-#endif
   
   if (!config) {
     out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");

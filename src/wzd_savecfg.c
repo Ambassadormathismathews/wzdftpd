@@ -704,7 +704,7 @@ int wzd_savecfg( void )
   char filenamenew[256];
   extern char configfile_name[256];
 
-  strcpy (filenamenew, configfile_name);
+  strncpy (filenamenew, configfile_name, sizeof(filenamenew));
   strcat (filenamenew, ".NEW");
 
   file = fopen(filenamenew,"w");

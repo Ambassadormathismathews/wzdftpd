@@ -276,7 +276,7 @@ int do_site_grpren(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  strcpy(group.groupname,newgroupname);
+  strncpy(group.groupname,newgroupname,sizeof(group.groupname));
 
   /* add it to backend */
   /* FIXME backend name hardcoded */

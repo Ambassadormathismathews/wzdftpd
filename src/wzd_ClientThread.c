@@ -534,8 +534,8 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
       } else {
         strncpy(buffer,context->currentpath,WZD_MAX_PATH);
         if (buffer[strlen(buffer)-1] != '/')
-          strcat(buffer,"/");
-        strcat(buffer,wanted_path);
+          strlcat(buffer,"/",WZD_MAX_PATH);
+        strlcat(buffer,wanted_path,WZD_MAX_PATH);
       }
       stripdir(buffer,buffer2,WZD_MAX_PATH-1);
 /*out_err(LEVEL_INFO,"DIR: %s NEW DIR: %s\n",buffer,buffer2);*/
@@ -762,7 +762,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 //	strncpy(cmd,strrchr(cmd,'/')+1,2048);
 //	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
-	strcpy(mask,cmd);
+	strncpy(mask,cmd,sizeof(mask));
 	cmd[0] = '\0';
       }
     }
@@ -784,9 +784,9 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   cmask = strrchr(mask,'/');
   if (cmask) {	/* search file in path (with /), but without wildcards */
     *cmask='\0';
-    strcat(cmd,"/");
-    strcat(cmd,mask);
-    strcpy(mask,cmask);
+    strlcat(cmd,"/",WZD_MAX_PATH);
+    strlcat(cmd,mask,WZD_MAX_PATH);
+    strncpy(mask,cmask,sizeof(mask));
   }
 
 /*#ifdef DEBUG
@@ -869,7 +869,7 @@ int do_mkdir(char *param, wzd_context_t * context)
     strcpy(cmd,".");
     if (checkpath(cmd,path,context)) return E_WRONGPATH;
     if (path[strlen(path)-1]!='/') strcat(path,"/");
-    strncat(path,param,WZD_MAX_PATH-1);
+    strlcat(path,param,WZD_MAX_PATH);
   } else {
     strcpy(cmd,param);
     if (checkpath(cmd,path,context)) return E_WRONGPATH;
@@ -943,8 +943,8 @@ int do_mkdir(char *param, wzd_context_t * context)
 
     if (param[0] != '/') {
       strcpy(buffer,context->currentpath);
-      strcat(buffer,"/");
-      strcat(buffer,param);
+      strlcat(buffer,"/",WZD_MAX_PATH);
+      strlcat(buffer,param,WZD_MAX_PATH);
     } else {
       strcpy(buffer,param);
     }
@@ -1009,8 +1009,8 @@ int do_rmdir(char * param, wzd_context_t * context)
 
     if (param[0] != '/') {
       strcpy(buffer,context->currentpath);
-      strcat(buffer,"/");
-      strcat(buffer,param);
+      strlcat(buffer,"/",WZD_MAX_PATH);
+      strlcat(buffer,param,WZD_MAX_PATH);
     } else {
       strcpy(buffer,param);
     }
@@ -1551,7 +1551,7 @@ int do_stor(char *param, wzd_context_t * context)
     }
     if (path[strlen(path)-1] != '/') strcat(path,"/");
   } /* absolute path */
-  strcat(path,param);
+  strlcat(path,param,WZD_MAX_PATH);
 
   /* TODO call checkpath again ? see do_mkdir */
 
@@ -1567,7 +1567,7 @@ int do_stor(char *param, wzd_context_t * context)
 
       if (checkpath(path2,path,context)) return 1;
       if (path[strlen(path)-1] != '/') strcat(path,"/");
-      strcat(path,param);
+      strlcat(path,param,WZD_MAX_PATH);
       out_err(LEVEL_FLOOD,"Resolved: %s\n",path);
     }
   }

@@ -127,7 +127,7 @@ void out_log(int level,const char *fmt,...)
       switch (level) {
 	case LEVEL_CRITICAL:
 	  strcpy(msg_begin,CLR_BOLD);
-	  strcat(msg_begin,CLR_RED);
+	  strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
 	  strcpy(msg_end,CLR_NOCOLOR);
 	  prior = LOG_ALERT;
 	  break;
@@ -228,7 +228,7 @@ void out_err(int level, const char *fmt,...)
       switch (level) {
       case LEVEL_CRITICAL:
 	strcpy(msg_begin,CLR_BOLD);
-	strcat(msg_begin,CLR_RED);
+	strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
 	strcpy(msg_end,CLR_NOCOLOR);
 	break;
       case LEVEL_HIGH:

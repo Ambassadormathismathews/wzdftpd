@@ -205,4 +205,7 @@
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
 
 
+#include "wzd_strlcat.h"
+
+
 #endif /* __WZD_TYPES__ */

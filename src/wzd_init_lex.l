@@ -296,9 +296,8 @@ int set_default_options(void)
 #if !defined(DEBUG)
 #if !defined(_WIN32)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
-#endif /* __CYGWIN__ */
+#endif /* _WIN32 */
 #else /* DEBUG */
-printf("Clearing option syslog\n");
     CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif
 

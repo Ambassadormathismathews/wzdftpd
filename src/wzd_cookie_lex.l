@@ -374,7 +374,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 
   if ( cookie_include_stack_ptr >= MAX_INCLUDE_DEPTH )
   {
-    fprintf( stderr, "Includes nested too deeply" );
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Includes nested too deeply" );
+#endif
     return -1;
   }
   if (cookie_include_stack_ptr)
@@ -400,7 +402,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       length = strlen(yytext);
       if (length<5 || length>=256)
       {
-        printf("invalid if loop\n");
+#ifdef WZD_DBG_COOKIES
+	out_err(LEVEL_HIGH, "Invalid if loop\n" );
+#endif
         return 1;
       }
       memcpy(condition,yytext+4,length-5); /* 5 = strlen("%if()"= */
@@ -415,7 +419,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 		return 1;
 		}*/
         if ( (i+strlen(yytext)) >= 16384 ) {
-          fprintf(stderr,"loop TOO LONG !\n");
+#ifdef WZD_DBG_COOKIES
+	  out_err(LEVEL_HIGH, "loop TOO LONG !\n" );
+#endif
           exit(1);
         }
         strcpy(tmpbuf+i,yytext);
@@ -426,7 +432,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 /*        printf("End of if loop (i=%d)\n",i);*/
         BEGIN(INITIAL);
       } else {
-        printf("unterminated if loop\n");
+#ifdef WZD_DBG_COOKIES
+	out_err(LEVEL_HIGH, "unterminated if loop\n" );
+#endif
         return 1;
       }
       /* flush buffer before executing 'for' loop */
@@ -463,7 +471,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       length = strlen(yytext);
       if (length<7 || length>=256)
       {
-        printf("invalid for loop\n");
+#ifdef WZD_DBG_COOKIES
+	out_err(LEVEL_HIGH,"invalid for loop");
+#endif
         return 1;
       }
       memcpy(condition,yytext+5,length-6); /* 6 = strlen("%for()") */
@@ -478,7 +488,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 		return 1;
 		}*/
         if ( (i+strlen(yytext)) >= 16384 ) {
-          fprintf(stderr,"loop TOO LONG !\n");
+#ifdef WZD_DBG_COOKIES
+	  out_err(LEVEL_HIGH,"loop TOO LONG !");
+#endif
           exit(1);
         }
         strcpy(tmpbuf+i,yytext);
@@ -489,7 +501,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 /*        printf("End of for loop (i=%d)\n",i);*/
         BEGIN(INITIAL);
       } else {
-        printf("unterminated for loop\n");
+#ifdef WZD_DBG_COOKIES
+	out_err(LEVEL_HIGH,"unterminated for loop");
+#endif
         return 1;
       }
       /* flush buffer before executing 'for' loop */
@@ -1349,7 +1363,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 	continue;
       break;
     case COOKIE_ENDFOR:
-      printf("!! endfor outside a for loop !!\n");
+#ifdef WZD_DBG_COOKIES
+      out_err(LEVEL_HIGH,"endfor outside a for loop");
+#endif
       continue;
     case COOKIE_INVALID: /* e.g This can be an explicit %s */
       snprintf(internalbuffer,IBUFSIZE,"%%%s",yytext);
@@ -1363,7 +1379,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       send_buffer_ptr += cookie_length;
       if (send_buffer_ptr >= MIN_SEND_BUFFERSIZE) {
 #ifdef WZD_DBG_COOKIES
-	printf("flushing buffer on [31mEOL[0m\n");
+	out_err(LEVEL_HIGH,"flushing buffer on [31mEOL[0m");
 #endif
 	/* flush buffer */
         if (out_buffer) {
@@ -1438,7 +1454,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       /* bufferize and send only complete lines */
       if (send_buffer_ptr + cookie_length >= MAX_SEND_BUFFERSIZE) {
 #ifdef WZD_DBG_COOKIES
-	printf("flushing buffer on [31mBUFFER OVERFLOW[0m\n");
+	out_err(LEVEL_HIGH,"flushing buffer on [31mBUFFER OVERFLOW[0m");
 #endif
 	/* flush buffer */
         if (out_buffer) {
@@ -1472,7 +1488,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   }
 
 #ifdef WZD_DBG_COOKIES
-  printf("flushing buffer on [31mEOF[0m (%d)\n",send_buffer_ptr);
+  out_err(LEVEL_HIGH,"flushing buffer on [31mEOF[0m (%d)",send_buffer_ptr);
 #endif
   /* flush buffer */
   if (send_buffer_ptr) {

@@ -1148,12 +1148,12 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
     struct dirent *entr;
 #else
     HANDLE dir;
-	WIN32_FIND_DATA fileData;
-	int finished;
-	char dirfilter[2048];
+    WIN32_FIND_DATA fileData;
+    int finished;
+    char dirfilter[2048];
 #endif
     char path_perm[2048];
-	const char *filename;
+    const char *filename;
 
 #ifndef _MSC_VER
     if ((dir=opendir(dirname))==NULL) return 0;
@@ -1184,7 +1184,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
     strcpy(path_perm,dirname); /* path is already ended by / */
     if (path_perm[strlen(path_perm)-1] != '/')
       strcat(path_perm,"/");
-    strcat(path_perm,HARD_PERMFILE);
+    strlcat(path_perm,HARD_PERMFILE,sizeof(path_perm));
     unlink(path_perm);
   }
 

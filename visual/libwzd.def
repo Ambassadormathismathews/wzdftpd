@@ -121,6 +121,7 @@ EXPORTS
 	str2event
 	str2loglevel
 	stripdir
+	strlcat
 	strptime
 	strtok_r
 	strtomd5

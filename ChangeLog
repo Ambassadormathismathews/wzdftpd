@@ -5,6 +5,9 @@
 	* cookies: filepath (uploaded\downloaded file path, absolute)
 	* bugfix: event POSTDOWNLOAD not called
 	* bugfix: wrong file size for files > 4Go (visual) (closes: #920425)
+	* feature: added strlcat default implementation if missing
+	* security: sources passed to 'rats' and 'pscan'
+	* security: some buffers changed to be dynamic, replace strcat with strlcat
 
 2004-03-17  Pierre Chifflier  <pollux@wzdftpd.net>
 

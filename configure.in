@@ -86,6 +86,7 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
+AC_CHECK_FUNC(strlcat,[AC_DEFINE(HAVE_STRLCAT)])
 AC_CHECK_FUNC(strptime,[AC_DEFINE(HAVE_STRPTIME)])
 AC_CHECK_FUNC(strtok_r,[AC_DEFINE(HAVE_STRTOK_R)])
 AC_CHECK_FUNC(strtoull,[AC_DEFINE(HAVE_STRTOULL)])
@@ -183,6 +184,8 @@ AH_TEMPLATE([WZD_BUILD_OPTS],
             [Build options.])
 AH_TEMPLATE([HAVE_GETOPT],
             [System has the getopt_long function.])
+AH_TEMPLATE([HAVE_STRLCAT],
+            [System has the strlcat function.])
 AH_TEMPLATE([HAVE_STRPTIME],
             [System has the strptime function.])
 AH_TEMPLATE([HAVE_STRTOK_R],

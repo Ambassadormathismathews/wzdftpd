@@ -467,10 +467,10 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
     strcat(cmd,"/");
   if (wanted_path) {
     if (wanted_path[0]!='/') {
-      strcat(cmd,wanted_path);
+      strlcat(cmd,wanted_path,WZD_MAX_PATH);
     } else {
       strcpy(cmd,allowed);
-      strcat(cmd,wanted_path+1);
+      strlcat(cmd,wanted_path+1,WZD_MAX_PATH);
     } 
   } 
 /*#ifdef DEBUG
@@ -511,9 +511,9 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
   } else
 #endif
   {
-    sprintf(allowed,"%s/",GetUserByID(context->userid)->rootpath);
+    snprintf(allowed,strlen(allowed),"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    sprintf(cmd,"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
+    snprintf(cmd,strlen(cmd),"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
   }
   if (cmd[strlen(cmd)-1] != '/')
     strcat(cmd,"/");

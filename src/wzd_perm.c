@@ -242,7 +242,7 @@ wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd
 
 int perm_add_perm(const char *permname, const char *permline, wzd_config_t * config)
 {
-  char buffer[BUFFER_LEN];
+  char * dyn_buffer;
   char * token, * ptr;
   wzd_command_perm_t * command_perm;
   wzd_command_perm_entry_t * perm_entry;
@@ -254,17 +254,16 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   if (!permname || !permline) return 1;
   if (!strlen(permname) || !strlen(permline)) return 1;
 
-  /* about 2x faster than strncpy ! (mainly because strlen(permline) << BUFFER_LEN) */
   if ( (length = strlen(permline)) >= BUFFER_LEN) return 1;
-  memcpy(buffer,permline,length);
-  buffer[length] = '\0';
+  dyn_buffer = malloc(length+1);
+  strncpy(dyn_buffer,permline,length);
 
   /* find the perm */
   command_perm = perm_find_create(permname,config);
 
   /* for each element of the permline, add it to the entries */
-  ptr = &buffer[0];
-  token = strtok_r(buffer," \t\r\n",&ptr);
+  ptr = dyn_buffer;
+  token = strtok_r(dyn_buffer," \t\r\n",&ptr);
 
   while (token) {
     negate=0;
@@ -303,6 +302,7 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 
     token = strtok_r(NULL," \t\r\n",&ptr);
   }
+  free(dyn_buffer);
 
   return 0;
 }

@@ -629,7 +629,7 @@ int do_site_invite(char *command_line, wzd_context_t * context)
   user = GetUserByID(context->userid);
   group = GetGroupByID(user->groups[0]);
 
-  strcpy(buffer,context->currentpath);
+  strncpy(buffer,context->currentpath,sizeof(buffer));
   stripdir(buffer,path,2047);
 
   log_message("INVITE","\"%s\" \"%s\" \"%s\" \"%s\"",
@@ -1336,7 +1336,7 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
   }
   if (S_ISDIR(s.st_mode))
   {
-    strcpy(buffer,filename);
+    strncpy(buffer,filename,sizeof(buffer));
     ptr = buffer + strlen(buffer);
     *ptr++ = '/';
 #ifndef _MSC_VER

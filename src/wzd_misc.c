@@ -142,15 +142,15 @@ char *time_to_str(time_t time)
 
   workstr[0]=(char)0;
   if(days)
-    sprintf(workstr,"%dd",days);
+    snprintf(workstr,sizeof(workstr),"%dd",days);
   if(hours)
-    sprintf(workstr,"%s%s%dh",workstr,(workstr[0])?", ":"",hours);
+    snprintf(workstr,sizeof(workstr),"%s%s%dh",workstr,(workstr[0])?", ":"",hours);
   if(mins)
-    sprintf(workstr,"%s%s%dm",workstr,(workstr[0])?", ":"",mins);
+    snprintf(workstr,sizeof(workstr),"%s%s%dm",workstr,(workstr[0])?", ":"",mins);
   if(secs)
-    sprintf(workstr,"%s%s%ds",workstr,(workstr[0])?", ":"",secs);
+    snprintf(workstr,sizeof(workstr),"%s%s%ds",workstr,(workstr[0])?", ":"",secs);
   if (!days && !hours && !mins && !secs)
-    sprintf(workstr,"0 seconds");
+    snprintf(workstr,sizeof(workstr),"0 seconds");
 
   return(workstr);
 }
@@ -195,12 +195,12 @@ int split_filename(const char *filename, char *path, char *stripped_filename,
   ptr = strrchr(filename,'/');
   if (!ptr) { /* no dir */
     if (path && pathlen>0) path[0] = '\0';
-    if (stripped_filename && filelen>strlen(filename)) strcpy(stripped_filename,filename);
+    if (stripped_filename && filelen>strlen(filename)) strncpy(stripped_filename,filename,filelen);
   } else {
     if (path && pathlen>(ptr-filename))
       { memcpy(path,filename,ptr-filename); path[ptr-filename]='\0'; }
     if (stripped_filename && filelen>(strlen(filename)-(ptr-filename)))
-      { strcpy(stripped_filename,ptr+1); }
+      { strncpy(stripped_filename,ptr+1,filelen); }
   }
 
   return 0;
@@ -870,7 +870,7 @@ int ip_add(wzd_ip_t **list, const char *newip)
 
   new_ip_t = malloc(sizeof(wzd_ip_t));
   new_ip_t->regexp = malloc(strlen(newip)+1);
-  strcpy(new_ip_t->regexp,newip);
+  strncpy(new_ip_t->regexp,newip,strlen(newip));
   new_ip_t->next_ip = NULL;
 
   /* tail insertion, be aware that order is important */
