@@ -210,6 +210,10 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       close(context->current_action.current_file);
 
       out_xferlog(context,1 /* complete */);
+      /* we increment the counter of uploaded files at the end
+       * of the upload
+       */
+      user->files_ul_total++;
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;

@@ -8,6 +8,7 @@
 |  Slots         : user: %10.userslots    leech: %10.userleechslots                     |
 %endif
 |  Stats         : dl: %15.usertotal_dl2    ul: %15.usertotal_ul2                |
+|                : dl: %15.userfiles_dl    ul: %15.userfiles_ul files          |
 |  Ratio         : %40.userratio                  |
 |  Credits       : %40.usercredits2                  |
 |  Home dir      : %55.userhome   |
@@ -23,6 +24,7 @@
 |  IP allow 6    : %40.userip_allow5                  |
 |  IP allow 7    : %40.userip_allow6                  |
 |  IP allow 8    : %40.userip_allow7                  |
+|  Last login    : %40.userlast_login                  |
 .----------------------------------------------------------------------------.
 | site user username give u informations on a user                           |
 .----------------------------------------------------------------------------.

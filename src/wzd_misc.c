@@ -41,6 +41,7 @@
 #include <errno.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <time.h>
 /* for intel compiler */
 #ifdef __INTEL_COMPILER
 # define __SWORD_TYPE   int
@@ -634,7 +635,21 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookielength = strlen(cookie);
         srcptr += 2; /* strlen("ip"); */
       } else
-      /* flags */
+      /* files_dl */
+      if (strncmp(srcptr,"files_dl",8)==0) {
+	snprintf(tmp_buffer,4096,"%lu",user->files_dl_total);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 8; /* strlen("files_dl"); */
+      } else
+      /* files_ul */
+      if (strncmp(srcptr,"files_ul",8)==0) {
+	snprintf(tmp_buffer,4096,"%lu",user->files_ul_total);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 8; /* strlen("files_ul"); */
+      } else
+    /* flags */
       if (strncmp(srcptr,"flags",5)==0) {
 	if (user->flags && strlen(user->flags)>0) {
 	  strncpy(tmp_buffer,user->flags,MAX_FLAGS_NUM);
@@ -678,6 +693,19 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         }
         cookielength = strlen(cookie);
         srcptr += 4; /* strlen("home"); */
+      } else
+      /* last_login */
+      if (strncmp(srcptr,"last_login",10)==0) {
+	if (user->last_login) {
+	  struct tm *ntime;
+	  ntime=localtime(&user->last_login);
+	  strftime(tmp_buffer,4096,"%b %d %H:%M",ntime);
+	} else {
+	  snprintf(tmp_buffer,4096,"never");
+	}
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 10; /* strlen("last_login"); */
       } else
       /* lastcmd */
       if (strncmp(srcptr,"lastcmd",7)==0) {

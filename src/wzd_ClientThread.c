@@ -1138,6 +1138,10 @@ int do_retr(char *param, wzd_context_t * context)
   else
     context->current_dl_limiter.maxspeed = 0;*/
 
+  /* we increment the counter of downloaded files at the beggining
+   * of the download
+   */
+  user->files_dl_total++;
   return 0;
 }
 
@@ -1877,6 +1881,8 @@ void * clientThreadProc(void *arg)
   END_FORALL_HOOKS
   ret = send_message(230,context);
 
+  /* update last login time */
+  time(&user->last_login);
 
   /* main loop */
   exitclient=0;

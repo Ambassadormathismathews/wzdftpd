@@ -121,10 +121,13 @@ typedef struct {
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   unsigned long long	bytes_ul_total;
   unsigned long long	bytes_dl_total;
+  unsigned long		files_ul_total;
+  unsigned long		files_dl_total;
   unsigned long long	credits;
   unsigned int		ratio;
   unsigned short	user_slots;	/**< user slots for gadmins */
   unsigned short	leech_slots;	/**< leech slots for gadmins */
+  time_t		last_login;
 } wzd_user_t;
 
 typedef struct {

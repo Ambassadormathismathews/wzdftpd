@@ -39,15 +39,9 @@
 
 unsigned long long ratio_get_credits(wzd_user_t * user)
 {
-  unsigned long long credits;
-
   if (!user->ratio) return (unsigned long long)-1;
 
-  /* TODO XXX FIXME we should ensure here the multiplication will not overflow ... */
-  credits = (user->bytes_ul_total) * (unsigned long long)user->ratio;
-  credits -= user->bytes_dl_total;
-
-  return credits;
+  return user->credits;
 }
 
 int ratio_check_download(const char *path, wzd_context_t *context)
@@ -62,7 +56,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
   if (!me->ratio) return 0;
   credits = ratio_get_credits(me);
 
-  if (!stat(path,&s)) {
+  if (stat(path,&s)) {
     /* problem during stat() */
     return -1;
   }
