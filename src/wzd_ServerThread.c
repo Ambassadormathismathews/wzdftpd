@@ -7,6 +7,9 @@ void serverMainThreadExit(int);
 void child_interrupt(int signum);
 void reset_stats(wzd_server_stat_t * stats);
 
+void check_server_dynamic_ip(void);
+void server_rebind(const unsigned char *new_ip, unsigned int new_port);
+
 /************ VARS *****************/
 wzd_config_t *	mainConfig;
 wzd_shm_t *	mainConfig_shm;
@@ -192,7 +195,7 @@ void server_restart(int signum)
 
   /* create socket iff different ports ! */
   if (rebind) {
-    sock = mainConfig->mainSocket = socket_make(&mainConfig->port,5);
+    sock = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,5);
     if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
 	  __FILE__, __LINE__);
@@ -208,7 +211,153 @@ void server_restart(int signum)
     }
     out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
   }
+
+  /* 5. Re-open log files */
+  {
+    int fd;
+    struct stat s;
+    fclose(mainConfig->logfile);
+    mainConfig->logfile = fopen(mainConfig->logfilename,mainConfig->logfilemode);
+    if (mainConfig->logfile==NULL) {
+      out_err(LEVEL_CRITICAL,"Could not reopen log file !!!\n");
+    }
+    if (mainConfig->xferlog_name && !stat(mainConfig->xferlog_name,&s)) {
+      close(mainConfig->xferlog_fd);
+      fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
+      if (fd==-1)
+	out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
+	    mainConfig->xferlog_name);
+      mainConfig->xferlog_fd = fd;
+    }
+  }
 }
+
+void server_rebind(const unsigned char *new_ip, unsigned int new_port)
+{
+  int sock;
+  const unsigned char *ip = (new_ip) ? new_ip : mainConfig->ip;
+
+  /* create socket iff different ports ?! */
+  sock = mainConfig->mainSocket;
+  close(sock);
+
+  sock = mainConfig->mainSocket = socket_make(ip,&new_port,5);
+  if (sock == -1) {
+      out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
+	  __FILE__, __LINE__);
+      serverMainThreadExit(-1);
+  }
+  {
+    int one=1;
+
+    if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+      out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+      serverMainThreadExit(-1);
+    }
+  }
+  out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
+}
+
+/* void check_server_dynamic_ip(void)
+ * checks if dynamic ip has changed, and rebind main socket if true
+ */
+void check_server_dynamic_ip(void)
+{
+  struct sockaddr_in sa_current, sa_config;
+  unsigned int size;
+  const unsigned char * str_ip_current;
+  const unsigned char * str_ip_config;
+  const unsigned char * str_ip_pasv;
+
+  if (!mainConfig->dynamic_ip || strlen(mainConfig->dynamic_ip)<=0) return;
+
+  if (strcmp(mainConfig->dynamic_ip,"0")==0) return;
+
+  /* 1- get my ip */
+  size = sizeof(struct sockaddr_in);
+  /* XXX The socket is NOT connected, so getsockname will ALWAYS return -1
+  */
+  getsockname(mainConfig->mainSocket,(struct sockaddr *)&sa_current,&size);
+/*  {
+    unsigned char *myip = (unsigned char*)&sa_current.sin_addr;
+    out_err(LEVEL_CRITICAL,"IP: %d.%d.%d.%d\n",myip[0],myip[1],myip[2],myip[3]);
+  }*/
+ 
+  /* get ip by system */
+  if (strcmp(mainConfig->dynamic_ip,"1")==0)
+  {
+    struct in_addr addr_current;
+    int ret;
+    ret = get_system_ip("eth0",&addr_current);
+    if (ret < 0) {
+      out_err(LEVEL_HIGH,"get_system_ip FAILED %s:%d\n",
+	  __FILE__,__LINE__);
+      return;
+    }
+/*    out_log(LEVEL_CRITICAL,"SYSTEM IP: %s\n",inet_ntoa(addr_current));*/
+    sa_config.sin_addr.s_addr = addr_current.s_addr;
+  }
+
+  if (mainConfig->dynamic_ip[0]=='+')
+  {
+    const char *ip = mainConfig->dynamic_ip;
+    ip++;
+
+   /* 2- resolve config ip */
+    if (strcmp(ip,"*")==0)
+      sa_config.sin_addr.s_addr = htonl(INADDR_ANY);
+    else
+    {
+      struct hostent* host_info;
+      // try to decode dotted quad notation
+      if(!inet_aton(ip, &sa_config.sin_addr))
+      {
+	// failing that, look up the name
+	if( (host_info = gethostbyname(ip)) == NULL)
+	{
+	  out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",ip,__FILE__,__LINE__);
+	  return;
+	}
+	memcpy(&sa_config.sin_addr, host_info->h_addr, host_info->h_length);
+      }
+    }
+/*    {
+      unsigned char *myip = (unsigned char*)&sa_config.sin_addr;
+      out_err(LEVEL_CRITICAL,"RESOLVED IP: %d.%d.%d.%d\n",myip[0],myip[1],myip[2],myip[3]);
+    }*/
+  } /* if (mainConfig->dynamic_ip[0]=='+') */
+
+  str_ip_current = (const unsigned char*)&sa_current.sin_addr.s_addr;
+  str_ip_config = (const unsigned char*)&sa_config.sin_addr.s_addr;
+  str_ip_pasv = (const unsigned char*)mainConfig->pasv_ip;
+
+  /* if different, rebind */ /* XXX FIXME what to do with old connections ? */
+  {
+    if (sa_current.sin_addr.s_addr != 0 && (sa_current.sin_addr.s_addr != sa_config.sin_addr.s_addr) ) {
+      out_log(LEVEL_HIGH,"Rebinding main server ! (from %d.%d.%d.%d to %d.%d.%d.%d)\n",
+	  str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
+	  str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
+      server_rebind(inet_ntoa(sa_config.sin_addr),mainConfig->port);
+    }
+  }
+
+  /* anyway, I need to rebind pasv ip ?! */
+  {
+    if ( str_ip_pasv[0] != '0' && (
+	str_ip_config[0] != str_ip_pasv[0]
+	|| str_ip_config[1] != str_ip_pasv[1]
+	|| str_ip_config[2] != str_ip_pasv[2]
+	|| str_ip_config[3] != str_ip_pasv[3] ) )
+    {
+      out_log(LEVEL_HIGH,"Changing PASV ip !\n");
+      mainConfig->pasv_ip[0] = str_ip_config[0];
+      mainConfig->pasv_ip[1] = str_ip_config[1];
+      mainConfig->pasv_ip[2] = str_ip_config[2];
+      mainConfig->pasv_ip[3] = str_ip_config[3];
+    }
+  }
+}
+
 
 /* void login_new(int socket_accept_fd)
  *
@@ -261,8 +410,6 @@ void login_new(int socket_accept_fd)
   /* start child process */
 #ifdef WZD_MULTIPROCESS
   if (fork()==0) { /* child */
-    /* FIXME windows does NOT like this line */
-/*    mainConfig->stats.num_childs++;*/
     /* 0. get shared memory zones */
 #ifdef __CYGWIN__
 /*    mainConfig_shm = wzd_shm_create(shm_key-1,sizeof(wzd_config_t),0);*/
@@ -335,6 +482,9 @@ void login_new(int socket_accept_fd)
 #endif
 
 #ifdef WZD_MULTIPROCESS
+    /* for stats */
+    mainConfig->stats.num_childs++;
+
     context->pid_child = getpid();
 #endif
     clientThreadProc(context);
@@ -409,6 +559,7 @@ void serverMainThreadProc(void *arg)
   int i;
   unsigned int length=0;
   int backend_storage;
+  time_t time_ip_start, time_now;
 
   /* catch broken pipe ! */
 #ifdef __SVR4
@@ -441,7 +592,7 @@ void serverMainThreadProc(void *arg)
   }
 #endif /* POSIX */
 
-  ret = mainConfig->mainSocket = socket_make(&mainConfig->port,5);
+  ret = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,5);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -488,14 +639,16 @@ void serverMainThreadProc(void *arg)
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (mainConfig->backend.name[0] == '\0') {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    exit (1);
+    serverMainThreadExit(-1);
+/*    exit (1);*/
   }
   ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
       mainConfig->group_list,HARD_DEF_GROUP_MAX);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (ret || mainConfig->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
-    exit (1);
+    serverMainThreadExit(-1);
+/*    exit (1);*/
   }
 
   /********** init modules **********/
@@ -512,6 +665,7 @@ void serverMainThreadProc(void *arg)
 
   /* sets start time, for uptime */
   time(&server_start);
+  time_ip_start = server_start;
 
   /* reset stats TODO load stats ! */
   reset_stats(&mainConfig->stats);
@@ -549,6 +703,15 @@ void serverMainThreadProc(void *arg)
         login_new(mainConfig->mainSocket);
       }
     }
+
+    /* check cron jobs */
+    time(&time_now);
+    if ( (time_now - time_ip_start) > HARD_DYNAMIC_IP_INTVL)
+    {
+      time_ip_start += HARD_DYNAMIC_IP_INTVL;
+      check_server_dynamic_ip();
+    }
+
   } /* while (!serverstop) */
 
 
