@@ -64,12 +64,12 @@ int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
 {
   wzd_vfs_t * current_vfs, * next_vfs;
   wzd_vfs_t * previous_vfs = NULL;
-  
+
   current_vfs = *vfs_list;
   while(current_vfs)
   {
     next_vfs = current_vfs->next_vfs;
-    
+
     if ( (strcmp( current_vfs->virtual_dir, vpath) == 0) )
     {
       if (current_vfs == *vfs_list)
@@ -82,7 +82,7 @@ int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
       }
       return 0;
     }
-    
+
     previous_vfs = current_vfs;
     current_vfs = next_vfs;
   }
@@ -191,7 +191,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
   buffer=strdup(perms);
   ptr=buffer;
   token = strtok_r(buffer," \t\r\n",&ptr);
- 
+
   while (token) {
     negate=0;
     /* FIXME split token to find entry type : user, group, flag */
@@ -375,13 +375,13 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
 char *stripdir(char * dir, char *buf, int maxlen)
 {
   char * in, * out;
-  char * last; 
+  char * last;
   int ldots;
-        
+
   in   = dir;
   out  = buf;
   last = buf + maxlen;
-  ldots = 0; 
+  ldots = 0;
   *out  = 0;
 
 #ifndef _MSC_VER
@@ -394,10 +394,10 @@ char *stripdir(char * dir, char *buf, int maxlen)
       out = buf + strlen(buf) - 1;
       if (*out != '/') *(++out) = '/';
       out++;
-    }       
+    }
     else
       return NULL;
-  }               
+  }
 
   while (out < last) {
     *out = *in;
@@ -430,18 +430,18 @@ char *stripdir(char * dir, char *buf, int maxlen)
 
     if (!*in)
       break;
-                        
+
     in++;
-  }       
-        
+  }
+
   if (*in) {
     errno = ENOMEM;
     return NULL;
-  }       
-        
+  }
+
   while (--out != buf && (*out == '/' || !*out)) *out=0;
     return buf;
-}       
+}
 
 /** \brief convert ftp-style path to system path
  * \deprecated use \ref checkpath_new
@@ -453,7 +453,7 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 
   allowed = malloc(WZD_MAX_PATH);
   cmd = malloc(WZD_MAX_PATH);
-  
+
   {
     snprintf(allowed,WZD_MAX_PATH,"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
@@ -467,8 +467,8 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
     } else {
       strcpy(cmd,allowed);
       strlcat(cmd,wanted_path+1,WZD_MAX_PATH);
-    } 
-  } 
+    }
+  }
   DIRNORM(cmd,strlen(cmd),0);
 /*#ifdef DEBUG
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
@@ -498,7 +498,7 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
 {
   char allowed[WZD_MAX_PATH];
   char cmd[WZD_MAX_PATH];
-  
+
   {
     snprintf(allowed,strlen(allowed),"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
@@ -516,8 +516,8 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
       return -1; /* we need absolute path, but it doesn't begin with / */
     } else {
       strcpy(cmd,wanted_path);
-    } 
-  } 
+    }
+  }
 /*#ifdef DEBUG
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 #endif*/
@@ -559,7 +559,7 @@ int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context
 
     /** \todo XXX FIXME this code is NOT finished ... */
     if (strncmp(buffer,vfs->physical_dir,strlen(vfs->physical_dir)) == 0) {
-      
+
     }
   }
 
@@ -621,7 +621,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
       free(syspath); free(ftppath);
       return E_WRONGPATH;
     }
-    
+
     path_simplify(ftppath);
 
     ret = checkpath_new(ftppath, syspath, context);
@@ -678,8 +678,8 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     /** \todo check permissions here */
     if (lstat(syspath,&s)) {
       /* file/dir does not exist
-       * 3 cases: error, vfs, symlink */ 
-      
+       * 3 cases: error, vfs, symlink */
+
       /* read permission file for parent */
       strcpy(syspath+sys_offset, HARD_PERMFILE);
       perm_list = NULL;
