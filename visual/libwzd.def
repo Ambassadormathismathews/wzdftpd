@@ -24,6 +24,7 @@ EXPORTS
 	calc_md5
 	checkabspath
 	checkpath
+	chop
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
@@ -121,7 +122,6 @@ EXPORTS
 	vfs_remove
 	vfs_replace
 	vfs_replace_cookies
-	write_message_footer
 	wzd_cache_close
 	wzd_cache_gets
 	wzd_cache_getsize
