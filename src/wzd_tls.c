@@ -90,7 +90,14 @@ int tls_init(void)
 {
   int status;
   SSL_CTX * tls_ctx;
+  char * tls_certificate;
   char * tls_certificate_key;
+
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
+  {
+    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+    return 1;
+  }
 
   ERR_load_ERR_strings();
   SSL_load_error_strings();	/* readable error messages */
@@ -115,9 +122,9 @@ int tls_init(void)
    * SSL_CTX_use_certificate_file
    */
 /*  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);*/
-  status = SSL_CTX_use_certificate_chain_file(tls_ctx, mainConfig->tls_certificate);
+  status = SSL_CTX_use_certificate_chain_file(tls_ctx, tls_certificate);
   if (status <= 0) {
-    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
+    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", tls_certificate, (char *)ERR_error_string(ERR_get_error(), NULL));
     SSL_CTX_free(tls_ctx);
     mainConfig->tls_ctx = NULL;
     return 1;
@@ -127,7 +134,7 @@ int tls_init(void)
   if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
   {
     /* if no key provided, try using the same certificate */
-    tls_certificate_key = mainConfig->tls_certificate;
+    tls_certificate_key = tls_certificate;
   }
 
   status = SSL_CTX_use_PrivateKey_file(tls_ctx, tls_certificate_key, X509_FILETYPE_PEM);
@@ -280,6 +287,7 @@ int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int 
 int tls_auth (const char *type, wzd_context_t * context)
 {
   int ret;
+  char * tls_cipher_list;
 
 #if 0
   if (!type || type[0]==0) return 1;
@@ -294,8 +302,13 @@ int tls_auth (const char *type, wzd_context_t * context)
   }
 #endif
 
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
+  {
+    tls_cipher_list = "ALL";
+  }
+
   context->ssl.obj = SSL_new(mainConfig->tls_ctx);
-  SSL_set_cipher_list(context->ssl.obj,mainConfig->tls_cipher_list);
+  SSL_set_cipher_list(context->ssl.obj,tls_cipher_list);
   ret = SSL_set_fd(context->ssl.obj,context->controlfd);
   if (ret != 1) {
     out_log(LEVEL_CRITICAL,"SSL_set_fd failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
@@ -590,7 +603,15 @@ static gnutls_certificate_credentials x509_cred;
 
 int tls_init(void)
 {
+  char * tls_certificate;
   char * tls_certificate_key;
+
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
+  {
+    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+    return 1;
+  }
+
   /* The order matters.
    */
   gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
@@ -598,7 +619,7 @@ int tls_init(void)
 
   /** \todo TODO XXX move this code to global init ? */
   gnutls_certificate_allocate_credentials(&x509_cred);
-  gnutls_certificate_set_x509_trust_file(x509_cred, mainConfig->tls_certificate,
+  gnutls_certificate_set_x509_trust_file(x509_cred, tls_certificate,
       GNUTLS_X509_FMT_PEM);
 
 /*
@@ -608,11 +629,11 @@ int tls_init(void)
   if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
   {
     /* if no key provided, try using the same certificate */
-    tls_certificate_key = mainConfig->tls_certificate;
+    tls_certificate_key = tls_certificate;
   }
 
   gnutls_certificate_set_x509_key_file(x509_cred,
-      mainConfig->tls_certificate /* CERTFILE */,
+      tls_certificate /* CERTFILE */,
       tls_certificate_key /* KEYFILE */,
       GNUTLS_X509_FMT_PEM);
 

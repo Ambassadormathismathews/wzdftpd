@@ -453,6 +453,17 @@ logfile</link>)
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_tls_certificate_key'>
+<term>tls_certificate_key [TLS only] <emphasis>( wzdftpd >= 0.5 )</emphasis></term>
+<listitem>
+<para>The name of the TLS certificate key file to use.
+<screen>tls_certificate_key = /path/to/wzd_key.pem</screen>
+</para>
+<para>If not specified, the server will try to use the certificate for the
+key file.</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_tls_cipher_list'><term>tls_cipher_list (default: ALL) [TLS only]</term>
 <listitem>
 <para>The cipher list server will negotiate during TLS handshake

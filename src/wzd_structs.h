@@ -536,8 +536,6 @@ typedef struct {
   unsigned int  data_buffer_length; /**< size of buffer used for transfers. This has a great impact on performances */
   unsigned long	server_opts;
   wzd_server_stat_t	stats;
-  char		tls_certificate[256];
-  char          tls_cipher_list[256];
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
   unsigned long	shm_key;
@@ -551,8 +549,7 @@ typedef struct {
   wzd_bw_limiter	global_ul_limiter;
   wzd_bw_limiter	global_dl_limiter;
   wzd_site_config_t	site_config;
-  wzd_user_t	*user_list;
-  wzd_group_t	*group_list;
+
   struct CHTBL * htab;
 } wzd_config_t;
 

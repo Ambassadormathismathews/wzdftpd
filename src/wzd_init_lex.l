@@ -111,8 +111,6 @@ typedef enum {
   CFG_SITE,
   CFG_SITECMD,
   CFG_SITEFILE,
-  CFG_TLS_CERT,
-  CFG_TLS_CIPHER_LIST,
   CFG_TLS_MODE,
   CFG_UMASK,
   CFG_USE_SYSLOG,
@@ -244,15 +242,15 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"site_cmd")) return CFG_SITECMD;
   if (!strncmp(word,"sitefile_",strlen("sitefile_"))) return CFG_SITEFILE;
   if (!strncmp(word,"site_",strlen("site_"))) return CFG_SITE;
-  if (!strcmp(word,"tls_certificate")) return CFG_TLS_CERT;
-  if (!strcmp(word,"tls_cipher_list")) return CFG_TLS_CIPHER_LIST;
   if (!strcmp(word,"tls_mode")) return CFG_TLS_MODE;
   if (!strcmp(word,"umask")) return CFG_UMASK;
   if (!strcmp(word,"use_syslog")) return CFG_USE_SYSLOG;
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
 
+  if (!strcmp(word,"tls_certificate")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_certificate_key")) return CFG_KEYWORD;
+  if (!strcmp(word,"tls_cipher_list")) return CFG_KEYWORD;
   return 0;
 }
 
@@ -360,7 +358,6 @@ int set_default_options(void)
   tempConfig.site_config.file_vfs = NULL;
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
   strcpy(tempConfig.tls_cipher_list,"ALL");
 
   tempConfig.tls_type = TLS_EXPLICIT;
@@ -1622,35 +1619,6 @@ int cfg_read_sitecmd(void)
 }
 
 
-/* TLS CERTIFICATE
- * absolute file name
- */
-int cfg_read_tls_certificate(void)
-{
-  unsigned int token;
-  char * filename;
-
-  token = yylex();
-  if (token!='=') {
-    out_err(LEVEL_HIGH,"line should be 'tls_certificate = ...'\n");
-    return 1;
-  }
-
-  if( !(filename=read_until_eol(256)) ) {
-    out_err(LEVEL_HIGH,"invalid file name\n");
-    return 1;
-  }
-
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  strcpy(tempConfig.tls_certificate,filename);
-#else
-  out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
-#endif /* HAVE_OPENSSL */
-
-  wzd_free(filename);
-  return 0;
-}
-
 /* TLS CIPHER LIST
  * string
  */
@@ -2087,12 +2055,6 @@ wzd_config_t * readConfigFile(const char *fileName)
         ret = cfg_read_sitefile(buf);
         wzd_free(buf);
       }
-      break;
-    case CFG_TLS_CERT:
-      ret = cfg_read_tls_certificate();
-      break;
-    case CFG_TLS_CIPHER_LIST:
-      ret = cfg_read_tls_cipher_list();
       break;
     case CFG_TLS_MODE:
       ret = cfg_read_tls_mode();

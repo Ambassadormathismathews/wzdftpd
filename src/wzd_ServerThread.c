@@ -296,8 +296,6 @@ void server_restart(int signum)
     /* reload global_ul_limiter ?? */
     /* reload global_dl_limiter ?? */
     mainConfig->site_config = config->site_config;
-    /* do not touch user_list */
-    /* do not touch group list */
   }
 
   /* 4- Re-open server */
@@ -1073,9 +1071,6 @@ int server_switch_to_config(wzd_config_t *config)
 
 
   context_list = wzd_malloc(sizeof(List));
-  config->user_list = NULL; /** \todo remove this line */
-  config->group_list = NULL; /** \todo remove this line */
-
 
   list_init(context_list, wzd_free);
 

@@ -105,18 +105,6 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   }
 
   /* check users limit -> backend will do that !! */
-#if 0
-  {
-    /* count users */
-    unsigned int i=0;
-    while (i < HARD_DEF_USER_MAX && mainConfig->user_list[i].username[0] != '\0') i++;
-
-    if (i >= HARD_DEF_USER_MAX-1) { /* -1, because nobody is counted here */
-      ret = send_message_with_args(501,context,"Too many users !");
-      return 0;
-    }
-  }
-#endif /* 0 */
 
   groupname = strtok_r(NULL," \t\r\n",&ptr);
   group = GetGroupByName(groupname);

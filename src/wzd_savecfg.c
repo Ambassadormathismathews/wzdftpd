@@ -337,10 +337,11 @@ static void save_tlsoptions (FILE *file)
   fprintf( file, "\n");
   
   fprintf( file, "# Certificate (only used in ssl mode, otherwise ignored)\n");
-  if (mainConfig->tls_certificate[0])
+  fprintf( file, "#tls_certificate = /etc/wzdftpd/wzd.pem\n");
+/*  if (mainConfig->tls_certificate[0])
     fprintf( file, "tls_certificate = %s\n", mainConfig->tls_certificate);
   else
-    fprintf( file, "#tls_certificate = /etc/wzd.pem\n");
+    fprintf( file, "#tls_certificate = /etc/wzd.pem\n");*/
   fprintf( file, "\n");
   
   fprintf( file, "# Mode (default: explicit)\n");
@@ -358,9 +359,9 @@ static void save_tlsoptions (FILE *file)
   fprintf( file, "# you should not use this option or let \"ALL\" unless you know\n");
   fprintf( file, "# what you are doing\n");
   fprintf( file, "# see openssl ciphers, man openssl(1)\n");
-  if (mainConfig->tls_cipher_list[0])
+/*  if (mainConfig->tls_cipher_list[0])
     fprintf( file, "tls_cipher_list = %s\n", mainConfig->tls_cipher_list);
-  else
+  else*/
     fprintf( file, "#tls_cipher_list = ALL\n");
   fprintf( file, "\n");
   fprintf( file, "# /TLS\n");
