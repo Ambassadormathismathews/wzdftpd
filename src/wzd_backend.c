@@ -14,7 +14,7 @@ void backend_clear_struct(wzd_backend_t *backend)
   backend->back_commit_changes = NULL;
 }
 
-int backend_validate(const char *backend)
+int backend_validate(const char *backend, const char *pred, const char *version)
 {
   struct stat statbuf;
   int ret;
@@ -42,10 +42,12 @@ int backend_validate(const char *backend)
     return 1;
   }
   /* basic type check */
+#ifdef DEBUG
   if (S_ISLNK(statbuf.st_mode))
     out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
   if (S_ISREG(statbuf.st_mode))
       out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
+#endif
 
   /* test dlopen */
   handle = dlopen(filename,RTLD_NOW);
@@ -76,8 +78,32 @@ int backend_validate(const char *backend)
   ret = ret & (ptr!=NULL);
   if (!ret) {
     out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
+    dlclose(handle);
     return 1;
   }
+
+  /* if predicate and/or version, do specific tests on backend */
+  if (pred) {
+    if (strcmp(pred,">")==0) { /* need a minimum version */
+      char ** version_found;
+      if (!version) {
+	out_err(LEVEL_CRITICAL,"We need a version number to do this test !\n");
+	dlclose(handle);
+	return 1;
+      }
+      version_found = dlsym(handle,"module_version");
+      if ( (dlerror()) != NULL ) {
+	out_err(LEVEL_CRITICAL,"Backend does not contain any \"module_version\" information\n");
+	dlclose(handle);
+	return 1;
+      }
+      if (strcmp(*version_found,version)<=0) {
+	out_err(LEVEL_CRITICAL,"Backend version is NOT > %s\n",version);
+	dlclose(handle);
+	return 1;
+      }
+    } /* if (strcmp(pred,">")>0) */
+  } /* if (pred) */
 
   dlclose(handle);
 /*  strncpy(mainConfig->backend.name,backend,1023);*/
@@ -123,7 +149,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_FIND_USER);
   mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_FIND_GROUP);
   mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,STR_CHPASS);
-  mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_MOD_USER);
+  mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,STR_MOD_USER);
   mainConfig->backend.back_mod_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,STR_COMMIT_CHANGES);
   strncpy(mainConfig->backend.name,backend,1023);
@@ -226,7 +252,7 @@ int backend_validate_login(const char *name, wzd_user_t * user, int * userid)
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
     /*user = &mainConfig->user_list[ret];*/
     if (user != NULL)
-      memcpy(user,mainConfig->user_list+ret,sizeof(wzd_user_t));
+      memcpy(user,&mainConfig->user_list[ret],sizeof(wzd_user_t));
     *userid = ret;
     return 0;
   }
@@ -299,13 +325,13 @@ int backend_inuse(const char *backend)
 }
 
 /* if user does not exist, add it */
-int backend_mod_user(const char *backend, const char *name, wzd_user_t * user)
+int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   int ret;
   if (!mainConfig->backend.handle) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
-  ret = (*mainConfig->backend.back_mod_user)(name,user);
+  ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
   return ret;
 }

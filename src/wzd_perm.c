@@ -105,7 +105,7 @@ wzd_command_perm_t * perm_find(const char *commandname, wzd_config_t * config)
 
 wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_command_perm_t * command_perm)
 {
-  wzd_command_perm_entry_t * entry;
+  wzd_command_perm_entry_t * entry, *insert_point;
 
   entry = command_perm->entry_list;
   if (!entry) {
@@ -123,11 +123,19 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
     entry = entry->next_entry;
   } while (entry);
 
-  /* not found, insert a new entry (head insertion) */
+  /* not found, insert a new entry (tail insertion, order is important) */
   entry = perm_create_empty_entry();
   strncpy(entry->target,target,256);
-  entry->next_entry = command_perm->entry_list;
-  command_perm->entry_list = entry;
+  entry->next_entry = NULL;
+  insert_point = command_perm->entry_list;
+  if (insert_point == NULL) {
+    command_perm->entry_list = entry;
+  } else {
+    while (insert_point->next_entry != NULL)
+      insert_point = insert_point->next_entry;
+
+    insert_point->next_entry = entry;
+  }
 
   return entry;
 }

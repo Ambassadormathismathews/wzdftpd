@@ -1,12 +1,12 @@
 .----------------------------------------------------------------------------.
 |                          »   S i T e    W h O    «                         |
 .---------------.-------------.----------------------------------------------.
-|   login       |    group    |      ip         |      spyin' time           |
+|   login       |     pid     |      ip         |      spyin' time           |
 .---------------.-------------.----------------------------------------------.
 %forallusersconnected
-| %14.username| %12.usergroup| %15.userip | %17.userlastcmd%10.userspeed|
+| %14.username| %12.userpid| %15.userip | %17.userlastcmd%10.userspeed|
 %endfor
 .----------------------------------------------------------------------------.
-| site who provide infos on people connected (their group, their ip if you're|
-| allowed to, and their last command...)                                     |
+| site swho provide more info than site who. SUperuser, group admin or       |
+| siteop can check ips and find PiD of connected user                        |
 .----------------------------------------------------------------------------.

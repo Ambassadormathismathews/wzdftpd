@@ -445,7 +445,7 @@ int waitconnect(wzd_context_t * context)
   }
 
   ret = send_message(150,context); /* about to open data connection */
-  sock = socket_connect(remote_host,context->dataport);
+  sock = socket_connect(remote_host,context->dataport,mainConfig->port-1,context->controlfd);
   if (sock == -1) {
     ret = send_message(425,context);
     return -1;
@@ -549,7 +549,9 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
+#ifdef DEBUG
 fprintf(stderr,"PARAM: '%s'\n",param);
+#endif
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
@@ -699,12 +701,13 @@ int do_mkdir(char *param, wzd_context_t * context)
   if (param[0] != '/') {
     strcpy(cmd,".");
     if (checkpath(cmd,path,context)) return 1;
-
+    if (path[strlen(path)-1]!='/') strcat(path,"/");
     strncat(path,param,2047);
   } else {
     strcpy(cmd,param);
     if (checkpath(cmd,path,context)) return 1;
-    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+    if (path[strlen(path)-1]!='/') strcat(path,"/");
+/*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
 
   ret = checkpath(param,buffer,context);
@@ -766,42 +769,6 @@ int do_rmdir(char * param, wzd_context_t * context)
 
   /* check permissions */
   return file_rmdir(path,context);
-
-#if 0
-  /* is dir empty ? */
-  {
-    DIR * dir;
-    struct dirent *entr;
-    char path_perm[2048];
-
-    if ((dir=opendir(path))==NULL) return 0;
-    
-    while ((entr=readdir(dir))!=NULL) {
-      if (strcmp(entr->d_name,".")==0 ||
-	  strcmp(entr->d_name,"..")==0 ||
-	  strcmp(entr->d_name,HARD_PERMFILE)==0) /* XXX hide perm file ! */
-	continue;
-      return 1; /* dir not empty */
-    }
-
-    closedir(dir);
-
-    /* remove permission file */
-    strcpy(path_perm,path); /* path is already ended by / */
-    strcat(path_perm,HARD_PERMFILE);
-    unlink(path_perm);
-  }
-
-#ifdef DEBUG
-fprintf(stderr,"Removing directory '%s'\n",path);
-#endif
-
-#ifndef __CYGWIN__
-  if (S_ISLNK(s.st_mode))
-    return unlink(path);
-#endif
-  return rmdir(path);
-#endif
 }
 
 /*************** do_pasv *****************************/
@@ -939,7 +906,7 @@ int do_retr(char *param, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
       param, bytestot);*/
     ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport);
+    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
     if (sock == -1) {
       ret = send_message(425,context);
       return 1;
@@ -1024,6 +991,7 @@ int do_stor(char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Incorrect filename");
     return 1;
   }
+  if (path[strlen(path)-1] != '/') strcat(path,"/");
   strcat(path,param);
 
   /* TODO call checkpath again ? see do_mkdir */
@@ -1086,7 +1054,7 @@ fprintf(stderr,"Resolved: %s\n",path);
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
       param);*/
     ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport);
+    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
     if (sock == -1) {
       ret = send_message(425,context);
       return 1;
@@ -1320,7 +1288,10 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
 }
 
 /*************** do_user *****************************/
-
+/* returns 0 if ok
+ * 1 if user name is invalid or has been deleted
+ * 2 if user has reached num_logins
+ */
 int do_user(const char *username, wzd_context_t * context)
 {
   int ret;
@@ -1335,8 +1306,44 @@ int do_user(const char *username, wzd_context_t * context)
     user = NULL;
 
   ret = backend_validate_login(username,user,&context->userid);
+  if (ret) return 1;
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
+
+  /* check if user have been deleted */
+  if (user->flags && strchr(user->flags,FLAG_DELETED))
+    return 1;
+
+  /* count logins from user */
+  if (user->num_logins)
+  {
+    int count=0;
+    int i;
+    for (i=0; i<HARD_USERLIMIT; i++)
+    {
+#if BACKEND_STORAGE
+      /* strcmp user->username , ? */
+#else
+      if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
+#endif
+	count++;
+    } /* for (i=0; i<HARD_USERLIMIT; i... */
+
+    /* we substract 1, because the current login attempt is counted */
+    count--;
+
+    out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);
+
+    if (count >= user->num_logins) return 2;
+    /* >= and not ==, because it two attempts are issued simultaneously, count > num_logins ! */
+  }
   
-  return ret;
+  return 0;
 }
 
 /*************** do_user_ip **************************/
@@ -1414,8 +1421,12 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
       }
       token = strtok_r(NULL," \t\r\n",&ptr);
       ret = do_user(token,context);
-      if (ret) { /* user was not accepted */
+      if (ret==1) { /* user was not accepted */
 	ret = send_message_with_args(421,context,"User rejected");
+	return 1;
+      }
+      if (ret==2) { /* too many logins */
+	ret = send_message_with_args(421,context,"Too many connections with your login");
 	return 1;
       }
       /* validate ip for user */

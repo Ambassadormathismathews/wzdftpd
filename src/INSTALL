@@ -34,6 +34,7 @@ The _MINIMUM_ installation is composed of:
 - the lib (libwzd.so for linux, libwzd.dll for win32)
 - the config file (wzd.cfg)
 - ONE backend at least, with the backend's config files (libwzdplaintext.so, users)
+- files used by site commands (see config file)
 
 You can add modules
 

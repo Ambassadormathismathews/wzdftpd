@@ -39,13 +39,13 @@ CC=gcc-3.2
 LIBWZD = libwzd.so
 EXEC=wzdFTPd
 COMMON_LIBS += -L. -lwzd -Wl,-rpath,.
+COMMON_CFLAGS += -march=i686 -ffast-math
 else
 CC=gcc
 LIBWZD = libwzd.dll
 EXEC=wzdFTPd.exe
 COMMON_LIBS += -L. -llibwzd -Wl,-rpath,.
 endif
-EXTRALIBS = $(LIBWZD)
 
 
 .SUFFIXES: .c .o .do .po
@@ -58,29 +58,32 @@ intel:
 intel_release:
 	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)' release
 
-release: $(OBJS) $(EXTRALIBS)
+release: $(OBJS) $(LIBWZD_OBJS)
 ifeq ($(PLATFORM),Linux)
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_OBJS) && \
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 else
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_OBJS) && \
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
 endif
 
-debug: $(DOBJS) $(EXTRALIBS)
+debug: $(DOBJS) $(LIBWZD_DOBJS)
 ifeq ($(PLATFORM),Linux)
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_DOBJS) && \
 	$(CC) -o $(EXEC) $(DOBJS) $(LIBS)
 else
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_DOBJS) && \
 	$(CC) -o $(EXEC) $(DOBJS) $(WINLIBS)
 endif
 
-pedantic: $(POBJS) $(EXTRALIBS)
+pedantic: $(POBJS) $(LIBWZD_POBJS)
 ifeq ($(PLATFORM),Linux)
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_POBJS) && \
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS)
 else
+	$(CC) -shared -o $(LIBWZD) $(LIBWZD_POBJS) && \
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS)
 endif
-
-$(LIBWZD): $(LIBWZD_DOBJS)
-	$(CC) -shared -o $@ $^
 
 check_symlinks:
 	rm -f libwzdplaintext.so libwzd_sfv.so libwzd_test.so; \

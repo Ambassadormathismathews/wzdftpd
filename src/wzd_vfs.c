@@ -68,15 +68,17 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen)
   while (vfs_list)
   {
     if (strncmp(vfs_list->virtual_dir,buffer,strlen(vfs_list->virtual_dir))==0
-	&& buffer[strlen(vfs_list->virtual_dir)] == '/')
+	&&
+	(buffer[strlen(vfs_list->virtual_dir)] == '/' || /* without this test, vfs will always match before vfs1 */
+	strcmp(vfs_list->virtual_dir,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
       char buf[4096];
-#if DEBUG
+#ifdef DEBUG
 out_err(LEVEL_CRITICAL,"VPATH : %s / %s\n",buffer,vfs_list->virtual_dir);
 #endif
       strcpy(buf,vfs_list->physical_dir);
       strcpy(buf+strlen(vfs_list->physical_dir),buffer+strlen(vfs_list->virtual_dir));
-#if DEBUG
+#ifdef DEBUG
 out_err(LEVEL_CRITICAL,"converted to %s\n",buf);
 #endif
       strcpy(buffer,buf);
@@ -168,6 +170,7 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 #endif
   {
     sprintf(allowed,"%s/",mainConfig->user_list[context->userid].rootpath);
+    if (strcmp(allowed,"//")==0) allowed[1]='\0';
     sprintf(cmd,"%s%s",mainConfig->user_list[context->userid].rootpath,context->currentpath);
   }
   if (cmd[strlen(cmd)-1] != '/')
@@ -188,10 +191,12 @@ printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 /*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
 #endif*/
-  if (path[strlen(path)-1] != '/')
-    strcat(path,"/");
+/*  if (path[strlen(path)-1] != '/')
+    strcat(path,"/");*/
   strcpy(cmd,path);
   cmd[strlen(allowed)]='\0';
+  if (path[strlen(cmd)-1] != '/')
+    strcat(cmd,"/");
   /* check if user is allowed to even see the path */
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */

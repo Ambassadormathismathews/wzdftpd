@@ -21,11 +21,24 @@
 |                | site checkperm user file rights              | r,s        |
 | site user      | (username) show user info                    | r,s        |
 | site adduser   | add a new user                               | r          |
-|                | IMPORTANT you MUST commit changes in backend |            |
 |                | site adduser user pass homedir [backend]     |            |
+| site deluser   | delete user                                  | r          |
+| site purge     | purge deleted user                           | r          |
+| site addip     | add ip to user                               | r          |
+|                | site addip user ip                           |            |
+| site delip     | delete ip from user                          | r          |
+| site chgrp     | add/remove user from group(s)                | r          |
+|                |   site chpgrp user group1 [group2 ... ]      |            |
+| site change    | change a field for a user                    | r          |
+|                | site change user field value                 |            |
+| site kick      | kick all connections from a user             | r          |
+| site kill      | kill a pid                                   | r          |
 | site shutdown  | shutdown the server remotely                 | r          |
 | site reload    | reloads server config                        | r          |
 | site backend   | (init/close/reload/commit) backend_name      | r          |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
+|                                                                            |
+|    IMPORTANT: after all modifications you must commit in backend,          |
+|               otherwise modifications will be lost next server start       |
 .----------------------------------------------------------------------------.

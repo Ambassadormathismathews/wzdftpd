@@ -425,8 +425,9 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
 
 
 /*fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);*/
-fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
-
+#ifdef DEBUG
+  fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
+#endif
 
   ret = readPermFile(perm_filename,&file_list);
   if (ret) { /* no permissions file */
@@ -542,10 +543,11 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
 
   strncpy(dst_perm_filename+length,HARD_PERMFILE,neededlength);
 
-
+#ifdef DEBUG
 fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
 fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,src_perm_filename,src_stripped_filename);
 fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_stripped_filename);
+#endif
 
   ret = readPermFile(src_perm_filename,&src_file_list);
   if (ret) { /* no permissions file */

@@ -49,7 +49,9 @@ int set_default_options(void)
   /* site config */
   tempConfig.site_config.file_help[0] = '\0';
   tempConfig.site_config.file_rules[0] = '\0';
+  tempConfig.site_config.file_swho[0] = '\0';
   tempConfig.site_config.file_user[0] = '\0';
+  tempConfig.site_config.file_users[0] = '\0';
   tempConfig.site_config.file_who[0] = '\0';
 
 #if SSL_SUPPORT
@@ -191,7 +193,9 @@ int parseVariable(const char *varname, const char *value)
       out_err(LEVEL_HIGH,"port must be between 1 and 65535 inclusive\n");
       return 1;
     }
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* changing port: new value %d\n",i);
+#endif
     tempConfig.port = i;
     return 0;
   }
@@ -208,7 +212,9 @@ int parseVariable(const char *varname, const char *value)
       out_err(LEVEL_HIGH,"max_threads must be between 1 and 2000 inclusive\n");
       return 1;
     }
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* changing max_threads: new value %d\n",i);
+#endif
     tempConfig.max_threads = i;
     return 0;
   }
@@ -217,8 +223,22 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("backend",varname)==0)
   {
+    char * ptr;
+    char *predicate=NULL, *version=NULL;
+    /* TODO if value contains spaces, check version */
+    if ( (ptr=strchr(value,' ')) ) {
+      char *dummy_ptr;
+      *ptr++ = '\0';
+      dummy_ptr = ptr;
+      predicate = strtok_r(ptr," \t\r\n",&dummy_ptr);
+      if (!predicate) return 1;
+      version = strtok_r(NULL," \t\r\n",&dummy_ptr);
+      if (!version) return 1;
+    }
+#ifdef DEBUG
     out_err(LEVEL_INFO,"trying backend; '%s'\n",value);
-    i = backend_validate(value);
+#endif
+    i = backend_validate(value,predicate,version);
     if (!i) {
       if (tempConfig.backend.handle == NULL) {
 /*        i = backend_init(value);*/
@@ -241,7 +261,9 @@ int parseVariable(const char *varname, const char *value)
       out_err(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
+#endif
     tempConfig.global_ul_limiter.maxspeed = l;
     return 0;
   }
@@ -257,7 +279,9 @@ int parseVariable(const char *varname, const char *value)
       out_err(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
+#endif
     tempConfig.global_dl_limiter.maxspeed = l;
     return 0;
   }
@@ -269,7 +293,9 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
+#endif
     tempConfig.pasv_low_range = l;
     return 0;
   }
@@ -281,7 +307,9 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
+#endif
     tempConfig.pasv_up_range = l;
     return 0;
   }
@@ -365,7 +393,9 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
+#ifdef DEBUG
     out_err(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
+#endif
     tempConfig.shm_key = l;
     return 0;
   }
@@ -375,8 +405,12 @@ int parseVariable(const char *varname, const char *value)
   { strncpy(tempConfig.site_config.file_help,value,256); return 0; }
   if (strcasecmp("sitefile_rules",varname)==0)
   { strncpy(tempConfig.site_config.file_rules,value,256); return 0; }
+  if (strcasecmp("sitefile_swho",varname)==0)
+  { strncpy(tempConfig.site_config.file_swho,value,256); return 0; }
   if (strcasecmp("sitefile_user",varname)==0)
   { strncpy(tempConfig.site_config.file_user,value,256); return 0; }
+  if (strcasecmp("sitefile_users",varname)==0)
+  { strncpy(tempConfig.site_config.file_users,value,256); return 0; }
   if (strcasecmp("sitefile_who",varname)==0)
   { strncpy(tempConfig.site_config.file_who,value,256); return 0; }
 #if SSL_SUPPORT
@@ -385,7 +419,9 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_certificate",varname)==0)
   {
+#ifdef DEBUG
     out_err(LEVEL_INFO,"TLS Certificate name: %s\n",value);
+#endif
     strcpy(tempConfig.tls_certificate,value);
     return 0;
   }
@@ -394,7 +430,9 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_cipher_list",varname)==0)
   {
+#ifdef DEBUG
     out_err(LEVEL_INFO,"TLS Cipher list: %s\n",value);
+#endif
     strcpy(tempConfig.tls_cipher_list,value);
     return 0;
   }
@@ -403,7 +441,9 @@ int parseVariable(const char *varname, const char *value)
    */
   if (strcasecmp("tls_mode",varname)==0)
   {
+#ifdef DEBUG
     out_err(LEVEL_INFO,"TLS mode: %s\n",value);
+#endif
     if (strcasecmp("explicit",value)==0)
       tempConfig.tls_type = TLS_EXPLICIT;
     else if (strcasecmp("explicit_strict",value)==0)

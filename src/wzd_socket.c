@@ -86,18 +86,31 @@ int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_por
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned long remote_host, int remote_port)
+int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd)
 {
   int sock;
   struct sockaddr_in sai;
   unsigned int len = sizeof(struct sockaddr_in);
   int ret;
+  int on=1;
 
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
     out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
     return -1;
   }
 
+  /* See if we can get the local port we want to bind to */
+  /* If we can't, just let the computer choose a port for us */
+  sai.sin_family = AF_INET;
+  getsockname(fd,(struct sockaddr *)&sai,&len);
+  sai.sin_port = htons(localport);
+
+  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
+
+  /* attempt to bind the socket - if it doesn't work, it is not a problem */
+  bind(sock,(struct sockaddr *)&sai,sizeof(sai));
+
+  /* makes the connection */
   sai.sin_port = htons(remote_port);
   sai.sin_family = AF_INET;
   memcpy(&sai.sin_addr,&remote_host,sizeof(remote_host));

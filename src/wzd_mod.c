@@ -81,10 +81,12 @@ int module_check(const char *filename)
   }
 
   /* basic type check */
+#ifdef DEBUG
   if (S_ISLNK(s.st_mode))
     out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
   if (S_ISREG(s.st_mode))
       out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
+#endif
 
   /* test dlopen */
   handle = dlopen(path,RTLD_NOW);

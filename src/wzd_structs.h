@@ -54,7 +54,9 @@ typedef struct _wzd_command_perm_t {
 typedef struct {
   char	file_help[256];
   char	file_rules[256];
+  char	file_swho[256];
   char	file_user[256];
+  char	file_users[256];
   char	file_who[256];
 } wzd_site_config_t;
 
@@ -94,6 +96,7 @@ typedef struct {
   char                  flags[MAX_FLAGS_NUM];
   unsigned long         max_ul_speed;
   unsigned long         max_dl_speed;   /* bytes / sec */
+  unsigned short	num_logins;	/* number of simultaneous logins allowed */
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   unsigned long		bytes_ul_total;
   unsigned long		bytes_dl_total;
@@ -110,10 +113,13 @@ typedef struct {
 
 /************************ FLAGS ***************************/
 
+#define	FLAG_SITEOP	'O'
+#define	FLAG_DELETED	'D'
 #define	FLAG_IDLE	'I'
 #define	FLAG_SEE_IP	's'
 #define	FLAG_SEE_HOME	't'
 #define	FLAG_HIDDEN	'H'
+#define	FLAG_GADMIN	'G'
 
 /************************ MODULES *************************/
 
@@ -166,5 +172,12 @@ typedef struct {
   char **       comments;
   wzd_sfv_entry **sfv_list;
 } wzd_sfv_file;
+
+/********************** SERVER STATS **********************/
+
+typedef struct {
+  unsigned long num_connections; /* total # of connections since server start */
+  unsigned long num_childs; /* idem with childs process created */
+} wzd_server_stat_t;
 
 #endif /* __WZD_STRUCTS__ */

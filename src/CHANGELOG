@@ -1,3 +1,50 @@
+# Dec, 10 2002
+- site users: list users online
+- server now tries to bind data PORT connection to control-1 on server-side to be RFC-compliant
+  This should help firewalls (rfc959 section 3.2 982:988)
+- bugfix: invalid permission in 'site checkperm' cause infinite loop
+
+# Dec, 06 2002
+- cookie: pid (need to have flag SITEOP)
+- site chgrp: add/remove user from group(s)
+  site chgrp user group1 [group2 ...]
+- site flags: display a user's flags (without args, show your own flags)
+- site swho: display detailed information about users online
+- site kick: kill all connections from user
+- site kill: kill a pid (if owned by a child)
+- site idle: display / set your idle time
+- site tagline: display / set your tagline
+- if RENAME commands is cross-device, uses internal fct to move dirs
+  works only for dirs, files and (partially) symlinks
+- childs trap SIGTERM to exit cleanly
+- backend version can be tested adding '> nnn' after 'backend = name'
+  backend must define "module_version" version, as a const char *
+- bugfix: server will no more start without backend
+- bugfix: permissions were inserted in wrong order, thus reversing it
+
+# Dec, 04 2002
+- site addip: add ip to user
+  site addip user ip
+  ip is checked to avoid shadowing other ip, or inserting useless ones
+- site delip: delete ip from user
+  site delip user ip
+  site delip user slot_number
+- site deluser: delete user (mark it as deleted)
+  site deluser user [backend]
+- site readd: unmark user as deleted
+  site readd user [backend]
+- site change: change user field
+  site change user field value
+  allow to change name, pass, homedir, tagline, group, max_idle, perms, flags, max_ul, max_dl, num_logins
+- site purge: purge deleted user
+  site purge user
+- num_logins directive (backend plaintext): number of simultaneous logins allowed
+- cookie: num_logins
+- bugfix: cookie 'home' uses flag of user instead of context to check permission
+- bugfix: when checking pass, backend plaintext was comparing only length chars
+  of the login
+- bugfix: error in function do_chdir when homedir was / and dir /
+
 #--- cvs commit
 # Dec, 02 2002
 - site adduser: what do you think it can be for ?

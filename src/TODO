@@ -51,6 +51,7 @@
 
 ## NORMAL ##
 
+- implement 'site purge' without arguments
 - multiple binds / restricted binds: bind to only specified ip(s)
 - change / add / remove vfs with site commands
 - add detection of ip for dynamic ip

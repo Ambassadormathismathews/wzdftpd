@@ -12,7 +12,7 @@ void out_log(int level,const char *fmt,...)
   if (level >= mainConfig->loglevel) {
     char new_format[1024];
 
-#if DEBUG
+#ifdef DEBUG
     switch (level) {
     case LEVEL_CRITICAL:
       strcpy(msg_begin,CLR_BOLD);
@@ -43,7 +43,7 @@ void out_log(int level,const char *fmt,...)
     snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
     
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-#if DEBUG
+#ifdef DEBUG
     if (mainConfig->logfile) {
       vfprintf(stdout,new_format,argptr);
 /*      vfprintf(mainConfig->logfile,fmt,argptr);

@@ -255,7 +255,7 @@ int sfv_check(const char * sfv_file)
       else {
 	sfv.sfv_list[i]->state = SFV_OK;
       }
-#if DEBUG
+#ifdef DEBUG
 out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,crc,sfv.sfv_list[i]->crc);
 #endif
     }

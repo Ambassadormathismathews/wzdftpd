@@ -23,7 +23,7 @@ wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
 fprintf(stderr,"Could not create file mapping\n");
     return NULL;
   }
-  shm->datazone = MapViewOfFile(shm->handle,FILE_MAP_WRITE,
+  shm->datazone = MapViewOfFile(shm->handle,FILE_MAP_ALL_ACCESS,
     0, 0, 0);
   if (shm->datazone == NULL) {
 fprintf(stderr,"Could not get file mapping view\n");
@@ -38,7 +38,29 @@ fprintf(stderr,"Could not get file mapping view\n");
 /* returns an EXISTING shm zone */
 wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 {
-  return NULL;
+  wzd_shm_t *shm;
+  char name[256];
+
+  shm = malloc(sizeof(wzd_shm_t));
+  if (!shm) return NULL;
+
+  shm->datazone = NULL;
+  sprintf(name,"%lu",key);
+  shm->handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
+  if (shm->handle == NULL) {
+fprintf(stderr,"Could not open file mapping\n");
+    return NULL;
+  }
+  shm->datazone = MapViewOfFile(shm->handle,FILE_MAP_ALL_ACCESS,
+    0, 0, 0);
+  if (shm->datazone == NULL) {
+fprintf(stderr,"Could not get file mapping view\n");
+    CloseHandle(shm->handle);
+    return NULL;
+  }
+
+
+  return shm;
 }
 
 /* read mem */

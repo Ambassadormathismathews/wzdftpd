@@ -84,7 +84,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
     while (vfs) {
       if (strncmp(vfs->virtual_dir,directory,strlen(directory))==0) {
-	char * ptr = vfs->virtual_dir + strlen(directory);
+	char * ptr = vfs->virtual_dir + strlen(directory) + 1;
 	if (strchr(ptr,'/')==NULL) {
 	  if (stat(vfs->physical_dir,&st)<0) {
 	    vfs = vfs->next_vfs;

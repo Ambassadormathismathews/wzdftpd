@@ -37,7 +37,7 @@ ip_allowed=10.0.0.10
 ip_allowed=127.0.0.1
 max_idle_time=0
 max_dl_speed=100000
-flags=IstH
+flags=OIstH
 
 name=wzdftpd
 home=/
@@ -48,7 +48,8 @@ groups=admin
 tagline=wzdftpd
 ip_allowed=127.0.0.1
 max_idle_time=0
-flags=IstH
+num_logins=1
+flags=OIstH
 
 name=guest
 home=/var/tmp
@@ -59,6 +60,7 @@ rights=0x03
 max_dl_speed=100000
 ip_allowed=*
 max_idle_time=90
+num_logins=2
 
 # per hosts rights
 [HOSTS]

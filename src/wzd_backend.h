@@ -26,10 +26,30 @@ typedef struct {
   int (*back_find_user) (const char *, wzd_user_t *);
   int (*back_find_group) (int, wzd_group_t *);
   int (*back_chpass) (const char *, const char *);
-  int (*back_mod_user) (const char *, wzd_user_t *);
+  int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
   int (*back_mod_group) (int, wzd_group_t *);
   int (*back_commit_changes) (void);
 } wzd_backend_t;
+
+/* used to know what was modified in update functions */
+#define	_USER_NOTHING	0
+#define	_USER_USERNAME	1<<0
+#define	_USER_USERPASS	1<<1
+#define	_USER_ROOTPATH	1<<2
+#define	_USER_TAGLINE	1<<3
+#define	_USER_UID	1<<4
+#define	_USER_GROUPNUM	1<<5
+#define	_USER_GROUP	1<<6
+#define	_USER_IDLE	1<<7
+#define	_USER_PERMS	1<<8
+#define	_USER_FLAGS	1<<9
+#define	_USER_MAX_ULS	1<<10
+#define	_USER_MAX_DLS	1<<11
+#define	_USER_IP	1<<12
+#define	_USER_BYTESUL	1<<13
+#define	_USER_BYTESDL	1<<14
+#define	_USER_NUMLOGINS	1<<15
+#define _USER_ALL	0xffffffff
 
 /* int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max) */
 #define	FCN_INIT		wzd_init
@@ -68,7 +88,7 @@ typedef struct {
 #define	STR_COMMIT_CHANGES	"wzd_commit_changes"
 
 
-int backend_validate(const char *backend);
+int backend_validate(const char *backend, const char *pred, const char *version);
 
 int backend_init(const char *backend, int * backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max);
 
@@ -86,8 +106,10 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
 
 int backend_chpass(const char *username, const char *new_pass);
 
-/* if user does not exist, add it */
-int backend_mod_user(const char *backend, const char *name, wzd_user_t * user);
+/* if user does not exist, add it
+ * if struct user is NULL, delete user
+ */
+int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type);
 
 int backend_commit_changes(const char *backend);
 

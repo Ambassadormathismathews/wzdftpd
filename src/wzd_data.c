@@ -8,7 +8,9 @@ void data_close(wzd_context_t * context)
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
+#ifdef DEBUG
 out_err(LEVEL_CRITICAL,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
+#endif
   ret = close(context->datafd);
   context->datafd = 0;
 }
@@ -114,7 +116,9 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       context->current_action.token = TOK_UNKNOWN;
       data_close(context);
       ret = send_message(226,context);
+#ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
+#endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
     }
@@ -142,7 +146,9 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->current_action.token = TOK_UNKNOWN;
       data_close(context);
       ret = send_message(226,context);
-out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
+#ifdef DEBUG
+      out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
+#endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
       FORALL_HOOKS(EVENT_POSTUPLOAD)

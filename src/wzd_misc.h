@@ -32,6 +32,9 @@ int print_file(const char *filename, int code, void * void_context);
 /* used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text);
 
+/* dst can be composed of wildcards */
+int my_str_compare(const char * src, const char *dst);
+
 /* IP allowing */
 int ip_add(wzd_ip_t **list, const char *newip);
 int ip_inlist(wzd_ip_t *list, const char *ip);

@@ -4,6 +4,9 @@
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
 
+void child_interrupt(int signum);
+void reset_stats(wzd_server_stat_t * stats);
+
 /************ VARS *****************/
 wzd_config_t *	mainConfig;
 wzd_shm_t *	mainConfig_shm;
@@ -37,7 +40,7 @@ void cleanchild(int nr) {
       /* TODO search context list and cleanup context */
       for (i=0; i<HARD_USERLIMIT; i++)
       {
-	if (context_list[i].pid_child == pid) {
+	if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
 #ifdef DEBUG
 	  fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
 #endif
@@ -102,6 +105,12 @@ fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",
   }
 
   return context;
+}
+
+void reset_stats(wzd_server_stat_t * stats)
+{
+  stats->num_connections = 0;
+  stats->num_childs = 0;
 }
 
 /* returns 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
@@ -201,6 +210,10 @@ void server_restart(int signum)
   }
 }
 
+/* void login_new(int socket_accept_fd)
+ *
+ * checks if login sequence can start, creates new context, etc
+ */
 void login_new(int socket_accept_fd)
 {
   unsigned long remote_host;
@@ -234,8 +247,8 @@ void login_new(int socket_accept_fd)
   if (mainConfig->login_pre_ip_check &&
         global_check_ip_allowed(userip)<=0) { /* IP was rejected */
     /* FIXME we should not be in raw mode here ... */
-    char * reject_msg = "421-Your ip was rejected\r\n";
-    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,NULL);
+/*    char * reject_msg = "421-Your ip was rejected\r\n";
+    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,NULL);*/
     close(newsock);
     out_log(LEVEL_HIGH,"Failed login from %d.%d.%d.%d: global ip rejected\n",
       userip[0],userip[1],userip[2],userip[3]);
@@ -248,9 +261,12 @@ void login_new(int socket_accept_fd)
   /* start child process */
 #ifdef WZD_MULTIPROCESS
   if (fork()==0) { /* child */
+    /* FIXME windows does NOT like this line */
+/*    mainConfig->stats.num_childs++;*/
     /* 0. get shared memory zones */
 #ifdef __CYGWIN__
-    mainConfig_shm = wzd_shm_create(shm_key-1,sizeof(wzd_config_t),0);
+/*    mainConfig_shm = wzd_shm_create(shm_key-1,sizeof(wzd_config_t),0);*/
+    mainConfig_shm = wzd_shm_get(shm_key-1,0);
     if (mainConfig_shm == NULL) {
       /* NOTE we do not have any out_log here, since we have no config !*/
       out_err(LEVEL_CRITICAL,"I can't open main config shm ! (child)\n");
@@ -258,12 +274,14 @@ void login_new(int socket_accept_fd)
     }
     mainConfig = mainConfig_shm->datazone;
     setlib_mainConfig(mainConfig);
-    context_shm = wzd_shm_create(shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
+/*    context_shm = wzd_shm_create(shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);*/
+    context_shm = wzd_shm_get(shm_key,0);
     if (context_shm == NULL) {
       out_err(LEVEL_CRITICAL,"I can't open context shm ! (child)\n");
       exit(1);
     }
     context_list = context_shm->datazone;
+    setlib_contextList(context_list);
     mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
     mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
@@ -287,6 +305,9 @@ void login_new(int socket_accept_fd)
     /* close unused fd */
     close (mainConfig->mainSocket);
     out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
+
+    /* redefines SIGTERM handler */
+    signal(SIGTERM,child_interrupt);
 #endif /* WZD_MULTIPROCESS */
     
     /* 1. create new context */
@@ -330,7 +351,7 @@ void login_new(int socket_accept_fd)
 void interrupt(int signum)
 {
   /* closing properly ?! */
-#if DEBUG
+#ifdef DEBUG
 #ifndef __CYGWIN__
 fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
 #else
@@ -339,6 +360,44 @@ fprintf(stderr,"Received signal %d\n",signum);
 #endif
   serverMainThreadExit(0);
 }
+
+#ifdef WZD_MULTIPROCESS
+/* STOP REQUEST - child part */
+void child_interrupt(int signum)
+{
+  wzd_context_t * context;
+  int i;
+  pid_t pid;
+
+  pid = getpid();
+#ifndef __CYGWIN__
+  out_err(LEVEL_HIGH,"Child %d received signal %s\n",pid,sys_siglist[signum]);
+#else
+  out_err(LEVEL_HIGH,"Child %d received signal %d\n",pid,signum);
+#endif
+
+  context = &context_list[0];
+  out_log(LEVEL_FLOOD,"Child %u exiting\n",pid);
+  /* TODO search context list and cleanup context */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
+#ifdef DEBUG
+      fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
+#endif
+      client_die(&context_list[i]);
+
+#if SSL_SUPPORT
+      tls_free(&context_list[i]);
+#endif
+      break;
+    }
+  }
+
+  exit(0);
+}
+#endif /* WZD_MULTIPROCESS */
+
 
 /*********************** SERVER MAIN THREAD *****************************/
 
@@ -426,6 +485,11 @@ void serverMainThreadProc(void *arg)
   mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
+  /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
+  if (mainConfig->backend.name[0] == '\0') {
+    out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
+    exit (1);
+  }
   ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
       mainConfig->group_list,HARD_DEF_GROUP_MAX);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
@@ -448,6 +512,9 @@ void serverMainThreadProc(void *arg)
 
   /* sets start time, for uptime */
   time(&server_start);
+
+  /* reset stats TODO load stats ! */
+  reset_stats(&mainConfig->stats);
 
   out_log(LEVEL_INFO,"%s started (build %lu)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
 
@@ -477,6 +544,7 @@ void serverMainThreadProc(void *arg)
       /* check for timeout logins */
       break;
     default: /* input */
+      mainConfig->stats.num_connections++;
       if (FD_ISSET(mainConfig->mainSocket,&r)) {
         login_new(mainConfig->mainSocket);
       }

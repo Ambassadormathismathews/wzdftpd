@@ -8,6 +8,7 @@
 |  Max Idle Time : %40.usermaxidle                  |
 |  Max Bandwidth : dl: %15.usermaxdl    ul: %15.usermaxul                |
 |  Tag line      : %55.usertag   |
+|  Max logins    : %40.usernum_logins                  |
 |  IP allow 1    : %40.userip_allow0                  |
 |  IP allow 2    : %40.userip_allow1                  |
 |  IP allow 3    : %40.userip_allow2                  |

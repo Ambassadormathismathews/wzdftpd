@@ -28,7 +28,12 @@ void do_site_test(const char *command, wzd_context_t * context)
     }
   }
 #endif
-  libtest();
+  /* prints some stats */
+  out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
+  out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
+
+/*  libtest();*/
+
   ret = 0;
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
@@ -261,6 +266,10 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   if (!perms) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
 
   word = right_text2word(perms);
+  if (word == 0) {
+    send_message_with_args(501,context,"Invalid permission");
+    return;
+  }
 
   if (backend_find_user(username,&userstruct,&uid)) {
     send_message_with_args(501,context,"User does not exist");
@@ -361,7 +370,53 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
 	tab_line[j] = NULL;
       }
       continue;
-    }
+    } else /* forallusersconnected */
+    if (strncmp(buffer,"%forallusers",strlen("%forallusers"))==0) {
+      char * tab_line[256];
+      int i, j;
+      wzd_context_t dummy_context;
+      for (i=0; i<256; i++) tab_line[i] = NULL;
+      i=0;
+      while ( (fgets(buffer,1022,fp)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
+	tab_line[i] = malloc(1024);
+	strcpy(tab_line[i],buffer);
+	i++;
+      } /* while */
+      i=0;
+      while (i<HARD_DEF_USER_MAX) {
+	if (mainConfig->user_list[i].username[0] != '\0') {
+#if 0
+#if BACKEND_STORAGE
+          if (tab_context[i].userinfo.flags &&
+              strchr(tab_context[i].userinfo.flags,FLAG_HIDDEN) &&
+              strcmp(tab_context[i].userinfo.username,context->userinfo.username)!=0 /* do not hide to self ! */
+#endif
+#endif
+#if 0
+          if (mainConfig->user_list[i].flags &&
+            strchr(mainConfig->user_list[i].flags,FLAG_HIDDEN)
+            /* XXX do not hide to self ! */
+              )
+          { i++; continue; }
+#endif
+	  dummy_context.userid = i;
+	  j=0;
+	  while (tab_line[j]) {
+	    memcpy(buffer,tab_line[j],1024);
+            ret = cookies_replace(buffer,1024,&dummy_context,context); /* TODO test ret */
+            send_message_raw(buffer,context);
+	    j++;
+	  }
+	}
+	i++;
+      } /* while */
+      j=0;
+      while (tab_line[j]) {
+	free(tab_line[j]);
+	tab_line[j] = NULL;
+      }
+      continue;
+    } /* forallusers */
     ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
     send_message_raw(buffer,context);
   } while ( (fgets(buffer,1022,fp)) != NULL);
@@ -589,7 +644,7 @@ int do_site(char *command_line, wzd_context_t * context)
 {
   char buffer[4096];
   char *token, *ptr;
-  int ret;
+  int ret=0;
   
   token = ptr = command_line;
   token = strtok_r(command_line," \t\r\n",&ptr);
@@ -621,15 +676,27 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"ADDUSER")==0) {
     return do_site_adduser(command_line+8,context); /* 8 = strlen("adduser")+1 */
   } else
+/******************** ADDIP *********************/
+  if (strcasecmp(token,"ADDIP")==0) {
+    return do_site_addip(command_line+6,context); /* 6 = strlen("addip")+1 */
+  } else
 /******************* BACKEND ********************/
   if (strcasecmp(token,"BACKEND")==0) {
     do_site_backend(command_line+8,context); /* 8 = strlen("backend")+1 */
     return 0;
   } else
+/******************* CHANGE *********************/
+  if (strcasecmp(token,"CHANGE")==0) {
+    return do_site_change(command_line+7,context); /* 7 = strlen("change")+1 */
+  } else
 /****************** CHECKPERM *******************/
   if (strcasecmp(token,"CHECKPERM")==0) {
     do_site_checkperm(command_line+10,context); /* 10 = strlen("checkperm")+1 */
     return 0;
+  } else
+/******************* CHGRP **********************/
+  if (strcasecmp(token,"CHGRP")==0) {
+    return do_site_chgrp(command_line+6,context); /* 6 = strlen("chgrp")+1 */
   } else
 /******************* CHMOD **********************/
   if (strcasecmp(token,"CHMOD")==0) {
@@ -646,10 +713,44 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_chpass(command_line+7,context); /* 7 = strlen("chpass")+1 */
     return 0;
   } else
+/******************** DELIP *********************/
+  if (strcasecmp(token,"DELIP")==0) {
+    return do_site_delip(command_line+6,context); /* 6 = strlen("delip")+1 */
+  } else
+/******************* DELUSER ********************/
+  if (strcasecmp(token,"DELUSER")==0) {
+    return do_site_deluser(command_line+8,context); /* 8 = strlen("deluser")+1 */
+  } else
+/******************* FLAGS **********************/
+  if (strcasecmp(token,"FLAGS")==0) {
+    return do_site_flags(command_line+6,context); /* 6 = strlen("flags")+1 */
+  } else
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
     do_site_print_file(mainConfig->site_config.file_help,NULL,context);
     return 0;
+  } else
+/******************* IDLE ***********************/
+  if (strcasecmp(token,"IDLE")==0) {
+    return do_site_idle(command_line+5,context); /* 5 = strlen("idle")+1 */
+  } else
+#ifdef WZD_MULTIPROCESS
+/******************* KICK ***********************/
+  if (strcasecmp(token,"KICK")==0) {
+    return do_site_kick(command_line+5,context); /* 5 = strlen("kick")+1 */
+  } else
+/******************* KILL ***********************/
+  if (strcasecmp(token,"KILL")==0) {
+    return do_site_kill(command_line+5,context); /* 5 = strlen("kill")+1 */
+  } else
+#endif /* WZD_MULTIPROCESS */
+/******************** PURGE *********************/
+  if (strcasecmp(token,"PURGE")==0) {
+    return do_site_purgeuser(command_line+6,context); /* 6 = strlen("purge")+1 */
+  } else
+/******************** READD *********************/
+  if (strcasecmp(token,"READD")==0) {
+    return do_site_readduser(command_line+6,context); /* 6 = strlen("readd")+1 */
   } else
 /******************* RELOAD *********************/
   if (strcasecmp(token,"RELOAD")==0) {
@@ -668,6 +769,15 @@ int do_site(char *command_line, wzd_context_t * context)
     return 0;
   } else
 #endif /* 0 */
+/******************* SWHO ***********************/
+  if (strcasecmp(token,"SWHO")==0) {
+    do_site_print_file(mainConfig->site_config.file_swho,NULL,context);
+    return 0;
+  } else
+/******************** TAGLINE *******************/
+  if (strcasecmp(token,"TAGLINE")==0) {
+    return do_site_tagline(command_line+8,context); /* 8 = strlen("tagline")+1 */
+  } else
 /******************* TEST ***********************/
   if (strcasecmp(token,"TEST")==0) {
     do_site_test(command_line+5,context); /* 5 = strlen("test")+1 */
@@ -676,6 +786,11 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************* USER ***********************/
   if (strcasecmp(token,"USER")==0) {
     do_site_user(command_line+5,context); /* 5 = strlen("user")+1 */
+    return 0;
+  } else
+/******************* USERS **********************/
+  if (strcasecmp(token,"USERS")==0) {
+    do_site_print_file(mainConfig->site_config.file_users,NULL,context);
     return 0;
   } else
 /******************* UTIME **********************/

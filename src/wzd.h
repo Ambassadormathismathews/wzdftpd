@@ -1,7 +1,7 @@
 #ifndef __WZD__
 #define __WZD__
 
-/*#define WZD_MULTIPROCESS*/
+#define WZD_MULTIPROCESS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,6 +148,7 @@ typedef struct {
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;
+  wzd_server_stat_t	stats;
 #if SSL_SUPPORT
   char		tls_certificate[256];
   char          tls_cipher_list[256];

@@ -37,17 +37,74 @@ void chop(char *s)
 /* internal fct, rename files by copying data */
 int _int_rename(const char * src, const char *dst)
 {
-#if 0
-  char buffer[32768];
-  int fd_from, fd_to;
   struct stat s;
+  int ret;
 
   if (lstat(src,&s)) return -1;
 
-  if (S_ISREG(s.st_mode))
-  {
+  if (S_ISDIR(s.st_mode)) {
+    char buf_src[2048];
+    char buf_dst[2048];
+    unsigned int length_src=2048;
+    unsigned int length_dst=2048;
+    char * ptr_src, * ptr_dst;
+    DIR *dir;
+    struct dirent *entr;
+    ret = mkdir(dst,s.st_mode & 0xffff);
+    ret = chmod(dst,s.st_mode & 0xffff);
+    memset(buf_src,0,2048);
+    memset(buf_dst,0,2048);
+    strncpy(buf_src,src,length_src-1); /* FIXME check ret */
+    strncpy(buf_dst,dst,length_dst-1); /* FIXME check ret */
+    length_src -= strlen(buf_src);
+    length_dst -= strlen(buf_dst);
+    ptr_src = buf_src + strlen(buf_src);
+    ptr_dst = buf_dst + strlen(buf_dst);
+    *ptr_src++ = '/'; /* no need to add '\0', the memset had already filled buffer with 0 */
+    *ptr_dst++ = '/';
+    /* TODO read dir and recurse function for all entries */
+    if ((dir=opendir(src))==NULL) return -1;
+    while ((entr=readdir(dir))!=NULL) {
+      if (entr->d_name[0]=='.') {
+	if (strcmp(entr->d_name,".")==0 ||
+	    strcmp(entr->d_name,"..")==0)
+	  continue;
+      }
+      strncpy(ptr_src,entr->d_name,length_src-1); /* FIXME check ret */
+      strncpy(ptr_dst,entr->d_name,length_dst-1); /* FIXME check ret */
+      ret = _int_rename(buf_src,buf_dst); /* FIXME check ret */
+      *ptr_src = '\0';
+      *ptr_dst = '\0';
+    }
+    rmdir(src);
+  } else
+  if (S_ISLNK(s.st_mode)) {
+    char buf[2048];
+    memset(buf,0,2048);
+    ret = readlink(src,buf,2047);
+    /* FIXME this will work iff the symlink is _relative_ to src
+     * otherwise we need to re-build a path from buf
+     */
+    ret = symlink(buf,dst);
+    ret = chmod(dst,s.st_mode & 0xffff);
+    unlink(src);
+  } else
+  if (S_ISREG(s.st_mode)) {
+    char buffer[32768];
+    int fd_from, fd_to;
+
+    /* FIXME XXX would it be wise to test functions return values ? :-P */
+    fd_from = open(src,O_RDONLY);
+    fd_to = open(dst,O_CREAT | O_WRONLY); /* XXX will overwite existing files */
+    while ( (ret=read(fd_from,buffer,32768)) > 0)
+    {
+      ret = write(fd_to,buffer,ret);
+    }
+    close(fd_from);
+    close(fd_to);
+    unlink(src);
   }
-#endif
+
   return 0;
 }
 
@@ -376,7 +433,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
       }
       /* home */
       if (strncmp(srcptr,"home",4)==0) {
-        if (user->flags && strchr(user->flags,FLAG_SEE_IP)) {
+        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {
           cookie = user->rootpath;
         } else { /* user not allowed to see */
           strcpy(tmp_buffer,"- some where -");
@@ -434,6 +491,24 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("maxul"); */
       }
+      /* num_logins */
+      if (strncmp(srcptr,"num_logins",10)==0) {
+	snprintf(tmp_buffer,4096,"%d",user->num_logins);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 10; /* strlen("num_logins"); */
+      }
+#ifdef WZD_MULTIPROCESS
+      /* pid */
+      if (strncmp(srcptr,"pid",3)==0) {
+	if (context_user->flags && strchr(context_user->flags,FLAG_SITEOP)) {
+	  snprintf(tmp_buffer,4096,"%d",param_context->pid_child);
+	  cookie = tmp_buffer;
+	  cookielength = strlen(cookie);
+	  srcptr += 3; /* strlen("pid"); */
+	}
+      }
+#endif /* WZD_MULTIPROCESS */
       /* speed */
       if (strncmp(srcptr,"speed",5)==0) {
         if (strncasecmp(param_context->last_command,"retr",4)==0) {
@@ -562,22 +637,25 @@ unsigned long right_text2word(const char * text)
     if (strncasecmp(ptr,"RIGHT_LIST",strlen("RIGHT_LIST"))==0) {
      word += RIGHT_LIST;
      ptr += strlen("RIGHT_LIST");
-    }
+    } else
     if (strncasecmp(ptr,"RIGHT_RETR",strlen("RIGHT_RETR"))==0) {
      word += RIGHT_RETR;
      ptr += strlen("RIGHT_RETR");
-    }
+    } else
     if (strncasecmp(ptr,"RIGHT_STOR",strlen("RIGHT_STOR"))==0) {
      word += RIGHT_STOR;
      ptr += strlen("RIGHT_STOR");
-    }
+    } else
     if (strncasecmp(ptr,"RIGHT_CWD",strlen("RIGHT_CWD"))==0) {
      word += RIGHT_CWD;
      ptr += strlen("RIGHT_CWD");
-    }
+    } else
     if (strncasecmp(ptr,"RIGHT_RNFR",strlen("RIGHT_RNFR"))==0) {
      word += RIGHT_RNFR;
      ptr += strlen("RIGHT_RNFR");
+    } else
+    {
+      return 0;
     }
   } while (*ptr);
 
