@@ -134,7 +134,7 @@ login_pre_ip_check = 0
 #login_pre_ip_allowed = -xxx
 login_pre_ip_allowed = +localhost
 #login_pre_ip_allowed = +xxx
-login_pre_ip_allowed = -*.cpe.fr
+login_pre_ip_allowed = -*.xxx.fr
 #login_pre_ip_denied = *
 
 ##### VFS

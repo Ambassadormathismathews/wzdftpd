@@ -92,3 +92,5 @@ install-data-hook:
 uninstall-hook:
 	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs
 
+EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO README 
+

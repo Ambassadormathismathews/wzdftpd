@@ -32,7 +32,7 @@
 #define	HARD_REACTION_TIME	1L
 
 /* FIXME should be a variable */
-#define	HARD_XFER_TIMEOUT	60L
+#define	HARD_XFER_TIMEOUT	30L
 
 #define	TRFMSG_INTERVAL		1000000
 

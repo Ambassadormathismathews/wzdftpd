@@ -1,7 +1,5 @@
-- if run with root uid (linux only), should bind then give up root rights
 - problem with fork(): communication between parent/childs
     we can use pipes
-- chown work only under linux - use groups & perms under windows
 - As long as all clients will be forked, we can always use chroot for childs -
   and NOT for parent
 
