@@ -1,2 +1,2 @@
-man_MANS = wzdftpd.1
-EXTRA_DIST = wzdftpd.1
+man_MANS = wzdftpd.8
+EXTRA_DIST = wzdftpd.8
