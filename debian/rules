@@ -142,10 +142,12 @@ binary-common:
 #	dh_perl
 #	dh_python
 	dh_makeshlibs
-	dh_installdeb
 	dh_shlibdeps
+	dh_installdeb
 	# Avoid wzdftpd dependancy on wzdftpd (thanks to dh_shlibdeps)
 	sed -i -e 's/, wzdftpd (= [0-9.-]*)//' $(CURDIR)/debian/wzdftpd.substvars
+	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd.substvars
+	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-mod-perl.substvars
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb

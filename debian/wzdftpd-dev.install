@@ -1,5 +1,6 @@
 usr/lib/libwzd*a
 usr/lib/libwzd.so
+usr/lib/libwzd_core.so
 usr/include/*
 usr/bin/wzd-config
 usr/lib/aclocal/wzd.m4
