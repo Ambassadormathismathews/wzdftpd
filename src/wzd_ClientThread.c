@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -223,9 +224,11 @@ void client_die(wzd_context_t * context)
   FORALL_HOOKS(EVENT_LOGOUT)
     typedef int (*login_hook)(unsigned long, const char*);
 #if BACKEND_STORAGE
-    ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,context->userinfo.username);
+    if (hook->hook)
+      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,context->userinfo.username);
 #endif
-    ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
+    if (hook->hook)
+      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
 #if BACKEND_STORAGE
@@ -769,7 +772,11 @@ fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
   if (!ret) {
-    file_chown(buffer,user->username,NULL,context);
+    const char *groupname=NULL;
+    if (user->group_num > 0) {
+      groupname = GetGroupByID(user->groups[0])->groupname;
+    }
+    file_chown(buffer,user->username,groupname,context);
   }
 
 #ifdef DEBUG
@@ -1136,14 +1143,21 @@ fprintf(stderr,"Resolved: %s\n",path);
   context->datafd = sock;
 
   /* sets owner */
-  file_chown (path,user->username,NULL,context);
+  {
+    const char *groupname=NULL;
+    if (user->group_num > 0) {
+      groupname = GetGroupByID(user->groups[0])->groupname;
+    }
+    file_chown (path,user->username,groupname,context);
+  }
 
   bytesnow = byteslast = 0;
   lseek(fd,context->resume,SEEK_SET);
 
   FORALL_HOOKS(EVENT_PREUPLOAD)
     typedef int (*login_hook)(unsigned long, const char*, const char *);
-    ret = (*(login_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
+    if (hook->hook)
+      ret = (*(login_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
   END_FORALL_HOOKS
 
 #ifdef DEBUG
@@ -1248,7 +1262,7 @@ int do_dele(char *param, wzd_context_t * context)
 fprintf(stderr,"Removing file '%s'\n",path);
 #endif
 
-  return unlink(path);
+  return file_remove(path,context);
 }
 
 /*************** do_rnfr *****************************/
@@ -1440,6 +1454,46 @@ int do_user_ip(const char *username, wzd_context_t * context)
   return 1;
 }
 
+/*************** check_tls_forced ********************/
+/* check_tls_forced
+ * check if tls connection must be enforced for user
+ * return 0 if user is in tls mode or is not forced to user
+ *        1 if user should be in tls but is not
+ */
+
+int check_tls_forced(wzd_context_t * context)
+{
+  wzd_user_t * user;
+/*  wzd_group_t *group;
+  int i;*/
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
+  if (user->flags && strchr(user->flags,FLAG_TLS)) {
+    if ( !(context->connection_flags & CONNECTION_TLS) ) {
+      return 1;
+    }
+  }
+  /* TODO XXX FIXME implement flags for groups */
+#if 0
+  /* try groups */
+  for (i=0; i<user->group_num; i++) {
+    group = GetGroupByID(user->groups[i]);
+    if (group->flags && strchr(group->flags,FLAG_TLS)) {
+      if ( !(context->connection_flags & CONNECTION_TLS) ) {
+	return 1;
+      }
+  }
+#endif
+
+  return 0;
+}
+
 /*************** do_login_loop ***********************/
 
 int do_login_loop(wzd_context_t * context)
@@ -1520,6 +1574,11 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	return 1;
       }
 #endif
+      /* check if user must be connected in tls mode */
+      if (check_tls_forced(context)) {
+	  ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
+	  return 1;
+      }
       return 0; /* user + pass ok */
       break;
 #if SSL_SUPPORT
@@ -1532,6 +1591,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	return 1;
       }
       tls_ok = 1;
+      context->connection_flags |= CONNECTION_TLS;
       break;
     case TOK_PBSZ:
       token = strtok_r(NULL,"\r\n",&ptr);
@@ -1580,7 +1640,7 @@ int do_login(wzd_context_t * context)
 /*****************************************************/
 /*************** client main proc ********************/
 /*****************************************************/
-void clientThreadProc(void *arg)
+void * clientThreadProc(void *arg)
 {
   struct timeval tv;
   fd_set fds_r,fds_w,efds;
@@ -1597,18 +1657,26 @@ void clientThreadProc(void *arg)
   char *ptr;
   int command;
   wzd_user_t * user;
+  int oldtype;
 
   context = arg;
   sockfd = context->controlfd;
 	
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
+#ifdef WZD_MULTITHREAD
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
+  pthread_cleanup_push((void (*) (void *))client_die, (void *) context);
+#endif /* WZD_MULTITHREAD */
 
   ret = do_login(context);
 
   if (ret) { /* USER not logged in */
     close (sockfd);
     out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
-    return;
+#ifdef WZD_MULTITHREAD
+    client_die(context);
+#endif /* WZD_MULTITHREAD */
+    return NULL;
   }
 
 #if BACKEND_STORAGE
@@ -1621,7 +1689,8 @@ void clientThreadProc(void *arg)
   /* user+pass ok */
   FORALL_HOOKS(EVENT_LOGIN)
     typedef int (*login_hook)(unsigned long, const char*);
-    ret = (*(login_hook)hook->hook)(EVENT_LOGIN,user->username);
+    if (hook->hook)
+      ret = (*(login_hook)hook->hook)(EVENT_LOGIN,user->username);
   END_FORALL_HOOKS
   ret = send_message(230,context);
 
@@ -1709,7 +1778,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 	buffer[length-- -1] = '\0';
       strncpy(context->last_command,buffer,2048);
     }
-    context->idle_time_start = time(NULL);
+/*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
 fprintf(stderr,"RAW: '%s'\n",buffer);
 #endif
@@ -1786,7 +1855,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    /* avoir error if current is "/" and action is ".." */
 	    if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
 	      /* TODO print message file */
-	      print_file("/home/pollux/.message",250,context);
+/*	      print_file("/home/pollux/.message",250,context);*/
 	      ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	      break;
 	    }
@@ -1830,8 +1899,15 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    } else {
 	      /* success */
 /*	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" created",token);*/
+              FORALL_HOOKS(EVENT_MKDIR)
+                typedef int (*mkdir_hook)(unsigned long, const char*);
+                if (hook->hook)
+	          ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,token);
+              END_FORALL_HOOKS
+
 	      ret = send_message_with_args(257,context,token,"created");
 	    }
+	    context->idle_time_start = time(NULL);
 	    break;
           }
 	  case TOK_RMD:
@@ -1845,8 +1921,14 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    } else {
 	      /* success */
 	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
+              FORALL_HOOKS(EVENT_RMDIR)
+                typedef int (*rmdir_hook)(unsigned long, const char*);
+                if (hook->hook)
+	          ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
+              END_FORALL_HOOKS
 	      ret = send_message_with_args(258,context,buffer2,"");
 	    }
+	    context->idle_time_start = time(NULL);
 	    break;
           }
 	  case TOK_RETR:
@@ -1863,6 +1945,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      ret = send_message(226,context);
 #endif
 	    context->resume=0;
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_STOR:
 	    if (context->current_action.token != TOK_UNKNOWN) {
@@ -1890,6 +1973,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      }
 #endif
 	    context->resume=0;
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_REST:
 	    token = strtok_r(NULL,"\r\n",&ptr);
@@ -1920,6 +2004,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      ret = send_message_with_args(250,context,"DELE","command successfull");
 	    else
 	      ret = send_message_with_args(501,context,"DELE failed");
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_ABOR:
 /*	    if (context->pid_child) kill(context->pid_child,SIGTERM);
@@ -1973,6 +2058,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 #else
 	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST");
 #endif
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_RNFR:
 	    token = strtok_r(NULL,"\r\n",&ptr);
@@ -1981,6 +2067,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	  case TOK_RNTO:
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    do_rnto(token,context);
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_NOTHING:
 	    break;
@@ -1992,9 +2079,14 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 
 /*	Sleep(2000);*/
 
+#ifdef WZD_MULTITHREAD
+      pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
+#else /* WZD_MULTITHREAD */
       client_die(context);
+#endif /* WZD_MULTITHREAD */
 
 #if SSL_SUPPORT
       tls_free(context);
 #endif
+      return NULL;
 }
