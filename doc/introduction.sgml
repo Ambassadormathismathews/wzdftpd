@@ -106,15 +106,31 @@ sourceforge</ulink>).
 <title>Installation</title>
 
 <para>
+The best way is to follow to classical installation method:
+<screen>make install</screen>
+</para>
+
+<para>
+If you want to manually install the server, do the following:
 <itemizedlist>
 <listitem><para>copy the config file and the executable in the install dir</para></listitem>
 <listitem><para>copy AT LEAST one backend in the same dir, and all its config
 files</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+After that, you have to:
+<itemizedlist>
 <listitem><para>edit wzd.cfg
   The file is commented, you shouldn't need help - if you need, install serv-u</para></listitem>
-<listitem><para>run the .exe</para></listitem>
+<listitem><para>run the exe (you will surely need to specify the config file).
+<screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg</screen>
+</para></listitem>
 <listitem><para>login for the first time FROM LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
-and create users</para></listitem>
+and create users and groups using SITE commande (<link linkend='site_adduser'>
+site adduser</link> and <link linkend='site_grpadd'>site grpadd</link>).
+</para></listitem>
 </itemizedlist>
 </para>
 
@@ -138,14 +154,14 @@ and create users</para></listitem>
 
 </sect1>
 
-<sect1>
+<!--sect1>
 <title>Configuration</title>
 
 <para>
 Edit your config file.
 </para>
 
-</sect1>
+</sect1-->
 
 </chapter>
 

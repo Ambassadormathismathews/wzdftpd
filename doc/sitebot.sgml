@@ -4,16 +4,16 @@
 <simplesect>
 <title>Prerequisites</title>
 <para>
-You need the following to install and use the sitebot for wzdFTPd:
+You need the following to install and use the sitebot for wzdftpd:
 </para>
 <itemizedlist>
-<listitem><para>wzdFTPd correctly installed and configured</para></listitem>
+<listitem><para>wzdftpd correctly installed and configured</para></listitem>
 <listitem><para>an eggdrop (see <ulink url="http://www.egghelp.org">slennox's
 eggdrop page</ulink> for help)</para></listitem>
 <listitem><para>The following executables: <ulink
 url="http://www.ncftpd.com/ncftp/">ncftpls</ulink>, df (windows: part of
 <ulink url="http://www.cygwin.com">cygwin</ulink>), sitewho and siteuptime (in
-tools section of wzdFTPd)</para></listitem>
+tools section of wzdftpd)</para></listitem>
 </itemizedlist>
 
 </simplesect>
@@ -22,7 +22,7 @@ tools section of wzdFTPd)</para></listitem>
 <title>Installation</title>
 
 <para>
-Simply copy files wzdFTPd.tcl and wzdFTPd.help in your eggdrop's scripts
+Simply copy files wzdftpd.tcl and wzdftpd.help in your eggdrop's scripts
 directory.
 </para>
 
@@ -33,7 +33,7 @@ directory.
 <title>Configuration</title>
 
 <para>
-Edit files wzdFTPd.tcl <emphasis>CAREFULLY</emphasis>, each variable or section
+Edit files wzdftpd.tcl <emphasis>CAREFULLY</emphasis>, each variable or section
 is documented. You'll need to set paths of executables according to your
 config.
 </para>

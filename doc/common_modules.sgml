@@ -38,6 +38,38 @@ md5 sums, this is similar - with a different algorithm).
 </simplesect>
 
 <simplesect>
+<title>Installation</title>
+<para>
+Just add the line
+<screen>module = /path/to/libwzd_sfv.so</screen>
+in your config file.
+</para>
+</simplesect>
+
+<simplesect>
+<title>Features</title>
+<itemizedlist>
+<listitem><para>
+When a SFV file is uploaded, an empty file is created for each name present in
+the SFV file, with '.missing' appended.
+</para></listitem>
+<listitem><para>
+If a SFV file is present, each file uploaded (and present in sfv) is checked,
+and marqued as bad if checksums doesn't match (.missing are removed).
+</para></listitem>
+<listitem><para>
+A "progress bar" is maintained after each upload, to inform on the progression
+of the upload. It uses the <emphasis>number of files</emphasis> to calculate
+percent.
+</para></listitem>
+<listitem><para>
+A symbolic link is created to mark the upload as incomplete (and will be
+removed when complete).
+</para></listitem>
+</itemizedlist>
+</simplesect>
+
+<simplesect>
 <title>Available commands</title>
 <itemizedlist>
 <listitem><screen>site sfv check sfv_name</screen>

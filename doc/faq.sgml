@@ -23,10 +23,21 @@ happen in two cases: last execution crashed, or another server is running.
 <para>
 To remove a zone resulting from a crash (this should never happen :) just run
 </para>
-<screen>wzdFTPd -d</screen>
+<screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg -d</screen>
 <para>
 To run multiples instance of a ftp server look at <link linkend='faq_multipleservers'>
 "Running multiples instances</link>.
+</para>
+</simplesect>
+
+<simplesect id='fas_shm2'>
+<title>[Linux] The precedent command (-d) does not work !</title>
+<para>
+OK, let's play: get the id using
+<screen>ipcs</screen> 
+and remove memory zones using
+<screen>ipcrm shm id</screen>
+If the memory zone is still there after running that as root, call an exorcist
 </para>
 </simplesect>
 

@@ -1,6 +1,6 @@
 ALL_SGML_FILES=commands_reference.sgml common_backends.sgml common_modules.sgml \
 	cookies_reference.sgml introduction.sgml sitebot.sgml license.sgml \
-	faq.sgml wzdFTPd.sgml
+	faq.sgml wzdFTPd.sgml config.sgml
 MAIN_SGML_FILE=wzdFTPd.sgml
 
 all: html

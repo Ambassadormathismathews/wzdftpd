@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "docbook/dtd/xml/4.1.2/docbookx.dtd" [
 <!ENTITY introduction SYSTEM "introduction.sgml">
+<!ENTITY config SYSTEM "config.sgml">
 <!ENTITY commands_reference SYSTEM "commands_reference.sgml">
 <!ENTITY cookies_reference SYSTEM "cookies_reference.sgml">
 <!ENTITY common_modules SYSTEM "common_modules.sgml">
@@ -11,9 +12,10 @@
 <!ENTITY faq SYSTEM "faq.sgml">
 ]>
 <book>
-  <title>wzdFTPd Documentation</title>
+  <title>wzdftpd Documentation</title>
 
 &introduction;
+&config;
 &commands_reference;
 &cookies_reference;
 &common_modules;
@@ -23,7 +25,7 @@
 &license;
 
 <glossary>
-<glossentry><glossterm>backend</glossterm>
+<glossentry id='gloss_backend'><glossterm>backend</glossterm>
 <indexterm><primary>backend</primary></indexterm>
 <glossdef>
 <para>
@@ -33,6 +35,25 @@ text files, directories(LDAP) or databases in the same convenient way.
 </para>
 </glossdef>
 </glossentry>
+
+<glossentry id='gloss_tls_mode'><glossterm>tls modes</glossterm>
+<indexterm><primary>tls_mode</primary></indexterm>
+<glossdef>
+<para>
+Three modes are available for TLS: implicit, explicit and explicit_strict.
+In explicit mode, server will start in clear mode (as usual), and if the client
+issues a "AUTH TLS" command, then it switches to ssl (put normal connections
+are still allowed).</para>
+<para>
+In explicit_strict mode, clients are forced to use "AUTH TLS" or will be
+rejected.</para>
+<para>
+In implicit mode, connection is switched to SSL <emphasis>before</emphasis> any
+data are exchanged. Thus there is no need to issue "AUTH" commands, though not
+all clients support this mode.</para>
+</glossdef>
+</glossentry>
+
 </glossary>
 
 </book>

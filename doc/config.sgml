@@ -1,0 +1,244 @@
+<chapter>
+<title>Config file directives</title>
+
+<variablelist>
+
+
+<varlistentry id='cfg_backend'><term>backend (default: plaintext)</term>
+<listitem>
+<para>The backend to use for authentication and user/group management.
+You can specify a test on the backend version if needed. See
+<link linkend='gloss_backend'>the glossary</link> for explanation on what a
+backend is.
+<screen>backend = /path/to/libwzdplaintext.so</screen>
+<screen>backend = /path/to/libwzdplaintext.so > 122</screen>
+</para>
+<para>In these two examples, backend will be name 'plaintext'</para>
+<para>
+You need <emphasis>at least</emphasis> one backend.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_backend_param'><term>backend_param_... </term>
+<listitem>
+<para>If backend needs an argument, specify it here. The argument depend on
+the backend used, see backend definition for details.
+<screen>backend_param_plaintext = /path/to/users</screen>
+</para>
+<para>
+This line must come <emphasis>after</emphasis> the definition of the backend.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_deny_files_uploaded'><term>deny_files_uploaded (default:
+0)</term>
+<listitem>
+<para>Specify 1 here to deny access to files during their upload.
+<screen>deny_access_files_uploaded = 1</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_dir_message'><term>dir_message</term>
+<listitem>
+<para>When changing current directory, the server will look for this file, and
+if present will append it to the end of the ftp reply.
+<screen>dir_message = .message</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_dynamicip'><term>dynamic_ip (default: 0)</term>
+<listitem>
+<para>If you specify 1 ou an ip, the server will try to detect ip changes (e.g
+ADSL disconnections).
+<screen>dynamic_ip = 1</screen>
+<screen>dynamic_ip = +xxx.myftp.org</screen>
+</para>
+<para>0 means the option is deactivated, 1 the server will ask the system to
+find its ip, +ip the server will perform DNS lookups</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_hide_dotted_files'><term>hide_dotted_files (default:
+0)</term>
+<listitem>
+<para>Specify 1 here to hide files beginning with a dot ('.')
+<screen>hide_dotted_files = 1</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_ip'><term>ip (default: *)</term>
+<listitem>
+<para>Specify server ip, to restrict server to a specific interface (usefull
+mainly for server with multiples interfaces).
+<screen>ip = *</screen>
+<screen>ip = 127.0.0.1</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_logfile'><term>logfile (default: do not use log file)</term>
+<listitem>
+<para>Log file for server activity (see <link linkend='cfg_use_syslog'>
+use_syslog</link>)
+<screen>logfile = /path/to/wzd.log</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_loglevel'><term>loglevel (default: normal)</term>
+<listitem>
+<para>Controls the verbosity of the server in the log file.
+<screen>loglevel = high</screen>
+</para>
+<para>This means only messages with a level <emphasis>greater or equal than
+</emphasis> 'high' will be logged</para>
+<para>level can be one of (in order): lowest, flood, info, normal, high,
+critical</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_max_dl_speed'><term>max_dl_speed (default: 0)</term>
+<listitem>
+<para>Maximum cumulated (for all users connected) download speed in bytes/sec.
+<screen>max_dl_speed = 300000</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_max_threads'><term>max_threads (default: 32)</term>
+<listitem>
+<para>The hard limit for child threads (clients connected simultaneously).
+<screen>max_threads = 50</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_max_ul_speed'><term>max_ul_speed (default: 0)</term>
+<listitem>
+<para>Maximum cumulated (for all users connected) upload speed in bytes/sec.
+<screen>max_ul_speed = 300000</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_pasv_high_range'><term>pasv_high_range (default: 65536)</term>
+<listitem>
+<para>The higher bound of ip range the server can take.
+<screen>pasv_high_range = 3000</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_pasv_ip'><term>pasv_ip (default: *)</term>
+<listitem>
+<para>Specify passive ip.
+<screen>pasv_ip = 64.xxx.xxx.xxx</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_pasv_low_range'><term>pasv_low_range (default: 1025)</term>
+<listitem>
+<para>The lower bound of ip range the server can take.
+<screen>pasv_low_range = 2500</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_pid_file'><term>pid_file (default: /var/run/wzdftpd.pid)</term>
+<listitem>
+<para>File where pid of server will be stored. This is used by init.d scripts
+to send signals to server.
+<screen>pid_file = /path/to/wzdftpd.pid</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_port'><term>port (default: 21)</term>
+<listitem>
+<para>The port to listen.
+<screen>port = 1321</screen>
+</para>
+<para><emphasis>IMPORTANT: undex linux, you need privileges to bind to a system
+port ( &lt; 1024 )</emphasis></para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_server_uid'><term>server_uid (default: none)</term>
+<listitem>
+<para>[Linux] Server will drop privileges and change its uid to server_uid
+after binding port. This is usefull only if server is riunned by root
+<screen>server_uid = toto</screen>
+</para>
+<para><emphasis>IMPORTANT: undex linux, you need privileges to bind to a system
+port ( &lt; 1024 )</emphasis></para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_shm_key'><term>shm_key (default: 0x1331c0d3)</term>
+<listitem>
+<para>Controls key used for shared memory zones.
+<screen>shm_key = 0x2442c0d3</screen>
+</para>
+<para>This is used to run two or more servers on the same machine</para>
+<para>Remember wzdftpd uses <emphasis>two</emphasis> shared memory zones,
+shm_key and shm_key-1</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_use_syslog'><term>use_syslog (default: 1, except for
+cygwin)</term>
+<listitem>
+<para>Use syslog to log server messages (see <link linkend='cfg_logfile'>
+logfile</link>)
+<screen>use_syslog = 1</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_tls_certificate'><term>tls_certificate [TLS only]</term>
+<listitem>
+<para>The name of the TLS certificate to use.
+<screen>tls_certificate = /path/to/wzd.pem</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_tls_cipher_list'><term>tls_cipher_list (default: ALL) [TLS only]</term>
+<listitem>
+<para>The cipher list server will negotiate during TLS handshake
+<screen>tls_cipher_list = ALL</screen>
+</para>
+<para>You should not use this option, or let "ALL", unless you know
+what you are doing. </para>
+<para>see openssl ciphers, man openssl(1)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_tls_mode'><term>tls_mode (default: explicit) [TLS only]</term>
+<listitem>
+<para>Use implicit, explicit or explicit_strict mode
+(see <link linkend='gloss_tls_mode'>tls modes for details</link>)
+<screen>tls_mode = explicit</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_xferlog'><term>xferlog (default: do not log)</term>
+<listitem>
+<para>Log transferred files in common xferlog format (suitable for analysis
+with classical tools).
+<screen>xferlog = /path/to/xferlog</screen>
+</para>
+</listitem>
+</varlistentry>
+
+
+</variablelist>
+
+</chapter>
