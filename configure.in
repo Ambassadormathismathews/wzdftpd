@@ -80,7 +80,7 @@ WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
 WZD_LIB_PGSQL
-WZD_LIB_TCL
+WZD_LIB_TCL(8,3)
 
 # check for zlib (optional, used in module sfv)
 AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
