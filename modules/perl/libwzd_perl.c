@@ -404,7 +404,11 @@ static int _perl_set_slave(void *context)
 
       _slaves[i].is_allocated = 1;
       _slaves[i].context = context;
+#ifdef WIN32
       _slaves[i].interp = perl_clone(my_perl,CLONEf_CLONE_HOST);
+#else
+      _slaves[i].interp = perl_clone(my_perl,NULL);
+#endif
       /* see perlapi (1) for more info, this flag is needed for win32 */
       
       PERL_SET_CONTEXT(_slaves[i].interp);
