@@ -62,6 +62,7 @@
 #include "wzd_perm.h"
 #include "wzd_crontab.h"
 #include "wzd_section.h"
+#include "wzd_site.h"
 #include "wzd_socket.h"
 #include "wzd_ServerThread.h"
 #include "wzd_vfs.h"
@@ -1555,8 +1556,22 @@ int cfg_read_sitecmd(void)
     return 1;
   }
 
-  if (hook_add_custom_command(&tempConfig.hook,sitecmdname,command))
-  {
+  if (commands_add(tempConfig.commands_list,sitecmdname,do_sitecmd,NULL,TOK_SITE_CUSTOM)) {
+    out_err(LEVEL_HIGH,"error adding custom site command\n");
+    wzd_free(sitecmdname);
+    wzd_free(command);
+    return 1;
+  }
+
+  /* add default permission */
+  if (commands_set_permission(tempConfig.commands_list,sitecmdname,"*")) {
+    out_err(LEVEL_HIGH,"error setting default permission to custom site command\n");
+    wzd_free(sitecmdname);
+    wzd_free(command);
+    return 1;
+  }
+
+  if (hook_add_custom_command(&tempConfig.hook,sitecmdname,command)) {
     wzd_free(sitecmdname);
     wzd_free(command);
     return 1;

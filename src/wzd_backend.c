@@ -163,15 +163,6 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
     return 1;
   }
-  /* basic type check */
-#if 0
-#ifdef DEBUG
-  if (S_ISLNK(st.st_mode))
-    out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
-  if (S_ISREG(st.st_mode))
-      out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
-#endif
-#endif
 
   /* test dlopen */
   handle = dlopen(filename,DL_ARG);
@@ -393,7 +384,11 @@ int backend_close(const char *backend)
   if (strcmp(backend,mainConfig->backend.name)!=0) return 1;
 
   /* step 2: call end function */
-  fini_fcn = (int (*)(void))dlsym(mainConfig->backend.handle,DL_PREFIX STR_FINI);
+  if (mainConfig->backend.b) {
+    fini_fcn = ((wzd_backend_t*)mainConfig->backend.b)->backend_exit;
+  } else {
+    fini_fcn = (int (*)(void))dlsym(mainConfig->backend.handle,DL_PREFIX STR_FINI);
+  }
   if (fini_fcn) {
     ret = (*fini_fcn)();
     if (ret) {

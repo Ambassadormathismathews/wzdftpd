@@ -57,4 +57,6 @@ int do_site_vfsls(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 int do_site_vfsadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_vfsdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+
+int do_sitecmd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 #endif /* __WZD_SITE__ */

@@ -146,6 +146,8 @@ typedef enum {
   TOK_SITE_WHO,
   TOK_SITE_WIPE,
 
+  TOK_SITE_CUSTOM,
+
   TOK_NOTHING=256,
 } wzd_token_t;
 
