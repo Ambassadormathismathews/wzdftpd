@@ -5,6 +5,7 @@ Prerequisites:
 Linux:
 * a C compiler (tested with gcc-2.9x, gcc-3.1, gcc-3.2 and icc)
 * if you want ssl support, openssl-devel headers and libs
+* a lexical analyser generator (flex)
 
 Windows:
 * Cygwin, with gcc, make
