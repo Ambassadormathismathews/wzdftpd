@@ -1,1 +1,1 @@
-SUBDIRS = sfv
+SUBDIRS = sfv test
