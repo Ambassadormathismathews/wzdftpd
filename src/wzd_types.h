@@ -48,6 +48,7 @@
 #define ECONNREFUSED WSAECONNREFUSED
 #define EINPROGRESS  WSAEINPROGRESS
 #define ENOTCONN     WSAENOTCONN
+#define ETIMEDOUT    WSAECONNABORTED
 
 #define in6_addr in_addr6 /* funny ! */
 

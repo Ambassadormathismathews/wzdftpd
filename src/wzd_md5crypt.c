@@ -4,6 +4,13 @@
 #include "wzd_md5crypt.h"
 
 #include "wzd_md5.h"
+/*
+* This is needed to make RSAREF happy on some MS-DOS compilers.
+*/
+
+#ifdef _WIN32
+typedef struct MD5Context MD5_CTX;
+#endif
 
 static unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";

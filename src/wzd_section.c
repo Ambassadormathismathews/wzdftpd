@@ -39,11 +39,6 @@
 #include <sys/stat.h>
 #include <string.h>	/* strdup */
 
-/* speed up compilation */
-#define SSL	void
-#define SSL_CTX	void
-#define FILE	void
-
 #include "wzd_structs.h"
 
 #include "wzd_section.h"

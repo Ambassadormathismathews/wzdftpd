@@ -46,11 +46,6 @@
 #include <arpa/inet.h>
 #endif
 
-/* speed up compilation */
-#define SSL     void
-#define SSL_CTX void
-#define	FILE	void
-
 #include "wzd_structs.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"

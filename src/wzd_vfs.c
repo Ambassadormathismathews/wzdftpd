@@ -42,8 +42,6 @@
 #endif
 
 /* speed up compilation */
-#define SSL     void
-#define SSL_CTX void
 #define	FILE	void
 
 #include "wzd_structs.h"

@@ -22,11 +22,6 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/* speed up compilation */
-#define SSL     void
-#define SSL_CTX void
-#define	FILE	void
-
 #include "wzd_structs.h"
 
 #include "wzd_libmain.h"

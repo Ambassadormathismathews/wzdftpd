@@ -52,10 +52,6 @@
 #include <signal.h>
 #include <fcntl.h>
 
-/* speed up compilation */
-#define SSL     void
-#define SSL_CTX void
-
 #include "wzd_structs.h"
 
 #include "wzd_log.h"

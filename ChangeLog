@@ -1,3 +1,8 @@
+2004-03-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: fixed build on visual
+	* feature: added tcl module to visual project
+
 2004-03-02  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* configure.in: openssl is now autodetected
