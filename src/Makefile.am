@@ -7,7 +7,7 @@ LT_VERSION_INFO=${LIBWZD_CURRENT}:${LIBWZD_REVISION}:${LIBWZD_AGE}
 
 lib_LTLIBRARIES = libwzd_core.la
 
-libwzd_core_ladir = ${prefix}/include/wzdftpd
+libwzd_core_ladir = ${e_prefix}/include/wzdftpd
 
 libwzd_core_la_HEADERS = \
 	wzd_action.h     \
@@ -123,10 +123,10 @@ dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	users.sample
 
 install-data-hook:
-	${INSTALL_PROGRAM} -m 775 -d @localstatedir@/log/wzdftpd || true
+	${INSTALL_PROGRAM} -m 775 -d @e_localstatedir@/log/wzdftpd || true
 
 uninstall-hook:
-	rmdir --ignore-fail-on-non-empty @localstatedir@/log/wzdftpd || true
+	rmdir --ignore-fail-on-non-empty @e_localstatedir@/log/wzdftpd || true
 
 # them while "make clean", use CLEANFILES
 CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c

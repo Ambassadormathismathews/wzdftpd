@@ -205,7 +205,7 @@ AH_TEMPLATE([WZD_BUILD_NUM],
 #                 ||     ||
 #
 if eval "test x$sysconfdir == x\${prefix}/etc"; then
-  sysconfdir="${prefix}/etc/wzdftpd"
+  sysconfdir="${sysconfdir}/wzdftpd"
 fi
 
 e_prefix=`echo $prefix | sed -e 's|NONE|/usr/local|'`
