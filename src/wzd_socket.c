@@ -423,6 +423,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   if (ret == SOCKET_ERROR)
   {
     int retry;
+    int save_errno;
     for (retry=0; retry<6; retry++)
     {
       ret = socket_wait_to_write(sock,timeout);
@@ -431,11 +432,14 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       if (ret == 1) /* timeout */
       {
         socket_close(sock);
+        errno = ETIMEDOUT;
         return -1;
       }
       /* error */
+      out_log(LEVEL_INFO,"Error during connection %d: %s\n",errno,strerror(errno));
+      save_errno = WSAGetLastError();
       socket_close(sock);
-      errno = WSAGetLastError();
+      errno = save_errno;
       return -1;
     }
   }
@@ -452,7 +456,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
           return -1;
         }
         if (errno == EINPROGRESS) continue;
-        out_log(LEVEL_NORMAL,"Error waiting for connection %s\n",strerror(errno));
+        out_log(LEVEL_NORMAL,"Error during connection %d: %s\n",errno,strerror(errno));
         socket_close(sock);
         return -1;
       }

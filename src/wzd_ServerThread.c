@@ -593,7 +593,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
       server_login_accept(context);
       return 0;
     }
-    out_log(LEVEL_INFO,"Could not get ident (error: %s)\n",strerror(errno));
+    out_log(LEVEL_INFO,"Could not get ident (error: %d %s)\n",errno,strerror(errno));
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
     return 3;
