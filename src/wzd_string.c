@@ -326,6 +326,7 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
     _str_set_min_size(str, result+1);
     result = vsnprintf(str->buffer, str->allocated, format, argptr);
   }
+  str->length = result;
 
   va_end (argptr);
 
