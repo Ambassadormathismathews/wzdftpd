@@ -51,6 +51,8 @@
 #include "wzd_section.h"
 #include "wzd_vfs.h"
 
+#include "wzd_debug.h"
+
 #endif /* WZD_USE_PCH */
 
 #define DEFAULT_MSG	"No message for this code"
@@ -127,9 +129,9 @@ const char * getMessage(int code, int *must_free)
     fp = wzd_cache_open(ptr+1,O_RDONLY,0644);
     if (!fp) return DEFAULT_MSG;
     filesize = wzd_cache_getsize(fp);
-    file_buffer = malloc(filesize+1);
+    file_buffer = wzd_malloc(filesize+1);
     if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize ) {
-      free(file_buffer);
+      wzd_free(file_buffer);
       wzd_cache_close(fp);
       return DEFAULT_MSG;
     }
@@ -152,23 +154,16 @@ void setMessage(const char *newMessage, int code)
 
 int send_message(int code, wzd_context_t * context)
 {
-/*  char buffer[BUFFER_LEN];*/
-  char *buffer;
-  unsigned int length;
+  wzd_string_t * str;
   int ret;
 
-/*  format_message(code,BUFFER_LEN,buffer);*/
-  format_message(code,&length,&buffer);
+  str = format_message(context,code);
 #ifdef DEBUG
-if (buffer[strlen(buffer)-1]!='\n')
-  out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
-else
-  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
-/*  sprintf(buffer,"%3d \r\n",code);
-  ret = (context->write_fct)(context->controlfd,buffer,6,0,HARD_XFER_TIMEOUT,context);*/
-  free(buffer);
+  ret = (context->write_fct)(context->controlfd,str_tochar(str),strlen(str_tochar(str)),0,HARD_XFER_TIMEOUT,context);
+
+  str_deallocate(str);
 
   return ret;
 }
@@ -178,24 +173,18 @@ else
 int send_message_with_args(int code, wzd_context_t * context, ...)
 {
   va_list argptr;
-/*  char buffer[BUFFER_LEN];*/
-  char * buffer;
-  unsigned int length;
+  wzd_string_t * str;
   int ret;
 
   va_start(argptr,context); /* note: ansi compatible version of va_start */
-/*  v_format_message(code,BUFFER_LEN,buffer,argptr);*/
-  v_format_message(code,&length,&buffer,argptr);
+  str = v_format_message(context,code,argptr);
   va_end (argptr);
 #ifdef DEBUG
-if (buffer[strlen(buffer)-1]!='\n')
-  out_err(LEVEL_FLOOD,"<thread %ld> -> %s\n",(unsigned long)context->pid_child,buffer);
-else
-  out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,buffer);
+  out_err(LEVEL_FLOOD,"<thread %ld> ->ML %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,str_tochar(str),strlen(str_tochar(str)),0,HARD_XFER_TIMEOUT,context);
 
-  free(buffer);
+  str_deallocate(str);
   return 0;
 }
 

@@ -595,141 +595,98 @@ char * safe_vsnprintf(const char *format, va_list ap)
 /** if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply
  */
-void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list argptr)
+wzd_string_t * v_format_message(wzd_context_t * context, int code, va_list argptr)
 {
-  const char * token, *token2;
-  const char * msg;
-  char *ptr;
-  unsigned int size;
-  char work_buf[WORK_BUF_LEN];
-  char cookies_buf[WORK_BUF_LEN];
-  char is_terminated=1;
-  int must_free;
-  int ret;
+  wzd_string_t * str = NULL;
   wzd_user_t * user;
   wzd_group_t * group;
-  wzd_context_t * context;
-  /* XXX 4096 should ALWAYS be >= length */
-  char * old_buffer;
-  unsigned int length;
-  char * buffer;
+  char * cookies_buf, * work_buf;
+  char * token, * ptr;
+  const char * msg;
+  int must_free;
+  u16_t is_terminated=1;
+  int ret;
 
-#if 0
-#ifdef DEBUG
-  if (length > WORK_BUF_LEN) {
-    out_err(LEVEL_HIGH,"*** WARNING *** message too long, will be truncated\n");
-    length = WORK_BUF_LEN;
-  }
-#endif
-#endif
+  if (!context) return NULL;
 
   if (code < 0) {
     is_terminated = 0;
-    code = abs(code);
+    code = (-code);
   }
 
-  msg = getMessage(code,&must_free);
-  ptr = work_buf;
-
-  context = GetMyContext();
   user = GetUserByID(context->userid);
   group = user ? GetGroupByID(user->groups[0]) : NULL;
 
+  msg = getMessage(code,&must_free);
+
   /* first, replace cookies */
-  ret = cookie_parse_buffer(msg, user, group, context, cookies_buf, WORK_BUF_LEN);
+  cookies_buf = wzd_malloc(WORK_BUF_LEN+1);
+  ret = cookie_parse_buffer(msg, user, group, context, cookies_buf, WORK_BUF_LEN); /** \todo use wzd_string_t here */
 
   /* then format message */
-  vsnprintf(work_buf,WORK_BUF_LEN,cookies_buf,argptr);
+  work_buf = safe_vsnprintf(cookies_buf,argptr);
+  wzd_free(cookies_buf);
 
-  if (must_free) {
-    free ( (char*)msg );
-  }
+  /* we don't need msg anymore */
+  if (must_free) wzd_free( (char*) msg );
 
-  length = (strlen(work_buf)*150)/100 + 11; /* empirical ratio: after/before interpreting cookies */
-  buffer = malloc(length);
-  *pbuffer = buffer;
-  *plength = length;
-  old_buffer = buffer;
+  str = str_allocate();
 
-  /* adjust size, we will need more space to put the code and \r\n */
-  length -= 7;
+  ptr = work_buf;
+  token = strtok_r(work_buf, "\r\n", &ptr);
 
-  /* remove trailing garbage */
-  {
-    char * ptr = work_buf;
-    unsigned int length = strlen(ptr);
-    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
-       *(ptr+length-1) = '\0';
-       length--;
-    }
-  }
-
-  if (!strpbrk(work_buf,"\r\n")) { /* simple case, msg on one line */
+  if (!token || strcmp(ptr,"\n")==0) { /* easy, one line */
     if (is_terminated)
-      snprintf(buffer,length,"%d %s\r\n",code,work_buf);
+      ret = str_sprintf(str,"%d %s\r\n",code,work_buf);
     else
-      snprintf(buffer,length,"%d-%s\r\n",code,work_buf);
+      ret = str_sprintf(str,"%d-%s\r\n",code,work_buf);
+    if (ret < 0) goto lbl_v_format_message;
   }
   else { /* funnier, multiline */
-    /* find first line break */
-    token = strtok_r(work_buf,"\r\n",&ptr);
 
-    /* first line begins by 123- */
-    snprintf(buffer,length,"%d-%s\r\n",code,token);
-    size = strlen(token);
-    length = length - size - 6;
-    buffer = buffer + size + 6;
+    /* first line begins with 123- */
+    str_sprintf(str,"%d-%s\r\n",code,token);
 
-    /* next line */
-    token = strtok_r(NULL,"\r\n",&ptr);
-
-    while (1) {
-      size = strlen(token);
-      /* find next token */
-      token2 = strtok_r(NULL,"\r\n",&ptr);
-      if (!token2) {
-        /* check size for BOF here ! */
-/*fprintf(stderr,"last: remaining %d (written %d, wants %d)\n",length,strlen(old_buffer),size+6);*/
-        if (size+6 >= length) {
-          out_err(LEVEL_CRITICAL,"Mayday, we're running into a BOF (%s:%d)\n",__FILE__,__LINE__);
-          snprintf(old_buffer,20,"%d Truncated\r\n",code);
-          break;
-        }
-        if (is_terminated) /* no more line, remove the - */
-          snprintf(buffer,length,"%d %s\r\n",code,token);
+    while ( (token=strtok_r(NULL, "\r\n", &ptr)) ) {
+      if (strcmp(ptr,"\n")==0) { /* last line */
+        wzd_string_t * end;
+        end = str_allocate();
+        if (is_terminated)
+          ret = str_sprintf(end,"%d %s\r\n",code,token);
         else
-          snprintf(buffer,length,"%d-%s\r\n",code,token);
+          ret = str_sprintf(end,"%d-%s\r\n",code,token);
+        str_append(str,str_tochar(end));
+        str_deallocate(end);
         break;
       }
-      /* check remaining size */
-      /* check size for BOF here ! */
-/*fprintf(stderr,"remaining %d (written %d, wants %d)\n",length,strlen(old_buffer),size+2);*/
-      if (size+2 >= length) {
-        out_err(LEVEL_CRITICAL,"Mayday, we're running into a BOF (%s:%d)\n",__FILE__,__LINE__);
-        snprintf(old_buffer,20,"%d Truncated\r\n",code);
-        break;
-      }
-      /* copy line into out buffer */
-      snprintf(buffer,length,"%s\r\n",token);
-      /* adjust length */
-      length = length - size - 2;
-      /* adjust buffer position */
-      buffer = buffer + size + 2;
-      /* loop */
-      token = token2;
+      str_append(str,token);
+      str_append(str,"\r\n");
     }
+
   }
+
+  wzd_free(work_buf);
+  return str;
+
+lbl_v_format_message:
+  wzd_free(work_buf);
+  str_deallocate(str);
+  return NULL;
 }
 
-void format_message(int code, unsigned int *plength, char **pbuffer, ...)
+wzd_string_t * format_message(wzd_context_t * context, int code, ...)
 {
   va_list argptr;
+  wzd_string_t * str;
 
-  va_start(argptr,pbuffer); /* note: ansi compatible version of va_start */
+  va_start(argptr,code); /* note: ansi compatible version of va_start */
 
-  v_format_message(code,plength,pbuffer,argptr);
+  str = v_format_message(context, code, argptr);
   va_end (argptr);
+
+  return str;
 }
+
 
 
 /************* BANDWIDTH LIMITATION *********/

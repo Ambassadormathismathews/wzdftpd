@@ -28,7 +28,7 @@
 void init_default_messages(void);
 void free_messages(void);
 
-/* must_free == 1 if calling function MUST free return after use */
+/* must_free == 1 if calling function MUST free return with wzd_free after use */
 const char * getMessage(int code, int *must_free);
 
 /* be carefull: the function does NOT copy string, it just stores its adress ! */

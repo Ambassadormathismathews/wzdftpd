@@ -41,6 +41,10 @@
 /* unsigned int, 64 bits: u64_t */
 #define u64_t unsigned __int64
 #define u32_t unsigned __int32
+#define u16_t unsigned __int16
+#define i64_t __int64
+#define i32_t __int32
+#define i16_t __int16
 
 typedef size_t ssize_t;
 
@@ -281,6 +285,8 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #else /* _MSC_VER */
 
 /* unsigned int, 64 bits: u64_t */
+#define i16_t int16_t
+#define u16_t u_int16_t
 #define i32_t int32_t
 #define u32_t u_int32_t
 #define i64_t int64_t
@@ -346,5 +352,7 @@ char * strtok_r(char *s, const char *delim, char **last);
 
 #include <libwzd-base/list.h>
 #include <libwzd-base/hash.h>
+
+#include <wzd_string.h>
 
 #endif /* __WZD_TYPES__ */

@@ -77,10 +77,8 @@ int server_diagnose(void);
 /* if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply
  */
-void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list argptr);
-void format_message(int code, unsigned int *plength, char **pbuffer, ...);
-/*void v_format_message(int code, unsigned int length, char *buffer, va_list argptr);*/
-/*void format_message(int code, unsigned int length, char *buffer, ...);*/
+wzd_string_t * v_format_message(wzd_context_t * context, int code, va_list argptr);
+wzd_string_t * format_message(wzd_context_t * context, int code, ...);
 
 /* Bandwidth limitation */
 

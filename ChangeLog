@@ -1,4 +1,8 @@
-2004-12-08  Pierre Chifflier  <pollux@cpe.fr>
+004-12-10  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: send_message functions rewritten to use safe strings
+
+004-12-08  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: crash during site purge (closes: #0022)
 
