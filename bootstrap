@@ -12,8 +12,14 @@ ACLOCAL_ARGS="-I m4/ -I ac-helpers/"
 #ACLOCAL_ARGS="-I /usr/local/share/aclocal"
 
 if [ -f bootstrap.local ]; then
-  . bootstrap.local
+  # openbsd pdksh does not execute script if it is not executable ..
+  chmod u+x bootstrap.local
+  . ./bootstrap.local
 fi
+
+echo $ACLOCAL
+
+exit 0
 
 
 abort () {
