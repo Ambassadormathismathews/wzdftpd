@@ -4,7 +4,8 @@
 <para>If you are a FreeBSD user, you can install wzdftpd using FreeBSD Port Collection.
 You need port tree dated 2003-10-22 or more recent. If you have an old port tree, please
 update it, you can find instructions how to do it in
-<ulink url="http://www.freebsd.org/handbook/ports-using.html"> FreeBSD Handbook</ulink>.</para>
+<ulink url="http://www.freebsd.org/handbook/ports-using.html">FreeBSD Handbook</ulink>.
+</para>
 
 <para>
 To install wzdftpd use the following commands:
@@ -23,9 +24,9 @@ To compile wzdftpd with TCL module, use <filename>WITH_TCL</filename> knob.
 Of course, you can use this keys together (i.e. <filename>make -DWITH_TCL -DWITH_SSL</filename>).
 To compile in all supported features you can just use <filename>PACKAGE_BUILDING</filename> knob.
 
-
 That's all, wzdftpd is installed on your machine. Sample config files are:
-<filename>%PREFIX/etc/wzd.cfg.sample</filename> and <filename>%PREFIX/share/wzdftpd/users.sample</filename>
+<filename>PREFIX/etc/wzd.cfg.sample</filename> and <filename>PREFIX/etc/users.sample</filename>
+(PREFIX usually is '/usr/local/').
 For quick start,
 <programlisting>
 	# cp wzd.cfg.sample wzd.cfg
@@ -41,13 +42,24 @@ To deinstall wzdftpd use
 	# make deinstall
 </programlisting>
 
-Binary packages are also available, you can find them on <ulink url="http://www.wzdftpd.net">wzdftpd site</ulink>.
+If you want wzdftpd to start on every system boot, add 
+<programlisting>
+wzdftpd_enable="YES"
+</programlisting>
+to <filename>/etc/rc.conf</filename> or <filename>/etc/rc.conf.local</filename> 
+(you need to have wzdftpd-0.3.2_1 or newer installed). 
+</para>
+
+<para>
+Binary packages are also available, you can find them  
+<ulink url="ftp://ftp.freebsd.org/pub/FreeBSD/ports/packages/">here</ulink>.
 To install package you should use <filename>pkg_add(1)</filename>. Package can be removed using 
 <filename>pkg_delete(1)</filename>.
+</para>
 
+<para>
 Additional info about FreeBSD ports and packages can be found in <ulink url="http://www.freebsd.org/doc/handbook">FreeBSD 
 Handbook</ulink>, chapter <ulink url="http://www.freebsd.org/doc/handbook/ports.html">Installing Applications: Packages and Ports</ulink>.
-
 </para>	
 </chapter>
 

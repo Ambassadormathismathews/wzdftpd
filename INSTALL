@@ -21,6 +21,7 @@ All paths are relative to rep wzdftpd (root)
 
 1) Generate configure script (if compiling from CVS):
 ./autogen.sh [args for configure]
+If you're FreeBSD user, read notes below.
 
 2) Configure
 ./configure [args]
@@ -43,3 +44,9 @@ The _MINIMUM_ installation is composed of:
 
 You can add modules
 
+Building CVS version on FreeBSD:
+It's known that there are some troubles with aclocal on FreeBSD 5.2.1 (and 
+may be other versions). The solution is to run aclocal with 
+"-I /usr/local/share/aclocal/" arg. If you have troubles with the mpatrol 
+you can freely remove it from the configure.in, it's needed for the 
+debugging purposes only. 
