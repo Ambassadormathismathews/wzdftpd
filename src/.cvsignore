@@ -2,7 +2,7 @@
 .libs
 Makefile
 Makefile.in
-libwzd.la
+libwzd_core.la
 tags
 wzd.cfg.sample
 wzd_init_lex.c

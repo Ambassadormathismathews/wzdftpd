@@ -254,6 +254,7 @@ AC_CONFIG_FILES([Makefile
 		 doc/Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
+		 libwzd/Makefile
 		 m4/Makefile
 		 man/Makefile
                  modules/Makefile
