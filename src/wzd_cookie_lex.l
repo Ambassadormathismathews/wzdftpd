@@ -179,8 +179,7 @@ C_VFS    ([0-9]+".")?"vfs"
 /*%option debug*/
 %option never-interactive
 %option prefix="cookie"
-/*%option outfile="lex.yy.c"*/
-/* VISUAL TODO XXX FIXME that *will* break linux bsd */
+%option outfile="lex.yy.c"
 %%
 
 <INITIAL>\r	/* ignore */
