@@ -172,7 +172,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       
       /* if entry is a directory, we must query dir for more infos */
       strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
-      if (stat(buffer_file,&st)) {
+      if (lstat(buffer_file,&st)) {
         /* we have a big problem here ! */
         itp = it;
         it = it->next_file;
