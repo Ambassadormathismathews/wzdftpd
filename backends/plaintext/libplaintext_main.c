@@ -167,7 +167,7 @@ void user_init_struct(wzd_user_t * user)
   user->rootpath[0]='\0';
   user->tagline[0]='\0';
   user->uid = -1;
-  memset(user->groups,0,256*sizeof(unsigned int));
+  memset(user->groups,0,MAX_GROUPS_PER_USER*sizeof(unsigned int));
   memset(user->tagline,0,256);
   user->max_idle_time = 0;
   user->userperms = 0;
@@ -178,10 +178,10 @@ void user_init_struct(wzd_user_t * user)
   user->num_logins = 0;
   for (i=0; i<HARD_IP_PER_USER; i++)
     user->ip_allowed[i][0] = '\0';
-  user->bytes_ul_total = 0;
-  user->bytes_dl_total = 0;
-  user->files_ul_total = 0;
-  user->files_dl_total = 0;
+  user->stats.bytes_ul_total = 0;
+  user->stats.bytes_dl_total = 0;
+  user->stats.files_ul_total = 0;
+  user->stats.files_dl_total = 0;
   user->credits = 0;
   user->ratio = 0;
   user->user_slots = 0;
@@ -280,6 +280,8 @@ int write_user_file(void)
     fprintf(file,"privgroup\t%s\n",group_pool[i].groupname);
     if (group_pool[i].max_idle_time)
       fprintf(file,"max_idle_time=%ld\n",group_pool[i].max_idle_time);
+    if (group_pool[i].num_logins)
+      fprintf(file,"num_logins=%d\n",group_pool[i].num_logins);
     for (j=0; j<HARD_IP_PER_GROUP; j++)
     {
       if (group_pool[i].ip_allowed[j][0] != '\0')
@@ -325,12 +327,12 @@ int write_user_file(void)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
-    fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].bytes_ul_total);
-    fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].bytes_dl_total);
-    if (user_pool[i].files_ul_total)
-      fprintf(file,"files_ul_total=%llu\n",user_pool[i].files_ul_total);
-    if (user_pool[i].files_dl_total)
-      fprintf(file,"files_dl_total=%llu\n",user_pool[i].files_dl_total);
+    fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].stats.bytes_ul_total);
+    fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].stats.bytes_dl_total);
+    if (user_pool[i].stats.files_ul_total)
+      fprintf(file,"files_ul_total=%llu\n",user_pool[i].stats.files_ul_total);
+    if (user_pool[i].stats.files_dl_total)
+      fprintf(file,"files_dl_total=%llu\n",user_pool[i].stats.files_dl_total);
     fprintf(file,"credits=%llu\n",user_pool[i].credits);
     if (user_pool[i].ratio)
       fprintf(file,"ratio=%d\n",user_pool[i].ratio);
@@ -436,7 +438,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
     }
     else if (strcmp("pass",varname)==0) {
       if (!user_count) break;
-      strncpy(user_pool[user_count-1].userpass,value,255);
+      strncpy(user_pool[user_count-1].userpass,value,MAX_PASS_LENGTH-1);
     }
     else if (strcmp("flags",varname)==0) {
       if (!user_count) break;
@@ -511,7 +513,7 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
 fprintf(stderr,"Invalid bytes_ul_total %s\n",value);
         continue;
       }
-      user_pool[user_count-1].bytes_ul_total = ul_num;
+      user_pool[user_count-1].stats.bytes_ul_total = ul_num;
     } /* bytes_ul_total */
     else if (strcmp("bytes_dl_total",varname)==0) {
       if (!user_count) break;
@@ -520,7 +522,7 @@ fprintf(stderr,"Invalid bytes_ul_total %s\n",value);
 fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
         continue;
       }
-      user_pool[user_count-1].bytes_dl_total = ul_num;
+      user_pool[user_count-1].stats.bytes_dl_total = ul_num;
     } /* bytes_dl_total */
     else if (strcmp("files_dl_total",varname)==0) {
       if (!user_count) break;
@@ -529,7 +531,7 @@ fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
 fprintf(stderr,"Invalid files_dl_total %s\n",value);
         continue;
       }
-      user_pool[user_count-1].files_dl_total = u_num;
+      user_pool[user_count-1].stats.files_dl_total = u_num;
     } /* files_dl_total */
     else if (strcmp("files_ul_total",varname)==0) {
       if (!user_count) break;
@@ -538,7 +540,7 @@ fprintf(stderr,"Invalid files_dl_total %s\n",value);
 fprintf(stderr,"Invalid files_ul_total %s\n",value);
         continue;
       }
-      user_pool[user_count-1].files_ul_total = u_num;
+      user_pool[user_count-1].stats.files_ul_total = u_num;
     } /* files_ul_total */
    else if (strcmp("credits",varname)==0) {
       if (!user_count) break;
@@ -554,7 +556,7 @@ fprintf(stderr,"Invalid credits %s\n",value);
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+fprintf(stderr,"Invalid num_logins %s\n",value);
         continue;
       }
       user_pool[user_count-1].num_logins = (unsigned short)num;
@@ -654,6 +656,7 @@ fprintf(stderr,"Defining new private group %s\n",token);
       group_pool[group_count-1].max_dl_speed = 0;
       group_pool[group_count-1].ratio = 0;
       group_pool[group_count-1].max_idle_time = 0;
+      group_pool[group_count-1].num_logins = 0;
       group_pool[group_count-1].defaultpath[0] = 0;
       for (i=0; i<HARD_IP_PER_GROUP; i++)
         group_pool[group_count-1].ip_allowed[i][0] = '\0';
@@ -678,6 +681,16 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
         }
         group_pool[group_count-1].max_idle_time = num;
       } /* max_idle_time */
+      else if (strcmp("num_logins",varname)==0) {
+	if (!group_count) break;
+	num = strtol(value, &ptr, 0);
+	if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid num_logins %s\n",value);
+	  continue;
+	}
+	group_pool[group_count-1].num_logins = (unsigned short)num;
+      } /* else if (strcmp("num_logins",... */
+
       else if (strcmp("ip_allowed",varname)==0) {
         group_ip_add(&group_pool[group_count-1],value);
       } /* ip_allowed */
@@ -890,7 +903,7 @@ fprintf(stderr,"User %s not found\n",login);
 
   memcpy(user,&user_pool[count],sizeof(wzd_user_t));
   /* XXX we erase password (more security ?!) */
-  memset(user->userpass,0,256);
+  memset(user->userpass,0,MAX_PASS_LENGTH);
   /* FIXME duplicate ip_allow list ? */
   
   return 0;
@@ -955,7 +968,7 @@ fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[co
 
   memcpy(user,&user_pool[count],sizeof(wzd_user_t));
   /* XXX we erase password (more security ?!) */
-  memset(user->userpass,0,256);
+  memset(user->userpass,0,MAX_PASS_LENGTH);
   /* FIXME duplicate ip_allow list ? */
 
   return 0;
@@ -1003,7 +1016,7 @@ fprintf(stderr,"User %s not found\n",name);
 
   memcpy(user,&user_pool[count],sizeof(wzd_user_t));
   /* XXX we erase password (more security ?!) */
-  memset(user->userpass,0,256);
+  memset(user->userpass,0,MAX_PASS_LENGTH);
 
   return 0;
 #endif
@@ -1100,7 +1113,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 	salt[0] = 'a' + (char)(rand()%26);
 	salt[1] = 'a' + (char)((rand()*72+3)%26);
 	cipher = crypt(user->userpass, salt);
-	strcpy(user_pool[count].userpass,cipher);
+	strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
       }
     }
     if (mod_type & _USER_ROOTPATH) strcpy(user_pool[count].rootpath,user->rootpath);
@@ -1108,7 +1121,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_UID) user_pool[count].uid = user->uid;
     if (mod_type & _USER_GROUPNUM) user_pool[count].group_num = user->group_num;
     if (mod_type & _USER_IDLE) user_pool[count].max_idle_time = user->max_idle_time;
-    if (mod_type & _USER_GROUP) memcpy(user_pool[count].groups,user->groups,256);
+    if (mod_type & _USER_GROUP) memcpy(user_pool[count].groups,user->groups,MAX_GROUPS_PER_USER);
     if (mod_type & _USER_PERMS) user_pool[count].userperms = user->userperms;
     if (mod_type & _USER_FLAGS) memcpy(user_pool[count].flags,user->flags,MAX_FLAGS_NUM);
     if (mod_type & _USER_MAX_ULS) user_pool[count].max_ul_speed = user->max_ul_speed;
@@ -1119,8 +1132,8 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       for ( i=0; i<HARD_IP_PER_USER; i++ )
 	strcpy(user_pool[count].ip_allowed[i],user->ip_allowed[i]);
     }
-    if (mod_type & _USER_BYTESUL) user_pool[count].bytes_ul_total = user->bytes_ul_total;
-    if (mod_type & _USER_BYTESDL) user_pool[count].bytes_dl_total = user->bytes_dl_total;
+    if (mod_type & _USER_BYTESUL) user_pool[count].stats.bytes_ul_total = user->stats.bytes_ul_total;
+    if (mod_type & _USER_BYTESDL) user_pool[count].stats.bytes_dl_total = user->stats.bytes_dl_total;
     if (mod_type & _USER_CREDITS) user_pool[count].credits = user->credits;
     if (mod_type & _USER_USERSLOTS) user_pool[count].user_slots = user->user_slots;
     if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
@@ -1132,7 +1145,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       salt[0] = 'a' + (char)(rand()%26);
       salt[1] = 'a' + (char)((rand()*72+3)%26);
       cipher = crypt(user->userpass, salt);
-      strcpy(user_pool[user_count].userpass,cipher);
+      strncpy(user_pool[user_count].userpass,cipher,MAX_PASS_LENGTH-1);
     }
     user_count++;
   } /* if (found) */
