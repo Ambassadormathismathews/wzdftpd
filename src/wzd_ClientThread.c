@@ -486,7 +486,7 @@ int check_timeout(wzd_context_t * context)
 
 int do_chdir(const char * wanted_path, wzd_context_t *context)
 {
-  char allowed[2048],path[2048];
+  char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH];
   struct stat buf;
   wzd_user_t * user;
 
@@ -499,7 +499,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
 
   if (checkpath(wanted_path,path,context)) return E_WRONGPATH;
-  snprintf(allowed,2048,"%s/",user->rootpath);
+  snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
@@ -509,9 +509,9 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   {
     int ret;
     int length;
-    char tmppath[4096];
+    char tmppath[WZD_MAX_PATH];
 
-    strncpy(tmppath,path,4096);
+    strncpy(tmppath,path,WZD_MAX_PATH); /* FIXME slow, and length _MUST_ be tested */
     /* remove trailing / */
     length = strlen(tmppath);
     if (length>1 && tmppath[length-1]=='/')
@@ -529,18 +529,18 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
   if (!stat(path,&buf)) {
     if (S_ISDIR(buf.st_mode)) {
-      char buffer[2048], buffer2[2048];
+      char buffer[WZD_MAX_PATH], buffer2[WZD_MAX_PATH];
       if (wanted_path[0] == '/') { /* absolute path */
-        strncpy(buffer,wanted_path,2048);
+        strncpy(buffer,wanted_path,WZD_MAX_PATH);
       } else {
-        strncpy(buffer,context->currentpath,2048);
+        strncpy(buffer,context->currentpath,WZD_MAX_PATH);
         if (buffer[strlen(buffer)-1] != '/')
           strcat(buffer,"/");
         strcat(buffer,wanted_path);
       }
-      stripdir(buffer,buffer2,2047);
+      stripdir(buffer,buffer2,WZD_MAX_PATH-1);
 /*out_err(LEVEL_INFO,"DIR: %s NEW DIR: %s\n",buffer,buffer2);*/
-      strncpy(context->currentpath,buffer2,2047);
+      strncpy(context->currentpath,buffer2,WZD_MAX_PATH-1);
     }
     else return E_NOTDIR;
   }
@@ -703,7 +703,7 @@ int list_callback(int sock, wzd_context_t * context, char *line)
 
 int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 {
-  char mask[1024],cmd[2048],path[2048];
+  char mask[1024],cmd[WZD_MAX_PATH],path[WZD_MAX_PATH];
   int ret,sock,n;
   char nullch[8];
   char * cmask;
@@ -752,7 +752,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
           return 1;
 	}
 	ptr = strrchr(cmd,'/');
-	strncpy(cmd,ptr+1,2048);
+	strncpy(cmd,ptr+1,WZD_MAX_PATH);
 	*ptr = '\0';
 //	strncpy(cmd,strrchr(cmd,'/')+1,2048);
 //	*strrchr(cmd,'/') = '\0';
@@ -844,8 +844,8 @@ printf("path: '%s'\n",path);
 
 int do_mkdir(char *param, wzd_context_t * context)
 {
-  char cmd[2048], path[2048];
-  char buffer[2048];
+  char cmd[WZD_MAX_PATH], path[WZD_MAX_PATH];
+  char buffer[WZD_MAX_PATH];
   int ret;
   wzd_user_t * user;
 
@@ -857,14 +857,14 @@ int do_mkdir(char *param, wzd_context_t * context)
     user = GetUserByID(context->userid);
 
   if (!param || !param[0]) return E_PARAM_NULL;
-  if (strlen(param)>2047) return E_PARAM_BIG;
+  if (strlen(param)>WZD_MAX_PATH-1) return E_PARAM_BIG;
   if (strcmp(param,"/")==0) return E_OK;
 
   if (param[0] != '/') {
     strcpy(cmd,".");
     if (checkpath(cmd,path,context)) return E_WRONGPATH;
     if (path[strlen(path)-1]!='/') strcat(path,"/");
-    strncat(path,param,2047);
+    strncat(path,param,WZD_MAX_PATH-1);
   } else {
     strcpy(cmd,param);
     if (checkpath(cmd,path,context)) return E_WRONGPATH;
@@ -906,14 +906,14 @@ int do_mkdir(char *param, wzd_context_t * context)
       /* we can reuse cmd */
       if (param[0] != '/') {
 	unsigned int length;
-	strncpy(cmd,context->currentpath,2048-1-strlen(param));
+	strncpy(cmd,context->currentpath,WZD_MAX_PATH-1-strlen(param));
 	length = strlen(cmd);
 	if (cmd[length-1]!='/') {
 	  cmd[length++] = '/';
 	}
-	strncpy(cmd+length,param,2048-1-length);
+	strncpy(cmd+length,param,WZD_MAX_PATH-1-length);
       } else {
-	strncpy(cmd,param,2048);
+	strncpy(cmd,param,WZD_MAX_PATH);
       }
       /* we need to give the ftp-relative path here */
       section = section_find(mainConfig->section_list,cmd);
@@ -936,10 +936,14 @@ int do_mkdir(char *param, wzd_context_t * context)
     }
     file_chown(buffer,user->username,groupname,context);
 
-    strcpy(buffer,context->currentpath);
-    strcat(buffer,"/");
-    strcat(buffer,param);
-    stripdir(buffer,path,2047);
+    if (param[0] != '/') {
+      strcpy(buffer,context->currentpath);
+      strcat(buffer,"/");
+      strcat(buffer,param);
+    } else {
+      strcpy(buffer,param);
+    }
+    stripdir(buffer,path,WZD_MAX_PATH-1);
     
     log_message("NEWDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
 	path, /* ftp-absolute path */
@@ -956,7 +960,7 @@ int do_mkdir(char *param, wzd_context_t * context)
 
 int do_rmdir(char * param, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   struct stat s;
   int ret;
 
@@ -984,7 +988,7 @@ int do_rmdir(char * param, wzd_context_t * context)
   if (!ret) {
     const char *groupname=NULL;
     wzd_user_t * user;
-    char buffer[2048], path[2048];
+    char buffer[WZD_MAX_PATH], path[WZD_MAX_PATH];
 
 #if BACKEND_STORAGE
     if (mainConfig->backend.backend_storage==0) {
@@ -1000,7 +1004,7 @@ int do_rmdir(char * param, wzd_context_t * context)
     strcpy(buffer,context->currentpath);
     strcat(buffer,"/");
     strcat(buffer,param);
-    stripdir(buffer,path,2047);
+    stripdir(buffer,path,WZD_MAX_PATH-1);
     
     log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
 	path, /* ftp-absolute path */
@@ -1365,7 +1369,7 @@ void do_epsv(wzd_context_t * context)
 /*************** do_retr *****************************/
 int do_retr(char *param, wzd_context_t * context)
 {
-  char path[2048],cmd[2048];
+  char path[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
   int fd;
   unsigned long bytestot, bytesnow, byteslast;
   unsigned long addr;
@@ -1481,7 +1485,7 @@ int do_retr(char *param, wzd_context_t * context)
 /*************** do_stor *****************************/
 int do_stor(char *param, wzd_context_t * context)
 {
-  char path[2048],path2[2048],cmd[2048];
+  char path[WZD_MAX_PATH],path2[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
   int fd;
   unsigned long bytesnow, byteslast;
   unsigned long addr;
@@ -1641,7 +1645,7 @@ int do_stor(char *param, wzd_context_t * context)
 /*************** do_mdtm *****************************/
 void do_mdtm(char *param, wzd_context_t * context)
 {
-  char path[2048], tm[32];
+  char path[WZD_MAX_PATH], tm[32];
   struct stat s;
   int ret;
 
@@ -1667,7 +1671,7 @@ void do_mdtm(char *param, wzd_context_t * context)
 /*************** do_size *****************************/
 void do_size(char *param, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   char buffer[1024];
   struct stat s;
   int ret;
@@ -1695,7 +1699,7 @@ void do_size(char *param, wzd_context_t * context)
 /*************** do_dele *****************************/
 int do_dele(char *param, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   int ret;
   struct stat s;
   off_t file_size;
@@ -1770,7 +1774,7 @@ int do_dele(char *param, wzd_context_t * context)
 /*************** do_rnfr *****************************/
 void do_rnfr(const char *filename, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   int ret;
 
   if (!filename || strlen(filename)==0 || checkpath(filename,path,context)) {
@@ -1798,7 +1802,7 @@ void do_rnfr(const char *filename, wzd_context_t * context)
 /*************** do_rnto *****************************/
 void do_rnto(const char *filename, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   int ret;
 
   if (!filename || strlen(filename)==0) {
@@ -1844,7 +1848,7 @@ void do_pret(char *param, wzd_context_t * context)
 /*************** do_xcrc *****************************/
 void do_xcrc(char *param, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   char buffer[1024];
   char * ptr;
   char * ptest;
@@ -1920,7 +1924,7 @@ void do_xcrc(char *param, wzd_context_t * context)
 /*************** do_xmd5 *****************************/
 void do_xmd5(char *param, wzd_context_t * context)
 {
-  char path[2048];
+  char path[WZD_MAX_PATH];
   char buffer[1024];
   char * ptr;
   char * ptest;

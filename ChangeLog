@@ -1,3 +1,9 @@
+2004-02-11  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: incorrect path displayed in NEWDIR event
+	* bugfix: debian package with incorrect dependancy on virtual package
+	* bugfix: use WZD_MAX_PATH instead of random number for max path length
+
 2004-02-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: segfault in socket_connect() on FreeBSD

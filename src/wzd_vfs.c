@@ -228,7 +228,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
 /** if needed, replace the vfs in the path */
 int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_context_t * context)
 {
-  char buffer_vfs[4096];
+  char buffer_vfs[2*WZD_MAX_PATH];
   char * ptr_out;
   wzd_user_t *user;
 
@@ -245,7 +245,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
       vfs_list = vfs_list->next_vfs;
       continue;
     }
-    strncpy(buffer_vfs,ptr_out,4096);
+    strncpy(buffer_vfs,ptr_out,2*WZD_MAX_PATH); /* FIXME this is slow ! replace by memcpy */
     wzd_free(ptr_out);
 
     if (DIRNCMP(buffer_vfs,buffer,strlen(buffer_vfs))==0
@@ -253,7 +253,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
 	(buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
 	strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
-      char buf[4096];
+      char buf[2*WZD_MAX_PATH];
       /* test perm */
       if (vfs_list->target) {
 	if (!vfs_match_perm(vfs_list->target,user)) { vfs_list = vfs_list->next_vfs; continue; }
@@ -280,7 +280,7 @@ out_err(LEVEL_HIGH,"converted to %s\n",buf);
  */
 char * vfs_replace_cookies(const char * path, wzd_context_t * context)
 {
-  char buffer[4096];
+  char buffer[2*WZD_MAX_PATH];
   unsigned int length, needed;
   char * out=NULL;
   const char * ptr_in;
@@ -299,7 +299,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
   length = 0;
   ptr_in = path; ptr_out = buffer;
   while ( (*ptr_in) ){
-    if (length >= 4096) {
+    if (length >= 2*WZD_MAX_PATH) {
       out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
       return NULL;
     }
@@ -307,7 +307,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
       if (strncmp(ptr_in,"%username",9)==0) { /* 9 == strlen(%username) */
         needed = strlen(user->username);
         length += needed;
-        if (length >= 4096) {
+        if (length >= 2*WZD_MAX_PATH) {
           out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
           return NULL;
         }
@@ -318,7 +318,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
         if (group) {
           needed = strlen(group->groupname);
           length += needed;
-          if (length >= 4096) {
+          if (length >= 2*WZD_MAX_PATH) {
             out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
             return NULL;
           }
@@ -335,7 +335,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
 #endif /* 0 */
           needed = strlen(user->rootpath);
           length += needed;
-          if (length >= 4096) {
+          if (length >= 2*WZD_MAX_PATH) {
             out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
             return NULL;
           }
@@ -440,8 +440,8 @@ char *stripdir(char * dir, char *buf, int maxlen)
 
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 {
-  char allowed[2048];
-  char cmd[2048];
+  char allowed[WZD_MAX_PATH];
+  char cmd[WZD_MAX_PATH];
   
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage == 0) {
@@ -468,7 +468,7 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 #endif*/
 /*  if (!realpath(cmd,path)) return 1;*/
-  if (!stripdir(cmd,path,2048)) return 1;
+  if (!stripdir(cmd,path,WZD_MAX_PATH)) return 1;
 /*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
 #endif*/
@@ -481,15 +481,15 @@ printf("Converted to: '%s'\n",path);
   /* check if user is allowed to even see the path */
   if (DIRNCMP(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,2048,context);
+  vfs_replace(mainConfig->vfs,path,WZD_MAX_PATH,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
 
 int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
 {
-  char allowed[2048];
-  char cmd[2048];
+  char allowed[WZD_MAX_PATH];
+  char cmd[WZD_MAX_PATH];
   
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage == 0) {
@@ -515,7 +515,7 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 #endif*/
 /*  if (!realpath(cmd,path)) return 1;*/
-  if (!stripdir(cmd,path,2048)) return 1;
+  if (!stripdir(cmd,path,WZD_MAX_PATH)) return 1;
 /*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
 #endif*/
@@ -528,7 +528,7 @@ printf("Converted to: '%s'\n",path);
   /* check if user is allowed to even see the path */
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,2048,context);
+  vfs_replace(mainConfig->vfs,path,WZD_MAX_PATH,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
@@ -539,12 +539,12 @@ int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context
   const char *ptr;
   wzd_user_t * user;
   wzd_vfs_t * vfs;
-  char buffer[4096];
+  char buffer[2*WZD_MAX_PATH];
 
   user = GetUserByID(context->userid);
   if (!user) return E_USER_IDONTEXIST;
 
-  strncpy(buffer,abs,4096);
+  strncpy(buffer,abs,2*WZD_MAX_PATH);
 
   vfs = mainConfig->vfs;
   if (vfs) {

@@ -1,3 +1,9 @@
+wzdftpd (0.2-2) unstable; urgency=low
+
+  * bugfix: incorrect dependancy on virtual package version
+
+ -- pollux <pollux@wzdftpd.net>  Fri,  6 Feb 2004 14:31:24 +0100
+
 wzdftpd (0.2-1) unstable; urgency=low
 
   * New upstream release

@@ -44,14 +44,14 @@ Description: A portable, modular, efficient and not user-friendly ftp server
 
 Package: wzdftpd-tools
 Architecture: any
-Depends: netbase (>= 2.0), ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: netbase (>= 2.0), ${shlibs:Depends}, wzdftpd-tls (= ${Source-Version}) | wzdftpd-notls (= ${Source-Version})
 Description: Tools for wzdftpd
  This is a set of tools for wzdftpd (A portable, modular, efficient and not
  user-friendly ftp server).
 
 Package: wzdftpd-dev
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version}), libc6-dev
+Depends: ${shlibs:Depends}, libc6-dev, wzdftpd-tls (= ${Source-Version}) | wzdftpd-notls (= ${Source-Version})
 Description: Tools for wzdftpd
  wedftpd is a portable, modular, efficient and not user-friendly ftp
  server.

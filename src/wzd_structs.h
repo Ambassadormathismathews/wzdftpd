@@ -412,7 +412,7 @@ typedef struct {
   unsigned char dataip[16];
   unsigned long	resume;
   unsigned long	connection_flags;
-  char          currentpath[2048];
+  char          currentpath[WZD_MAX_PATH];
 /*  wzd_user_t    userinfo;*/
   unsigned int	userid;
   xfer_t        current_xfer_type;
