@@ -149,6 +149,8 @@ typedef struct {
 #define	FLAG_SEE_HOME	't'
 #define	FLAG_HIDDEN	'H'
 #define	FLAG_GADMIN	'G'
+#define	FLAG_TLS	'k'	/* explicit and implicit connections only */
+#define	FLAG_ANONYMOUS	'A'	/* anonymous users cannot modify filesystem */
 
 /************************ MODULES *************************/
 
@@ -158,6 +160,7 @@ typedef struct _wzd_hook_t {
   unsigned long mask;
 
   void_fct	hook;
+  char *	external_command;
 
   struct _wzd_hook_t	*next_hook;
 } wzd_hook_t;
@@ -213,7 +216,7 @@ typedef struct {
 
 /*************************** TLS **************************/
 
-#if !SSL_SUPPORT
+#ifndef SSL_SUPPORT
 #define SSL     void
 #define SSL_CTX void
 #endif
@@ -244,6 +247,9 @@ typedef enum {
  */
 #define	CONTEXT_MAGIC	0x0aa87d45
 
+/* context::connection_flags field */
+#define	CONNECTION_TLS	0x00000040
+
 typedef int (*read_fct_t)(int,char*,unsigned int,int,int,void *);
 typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 
@@ -256,7 +262,7 @@ typedef struct {
   int           controlfd;
   int           datafd;
   data_mode_t   datamode;
-  int	        pid_child;
+  unsigned long	pid_child;
   int	        portsock;
   int	        pasvsock;
   read_fct_t	read_fct;
@@ -264,6 +270,7 @@ typedef struct {
   int	        dataport;
   int	        dataip[4];
   unsigned long	resume;
+  unsigned long	connection_flags;
   char          currentpath[2048];
 /*  wzd_user_t    userinfo;*/
   unsigned int	userid;
@@ -351,7 +358,11 @@ typedef unsigned long list_type_t;
 #ifdef WZD_MULTIPROCESS
 #define	WZD_MP	" mp "
 #else /* WZD_MULTIPROCESS */
+#ifdef WZD_MULTITHREAD
+#define	WZD_MP	" mt "
+#else
 #define	WZD_MP	" up "
+#endif /* WZD_MULTITHREAD */
 #endif /* WZD_MULTIPROCESS */
 
 #ifdef __CYGWIN__
