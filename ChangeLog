@@ -1,4 +1,4 @@
-2004-09-20  Pierre Chifflier  <pollux@cpe.fr>
+2004-09-27  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: site chacl broken
 	* bugfix: segfault on idle timeout
@@ -6,6 +6,7 @@
 	* bugfix: no more possible to change user_slots/leech_slots for non-gadmins
 	* bugfix: unable to delete file after failed upload (closes: #0008)
 	* bugfix: free space is taken from drive c: (closes: #0001, #0009)
+	* bugfix: user ip check fails if ip1 was deleted (closes: #0012)
 	* feature: site chmod now accepts string version of permissions
 
 2004-09-13  Pierre Chifflier  <pollux@cpe.fr>

@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
+#include <arpa/inet.h>  /* struct in_addr (wzd_misc.h) */
 
 #include <netdb.h>  /* gethostbyname */
 #endif
@@ -235,10 +235,10 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
     if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
 
     if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-  
+
     current_ip = current_ip->next_ip;
   } /* while current_ip */
-  
+
   return 0;
 }
 
@@ -288,36 +288,34 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
   const char * ptr_ident;
   unsigned int ident_length=0;
 
-  i = 0;
-  while (user->ip_allowed[i][0] != '\0') {
-    ptr_ip = ip;
-    ptr_test = user->ip_allowed[i];
-    if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+  for (i=0; i<HARD_IP_PER_USER; i++) {
+    if (user->ip_allowed[i][0] != '\0') {
+      ptr_ip = ip;
+      ptr_test = user->ip_allowed[i];
+      if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
 
-    ptr = strchr(ptr_test,'@');
-    if (ptr) { /* we have an ident to check */
-      if (!ident || ident[0] == '\0') {
-        i++;
-        continue;
-      }
-      ptr_ident = ptr_test;
-      ident_length = ptr - ptr_ident;
+      ptr = strchr(ptr_test,'@');
+      if (ptr) { /* we have an ident to check */
+        if (!ident || ident[0] == '\0') {
+          continue;
+        }
+        ptr_ident = ptr_test;
+        ident_length = ptr - ptr_ident;
 #ifdef WZD_DBG_IDENT
-      out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
+        out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
 #endif
-      ptr_test = (char*)ptr+1;
-      if ( !(*ptr_ident=='*' && ident_length==1) &&
-          strncmp(ident,ptr_ident,ident_length) != 0) {
-        /* ident does not match */
-        i++;
-        continue;
+        ptr_test = (char*)ptr+1;
+        if ( !(*ptr_ident=='*' && ident_length==1) &&
+            strncmp(ident,ptr_ident,ident_length) != 0) {
+          /* ident does not match */
+          continue;
+        }
       }
+
+      if (ip_compare(ptr_ip,ptr_test)==1) return 1;
+
     }
-
-    if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-
-    i++;
-  } /* while current_ip */
+  } /* while ip */
 
   return 0;
 }
@@ -351,33 +349,31 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
   const char * ptr_ident;
   unsigned int ident_length=0;
 
-  i = 0;
-  while (group->ip_allowed[i][0] != '\0') {
-    ptr_ip = ip;
-    ptr_test = group->ip_allowed[i];
-    if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
-    
-    ptr = strchr(ptr_test,'@');
-    if (ptr) { /* we have an ident to check */
-      if (!ident) {
-        i++;
-        continue;
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    if (group->ip_allowed[i][0] != '\0') {
+      ptr_ip = ip;
+      ptr_test = group->ip_allowed[i];
+      if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+
+      ptr = strchr(ptr_test,'@');
+      if (ptr) { /* we have an ident to check */
+        if (!ident) {
+          continue;
+        }
+        ptr_ident = ptr_test;
+        ident_length = ptr - ptr_ident;
+        out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
+        ptr_test = (char*)ptr+1;
+        if ( !(*ptr_ident=='*' && ident_length==1) &&
+            strncmp(ident,ptr_ident,ident_length) != 0) {
+          /* ident does not match */
+          continue;
+        }
       }
-      ptr_ident = ptr_test;
-      ident_length = ptr - ptr_ident;
-      out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
-      ptr_test = (char*)ptr+1;
-      if ( !(*ptr_ident=='*' && ident_length==1) &&
-          strncmp(ident,ptr_ident,ident_length) != 0) {
-        /* ident does not match */
-        i++;
-        continue;
-      }
+
+      if (ip_compare(ptr_ip,ptr_test)==1) return 1;
+
     }
-
-    if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-
-    i++;
   } /* while current_ip */
 
   return 0;
