@@ -206,7 +206,7 @@ typedef struct {
   char                  tagline[MAX_TAGLINE_LENGTH];
   unsigned int          group_num;
   unsigned int          groups[MAX_GROUPS_PER_USER];
-  time_t	        max_idle_time;
+  u32_t 	        max_idle_time;
   wzd_perm_t            userperms;      /**< @brief default permissions */
   char                  flags[MAX_FLAGS_NUM];
   u32_t                 max_ul_speed;

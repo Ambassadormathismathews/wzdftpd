@@ -1534,7 +1534,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_idle_time);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_user->max_idle_time);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usermaxidle");

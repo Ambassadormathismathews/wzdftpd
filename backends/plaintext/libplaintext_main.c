@@ -413,7 +413,7 @@ static int write_user_file(void)
     if (user_pool[i].num_logins)
       fprintf(file,"num_logins=%d\n",user_pool[i].num_logins);
     if (user_pool[i].max_idle_time)
-      fprintf(file,"max_idle_time=%ld\n",user_pool[i].max_idle_time);
+      fprintf(file,"max_idle_time=%u\n",user_pool[i].max_idle_time);
     if (user_pool[i].flags && strlen(user_pool[i].flags)>0)
       fprintf(file,"flags=%s\n",user_pool[i].flags);
     if (user_pool[i].user_slots)
