@@ -25,7 +25,7 @@ To create a RSA key and cerificate use:
 openssl req -new -x509 -days 365 -nodes -config wzd_tls.cnf -out \
 wzd.pem -keyout wzd.pem
 
-then specify this file with the tlsrsafile option in wzd.cfg
+then specify this file with the tls_certificate option in wzd.cfg
 
 ---
 
