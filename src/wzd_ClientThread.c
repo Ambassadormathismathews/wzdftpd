@@ -444,7 +444,7 @@ int check_timeout(wzd_context_t * context)
             delay
             );
       }
-      client_die(context);
+      kill_child_new(context->pid_child,context);
 #ifdef WZD_MULTIPROCESS
       exit(0);
 #else /* WZD_MULTIPROCESS */
@@ -2744,7 +2744,7 @@ int do_user(const char *username, wzd_context_t * context)
         return E_GROUP_NUMLOGINS; /* user has reached group max num_logins */
     }
   }
-  
+
   return E_OK;
 }
 
@@ -2767,7 +2767,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
 #endif
   if (user_ip_inlist(user,ip,context->ident)==1)
     return E_OK;
-  
+
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
     group = GetGroupByID(user->groups[i]);
@@ -3023,7 +3023,7 @@ void * clientThreadProc(void *arg)
 {
   struct timeval tv;
   fd_set fds_r,fds_w,efds;
-  wzd_context_t	 * context;
+  wzd_context_t * context;
   char *buffer = NULL;
   int save_errno;
   unsigned int sockfd;
@@ -3267,7 +3267,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       ascii_lower(token,length);
       command = command_list_find(token);
     }
-    
+
     if (command) {
       char * command_name = token;
       token = strtok_r(NULL,"\r\n",&ptr);

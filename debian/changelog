@@ -1,3 +1,9 @@
+wzdftpd (0.4.1-1) unstable; urgency=low
+
+  * New upstream version. (Closes: #268878)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Wed, 15 Sep 2004 22:00:37 +0200
+
 wzdftpd (0.4.0-1) unstable; urgency=low
 
   * New upstream version.

@@ -1,3 +1,11 @@
+2004-09-20  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: site chacl broken
+	* bugfix: segfault on idle timeout
+	* bugfix: remove duplicate flags when changinf user flags (closes: #0004)
+	* bugfix: no more possible to change user_slots/leech_slots for non-gadmins
+	* feature: site chmod now accepts string version of permissions
+
 2004-09-13  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: GnuTLS support

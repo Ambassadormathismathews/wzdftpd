@@ -319,7 +319,7 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
   acl_new = wzd_malloc(sizeof(wzd_acl_line_t));
   strncpy(acl_new->user,user,256);
   strncpy(acl_new->perms,rights,3);
-  
+
   /* head insertion */
   acl_current = file->acl;
   if (!acl_current) { /* simple case, first insertion */
@@ -332,6 +332,7 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
     if (strcmp(acl_current->user,user)==0) { /* found ! */
       strncpy(acl_current->perms,rights,3); /* replace old perms */
       wzd_free (acl_new);
+      return;
     }
     acl_current = acl_current->next_acl;
   }

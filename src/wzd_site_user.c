@@ -64,6 +64,7 @@
 
 
 static int _user_changeflags(wzd_user_t * user, const char *newflags);
+static void _flags_simplify(char *flags, size_t length);
 
 
 
@@ -858,6 +859,10 @@ int do_site_change(char *command_line, wzd_context_t * context)
        ret = send_message_with_args(501,context,"You can't change that field");
        return 0;
     }
+    if ( ! strchr(user.flags,FLAG_GADMIN) ) {
+       ret = send_message_with_args(501,context,"User is not a gadmin");
+       return 0;
+    }
     ul=strtoul(value,&ptr,0);
     /* TODO compare with USHORT_MAX */
     if (!*ptr) { mod_type = _USER_USERSLOTS; user.user_slots = (unsigned short)ul; }
@@ -867,6 +872,10 @@ int do_site_change(char *command_line, wzd_context_t * context)
     /* GAdmin ? */
     if (is_gadmin) {
        ret = send_message_with_args(501,context,"You can't change that field");
+       return 0;
+    }
+    if ( ! strchr(user.flags,FLAG_GADMIN) ) {
+       ret = send_message_with_args(501,context,"User is not a gadmin");
        return 0;
     }
     ul=strtoul(value,&ptr,0);
@@ -1647,7 +1656,8 @@ static int _user_changeflags(wzd_user_t * user, const char *newflags)
     if (length+strlen(newflags) >= MAX_FLAGS_NUM) return -1;
 
     wzd_strncpy(user->flags+length,newflags+1,MAX_FLAGS_NUM-length-1);
-    /** \todo XXX remove duplicate flags */
+    /* remove duplicate flags */
+    _flags_simplify(user->flags,MAX_FLAGS_NUM);
 
     return 0;
   }
@@ -1670,9 +1680,27 @@ static int _user_changeflags(wzd_user_t * user, const char *newflags)
   else {
     /* replace flags */
     strncpy(user->flags,newflags,MAX_FLAGS_NUM-1);
+    _flags_simplify(user->flags,MAX_FLAGS_NUM);
     return 0;
   }
 
   return -1;
 }
 
+static void _flags_simplify(char *flags, size_t length)
+{
+  char * ptr, * test;
+  size_t l;
+
+  l = strlen(flags);
+
+  for (test=flags; (length > 0) && (*test) ; test++,l--)
+  {
+    while ( (ptr = strchr(test+1,*test)) ) {
+      /* replace duplicate flag with last one */
+      *ptr = flags[l-1];
+      flags[l-1] = '\0';
+      l--;
+    }
+  }
+}

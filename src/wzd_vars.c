@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <time.h>
+
 #ifdef WIN32
 #include <winsock2.h>
 #else

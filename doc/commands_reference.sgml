@@ -168,13 +168,13 @@ This will give dir1 to group <quote>admin</quote>,
 </varlistentry>
 
 <varlistentry id='site_chmod'><term>
-site chmod &lt;user&gt; &lt;mode&gt; &lt;file1&gt; [&lt;file2&gt; ...]
+site chmod &lt;mode&gt; &lt;file1&gt; [&lt;file2&gt; ...]
 </term>
 <listitem>
 <para>Change permissions for <quote>user</quote> on files. Permissions are unix-like.
-<screen>site chmod toto rwx dir1</screen>
+<screen>site chmod rwx dir1</screen>
 is equivalent to
-<screen>site chmod toto 755 dir1</screen>
+<screen>site chmod 755 dir1</screen>
 </para>
 </listitem>
 </varlistentry>

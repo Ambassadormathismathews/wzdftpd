@@ -282,7 +282,9 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
   unsigned int err;
   unsigned int drive;
 
-  drive = 3; /* c: ?? TODO XXX FIXME */
+  drive = 3; /** \todo c: ?? TODO XXX FIXME
+   if path begins with x:, take path; else
+   use _getdrive to get current drive */
   err = _getdiskfree(drive, &df);
   if (!err) {
     if (f_free) *f_free = df.avail_clusters * df.sectors_per_cluster;

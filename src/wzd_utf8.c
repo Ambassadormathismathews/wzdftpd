@@ -62,6 +62,8 @@
 #define	DL_PREFIX
 #endif
 
+#define DEFAULT_CODESET "ISO-8859-1"
+
 typedef void *  iconv_t;
 typedef size_t (*fn_iconv_t)(iconv_t, const char **, size_t *, char **, size_t *);
 typedef iconv_t (*fn_iconv_open_t)(const char *, const char *);
@@ -152,6 +154,9 @@ const char * charset_detect_local(void)
 
   /* should be very common now */
   codeset = nl_langinfo (CODESET);
+  if (strcasecmp(codeset,"ansi_x3.4-1968")==0)
+    codeset = DEFAULT_CODESET;
+  out_log(LEVEL_FLOOD,"nl_langinfo: %s\n",codeset);
 
 # else
 
@@ -166,6 +171,7 @@ const char * charset_detect_local(void)
       locale = getenv("LANG");
   }
   codeset = locale; /* something like language_COUNTRY.charset */
+  out_log(LEVEL_FLOOD,"env: %s\n",codeset);
   
   /* we need to try to translate that into an understandable
    * codeset for iconv (see `iconv --list`)

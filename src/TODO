@@ -3,9 +3,11 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- get_bandwidth(): give download, upload, total
+- win32: fix free space display !!
 '********'
-- rename wzd.cfg to wzd.cfg.sample and users to users.sample
+- redhat/wzdftpd.spec: replace -mcpu= by -march=
+'********'
+- get_bandwidth(): give download, upload, total
 '********'
 - provide a socket registration interface to have ~ servers
 '********'
