@@ -30,8 +30,8 @@
 #define OUT(x) fprintf(stdout,"%s\n",(x))
 #endif
 
-int list(int,wzd_context_t *,list_type_t,char *,char *,int callback(unsigned int,wzd_context_t*,char *));
-int old_list(int,wzd_context_t *,list_type_t,char *,char *,int callback(unsigned int,wzd_context_t*,char *));
+int list(int,wzd_context_t *,list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
+int old_list(int,wzd_context_t *,list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
 int list_match(char *,char *);
 
 #endif /* __LS__ */

@@ -142,9 +142,9 @@ fd_t socket_make(const char *ip, unsigned int *port, int nListen)
   }
 
 #if !defined(IPV6_SUPPORT)
-  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == -1) {
+  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
 #else
-  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == -1) {
+  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1) {
 #endif
     out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
     return -1;
@@ -208,6 +208,8 @@ int socket_close(fd_t sock)
   char acReadBuffer[256];
   int nNewBytes;
 
+  if (sock == (fd_t)-1) return 0; /* invalid fd */
+
   /* Disallow any further data sends.  This will tell the other side
    * that we want to go away now.  If we skip this step, we don't
    * shut the connection down nicely.
@@ -235,7 +237,7 @@ int socket_close(fd_t sock)
       return 1;
     }
     else if (nNewBytes != 0) {
-      out_err(LEVEL_CRITICAL,"\nFYI, received %d unexpected bytes during shutdown.\n",nNewBytes);
+      out_err(LEVEL_FLOOD,"\nFYI, received %d unexpected bytes during shutdown.\n",nNewBytes);
     }
     else {
       /* Okay, we're done! */
@@ -271,7 +273,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
 
-  if (new_sock < 0) {
+  if (new_sock == (fd_t)-1) {
     out_log(LEVEL_CRITICAL,"Accept failed %s:%d\n", __FILE__, __LINE__);
     return -1;
   }

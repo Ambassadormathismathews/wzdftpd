@@ -806,7 +806,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     /* find corresponding id */
     newgroupid = GetGroupIDByName(str_tochar(value));
 
-    if (newgroupid != -1) {
+    if (newgroupid != (unsigned int)-1) {
       ret=0;
       for (i=0; i<user->group_num; i++)
         if (newgroupid == user->groups[i]) { ret=1; break; } 
@@ -1012,7 +1012,7 @@ int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
 
     newgroupid = GetGroupIDByName(str_tochar(group_name));
 
-    if (newgroupid != -1) {
+    if (newgroupid != (unsigned int)-1) {
       ret=0;
       for (i=0; i<user->group_num; i++)
         if (newgroupid == user->groups[i]) { ret=1; break; } 

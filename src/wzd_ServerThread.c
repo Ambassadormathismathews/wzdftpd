@@ -138,7 +138,7 @@ int runMainThread(int argc, char **argv)
 static void free_config(wzd_config_t * config);
 
 static List server_ident_list;
-static int server_add_ident_candidate(unsigned int socket_accept_fd);
+static int server_add_ident_candidate(fd_t socket_accept_fd);
 static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(wzd_ident_context_t * ident_context);
@@ -241,15 +241,15 @@ static int global_check_ip_allowed(unsigned char *userip)
 
 void server_rebind(const unsigned char *new_ip, unsigned int new_port)
 {
-  int sock;
+  fd_t sock;
   const unsigned char *ip = (new_ip) ? new_ip : mainConfig->ip;
 
   /* create socket iff different ports ?! */
   sock = mainConfig->mainSocket;
-  close(sock);
+  socket_close(sock);
 
   sock = mainConfig->mainSocket = socket_make((const char *)ip,&new_port,mainConfig->max_threads);
-  if (sock == -1) {
+  if (sock == (fd_t)-1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
           __FILE__, __LINE__);
       serverMainThreadExit(-1);
@@ -407,7 +407,7 @@ static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 /*
  * add a connection to the list of idents to be checked
  */
-static int server_add_ident_candidate(unsigned int socket_accept_fd)
+static int server_add_ident_candidate(fd_t socket_accept_fd)
 {
   unsigned char remote_host[16];
   unsigned int remote_port;
@@ -488,7 +488,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   fd_ident = socket_connect(userip,WZD_INET4,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
 #endif
 
-  if (fd_ident == -1) {
+  if (fd_ident == (fd_t)-1) {
     if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
       server_login_accept(context);
       return 0;
@@ -532,13 +532,13 @@ static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, 
   for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt)) {
     ident_context = list_data(elmnt);
     if (!ident_context) continue;
-    if (ident_context->read_fd != -1)
+    if (ident_context->read_fd != (fd_t)-1)
     {
       FD_SET(ident_context->read_fd,r_fds);
       FD_SET(ident_context->read_fd,e_fds);
       *maxfd = MAX(*maxfd,ident_context->read_fd);
     }
-    if (ident_context->write_fd != -1)
+    if (ident_context->write_fd != (fd_t)-1)
     {
       FD_SET(ident_context->write_fd,w_fds);
       FD_SET(ident_context->write_fd,e_fds);
@@ -557,7 +557,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
   wzd_context_t * context=NULL;
   unsigned short remote_port;
   unsigned short local_port;
-  int fd_ident;
+  fd_t fd_ident;
   int ret;
   ListElmt * elmnt;
   wzd_ident_context_t * ident_context;
@@ -570,7 +570,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 
     context = ident_context->context;
 
-    if (ident_context->read_fd != -1)
+    if (ident_context->read_fd != (fd_t)-1)
     {
       if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
@@ -630,7 +630,7 @@ continue_connection:
         if (!elmnt) return;
       }
     }
-    else if (ident_context->write_fd != -1)
+    else if (ident_context->write_fd != (fd_t)-1)
     {
       fd_ident = ident_context->write_fd;
       if (FD_ISSET(ident_context->write_fd,e_fds)) { /* error */
@@ -794,7 +794,8 @@ static void server_login_accept(wzd_context_t * context)
 #ifdef WZD_MULTIPROCESS
     exit (0);
   } else { /* parent */
-    close (newsock);
+    FD_UNREGISTER(newsock,"Client socket");
+    socket_close (newsock);
   }
 #endif
 }
@@ -887,7 +888,7 @@ int server_switch_to_config(wzd_config_t *config)
   int fd;
   int ret;
 
-  ret = config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads);
+  ret = (config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads));
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -1377,9 +1378,9 @@ void serverMainThreadExit(int retcode)
   signal(SIGINT,SIG_IGN);
 #endif
 
-  close(mainConfig->mainSocket);
+  socket_close(mainConfig->mainSocket);
   FD_UNREGISTER(mainConfig->mainSocket,"Server listening socket");
-  if (mainConfig->controlfd >= 0) {
+  if (mainConfig->controlfd != (fd_t)-1) {
     close(mainConfig->controlfd);
     FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
   }

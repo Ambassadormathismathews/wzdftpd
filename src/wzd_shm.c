@@ -517,7 +517,7 @@ void wzd_shm_cleanup(unsigned long key)
 #endif
 
   {
-    unsigned int shmid;
+    int shmid;
     shmid = shmget((key_t)key,0,0600 );
     if (shmid != -1) shmctl(shmid,IPC_RMID,NULL);
   }

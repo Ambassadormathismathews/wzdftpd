@@ -312,7 +312,7 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #define i64_t int64_t
 #define u64_t uint64_t
 
-typedef unsigned fd_t;
+typedef signed fd_t;
 
 
 #include <sys/time.h> /* struct timeval */

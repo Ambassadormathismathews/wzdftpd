@@ -69,8 +69,8 @@ static int _format_date(time_t time, char * buffer, size_t length);
 
 int list_match(char *,char *);
 
-int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, char *buffer, size_t *buffer_len,
-    int callback(unsigned int,wzd_context_t*,char *))
+int list_call_wrapper(fd_t sock, wzd_context_t *context, char *line, char *buffer, size_t *buffer_len,
+    int callback(fd_t,wzd_context_t*,char *))
 {
   size_t length;
   if (!line) { /* request to flush */
@@ -95,8 +95,8 @@ int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, cha
 
 
 
-int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
-	 int callback(unsigned int,wzd_context_t*,char *))
+int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
+	 int callback(fd_t,wzd_context_t*,char *))
 {
   struct wzd_dir_t * dir;
   struct wzd_file_t * file;
@@ -260,8 +260,8 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 /** build list in LIST format and send the result to callback
  * \deprecated use \ref list
  */
-int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
-	 int callback(unsigned int,wzd_context_t*,char *)) {
+int old_list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
+	 int callback(fd_t,wzd_context_t*,char *)) {
 
 #ifndef _MSC_VER
   DIR *dir;

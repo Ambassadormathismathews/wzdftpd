@@ -72,10 +72,10 @@ List * getlib_contextList(void)
 void setlib_contextList(List *c)
 { context_list = c; }
 
-int getlib_server_gid(void)
+gid_t getlib_server_gid(void)
 { return _wzd_server_gid; }
 
-void setlib_server_gid(int gid)
+void setlib_server_gid(gid_t gid)
 { _wzd_server_gid = gid; }
 
 int getlib_server_uid(void)
