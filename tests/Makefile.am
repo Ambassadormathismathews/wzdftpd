@@ -1,3 +1,5 @@
+EXTRA_DIST = file_crc.txt
+
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 LDADD = ../src/libwzd_core.la
 
