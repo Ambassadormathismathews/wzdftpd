@@ -534,6 +534,9 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     /* remove trailing / */
     length = strlen(tmppath);
     if (length>1 && tmppath[length-1]=='/')
+#ifdef _MSC_VER
+		if (length != 3) /* root of a logical dir */
+#endif
       tmppath[length-1] = '\0';
     ret = _checkPerm(tmppath,RIGHT_CWD,user);
   
@@ -2608,7 +2611,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 
 	  /* remote host has closed session */
     if (ret==0 || ret==-1) {
-      out_log(LEVEL_INFO,"Host disconnected improperly!\n");
+      out_log(LEVEL_FLOOD,"Host disconnected improperly!\n");
       exitclient=1;
       break;
     }
