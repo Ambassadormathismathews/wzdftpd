@@ -234,64 +234,6 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
     if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
 
     if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-#if 0
-    if (*ptr_test == '+') {
-      char buffer[30];
-      unsigned char * host_ip;
-
-      ptr_test++;
-      host = gethostbyname(ptr_test);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        current_ip = current_ip->next_ip;
-        continue;
-      }
-
-      host_ip = (unsigned char*)(host->h_addr);
-      snprintf(buffer,29,"%d.%d.%d.%d",
-        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
-#if DEBUG
-out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
-#endif
-      if (my_str_compare(buffer,ip)==1)
-        return 1;
-    } else
-    if (*ptr_test == '-') {
-      unsigned char host_ip[5];
-      int i1, i2, i3, i4;
-
-      ptr_test++;
-      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
-        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
-          ptr_ip);
-        return 0;
-      }
-      host_ip[0] = i1;
-      host_ip[1] = i2;
-      host_ip[2] = i3;
-      host_ip[3] = i4;
-
-      host = gethostbyaddr(host_ip,4,AF_INET);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        current_ip = current_ip->next_ip;
-        continue;
-      }
-
-      /* XXX do not forget the alias list ! */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
-#endif
-      if (my_str_compare(host->h_name,ptr_test)==1)
-        return 1;
-    } else
-    { /* ip does not begin with + or - */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
-#endif
-      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
-    } /* ip does not begin with + or - */
-#endif /* 0 */
   
     current_ip = current_ip->next_ip;
   } /* while current_ip */
@@ -363,7 +305,8 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
       out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
 #endif
       ptr_test = (char*)ptr+1;
-      if (strncmp(ident,ptr_ident,ident_length) != 0) {
+      if ( !(*ptr_ident=='*' && ident_length==1) &&
+          strncmp(ident,ptr_ident,ident_length) != 0) {
         /* ident does not match */
         i++;
         continue;
@@ -371,64 +314,6 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
     }
 
     if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-#if 0
-    if (*ptr_test == '+') {
-      char buffer[30];
-      unsigned char * host_ip;
-      
-      ptr_test++;
-      host = gethostbyname(ptr_test);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        i++;
-        continue;
-      }
-      
-      host_ip = (unsigned char*)(host->h_addr);
-      snprintf(buffer,29,"%d.%d.%d.%d",
-        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
-#if DEBUG
-out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
-#endif
-      if (my_str_compare(buffer,ip)==1)
-        return 1;
-    } else
-    if (*ptr_test == '-') {
-      unsigned char host_ip[5];
-      int i1, i2, i3, i4;
-
-      ptr_test++;
-      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
-        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
-          ptr_ip);
-        return 0;
-      }
-      host_ip[0] = i1;
-      host_ip[1] = i2;
-      host_ip[2] = i3;
-      host_ip[3] = i4;
-
-      host = gethostbyaddr(host_ip,4,AF_INET);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        i++;
-        continue;
-      }
-
-      /* XXX do not forget the alias list ! */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
-#endif
-      if (my_str_compare(host->h_name,ptr_test)==1)
-        return 1;
-    } else
-    { /* ip does not begin with + or - */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
-#endif
-      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
-    } /* ip does not begin with + or - */
-#endif /* 0 */
 
     i++;
   } /* while current_ip */
@@ -481,7 +366,8 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
       ident_length = ptr - ptr_ident;
       out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
       ptr_test = (char*)ptr+1;
-      if (strncmp(ident,ptr_ident,ident_length) != 0) {
+      if ( !(*ptr_ident=='*' && ident_length==1) &&
+          strncmp(ident,ptr_ident,ident_length) != 0) {
         /* ident does not match */
         i++;
         continue;
@@ -489,64 +375,6 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
     }
 
     if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-#if 0
-    if (*ptr_test == '+') {
-      char buffer[30];
-      unsigned char * host_ip;
-      
-      ptr_test++;
-      host = gethostbyname(ptr_test);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        i++;
-        continue;
-      }
-      
-      host_ip = (unsigned char*)(host->h_addr);
-      snprintf(buffer,29,"%d.%d.%d.%d",
-        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
-#if DEBUG
-out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
-#endif
-      if (my_str_compare(buffer,ip)==1)
-        return 1;
-    } else
-    if (*ptr_test == '-') {
-      unsigned char host_ip[5];
-      int i1, i2, i3, i4;
-
-      ptr_test++;
-      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
-        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
-          ptr_ip);
-        return 0;
-      }
-      host_ip[0] = i1;
-      host_ip[1] = i2;
-      host_ip[2] = i3;
-      host_ip[3] = i4;
-
-      host = gethostbyaddr(host_ip,4,AF_INET);
-      if (!host) {
-        /* XXX could not resolve hostname - warning in log ? */
-        i++;
-        continue;
-      }
-
-      /* XXX do not forget the alias list ! */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
-#endif
-      if (my_str_compare(host->h_name,ptr_test)==1)
-        return 1;
-    } else
-    { /* ip does not begin with + or - */
-#if DEBUG
-out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
-#endif
-      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
-    } /* ip does not begin with + or - */
-#endif /* 0 */
 
     i++;
   } /* while current_ip */

@@ -6,6 +6,7 @@
 	* bugfix: site change group without arg cause segfault
 	* bugfix: site purge broken
 	* bugfix: misc important problems in backend plaintext
+	* bugfix: ip *@* not working
 
 2004-08-31  Pierre Chifflier  <pollux@cpe.fr>
 
