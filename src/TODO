@@ -136,6 +136,7 @@ _ possibility to link a backend statically (instead of dll)
 - option : check certificate only at login (not at port/pasv)
 - reward mechanism for top ten winners (credits/slots/...)
 - support ident on different port per user
+- find out what's wrong with CLONEf_CLONE_HOST for perl 5.6 (perl module)
 
 ## I'LL THINK ABOUT IT ##
 
