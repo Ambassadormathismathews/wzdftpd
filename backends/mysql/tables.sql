@@ -23,7 +23,7 @@ CREATE TABLE groups (
   defaultpath TINYTEXT NOT NULL,
   tagline TINYTEXT default NULL,
   groupperms int(10) unsigned default NULL,
-  max_idle_time int(10) unsigned default NULL
+  max_idle_time int(10) unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
@@ -46,10 +46,10 @@ CREATE TABLE users (
   username TINYTEXT NOT NULL,
   userpass varchar(32) default NULL,
   rootpath TINYTEXT NOT NULL,
-  tagline TINYTEXT NOT NULL,
+  tagline TINYTEXT default NULL,
   uid int(10) unsigned NOT NULL,
   flags varchar(32) default NULL,
-  max_idle_time int(10) unsigned NOT NULL,
+  max_idle_time int(10) unsigned default NULL,
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
@@ -139,3 +139,7 @@ INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE 
 --
 -- find all ip for a user
 --   select UserIP.ip from UserIP,users where users.ref=1 AND users.ref=UserIP.ref;
+--
+--
+-- reset auto-increment: ALTER TABLE users AUTO_INCREMENT=4;
+--
