@@ -118,6 +118,8 @@ EXPORTS
 	strtok_r
 	strtomd5
 	strtoull
+	symlink_create
+	symlink_remove
 	time_to_str
 	user_ip_add
 	user_ip_inlist

@@ -34,6 +34,60 @@
 #include <io.h>
 #include <direct.h> /* _mkdir */
 #include <sys/locking.h> /* _locking */
+#define _WIN32_WINNT  0x500
+#include <windows.h>
+#include <tchar.h>
+#include <winioctl.h>
+
+
+// Since MS apparently removed this struct (and its documentation) from
+// the W2k SDK, but still refer to it in 'winioctl.h' for the specific
+// IOCTLs, I decided to rename it and make it available.
+// I've made some modifications to this one for easier access.
+//
+// Structure for FSCTL_SET_REPARSE_POINT, FSCTL_GET_REPARSE_POINT, and
+// FSCTL_DELETE_REPARSE_POINT.
+// This version of the reparse data buffer is only for Microsoft tags.
+
+typedef struct
+{
+    DWORD  ReparseTag;
+    WORD   ReparseDataLength;
+    WORD   Reserved;
+
+	// IO_REPARSE_TAG_MOUNT_POINT specifics follow
+    WORD   SubstituteNameOffset;
+    WORD   SubstituteNameLength;
+    WORD   PrintNameOffset;
+    WORD   PrintNameLength;
+    WCHAR  PathBuffer[1];
+
+	// Some helper functions
+//	bool Init(LPCSTR szJunctionPoint);
+//	bool Init(LPCWSTR wszJunctionPoint);
+//	int BytesForIoControl() const;
+} TMN_REPARSE_DATA_BUFFER;
+
+#define TMN_REPARSE_DATA_BUFFER_HEADER_SIZE \
+			FIELD_OFFSET(TMN_REPARSE_DATA_BUFFER, SubstituteNameOffset)
+
+
+// These have the wrong values in pre-W2k SDKs, why I redefine them here.
+#if !defined(FSCTL_SET_REPARSE_POINT) || \
+	(FSCTL_SET_REPARSE_POINT != 0x900a4)
+#undef FSCTL_SET_REPARSE_POINT
+#define FSCTL_SET_REPARSE_POINT  CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 41, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#endif
+
+#if !defined(FSCTL_DELETE_REPARSE_POINT) || \
+	(FSCTL_DELETE_REPARSE_POINT != 0x900ac)
+#undef FSCTL_DELETE_REPARSE_POINT
+#define FSCTL_DELETE_REPARSE_POINT      CTL_CODE(FILE_DEVICE_FILE_SYSTEM, 43, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#endif
+
+
+
+
 #else
 #include <unistd.h>
 
@@ -795,6 +849,185 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
   return 0;
 }
 
+#ifdef _MSC_VER
+
+int _rdb_init(TMN_REPARSE_DATA_BUFFER * rdb, LPCWSTR wszJunctionPoint)
+{
+	size_t nDestMountPointBytes;
+
+	if (!wszJunctionPoint || !*wszJunctionPoint) {
+		return -1;
+	}
+
+	nDestMountPointBytes = lstrlenW(wszJunctionPoint) * 2;
+
+	rdb->ReparseTag           = IO_REPARSE_TAG_MOUNT_POINT;
+	rdb->ReparseDataLength    = nDestMountPointBytes + 12;
+	rdb->Reserved             = 0;
+	rdb->SubstituteNameOffset = 0;
+	rdb->SubstituteNameLength = nDestMountPointBytes;
+	rdb->PrintNameOffset      = nDestMountPointBytes + 2;
+	rdb->PrintNameLength      = 0;
+	lstrcpyW(rdb->PathBuffer, wszJunctionPoint);
+
+	return 0;
+}
+
+/* returns 0 if ok */
+int RDB_INIT(TMN_REPARSE_DATA_BUFFER * rdb, LPCSTR szJunctionPoint)
+{
+	wchar_t wszDestMountPoint[512];
+	size_t cchDest;
+
+	if (!szJunctionPoint || !*szJunctionPoint) {
+		return -1;
+	}
+
+	cchDest = lstrlenA(szJunctionPoint) + 1;
+	if (cchDest > 512) {
+		return -1;
+	}
+
+	if (!MultiByteToWideChar(CP_THREAD_ACP,
+							MB_PRECOMPOSED,
+							szJunctionPoint,
+							cchDest,
+							wszDestMountPoint,
+							cchDest))
+	{
+		return -1;
+	}
+
+	return _rdb_init(rdb,wszDestMountPoint);
+}
+
+int BytesForIoControl(const TMN_REPARSE_DATA_BUFFER *rdb)
+{
+	return rdb->ReparseDataLength + TMN_REPARSE_DATA_BUFFER_HEADER_SIZE;
+}
+
+HANDLE Reparse_Dir_HANDLE(LPCTSTR szDir, int bWriteable)
+{
+	return CreateFile(	szDir,
+					GENERIC_READ | (bWriteable ? GENERIC_WRITE : 0),
+					0,
+					0,
+					OPEN_EXISTING,
+					FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+					0);
+}
+
+/* returns 0 if failed, non-zero if success */
+int SetReparsePoint(HANDLE m_hDir, const TMN_REPARSE_DATA_BUFFER* rdb)
+{
+	DWORD dwBytes;
+	return DeviceIoControl(m_hDir,
+						FSCTL_SET_REPARSE_POINT,
+						(LPVOID)rdb,
+						BytesForIoControl(rdb),
+						NULL,
+						0,
+						&dwBytes,
+						0);
+}
+
+int DeleteReparsePoint(HANDLE m_hDir)
+{
+	REPARSE_GUID_DATA_BUFFER rgdb = { 0 };
+	DWORD dwBytes;
+	rgdb.ReparseTag = IO_REPARSE_TAG_MOUNT_POINT;
+	return DeviceIoControl(m_hDir,
+						FSCTL_DELETE_REPARSE_POINT,
+						&rgdb,
+						REPARSE_GUID_DATA_BUFFER_HEADER_SIZE,
+						NULL,
+						0,
+						&dwBytes,
+						0);
+}
+
+int CreateJunctionPoint(LPCTSTR szMountDir, LPCTSTR szDestDirArg)
+{
+	TCHAR szDestDir[1024];
+	char szBuff[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
+	TMN_REPARSE_DATA_BUFFER * rdb;
+	TCHAR szFullDir[1024];
+	LPTSTR pFilePart;
+
+	if (!szMountDir || !szDestDirArg || !szMountDir[0] || !szDestDirArg[0]) {
+		return -1;
+	}
+
+	if (szDestDirArg[0] == '\\' && szDestDirArg[1] == '?') {
+		lstrcpy(szDestDir, szDestDirArg);
+	} else {
+		lstrcpy(szDestDir, TEXT("\\??\\"));
+		if (!GetFullPathName(szDestDirArg, 1024, szFullDir, &pFilePart) ||
+			GetFileAttributes(szFullDir) == -1)
+		{
+			return -1;
+		}
+		lstrcat(szDestDir, szFullDir);
+	}
+
+	if (!GetFullPathName(szMountDir, 1024, szFullDir, &pFilePart) )
+	{
+		return -1;
+	}
+	szMountDir = szFullDir;
+
+	// create link if not existing
+	CreateDirectory(szMountDir, NULL);
+
+	rdb = (TMN_REPARSE_DATA_BUFFER*)szBuff;
+
+	RDB_INIT(rdb,szDestDir);
+
+	{
+		HANDLE handle;
+		handle = Reparse_Dir_HANDLE(szMountDir, 1 /* true */);
+		if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
+		if (!SetReparsePoint(handle,rdb)) { CloseHandle(handle); RemoveDirectory(szMountDir); return -1; }
+		CloseHandle(handle);
+	}
+
+
+	return 0;
+}
+
+int RemoveJunctionPoint(LPCTSTR szDir)
+{
+	TCHAR szFullDir[1024];
+	LPTSTR pFilePart;
+
+	if (!szDir || !szDir[0]) {
+		return -1;
+	}
+
+	if (!GetFullPathName(szDir, 1024, szFullDir, &pFilePart) )
+	{
+		return -1;
+	}
+	szDir = szFullDir;
+
+	{
+		HANDLE handle;
+		handle = Reparse_Dir_HANDLE(szDir, 1 /* true */);
+		if (handle == INVALID_HANDLE_VALUE) { CloseHandle(handle); return -1; }
+		if (!DeleteReparsePoint(handle)) { CloseHandle(handle); return -1; }
+		CloseHandle(handle);
+		RemoveDirectory(szDir);
+	}
+
+
+	return 0;
+}
+
+
+
+
+#endif
+
 
 /************ PUBLIC FUNCTIONS ***************/
 
@@ -1260,7 +1493,8 @@ int symlink_create(const char *existing, const char *link)
 #if !defined(_MSC_VER) && !defined(__CYGWIN__)
   return symlink(existing,link);
 #else
-  return -1;
+  /* TODO XXX FIXME check that symlink dest is inside user authorized path */
+  return CreateJunctionPoint(link,existing);
 #endif
 }
 
@@ -1273,6 +1507,6 @@ int symlink_remove(const char *link)
   if ( !S_ISLNK(s.st_mode) ) return E_FILE_TYPE;
   return unlink(link);
 #else
-  return -1;
+  return RemoveJunctionPoint(link);
 #endif
 }

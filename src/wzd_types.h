@@ -136,8 +136,8 @@
 /*********************** VERSION **************************/
 
 /* Version */
-#define  WZD_VERSION_NUM "0.2 visual"
-#define  WZD_BUILD_NUM "20040127"
+#define  WZD_VERSION_NUM "0.3cvs visual"
+#define  WZD_BUILD_NUM "20040130"
 #define  WZD_BUILD_OPTS  "visual"
 
 #ifdef WZD_MULTIPROCESS
