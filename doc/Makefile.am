@@ -35,10 +35,8 @@ wzdftpd-doc/wzdftpd.pdf: $(ALL_SGML_FILES) $(EXAMPLES)
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
 	$(JW) -o wzdftpd-doc -b pdf $(srcdir)/$(MAIN_SGML_FILE)
 
-clean:
+clean-local:
 	rm -f wzdftpd-doc/*.html wzdftpd-doc/*.php wzdftpd-doc/*.pdf wzdftpd-doc/*.out
-
-distclean: clean
 
 endif
 
