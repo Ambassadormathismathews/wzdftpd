@@ -29,7 +29,6 @@ struct wzd_cache_t;
 typedef struct wzd_cache_t wzd_cache_t;
 
 wzd_cache_t* wzd_cache_open(const char *file, int flags, unsigned int mode);
-wzd_cache_t* wzd_cache_refresh(wzd_cache_t *c, const char *file, int flags, unsigned int mode);
 
 unsigned int wzd_cache_getsize(wzd_cache_t *c);
 

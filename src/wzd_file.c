@@ -507,7 +507,8 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     ptr = strrchr(dir,'/');
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
-      *ptr = 0;
+      if (ptr == &dir[0]) *(ptr+1) = '\0';
+      else *ptr = 0;
     }
     /* we need to check in parent dir for the same right */
     if (_checkPerm(dir,wanted_right,user)) return -1; /* we do not have the right to modify parent dir */
@@ -518,7 +519,8 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
       ptr = strrchr(dir,'/');
       if (ptr) {
         strcpy(stripped_filename,ptr+1);
-        *ptr = 0;
+	if (ptr == &dir[0]) *(ptr+1) = '\0';
+	else *ptr = 0;
       }
     } /* ! isdir */
   } /* stat == -1 */

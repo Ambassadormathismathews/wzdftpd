@@ -26,6 +26,14 @@
 %x incl
 
 %{
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -86,18 +94,19 @@
 #define	CFG_PASV_IP		319
 #define	CFG_PASV_LOW		320
 #define	CFG_PASV_HIGH		321
-#define	CFG_PORT		322
-#define	CFG_SECTION		323
-#define	CFG_SERVER_UID		324
-#define	CFG_SHM_KEY		325
-#define	CFG_SITE		326
-#define	CFG_SITECMD		327
-#define	CFG_SITEFILE		328
-#define	CFG_TLS_CERT		329
-#define	CFG_TLS_CIPHER_LIST	330
-#define	CFG_TLS_MODE		331
-#define	CFG_VFS			332
-#define	CFG_XFERLOG		333
+#define	CFG_PID_FILE		322
+#define	CFG_PORT		323
+#define	CFG_SECTION		324
+#define	CFG_SERVER_UID		325
+#define	CFG_SHM_KEY		326
+#define	CFG_SITE		327
+#define	CFG_SITECMD		328
+#define	CFG_SITEFILE		329
+#define	CFG_TLS_CERT		330
+#define	CFG_TLS_CIPHER_LIST	331
+#define	CFG_TLS_MODE		332
+#define	CFG_VFS			333
+#define	CFG_XFERLOG		334
 
 #define	CFG_UNKNOWN	511
 
@@ -112,6 +121,7 @@ int include_stack_ptr=0;
 wzd_config_t tempConfig;
 
 extern wzd_cronjob_t * crontab;
+extern unsigned int wzd_server_uid;
 
 %}
 
@@ -207,6 +217,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"pasv_ip")) return CFG_PASV_IP;
   if (!strcasecmp(word,"pasv_low_range")) return CFG_PASV_LOW;
   if (!strcasecmp(word,"pasv_high_range")) return CFG_PASV_HIGH;
+  if (!strcasecmp(word,"pid_file")) return CFG_PID_FILE;
   if (!strcasecmp(word,"port")) return CFG_PORT;
   if (!strcasecmp(word,"section")) return CFG_SECTION;
   if (!strcasecmp(word,"server_uid")) return CFG_SERVER_UID;
@@ -239,6 +250,8 @@ int set_default_options(void)
 /*  mainConfig = &tempConfig;*/
   setlib_mainConfig(mainConfig);
 /*  setlib_mainConfig(&tempConfig);*/
+
+  tempConfig.pid_file = strdup("/var/run/wzdftpd.pid");
 
   tempConfig.config_filename=NULL;
 
@@ -446,19 +459,38 @@ int cfg_read_cronjob(void)
   unsigned int token;
   unsigned long l;
   unsigned int length;
+  char *min,*hour,*day,*month,*day_of_week;
 
   token = yylex();
   if (token!='=') {
     out_err(LEVEL_HIGH,"line should be 'cronjob = ...'\n");
     return 1;
   }
-  if ( (token=yylex()) != CFG_NUM ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <interval> <command>'\n");
+  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
     return 1;
   }
-  l = strtoul(yytext,&end,0);
-  if (end == yytext) { return 1; }
-  if (l==ULONG_MAX && errno==ERANGE) { return 1; }
+  min = yytext;
+  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+  hour = yytext;
+  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+  day = yytext;
+  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+  month = yytext;
+  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+  day_of_week = yytext;
 
   length = 0;
   end=command;
@@ -476,7 +508,8 @@ int cfg_read_cronjob(void)
   end = command;
   while (*end && (*end==' ' || *end=='\t')) end++;
 
-  return cronjob_add(&crontab,NULL,end,l);
+/*  return cronjob_add(&crontab,NULL,end,l);*/
+  return cronjob_add(&crontab,NULL,end,min,hour,day,month,day_of_week);
 }
 
 /* CSCRIPT (string)
@@ -1139,6 +1172,42 @@ int cfg_read_pasv_high(void)
   return 0;
 }
 
+/* PID_FILE
+ * absolute file name
+ */
+int cfg_read_pid_file(void)
+{
+  unsigned int token;
+  char * filename;
+  int fd;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'pid_file = ...'\n");
+    return 1;
+  }
+
+  if( !(filename=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid file name\n");
+    return 1;
+  }
+
+  fd = open(filename,O_WRONLY | O_CREAT | O_EXCL,0644);
+  if (fd == -1)
+  {
+    if (errno==EEXIST)
+      out_err(LEVEL_HIGH,"pid_file already exist ! (%s)\nRemove it if you are sure",filename);
+    else
+      out_err(LEVEL_HIGH,"Could not open pid_file (%s)\n",filename);
+    return 1;
+  }
+  close(fd);
+  unlink(filename);
+  if (tempConfig.pid_file) free(tempConfig.pid_file);
+  tempConfig.pid_file = filename; /* will be freed at server exit */
+
+  return 0;
+}
 
 /* PORT (int)
  * 2 remarks:
@@ -1698,6 +1767,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_PASV_HIGH:
       ret = cfg_read_pasv_high();
+      break;
+    case CFG_PID_FILE:
+      ret = cfg_read_pid_file();
       break;
     case CFG_PORT:
       ret = cfg_read_port();

@@ -66,6 +66,9 @@ char * ul2a(unsigned long q)
 int socket_make(const char *ip, int *port, int nListen)
 {
   struct sockaddr_in sai;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 sai6;
+#endif
   unsigned int c;
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
   SOCKET sock;
@@ -98,7 +101,11 @@ int socket_make(const char *ip, int *port, int nListen)
    }
   }
 
+#if !defined(IPV6_SUPPORT)
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+#else
+  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) < 0) {
+#endif
     out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
     return -1;
   }
@@ -110,6 +117,7 @@ int socket_make(const char *ip, int *port, int nListen)
 
 /*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
 
+#if !defined(IPV6_SUPPORT)
   sai.sin_family = PF_INET;
   sai.sin_port = htons(*port); /* any port */
 
@@ -122,6 +130,21 @@ int socket_make(const char *ip, int *port, int nListen)
     socket_close(sock);
     return -1;
   }
+#else /* IPV6_SUPPORT */
+  sai6.sin6_family = PF_INET6;
+  sai6.sin6_port = htons(*port); /* any port */
+  sai6.sin6_flowinfo = 0;
+  sai6.sin6_addr = in6addr_any;
+  if (bind(sock,(struct sockaddr *)&sai6, sizeof(sai6))==-1) {
+#ifdef __CYGWIN__
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
+#else
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
+#endif
+    socket_close(sock);
+    return -1;
+  }
+#endif /* IPV6_SUPPORT */
 
   c = sizeof(struct sockaddr_in);
   getsockname(sock, (struct sockaddr *)&sai, &c);
@@ -185,11 +208,16 @@ int socket_close(int sock)
 
 /*************** socket_accept **************************/
 
-int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_port)
+int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port)
 {
   int new_sock;
+#if !defined(IPV6_SUPPORT)
   struct sockaddr_in from;
   unsigned int len = sizeof(struct sockaddr_in);
+#else
+  struct sockaddr_in6 from;
+  unsigned int len = sizeof(struct sockaddr_in6);
+#endif
   int i;
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
@@ -215,8 +243,13 @@ int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_por
 #endif
 #endif
 
+#if !defined(IPV6_SUPPORT)
   bcopy((const char*)&from.sin_addr.s_addr, (char*)remote_host, sizeof(unsigned long));
   *remote_port = ntohs(from.sin_port);
+#else
+  bcopy((const char*)&from.sin6_addr.s6_addr, (char*)remote_host, 16);
+  *remote_port = ntohs(from.sin6_port);
+#endif
 
   return new_sock;
 }

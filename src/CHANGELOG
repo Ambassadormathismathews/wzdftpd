@@ -1,4 +1,20 @@
 #--- cvs commit
+# Apr, 21 2003
+- site grpkill: kill all connected members from a group
+- number of members connected at the same time can be limited for each group
+- work on IPv6 compatibility
+- crontab changed to accept classical crontab definition
+  (min hour day month day_of_week)
+- site grpren: rename group
+- site grpdel removes all references to group, and send warnings if deletion
+  creates users with no groups or changes user main group
+- site wipe: delete file/dir recursively, without affecting user stats
+- location pointer in file was shared by all clients connected to cache !
+- fixed CRITICAL bug: context->datafd was closed without testing it, with a
+  default value of 0 which IS a valid socket value !
+- again, fixed problem when creating dir at the physical root of the server ...
+
+#--- cvs commit
 # Apr, 17 2003
 - string analysis in cookie parser rewritten using a flex parser
   this has many benefits, allowing to use nested if/for statements, colors, etc.

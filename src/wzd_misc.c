@@ -153,6 +153,25 @@ void chop(char *s)
     *r = '\0';
 }
 
+int split_filename(const char *filename, char *path, char *stripped_filename,
+    int pathlen, int filelen)
+{
+  char *ptr;
+
+  ptr = strrchr(filename,'/');
+  if (!ptr) { /* no dir */
+    if (path && pathlen>0) path[0] = '\0';
+    if (stripped_filename && filelen>strlen(filename)) strcpy(stripped_filename,filename);
+  } else {
+    if (path && pathlen>(ptr-filename))
+      { memcpy(path,filename,ptr-filename); path[ptr-filename]='\0'; }
+    if (stripped_filename && filelen>(strlen(filename)-(ptr-filename)))
+      { strcpy(stripped_filename,ptr+1); }
+  }
+
+  return 0;
+}
+
 /** returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina)
 {
@@ -480,529 +499,6 @@ void limiter_free(wzd_bw_limiter *l)
     free(l);
 }
 
-typedef enum {
-  COOKIE_MY,
-  COOKIE_USER,
-  COOKIE_GROUP
-} wzd_cookie_t;
-
-/* cookies */
-int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context)
-{
-  wzd_cookie_t cookie_type;
-  unsigned long length=0;
-  wzd_context_t * context = void_context;
-  char work_buffer[4096];
-  char tmp_buffer[4096];
-  char *srcptr, *dstptr;
-  unsigned int bytes_written=0;
-  char * cookie;
-  unsigned int cookielength;
-  unsigned int l;
-  char c;
-  wzd_context_t * param_context=NULL;
-  wzd_user_t * user = NULL;
-  wzd_user_t * context_user = NULL;
-  wzd_group_t * group;
-
-  if (buffersize > 4095) {
-#ifdef DEBUG
-    fprintf(stderr,"BUFFER SIZE too long !!\n");
-#endif
-    return -1;
-  }
-
-  memset(work_buffer,0,4096);
-  srcptr = buffer;
-  dstptr = work_buffer;
-
-  while ( (c=*srcptr++) != '\0' ) {
-    if ( c != '%' ) {
-      *dstptr++ = c;
-      bytes_written++;
-      if (bytes_written == buffersize) {
-        memcpy(buffer,work_buffer,buffersize);
-        return 1;
-      }
-      continue;
-    }
-
-    if ( *srcptr == '%' ) {
-      *dstptr++ = c;
-      srcptr++;
-      bytes_written++;
-      continue;
-    }
-
-    length = 0;
-
-    /* test if a number is written here - is the exact length the cookie will have */
-    if ( *srcptr>='0' && *srcptr <= '9') {
-      char *ptr;
-      length = strtol(srcptr,&ptr,10);
-      if (*ptr != '.') {
-	length = 0;
-      }
-      srcptr = ptr + 1;
-    }
-
-    cookielength = 0;
-    cookie = NULL;
-
-    if (strncmp(srcptr,"my",2)==0)
-    { cookie_type=COOKIE_MY; param_context=context; srcptr += 2; }
-    else if (strncmp(srcptr,"user",4)==0)
-    { cookie_type=COOKIE_USER; param_context=void_param; srcptr += 4; }
-    else if (strncmp(srcptr,"group",5)==0)
-    {
-      cookie_type=COOKIE_GROUP;
-      param_context=void_param;
-      group = GetGroupByID(param_context->userid);
-        /* userid contains the gid ... Yes, I know ! */
-      if (!group) { /* we really have a problem */
-	return 1;
-      }
-      srcptr += 5;
-    }
-
-    if (param_context == NULL) {
-      /* happens when using %username and void_param is not correctly set */
-      return 1;
-    }
-
-    if (mainConfig->backend.backend_storage == 0) {
-      user = GetUserByID(param_context->userid);
-      context_user = GetUserByID(context->userid);
-#if BACKEND_STORAGE
-    } else {
-      user = &param_context->user;
-      context_user = &context->user;
-#endif
-    }
-
-    if (param_context) {
-      /* name */
-      if (strncmp(srcptr,"name",4)==0) {
-	if (cookie_type==COOKIE_GROUP)
-	  cookie = group->groupname;
-	else
-	  cookie = user->username;
-        cookielength = strlen(cookie);
-        srcptr += 4; /* strlen("name"); */
-      } else
-      /* ip_allow */
-      if (strncmp(srcptr,"ip_allow",8)==0) {
-	char *endptr;
-        srcptr += 8; /* strlen("ip_allow"); */
-	l = strtoul(srcptr,&endptr,10);
-	if (endptr-srcptr > 0) {
-	  if (cookie_type==COOKIE_GROUP)
-	  {
-	    if (l < HARD_IP_PER_GROUP) {
-	      strncpy(tmp_buffer,group->ip_allowed[l],4095);
-	    } else {
-	      snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
-	    }
-	    srcptr = endptr;
-	  } else { /* !COOKIE_GROUP */
-	    if (l < HARD_IP_PER_USER) {
-	      strncpy(tmp_buffer,user->ip_allowed[l],4095);
-	    } else {
-	      snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
-	    }
-	    srcptr = endptr;
-	  }
-	} else {
-	  snprintf(tmp_buffer,4096,"Invalid ip index");
-	}
-	cookie = tmp_buffer;
-	cookielength = strlen(cookie);
-      } else
-      if (strncmp(srcptr,"credits",7)==0) {
-	float val;
-	char c;
-	short convert=0;
-	if (*(srcptr+7)=='2') convert=1;
-	if (user->ratio) {
-	  if (convert) {
-	    val = (float)user->credits;
-	    bytes_to_unit(&val,&c);
-	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
-	  } else
-	    snprintf(tmp_buffer,4096,"%lld",user->credits);
-	} else {
-	  snprintf(tmp_buffer,4096,"unlimited");
-	}
-	cookie = tmp_buffer;
-	cookielength = strlen(cookie);
-	srcptr += 7; /* strlen("credits"); */
-	if (convert) srcptr++;
-      }
-
-      /* ip */
-      if (strncmp(srcptr,"ip",2)==0) {
-        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {
-        snprintf(tmp_buffer,4096,"%d.%d.%d.%d",param_context->hostip[0],
-  	  param_context->hostip[1],param_context->hostip[2],
-          param_context->hostip[3]);
-        } else { /* not allowed to see */
-          strcpy(tmp_buffer,"xxx.xxx.xxx.xxx");
-        }
-        cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 2; /* strlen("ip"); */
-      } else
-      /* files_dl */
-      if (strncmp(srcptr,"files_dl",8)==0) {
-	snprintf(tmp_buffer,4096,"%lu",user->files_dl_total);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 8; /* strlen("files_dl"); */
-      } else
-      /* files_ul */
-      if (strncmp(srcptr,"files_ul",8)==0) {
-	snprintf(tmp_buffer,4096,"%lu",user->files_ul_total);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 8; /* strlen("files_ul"); */
-      } else
-    /* flags */
-      if (strncmp(srcptr,"flags",5)==0) {
-	if (user->flags && strlen(user->flags)>0) {
-	  strncpy(tmp_buffer,user->flags,MAX_FLAGS_NUM);
-	} else {
-	  strcpy(tmp_buffer,"no flags");
-	}
-	cookie = tmp_buffer;
-	cookielength = strlen(cookie);
-	srcptr += 5; /* strlen("flags"); */
-      } else
-      /* group */
-      if (strncmp(srcptr,"group",5)==0) {
-        wzd_group_t group, *gptr;
-	int gid;
-	int ret;
-        if ( (user->group_num > 0)) {
-          ret = backend_find_group(user->groups[0],&group,&gid);
-	  if (mainConfig->backend.backend_storage==0) {
-	    gptr = GetGroupByID(ret);
-	  } else {
-	    gptr = &group;
-	  }
-          snprintf(tmp_buffer,4096,"%s",group.groupname);
-        } else {
-          strcpy(tmp_buffer,"nogroup");
-        }
-        cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("group"); */
-      } else
-      /* home */
-      if (strncmp(srcptr,"home",4)==0) {
-        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_HOME)) {
-	  if (cookie_type==COOKIE_GROUP)
-	    cookie = group->defaultpath;
-	  else
-	    cookie = user->rootpath;
-        } else { /* user not allowed to see */
-          strcpy(tmp_buffer,"- some where -");
-          cookie = tmp_buffer;
-        }
-        cookielength = strlen(cookie);
-        srcptr += 4; /* strlen("home"); */
-      } else
-      /* last_login */
-      if (strncmp(srcptr,"last_login",10)==0) {
-	if (user->last_login) {
-	  struct tm *ntime;
-	  ntime=localtime(&user->last_login);
-	  strftime(tmp_buffer,4096,"%b %d %H:%M",ntime);
-	} else {
-	  snprintf(tmp_buffer,4096,"never");
-	}
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 10; /* strlen("last_login"); */
-      } else
-      /* lastcmd */
-      if (strncmp(srcptr,"lastcmd",7)==0) {
-	strncpy(tmp_buffer,param_context->last_command,4095);
-	/* modify special commands, to not appear explicit */
-	if (strncasecmp(tmp_buffer,"site",4)==0) {
-/*	  char * ptr;
-	  ptr = strpbrk(tmp_buffer+5," \t");
-	  if (ptr) {
-	    memset(ptr+1,'x',strlen(tmp_buffer)-(ptr-tmp_buffer+1));
-	  }*/
-	  strcpy(tmp_buffer,"SITE command");
-	}
-	else if (strncasecmp(tmp_buffer,"retr",4)==0) {
-	  char *fname;
-	  fname = strrchr(param_context->current_action.arg,'/')+1;
-	  if (fname==NULL || *fname=='\0') fname = param_context->current_action.arg;
-	  snprintf(tmp_buffer,4095,"DL: %s",fname);
-	}
-	else if (strncasecmp(tmp_buffer,"stor",4)==0) {
-	  char *fname;
-	  fname = strrchr(param_context->current_action.arg,'/')+1;
-	  if (fname==NULL || *fname=='\0') fname = param_context->current_action.arg;
-	  snprintf(tmp_buffer,4095,"UL: %s",fname);
-	}
-        cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 7; /* strlen("lastcmd"); */
-      } else
-      /* leechslots */
-      if (strncmp(srcptr,"leechslots",10)==0) {
-	snprintf(tmp_buffer,4096,"%hu",user->leech_slots);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 10; /* strlen("leechslots"); */
-      } else
-      /* maxdl */
-      if (strncmp(srcptr,"maxdl",5)==0) {
-	if (cookie_type==COOKIE_GROUP)
-	  snprintf(tmp_buffer,4096,"%ld",group->max_dl_speed);
-	else
-	  snprintf(tmp_buffer,4096,"%ld",user->max_dl_speed);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("maxdl"); */
-      } else
-      /* maxidle */
-      if (strncmp(srcptr,"maxidle",7)==0) {
-	if (cookie_type==COOKIE_GROUP)
-	  snprintf(tmp_buffer,4096,"%ld",group->max_idle_time);
-	else
-	  snprintf(tmp_buffer,4096,"%ld",user->max_idle_time);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 7; /* strlen("maxidle"); */
-      } else
-      /* maxul */
-      if (strncmp(srcptr,"maxul",5)==0) {
-	if (cookie_type==COOKIE_GROUP)
-	  snprintf(tmp_buffer,4096,"%ld",group->max_ul_speed);
-	else
-	  snprintf(tmp_buffer,4096,"%ld",user->max_ul_speed);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("maxul"); */
-      } else
-      /* num_logins */
-      if (strncmp(srcptr,"num_logins",10)==0) {
-	snprintf(tmp_buffer,4096,"%d",user->num_logins);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 10; /* strlen("num_logins"); */
-      } else
-#ifdef WZD_MULTIPROCESS
-      /* pid */
-      if (strncmp(srcptr,"pid",3)==0) {
-	if (context_user->flags && strchr(context_user->flags,FLAG_SITEOP)) {
-	  snprintf(tmp_buffer,4096,"%ld",param_context->pid_child);
-	  cookie = tmp_buffer;
-	  cookielength = strlen(cookie);
-	  srcptr += 3; /* strlen("pid"); */
-	}
-      } else
-#endif /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTITHREAD
-      /* pid */
-      if (strncmp(srcptr,"pid",3)==0) {
-	if (context_user->flags && strchr(context_user->flags,FLAG_SITEOP)) {
-	  snprintf(tmp_buffer,4096,"%ld",param_context->pid_child);
-	  cookie = tmp_buffer;
-	  cookielength = strlen(cookie);
-	  srcptr += 3; /* strlen("pid"); */
-	}
-      } else
-#endif /* WZD_MULTIPROCESS */
-      /* ratio */
-      if (strncmp(srcptr,"ratio",5)==0) {
-	if (cookie_type==COOKIE_GROUP)
-	{
-	  if (group->ratio)
-	    snprintf(tmp_buffer,4096,"1:%u",group->ratio);
-	  else
-	    strcpy(tmp_buffer,"unlimited");
-	}
-	else
-	{
-	  if (user->ratio)
-	    snprintf(tmp_buffer,4096,"1:%u",user->ratio);
-	  else
-	    strcpy(tmp_buffer,"unlimited");
-	}
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("ratio"); */
-      } else
-      /* slots */
-      if (strncmp(srcptr,"slots",5)==0) {
-	snprintf(tmp_buffer,4096,"%hu",user->user_slots);
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("slots"); */
-      } else
-      /* speed */
-      if (strncmp(srcptr,"speed",5)==0) {
-        if (strncasecmp(param_context->last_command,"retr",4)==0) {
-          snprintf(tmp_buffer,4095,"%.1f kB/s",param_context->current_dl_limiter.current_speed/1024.f);
-        }
-        else {
-	  if (strncasecmp(param_context->last_command,"stor",4)==0) {
-            snprintf(tmp_buffer,4095,"%.1f kB/s",param_context->current_ul_limiter.current_speed/1024.f);
-          }
-          else {
-	    tmp_buffer[0] = '\0'; /* if not DL/UL, do not show speed */
-	  }
-	}
-        cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 5; /* strlen("speed"); */
-      } else
-      /* tag */
-      if (strncmp(srcptr,"tag",3)==0) {
-	if (user->flags && strchr(user->flags,FLAG_DELETED)) {
-	  strcpy(tmp_buffer,"**DELETED**");
-	  cookie = tmp_buffer;
-	} else {
-	  if (strlen(user->tagline) > 0) {
-	    cookie = user->tagline;
-	  } else {
-	    strcpy(tmp_buffer,"no tagline set");
-	    cookie = tmp_buffer;
-	  }
-	}
-        cookielength = strlen(cookie);
-        srcptr += 3; /* strlen("tag"); */
-      } else
-      /* total_dl, total_dl2 */
-      if (strncmp(srcptr,"total_dl",8)==0) {
-	float val;
-	char c;
-	short convert=0;
-	if (*(srcptr+8)=='2') convert=1;
-	if (cookie_type==COOKIE_GROUP)
-	{
-	  int gid, i;
-	  unsigned long long total;
-	  wzd_user_t * loop_user;
-	  /* TODO iterate through users and sum */
-	  gid = param_context->userid;
-	  total = 0;
-	  for (i=0; i<HARD_DEF_USER_MAX; i++)
-	  {
-	    loop_user = GetUserByID(i);
-	    if (!loop_user) continue;
-	    if (is_user_in_group(loop_user,gid)==1)
-	    {
-	      total += loop_user->bytes_dl_total;
-	    }
-	  }
-	  if (convert) {
-	    val = (float)total;
-	    bytes_to_unit(&val,&c);
-	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
-	  } else
-	    snprintf(tmp_buffer,4096,"%lld",total);
-	} else {
-	  if (convert) {
-	    val = (float)user->bytes_dl_total;
-	    bytes_to_unit(&val,&c);
-	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
-	  } else
-	    snprintf(tmp_buffer,4096,"%lld",user->bytes_dl_total);
-	}
-	cookie = tmp_buffer;
-        cookielength = strlen(cookie);
-        srcptr += 8; /* strlen("total_dl"); */
-	if (convert) srcptr++;
-      } else
-      /* total_ul */
-      if (strncmp(srcptr,"total_ul",8)==0) {
-	float val;
-	char c;
-	short convert=0;
-	if (*(srcptr+8)=='2') convert=1;
-	if (cookie_type==COOKIE_GROUP)
-	{
-	  int gid, i;
-	  unsigned long long total;
-	  wzd_user_t * loop_user;
-	  /* TODO iterate through users and sum */
-	  gid = param_context->userid;
-	  total = 0;
-	  for (i=0; i<HARD_DEF_USER_MAX; i++)
-	  {
-	    loop_user = GetUserByID(i);
-	    if (!loop_user) continue;
-	    if (is_user_in_group(loop_user,gid)==1)
-	    {
-	      total += loop_user->bytes_ul_total;
-	    }
-	  }
-	  if (convert) {
-	    val = (float)total;
-	    bytes_to_unit(&val,&c);
-	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
-	  } else
-	    snprintf(tmp_buffer,4096,"%lld",total);
-	} else {
-	  if (convert) {
-	    val = (float)user->bytes_ul_total;
-	    bytes_to_unit(&val,&c);
-	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
-	  } else
-	    snprintf(tmp_buffer,4096,"%lld",user->bytes_ul_total);
-	}
-	cookie = tmp_buffer;
-	cookielength = strlen(cookie);
-	srcptr += 8; /* strlen("total_ul"); */
-	if (convert) srcptr++;
-      }
-    } /* if param_context */
-    /* end of cookies */
-
-
-    /* TODO if length is non null, we will proceed differently: write maximum length chars, and pad with spaces (FIXME) */
-    if (length <= 0) {
-      if (bytes_written+cookielength >= buffersize) {
-        return 1;
-      }
-  
-      memcpy(dstptr,cookie,cookielength);
-      bytes_written += cookielength;
-      dstptr += cookielength;
-    } else { /* length > 0 */
-      if (bytes_written+cookielength >= buffersize) {
-        return 1;
-      }
-  
-      if (length < cookielength) {
-        memcpy(dstptr,cookie,length);
-        bytes_written += length;
-        dstptr += length;
-      } else {
-        memcpy(dstptr,cookie,cookielength);
-        bytes_written += cookielength;
-        dstptr += cookielength;
-	/* TODO check that total length will not exceed buffer size */
-	while (cookielength < length) {
-	  bytes_written++;
-	  *dstptr++ = ' '; /* FIXME choose padding character */
-	  cookielength++;
-	}
-      } /* length < cookielength */
-    } /* length <= 0 */
-    
-  }
-
-  memcpy(buffer,work_buffer,buffersize);
-  return 0;
-}
-
 /** print_file : read file, replace cookies and prints it
  * header (200-) MUST have been sent, and end (200 ) is NOT sent)
  */
@@ -1038,7 +534,7 @@ int print_file(const char *filename, int code, void * void_context)
 
   param = NULL;
   do {
-    ret = cookies_replace(buffer,1018,param,context); /* TODO test ret */
+    ret = cookie_parse_buffer(buffer,NULL,NULL,context); /* TODO test ret */
   /* XXX FIXME TODO */
 /*    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);*/
     send_message_raw(complete_buffer,context);
@@ -1533,6 +1029,30 @@ short is_user_in_group(wzd_user_t * user, int gid)
 	for (i=0; i<user->group_num; i++)
 		if (gid==user->groups[i]) return 1;
 	return 0;
+}
+
+
+int group_remove_user(wzd_user_t * user, int gid)
+{
+  int i;
+  int idx=-1;
+
+  if (!user || user->group_num<=0) return -1;
+  for (i=0; i<user->group_num; i++)
+  {
+    if (user->groups[i]==gid) {
+      idx = i;
+    }
+  }
+  if (idx==-1) return -1;
+
+  for (i=idx; i<user->group_num; i++)
+  {
+    user->groups[i] = user->groups[i+1];
+  }
+  user->group_num--;
+  
+  return 0;
 }
 
 

@@ -33,6 +33,8 @@ int bytes_to_unit(float *value, char *unit);
 
 void chop(char *s);
 
+int split_filename(const char *filename, char *path, char *stripped_filename, int pathlen, int filelen);
+
 /* returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina);
 
@@ -65,7 +67,6 @@ void limiter_free(wzd_bw_limiter *l);
 /* cookies */
 /* defined in wzd_cookie_lex.l */
 int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context);
-int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context);
 
 /* print_file : read file, replace cookies and prints it
  * header (200-) MUST have been sent, and end (200 ) is NOT sent)
@@ -98,6 +99,7 @@ unsigned int GetUserIDByName(const char *name);
 unsigned int GetGroupIDByName(const char *name);
 
 short is_user_in_group(wzd_user_t * user, int gid);
+int group_remove_user(wzd_user_t * user, int gid);
 
 /* wrappers to context list */
 void * GetMyContext(void);

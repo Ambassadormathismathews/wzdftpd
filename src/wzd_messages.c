@@ -218,8 +218,8 @@ int write_message_footer(int code, wzd_context_t * context)
     total /= 1024.f;
   }
 
-  bytes_dl = (float)user->bytes_dl_total;
-  bytes_ul = (float)user->bytes_ul_total;
+  bytes_dl = (float)user->stats.bytes_dl_total;
+  bytes_ul = (float)user->stats.bytes_ul_total;
 
   bytes_to_unit(&bytes_dl,&unit_dl);
   bytes_to_unit(&bytes_ul,&unit_ul);

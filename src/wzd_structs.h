@@ -102,16 +102,24 @@ typedef enum {
   DATA_PASV
 } data_mode_t;
 
+/*********************** STATS ****************************/
+typedef struct {
+  unsigned long long	bytes_ul_total;
+  unsigned long long	bytes_dl_total;
+  unsigned long		files_ul_total;
+  unsigned long		files_dl_total;
+} wzd_stats_t;
+
 /********************** USER, GROUP ***********************/
 
 typedef struct {
   char                  username[HARD_USERNAME_LENGTH];
-  char			userpass[256];
+  char			userpass[MAX_PASS_LENGTH];
   char                  rootpath[1024];
   char                  tagline[256];
   unsigned int          uid;
   unsigned int          group_num;
-  unsigned int          groups[256];
+  unsigned int          groups[MAX_GROUPS_PER_USER];
   time_t	        max_idle_time;
   wzd_perm_t            userperms;
   char                  flags[MAX_FLAGS_NUM];
@@ -119,10 +127,7 @@ typedef struct {
   unsigned long         max_dl_speed;   /**< bytes / sec */
   unsigned short	num_logins;	/**< number of simultaneous logins allowed */
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
-  unsigned long long	bytes_ul_total;
-  unsigned long long	bytes_dl_total;
-  unsigned long		files_ul_total;
-  unsigned long		files_dl_total;
+  wzd_stats_t		stats;
   unsigned long long	credits;
   unsigned int		ratio;
   unsigned short	user_slots;	/**< user slots for gadmins */
@@ -134,6 +139,7 @@ typedef struct {
   char                  groupname[128];
   wzd_perm_t            groupperms;
   time_t		max_idle_time;
+  unsigned short	num_logins;	/**< number of simultaneous logins allowed */
   unsigned long         max_ul_speed;
   unsigned long         max_dl_speed;
   unsigned int		ratio;
@@ -298,7 +304,7 @@ typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 
 typedef struct {
   unsigned long	magic;
-  unsigned char	hostip[4];
+  unsigned char	hostip[16];
   int           state;
   int           controlfd;
   int           datafd;
@@ -309,7 +315,7 @@ typedef struct {
   read_fct_t	read_fct;
   write_fct_t	write_fct;
   int	        dataport;
-  int	        dataip[4];
+  int	        dataip[16];
   unsigned long	resume;
   unsigned long	connection_flags;
   char          currentpath[2048];
@@ -340,6 +346,7 @@ typedef struct {
 #define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
 
 typedef struct {
+  char *	pid_file;
   char *	config_filename;
   time_t	server_start;
   unsigned char	serverstop;
@@ -359,7 +366,7 @@ typedef struct {
   unsigned int	port;
   unsigned long	pasv_low_range;
   unsigned long	pasv_high_range;
-  unsigned char	pasv_ip[4];
+  unsigned char	pasv_ip[16];
   int		login_pre_ip_check;
   wzd_ip_t	*login_pre_ip_allowed;
   wzd_ip_t	*login_pre_ip_denied;
@@ -414,9 +421,9 @@ typedef unsigned long list_type_t;
 #endif /* WZD_MULTIPROCESS */
 
 #ifdef __CYGWIN__
-#define	WZD_VERSION_STR	"wzdFTPd cygwin" WZD_MP WZD_VERSION_NUM
+#define	WZD_VERSION_STR	"wzdftpd cygwin" WZD_MP WZD_VERSION_NUM
 #else /* __CYGWIN__ */
-#define	WZD_VERSION_STR	"wzdFTPd linux" WZD_MP WZD_VERSION_NUM
+#define	WZD_VERSION_STR	"wzdftpd linux" WZD_MP WZD_VERSION_NUM
 #endif /* __CYGWIN__ */
 
 

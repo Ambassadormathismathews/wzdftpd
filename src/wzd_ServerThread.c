@@ -149,9 +149,9 @@ void context_init(wzd_context_t * context)
   context->magic = 0;
   memset(context->hostip,0,4);
   context->controlfd = -1;
-  context->datafd = 0;
+  context->datafd = -1;
   context->portsock = 0;
-  context->pasvsock = 0;
+  context->pasvsock = -1;
   context->dataport=0;
   context->resume = 0;
   context->pid_child = 0;
@@ -352,6 +352,7 @@ int check_server_dynamic_ip(void)
   const unsigned char * str_ip_config;
   const unsigned char * str_ip_pasv;
 
+/*out_err(LEVEL_CRITICAL,"check_server_dynamic_ip\n");*/
   if (!mainConfig->dynamic_ip || strlen(mainConfig->dynamic_ip)<=0) return 0;
 
   if (strcmp(mainConfig->dynamic_ip,"0")==0) return 0;
@@ -452,31 +453,34 @@ int check_server_dynamic_ip(void)
  */
 void login_new(int socket_accept_fd)
 {
-  unsigned long remote_host;
+  unsigned char remote_host[16];
   unsigned int remote_port;
-  int userip[4];
+  char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
+  int userip[16];
   int newsock;
   wzd_context_t	* context;
-  unsigned char *p;
 #ifdef WZD_MULTIPROCESS
 #ifdef __CYGWIN__
   unsigned long shm_key = mainConfig->shm_key;
 #endif /* __CYGWIN__ */
 #endif /* WZD_MULTIPROCESS */
 
-  newsock = socket_accept(mainConfig->mainSocket, &remote_host, &remote_port);
+  newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
   if (newsock <0)
   {
     out_log(LEVEL_HIGH,"Error while accepting\n");
     serverMainThreadExit(-1);
   }
 
-  p=(unsigned char *)&remote_host;
+  memcpy(userip,remote_host,16);
 
-  userip[0]=*p++;
-  userip[1]=*p++;
-  userip[2]=*p++;
-  userip[3]=*p++;
+#if !defined(IPV6_SUPPORT)
+  inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
+#else
+  inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
+  if (IN6_IS_ADDR_V4MAPPED(userip))
+    out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
+#endif
 
   /* Here we check IP BEFORE starting session */
   /* do this iff login_pre_ip_check is enabled */
@@ -484,13 +488,12 @@ void login_new(int socket_accept_fd)
         global_check_ip_allowed(userip)<=0) { /* IP was rejected */
     /* close socket without warning ! */
     socket_close(newsock);
-    out_log(LEVEL_HIGH,"Failed login from %d.%d.%d.%d: global ip rejected\n",
-      userip[0],userip[1],userip[2],userip[3]);
+    out_log(LEVEL_HIGH,"Failed login from %s: global ip rejected\n",
+      inet_buf);
     return;
   }
 
-  out_log(LEVEL_NORMAL,"Connection opened from %d.%d.%d.%d\n",
-    userip[0],userip[1],userip[2],userip[3]);
+  out_log(LEVEL_NORMAL,"Connection opened from %s\n", inet_buf);
 
   /* start child process */
 #ifdef WZD_MULTIPROCESS
@@ -554,17 +557,15 @@ void login_new(int socket_accept_fd)
     /* don't forget init is done before */
     context->magic = CONTEXT_MAGIC;
     context->controlfd = newsock;
-    context->hostip[0] = userip[0];
-    context->hostip[1] = userip[1];
-    context->hostip[2] = userip[2];
-    context->hostip[3] = userip[3];
+
+    memcpy(context->hostip,userip,16);
 
     /* switch to tls mode ? */
 #ifdef SSL_SUPPORT
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
 	close(newsock);
-	out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %d.%d.%d.%d\n", userip[0],userip[1],userip[2],userip[3]);
+	out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
 	/* mark context as free */
 	context->magic = 0;
 	return;
@@ -804,6 +805,20 @@ void serverMainThreadProc(void *arg)
   }
 #endif /* __CYGWIN__ */
 
+  /* creates pid file */
+  {
+    int fd;
+    char buf[64];
+    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+    snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
+    if (fd==-1) {
+      fprintf(stderr,"Unable to open pid file %s\n",strerror(errno));
+      return;
+    }
+    ret = write(fd,buf,strlen(buf));
+    close(fd);
+  }
+
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
   length += HARD_USERLIMIT*sizeof(wzd_context_t);
   length += HARD_DEF_USER_MAX*sizeof(wzd_user_t);
@@ -852,7 +867,9 @@ void serverMainThreadProc(void *arg)
   }
 
   /********** set up crontab ********/
-  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);
+/*  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);*/
+  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL,
+      "*","*","*","*");
 
   /********** init modules **********/
   {
@@ -953,6 +970,7 @@ void free_config(wzd_config_t * config)
   fclose(mainConfig->logfile);
   free(mainConfig->logfilename);
   free(mainConfig->config_filename);
+  free(mainConfig->pid_file);
   wzd_shm_free(mainConfig_shm);
 #ifdef DEBUG
   mainConfig_shm = NULL;
@@ -1006,6 +1024,7 @@ void serverMainThreadExit(int retcode)
   wzd_shm_free(context_shm);
   context_list = NULL;
   /* free(mainConfig); */
+  unlink(mainConfig->pid_file);
   free_config(mainConfig);
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
   WSACleanup();

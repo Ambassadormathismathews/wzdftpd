@@ -28,7 +28,7 @@
 int socket_make(const char *ip, int *port, int nListen);
 int socket_close(int sock);
 
-int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_port);
+int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port);
 
 int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd);
 

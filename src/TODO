@@ -2,8 +2,10 @@
 
 
 '********'
-- write a 'site color' command (visibility: all but anonymous) to toggle
-  color use
+- getmyip does not seems to work with ipv6 ...
+'********'
+- configure: --enable-internal-sfv || remove wzd_crc32.c file from sources (disable internal
+  sfv)
 '********'
 - permissions: siteop always have all perms on files (wzd_perm.c) / OK
   and gadmins on their group files
@@ -14,9 +16,6 @@
  ++ add possibility to use multi-line directives in .cfg and/or
     use files for messages (message_230 = +my_file.txt)
   (221)!
-'********'
-- group management SITE commands: grpkill
-  -- max simultaneous group members
 '********'
 - To Be Documented :
   -- if root run server, must use server_uid + chown users, user.OLD to
@@ -31,7 +30,7 @@
 ==4220==    by 0x402946CD: backend_validate (wzd_backend.c:80)
 '********'
 - ratio: weekly allotment
-  -- modify crontab to accept dates (each day/week/month at specified time)
+  -- modify crontab to accept dates (each day/week/month at specified time) / OK
 '********'
 - give back slots to GAdmins if deleting user
   -- need to store info on who created user
@@ -39,13 +38,6 @@
 - implement recursive chown/chmod
 '********'
 - implement group flags
-'********'
-- stats on ul/dl
-  -- number of files uploaded/downloaded / OK
-  -- decrement credits when deleting files / OK
-   -- adjust stats for real owner ! -> create fct GetFileOwner /OK
-  -- site wipe /OK
-  -- site wipe -r
 '********'
 - sfv checker:
   verify zip integrity
@@ -57,7 +49,6 @@
 current objectives:
 
 * ratios
-* per user/group vfs
 * dupecheck
 * quotas
 
@@ -95,7 +86,6 @@ current objectives:
 - anti-hammering: per ip/user, ban time
 - special flag to start server and connect to existing shm without
   creating/blanking it (goal: replace exe instance by another on the fly)
-- implement a crontab to schedule tasks
 - per-dir msg / default msg; SITE commands:
     * site DIRMSG new_msg
     * site APPENDMSG new_line

@@ -168,7 +168,7 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       limiter_add_bytes(&mainConfig->global_dl_limiter,limiter_sem,n,0);
       limiter_add_bytes(&context->current_dl_limiter,limiter_sem,n,0);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
-      user->bytes_dl_total += n;
+      user->stats.bytes_dl_total += n;
       user->credits -= n;
       context->idle_time_data_start = time(NULL);
     } else { /* end */
@@ -203,7 +203,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_sem,n,0);
       limiter_add_bytes(&context->current_ul_limiter,limiter_sem,n,0);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
-      user->bytes_ul_total += n;
+      user->stats.bytes_ul_total += n;
       if (user->ratio)
 	user->credits += (user->ratio * n);
       context->idle_time_data_start = time(NULL);
@@ -215,7 +215,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       /* we increment the counter of uploaded files at the end
        * of the upload
        */
-      user->files_ul_total++;
+      user->stats.files_ul_total++;
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;

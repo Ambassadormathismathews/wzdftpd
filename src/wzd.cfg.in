@@ -17,7 +17,7 @@ ip = *
 # ip changes
 # 0 desactivates checks
 # if you specify an ip beginning by +, the server will use DNS lookups
-#dynamic_ip = +pollux.myftp.org
+#dynamic_ip = +xxx.myftp.org
 #dynamic_ip = 1
 
 # Listen port (default: 21)
@@ -29,13 +29,18 @@ port = 6969
 # specify this iff you want to get a specific range
 pasv_low_range = 2500
 pasv_high_range  = 3000
-#pasv_ip = 62.212.107.165
-#pasv_ip = 134.214.71.84
+#pasv_ip = 62.xxx.xxx.xxx
+#pasv_ip = 134.xxx.xx.xx
 
 # linux only: server will drop privileges to a user after binding port
 # you can specify a user login name
 # This will only be used if run by root !
 #server_uid = pollux
+
+# linux only: file where pid of server will be stored
+# (default: /var/run/wzdftpd.pid)
+# this is used by init.d script
+pid_file = @prefix@/etc/wzdftpd/wzdftpd.pid
 
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
@@ -60,8 +65,9 @@ backend_param_plaintext = @prefix@/etc/wzdftpd/users
 
 # speed limits in bytes /sec (approx !)
 # 0 = no limit
+# ex: max_dl_speed = 300000
 max_ul_speed = 0
-max_dl_speed = 300000
+max_dl_speed = 0
 
 # deny_access_files_uploaded (default: 0)
 # if you say 1 here, users trying to download file whereas
@@ -79,7 +85,7 @@ deny_access_files_uploaded = 1
 # Verbosity of log (only messages >= level will be displayed)
 # can be one of (in order):
 # lowest, flood, info, normal, high, critical
-loglevel = lowest
+#loglevel = lowest
 
 # TLS Options
 # Certificate (only used in ssl mode, otherwise ignored)
@@ -120,10 +126,10 @@ login_pre_ip_check = 0
 # YOU CAN ONLY USE WILDCARDS ON LINES BEGINNING BY -
 #
 # WARNING: to match all ip ending by 0.1 you MUST write *.*.0.1, NOT *.0.1
-#login_pre_ip_allowed = +pollux.no-ip.org
-#login_pre_ip_allowed = -pollux
+#login_pre_ip_allowed = +xxx.xxx.org
+#login_pre_ip_allowed = -xxx
 login_pre_ip_allowed = +localhost
-#login_pre_ip_allowed = +pollux
+#login_pre_ip_allowed = +xxx
 login_pre_ip_allowed = -*.cpe.fr
 #login_pre_ip_denied = *
 
@@ -147,7 +153,7 @@ module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
 ##### SECTIONS
 # sections are used to define local server properties
 # order *IS* important (first matching section is taken)
-section = ALL /*
+section = ALL /* ^([][A-Za-z0-9_.'() \t-])*$
 
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands
@@ -170,11 +176,14 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically
-# syntax: cronjob = interval command
-# interval is an integer (minimum 3) in seconds
+# syntax: cronjob = minute hour day_of_month month day_of_week command
+# each field is an integer, of *
+# syntax is similar to *nix 'crontab' command (man 5 crontab), except
+#  ranges are not supported (for now)
 # command should be an absolute path (with args if needed)
 # NOTE: if command produce output, it will be logged with level LEVEL_INFO
-#cronjob = 6 /bin/df -h
+# the following command will be run the 2 of each month, at 05:00 am
+#cronjob = 5 * 2 * * /bin/cleanup.sh
 
 ##### CUSTOM MESSAGES
 # You can modify custom ftp replies here
@@ -201,12 +210,13 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 -site_chacl = =pollux
 -site_change = +O +G
 -site_checkperm = =pollux
--site_chgrp = -admin
+-site_chgrp = +O
 -site_chmod = =pollux
 -site_chown = =pollux
 -site_chpass = +O +G
 -site_chratio = +O +G
 -site_close = +O
+-site_color = !=guest *
 -site_delip = +O +G
 -site_deluser = +O +G
 -site_flags = -admin
@@ -217,7 +227,9 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 -site_grpaddip = +O
 -site_grpdel = +O
 -site_grpdelip = +O
+-site_grpkill = +O
 -site_grpratio = +O
+-site_grpren = +O
 -site_gsinfo = +O +G
 -site_help = *
 -site_idle = *

@@ -30,7 +30,7 @@ libwzd_la_SOURCES =  \
 	wzd_crontab.h	\
 	wzd_cookie_lex.l
 
-libwzd_la_LDFLAGS = -avoid-version -module
+libwzd_la_LDFLAGS = -avoid-version -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 
@@ -76,7 +76,7 @@ wzdftpd_SOURCES =    \
 	wzd_tls.h          \
 	wzd_init_lex.l
 
-wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ -lpthread -lfl @DL_FLAGS@
+wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ -lpthread @LEXLIB@ @DL_FLAGS@
 
 AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_BUILD_NUM=@BUILDNUM@ -DWZD_VERSION_NUM=\"@VERSION@\" -DWZD_MULTITHREAD -D_REENTRANT
 

@@ -170,8 +170,8 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   user.num_logins=0;
   for (i=0; i<HARD_IP_PER_USER; i++)
     user.ip_allowed[i][0]='\0';
-  user.bytes_ul_total=0;
-  user.bytes_dl_total=0;
+  user.stats.bytes_ul_total=0;
+  user.stats.bytes_dl_total=0;
   user.ratio = ratio;
   user.user_slots=0;
   user.leech_slots=0;

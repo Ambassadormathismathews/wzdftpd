@@ -239,23 +239,6 @@ extern wzd_context_t *	context_list;
 #include "wzd_site.h"
 #include "ls.h"
 
-#if 0
-/* Version */
-/*#define	WZD_VERSION_NUM	"0.1rc2"*/
-
-#ifdef WZD_MULTIPROCESS
-#define	WZD_MP	" mp "
-#else /* WZD_MULTIPROCESS */
-#define	WZD_MP	" up "
-#endif /* WZD_MULTIPROCESS */
-
-#ifdef __CYGWIN__
-#define	WZD_VERSION_STR	"wzdFTPd cygwin" WZD_MP WZD_VERSION_NUM
-#else /* __CYGWIN__ */
-#define	WZD_VERSION_STR	"wzdFTPd linux" WZD_MP WZD_VERSION_NUM
-#endif /* __CYGWIN__ */
-#endif
-
 #include "wzd_libmain.h"
 
 #endif /* __WZD__ */

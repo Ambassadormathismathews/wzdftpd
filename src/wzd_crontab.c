@@ -40,25 +40,148 @@
 struct wzd_cronjob_t {
   int (*fn)(void);
   char * command;
-  unsigned int interval;
-  time_t timestamp;
+  char minutes[32];
+  char hours[32];
+  char day_of_month[32];
+  char month[32];
+  char day_of_week[32];
+  time_t next_run;
   wzd_cronjob_t * next_cronjob;
 };
 
-int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command, unsigned int interval)
+time_t cronjob_find_next_exec_date(time_t start, 
+    char * minutes, char * hours, char * day_of_month,
+    char * month, char * day_of_week)
+{
+  time_t t = start;
+  struct tm * ltm;
+  int num_minutes, num_hours, num_day_of_month, num_month;
+
+  if (minutes[0]!='*')
+    num_minutes=strtol(minutes,NULL,10);
+  else
+    num_minutes = -1;
+  if (hours[0]!='*')
+    num_hours=strtol(hours,NULL,10);
+  else
+    num_hours = -1;
+  if (day_of_month[0]!='*')
+    num_day_of_month=strtol(day_of_month,NULL,10);
+  else
+    num_day_of_month = -1;
+  if (month[0]!='*') {
+    num_month=strtol(month,NULL,10);
+    num_month--; /* ltm->tm_mon is in [0,11] */
+  } else
+    num_month = -1;
+
+  ltm = localtime(&t);
+
+  if (num_month != -1 && num_month != ltm->tm_mon)
+  {
+    ltm->tm_sec=0;
+    if (num_minutes>0) ltm->tm_min = num_minutes;
+    else ltm->tm_min = 0;
+    if (num_hours>0) ltm->tm_hour = num_hours;
+    else ltm->tm_hour = 0;
+    if (num_day_of_month>0) ltm->tm_mday = num_day_of_month;
+    else ltm->tm_mday = 0;
+    ltm->tm_mon = num_month;
+    ltm->tm_year++;
+  }
+
+  /* here month = '*' */
+
+  else if (num_day_of_month != -1 && num_day_of_month != ltm->tm_mday)
+  {
+    ltm->tm_sec=0;
+    if (num_minutes>0) ltm->tm_min = num_minutes;
+    else ltm->tm_min = 0;
+    if (num_hours>0) ltm->tm_hour = num_hours;
+    else ltm->tm_hour = 0;
+    if (num_day_of_month>0) ltm->tm_mday = num_day_of_month;
+    else ltm->tm_mday = 0;
+    ltm->tm_mon++;
+  }
+
+  /* here month = '*' and day = '*' */
+
+  else if (num_hours != -1 && num_hours != ltm->tm_hour)
+  {
+    ltm->tm_sec=0;
+    if (num_minutes>0) ltm->tm_min = num_minutes;
+    else ltm->tm_min = 0;
+    if (num_hours>0) ltm->tm_hour = num_hours;
+    else ltm->tm_hour = 0;
+    ltm->tm_mday++;
+  }
+
+  /* here month = '*' and day = '*' and hour = '*' */
+
+  else if (num_minutes != -1 && num_minutes != ltm->tm_min)
+  {
+    ltm->tm_sec=0;
+    if (num_minutes>0) ltm->tm_min = num_minutes;
+    else ltm->tm_min = 0;
+    ltm->tm_hour++;
+  }
+  else {
+    /* all is '*' */
+    ltm->tm_min++;
+  }
+ 
+#if 0
+  if (ltm->tm_min > 59)
+  {
+    ltm->tm_min=0;
+    ltm->tm_hour++;
+  }
+  if (ltm->tm_hour > 23)
+  {
+    ltm->tm_hour = 0;
+    ltm->tm_mday++;
+  }
+  if (ltm->tm_mday > 31)
+  {
+    ltm->tm_mday = 1;
+    ltm->tm_mon++;
+  }
+  if (ltm->tm_mon > 11)
+  {
+    ltm->tm_mon = 0;
+    ltm->tm_year++;
+  }
+#endif
+
+  t = mktime(ltm);
+  return t;
+}
+
+int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
+    char * minutes, char * hours, char * day_of_month,
+    char * month, char * day_of_week)
 {
   wzd_cronjob_t * current = *crontab, *new;
+  time_t now;
 
   if (!fn && !command) return 1;
   if (fn && command) return 1;
-  if (interval <= 3) return 2;
 
   new = malloc(sizeof(wzd_cronjob_t));
   new->fn = fn;
   new->command = command?strdup(command):NULL;
-  new->interval = interval;
-  time(&new->timestamp);
+  strncpy(new->minutes,minutes,32);
+  strncpy(new->hours,hours,32);
+  strncpy(new->day_of_month,day_of_month,32);
+  strncpy(new->month,month,32);
+  strncpy(new->day_of_week,day_of_week,32);
+  time(&now);
+  new->next_run = cronjob_find_next_exec_date(now,minutes,hours,day_of_month,
+      month,day_of_week);
   new->next_cronjob = NULL;
+
+/*  out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
+  out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&new->next_run));*/
 
   if (current==NULL) { /* first insertion */
     *crontab = new;
@@ -78,7 +201,7 @@ int cronjob_run(wzd_cronjob_t ** crontab)
 
   time(&now);
   while (job) {
-    if ( (now-job->timestamp) >= job->interval )
+    if ( now >= job->next_run )
     {
       /* run job */
       if (job->fn) {
@@ -96,7 +219,8 @@ int cronjob_run(wzd_cronjob_t ** crontab)
 	}
 	pclose(command_output);
       }
-      job->timestamp = now;
+      job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
+	  job->day_of_month, job->month, job->day_of_week);
     }
     job = job->next_cronjob;
   }
@@ -116,7 +240,6 @@ void cronjob_free(wzd_cronjob_t ** crontab)
     if (current_job->command)
      free(current_job->command);
 #ifdef DEBUG
-    current_job->interval = 0;
     current_job->fn = NULL;
     current_job->next_cronjob = NULL;
 #endif /* DEBUG */

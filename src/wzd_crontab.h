@@ -28,7 +28,9 @@
 struct wzd_cronjob_t;
 typedef struct wzd_cronjob_t wzd_cronjob_t;
 
-int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command, unsigned int interval);
+int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
+    char * minutes, char * hours, char * day_of_month,
+    char * month, char * day_of_week);
 
 void cronjob_free(wzd_cronjob_t ** crontab);
 

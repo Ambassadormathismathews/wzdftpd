@@ -151,8 +151,14 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   char *ptr;
   char * groupname;
   int ret;
-  wzd_user_t *me;
+  wzd_user_t *me, *user;
   short is_gadmin;
+  int gid,i;
+  int users_maingroup_changed[HARD_DEF_USER_MAX];
+  int num_users_maingroup_changed=0;
+  int users_without_group[HARD_DEF_USER_MAX];
+  int num_users_without_group=0;
+  char buffer[256];
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -166,7 +172,7 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   /* TODO read backend */
 
   /* check if group already exists */
-  if ( !GetGroupIDByName(groupname) ) {
+  if ( !(gid=GetGroupIDByName(groupname)) ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -182,10 +188,101 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   /* FIXME backend name hardcoded */
   backend_mod_group("plaintext",groupname,NULL,_GROUP_ALL);
 
-  /* TODO XXX FIXME iterate through user list and delete all references to group */
+  send_message_raw("200-\r\n",context);
+  /* iterate through user list and delete all references to group */
+  for (i=0; i<HARD_DEF_USER_MAX; i++)
+  {
+    user = GetUserByID(i);
+    if (user->username[0]=='\0') continue;
+    if (is_user_in_group(user,gid))
+    {
+      /* warn for users with no groups and / or primary group
+       * changed
+       */ 
+      if (user->groups[0] == gid) {
+	snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
+	send_message_raw(buffer,context);
+      }
+      group_remove_user(user,gid);
+      if (user->group_num == 0) {
+	snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
+	send_message_raw(buffer,context);
+      }
+    }
+  }
   /* TODO XXX FIXME delete users belonging only to this group ? */
 
-  ret = send_message_with_args(200,context,"Group deleted");
+  ret = send_message_raw("200 Group deleted\r\n",context);
+  return 0;
+}
+
+void do_site_help_grpren(wzd_context_t * context)
+{
+  send_message_with_args(501,context,"site grpren <groupname> <newgroupname>");
+}
+/** site grpren: rename group
+ *
+ * grpren oldname newname
+ */
+int do_site_grpren(char *command_line, wzd_context_t * context)
+{
+  char *ptr;
+  char * groupname, *newgroupname;
+  int ret;
+  wzd_user_t *me;
+  wzd_group_t group;
+  int gid;
+  unsigned int ratio;
+  short is_gadmin;
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+  ptr = command_line;
+  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  if (!groupname) {
+    do_site_help_grpren(context);
+    return 0;
+  }
+  newgroupname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!newgroupname) {
+    do_site_help_grpren(context);
+    return 0;
+  }
+
+  /* check if group exists */
+  if ( (gid=GetGroupIDByName(groupname))==0 ) {
+    ret = send_message_with_args(501,context,"Group does not exist");
+    return 0;
+  }
+  if ( backend_find_group(gid, &group, NULL) ) {
+    ret = send_message_with_args(501,context,"Error getting group info");
+    return 0;
+  }
+
+  /* check if group exists */
+  if ( (GetGroupIDByName(newgroupname))!=0 ) {
+    ret = send_message_with_args(501,context,"New group already exists");
+    return 0;
+  }
+
+  if (is_gadmin)
+  {
+    ret = send_message_with_args(501,context,"GAdmins can't do that !");
+    return 0;
+  }
+
+  strcpy(group.groupname,newgroupname);
+
+  /* add it to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_group("plaintext",groupname,&group,_GROUP_GROUPNAME);
+
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem changing value");
+  } else {
+    ret = send_message_with_args(200,context,"Group name changed");
+  }
   return 0;
 }
 
@@ -505,6 +602,55 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
   } else {
     ret = send_message_with_args(200,context,"Group ratio changed");
   }
+  return 0;
+}
+
+/** site grpkill: kill all connections from a group
+ *
+ * grpkill group
+ */
+int do_site_grpkill(char *command_line, wzd_context_t * context)
+{
+  char * ptr;
+  char * groupname;
+  int ret;
+  wzd_group_t group;
+  int i,found;
+  wzd_user_t * user, * me;
+  int gid;
+  wzd_context_t user_context;
+
+  me = GetUserByID(context->userid);
+  ptr = command_line;
+  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  if (!groupname) {
+    do_site_help("grpkill",context);
+    return 0;
+  }
+  /* check if group exists */
+  if ( (gid=GetGroupIDByName(groupname))==0 ) {
+    ret = send_message_with_args(501,context,"Group does not exist");
+    return 0;
+  }
+  if ( backend_find_group(gid, &group, NULL) ) {
+    ret = send_message_with_args(501,context,"Error getting group info");
+    return 0;
+  }
+
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC) {
+      user = GetUserByID(context_list[i].userid);
+      if (strcmp(me->username,user->username) && is_user_in_group(user,gid)) {
+	found=1;
+	kill_child(context_list[i].pid_child,context);
+      }
+    }
+  }
+
+  if (!found) { ret = send_message_with_args(501,context,"No member found !"); }
+  else { ret = send_message_with_args(200,context,"KILL signal sent"); }
+
   return 0;
 }
 

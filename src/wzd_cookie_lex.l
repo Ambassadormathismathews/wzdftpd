@@ -81,6 +81,7 @@ typedef enum {
   COOKIE_GROUPMAXIDLE,
   COOKIE_GROUPMAXUL,
   COOKIE_GROUPNAME,
+  COOKIE_GROUPNUM_LOGINS,
   COOKIE_GROUPRATIO,
   COOKIE_GROUPTOTAL_DL,
   COOKIE_GROUPTOTAL_DL2,
@@ -242,6 +243,7 @@ C_USER		([0-9]+".")?"user"
 <sc_cook>{C_GROUP}maxidle	BEGIN(INITIAL); return COOKIE_GROUPMAXIDLE;
 <sc_cook>{C_GROUP}maxul		BEGIN(INITIAL); return COOKIE_GROUPMAXUL;
 <sc_cook>{C_GROUP}name		BEGIN(INITIAL); return COOKIE_GROUPNAME;
+<sc_cook>{C_GROUP}num_logins	BEGIN(INITIAL); return COOKIE_GROUPNUM_LOGINS;
 <sc_cook>{C_GROUP}ratio		BEGIN(INITIAL); return COOKIE_GROUPRATIO;
 <sc_cook>{C_GROUP}total_dl2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL2;
 <sc_cook>{C_GROUP}total_dl	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL;
@@ -559,6 +561,17 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
+    case COOKIE_GROUPNUM_LOGINS:
+      get_cookie_format(yytext,&padding);
+      if (current_group)
+      {
+	snprintf(internalbuffer,IBUFSIZE,"%d",current_group->num_logins);
+      }
+      else
+	snprintf(internalbuffer,IBUFSIZE,"groupnum_logins");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_GROUPRATIO:
       get_cookie_format(yytext,&padding);
       if (current_group)
@@ -590,7 +603,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	  if (!loop_user) continue;
 	  if (is_user_in_group(loop_user,gid)==1)
 	  {
-	    total += loop_user->bytes_dl_total;
+	    total += loop_user->stats.bytes_dl_total;
 	  }
 	}
 	if (convert) {
@@ -623,7 +636,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	  if (!loop_user) continue;
 	  if (is_user_in_group(loop_user,gid)==1)
 	  {
-	    total += loop_user->bytes_ul_total;
+	    total += loop_user->stats.bytes_ul_total;
 	  }
 	}
 	if (convert) {
@@ -667,7 +680,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
     case COOKIE_USERFILES_DL:
       get_cookie_format(yytext,&padding);
       if (current_user)
-	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->files_dl_total);
+	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_dl_total);
       else
 	snprintf(internalbuffer,IBUFSIZE,"userfiles_dl");
       cookie_ptr = internalbuffer;
@@ -676,7 +689,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
     case COOKIE_USERFILES_UL:
       get_cookie_format(yytext,&padding);
       if (current_user)
-	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->files_ul_total);
+	snprintf(internalbuffer,IBUFSIZE,"%lu",current_user->stats.files_ul_total);
       else
 	snprintf(internalbuffer,IBUFSIZE,"userfiles_ul");
       cookie_ptr = internalbuffer;
@@ -946,7 +959,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	total = current_user->bytes_dl_total;
+	total = current_user->stats.bytes_dl_total;
 	if (convert) {
 	  val = (float)total;
 	  bytes_to_unit(&val,&c);
@@ -966,7 +979,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-	total = current_user->bytes_ul_total;
+	total = current_user->stats.bytes_ul_total;
 	if (convert) {
 	  val = (float)total;
 	  bytes_to_unit(&val,&c);

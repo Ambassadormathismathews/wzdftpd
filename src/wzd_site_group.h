@@ -27,6 +27,7 @@
 
 int do_site_grpadd(char *command_line, wzd_context_t * context);
 int do_site_grpdel(char *command_line, wzd_context_t * context);
+int do_site_grpren(char *command_line, wzd_context_t * context);
 
 int do_site_ginfo(char *command_line, wzd_context_t * context);
 int do_site_gsinfo(char *command_line, wzd_context_t * context);
@@ -35,6 +36,8 @@ int do_site_grpaddip(char *command_line, wzd_context_t * context);
 int do_site_grpdelip(char *command_line, wzd_context_t * context);
 
 int do_site_grpratio(char *command_line, wzd_context_t * context);
+
+int do_site_grpkill(char *command_line, wzd_context_t * context);
 
 #if 0
 int do_site_kick(char *command_line, wzd_context_t * context);

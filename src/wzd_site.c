@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <utime.h>
 #include <fcntl.h>
+#include <dirent.h> /* opendir, readdir, closedir */
 
 /* speed up compilation */
 #define SSL     void
@@ -155,6 +156,10 @@ void do_site_help(const char *site_command, wzd_context_t * context)
   if (strcasecmp(site_command,"chpass")==0) {
     send_message_raw("501-change the password of a user\r\n",context);
     send_message_raw("501-site chpass user new_pass\r\n",context);
+  } else
+  if (strcasecmp(site_command,"grpkill")==0) {
+    send_message_raw("501-kill all connected users from a group\r\n",context);
+    send_message_raw("501-site grpkill groupname\r\n",context);
   } else
   if (strcasecmp(site_command,"user")==0) {
     send_message_raw("501-show user info\r\n",context);
@@ -811,6 +816,57 @@ int do_site_version(char * ignored, wzd_context_t * context)
   return 0;
 }
 
+int do_internal_wipe(const char *filename, wzd_context_t * context)
+{
+  struct stat s;
+  int ret;
+  DIR * dir;
+  struct dirent * entry;
+  char buffer[1024];
+  char path[1024];
+  char * ptr;
+
+  split_filename(filename,path,NULL,1024,0);
+
+  if (stat(filename,&s)) return -1;
+  
+  if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+    ret = file_remove(filename,context);
+    if (ret) return 1;
+  }
+  if (S_ISDIR(s.st_mode))
+  {
+    strcpy(buffer,filename);
+    ptr = buffer + strlen(buffer);
+    *ptr++ = '/';
+    dir = opendir(filename);
+
+    while ( (entry=readdir(dir)) )
+    {
+      if (strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0)
+	continue;
+      if (strlen(buffer)+strlen(entry->d_name)>=1024) return 1;
+      strncpy(ptr,entry->d_name,256);
+
+      if (stat(buffer,&s)) return -1;
+      if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+	ret = file_remove(buffer,context);
+	if (ret) return 1;
+      }
+      if (S_ISDIR(s.st_mode)) {
+	ret = do_internal_wipe(buffer,context);
+	if (ret) return 1;
+      }
+    }
+
+    closedir(dir);
+    ret = rmdir(filename);
+    if (ret) return 1;
+  }
+
+  return 0;
+}
+
 /********************* do_site_wipe ************************/
 /** wipe: [-r] file1 [file2 ...]
  */
@@ -849,20 +905,10 @@ int do_site_wipe(char *command_line, wzd_context_t * context)
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
     /* TODO XXX FIXME wipe file | if_recursive dir/file */
-    if (stat(buffer,&s)) {
-      ret = send_message_with_args(501,context,"File does not exist");
+    ret = do_internal_wipe(buffer,context);
+    if (ret) {
+      ret = send_message_with_args(501,context,"WIPE failed");
       return 1;
-    }
-    if (!is_recursive && S_ISDIR(s.st_mode)) {
-      ret = send_message_with_args(501,context,"Use -r to wipe dirs");
-      return 1;
-    }
-    if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
-      ret = file_remove(buffer,context);
-      if (ret) {
-	ret = send_message_with_args(501,context,"WIPE failed");
-	return 1;
-      }
     }
   }
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) );
@@ -953,7 +999,9 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"GRPADDIP",&do_site_grpaddip)) return 1;
   if (site_command_add(&config->site_list,"GRPDEL",&do_site_grpdel)) return 1;
   if (site_command_add(&config->site_list,"GRPDELIP",&do_site_grpdelip)) return 1;
+  if (site_command_add(&config->site_list,"GRPKILL",&do_site_grpkill)) return 1;
   if (site_command_add(&config->site_list,"GRPRATIO",&do_site_grpratio)) return 1;
+  if (site_command_add(&config->site_list,"GRPREN",&do_site_grpren)) return 1;
   if (site_command_add(&config->site_list,"GSINFO",&do_site_gsinfo)) return 1;
   if (site_command_add(&config->site_list,"IDLE",&do_site_idle)) return 1;
   if (site_command_add(&config->site_list,"INVITE",&do_site_invite)) return 1;

@@ -61,6 +61,8 @@
 #define	TOK_RNTO	31
 #define	TOK_APPE	32
 
+#define	TOK_EPSV	33
+
 #define	TOK_NOTHING	64
 
 typedef struct {

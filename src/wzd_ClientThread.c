@@ -141,6 +141,8 @@ int identify_token(const char *token)
     return TOK_RNTO;
   if (strcasecmp("ABOR",token)==0)
     return TOK_ABOR;
+  if (strcasecmp("EPSV",token)==0)
+    return TOK_EPSV;
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
@@ -242,6 +244,7 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
 
 unsigned char * getmyip(int sock)
 {
+#if !defined(IPV6_SUPPORT)
   static unsigned char myip[4];
   struct sockaddr_in sa;
   unsigned int size;
@@ -256,6 +259,22 @@ unsigned char * getmyip(int sock)
   }
 
   return myip;
+#else /* IPV6_SUPPORT */
+  static unsigned char myip[16];
+  struct sockaddr_in6 sa6;
+  unsigned int size;
+
+  size = sizeof(struct sockaddr_in6);
+  memset(myip,0,sizeof(myip));
+  if (getsockname(sock,(struct sockaddr *)&sa6,&size)!=-1)
+  {
+    memcpy(myip,&sa6.sin6_addr,sizeof(myip));
+  } else { /* failed, using localhost */
+    exit (1);
+  }
+
+  return myip;
+#endif /* IPV6_SUPPORT */
 }
 
 /***************** client_die ************************/
@@ -289,8 +308,11 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   context->magic = 0;
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
-  socket_close(context->datafd);
+  if (context->datafd >= 0)
+    socket_close(context->datafd);
+  context->datafd = -1;
   socket_close(context->controlfd);
+  context->controlfd = -1;
 }
 
 /*************** check_timeout ***********************/
@@ -494,7 +516,7 @@ int waitaccept(wzd_context_t * context)
   fd_set fds;
   struct timeval tv;
   int sock;
-  unsigned long remote_host;
+  unsigned char remote_host[16];
   unsigned int remote_port;
   int ret;
 
@@ -512,7 +534,7 @@ int waitaccept(wzd_context_t * context)
     }
   } while (!FD_ISSET(sock,&fds));
 
-  sock = socket_accept(context->pasvsock, &remote_host, &remote_port);
+  sock = socket_accept(context->pasvsock, remote_host, &remote_port);
   if (sock == -1) {
     socket_close(sock);
     send_message_with_args(501,context,"PASV timeout");
@@ -649,7 +671,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  if (context->pasvsock <= 0 && context->dataport == 0)
+  if (context->pasvsock < 0 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return 1;
@@ -738,7 +760,7 @@ printf("path: '%s'\n",path);
     return 1;
   }
 
-  if (context->pasvsock <= 0) { /* PORT ! */
+  if (context->pasvsock < 0) { /* PORT ! */
     sock = waitconnect(context);
     if (sock < 0) {
       return 1;
@@ -846,7 +868,7 @@ int do_mkdir(char *param, wzd_context_t * context)
     wzd_section_t * section;
     strcpy(path,buffer);
     ptr = strrchr(path,'/');
-    if (ptr) {
+    if (ptr && ptr!=&path[0]) {
       *ptr='\0';
       section = section_find(mainConfig->section_list,path);
       if (section && !section_check_filter(section,ptr+1))
@@ -952,21 +974,22 @@ void do_pasv(wzd_context_t * context)
   unsigned int size,port;
   struct sockaddr_in sai;
   unsigned char *myip;
-  unsigned char pasv_bind_ip[4];
+  unsigned char pasv_bind_ip[16];
+  int offset=0;
 
   size = sizeof(struct sockaddr_in);
   port = mainConfig->pasv_low_range; /* use pasv range min */
 
   /* close existing pasv connections */
-  if (context->pasvsock > 0) {
+  if (context->pasvsock >= 0) {
     socket_close(context->pasvsock);
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
-    context->pasvsock = 0;
+    context->pasvsock = -1;
   }
 
   /* create socket */
   if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) < 0) {
-    context->pasvsock = 0;
+    context->pasvsock = -1;
     ret = send_message(425,context);
     return;
   }
@@ -974,16 +997,37 @@ void do_pasv(wzd_context_t * context)
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
-    memcpy(pasv_bind_ip,myip,4);
+#if defined(IPV6_SUPPORT)
+      if (IN6_IS_ADDR_V4MAPPED(myip))
+	memcpy(pasv_bind_ip,myip+12,4);
+      else
+#endif /* IPV6_SUPPORT */
+	memcpy(pasv_bind_ip,myip,4);
   } else {
+#if defined(IPV6_SUPPORT)
+    if (IN6_IS_ADDR_V4MAPPED(context->hostip))
+	offset = 12;
+#endif
     /* do NOT send pasv_ip if used from private network */
-    if (context->hostip[0]==10 ||
-      (context->hostip[0] == 172 && context->hostip[1] == 16) ||
-      (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
-      (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
-      memcpy(pasv_bind_ip,myip,4);
+    if (context->hostip[offset+0]==10 ||
+      (context->hostip[offset+0] == 172 && context->hostip[offset+1] == 16) ||
+      (context->hostip[offset+0] == 192 && context->hostip[offset+1] == 168 && context->hostip[offset+2] == 0) ||
+      (context->hostip[offset+0] == 127 && context->hostip[offset+1] == 0 && context->hostip[offset+2] == 0 && context->hostip[offset+3] == 1))
+    {
+#if defined(IPV6_SUPPORT)
+      if (IN6_IS_ADDR_V4MAPPED(myip))
+	memcpy(pasv_bind_ip,myip+12,4);
+      else
+#endif /* IPV6_SUPPORT */
+	memcpy(pasv_bind_ip,myip,4);
+    }
     else
-      memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
+#if defined(IPV6_SUPPORT)
+      if (IN6_IS_ADDR_V4MAPPED(mainConfig->pasv_ip))
+	memcpy(pasv_bind_ip,mainConfig->pasv_ip+12,4);
+      else
+#endif /* IPV6_SUPPORT */
+	memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
   }
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
@@ -1007,7 +1051,7 @@ void do_pasv(wzd_context_t * context)
 
   if (port >= 65536) {
     socket_close(context->pasvsock);
-    context->pasvsock = 0;
+    context->pasvsock = -1;
     ret = send_message(425,context);
     return;
   }
@@ -1015,7 +1059,7 @@ void do_pasv(wzd_context_t * context)
   if (listen(context->pasvsock,1)<0) {
     out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
     socket_close(context->pasvsock);
-    context->pasvsock = 0;
+    context->pasvsock = -1;
     ret = send_message(425,context);
     return;
   }
@@ -1023,6 +1067,139 @@ void do_pasv(wzd_context_t * context)
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
+  
+#if 0
+  if (mainConfig->pasv_ip[0] == 0) {
+    ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
+  } else {
+    /* do NOT send pasv_ip if used from private network */
+    if (context->hostip[0]==10 ||
+      (context->hostip[0] == 172 && context->hostip[1] == 16) ||
+      (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
+      (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
+      ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
+    else
+      ret = send_message_with_args(227,context,mainConfig->pasv_ip[0], mainConfig->pasv_ip[1],
+	mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
+  }
+#endif
+}
+
+/*************** do_epsv *****************************/
+void do_epsv(wzd_context_t * context)
+{
+  int ret;
+  unsigned long addr;
+  unsigned int size,port;
+  struct sockaddr_in sai;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 sai6;
+#endif
+  unsigned char *myip;
+  unsigned char pasv_bind_ip[4];
+
+#if !defined(IPV6_SUPPORT)
+  size = sizeof(struct sockaddr_in);
+#else
+  size = sizeof(struct sockaddr_in6);
+#endif
+  port = mainConfig->pasv_low_range; /* use pasv range min */
+
+  /* close existing pasv connections */
+  if (context->pasvsock >= 0) {
+    socket_close(context->pasvsock);
+/*    port = context->pasvsock+1; *//* FIXME force change of socket */
+    context->pasvsock = -1;
+  }
+
+  /* create socket */
+#if !defined(IPV6_SUPPORT)
+  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+#else
+  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) < 0) {
+#endif
+    context->pasvsock = -1;
+    ret = send_message(425,context);
+    return;
+  }
+
+  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+
+  if (mainConfig->pasv_ip[0] == 0) {
+    memcpy(pasv_bind_ip,myip,4);
+  } else {
+    /* do NOT send pasv_ip if used from private network */
+    if (context->hostip[0]==10 ||
+      (context->hostip[0] == 172 && context->hostip[1] == 16) ||
+      (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
+      (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
+      memcpy(pasv_bind_ip,myip,4);
+    else
+      memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
+  }
+/*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
+      pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
+
+  while (port < mainConfig->pasv_high_range) { /* use pasv range max */
+#if !defined(IPV6_SUPPORT)
+    memset(&sai,0,size);
+
+    sai.sin_family = AF_INET;
+    sai.sin_port = htons(port);
+    /* XXX TODO FIXME bind to specific address works, but not for NAT */
+    /* XXX TODO FIXME always bind to 'myip' ?! */
+    addr = INADDR_ANY;
+/*    memcpy( (void*)&addr, pasv_bind_ip, sizeof(unsigned long));*/
+    
+    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
+
+    if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
+#else /* IPV6_SUPPORT */
+    memset(&sai6,0,size);
+
+    sai6.sin6_family = AF_INET6;
+    sai6.sin6_port = htons(port);
+    sai6.sin6_flowinfo = 0;
+    sai6.sin6_addr = in6addr_any;
+    /* XXX TODO FIXME bind to specific address works, but not for NAT */
+    /* XXX TODO FIXME always bind to 'myip' ?! */
+/*    addr = INADDR_ANY;*/
+    
+/*    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));*/
+
+    if (bind(context->pasvsock,(struct sockaddr *)&sai6,size)==0) break;
+
+#endif /* IPV6_SUPPORT */
+    port++; /* retry with next port */
+  }
+
+
+  if (port >= 65536) {
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+    ret = send_message(425,context);
+    return;
+  }
+
+  if (listen(context->pasvsock,1)<0) {
+    out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+    ret = send_message(425,context);
+    return;
+  }
+
+  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+
+#if !defined(IPV6_SUPPORT)
+  ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
+#else
+  {
+    char buf[256];
+    snprintf(buf,256,"227 Entering Passive Mode (|||%d|)\r\n",port);
+    ret = send_message_raw(buf,context);
+  }
+#endif
   
 #if 0
   if (mainConfig->pasv_ip[0] == 0) {
@@ -1061,7 +1238,7 @@ int do_retr(char *param, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock <= 0) && (context->dataport == 0)) {
+  if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
     return 1;
   }
@@ -1097,7 +1274,7 @@ int do_retr(char *param, wzd_context_t * context)
   bytestot = lseek(fd,0,SEEK_END);
   bytesnow = byteslast=context->resume;
 
-  if (context->pasvsock <= 0) { /* PORT ! */
+  if (context->pasvsock < 0) { /* PORT ! */
     /* IP-check needed (FXP ?!) */
     snprintf(cmd,2048,"%d.%d.%d.%d",
 	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
@@ -1158,7 +1335,7 @@ int do_retr(char *param, wzd_context_t * context)
   /* we increment the counter of downloaded files at the beggining
    * of the download
    */
-  user->files_dl_total++;
+  user->stats.files_dl_total++;
   return 0;
 }
 
@@ -1182,7 +1359,7 @@ int do_stor(char *param, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock <= 0) && (context->dataport == 0)) {
+  if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return 1;
   }
@@ -1245,7 +1422,7 @@ int do_stor(char *param, wzd_context_t * context)
     return 1;
   }
 
-  if (context->pasvsock <= 0) { /* PORT ! */
+  if (context->pasvsock < 0) { /* PORT ! */
     /* IP-check needed (FXP ?!) */
     snprintf(cmd,2048,"%d.%d.%d.%d",
 	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
@@ -1435,12 +1612,12 @@ int do_dele(char *param, wzd_context_t * context)
 	 owner->credits = 0;
      }
     }
-    if (owner->bytes_ul_total > file_size)
-      owner->bytes_ul_total -= file_size;
+    if (owner->stats.bytes_ul_total > file_size)
+      owner->stats.bytes_ul_total -= file_size;
     else
-      owner->bytes_ul_total = 0;
-    if (owner->files_ul_total)
-      owner->files_ul_total--;
+      owner->stats.bytes_ul_total = 0;
+    if (owner->stats.files_ul_total)
+      owner->stats.files_ul_total--;
   }
 
   if (!ret)
@@ -1554,41 +1731,42 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
  * 1 if user name is invalid or has been deleted
  * 2 if user has reached num_logins
  * 3 if site is closed and user is not a siteop
+ * 4 if user has reached group num_logins
  */
 int do_user(const char *username, wzd_context_t * context)
 {
   int ret;
-  wzd_user_t * user;
+  wzd_user_t * me;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
-    user = &context->userinfo;
+    me = &context->userinfo;
   } else
 #endif
-/*    user = GetUserByID(context->userid);*/
-    user = NULL;
+/*    me = GetUserByID(context->userid);*/
+    me = NULL;
 
-  ret = backend_validate_login(username,user,&context->userid);
+  ret = backend_validate_login(username,me,&context->userid);
   if (ret) return 1;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
-    user = &context->userinfo;
+    me = &context->userinfo;
   } else
 #endif
-  user = GetUserByID(context->userid);
+  me = GetUserByID(context->userid);
 
   /* check if user have been deleted */
-  if (user->flags && strchr(user->flags,FLAG_DELETED))
+  if (me->flags && strchr(me->flags,FLAG_DELETED))
     return 1;
 
   /* check if site is closed */
   if (mainConfig->site_closed &&
-      !(user->flags && strchr(user->flags,FLAG_SITEOP)))
+      !(me->flags && strchr(me->flags,FLAG_SITEOP)))
     return 3;
 
   /* count logins from user */
-  if (user->num_logins)
+  if (me->num_logins)
   {
     int count=0;
     int i;
@@ -1607,8 +1785,35 @@ int do_user(const char *username, wzd_context_t * context)
 
     out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);
 
-    if (count >= user->num_logins) return 2;
+    if (count >= me->num_logins) return 2;
     /* >= and not ==, because it two attempts are issued simultaneously, count > num_logins ! */
+  }
+
+  /* foreach group of user, check num_logins */
+  {
+    int i,j;
+      wzd_group_t * group;
+    wzd_user_t * user;
+    unsigned int num_logins[HARD_DEF_GROUP_MAX];
+    memset(num_logins,0,HARD_DEF_GROUP_MAX*sizeof(int));
+    /* try to do it in one pass only */
+    for (i=0; i<HARD_USERLIMIT; i++)
+    {
+      if (context_list[i].magic == CONTEXT_MAGIC) {
+	user = GetUserByID(context_list[i].userid);
+	for (j=0; j<user->group_num; j++)
+	  num_logins[ user->groups[j] ]++;
+      }
+    }
+    /* checks num_logins for all groups */
+    for (i=0; i<me->group_num; i++)
+    {
+      group = GetGroupByID( me->groups[i] );
+      if (group && group->num_logins
+	  && (num_logins[me->groups[i]]>group->num_logins))
+	  /* > and not >= because current login attempt is counted ! */
+	return 4; /* user has reached group max num_logins */
+    }
   }
   
   return 0;
@@ -1618,7 +1823,7 @@ int do_user(const char *username, wzd_context_t * context)
 
 int do_user_ip(const char *username, wzd_context_t * context)
 {
-  char ip[30];
+  char ip[INET6_ADDRSTRLEN];
   const unsigned char *userip = context->hostip;
   wzd_user_t * user;
   wzd_group_t *group;
@@ -1631,7 +1836,11 @@ int do_user_ip(const char *username, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
+#if !defined(IPV6_SUPPORT)
+  inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
+#else
+  inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
+#endif
   if (user_ip_inlist(user,ip)==1)
     return 0;
   
@@ -1745,16 +1954,18 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	return 1;
       }
       ret = do_user(token,context);
-      if (ret==1) { /* user was not accepted */
+      switch (ret) {
+      case 1: /* user was not accepted */
 	ret = send_message_with_args(421,context,"User rejected");
 	return 1;
-      }
-      if (ret==2) { /* too many logins */
+      case 2: /* too many logins */
 	ret = send_message_with_args(421,context,"Too many connections with your login");
 	return 1;
-      }
-      if (ret==3) { /* site closed */
+      case 3: /* site closed */
 	ret = send_message_with_args(421,context,"Site is closed, try again later");
+	return 1;
+      case 4: /* too many logins for group */
+	ret = send_message_with_args(421,context,"Too many connections for your group");
 	return 1;
       }
       /* validate ip for user */
@@ -1956,6 +2167,13 @@ void * clientThreadProc(void *arg)
   context->idle_time_start = time(NULL);
 
   while (!exitclient) {
+#if DEBUG
+    if (!context->magic == CONTEXT_MAGIC || sockfd != context->controlfd)
+    {
+      out_err(LEVEL_CRITICAL,"Omar m'a tuer !\n");
+      out_err(LEVEL_CRITICAL,"sock %d\n",sockfd);
+    }
+#endif /* DEBUG */
     save_errno = 666;
     /* trying to find if bzero is faster than memset */
 /*    bzero(buffer,BUFFER_LEN);*/
@@ -1966,6 +2184,14 @@ void * clientThreadProc(void *arg)
     FD_ZERO(&fds_w);
     FD_ZERO(&efds);
     /* set control fd */
+#ifdef DEBUG
+    if (sockfd<0) {
+      fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
+	  sockfd,__FILE__,__LINE__);
+      exitclient=1;
+      break;
+    }
+#endif
     FD_SET(sockfd,&fds_r);
     FD_SET(sockfd,&efds);
     /* set data fd */
@@ -1979,7 +2205,7 @@ void * clientThreadProc(void *arg)
     if (ret==-1) {
      if (errno == EINTR) continue;
       else {
-        out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));
+        out_log(LEVEL_CRITICAL,"Major error during recv: control fd %d errno %d error %s\n",sockfd,save_errno,strerror(save_errno));
         exitclient = 1;
       }
     }
@@ -2087,7 +2313,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	  case TOK_PORT:
 	    if (context->pasvsock) {
 	      socket_close(context->pasvsock);
-	      context->pasvsock = 0;
+	      context->pasvsock = -1;
 	    }
 	    /* context->resume = 0; */
 	    token = strtok_r(NULL,"\r\n",&ptr);
@@ -2104,6 +2330,9 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    break;
 	  case TOK_PASV:
 	    do_pasv(context);
+	    break;
+	  case TOK_EPSV:
+	    do_epsv(context);
 	    break;
 	  case TOK_PWD:
 	    context->resume = 0;
@@ -2301,7 +2530,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    context->pid_child = 0;*/
 	    if (context->pasvsock) {
 	      socket_close(context->pasvsock);
-	      context->pasvsock=0;
+	      context->pasvsock=-1;
 	    }
 	    if (context->current_action.current_file) {
 	      out_xferlog(context, 0 /* incomplete */);
