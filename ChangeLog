@@ -1,3 +1,11 @@
+2005-04-02 Jose Antonio Oliveira <javsmo@users.sourceforge.net>
+
+	* bugfix:  Include a link to ActiveState on Installer (Closes: #0030)
+	* feature: The installer now uses only the files from distribution users.sample and wzd.cfg.sample.in
+	* feature: Inclusion of five Icons on Visual C++ project.
+	* feature: Correction of icons on Start Menu
+	* feature: Installer custom bitmaps replaces default bitmaps of NSIS
+	
 2005-03-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: mkd command crashes the server if user doesn't have RIGHT_MKDIR (Closes: #0031)
