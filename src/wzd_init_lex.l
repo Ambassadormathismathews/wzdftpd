@@ -56,6 +56,7 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_perm.h"
+#include "wzd_crc32.h"
 #include "wzd_crontab.h"
 #include "wzd_section.h"
 #include "wzd_ServerThread.h"

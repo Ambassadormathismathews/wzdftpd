@@ -1,6 +1,7 @@
 2004-03-22  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* cookies: filecrc (uploaded\downloaded file crc)
+	* bugfix: some cookies not working because of wrong context pointer
 
 2004-03-21  Pierre Chifflier  <pollux@wzdftpd.net>
 

@@ -386,6 +386,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   cookie_include_stack_ptr++;
   yy_switch_to_buffer(yy_scan_string(buffer));
 
+  current_context = context;
   current_user = user;
   current_group = group;
 
