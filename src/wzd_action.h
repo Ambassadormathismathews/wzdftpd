@@ -27,6 +27,7 @@
 
 typedef enum {
   TOK_UNKNOWN=0,
+  TOK_HELP,
   TOK_USER,
   TOK_PASS,
   TOK_AUTH,

@@ -151,6 +151,7 @@ int commands_add_defaults(void)
   if (commands_add("xcrc",do_xcrc,NULL,TOK_XCRC)) return -1;
   if (commands_add("xmd5",do_xmd5,NULL,TOK_XMD5)) return -1;
   if (commands_add("opts",do_opts,NULL,TOK_OPTS)) return -1;
+  if (commands_add("help",do_help,NULL,TOK_HELP)) return -1;
   if (commands_add("quit",do_quit,NULL,TOK_QUIT)) return -1;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (commands_add("prot",do_prot,NULL,TOK_PROT)) return -1;

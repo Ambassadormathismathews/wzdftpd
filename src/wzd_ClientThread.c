@@ -104,6 +104,7 @@ int identify_token(char *token)
   /* TODO order the following by probability order */
   if (length <= 4) {
     switch ( STRTOINT(token[0],token[1],token[2],token[3]) ) {
+      case STRTOINT('h','e','l','p'): return TOK_HELP;
       case STRTOINT('u','s','e','r'): return TOK_USER;
       case STRTOINT('p','a','s','s'): return TOK_PASS;
       case STRTOINT('a','u','t','h'): return TOK_AUTH;
@@ -3115,6 +3116,15 @@ int do_user(const char *username, wzd_context_t * context)
   return E_OK;
 }
 
+/*************** do_help *****************************/
+int do_help(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+{
+  /* TODO maybe add HELP SITE? */
+  send_message_with_args(214,context);
+
+  return E_OK;
+}
+  
 /*************** do_user_ip **************************/
 
 int do_user_ip(const char *username, wzd_context_t * context)

@@ -71,6 +71,11 @@ void init_default_messages(void)
   msg_tab[202] = strdup("Command not implemented.");
   msg_tab[211] = strdup("%s");
   msg_tab[213] = strdup("%s"); /* mdtm */
+  msg_tab[214] = strdup("The following commands can be used:\n"
+      "SITE TYPE PORT PASV EPRT EPSV ABOR PWD ALLO FEAT NOOP\n"
+      "SYST RNFR RNTO CWD LIST STAT MKD  RMD RETR STOR REST\n"
+      "MDTM SIZE DELE PRET XCRC XMD5 OPTS HELP QUIT\n"
+      "Help OK"); /* TODO sort */
   msg_tab[215] = strdup("UNIX Type: L8");
   msg_tab[220] = strdup("wzd server ready.");
   msg_tab[221] = strdup("Cya !");
