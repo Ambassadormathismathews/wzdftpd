@@ -23,6 +23,7 @@ AM_CONFIG_HEADER([config.h])
 
 dnl helper macros
 sinclude(ac-helpers/pgsql.m4)
+sinclude(ac-helpers/tcl.m4)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -94,6 +95,7 @@ AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
 
 WZD_LIB_PGSQL
+WZD_LIB_TCL
 
 # check for zlib (optional, used in module sfv)
 AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
@@ -262,8 +264,6 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 
-#HOSTOS=`uname -s`
-#if test x$HOSTOS = xCygwin; then
 if test x$CYGWIN = xyes; then
   echo "Patching libtool ! ..."
   sed -e 's/deplibs_check_method="file_magic \^x86 archive import|\^x86 DLL"/deplibs_check_method="file_magic ^x86 archive import|^x86 DLL|^x86 archive static"/' libtool > libtool2
