@@ -1615,7 +1615,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       {
         /* check FLAG_SITEOP for self */
         if (me && me->flags && strchr(me->flags,FLAG_SITEOP))
-          snprintf(internalbuffer,IBUFSIZE,"%ld",current_context->pid_child);
+          snprintf(internalbuffer,IBUFSIZE,"%lu",current_context->pid_child);
         else
           snprintf(internalbuffer,IBUFSIZE,"some id");
       }
