@@ -419,7 +419,7 @@ int check_timeout(wzd_context_t * context)
         if (hook->hook)
           ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
       END_FORALL_HOOKS
-      close(context->current_action.current_file);
+      file_close(context->current_action.current_file,context);
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;

@@ -1,4 +1,4 @@
-2004-05-16  Pierre Chifflier  <pollux@wzdftpd.net>
+2004-05-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new module: PERL
 	* configure.in: display summary of detected options at end of configure
@@ -6,6 +6,8 @@
 	* bugfix: allow OPTS command in login sequence to please lftp
 	* bugfix: memory leaks in TCL module
 	* bugfix: fixed compilation for linux when enabling UTF-8
+	* bugfix: TCL: if no arguments, $wzd_arg pointer is not initialized
+	* bugfix: windows installer: do not overwrite wzd.pem if existing
 
 2004-05-15  Pierre Chifflier  <pollux@wzdftpd.net>
 

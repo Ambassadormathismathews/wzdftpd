@@ -1,0 +1,5 @@
+LIBRARY LIBWZD_PERL
+
+EXPORTS
+	wzd_module_init
+	wzd_module_close

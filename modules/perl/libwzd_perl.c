@@ -157,17 +157,21 @@ void WZD_MODULE_CLOSE(void)
 
 static int perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
+  SV *val;
+
   if (strcasecmp(token,"perl")==0) {
     if (!my_perl) return 0;
     if (!args || strlen(args)==0) { do_perl_help(context); return 0; }
-      SV *val;
 
       if (_perl_set_slave(context)) return -1;
       
       /* exec string */
-      val = eval_pv(args, TRUE);
+      val = eval_pv(args, FALSE);
 
-      send_message_with_args(200,context,"PERL command ok");
+      if (SvTRUE(val))
+        send_message_with_args(200,context,"PERL command ok");
+      else
+        send_message_with_args(200,context,"PERL command reported errors");
   }
   return 0;
 }
@@ -386,6 +390,8 @@ static int _perl_set_slave(void *context)
   {
     if ( ! _slaves[i].is_allocated )
     {
+      PERL_SET_CONTEXT(my_perl);
+
       _slaves[i].is_allocated = 1;
       _slaves[i].context = context;
       _slaves[i].interp = perl_clone(my_perl,CLONEf_CLONE_HOST);
@@ -490,7 +496,10 @@ static XS(XS_wzd_send_message_raw)
 
   ret = send_message_raw(text,current_context);
 
-  (ret) ? XSRETURN_NO : XSRETURN_YES;
+  if (ret)
+    XSRETURN_YES;
+  else
+    XSRETURN_NO;
 }
 
 
@@ -522,7 +531,10 @@ static XS(XS_wzd_send_message)
   ret = send_message_raw(ptr,current_context);
   free(ptr);
 
-  (ret) ? XSRETURN_NO : XSRETURN_YES;
+  if (ret)
+    XSRETURN_YES;
+  else
+    XSRETURN_NO;
 }
 
 

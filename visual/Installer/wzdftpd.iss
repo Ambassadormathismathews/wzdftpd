@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040515
+AppVerName=wzdftpd 0.4cvs-20040518
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040515
+OutputBaseFilename=wzdftpd-0.4cvs-20040518
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -51,7 +51,7 @@ Source: ..\..\INSTALL; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\Permissions.ReadMeFirst; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\README; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\TLS.ReadmeFirst; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\src\wzd.pem; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\src\wzd.pem; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 
 Source: ..\wzd.cfg; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 
@@ -59,6 +59,7 @@ Source: ..\wzd.cfg; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 Source: ..\backends\plaintext\release\libwzd_plaintext.dll; DestDir: {app}\backends; Flags: ignoreversion
 Source: ..\users; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 
+Source: ..\modules\perl\release\libwzd_perl.dll; DestDir: {app}\modules; Flags: ignoreversion
 Source: ..\modules\sfv\release\libwzd_sfv.dll; DestDir: {app}\modules; Flags: ignoreversion
 Source: ..\modules\tcl\release\libwzd_tcl.dll; DestDir: {app}\modules; Flags: ignoreversion
 

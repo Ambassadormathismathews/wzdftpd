@@ -184,6 +184,10 @@ int socket_close(int sock)
    * shut the connection down nicely.
    */
   if (shutdown(sock, SD_SEND) == SOCKET_ERROR) {
+    /* Close the socket. */
+    if (closesocket(sock) == SOCKET_ERROR) {
+        return 1;
+    }
     return -1;
   }
   /* Receive any extra data still sitting on the socket.  After all
@@ -195,6 +199,10 @@ int socket_close(int sock)
   while (1) {
     nNewBytes = recv(sock, acReadBuffer, 256, 0);
     if (nNewBytes == SOCKET_ERROR) {
+      /* Close the socket. */
+      if (closesocket(sock) == SOCKET_ERROR) {
+          return 1;
+      }
       return 1;
     }
     else if (nNewBytes != 0) {

@@ -233,7 +233,10 @@ static int tcl_hook_protocol(const char *file, const char *args)
     Tcl_SetVar(slave,TCL_REPLY_CODE,buffer,TCL_GLOBAL_ONLY);
   }
   Tcl_SetVar(slave,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
-  Tcl_SetVar(slave,TCL_ARGS,args,TCL_GLOBAL_ONLY);
+  if (args)
+    Tcl_SetVar(slave,TCL_ARGS,args,TCL_GLOBAL_ONLY);
+  else
+    Tcl_SetVar(slave,TCL_ARGS,"",TCL_GLOBAL_ONLY);
   Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
 
   ret = Tcl_EvalFile(slave, file);

@@ -121,12 +121,21 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
 int vars_user_get(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_user_t * user;
+  wzd_group_t * group;
 
   if (!username || !varname) return 1;
 
   user = GetUserByName(username);
   if (!user) return 1;
 
+  if (strcasecmp(varname,"group")==0) {
+    if (user->group_num > 0) {
+      group = GetGroupByID(user->groups[0]);
+      snprintf(data,datalength,"%s",group->groupname);
+    } else
+      snprintf(data,datalength,"no group");
+    return 0;
+  }
   if (strcasecmp(varname,"home")==0) {
     snprintf(data,datalength,"%s",user->rootpath);
     return 0;

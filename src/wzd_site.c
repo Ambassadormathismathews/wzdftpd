@@ -1711,6 +1711,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
   int ret=0;
   site_fct_t fct;
   int catched = 0;
+  int first_reply;
   
   token = ptr = command_line;
   token = strtok_r(command_line," \t\r\n",&ptr);
@@ -1816,10 +1817,12 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
   }
 #endif /* WZD_MULTITHREAD */
 
+  first_reply = 1;
 
   FORALL_HOOKS(EVENT_SITE)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
     if (hook->hook) {
+      if (first_reply) { send_message_raw("200-\r\n",context); first_reply=0; }
       ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
       /** \todo implement and use constants: HANDLED, NEXT, ERROR or something like .. */
       if (ret == 0)
@@ -1828,7 +1831,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
     /* custom site commands */
     if (hook->opt && hook->external_command && strcasecmp(hook->opt,token)==0) {
       catched = 1;
-      send_message_raw("200-\r\n",context);
+      if (first_reply) { send_message_raw("200-\r\n",context); first_reply=0; }
       ret = hook_call_custom(context, hook, 200, command_line+strlen(token)+1);
       if (!ret) {
         ret = send_message_with_args(200,context,"SITE command ok");

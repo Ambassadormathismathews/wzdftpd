@@ -549,7 +549,7 @@ char * safe_vsnprintf(const char *format, va_list ap)
   result = vsnprintf(buffer, size, format, ap);
   if (result >= size)
   {
-    buffer = wzd_realloc(result+1, buffer);
+    buffer = wzd_realloc(buffer, result+1);
     result = vsnprintf(buffer, result+1, format, ap);
   }
 

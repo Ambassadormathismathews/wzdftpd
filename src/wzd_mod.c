@@ -494,6 +494,7 @@ int module_check(const char *filename)
 #ifndef _MSC_VER
   if ((error = dlerror()) != NULL)
 #else
+  error = "";
   if ( !ptr )
 #endif
   {
@@ -590,6 +591,7 @@ int module_load(wzd_module_t *module)
 #ifndef _MSC_VER
   if ((error = dlerror()) != NULL)
 #else
+  error = "";
   if ( !f_init )
 #endif
   {

@@ -69,23 +69,34 @@
 
 #define __S_ISTYPE(mode,mask) (((mode) & _S_IFMT) == (mask))
 
-#define S_ISDIR(mode) __S_ISTYPE((mode), _S_IFDIR)
-#define S_ISLNK(mode) 0
-#define S_ISREG(mode) __S_ISTYPE((mode), _S_IFREG)
+#ifndef S_ISDIR
+#   define S_ISDIR(mode) (__S_ISTYPE((mode), _S_IFDIR))
+#endif
+#ifndef S_ISDIR
+#   define S_ISDIR(mode) 
+#endif
+#ifndef S_ISLNK
+#   define S_ISLNK(mode) (0)
+#endif
+#ifndef S_ISREG
+#   define S_ISREG(mode) __S_ISTYPE((mode), _S_IFREG)
+#endif
 
 #define S_IREAD  _S_IREAD
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
-#define S_IRUSR S_IREAD
-#define S_IWUSR S_IWRITE
-#define S_IXUSR S_IEXEC
-#define S_IRGRP S_IREAD
-#define S_IWGRP S_IWRITE
-#define S_IXGRP S_IEXEC
-#define S_IROTH S_IREAD
-#define S_IWOTH S_IWRITE
-#define S_IXOTH S_IEXEC
+#ifndef S_IRGRP
+#   define S_IRUSR S_IREAD
+#   define S_IWUSR S_IWRITE
+#   define S_IXUSR S_IEXEC
+#   define S_IRGRP S_IREAD
+#   define S_IWGRP S_IWRITE
+#   define S_IXGRP S_IEXEC
+#   define S_IROTH S_IREAD
+#   define S_IWOTH S_IWRITE
+#   define S_IXOTH S_IEXEC
+#endif
 
 #define DIR_CONTINUE \
 	  { \
@@ -111,7 +122,9 @@
   } while (0)
 
 
-#define chmod	_chmod
+#ifndef chmod
+#  define chmod	_chmod
+#endif
 
 #define dlopen(filename,dummy)	LoadLibrary(filename)
 #define dlclose(handle)			FreeLibrary(handle)
@@ -121,14 +134,20 @@
 #define getcwd	_getcwd
 
 /* FIXME this will surely have some effects ... */
-#define fstat _fstati64
-#define lstat	_stati64
-#define stat  _stati64
+#ifndef stat
+#   define fstat _fstati64
+#   define lstat	_stati64
+#   define stat  _stati64
+#endif
 
-#define mkdir(filename,mode)	_mkdir(filename)
-#define closedir	FindClose
+#ifndef mkdir
+#   define mkdir(filename,mode)	_mkdir(filename)
+#   define closedir	FindClose
+#endif
 
-#define open	_open
+#ifndef open
+#  define open	_open
+#endif
 
 #define popen	_popen
 #define pclose	_pclose
