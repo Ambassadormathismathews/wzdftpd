@@ -942,6 +942,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"CHPASS",&do_site_chpass)) return 1;
   if (site_command_add(&config->site_list,"CHRATIO",&do_site_chratio)) return 1;
   /* do_site_close ? */
+  if (site_command_add(&config->site_list,"COLOR",&do_site_color)) return 1;
   if (site_command_add(&config->site_list,"DELIP",&do_site_delip)) return 1;
   if (site_command_add(&config->site_list,"DELUSER",&do_site_deluser)) return 1;
   if (site_command_add(&config->site_list,"FLAGS",&do_site_flags)) return 1;

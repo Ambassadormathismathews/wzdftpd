@@ -569,6 +569,44 @@ int do_site_delip(char *command_line, wzd_context_t * context)
   return 0;
 }
 
+
+/** site color: toggle color user (for self only)
+ *
+ * change color
+ */
+int do_site_color(char *command_line, wzd_context_t * context)
+{
+  wzd_user_t * me;
+  char * src_ptr, *dst_ptr;
+  char new_flags[MAX_FLAGS_NUM];
+  int i, found, ret;
+
+  me = GetUserByID(context->userid);
+  
+  found=0;
+  src_ptr = me->flags;
+  dst_ptr = new_flags;
+  for (i=0; *src_ptr && i<MAX_FLAGS_NUM; i++,src_ptr++,dst_ptr++)
+  {
+    if ( *src_ptr==FLAG_COLOR) { found=1; continue; }
+    *dst_ptr = *src_ptr;
+  }
+  if (!found) {
+    *dst_ptr++ = FLAG_COLOR;
+    *dst_ptr='\0';
+    memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
+    ret = backend_mod_user("plaintext",me->username,me,_USER_FLAGS);
+    ret = send_message_with_args(200,context,"color mode ON");
+  } else {
+    *dst_ptr='\0';
+    memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
+    ret = backend_mod_user("plaintext",me->username,me,_USER_FLAGS);
+    ret = send_message_with_args(200,context,"color mode OFF");
+  }
+  return 0;
+}
+
+
 void do_site_help_change(wzd_context_t * context)
 {
   send_message_raw("501-site change <user> <field> <value>\r\n",context);

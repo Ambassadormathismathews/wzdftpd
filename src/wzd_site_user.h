@@ -35,6 +35,8 @@ int do_site_kill(char *command_line, wzd_context_t * context);
 int do_site_addip(char *command_line, wzd_context_t * context);
 int do_site_delip(char *command_line, wzd_context_t * context);
 
+int do_site_color(char *command_line, wzd_context_t * context);
+
 int do_site_chgrp(char *command_line, wzd_context_t * context);
 int do_site_chratio(char *command_line, wzd_context_t * context);
 int do_site_give(char *command_line, wzd_context_t * context);
