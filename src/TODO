@@ -1,24 +1,36 @@
 ## IN PROGRESS ##
 
+
+'********'
+- give back slots to GAdmins if deleting user
+'********'
+- site close (temporarily close server for maintainance)
 '********'
 - implement recursive chown/chmod
 '********'
 - implement group flags
-'********'
-- rnfr/rnto: perms seems to be not checked in destination dir ?!
 '********'
 - implement hooks to external programs
 '********'
 - stats on ul/dl
 '********'
 
+
+'********'
+current objectives:
+
+* ratios
+* per user/group vfs
+* dupecheck
+* quotas
+
+'********'
+
 - avoid sending multiples "250-" to be rfc-compliant (message file + answer)
 
-- one of the first external site commands should be 'site free'
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
 - SFV: site rescan
-- SFV: check file if upload interrupted (ABOR, or connection closed)
 - per dir global permissions (to pass over rootpath)
 - VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
 - use options in ls

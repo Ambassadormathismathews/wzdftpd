@@ -1,3 +1,51 @@
+#--- cvs commit TAG: rel-0-1rc3
+# Mar, 05 2003
+- new command: APPE (append with create)
+- site adduser: syntax changed, homedir is replaced by primary group
+- new directive default_home for groups, used when creating users to determine
+  home dir
+- site purge: without arguments, iterate users to purge all deleted users.
+- fields user_slots, leech_slots added to wzd_user_t struct
+- GAdmins: site adduser/deluser/purge/chpass/readd/addip/delip/change
+  commands can be run by GAdmins, only for users from their main group
+- sitebot: commands modified to be contained in namespace, to avoid conflicts
+  with other scripts
+- sitewho: hide arguments from SITE commands
+- server can use another config file using the '-f filename' option
+- cookie: slots, leechslots: show gadmin slots (if gadmin !)
+- cookie: conditionnal cookie, using %if
+- site change: siteop can modify user_slots and leech_slots
+
+# Feb, 27 2003
+- huge change: winsock2 support, with tls (using a wrapper compiled with VC++,
+  due to incompatibilities between BSD and winsock sockets)
+- bugfix: idle time counter not reset at the end of dl/ul/list
+- bugfix: bytes_ul_total (dl) written as long int instead of unsigned long int
+- site invite (tells the sitebot to invite you)
+
+# Feb, 22 2003
+- tools now accept '-k key' argument, to work if server uses another key
+- sitebot configuration modified to use specific key
+
+# Feb, 15 2003
+- update speed in limiter_add function
+- fixed kindof memory leak (forgot to free permissions list at exit, not
+  really usefull as we are exiting, but it is better, isn't it ? :)
+- event POSTUPLOAD is send after an ABOR command, or a data connection timeout
+  this allow sfv script to mark file as bad
+- reduced verbosity level (even in debug mode), controlled with 'loglevel'
+  directive in config file
+- new target in Makefile: installdebug (same as install with debug version)
+- tools sitewho,siteuptime ported to cygwin (sem key still hardcoded)
+- sitebot development starts !
+- sitebot: new commands WHO, BNC, UPTIME, HELP, FREE
+- sitebot: reads log file and announce new lines (without formatting)
+- log format defined, to be compatible with glftpd
+- bugfix: again, cygwin does not set correctly variables after dlopen ... I'm
+  soon going to be bored by this damn os
+- big documentation effort (inline, and in documentation files)
+
+#--- cvs commit
 # Feb, 12 2003
 - timeout counter is reset only with a few commands
 - bugfix: checkpath denies access when homedir is /
