@@ -27,6 +27,9 @@ unsigned int wzd_server_uid;
 
 wzd_config_t * config;
 
+#ifndef __CYGWIN__
+char *time_to_str(time_t time); /* defined in wzd_misc.c */
+#else
 char *time_to_str(time_t time)
 { /* This support functionw as written by George Shearer (Dr_Delete) */
 
@@ -50,6 +53,7 @@ char *time_to_str(time_t time)
 
   return(workstr);
 }
+#endif
 
 void usage(const char *progname)
 {
