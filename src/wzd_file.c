@@ -296,16 +296,25 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_context_t *
 
   strncpy(dir,filename,BUFFER_LEN); 
 
-  if (stat(filename,&s)==-1) return -1; /* inexistant ? */
-  if (S_ISDIR(s.st_mode)) { /* isdir */
-    strcpy(stripped_filename,".");
-  } else { /* ! isdir */
+  if (stat(filename,&s)==-1) {
+    if (wanted_right != RIGHT_STOR)
+      return -1; /* inexistant ? */
     ptr = strrchr(dir,'/');
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
       *ptr = 0;
     }
-  } /* ! isdir */
+  } else {
+    if (S_ISDIR(s.st_mode)) { /* isdir */
+      strcpy(stripped_filename,".");
+    } else { /* ! isdir */
+      ptr = strrchr(dir,'/');
+      if (ptr) {
+        strcpy(stripped_filename,ptr+1);
+        *ptr = 0;
+      }
+    } /* ! isdir */
+  } /* stat == -1 */
 
   if (dir[strlen(dir)-1] != '/') {
     strcat(dir,"/");
@@ -401,7 +410,10 @@ FILE * file_open(const char *filename, const char *mode, unsigned long wanted_ri
   FILE *fp;
   int ret;
 
-  ret = _checkPerm(filename,RIGHT_RETR,context);
+  if (*mode == 'r')
+    ret = _checkPerm(filename,RIGHT_RETR,context);
+  else
+    ret = _checkPerm(filename,RIGHT_STOR,context);
   if (ret)
     return NULL;
   
