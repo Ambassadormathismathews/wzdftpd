@@ -31,7 +31,6 @@ libwzd_core_la_HEADERS = \
 	wzd_perm.h       \
 	wzd_section.h    \
 	wzd_shm.h        \
-	wzd_strtok_r.h   \
 	wzd_structs.h    \
 	wzd_types.h      \
 	wzd_utf8.h       \
@@ -62,7 +61,6 @@ libwzd_core_la_SOURCES = \
 	wzd_perm.c       \
 	wzd_section.c    \
 	wzd_shm.c        \
-	wzd_strtok_r.c   \
 	wzd_utf8.c       \
 	wzd_vars.c       \
 	wzd_vfs.c
