@@ -217,7 +217,7 @@ typedef size_t ssize_t;
 /*********************** VERSION **************************/
 
 /* Version */
-#define  WZD_VERSION_NUM "0.5.0 visual"
+#define  WZD_VERSION_NUM "0.5.1 visual"
 #define  WZD_BUILD_NUM __DATE__
 #define  WZD_BUILD_OPTS  "visual"
 

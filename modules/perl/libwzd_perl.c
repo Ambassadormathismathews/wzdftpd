@@ -156,10 +156,17 @@ int WZD_MODULE_INIT(void)
     if (chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0)
     {
       int fd;
+	  const char * filename;
 
       wzd_string_t *str = str_allocate();
       str_sprintf(str,"%s/%s", logdir, PERL_ERRORLOGNAME);
-      fd = open(str_tochar(str),O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
+	  filename = str_tochar(str);
+#ifndef WIN32
+      fd = open(filename,O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
+#else
+	  /* activeperl redefines open(), and this causes a segfault here ! */
+      fd = _open(filename,O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
+#endif
       if (fd >= 0) {
         perl_fd_errlog = fd;
         ret = 0;
