@@ -608,14 +608,17 @@ char * safe_vsnprintf(const char *format, va_list ap)
   /** vsnprintf modifies its last argument on some archs, we have to
    * work on a copy of the va_list
    */
-  va_copy(ap2,ap);
+/*  va_copy(ap2,ap);*/
+  /** (autoconf.info)Function Portability: better use memcpy than va_copy
+   */
+  memcpy (&ap2,&ap, sizeof(va_list));
 
   result = vsnprintf(buffer, size, format, ap2);
   if (result >= size)
   {
     buffer = wzd_realloc(buffer, result+1);
     va_end(ap2);
-    va_copy(ap2,ap);
+    memcpy (&ap2,&ap, sizeof(va_list));
     result = vsnprintf(buffer, result+1, format, ap2);
   }
   va_end(ap2);
