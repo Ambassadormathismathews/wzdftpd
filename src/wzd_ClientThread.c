@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
@@ -31,6 +55,7 @@
 #include "wzd_messages.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
+#include "wzd_ratio.h"
 #include "wzd_site.h"
 #include "wzd_socket.h"
 #include "wzd_tls.h"
@@ -95,7 +120,7 @@ int identify_token(const char *token)
     return TOK_DELE;
   if (strcasecmp("ABOR",token)==0)
     return TOK_ABOR;
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (strcasecmp("PBSZ",token)==0)
     return TOK_PBSZ;
   if (strcasecmp("PROT",token)==0)
@@ -491,7 +516,7 @@ int waitaccept(wzd_context_t * context)
       return -1;
   }
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_init_datamode(sock, context);
 #endif
@@ -559,7 +584,7 @@ int waitconnect(wzd_context_t * context)
       return -1;
   }
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_init_datamode(sock, context);
 #endif
@@ -594,7 +619,7 @@ int list_callback(int sock, wzd_context_t * context, char *line)
     }
   } while (!FD_ISSET(sock,&fds));
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (context->ssl.data_mode == TLS_CLEAR)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
@@ -745,11 +770,14 @@ printf("path: '%s'\n",path);
   if (strlen(mask)==0) strcpy(mask,"*");
 
   if (list(sock,context,listtype,path,mask,list_callback))
-    ret = send_message(226,context);
+  {
+    ret = send_message(-226,context); /* - means ftp reply will continue */
+    write_message_footer(226,context);
+  }
   else
     ret = send_message_with_args(501,context,"Error processing list");
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
@@ -943,7 +971,7 @@ void do_pasv(wzd_context_t * context)
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
 
-  while (port < mainConfig->pasv_up_range) { /* use pasv range max */
+  while (port < mainConfig->pasv_high_range) { /* use pasv range max */
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
@@ -1034,6 +1062,12 @@ int do_retr(char *param, wzd_context_t * context)
   if (is_perm_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
     return 1;
+  }
+
+  /* check user ratio */
+  if (ratio_check_download(path,context)) {
+    ret = send_message_with_args(501,context,"Insufficient credits - Upload first");
+    return 0;
   }
 
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
@@ -1445,9 +1479,10 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
 }
 
 /*************** do_user *****************************/
-/* returns 0 if ok
+/** returns 0 if ok
  * 1 if user name is invalid or has been deleted
  * 2 if user has reached num_logins
+ * 3 if site is closed and user is not a siteop
  */
 int do_user(const char *username, wzd_context_t * context)
 {
@@ -1475,6 +1510,11 @@ int do_user(const char *username, wzd_context_t * context)
   /* check if user have been deleted */
   if (user->flags && strchr(user->flags,FLAG_DELETED))
     return 1;
+
+  /* check if site is closed */
+  if (mainConfig->site_closed &&
+      !(user->flags && strchr(user->flags,FLAG_SITEOP)))
+    return 3;
 
   /* count logins from user */
   if (user->num_logins)
@@ -1535,12 +1575,10 @@ int do_user_ip(const char *username, wzd_context_t * context)
 }
 
 /*************** check_tls_forced ********************/
-/* check_tls_forced
- * check if tls connection must be enforced for user
+/** check if tls connection must be enforced for user
  * return 0 if user is in tls mode or is not forced to user
  *        1 if user should be in tls but is not
  */
-
 int check_tls_forced(wzd_context_t * context)
 {
   wzd_user_t * user;
@@ -1581,16 +1619,18 @@ int do_login_loop(wzd_context_t * context)
   char buffer[BUFFER_LEN];
   char * ptr;
   char * token;
-  char * username=0;
+  char username[HARD_USERNAME_LENGTH];
   int ret;
   int user_ok=0, pass_ok=0;
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   int tls_ok=0;
 #endif
   int command;
 
+  *username = '\0';
+
   while (1) {
-    /** wait response **/
+    /* wait response */
     ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
@@ -1611,7 +1651,7 @@ int do_login_loop(wzd_context_t * context)
       int length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
 	buffer[length-- -1] = '\0';
-      strncpy(context->last_command,buffer,2048);
+      strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
     }
 
 #ifdef DEBUG
@@ -1629,6 +1669,10 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	return 1;
       }
       token = strtok_r(NULL," \t\r\n",&ptr);
+      if (!token) {
+	ret = send_message_with_args(421,context,"Give me a user name !");
+	return 1;
+      }
       ret = do_user(token,context);
       if (ret==1) { /* user was not accepted */
 	ret = send_message_with_args(421,context,"User rejected");
@@ -1638,13 +1682,17 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	ret = send_message_with_args(421,context,"Too many connections with your login");
 	return 1;
       }
+      if (ret==3) { /* site closed */
+	ret = send_message_with_args(421,context,"Site is closed, try again later");
+	return 1;
+      }
       /* validate ip for user */
       ret = do_user_ip(token,context);
       if (ret) { /* user was not accepted */
 	ret = send_message_with_args(421,context,"IP not allowed");
 	return 1;
       }
-      username = strdup(token);
+      strncpy(username,token,HARD_USERNAME_LENGTH-1);
       ret = send_message_with_args(331,context,username);
       user_ok = 1;
       break;
@@ -1654,13 +1702,17 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	return 1;
       }
       token = strtok_r(NULL," \t\r\n",&ptr);
+      if (!token) {
+	ret = send_message_with_args(421,context,"Give me a password !");
+	return 1;
+      }
       ret = do_pass(username,token,context);
       if (ret) { /* pass was not accepted */
 	ret = send_message_with_args(421,context,"Password rejected");
 	return 1;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
       if (mainConfig->tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
 	ret = send_message_with_args(421,context,"TLS session MUST be engaged");
 	return 1;
@@ -1673,7 +1725,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
       }
       return 0; /* user + pass ok */
       break;
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
     case TOK_AUTH:
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token || token[0]==0) {
@@ -1820,6 +1872,8 @@ void * clientThreadProc(void *arg)
     typedef int (*login_hook)(unsigned long, const char*);
     if (hook->hook)
       ret = (*(login_hook)hook->hook)(EVENT_LOGIN,user->username);
+    if (hook->external_command)
+      ret = hook_call_external(hook,user->username);
   END_FORALL_HOOKS
   ret = send_message(230,context);
 
@@ -1905,7 +1959,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
       int length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
 	buffer[length-- -1] = '\0';
-      strncpy(context->last_command,buffer,2048);
+      strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
     }
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
@@ -2053,6 +2107,8 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
                 typedef int (*mkdir_hook)(unsigned long, const char*);
                 if (hook->hook)
 	          ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,token);
+		if (hook->external_command)
+		  ret = hook_call_external(hook,token);
               END_FORALL_HOOKS
 
 	      ret = send_message_with_args(257,context,token,"created");
@@ -2075,6 +2131,8 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
                 typedef int (*rmdir_hook)(unsigned long, const char*);
                 if (hook->hook)
 	          ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
+		if (hook->external_command)
+		  ret = hook_call_external(hook,token);
               END_FORALL_HOOKS
 	      ret = send_message_with_args(258,context,buffer2,"");
 	    }
@@ -2202,7 +2260,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    }
 	    ret = send_message(226,context);
 	    break;
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
 	  case TOK_PROT:
 	    /* TODO if user is NOT in TLS mode, insult him */
 	    token = strtok_r(NULL,"\r\n",&ptr);
@@ -2222,7 +2280,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    do_site(token,context); /* do_site send message ! */
 	    break;
 	  case TOK_FEAT:
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
 	    ret = send_message_with_args(211,context,"AUTH TLS\n PBSZ\n PROT\n MDTM\n SIZE\n SITE\n REST");
 #else
 	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST");
@@ -2254,7 +2312,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
       client_die(context);
 #endif /* WZD_MULTITHREAD */
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
       tls_free(context);
 #endif
       return NULL;
