@@ -40,6 +40,7 @@ CREATE TABLE users (
   rootpath TINYTEXT NOT NULL,
   uid int(10) unsigned NOT NULL,
   flags varchar(32) default NULL,
+  max_idle_time int(10) unsigned NOT NULL,
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
@@ -53,10 +54,10 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
-INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
 --
 -- Table structure for table `UGR` (User-Group Relations)

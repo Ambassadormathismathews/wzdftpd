@@ -36,46 +36,19 @@
 #endif
 
 #include <wzd_backend.h>
+#include <wzd_md5.h>
+#include <wzd_md5crypt.h>
 #include <wzd_debug.h>
 
-enum {
-  UCOL_REF=0,
-  UCOL_USERNAME,
-  UCOL_USERPASS,
-  UCOL_ROOTPATH,
-  UCOL_UID,
-  UCOL_FLAGS,
-  UCOL_MAX_UL_SPEED,
-  UCOL_MAX_DL_SPEED,
-  UCOL_NUM_LOGINS,
-  UCOL_RATIO,
-  UCOL_USER_SLOTS,
-  UCOL_LEECH_SLOTS,
-  UCOL_LAST_LOGIN,
-};
-
-enum {
-  GCOL_REF=0,
-  GCOL_GROUPNAME,
-  GCOL_GID,
-};
-
-enum {
-  UIPCOL_REF=0,
-  UIPCOL_IP,
-};
+#include "libmysql.h"
 
 
 
-static MYSQL mysql;
+MYSQL mysql;
 static char *db_user, *db_passwd, *db_hostname, *db;
 
-static void wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
 /*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
 static int wzd_parse_arg(char *arg);
-
-/* basic syntax checking to avoid injections */
-static int wzd_mysql_check_name(const char *name);
 
 /* get mysql value, in a more robust way than just a copy
  * return 0 if ok, non-zero otherwise (ex: value is NULL)
@@ -91,7 +64,7 @@ static int * wzd_mysql_get_group_list(void);
 
 
 
-static void wzd_mysql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
+void _wzd_mysql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
 {
   fprintf(stderr, "%s(%s):%d %s\n", filename, func_name, line, mysql_error(&mysql));
 }
@@ -133,7 +106,7 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
   mysql_init(&mysql);
 
   if (!mysql_real_connect(&mysql, db_hostname, db_user, db_passwd, db, 0, NULL, 0)) {
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     mysql_close(&mysql);
     return -1;
   }
@@ -157,7 +130,7 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
   free(query);
@@ -173,7 +146,7 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     int num_fields;
 
     if (!(res = mysql_store_result(&mysql))) {
-      wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
       return -1;
     }
 
@@ -205,6 +178,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
   char *query;
   char * cipher;
   int uid;
+  char buffer[128];
 
   if (!wzd_mysql_check_name(login)) return -1;
 
@@ -213,7 +187,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
 
@@ -230,7 +204,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     char stored_pass[MAX_PASS_LENGTH];
 
     if (!(res = mysql_store_result(&mysql))) {
-      wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
       return -1;
     }
 
@@ -259,12 +233,19 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     mysql_free_result(res);
 
     if (strlen(stored_pass) == 0)
-      return uid;	// passworldless login
-    /** NO ! The 'anything' pass is '%' ! */
+    {
+      fprintf(stderr,"WARNING: empty password field whould not be allowed !\n");
+      fprintf(stderr,"WARNING: you should run: UPDATE users SET userpass='%%s' WHERE userpass=NULL\n");
+      return uid; /* passworldless login */
+    }
 
-    cipher = (char*)crypt(pass, stored_pass);
+    if (strcmp(stored_pass,"%")==0)
+      return uid; /* passworldless login */
 
-    if (!strcasecmp(cipher,stored_pass))
+    cipher = (char*)md5_hash_r(pass, buffer, sizeof(buffer));
+    if (!cipher) return -1;
+
+    if (strncasecmp(cipher,stored_pass,32))
       return -1;
 
   } /* else // user does not exist in table
@@ -286,7 +267,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
 
@@ -301,7 +282,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
     int num_fields;
 
     if (!(res = mysql_store_result(&mysql))) {
-      wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
       return -1;
     }
 
@@ -334,17 +315,6 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
   // XXX: forgot about it while  wzd_group_t->gid is not implemented
 
   return 0;
-}
-
-int FCN_CHPASS(const char *username, const char *new_pass)
-{
-  return 1;
-}
-
-/* if user does not exist, add it */
-int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
-{
-  return 1;
 }
 
 int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
@@ -384,13 +354,13 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
   if (!(res = mysql_store_result(&mysql))) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
@@ -418,6 +388,7 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, row, UCOL_USERPASS);
   wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, UCOL_ROOTPATH);
   wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, UCOL_FLAGS);
+  wzd_row_get_uint((unsigned int*)&user->max_idle_time, row, UCOL_MAX_IDLE_TIME);
   wzd_row_get_ulong(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);
   wzd_row_get_ulong(&user->max_dl_speed, row, UCOL_MAX_DL_SPEED);
   if (wzd_row_get_uint(&i, row, UCOL_NUM_LOGINS)==0) user->num_logins = i;
@@ -434,12 +405,12 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
   if (!(res = mysql_store_result(&mysql))) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
 
@@ -462,12 +433,12 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
   if (!(res = mysql_store_result(&mysql))) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
 
@@ -509,13 +480,13 @@ wzd_group_t * FCN_GET_GROUP(int gid)
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
   free(query);
 
   if (!(res = mysql_store_result(&mysql))) {
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
@@ -552,7 +523,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
 
 
 /* basic syntax checking to avoid injections */
-static int wzd_mysql_check_name(const char *name)
+int wzd_mysql_check_name(const char *name)
 {
   if (strpbrk(name,"'\";"))
     return 0;
@@ -633,24 +604,25 @@ static int * wzd_mysql_get_user_list(void)
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
   if (!(res = mysql_store_result(&mysql))) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
-  uid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+  uid_list = (int*)wzd_malloc((HARD_DEF_USER_MAX+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
     wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
     uid_list[index++] = (int)i;
   }
-
+  uid_list[index] = -1;
+  uid_list[HARD_DEF_USER_MAX] = -1;
 
   mysql_free_result(res);
   free(query);
@@ -671,23 +643,25 @@ static int * wzd_mysql_get_group_list(void)
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
   if (!(res = mysql_store_result(&mysql))) {
     free(query);
-    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
   }
 
-  gid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+  gid_list = (int*)wzd_malloc((HARD_DEF_GROUP_MAX+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
     wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
     gid_list[index++] = (int)i;
   }
+  gid_list[index] = -1;
+  gid_list[HARD_DEF_GROUP_MAX] = -1;
 
 
   mysql_free_result(res);
