@@ -11,6 +11,7 @@ wzd_include_dir="@includedir@/@PACKAGE@"
 lib_dir="@libdir@"
 
 ssl_flags="@WZD_SSL_LIBS@"
+ssl_cflags="@WZD_SSL_INCLUDES@"
 
 usage()
 {
@@ -91,9 +92,9 @@ if test "$echo_exec_prefix" = "yes"; then
 fi
 
 if test "$include_dir" != "/usr/include"; then
-    cflags="-I$include_dir -I$wzd_include_dir"
+    cflags="-I$include_dir -I$wzd_include_dir $ssl_cflags"
 else
-    cflags="-I$wzd_include_dir"
+    cflags="-I$wzd_include_dir $ssl_cflags"
 fi
 
 if test "$lib_dir" != "/usr/lib"; then
