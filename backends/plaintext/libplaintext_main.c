@@ -52,14 +52,17 @@
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(plaintext);
-BACKEND_VERSION(125);
+BACKEND_VERSION(126);
+
+#define	HARD_DEF_USER_MAX	64
+#define	HARD_DEF_GROUP_MAX	64
 
 static char USERS_FILE[256]="/etc/wzdftpd/users";
 
-static wzd_user_t * user_pool;
+static wzd_user_t * user_pool=NULL;
 static unsigned int user_count, user_count_max=0;
 
-static wzd_group_t * group_pool;
+static wzd_group_t * group_pool=NULL;
 static unsigned int group_count, group_count_max=0;
 
 static regex_t reg_line;
@@ -946,18 +949,17 @@ fprintf(stderr,"directive without section in line '%s'\n",line);
 }
 
 
-int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void *arg)
+int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
 {
   int ret;
 
-  /* storage is done in the main prog's memory */
-  *backend_storage = 0;
+  user_count_max = HARD_DEF_USER_MAX; /* XXX FIXME remove me */
+  group_count_max = HARD_DEF_GROUP_MAX; /* XXX FIXME remove me */
 
-  user_count_max = user_max;
-  group_count_max = group_max;
-
-  user_pool = user_list;
-  group_pool = group_list;
+  user_pool = wzd_malloc(user_count_max * sizeof(wzd_user_t));
+  if (!user_pool) return -1;
+  group_pool = wzd_malloc(group_count_max * sizeof(wzd_group_t));
+  if (!group_pool) { wzd_free(user_pool); return -1; }
 
   memset(user_pool,0,user_count_max*sizeof(wzd_user_t));
   memset(group_pool,0,group_count_max*sizeof(wzd_group_t));
@@ -972,6 +974,8 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
 int FCN_FINI(void)
 {
 /*  fprintf(stderr,"Backend plaintext unloading\n");*/
+  wzd_free(user_pool);
+  wzd_free(group_pool);
   return 0;
 }
 
@@ -1329,9 +1333,12 @@ int  FCN_COMMIT_CHANGES(void)
 
 wzd_user_t * FCN_GET_USER(int uid)
 {
+  int index;
+  wzd_user_t * user;
+
   if (uid == -2) {
     int * uid_list = NULL;
-    unsigned int i, index;
+    unsigned int i;
 
     uid_list = (int*)wzd_malloc((HARD_DEF_USER_MAX+1)*sizeof(int));
     i = index = 0;
@@ -1346,16 +1353,28 @@ wzd_user_t * FCN_GET_USER(int uid)
     return (wzd_user_t*)uid_list;
   }
 
-  if (uid < 0 || uid >= (int)user_count_max) return NULL;
-  if (user_pool[uid].username[0] == '\0') return NULL;
-  return &user_pool[uid];
+  if (uid < 0) return NULL;
+
+  index =  _get_index_from_uid(uid);
+  if (index >= 0)
+  {
+    if (user_pool[index].username[0] == '\0') return NULL;
+    user = wzd_malloc(sizeof(wzd_user_t));
+    if (!user) return NULL;
+    memcpy(user, &user_pool[index], sizeof(wzd_user_t));
+    return user;
+  }
+  return NULL;
 }
 
 wzd_group_t * FCN_GET_GROUP(int gid)
 {
+  int index;
+  wzd_group_t * group;
+
   if (gid == -2) {
     int * gid_list = NULL;
-    unsigned int i, index;
+    unsigned int i;
 
     gid_list = (int*)wzd_malloc((HARD_DEF_GROUP_MAX+1)*sizeof(int));
     i = index = 0;
@@ -1370,7 +1389,16 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     return (wzd_group_t*)gid_list;
   }
 
-  if (gid < 0 || gid >= (int)group_count_max) return NULL;
-  if (group_pool[gid].groupname[0] == '\0') return NULL;
-  return &group_pool[gid];
+  if (gid < 0) return NULL;
+
+  index =  _get_index_from_gid(gid);
+  if (index >= 0)
+  {
+    if (group_pool[index].groupname[0] == '\0') return NULL;
+    group = wzd_malloc(sizeof(wzd_group_t));
+    if (!group) return NULL;
+    memcpy(group, &group_pool[index], sizeof(wzd_group_t));
+    return group;
+  }
+  return NULL;
 }

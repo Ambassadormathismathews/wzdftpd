@@ -99,17 +99,8 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
     return 0;
   }
 
+  /* backend will do that */
   /* check groups limit */
-  {
-    /* count groups */
-    unsigned int i=0;
-    while (i < HARD_DEF_GROUP_MAX && mainConfig->group_list[i].groupname[0] != '\0') i++;
-
-    if (i >= HARD_DEF_GROUP_MAX-1) { /* -1, because nogroup is counted */
-      ret = send_message_with_args(501,context,"Too many groups !");
-      return 0;
-    }
-  }
 
   /* Gadmin ? */
   if (is_gadmin)

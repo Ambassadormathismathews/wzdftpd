@@ -1001,8 +1001,6 @@ void server_crashed(int signum)
 int server_switch_to_config(wzd_config_t *config)
 {
   int fd;
-  int backend_storage;
-  unsigned int size_user, size_group;
   int ret;
 
   ret = config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads);
@@ -1072,12 +1070,9 @@ int server_switch_to_config(wzd_config_t *config)
 #endif
 
 
-  size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
-  size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
-
   context_list = wzd_malloc(sizeof(List));
-  config->user_list = wzd_malloc(size_user);
-  config->group_list = wzd_malloc(size_group);
+  config->user_list = NULL; /** \todo remove this line */
+  config->group_list = NULL; /** \todo remove this line */
 
 
   list_init(context_list, wzd_free);
@@ -1106,8 +1101,7 @@ int server_switch_to_config(wzd_config_t *config)
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     return -1;
   }
-  ret = backend_init(config->backend.name,&backend_storage,config->user_list,HARD_DEF_USER_MAX,
-      config->group_list,HARD_DEF_GROUP_MAX);
+  ret = backend_init(config->backend.name,0 /* max users */,0 /* max groups */);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (ret || config->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");

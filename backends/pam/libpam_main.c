@@ -43,12 +43,19 @@
 
 #include "wzd_backend.h"
 
+#define	HARD_DEF_USER_MAX	64
+#define	HARD_DEF_GROUP_MAX	64
 
 
 /* module notes:
  *
  * If you use shadow file, you need to be root !
  */
+
+/* IMPORTANT needed to check version */
+BACKEND_NAME(pam);
+BACKEND_VERSION(111);
+
 
 
 
@@ -106,7 +113,7 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 
 
 
-int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void *arg)
+int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
 {
   int uid;
   
@@ -118,9 +125,8 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
   }
 
   
-  *backend_storage = 1;
-  user_pool = malloc(user_max * sizeof(wzd_user_t));
-  memset(user_pool, 0, user_max * sizeof(wzd_user_t));
+  user_pool = malloc(HARD_DEF_USER_MAX * sizeof(wzd_user_t));
+  memset(user_pool, 0, HARD_DEF_USER_MAX * sizeof(wzd_user_t));
   _user_count = 0;
   _user_max = user_max;
 

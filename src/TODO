@@ -3,6 +3,13 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- change backend->name to be dynamic !
+'********'
+- BACKEND_STORAGE is now the default
+'********'
+- remove HARD_DEF_USER_MAX and HARD_DEF_GROUP_MAX from files // ok
+- change static arrays for linked lists in backends.
+'********'
 - src/wzd_tls.c & others: add config keyword for separate key file (certificates)
 '********'
 - use generic list definition when possible

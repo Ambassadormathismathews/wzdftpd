@@ -1,3 +1,9 @@
+004-12-13  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: removed server limitations for users/groups. The same has
+	to be done in backends to be fully effective.
+	* feature: removed backend_storage
+
 004-12-10  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: send_message functions rewritten to use safe strings

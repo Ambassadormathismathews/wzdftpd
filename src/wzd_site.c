@@ -274,8 +274,7 @@ int do_site_backend(char *command_line, wzd_context_t * context)
     return 0;
   } /* close */
   if (strcasecmp(command,"init")==0) {
-    int backend_storage;
-    ret = backend_init(name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,mainConfig->group_list,HARD_DEF_GROUP_MAX);
+    ret = backend_init(name,0 /* max users */,0 /* max groups */);
     if (ret) {
       ret = send_message_with_args(501,context,"Could not init backend");
     } else {

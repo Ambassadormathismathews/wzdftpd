@@ -1053,17 +1053,22 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       {
         int gid;
         wzd_user_t * loop_user;
+        int * uid_list;
         /* iterate through users and sum */
         gid = GetGroupIDByName(current_group->groupname);
         total = 0;
-        for (i=0; i<HARD_DEF_USER_MAX; i++)
-        {
-          loop_user = GetUserByID(i);
-          if (!loop_user) continue;
-          if (is_user_in_group(loop_user,gid)==1)
+        uid_list = (int*)backend_get_user(-2);
+        if (uid_list) {
+          for (i=0; uid_list[i] >= 0; i++)
           {
-            total += loop_user->stats.bytes_dl_total;
+            loop_user = GetUserByID(uid_list[i]);
+            if (!loop_user) continue;
+            if (is_user_in_group(loop_user,gid)==1)
+            {
+              total += loop_user->stats.bytes_dl_total;
+            }
           }
+          wzd_free(uid_list);
         }
         if (convert) {
 #ifndef _MSC_VER
@@ -1090,16 +1095,21 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       {
         int gid;
         wzd_user_t * loop_user;
+        int * uid_list;
         /* iterate through users and sum */
         gid = GetGroupIDByName(current_group->groupname);
         total = 0;
-        for (i=0; i<HARD_DEF_USER_MAX; i++)
-        {
-          loop_user = GetUserByID(i);
-          if (!loop_user) continue;
-          if (is_user_in_group(loop_user,gid)==1)
+        uid_list = (int*)backend_get_user(-2);
+        if (uid_list) {
+          for (i=0; uid_list[i] >= 0; i++)
           {
-            total += loop_user->stats.bytes_ul_total;
+            loop_user = GetUserByID(uid_list[i]);
+            if (!loop_user) continue;
+            if (is_user_in_group(loop_user,gid)==1)
+            {
+              total += loop_user->stats.bytes_ul_total;
+            }
+          wzd_free(uid_list);
           }
         }
         if (convert) {

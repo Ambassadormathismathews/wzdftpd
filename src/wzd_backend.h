@@ -95,7 +95,7 @@ typedef struct {
 #define	_GROUP_GID		1<<10
 #define _GROUP_ALL	0xffffffff
 
-/* int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void * arg) */
+/* int FCN_INIT(unsigned int user_max, unsigned int group_max, void * arg) */
 #define	FCN_INIT		wzd_init
 #define	STR_INIT		"wzd_init"
 
@@ -153,7 +153,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
  * \param group_list Memory zone to be filled dy group_data. Must be allocated
  * \param group_max Max number of group to store in group_list
  */
-int backend_init(const char *backend, int * backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max);
+int backend_init(const char *backend, unsigned int user_max, unsigned int group_max);
 
 int backend_close(const char *backend);
 

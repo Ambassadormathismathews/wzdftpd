@@ -48,7 +48,7 @@
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(mysql);
-BACKEND_VERSION(110);
+BACKEND_VERSION(111);
 
 
 MYSQL mysql;
@@ -100,13 +100,11 @@ static int wzd_parse_arg(char *arg)
 }
 
 
-int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void *arg)
+int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
 {
   if ((wzd_parse_arg((char *)arg)) != 0) {
     return -1;
   }
-
-  *backend_storage = 1;
 
   mysql_init(&mysql);
 
@@ -608,6 +606,7 @@ static int * wzd_mysql_get_user_list(void)
   MYSQL_ROW    row;
   int * uid_list;
   unsigned int index, i;
+  my_ulonglong num_rows;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT uid FROM users");
@@ -624,7 +623,10 @@ static int * wzd_mysql_get_user_list(void)
     return NULL;
   }
 
-  uid_list = (int*)wzd_malloc((HARD_DEF_USER_MAX+1)*sizeof(int));
+  /* number of rows */
+  num_rows = mysql_num_rows(res);
+
+  uid_list = (int*)wzd_malloc((num_rows+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
@@ -632,7 +634,7 @@ static int * wzd_mysql_get_user_list(void)
     uid_list[index++] = (int)i;
   }
   uid_list[index] = -1;
-  uid_list[HARD_DEF_USER_MAX] = -1;
+  uid_list[num_rows] = -1;
 
   mysql_free_result(res);
   free(query);
@@ -647,6 +649,7 @@ static int * wzd_mysql_get_group_list(void)
   MYSQL_ROW    row;
   int * gid_list;
   unsigned int index, i;
+  my_ulonglong num_rows;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT gid FROM groups");
@@ -663,7 +666,10 @@ static int * wzd_mysql_get_group_list(void)
     return NULL;
   }
 
-  gid_list = (int*)wzd_malloc((HARD_DEF_GROUP_MAX+1)*sizeof(int));
+  /* number of rows */
+  num_rows = mysql_num_rows(res);
+
+  gid_list = (int*)wzd_malloc((num_rows+1)*sizeof(int));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
@@ -671,7 +677,7 @@ static int * wzd_mysql_get_group_list(void)
     gid_list[index++] = (int)i;
   }
   gid_list[index] = -1;
-  gid_list[HARD_DEF_GROUP_MAX] = -1;
+  gid_list[num_rows] = -1;
 
 
   mysql_free_result(res);

@@ -254,7 +254,6 @@ typedef struct {
   char name[HARD_BACKEND_NAME_LENGTH];
   void * param;
   void * handle;
-  int backend_storage;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
   wzd_user_t * (*back_get_user)(int uid);
