@@ -389,8 +389,8 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   else if (strcmp(varname, "home")==0) {
     /* check if homedir exist */
     {
-      struct stat s;
-      if (stat(data,&s) || !S_ISDIR(s.st_mode)) {
+      struct statbuf s;
+      if (fs_stat(data,&s) || !S_ISDIR(s.st_mode)) {
         /* Homedir does not exist */
         return 1;
       }
@@ -495,8 +495,8 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
 
   /* check if homedir exist */
   {
-    struct stat s;
-    if (stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    struct statbuf s;
+    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
       return 3;
     }
   }
@@ -605,8 +605,8 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
   else if (strcmp(varname,"home")==0) {
     /* check if homedir exist */
     {
-      struct stat s;
-      if (stat(data,&s) || !S_ISDIR(s.st_mode)) {
+      struct statbuf s;
+      if (fs_stat(data,&s) || !S_ISDIR(s.st_mode)) {
         /* Homedir does not exist */
         return 2;
       }

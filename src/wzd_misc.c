@@ -343,10 +343,10 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
 /** internal fct, rename files by copying data */
 static int _int_rename(const char * src, const char *dst)
 {
-  struct stat s;
+  struct statbuf s;
   int ret;
 
-  if (lstat(src,&s)) return -1;
+  if (fs_lstat(src,&s)) return -1;
 
   if (S_ISDIR(s.st_mode)) {
     char buf_src[2048];
@@ -504,15 +504,15 @@ int is_perm_file(const char *filename)
 /** get file last change time */
 time_t get_file_ctime(const char *file)
 {
-  struct stat s;
-  if ( stat(file,&s) < 0 ) return (time_t)-1;
+  struct statbuf s;
+  if ( fs_stat(file,&s) < 0 ) return (time_t)-1;
   return s.st_ctime;
 }
 
 time_t lget_file_ctime(int fd)
 {
-  struct stat s;
-  if ( fstat(fd,&s) < 0 ) return (time_t)-1;
+  struct statbuf s;
+  if ( fs_fstat(fd,&s) < 0 ) return (time_t)-1;
   return s.st_ctime;
 }
 

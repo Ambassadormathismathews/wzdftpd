@@ -58,7 +58,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
 {
   wzd_user_t * me;
   u64_t credits;
-  struct stat s;
+  struct statbuf s;
   u64_t needed=0;
 
   me = GetUserByID(context->userid);
@@ -66,7 +66,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
   if (!me->ratio) return 0;
   credits = ratio_get_credits(me);
 
-  if (stat(path,&s)) {
+  if (fs_stat(path,&s)) {
     /* problem during stat() */
     return -1;
   }

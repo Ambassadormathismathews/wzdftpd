@@ -93,6 +93,8 @@ ACX_PTHREAD(,exit 1)
 
 AC_CHECK_FUNCS([crypt])
 
+WZD_STAT64
+
 AC_PATH_PROG(JW, jw, no)
 AC_SUBST(JW)
 AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")

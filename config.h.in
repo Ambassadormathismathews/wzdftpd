@@ -163,6 +163,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Is stat64 available? */
+#undef HAVE_STAT64
+
 /* Define to 1 if you have the `statfs' function. */
 #undef HAVE_STATFS
 
@@ -387,6 +390,9 @@
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
+
+/* Enable LFS */
+#undef _LARGEFILE64_SOURCE
 
 /* Define for large files, on AIX-style hosts. */
 #undef _LARGE_FILES

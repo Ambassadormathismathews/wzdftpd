@@ -975,8 +975,8 @@ int server_switch_to_config(wzd_config_t *config)
 
   /** \todo XXX FIXME open log dir */
   if (config->logdir) {
-    struct stat s;
-    if (stat(config->logdir,&s)) {
+    struct statbuf s;
+    if (fs_stat(config->logdir,&s)) {
       out_err(LEVEL_HIGH,"Could not open log dir (%s)\n", config->logdir);
       return 1;
     }

@@ -99,9 +99,9 @@ int fd_is_valid(int fd)
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   return 1;
 #else
-  static struct stat s;
+  static struct statbuf s;
 
-  if (fstat(fd,&s)<0) return 0;
+  if (fs_fstat(fd,&s)<0) return 0;
   return 1;
 #endif
 }

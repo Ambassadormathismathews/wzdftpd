@@ -486,7 +486,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 {
   int ret;
   char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH];
-  struct stat buf;
+  struct statbuf buf;
   wzd_user_t * user;
 
   user = GetUserByID(context->userid);
@@ -520,7 +520,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   }
 
 
-  if (!stat(path,&buf)) {
+  if (!fs_stat(path,&buf)) {
     if (S_ISDIR(buf.st_mode)) {
       char buffer[WZD_MAX_PATH], buffer2[WZD_MAX_PATH];
       if (wanted_path[0] == '/') { /* absolute path */
@@ -888,7 +888,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 {
   struct wzd_file_t * file_info;
   char *ptr;
-  struct stat s;
+  struct statbuf s;
   wzd_string_t *temp;
   const char *type;
 
@@ -898,7 +898,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
   if (!ptr) return -1;
   if (ptr+1 != '\0') ptr++;
 
-  if (stat(filename,&s)) return -1;
+  if (fs_stat(filename,&s)) return -1;
 
   temp = str_allocate();
 
@@ -1385,7 +1385,7 @@ label_error_mkdir:
 int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
-  struct stat s;
+  struct statbuf s;
   int ret;
   wzd_user_t * user;
   const char *param;
@@ -1416,7 +1416,7 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  if (lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
+  if (fs_lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
   if (!S_ISDIR(s.st_mode)) {
     ret = send_message_with_args(553,context,"not a directory");
     return E_NOTDIR;
@@ -1897,7 +1897,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int fd;
-  unsigned long bytestot, bytesnow, byteslast;
+  u64_t bytestot, bytesnow, byteslast;
   int sock;
   int ret;
   wzd_user_t * user;
@@ -2006,8 +2006,11 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   file_seek(fd,context->resume,SEEK_SET);
 
-  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%ld bytes)\n",
-    user->username,param,bytestot);
+#ifndef WIN32
+  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%llu bytes)\n", user->username,param,bytestot);
+#else
+  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%I64u bytes)\n", user->username,param,bytestot);
+#endif
 
   context->state = STATE_XFER;
   context->current_action.token = TOK_RETR;
@@ -2051,7 +2054,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
   int fd;
-  unsigned long bytesnow, byteslast;
+  u64_t bytesnow, byteslast;
   int sock;
   int ret;
   wzd_user_t * user;
@@ -2243,7 +2246,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], tm[32];
-  struct stat s;
+  struct statbuf s;
   int ret;
 
   if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
@@ -2261,7 +2264,7 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
       return E_FILE_FORBIDDEN;
     }
 
-    if (stat(path,&s)==0) {
+    if (fs_stat(path,&s)==0) {
       context->resume = 0L;
       strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
       ret = send_message_with_args(213,context,tm);
@@ -2277,7 +2280,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
-  struct stat s;
+  struct statbuf s;
   int ret;
 
   if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
@@ -2295,8 +2298,12 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     }
 
 
-    if (stat(path,&s)==0) {
-      snprintf(buffer,1024,"%ld",(long int)s.st_size);
+    if (fs_stat(path,&s)==0) {
+#ifndef WIN32
+      snprintf(buffer,1024,"%llu",(u64_t)s.st_size);
+#else
+      snprintf(buffer,1024,"%I64u",(u64_t)s.st_size);
+#endif
       ret = send_message_with_args(213,context,buffer);
       return E_OK;
     }
@@ -2415,7 +2422,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
-  struct stat s;
+  struct statbuf s;
   u64_t file_size;
   wzd_user_t * user, * owner;
 
@@ -2443,7 +2450,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  if (lstat(path,&s)) {
+  if (fs_lstat(path,&s)) {
     /* non-existent file ? */
     ret = send_message_with_args(501,context,"File does not exist");
     return E_FILE_NOEXIST;
@@ -2609,23 +2616,27 @@ int do_quit(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 int do_rest(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
-  unsigned long ul;
-  int i;
+  u64_t ull;
+  char *ptr;
 
   if (!arg) {
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
   }
-  ul=0;
-  i = sscanf(str_tochar(arg),"%lu",&ul);
-  if (i>0) {
-    char buf[256];
-    snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",ul);
-    ret = send_message_with_args(350,context,buf);
-    context->resume = ul;
-  } else {
+  ull = strtoull(str_tochar(arg), &ptr, 0);
+  if (ptr==str_tochar(arg) || *ptr!='\0')
+  {
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
+  } else {
+    char buf[256];
+#ifndef WIN32
+    snprintf(buf,256,"Restarting at %llu. Send STORE or RETRIEVE.",ull);
+#else
+    snprintf(buf,256,"Restarting at %I64u. Send STORE or RETRIEVE.",ull);
+#endif
+    ret = send_message_with_args(350,context,buf);
+    context->resume = ull;
   }
   return E_OK;
 }
@@ -2743,7 +2754,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char buffer[1024];
   const char * ptr;
   char * ptest;
-  struct stat s;
+  struct statbuf s;
   int ret;
   unsigned long crc = 0;
   unsigned long startpos = 0;
@@ -2802,7 +2813,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
 
 
-    if (stat(path,&s)==0) {
+    if (fs_stat(path,&s)==0) {
       ret = calc_crc32(path,&crc,startpos,length);
       snprintf(buffer,1024,"%lX\r\n",crc);
 /*      snprintf(buffer,1024,"%d %lX\r\n",250,crc);*/
@@ -2822,7 +2833,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char buffer[1024];
   const char * ptr;
   char * ptest;
-  struct stat s;
+  struct statbuf s;
   int ret;
   unsigned char crc[16];
   unsigned char md5str[33];
@@ -2886,7 +2897,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
 
 
-    if (stat(path,&s)==0) {
+    if (fs_stat(path,&s)==0) {
       ret = calc_md5(path,crc,startpos,length);
       for (i=0; i<16; i++)
         snprintf(md5str+i*2,3,"%02x",crc[i]);

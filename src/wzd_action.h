@@ -62,16 +62,16 @@ typedef enum {
   TOK_RNFR,
   TOK_RNTO,
   TOK_APPE,
-  
+
   TOK_EPSV,
   TOK_EPRT,
   TOK_PRET,
-  
+
   TOK_XCRC,
   TOK_XMD5,
-  
+
   TOK_OPTS,
-  
+
   TOK_MLST,
   TOK_MLSD,
 
@@ -131,7 +131,7 @@ typedef enum {
   TOK_SITE_VFSADD,
   TOK_SITE_VFSDEL,
   TOK_SITE_WIPE,
-  
+
   TOK_NOTHING=256,
 } wzd_token_t;
 

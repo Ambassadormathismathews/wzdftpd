@@ -109,8 +109,8 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
   char datestr[128];
   char * buffer_ptr;
   size_t length;
-  struct stat st;
   unsigned long watchdog=0;
+  struct statbuf st;
 
   if (!directory || strlen(directory)<1) return 0;
 
@@ -167,10 +167,10 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
         break;
     }
 
-    if (lstat(ptr_to_buffer,&st)) {
+    if (fs_lstat(ptr_to_buffer,&st)) {
       /* destination does not exist */
       out_log(LEVEL_FLOOD, "list: broken file %s -> %s\n", file->filename, ptr_to_buffer);
-      memset(&st, 0, sizeof(struct stat));
+      memset(&st, 0, sizeof(st));
       st.st_mode = S_IFREG;
     };
 
@@ -183,7 +183,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
       !S_ISREG(st.st_mode)) {
       /* destination does not exist */
       out_log(LEVEL_FLOOD, "list: strange file %s\n", file->filename);
-      memset(&st, 0, sizeof(struct stat));
+      memset(&st, 0, sizeof(st));
     };
 
     if (S_ISLNK(st.st_mode)) {
@@ -284,7 +284,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
   size_t dirlen;
   int i;
   time_t timeval;
-  struct stat st;
+  struct statbuf st;
   struct tm *ntime;
   wzd_user_t * user, * owner;
   short vfs_pad=0;
@@ -336,7 +336,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
       {
         char * ptr = buffer_vfs + strlen(directory) + vfs_pad;
         if (strchr(ptr,'/')==NULL) {
-          if (stat(vfs->physical_dir,&st)<0) {
+          if (fs_stat(vfs->physical_dir,&st)<0) {
             vfs = vfs->next_vfs;
             continue;
           }
@@ -474,7 +474,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
           continue;
         }
         strcpy(filename+dirlen,dir_filename);
-        if (lstat(filename,&st)<0)
+        if (fs_lstat(filename,&st)<0)
         {
 #ifdef _MSC_VER
           if (!FindNextFile(dir,&fileData))

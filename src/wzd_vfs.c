@@ -123,7 +123,7 @@ int vfs_free(wzd_vfs_t **vfs_list)
 int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target)
 {
   wzd_vfs_t * current_vfs, * new_vfs;
-  struct stat s;
+  struct statbuf s;
 
   current_vfs = *vfs_list;
   while (current_vfs)
@@ -136,7 +136,7 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
     current_vfs = current_vfs->next_vfs;
   }
 
-  if (stat(path,&s)) {
+  if (fs_stat(path,&s)) {
     /* destination does not exist */
     return 1;
   }
@@ -589,7 +589,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   char * ptr_ftppath;
   wzd_user_t * user;
   unsigned int sys_offset;
-  struct stat s;
+  struct statbuf s;
   struct wzd_file_t * perm_list, * entry;
 
   user = GetUserByID(context->userid);
@@ -676,7 +676,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     strcpy(syspath+sys_offset, lpart);
 
     /** \todo check permissions here */
-    if (lstat(syspath,&s)) {
+    if (fs_lstat(syspath,&s)) {
       /* file/dir does not exist
        * 3 cases: error, vfs, symlink */
 
@@ -746,7 +746,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
       } /* check for vfs entries */
 
       /* even if found, check the new destination exists */
-      if (ret || lstat(syspath,&s)) { /* this time, it is really not found */
+      if (ret || fs_lstat(syspath,&s)) { /* this time, it is really not found */
         if (!rpart || *rpart=='\0') {
           /* we return the 'what it would have been' path anyway, so it can be used */
           strcpy(syspath+sys_offset, lpart);

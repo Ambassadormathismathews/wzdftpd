@@ -168,8 +168,8 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   }
   /* check if homedir exist */
   {
-    struct stat s;
-    if (stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    struct statbuf s;
+    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
       str_deallocate(username); str_deallocate(password); str_deallocate(ip);
       return 0;
@@ -776,8 +776,8 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     }
     /* check if homedir exist */
     {
-      struct stat s;
-      if (stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
+      struct statbuf s;
+      if (fs_stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
         ret = send_message_with_args(501,context,"Homedir does not exist");
         str_deallocate(field); str_deallocate(value);
         return 0;

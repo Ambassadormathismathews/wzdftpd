@@ -74,7 +74,7 @@ struct wzd_internal_cache_t  {
   int fd;
 
   unsigned long filename_hash;
-  unsigned long datasize;
+  u64_t datasize;
   time_t mtime;
   unsigned short use;
 
@@ -84,7 +84,7 @@ struct wzd_internal_cache_t  {
 };
 
 struct wzd_cache_t {
-  unsigned long current_location;
+  u64_t current_location;
 
   wzd_internal_cache_t * cache;
 };
@@ -106,7 +106,7 @@ wzd_internal_cache_t * wzd_cache_find(unsigned long hash)
   return NULL;
 }
 
-unsigned long wzd_cache_getsize(wzd_cache_t *c)
+u64_t wzd_cache_getsize(wzd_cache_t *c)
 {
   if (!c) return (unsigned int)-1;
   return c->cache->datasize;
@@ -116,10 +116,10 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 {
   wzd_cache_t * cache;
   wzd_internal_cache_t * c;
-  struct stat s;
+  struct statbuf s;
   unsigned long hash;
   unsigned long ret;
-  unsigned long length;
+  u64_t length;
   int fd;
 
   if (!file) return NULL;
@@ -131,10 +131,10 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   flags |= _O_BINARY;
 #endif
 
-  fd = open(file,flags,mode);
+  fd = fs_open(file,flags,mode);
   if (fd==-1) return NULL;
 
-  if (fstat(fd,&s)) { close(fd); return NULL; }
+  if (fs_fstat(fd,&s)) { close(fd); return NULL; }
   FD_REGISTER(fd,"Cached file");
 
   c = wzd_cache_find(hash);
@@ -175,7 +175,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  length = (unsigned long)s.st_size;
+  length = s.st_size;
   if (length > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;
@@ -201,18 +201,18 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode)
 {
   wzd_cache_t * cache;
-  struct stat s;
+  struct statbuf s;
   unsigned long hash;
-  unsigned long length, ret;
+  u64_t length, ret;
   int fd;
 
   hash = compute_hashval(file,strlen(file));
 
-  fd = open(file,flags,mode);
+  fd = fs_open(file,flags,mode);
   if (fd==-1) return NULL;
   FD_REGISTER(fd,"Cached file");
 
-  if (fstat(fd,&s)) { close(fd); return NULL; }
+  if (fs_fstat(fd,&s)) { close(fd); return NULL; }
 
   if (c->fd != -1) { close(c->fd); FD_UNREGISTER(fd,"Cached file"); }
   if (c->data) free(c->data);
@@ -223,14 +223,14 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  length = (unsigned long)s.st_size;
+  length = s.st_size;
   if (length > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;
     c->datasize = 0;
   } else {
     c->data = malloc(length);
-    if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
+    if ( (ret=read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes\n",ret);
     }
     c->datasize = length;

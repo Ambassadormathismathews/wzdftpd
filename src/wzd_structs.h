@@ -447,7 +447,7 @@ typedef struct _context_t {
   write_fct_t   write_fct;
   int           dataport;
   unsigned char dataip[16];
-  unsigned long	resume;
+  u64_t         resume;
   unsigned long	connection_flags;
   char          currentpath[WZD_MAX_PATH];
   unsigned int	userid;

@@ -833,7 +833,7 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
   char msg_file[2048];
   char other_file[2048];
   unsigned int length;
-  struct stat s;
+  struct statbuf s;
 
   if (!mainConfig->dir_message) {
     send_message_with_args(501,context,"no dir_message defined in config");
@@ -872,7 +872,7 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
     }
     strncpy(other_file+length,str_tochar(filename),2048-length-1);
     str_deallocate(filename);
-    if (stat(other_file,&s) || !S_ISREG(s.st_mode))
+    if (fs_stat(other_file,&s) || !S_ISREG(s.st_mode))
     {
       send_message_with_args(501,context,"inexistant file, or not a regular file");
       return -1;
@@ -1861,7 +1861,7 @@ int do_site_vfsdel(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
     send_message_with_args(501,context,tmp);
   } else
     send_message_with_args(200,context,"VFSDEL command ok");
-  
+
   return 0;
 }
 
@@ -1869,7 +1869,7 @@ int do_site_vfsdel(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
  */
 static int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
-  struct stat s;
+  struct statbuf s;
   int ret;
 #ifndef _MSC_VER
   DIR * dir;
@@ -1887,8 +1887,8 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
 
   split_filename(filename,path,NULL,1024,0);
 
-  if (stat(filename,&s)) return -1;
-  
+  if (fs_stat(filename,&s)) return -1;
+
   if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
     ret = file_remove(filename,context);
     if (ret) return 1;
@@ -1920,7 +1920,7 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
       if (strlen(buffer)+strlen(dir_filename)>=1024) { closedir(dir); return 1; }
       strncpy(ptr,dir_filename,256);
 
-      if (stat(buffer,&s)) { closedir(dir); return -1; }
+      if (fs_stat(buffer,&s)) { closedir(dir); return -1; }
       if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
         ret = file_remove(buffer,context);
         if (ret) { closedir(dir); return 1; }
@@ -1958,7 +1958,6 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   int ret;
 /*  wzd_user_t user;*/
 /*  int uid;*/
-/*  struct stat s;*/
 
   firstarg = str_tok(command_line," \t\r\n");
   if (!firstarg) {

@@ -384,3 +384,28 @@ int main(void)
  ]
 )
 
+dnl Checks for stat64
+dnl
+AC_DEFUN([WZD_STAT64], [
+  AC_MSG_CHECKING([for stat64])
+  AC_CACHE_VAL(wzd_cv_have_stat64,
+    [AC_TRY_LINK([#include <sys/stat.h>], [struct stat64 st; stat64 ("/tmp/foo", &st);],
+      wzd_cv_have_stat64=yes,
+      [saved_CPPFLAGS=$CPPFLAGS
+      CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64"
+      AC_TRY_LINK([#include <sys/stat.h>], [struct stat64 st; stat64 ("/tmp/foo", &st);],
+	wzd_cv_have_stat64="need -D_LARGEFILE64_SOURCE",
+	wzd_cv_have_stat64=no)
+      CPPFLAGS=$saved_CPPFLAGS])])
+  AC_MSG_RESULT($wzd_cv_have_stat64)
+  if test "$wzd_cv_have_stat64" != no; then
+  AC_DEFINE([HAVE_STAT64], 1,
+    [Is stat64 available?])
+  fi
+  if test "$wzd_cv_have_stat64" = "need -D_LARGEFILE64_SOURCE"; then
+    AC_DEFINE([_LARGEFILE64_SOURCE], 1,
+  	    [Enable LFS])
+    CPPFLAGS="$CPPFLAGS -D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64" 
+  fi
+]
+)

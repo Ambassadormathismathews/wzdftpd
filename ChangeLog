@@ -1,3 +1,7 @@
+2005-01-18  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: problems with > 2GB files on 32-bit arches (closes: #0024)
+
 2005-01-14  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: use statvfs instead of statfs if detected

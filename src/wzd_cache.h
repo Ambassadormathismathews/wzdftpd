@@ -35,7 +35,7 @@ wzd_cache_t* wzd_cache_open(const char *file, int flags, unsigned int mode);
 /** force update of specific file, only if present in cache */
 void wzd_cache_update(const char *file);
 
-unsigned long wzd_cache_getsize(wzd_cache_t *c);
+u64_t wzd_cache_getsize(wzd_cache_t *c);
 
 int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count);
 int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count);

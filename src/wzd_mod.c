@@ -483,7 +483,7 @@ int module_check(const char *filename)
   void * handle;
   void * ptr;
   char * error;
-  struct stat s;
+  struct statbuf s;
   int ret;
 
   if (!filename || filename[0]=='\0') return -1;
@@ -501,7 +501,7 @@ int module_check(const char *filename)
     strcpy(path+2,filename);
   }
 
-  ret = lstat(path,&s);
+  ret = fs_lstat(path,&s);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat module '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));

@@ -123,8 +123,8 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   }
   /* check if homedir exist */
   {
-    struct stat s;
-    if (stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    struct statbuf s;
+    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
       str_deallocate(groupname);
       return 0;
@@ -735,8 +735,8 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   else if (strcmp(str_tochar(field),"homedir")==0) {
     /* check if homedir exist */
     {
-      struct stat s;
-      if (stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
+      struct statbuf s;
+      if (fs_stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
         ret = send_message_with_args(501,context,"Homedir does not exist");
         str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
         return 0;
@@ -824,18 +824,18 @@ void do_site_help_group(wzd_context_t * context)
 /* regroup all group administration in one site command */
 int do_site_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  
+
   wzd_string_t * cmd;
   int ret;
-  
-  
+
+
   cmd = str_tok(command_line," \t\r\n");
 
   if( cmd == NULL ) {
     do_site_help_group(context);
     return 0;
   }
-  
+
   if(strcmp("info", str_tochar(cmd)) == 0) {
     do_site_gsinfo( cmd, command_line, context );
   } else if(strcmp( "add", str_tochar(cmd)) == 0) {

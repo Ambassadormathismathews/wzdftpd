@@ -80,7 +80,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   char * ptr, * dir_filename;
   char buffer_file[WZD_MAX_PATH+1];
   int ret;
-  struct stat st;
+  struct statbuf st;
   unsigned short sorted = 0;
   unsigned long watchdog = 0;
 
@@ -186,10 +186,11 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
       /* if entry is a directory, we must query dir for more infos */
       strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
-      if (lstat(buffer_file,&st)) {
+      if (fs_lstat(buffer_file,&st)) {
         /* we have a big problem here ! */
+        out_err(LEVEL_HIGH,"lstat(%s) FAILED ! (errno: %d %s)\n",dir_filename,errno,strerror(errno));
         itp = it;
-        it = it->next_file;
+        it = (it)?it->next_file:NULL;
         continue;
       }
       if (S_ISDIR(st.st_mode)) {
