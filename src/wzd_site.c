@@ -142,6 +142,112 @@ void do_site_backend(char *command_line, wzd_context_t * context)
   do_site_help("backend",context);
 }
 
+/********************* do_site_chacl ***********************/
+/* chacl: user mode file1 [file2 ...]
+ */
+
+void do_site_chacl(char *command_line, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * mode, *username, *filename;
+  int ret;
+  wzd_user_t user;
+  int uid;
+  unsigned long long_perms;
+  char str_perms[64];
+  char * endptr;
+
+  ptr = command_line;
+  username = strtok_r(NULL," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help("chacl",context);
+    return;
+  }
+  /* check that username exists */
+  if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return;
+  }
+  mode = strtok_r(NULL," \t\r\n",&ptr);
+  if (!mode) {
+    do_site_help("chacl",context);
+    return;
+  }
+  /* TODO check that mode is ok */
+  if (strlen(mode) > 15) {
+    do_site_help("chacl",context);
+    return;
+  }
+  long_perms = strtoul(mode,&endptr,8);
+  if (endptr != mode) {
+    snprintf(str_perms,63,"%c%c%c",
+	(long_perms & 01) ? 'r' : '-',
+	(long_perms & 02) ? 'w' : '-',
+	(long_perms & 04) ? 'x' : '-'
+	);
+  } else
+    strncpy(str_perms,mode,63);
+
+  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  {
+    /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
+    _setPerm(buffer,username,0,0,str_perms,0,context);
+  }
+
+  snprintf(buffer,BUFFER_LEN,"CHACL: '%s'",command_line);
+  ret = send_message_with_args(200,context,buffer);
+}
+
+/********************* do_site_chmod ***********************/
+/* chmod: mode file1 [file2 ...]
+ */
+
+void do_site_chmod(char *command_line, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * mode, *filename;
+  int ret;
+  unsigned long long_perms;
+/*  char str_perms[64];*/
+  char * endptr;
+
+  ptr = command_line;
+  mode = strtok_r(command_line," \t\r\n",&ptr);
+  if (!mode) {
+    do_site_help("chmod",context);
+    return;
+  }
+  /* TODO check that mode is ok */
+  if (strlen(mode) > 15) {
+    do_site_help("chmod",context);
+    return;
+  }
+  long_perms = strtoul(mode,&endptr,8);
+/*  if (endptr != mode) {
+    snprintf(str_perms,63,"%c%c%c",
+	(long_perms & 01) ? 'r' : '-',
+	(long_perms & 02) ? 'w' : '-',
+	(long_perms & 04) ? 'x' : '-'
+	);
+  } else
+    strncpy(str_perms,mode,63);*/
+
+  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  {
+    /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+/*    _setPerm(buffer,username,0,0,str_perms,0,context);*/
+    _setPerm(buffer,0,0,0,0,long_perms,context);
+  }
+
+  snprintf(buffer,BUFFER_LEN,"CHMOD: '%s'",command_line);
+  ret = send_message_with_args(200,context,buffer);
+}
+
 /********************* do_site_chown ***********************/
 /* chown: user file1 [file2 ...]
  */
@@ -172,69 +278,10 @@ void do_site_chown(char *command_line, wzd_context_t * context)
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,0,username,0,0,context);
+    _setPerm(buffer,0,username,0,0,0,context);
   }
 
   snprintf(buffer,BUFFER_LEN,"CHOWN: '%s'",command_line);
-  ret = send_message_with_args(200,context,buffer);
-}
-
-/********************* do_site_chmod ***********************/
-/* chmod: user mode file1 [file2 ...]
- */
-
-void do_site_chmod(char *command_line, wzd_context_t * context)
-{
-  char buffer[BUFFER_LEN];
-  char * ptr;
-  char * mode, *username, *filename;
-  int ret;
-  wzd_user_t user;
-  int uid;
-  unsigned long long_perms;
-  char str_perms[64];
-  char * endptr;
-
-  ptr = command_line;
-  username = strtok_r(NULL," \t\r\n",&ptr);
-  if (!username) {
-    do_site_help("chmod",context);
-    return;
-  }
-  /* check that username exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
-    return;
-  }
-  mode = strtok_r(NULL," \t\r\n",&ptr);
-  if (!mode) {
-    do_site_help("chmod",context);
-    return;
-  }
-  /* TODO check that mode is ok */
-  if (strlen(mode) > 15) {
-    do_site_help("chmod",context);
-    return;
-  }
-  long_perms = strtoul(mode,&endptr,8);
-  if (endptr != mode) {
-    snprintf(str_perms,63,"%c%c%c",
-	(long_perms & 01) ? 'r' : '-',
-	(long_perms & 02) ? 'w' : '-',
-	(long_perms & 04) ? 'x' : '-'
-	);
-  } else
-    strncpy(str_perms,mode,63);
-
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
-  {
-    /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,username,0,0,str_perms,context);
-  }
-
-  snprintf(buffer,BUFFER_LEN,"CHMOD: '%s'",command_line);
   ret = send_message_with_args(200,context,buffer);
 }
 
@@ -325,6 +372,60 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   
   send_message_with_args(200,context,buffer);
 }
+
+/********************* do_site_free ************************/
+/* free sectionname
+ */
+
+int do_site_free(char *command_line, wzd_context_t * context)
+{
+  char buffer[2048];
+  int ret;
+/*  char * ptr;
+  char * sectionname;
+  wzd_user_t user;
+  int uid;
+  wzd_context_t user_context;*/
+  long f_type, f_bsize, f_blocks, f_free;
+  float free,total;
+  char unit;
+
+/*  ptr = command_line;
+  username = strtok_r(command_line," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help("user",context);
+    return;
+  }*/
+
+  if (checkpath(".",buffer,context)) {
+    send_message_with_args(501,context,". does not exist ?!");
+    return -1;
+  }
+
+  ret = get_device_info(buffer,&f_type, &f_bsize, &f_blocks, &f_free);
+
+  unit='k';
+  free = f_free*(f_bsize/1024.f);
+  total = f_blocks*(f_bsize/1024.f);
+
+  if (total > 1000.f) {
+    unit='M';
+    free /= 1024.f;
+    total /= 1024.f;
+  }
+  if (total > 1000.f) {
+    unit='G';
+    free /= 1024.f;
+    total /= 1024.f;
+  }
+
+  snprintf(buffer,2047,"[FREE] + [home: %.2f / %.2f %c] -",free,total,unit);
+
+  ret = send_message_with_args(200,context,buffer);
+
+  return 0;
+}
+
 
 /********************* do_site_print_file ******************/
 void do_site_print_file(const char * filename, void * param, wzd_context_t * context)
@@ -720,6 +821,11 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"CHANGE")==0) {
     return do_site_change(command_line+7,context); /* 7 = strlen("change")+1 */
   } else
+/******************* CHACL **********************/
+  if (strcasecmp(token,"CHACL")==0) {
+    do_site_chacl(command_line+6,context); /* 6 = strlen("chacl")+1 */
+    return 0;
+  } else
 /****************** CHECKPERM *******************/
   if (strcasecmp(token,"CHECKPERM")==0) {
     do_site_checkperm(command_line+10,context); /* 10 = strlen("checkperm")+1 */
@@ -756,6 +862,10 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"FLAGS")==0) {
     return do_site_flags(command_line+6,context); /* 6 = strlen("flags")+1 */
   } else
+/******************* FREE ***********************/
+  if (strcasecmp(token,"FREE")==0) {
+    return do_site_free(command_line+5,context); /* 5 = strlen("free")+1 */
+  } else
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
     do_site_print_file(mainConfig->site_config.file_help,NULL,context);
@@ -765,7 +875,6 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"IDLE")==0) {
     return do_site_idle(command_line+5,context); /* 5 = strlen("idle")+1 */
   } else
-#ifdef WZD_MULTIPROCESS
 /******************* KICK ***********************/
   if (strcasecmp(token,"KICK")==0) {
     return do_site_kick(command_line+5,context); /* 5 = strlen("kick")+1 */
@@ -774,7 +883,6 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"KILL")==0) {
     return do_site_kill(command_line+5,context); /* 5 = strlen("kill")+1 */
   } else
-#endif /* WZD_MULTIPROCESS */
 /******************** PURGE *********************/
   if (strcasecmp(token,"PURGE")==0) {
     return do_site_purgeuser(command_line+6,context); /* 6 = strlen("purge")+1 */
@@ -848,12 +956,22 @@ int do_site(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(200,context,buffer);
     return 0;
 /******************* SHUTDOWN *******************/
-  } else
-  if (strcasecmp(token,"SHUTDOWN")==0) {
+  }
+#ifndef WZD_MULTITHREAD
+  else if (strcasecmp(token,"SHUTDOWN")==0) {
     mainConfig->serverstop = 1;
     ret = send_message_with_args(250,context,"SITE:","server will shutdown after you logout");
     return 0;
   }
+#endif /* WZD_MULTIPROCESS */
+#ifdef WZD_MULTITHREAD
+  else if (strcasecmp(token,"SHUTDOWN")==0) {
+    ret = send_message_with_args(250,context,"SITE:","server will shutdown NOW");
+    mainConfig->serverstop = 1;
+    return 0;
+  }
+#endif /* WZD_MULTITHREAD */
+
 
   FORALL_HOOKS(EVENT_SITE)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
