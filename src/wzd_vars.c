@@ -48,8 +48,6 @@
 
 #include "wzd_structs.h"
 
-#include "hash.h"
-
 #include "wzd_misc.h"
 
 #include "wzd_vars.h"
@@ -156,9 +154,7 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
   if (strcasecmp(varname,"max_dl")==0) {
     ul = strtoul(data,&ptr,0);
     if (ptr && *ptr == '\0') {
-      wzd_mutex_lock(limiter_mutex);
       config->global_dl_limiter.maxspeed = ul;
-      wzd_mutex_unlock(limiter_mutex);
       return 0;
     }
   }
@@ -172,9 +168,7 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
   if (strcasecmp(varname,"max_ul")==0) {
     ul = strtoul(data,&ptr,0);
     if (ptr && *ptr == '\0') {
-      wzd_mutex_lock(limiter_mutex);
       config->global_ul_limiter.maxspeed = ul;
-      wzd_mutex_unlock(limiter_mutex);
       return 0;
     }
   }

@@ -68,8 +68,6 @@
 
 #include "wzd_structs.h"
 
-#include "hash.h"
-
 #include "wzd_misc.h"
 #include "wzd_log.h"
 #include "wzd_tls.h"

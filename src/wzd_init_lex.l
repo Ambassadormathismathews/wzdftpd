@@ -52,8 +52,6 @@
 
 #include "wzd_structs.h"
 
-#include "hash.h"
-
 #include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_libmain.h"

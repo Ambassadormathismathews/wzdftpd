@@ -27,6 +27,9 @@ EXPORTS
 	checkpath
 	checkpath_new
 	chop
+	chtbl_destroy
+	chtbl_init
+	chtbl_insert
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
@@ -69,6 +72,7 @@ EXPORTS
 	group_ip_add
 	group_ip_inlist
 	group_remove_user
+	hash_str
 	hook_add
 	hook_add_custom_command
 	hook_add_external
@@ -93,6 +97,10 @@ EXPORTS
 	limiter_add_bytes
 	limiter_free
 	limiter_new
+	list_destroy
+	list_init
+	list_ins_next
+	list_rem_next
 	local_charset
 	local_charset_to_utf8
 	log_close
@@ -100,6 +108,7 @@ EXPORTS
 	log_open
 	loglevel2str
 	md5_crypt
+	md5_hash_r
 	module_add
 	module_check
 	module_free

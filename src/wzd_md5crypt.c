@@ -10,9 +10,24 @@
 #include "wzd_md5.h"
 #include "wzd_md5crypt.h"
 
-#define TEST
+#ifdef WIN32
+typedef struct MD5Context MD5_CTX;
+#endif
 
-#ifndef TEST
+static unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
+  "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+
+
+static void
+to64(char *s, unsigned long v, int n)
+{
+  while (--n >= 0) {
+    *s++ = itoa64[v&0x3f];
+    v >>= 6;
+  }
+}
+
 
 /*
  * UNIX password
@@ -125,8 +140,6 @@ char * md5_crypt(const char *pw, const char *salt)
 }
 
 
-#else
-
 char * md5_hash_r(const char *pw, char * out, size_t len)
 {
   MD5_DIGEST digest;
@@ -143,4 +156,3 @@ char * md5_hash_r(const char *pw, char * out, size_t len)
   return out;
 }
 
-#endif

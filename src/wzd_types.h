@@ -40,6 +40,7 @@
 
 /* unsigned int, 64 bits: u64_t */
 #define u64_t unsigned __int64
+#define u32_t unsigned __int32
 
 typedef size_t ssize_t;
 
@@ -344,5 +345,6 @@ char * strtok_r(char *s, const char *delim, char **last);
 #endif
 
 #include <libwzd-base/list.h>
+#include <libwzd-base/hash.h>
 
 #endif /* __WZD_TYPES__ */
