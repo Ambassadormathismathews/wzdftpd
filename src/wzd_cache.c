@@ -207,7 +207,6 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   wzd_cache_t * cache;
   wzd_internal_cache_t * c;
   int fd;
-  u64_t l64;
 
   if (!file) return NULL;
 
@@ -229,9 +228,8 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  l64 = s.st_size;
+  c->datasize = s.st_size;
   c->data = NULL;
-  c->datasize = 0;
 
   return cache;
   
@@ -290,7 +288,6 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   wzd_cache_t * cache;
   wzd_internal_cache_t c2, c_old;
   int fd;
-  u64_t l64;
 
   if (!file) return NULL;
 
@@ -311,9 +308,8 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   c2.mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  l64 = s.st_size;
+  c->datasize = s.st_size;
   c2.data = NULL;
-  c2.datasize = 0;
 
   /* atomic part */
   memcpy(&c_old, c, sizeof(wzd_internal_cache_t));
@@ -506,7 +502,7 @@ void wzd_cache_close(wzd_cache_t * c)
     c->cache->use--;
     /** \bug XXX FIXME possible leak here if big file, fd is not closed */
     if (c->cache->use == 0) {
-      out_log(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
+      out_err(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
       FD_UNREGISTER(c->cache->fd,"Cached file"); }
       close( c->cache->fd );
   }

@@ -638,11 +638,17 @@ int socket_wait_to_write(int sock, unsigned int timeout)
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
 #ifdef WIN32
-      ret = select(0,&rfds,&wfds,&efds,&tv);
+      ret = select(0,NULL,&wfds,&efds,&tv);
 #else
-      ret = select(sock+1,&rfds,&wfds,&efds,&tv);
+      ret = select(sock+1,NULL,&wfds,&efds,&tv);
 #endif
       save_errno = errno;
+
+      if (ret == -1) return -1;
+
+      if (ret == 0) return 1; /* timeout */
+
+      
 
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
@@ -653,14 +659,9 @@ int socket_wait_to_write(int sock, unsigned int timeout)
         return -1;
       }
 #if 0
-      if (FD_ISSET(sock,&rfds)) {
-        if (save_errno == EINTR) continue;
-        out_log(LEVEL_CRITICAL,"WTF, socket %d wants to read during socket_wait_to_write: %s\n",sock,strerror(save_errno));
-        return -1;
-      }
-#endif
       if (!FD_ISSET(sock,&wfds)) /* timeout */
         return 1;
+#endif
       break;
     }
     return 0;
