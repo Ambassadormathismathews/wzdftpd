@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -43,6 +44,7 @@ typedef struct _wzd_file_t {
   char	filename[256];
   char	owner[256];
   char	group[256];
+  unsigned long permissions;	/* classic linux format */
   wzd_acl_line_t *acl;
   struct _wzd_file_t	*next_file;
 } wzd_file_t;
@@ -139,6 +141,7 @@ wzd_file_t * add_new_file(const char *name, const char *owner, const char *group
   memset(new_file->group,0,256);
   if (group) strncpy(new_file->group,group,256);
   new_file->acl = NULL;
+  new_file->permissions = 0755; /* TODO XXX FIXME hardcoded */
   new_file->next_file = NULL;
   if (*first == NULL) {
     *first = new_file;
@@ -187,7 +190,7 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
   FILE *fp;
   char line_buffer[BUFFER_LEN];
   wzd_file_t *current_file, *ptr_file;
-  char * token1, *token2, *token3, *token4;
+  char * token1, *token2, *token3, *token4, *token5;
   char *ptr;
 
   if ( !pTabFiles ) return 0;
@@ -215,8 +218,18 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
       ptr_file = add_new_file(token2,0,0,pTabFiles);
     }
     if (strcmp(token1,"owner")==0) {
+      token5 = strtok_r(NULL," \t\r\n",&ptr);
+/*      if (!token5) continue;*/ /* malformed line */
       strncpy(ptr_file->owner,token3,256);
       strncpy(ptr_file->group,token4,256);
+      if (token5) {
+	unsigned long ul;
+	ul = strtoul(token5,&ptr,8);
+	if (ptr==token5) continue;
+	ptr_file->permissions = ul;
+      } else { /* default user/group permission */
+	ptr_file->permissions = 0755; /* TODO XXX FIXME */
+      }
     }
     else if (strcmp(token1,"perm")==0) {
       addAcl(token2,token3,token4,ptr_file);
@@ -247,8 +260,8 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
   while (file_cur) {
     /* first write owner if available */
     if (strlen(file_cur->owner)>0 && strlen(file_cur->group)>0) {
-      snprintf(buffer,4096,"owner\t%s\t%s\t%s\n",
-	  file_cur->filename,file_cur->owner,file_cur->group);
+      snprintf(buffer,4096,"owner\t%s\t%s\t%s\t%lo\n",
+	  file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
       fwrite(buffer,strlen(buffer),1,fp);
     }
     acl_cur = file_cur->acl;
@@ -303,16 +316,93 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
     /* now find corresponding acl */
     acl_cur = find_acl(user->username,file_cur);
 
+    is_dir = ( strcmp(wanted_file,".")==0 );
+
     if (!acl_cur) { /* ! in acl list */
       /* TODO check if user is owner or group of file, and use perms */
+      {
+	int i;
+	wzd_group_t * group;
+/*	out_err(LEVEL_HIGH,"owner %s\n",file_cur->owner);*/
+/*	out_err(LEVEL_HIGH,"group %s\n",file_cur->group);*/
+/*	out_err(LEVEL_HIGH,"group %lo\n",file_cur->permissions);*/
+	if (strcmp(user->username,file_cur->owner)==0) {
+	  /* NOTE all results are inverted (!=) because we return 0 on success ! */
+	  switch (wanted_right) {
+	    case RIGHT_LIST:
+	    case RIGHT_RETR:
+	      ret = (file_cur->permissions & 0400);
+	      break;
+	    case RIGHT_STOR:
+	    case RIGHT_MKDIR:
+	    case RIGHT_RMDIR:
+	    case RIGHT_RNFR:
+	      ret = (file_cur->permissions & 0200);
+	      break;
+	    case RIGHT_CWD:
+	      ret = (file_cur->permissions & 0100);
+	      break;
+	    default:
+	      ret = 0;
+	  }
+/*	  out_err(LEVEL_HIGH,"user is file owner : %d !\n",ret);*/
+	  free_file_recursive(file_list);
+	  file_list = NULL;
+	  return !ret;
+	}
+	for (i=0; i<user->group_num; i++) {
+	  group = GetGroupByID(user->groups[i]);
+	  if (group && strcmp(group->groupname,file_cur->group)==0) {
+	    /* NOTE all results are inverted (!=) because we return 0 on success ! */
+  	    switch (wanted_right) {
+	      case RIGHT_LIST:
+	      case RIGHT_RETR:
+		ret = (file_cur->permissions & 0040);
+		break;
+	      case RIGHT_STOR:
+	      case RIGHT_MKDIR:
+	      case RIGHT_RMDIR:
+	      case RIGHT_RNFR:
+		ret = (file_cur->permissions & 0020);
+		break;
+	      case RIGHT_CWD:
+		ret = (file_cur->permissions & 0010);
+		break;
+	      default:
+		ret = 0;
+	    }
+/*	    out_err(LEVEL_HIGH,"user is in group : %d !\n",ret);*/
+	    free_file_recursive(file_list);
+	    file_list = NULL;
+	    return !ret;
+	  }
+	}
+      }
 
-      /* FIXME XXX search in parent dirs - group perm ???????? XXX FIXME */
+      /* NOTE all results are inverted (!=) because we return 0 on success ! */
+      switch (wanted_right) {
+	case RIGHT_LIST:
+	case RIGHT_RETR:
+	  ret = (file_cur->permissions & 0004);
+	  break;
+	case RIGHT_STOR:
+	case RIGHT_MKDIR:
+	case RIGHT_RMDIR:
+	case RIGHT_RNFR:
+	  ret = (file_cur->permissions & 0002);
+	  break;
+	case RIGHT_CWD:
+	  ret = (file_cur->permissions & 0001);
+	  break;
+	default:
+	  ret = 0;
+      }
+/*      out_err(LEVEL_HIGH,"user is in others : %d !\n",ret);*/
       free_file_recursive(file_list);
       file_list = NULL;
-      return _default_perm(wanted_right,user);
-    }
+      return !ret;
 
-    is_dir = ( strcmp(wanted_file,".")==0 );
+    }
 
     /* NOTE all results are inverted (!=) because we return 0 on success ! */
     switch (wanted_right) {
@@ -362,6 +452,17 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
 
   strncpy(dir,filename,BUFFER_LEN); 
 
+  if (user->flags && strchr(user->flags,FLAG_ANONYMOUS))
+  {
+    switch (wanted_right) {
+      case RIGHT_STOR:
+      case RIGHT_MKDIR:
+      case RIGHT_RMDIR:
+      case RIGHT_RNFR:
+	return -1;
+    }
+  }
+
   if (stat(filename,&s)==-1) {
     if (wanted_right != RIGHT_STOR && wanted_right != RIGHT_MKDIR)
       return -1; /* inexistant ? */
@@ -370,6 +471,8 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
       strcpy(stripped_filename,ptr+1);
       *ptr = 0;
     }
+    /* we need to check in parent dir for the same right */
+    if (_checkPerm(dir,wanted_right,user)) return -1; /* we do not have the right to modify parent dir */
   } else {
     if (S_ISDIR(s.st_mode)) { /* isdir */
       strcpy(stripped_filename,".");
@@ -410,7 +513,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
 }
 
 /* MUST NOT be / terminated (except /) */
-int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, wzd_context_t * context)
+int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context)
 {
   char dir[BUFFER_LEN];
   char stripped_filename[BUFFER_LEN];
@@ -480,6 +583,10 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   /* remember addAcl REPLACE existing acl on user is already existing */
   if (rights)
     addAcl(stripped_filename,granted_user,rights,file_cur);
+  if (perms)
+  {
+    file_cur->permissions = perms;
+  }
 
   /* finally writes perm file on disk */
   ret = writePermFile(perm_filename,&file_list);
@@ -647,7 +754,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   else
     ret = _checkPerm(filename,RIGHT_STOR,user);
   if (ret)
-    return 0;
+    return -1;
   
   /* IMPORTANT NOTE: we can't use flock/lockf because cygwin does not
    * implement it.
@@ -697,11 +804,11 @@ void file_close(int fd, wzd_context_t * context)
 
 /* NOTE:
  * one of username/groupname can be NULL
- * context is usefull to check is the user chan chown to other users
+ * context is usefull to check if the user can chown to other users
  */
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context)
 {
-  return _setPerm(filename,0,username,groupname,0,context);
+  return _setPerm(filename,0,username,groupname,0,0,context);
 }
 
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
@@ -813,6 +920,61 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   if (ret==-1) {
 #ifdef DEBUG
 fprintf(stderr,"rename error %d (%s)\n", errno, strerror(errno));
+#endif
+    return 1;
+  }
+
+  return 0;
+}
+
+int file_remove(const char *filename, wzd_context_t * context)
+{
+  char perm_filename[BUFFER_LEN];
+  char stripped_filename[BUFFER_LEN];
+  char * ptr;
+  int ret;
+  wzd_user_t * user;
+  wzd_file_t * file_list=NULL, * file_cur;
+  int neededlength, length;
+
+  /* find the dir containing the perms file */
+  strncpy(perm_filename,filename,BUFFER_LEN);
+  ptr = strrchr(perm_filename,'/');
+  if (!ptr || *(ptr+1)=='\0') return -1;
+  strcpy(stripped_filename,ptr+1);
+  if (ptr != perm_filename) *(ptr+1)='\0';
+  neededlength = strlen(HARD_PERMFILE);
+  length = strlen(perm_filename);
+  /* check if !overflow */
+  if ( length+neededlength > 4095 )
+      return -1;
+
+  strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
+
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
+  ret = _checkPerm(filename,RIGHT_STOR ,user);
+  if (ret)
+    return 1;
+
+  /* remove name in perm file !! */
+  ret = readPermFile(perm_filename,&file_list);
+  if (!ret) {
+    file_cur = remove_file(stripped_filename, &file_list);
+    ret = writePermFile(perm_filename,&file_list);
+    free_file_recursive(file_cur);
+    free_file_recursive(file_list);
+  }
+  ret = unlink(filename);
+  if (ret==-1) {
+#ifdef DEBUG
+fprintf(stderr,"remove error %d (%s)\n", errno, strerror(errno));
 #endif
     return 1;
   }
