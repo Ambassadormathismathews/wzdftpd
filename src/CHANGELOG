@@ -1,3 +1,14 @@
+# Sep, 10 2003
+- bugfix: incorrect section match (closes: unable to create dirs in sections)
+
+# Sep, 08 20003
+- Display real owner in LIST (this implementation is particularly bad - we rely on the cache)
+- Display section on end of LIST ANSWER when in section
+
+# Sep, 05 2003
+- bugfix: segfault when two or more sections
+- display section on end of LIST command
+
 #--- cvs commit TAG: rel-0-1rc5
 # Sep, 03 2003
 - call fini function when unloading backend

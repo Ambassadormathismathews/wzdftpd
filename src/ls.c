@@ -253,7 +253,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		st.st_mode & S_IWOTH ? 'w' : '-',
 		st.st_mode & S_IXOTH ? 'x' : '-',
 		(int)st.st_nlink,
-		(owner)?owner->username:"NULL",
+		(owner)?owner->username:"unknown",
 		"ftp",
 		(unsigned long long)st.st_size,
 		datestr,

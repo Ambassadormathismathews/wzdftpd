@@ -899,7 +899,7 @@ int do_mkdir(char *param, wzd_context_t * context)
     return E_MKDIR_PARSE;
   }
 
-  /* TODO XXX FIXME check section path-filter */
+  /* check section path-filter */
   {
     char *ptr;
     wzd_section_t * section;
@@ -907,7 +907,20 @@ int do_mkdir(char *param, wzd_context_t * context)
     ptr = strrchr(path,'/');
     if (ptr && ptr!=&path[0]) {
       *ptr='\0';
-      section = section_find(mainConfig->section_list,path);
+      /* we can reuse cmd */
+      if (param[0] != '/') {
+	unsigned int length;
+	strncpy(cmd,context->currentpath,2048-1-strlen(param));
+	length = strlen(cmd);
+	if (cmd[length-1]!='/') {
+	  cmd[length++] = '/';
+	}
+	strncpy(cmd+length,param,2048-1-length);
+      } else {
+	strncpy(cmd,param,2048);
+      }
+      /* we need to give the ftp-relative path here */
+      section = section_find(mainConfig->section_list,cmd);
       if (section && !section_check_filter(section,ptr+1))
       {
 	out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
