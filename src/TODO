@@ -3,6 +3,14 @@
 - use 'rats','splint' for security audit
 
 '********'
+- add new cookie: %msg (message file) / OK
+- per-dir msg / default msg; SITE commands:
+    * site MSG SHOW / OK
+    * site MSG NEW new_msg
+    * site MSG APPEND new_line
+    * site MSG CONVERT filename
+    * site MSG DELETE
+'********'
 - siteconfig: get bw, etc. change stats, mkdir open, etc.
 '********'
 - remove limit on msg
@@ -102,10 +110,6 @@ current objectives:
 - anti-hammering: per ip/user, ban time
 - special flag to start server and connect to existing shm without
   creating/blanking it (goal: replace exe instance by another on the fly)
-- per-dir msg / default msg; SITE commands:
-    * site DIRMSG new_msg
-    * site APPENDMSG new_line
-    * site CONVERTMSG filename
 - add option to SITE SHUTDOWN, to kick (or not) users
 - possibility to regroup txt files in 1
 - hooks for events (on_file_upload, etc)

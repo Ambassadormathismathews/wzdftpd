@@ -382,7 +382,7 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #endif
   } while ( (ret==-1) && (errno==EINPROGRESS));
   if (ret < 0) {
-    out_log(LEVEL_NORMAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
+    out_log(LEVEL_FLOOD,"Connect failed %s:%d\n", __FILE__, __LINE__);
     socket_close (sock);
     return -1;
   }

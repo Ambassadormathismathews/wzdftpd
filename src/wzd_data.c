@@ -75,7 +75,7 @@ void data_close(wzd_context_t * context)
     ret = tls_close_data(context);
 #endif
 #ifdef DEBUG
-out_err(LEVEL_CRITICAL,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
+out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
 #endif
   ret = socket_close(context->datafd);
   context->datafd = 0;
@@ -175,6 +175,7 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
 /*	limiter_free(context->current_limiter);
 	context->current_limiter = NULL;*/
         context->idle_time_start = time(NULL);
+        context->state = STATE_COMMAND;
 	return 1;
       }
       context->current_action.bytesnow += n;
@@ -194,6 +195,7 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
+      context->state = STATE_COMMAND;
       data_close(context);
       ret = send_message(226,context);
 #ifdef DEBUG
@@ -235,6 +237,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
+      context->state = STATE_COMMAND;
       data_close(context);
       ret = send_message(226,context);
 #ifdef DEBUG

@@ -376,13 +376,23 @@ typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 
 #include "wzd_action.h"
 
+/** @brief Connection state
+ */
+typedef enum {
+  STATE_UNKNOWN=0,
+  STATE_CONNECTING, /* waiting for ident */
+  STATE_LOGGING,
+  STATE_COMMAND,
+  STATE_XFER
+} connection_state_t;
+
 /** @brief Client-specific data
  */
 typedef struct {
   unsigned long	magic;
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
-  int           state;
+  connection_state_t state;
   int           controlfd;
   int           datafd;
   data_mode_t   datamode;
@@ -404,6 +414,7 @@ typedef struct {
 /*  wzd_bw_limiter * current_limiter;*/
   wzd_bw_limiter current_ul_limiter;
   wzd_bw_limiter current_dl_limiter;
+  time_t        login_time;
   time_t	idle_time_start;
   time_t	idle_time_data_start;
   wzd_ssl_t   	ssl;

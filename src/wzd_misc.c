@@ -1180,13 +1180,15 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
 
     ptr = strchr(ptr_test,'@');
     if (ptr) { /* we have an ident to check */
-      if (!ident) {
+      if (!ident || ident[0] == '\0') {
         i++;
         continue;
       }
       ptr_ident = ptr_test;
       ident_length = ptr - ptr_ident;
-      out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
+#ifdef WZD_DBG_IDENT
+      out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
+#endif
       ptr_test = (char*)ptr+1;
       if (strncmp(ident,ptr_ident,ident_length) != 0) {
         /* ident does not match */

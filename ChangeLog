@@ -1,3 +1,10 @@
+2003-12-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* wzd_ServerThread.c: ident is checked by main thread before accepting connection
+	* some code cleanup
+	* cookies: msg (prints dir_message)
+	* site msg: directory messages management
+
 2003-12-17  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* wzd_dir.c: function to get the n trailing parts of a filename

@@ -70,7 +70,9 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
+#include "wzd_cache.h"
 #include "wzd_messages.h"
+#include "wzd_section.h"
 
 #include "wzd_debug.h"
 
@@ -107,6 +109,8 @@ typedef enum {
   COOKIE_GROUPTOTAL_UL,
   COOKIE_GROUPTOTAL_UL2,
 
+  COOKIE_MSG,
+
   COOKIE_SECTIONNAME,
 
   COOKIE_SPACEFREE,
@@ -138,6 +142,7 @@ typedef enum {
   COOKIE_USERTOTAL_DL2,
   COOKIE_USERTOTAL_UL,
   COOKIE_USERTOTAL_UL2,
+
   COOKIE_VFSVIRTUAL,
   COOKIE_VFSPHYSICAL,
   COOKIE_VFSTARGET,
@@ -278,6 +283,8 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_GROUP}total_dl	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_DL;
 <sc_cook>{C_GROUP}total_ul2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL2;
 <sc_cook>{C_GROUP}total_ul	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL;
+
+<sc_cook>msg                    BEGIN(INITIAL); return COOKIE_MSG;
 
 <sc_cook>sectionname            BEGIN(INITIAL); return COOKIE_SECTIONNAME;
 <sc_cook>spacefree              BEGIN(INITIAL); return COOKIE_SPACEFREE;
@@ -766,6 +773,54 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       cookie_length = strlen(cookie_ptr);
       convert=0;
       break;
+/*** FILES cookies ***/
+    case COOKIE_MSG:
+    {
+      wzd_cache_t * file;
+      char * tmpbuf;
+      char buffer[IBUFSIZE];
+      int length;
+      unsigned int size;
+
+      if (checkpath(".",buffer,context)) {
+        snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
+        cookie_ptr = internalbuffer;
+        cookie_length = strlen(cookie_ptr);
+        break;
+      } else {
+        length = strlen(buffer);
+        if (buffer[length-1] != '/') buffer[length++] = '/';
+        strncpy(buffer+length,mainConfig->dir_message,IBUFSIZE-length-1);
+        file = wzd_cache_open(buffer,O_RDONLY,0666);
+        if (!file) {
+          cookie_ptr = NULL;
+          cookie_length = 0;
+          break;
+        }
+        size = wzd_cache_getsize(file);
+        if (size >= out_buffer_len) { /* is it a good condition ? */
+#ifdef WZD_DBG_COOKIES
+          out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+          size = out_buffer_len - size;
+        }
+        tmpbuf = wzd_malloc(size+1);
+        wzd_cache_read(file,tmpbuf,size);
+        tmpbuf[size] = '\0';
+        wzd_cache_close(file);
+
+        if (out_buffer)
+          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+        else
+          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+
+        wzd_free(tmpbuf);
+
+        cookie_ptr = out_buffer_ptr;
+        cookie_length = strlen(cookie_ptr);
+      }
+    }
+    break;
 /*** SECTION cookies ***/
     case COOKIE_SECTIONNAME:
     {

@@ -1968,7 +1968,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   ret = backend_validate_pass(username,pass,user,&context->userid);
   if (ret) {
     /* pass was not accepted */
-    return E_PASS_REJECTED;  /* FIXME - abort thread */
+    return E_PASS_REJECTED;
   }
 
 #if BACKEND_STORAGE
@@ -2164,91 +2164,6 @@ int check_tls_forced(wzd_context_t * context)
   return E_OK;
 }
 
-/*************** do_user_ident ***********************/
-/** Get ident for user.
- */
-void do_user_ident(wzd_context_t * context)
-{
-  char buffer[BUFFER_LEN];
-  unsigned short ident_port = 113;
-  int ret;
-  int fd_ident;
-  unsigned short remote_port;
-  unsigned short local_port;
-  const char * ptr;
-
-  memset(context->ident,0,MAX_IDENT_LENGTH);
-
-  /* 1- try to open ident connection */
-  fd_ident = socket_connect(*(unsigned long*)&context->hostip,ident_port,0,context->controlfd,HARD_IDENT_TIMEOUT);
-
-  if (fd_ident == -1) {
-    out_log(LEVEL_NORMAL,"Could not get ident (error: %s)\n",strerror(errno));
-    return;
-  }
-
-  /* 2- get local and remote ports */
-
-  /* get remote port number */
-  local_port = socket_get_local_port(context->controlfd);
-  remote_port = socket_get_remote_port(context->controlfd);
-
-  snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",local_port,remote_port);
-
-  /* 3- try to write */
-  do {
-    if (socket_wait_to_write(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
-      ret = send(fd_ident,buffer,strlen(buffer),0);
-	  if (ret < 0) {
-#ifdef _MSC_VER
-		  errno = WSAGetLastError();
-		  socket_close(fd_ident);
-		  return;
-#endif
-	  }
-    } else {
-      if (errno == EINPROGRESS) continue;
-      out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
-      socket_close(fd_ident);
-      return;
-    }
-  } while (0);
-
-  /* 4- try to read response */
-  do {
-    if (socket_wait_to_read(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
-      ret = recv(fd_ident,buffer,sizeof(buffer),0);
-	  if (ret < 0) {
-#ifdef _MSC_VER
-		  errno = WSAGetLastError();
-		  socket_close(fd_ident);
-		  return;
-#endif
-	  }
-      buffer[ret] = '\0';
-    } else {
-      if (errno == EINPROGRESS) continue;
-      out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
-      socket_close(fd_ident);
-      return;
-    }
-  } while (0);
-
-  socket_close(fd_ident);
-
-  /* 5- decode response */
-  ptr = strrchr(buffer,':');
-  if (!ptr) return;
-  ptr++; /* skip ':' */
-  while (*ptr && isspace(*ptr)) ptr++;
-  strncpy(context->ident,ptr,MAX_IDENT_LENGTH);
-  chop(context->ident);
-
-#ifdef WZD_DBG_IDENT
-  out_log(LEVEL_NORMAL,"received ident %s\n",context->ident);
-#endif
-}
-
 /*************** do_login_loop ***********************/
 
 int do_login_loop(wzd_context_t * context)
@@ -2265,6 +2180,8 @@ int do_login_loop(wzd_context_t * context)
   int command;
 
   *username = '\0';
+
+  context->state = STATE_LOGGING;
 
   while (1) {
     /* wait response */
@@ -2295,7 +2212,7 @@ int do_login_loop(wzd_context_t * context)
 out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
 #endif
 
-    /* XXX strtok_r: to be reentrant ! */
+    /* strtok_r: to be reentrant ! */
     token = strtok_r(buffer," \t\r\n",&ptr);
     command = identify_token(token);
 
@@ -2384,7 +2301,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       ret = tls_auth(token,context);
       if (ret) { /* couldn't switch to ssl */
-	/* XXX should we send a message ? - with ssl aborted we can't be sure there won't be problems */
+        /* XXX should we send a message ? - with ssl aborted we can't be sure there won't be problems */
 	ret = send_message_with_args(431,context,"Failed TLS negotiation");
 	return 1;
       }
@@ -2431,9 +2348,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 int do_login(wzd_context_t * context)
 {
   int ret;
-
-  /* get ident */
-  do_user_ident(context);
 
   /* welcome msg */
   ret = send_message(220,context);
@@ -2494,6 +2408,8 @@ void * clientThreadProc(void *arg)
   } else
 #endif
     user = GetUserByID(context->userid);
+
+  context->state = STATE_COMMAND;
 
   {
     const char * groupname = NULL;
@@ -2637,393 +2553,390 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     token = strtok_r(buffer," \t\r\n",&ptr);
     command = identify_token(token);
 
-    context->state = command;
+    switch (command) {
+    case TOK_QUIT:
+      ret = send_message(221,context);
+      {
+        const char * groupname = NULL;
+        const unsigned char * userip = context->hostip;
+        const char * remote_host;
+        struct hostent *h;
+        h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+        if (h==NULL)
+          remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+        else
+          remote_host = h->h_name;
+        if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+        log_message("LOGOUT","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
+            remote_host,
+            *(unsigned char *)&userip[0],
+            *(unsigned char *)&userip[1],
+            *(unsigned char *)&userip[2],
+            *(unsigned char *)&userip[3],
+            user->username,
+            (groupname)?groupname:"No Group",
+            user->tagline
+            );
+      }
+      exitclient=1;
+      /* check if pending xfers */
+      break;
+    case TOK_TYPE:
+      context->resume = 0;
+      token = strtok_r(NULL," \t\r\n",&ptr);
+      if (strcasecmp(token,"I")==0)
+        context->current_xfer_type = BINARY;
+      else if (strcasecmp(token,"A")==0)
+        context->current_xfer_type = ASCII;
+      else {
+        ret = send_message(502,context);
+        break;
+      }
+      ret = send_message_with_args(200,context,"Command okay");
+      break;
+    case TOK_PORT:
+      if (context->pasvsock) {
+        socket_close(context->pasvsock);
+        context->pasvsock = -1;
+      }
+      /* context->resume = 0; */
+      token = strtok_r(NULL,"\r\n",&ptr);
+      if (!token) {
+        ret = send_message_with_args(501,context,"Invalid parameters");
+        break;
+      }
+      if ((sscanf(token,"%d,%d,%d,%d,%d,%d",
+              &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
+              &p1,&p2))<6) {
+        ret = send_message(502,context);
+        break;
+      }
 
-	  switch (command) {
-	  case TOK_QUIT:
-	    ret = send_message(221,context);
-	    {
-	      const char * groupname = NULL;
-	      const unsigned char * userip = context->hostip;
-	      const char * remote_host;
-	      struct hostent *h;
-	      h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
-	      if (h==NULL)
-		remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
-	      else
-		remote_host = h->h_name;
-	      if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-	      log_message("LOGOUT","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
-		  remote_host,
-                  *(unsigned char *)&userip[0],
-                  *(unsigned char *)&userip[1],
-                  *(unsigned char *)&userip[2],
-                  *(unsigned char *)&userip[3],
-		  user->username,
-		  (groupname)?groupname:"No Group",
-		  user->tagline
-		  );
-	    }
-	    exitclient=1;
-	    /* check if pending xfers */
-	    break;
-	  case TOK_TYPE:
-	    context->resume = 0;
-	    token = strtok_r(NULL," \t\r\n",&ptr);
-	    if (strcasecmp(token,"I")==0)
-	      context->current_xfer_type = BINARY;
-	    else if (strcasecmp(token,"A")==0)
-	      context->current_xfer_type = ASCII;
-	    else {
-	      ret = send_message(502,context);
-	      break;
-	    }
-            ret = send_message_with_args(200,context,"Command okay");
-	    break;
-	  case TOK_PORT:
-	    if (context->pasvsock) {
-	      socket_close(context->pasvsock);
-	      context->pasvsock = -1;
-	    }
-	    /* context->resume = 0; */
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    if (!token) {
-	      ret = send_message_with_args(501,context,"Invalid parameters");
-	      break;
-	    }
-	    if ((sscanf(token,"%d,%d,%d,%d,%d,%d",
-		    &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
-		    &p1,&p2))<6) {
-	      ret = send_message(502,context);
-	      break;
-	    }
+      context->dataport = ((p1&0xff)<<8) | (p2&0xff);
+      ret = send_message_with_args(200,context,"Command okay");
 
-	    context->dataport = ((p1&0xff)<<8) | (p2&0xff);
-            ret = send_message_with_args(200,context,"Command okay");
+      break;
+    case TOK_PASV:
+      do_pasv(context);
+      break;
+    case TOK_EPRT:
+      ret = send_message_with_args(501,context,"Not yet implemented !");
+      break;
+    case TOK_EPSV:
+      do_epsv(context);
+      break;
+    case TOK_PWD:
+      context->resume = 0;
+      ret = send_message_with_args(257,context,context->currentpath,"is current directory");
+      break;
+    case TOK_ALLO:
+    case TOK_NOOP:
+      ret = send_message_with_args(200,context,"Command okay");
+      break;
+    case TOK_SYST:
+      context->resume = 0;
+      ret = send_message(215,context);
+      break;
+    case TOK_CDUP:
+      strcpy(buffer,"..");
+      param = buffer;
+      /* break through !!! */
+    case TOK_CWD:
+      context->resume = 0;
+      if (!param) {
+        token = strtok_r(NULL,"\r\n",&ptr);
+        param = token;
+      }
+      /* avoir error if current is "/" and action is ".." */
+      if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
+        ret = send_message_with_args(250,context,context->currentpath," now current directory.");
+        break;
+      }
+      if (do_chdir(param,context)) {
+        ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
+        break;
+      }
+      ret = send_message_with_args(250,context,context->currentpath," now current directory.");
+      break;
+    case TOK_LIST:
+      context->resume = 0;
+      context->state = STATE_XFER;
+/*      if (context->pid_child) {
+        ret = send_message(491,context);
+        break;
+      }*/
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_list(token,LIST_TYPE_LONG,context);
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_NLST:
+      context->resume = 0;
+      context->state = STATE_XFER;
+/*      if (context->pid_child) {
+        ret = send_message(491,context);
+        break;
+      }*/
+      token = strtok_r(NULL,"\r\n",&ptr);	    
+      do_list(token,LIST_TYPE_SHORT,context);
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_MKD:
+      {
+        char buffer2[BUFFER_LEN];
+        token = strtok_r(NULL,"\r\n",&ptr);
+        /* TODO check perms !! */
+        switch (do_mkdir(token,context)) { 
+        case E_OK: /* success */
+          FORALL_HOOKS(EVENT_MKDIR)
+            typedef int (*mkdir_hook)(unsigned long, const char*);
+          if (hook->hook)
+            ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,token);
+          if (hook->external_command)
+            ret = hook_call_external(hook,token);
+          END_FORALL_HOOKS
 
-	    break;
-	  case TOK_PASV:
-	    do_pasv(context);
-	    break;
-          case TOK_EPRT:
-            ret = send_message_with_args(501,context,"Not yet implemented !");
+            ret = send_message_with_args(257,context,token,"created");
+          break;
+        case E_FILE_FORBIDDEN:
+          ret = send_message_with_args(553,context,"forbidden !");
+          break;
+        case E_MKDIR_PATHFILTER:
+          ret = send_message_with_args(553,context,"dirname does not match pathfilter");
+          break;
+        default:
+          /* could not create dir */
+          snprintf(buffer2,BUFFER_LEN-1,"could not create dir '%s'",(token)?token:"(NULL)");
+          ret = send_message_with_args(553,context,buffer2);
+          break;
+        }
+        context->idle_time_start = time(NULL);
+        break;
+      }
+    case TOK_RMD:
+      {
+        char buffer2[BUFFER_LEN];
+        token = strtok_r(NULL,"\r\n",&ptr);
+        /* TODO check perms !! */
+        switch (do_rmdir(token,context)) {
+          case E_OK: /* success */
+            snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
+            FORALL_HOOKS(EVENT_RMDIR)
+              typedef int (*rmdir_hook)(unsigned long, const char*);
+            if (hook->hook)
+              ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
+            if (hook->external_command)
+              ret = hook_call_external(hook,token);
+            END_FORALL_HOOKS
+              ret = send_message_with_args(258,context,buffer2,"");
             break;
-	  case TOK_EPSV:
-	    do_epsv(context);
-	    break;
-	  case TOK_PWD:
-	    context->resume = 0;
-	    ret = send_message_with_args(257,context,context->currentpath,"is current directory");
-	    break;
-	  case TOK_ALLO:
-	  case TOK_NOOP:
-            ret = send_message_with_args(200,context,"Command okay");
-	    break;
-	  case TOK_SYST:
-	    context->resume = 0;
-	    ret = send_message(215,context);
-	    break;
-	  case TOK_CDUP:
-	    strcpy(buffer,"..");
-	    param = buffer;
-	    /* break through !!! */
-	  case TOK_CWD:
-	    context->resume = 0;
-	    if (!param) {
-              token = strtok_r(NULL,"\r\n",&ptr);
-	      param = token;
-	    }
-	    /* avoir error if current is "/" and action is ".." */
-	    if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
-	      /** \todo TOK_CWD: print message file */
-/*	      print_file("/home/pollux/.message",250,context);*/
-	      ret = send_message_with_args(250,context,context->currentpath," now current directory.");
-	      break;
-	    }
-	    if (do_chdir(param,context)) {
-	      ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
-	      break;
-	    }
-	      /** \todo TOK_CWD: print message file */
-/*            print_file("/home/pollux/.message",250,context);*/
-	    ret = send_message_with_args(250,context,context->currentpath," now current directory.");
-	    break;
-	  case TOK_LIST:
-	    context->resume = 0;
-/*	    if (context->pid_child) {
-	      ret = send_message(491,context);
-	      break;
-	    }*/
-	    token = strtok_r(NULL,"\r\n",&ptr);
-/*	    if ((context->pid_child=fork())==0)*/
-	      do_list(token,LIST_TYPE_LONG,context);
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_NLST:
-	    context->resume = 0;
-/*	    if (context->pid_child) {
-	      ret = send_message(491,context);
-	      break;
-	    }*/
-	    token = strtok_r(NULL,"\r\n",&ptr);	    
-/*	    if ((context->pid_child=fork())==0)*/
-	      do_list(token,LIST_TYPE_SHORT,context);
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_MKD:
-          {
-            char buffer2[BUFFER_LEN];
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    /* TODO check perms !! */
-	    switch (do_mkdir(token,context)) { 
-	    case E_OK: /* success */
-/*	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" created",token);*/
-              FORALL_HOOKS(EVENT_MKDIR)
-                typedef int (*mkdir_hook)(unsigned long, const char*);
-                if (hook->hook)
-	          ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,token);
-		if (hook->external_command)
-		  ret = hook_call_external(hook,token);
-              END_FORALL_HOOKS
-
-	      ret = send_message_with_args(257,context,token,"created");
-	      break;
-	    case E_FILE_FORBIDDEN:
-	      ret = send_message_with_args(553,context,"forbidden !");
-	      break;
-	    case E_MKDIR_PATHFILTER:
-	      ret = send_message_with_args(553,context,"dirname does not match pathfilter");
-	      break;
-	    default:
-	      /* could not create dir */
-	      snprintf(buffer2,BUFFER_LEN-1,"could not create dir '%s'",(token)?token:"(NULL)");
-	      ret = send_message_with_args(553,context,buffer2);
-	      break;
-	    }
-	    context->idle_time_start = time(NULL);
-	    break;
-          }
-	  case TOK_RMD:
-          {
-            char buffer2[BUFFER_LEN];
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    /* TODO check perms !! */
-	    switch (do_rmdir(token,context)) {
-	    case E_OK: /* success */
-	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
-              FORALL_HOOKS(EVENT_RMDIR)
-                typedef int (*rmdir_hook)(unsigned long, const char*);
-                if (hook->hook)
-	          ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
-		if (hook->external_command)
-		  ret = hook_call_external(hook,token);
-              END_FORALL_HOOKS
-	      ret = send_message_with_args(258,context,buffer2,"");
-	      break;
-	    case E_NOTDIR:
-	      ret = send_message_with_args(553,context,"not a directory");
-	      break;
-	    case E_FILE_FORBIDDEN:
-	      ret = send_message_with_args(553,context,"forbidden !");
-	      break;
-	    default:
-	      snprintf(buffer2,BUFFER_LEN-1,"could not delete dir '%s'",(token)?token:"(NULL)");
-	      ret = send_message_with_args(553,context,buffer2);
-	    }
-	    context->idle_time_start = time(NULL);
-	    break;
-          }
-	  case TOK_RETR:
-	    if (context->current_action.token != TOK_UNKNOWN) {
-	      ret = send_message(491,context);
-	      break;
-	    }
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    do_retr(token,context);
+          case E_NOTDIR:
+            ret = send_message_with_args(553,context,"not a directory");
+            break;
+          case E_FILE_FORBIDDEN:
+            ret = send_message_with_args(553,context,"forbidden !");
+            break;
+          default:
+            snprintf(buffer2,BUFFER_LEN-1,"could not delete dir '%s'",(token)?token:"(NULL)");
+            ret = send_message_with_args(553,context,buffer2);
+        }
+        context->idle_time_start = time(NULL);
+        break;
+      }
+    case TOK_RETR:
+      if (context->current_action.token != TOK_UNKNOWN) {
+        ret = send_message(491,context);
+        break;
+      }
+      context->state = STATE_XFER;
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_retr(token,context);
 #if 0
-	    if (do_retr(token,context))
-	      ret = send_message_with_args(501,context,"RETR failed");
-	    else
-	      ret = send_message(226,context);
+      if (do_retr(token,context))
+        ret = send_message_with_args(501,context,"RETR failed");
+      else
+        ret = send_message(226,context);
 #endif
-	    context->resume=0;
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_STOR:
-	    if (context->current_action.token != TOK_UNKNOWN) {
-	      ret = send_message(491,context);
-	      break;
-	    }
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    ret = do_stor(token,context);
+      context->resume=0;
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_STOR:
+      if (context->current_action.token != TOK_UNKNOWN) {
+        ret = send_message(491,context);
+        break;
+      }
+      context->state = STATE_XFER;
+      token = strtok_r(NULL,"\r\n",&ptr);
+      ret = do_stor(token,context);
 #if 0
-	      switch (do_stor(token,context)) {
-	      case 1:
-	        ret = send_message_with_args(501,context,"STOR failed");
-	        break;
-	      case 2:
-	        ret = send_message_with_args(553,context,"You can't overwrite !\n");
-	        break;
-	      case 3:
-	        ret = send_message(451,context);
-	        break;
-	      default:
-	        ret = send_message(226,context);
-	        out_log(LEVEL_INFO,"STOR: %s sent %s\n",
-	          context->userinfo.username, param);
-	        break;
-	      }
+      switch (do_stor(token,context)) {
+        case 1:
+          ret = send_message_with_args(501,context,"STOR failed");
+          break;
+        case 2:
+          ret = send_message_with_args(553,context,"You can't overwrite !\n");
+          break;
+        case 3:
+          ret = send_message(451,context);
+          break;
+        default:
+          ret = send_message(226,context);
+          out_log(LEVEL_INFO,"STOR: %s sent %s\n",
+              context->userinfo.username, param);
+          break;
+      }
 #endif
-	    context->resume=0;
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_APPE:
-	    if (context->current_action.token != TOK_UNKNOWN) {
-	      ret = send_message(491,context);
-	      break;
-	    }
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    context->resume = (unsigned long)-1;
-	    ret = do_stor(token,context);
+      context->resume=0;
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_APPE:
+      if (context->current_action.token != TOK_UNKNOWN) {
+        ret = send_message(491,context);
+        break;
+      }
+      context->state = STATE_XFER;
+      token = strtok_r(NULL,"\r\n",&ptr);
+      context->resume = (unsigned long)-1;
+      ret = do_stor(token,context);
 
-	    context->resume=0;
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_REST:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    j=0;
-	    i = sscanf(token,"%lu",&j);
-	    if (i>0) {
-	      char buf[256];
-	      snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",j);
-	      ret = send_message_with_args(350,context,buf);
-	      context->resume = j;
-	    } else {
-	      ret = send_message_with_args(501,context,"Invalid REST marker");
-	    }
-	    break;
-	  case TOK_MDTM:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    context->resume = 0L;
-	    do_mdtm(token,context);
-	    break;
-	  case TOK_SIZE:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    context->resume=0;
-	    do_size(token,context);
-	    break;
-	  case TOK_DELE:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    do_dele(token,context);
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_ABOR:
-/*	    if (context->pid_child) kill(context->pid_child,SIGTERM);
-	    context->pid_child = 0;*/
-	    if (context->pasvsock) {
-	      socket_close(context->pasvsock);
-	      context->pasvsock=-1;
-	    }
-	    if (context->current_action.current_file) {
-	      out_xferlog(context, 0 /* incomplete */);
-	      /** \bug FIXME XXX TODO
-	       * the two following sleep(5) are MANDATORY
-	       * the reason is unknown, but seems to be link to network
-	       * (not lock)
-	       */
+      context->resume=0;
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_REST:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      j=0;
+      i = sscanf(token,"%lu",&j);
+      if (i>0) {
+        char buf[256];
+        snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",j);
+        ret = send_message_with_args(350,context,buf);
+        context->resume = j;
+      } else {
+        ret = send_message_with_args(501,context,"Invalid REST marker");
+      }
+      break;
+    case TOK_MDTM:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      context->resume = 0L;
+      do_mdtm(token,context);
+      break;
+    case TOK_SIZE:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      context->resume=0;
+      do_size(token,context);
+      break;
+    case TOK_DELE:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_dele(token,context);
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_ABOR:
+/*      if (context->pid_child) kill(context->pid_child,SIGTERM);
+      context->pid_child = 0;*/
+      if (context->pasvsock) {
+        socket_close(context->pasvsock);
+        context->pasvsock=-1;
+      }
+      if (context->current_action.current_file) {
+        out_xferlog(context, 0 /* incomplete */);
+        /** \bug FIXME XXX TODO
+         * the two following sleep(5) are MANDATORY
+         * the reason is unknown, but seems to be link to network
+         * (not lock)
+         */
 #ifndef _MSC_VER
-          sleep(5);
+        sleep(5);
 #else
-		  Sleep(5000);
+        Sleep(5000);
 #endif
-	      if (context->current_action.token == TOK_STOR) {
-		file_unlock(context->current_action.current_file);
-		file_close(context->current_action.current_file,context);
-		/* send events here allow sfv checker to mark file as bad if
-		 * partially uploaded
-		 */
-		FORALL_HOOKS(EVENT_POSTUPLOAD)
-		  typedef int (*upload_hook)(unsigned long, const char*, const char *);
-                  if (hook->hook)
-                    ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-		END_FORALL_HOOKS
-	      }
-              context->current_action.current_file = 0;
-              context->current_action.bytesnow = 0;
-              context->current_action.token = TOK_UNKNOWN;
-              data_close(context);
+        if (context->current_action.token == TOK_STOR) {
+          file_unlock(context->current_action.current_file);
+          file_close(context->current_action.current_file,context);
+          /* send events here allow sfv checker to mark file as bad if
+           * partially uploaded
+           */
+          FORALL_HOOKS(EVENT_POSTUPLOAD)
+            typedef int (*upload_hook)(unsigned long, const char*, const char *);
+          if (hook->hook)
+            ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+          END_FORALL_HOOKS
+        }
+        context->current_action.current_file = 0;
+        context->current_action.bytesnow = 0;
+        context->current_action.token = TOK_UNKNOWN;
+        context->state = STATE_COMMAND;
+        data_close(context);
 #ifndef _MSC_VER
-          sleep(5);
+        sleep(5);
 #else
-		  Sleep(5000);
+        Sleep(5000);
 #endif
-	    }
-	    ret = send_message(226,context);
-	    break;
+      }
+      ret = send_message(226,context);
+      break;
 #ifdef SSL_SUPPORT
-	  case TOK_PROT:
-	    /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    if (strcasecmp("P",token)==0)
-	      context->ssl.data_mode = TLS_PRIV;
-	    else if (strcasecmp("C",token)==0)
-	      context->ssl.data_mode = TLS_CLEAR;
-	    else {
-	      ret = send_message_with_args(550,context,"PROT","must be C or P");
-	      break;
-	    }
-	    ret = send_message_with_args(200,context,"PROT command OK");
-	    break;
+    case TOK_PROT:
+      /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
+      token = strtok_r(NULL,"\r\n",&ptr);
+      if (strcasecmp("P",token)==0)
+        context->ssl.data_mode = TLS_PRIV;
+      else if (strcasecmp("C",token)==0)
+        context->ssl.data_mode = TLS_CLEAR;
+      else {
+        ret = send_message_with_args(550,context,"PROT","must be C or P");
+        break;
+      }
+      ret = send_message_with_args(200,context,"PROT command OK");
+      break;
 #endif
-	  case TOK_SITE:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    do_site(token,context); /* do_site send message ! */
-	    break;
-	  case TOK_FEAT:
-	    ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
-	    context->idle_time_start = time(NULL);
-	    break;
-	  case TOK_RNFR:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    do_rnfr(token,context);
-	    break;
-	  case TOK_RNTO:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    do_rnto(token,context);
-	    context->idle_time_start = time(NULL);
-	    break;
-          case TOK_PRET:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-            do_pret(token,context);
-            break;
-          case TOK_XCRC:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-            do_xcrc(token,context);
-            break;
-          case TOK_XMD5:
-	    token = strtok_r(NULL,"\r\n",&ptr);
-            do_xmd5(token,context);
-            break;
-	  case TOK_NOTHING:
-	    break;
-	  default:
-	    ret = send_message(202,context);
-	    break;
-	  }
-	} /* while (!exitclient) */
+    case TOK_SITE:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_site(token,context); /* do_site send message ! */
+      break;
+    case TOK_FEAT:
+      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_RNFR:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_rnfr(token,context);
+      break;
+    case TOK_RNTO:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_rnto(token,context);
+      context->idle_time_start = time(NULL);
+      break;
+    case TOK_PRET:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_pret(token,context);
+      break;
+    case TOK_XCRC:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_xcrc(token,context);
+      break;
+    case TOK_XMD5:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      do_xmd5(token,context);
+      break;
+    case TOK_NOTHING:
+      break;
+    default:
+      ret = send_message(202,context);
+      break;
+    }
+  } /* while (!exitclient) */
 
 /*	Sleep(2000);*/
 
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER
-      pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
+  pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
 #endif
 #else /* WZD_MULTITHREAD */
-      client_die(context);
+  client_die(context);
 #endif /* WZD_MULTITHREAD */
 
 #ifdef SSL_SUPPORT
-      tls_free(context);
+  tls_free(context);
 #endif
-      return NULL;
+  return NULL;
 }

@@ -94,10 +94,12 @@
 
 #include "wzd_debug.h"
 
+#define BUFFER_LEN	4096
 
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
+void server_crashed(int signum);
 
 void child_interrupt(int signum);
 void reset_stats(wzd_server_stat_t * stats);
@@ -135,6 +137,19 @@ int runMainThread(int argc, char **argv)
 /************ PRIVATE *************/
 
 static void free_config(wzd_config_t * config);
+
+static int server_ident_list[3*HARD_USERLIMIT];
+static int server_add_ident_candidate(int socket_accept_fd);
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, int * maxfd);
+static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
+static void server_ident_remove(int index);
+static void server_ident_timeout_check(void);
+
+static void server_login_accept(wzd_context_t * context);
+
+time_t server_time;
+
+
 
 static void cleanchild(int nr) {
 #ifndef _MSC_VER
@@ -184,6 +199,7 @@ static void context_init(wzd_context_t * context)
   context->dataport=0;
   context->resume = 0;
   context->pid_child = 0;
+  context->state = STATE_UNKNOWN;
   context->datamode = DATA_PORT;
   context->current_action.token = TOK_UNKNOWN;
   context->connection_flags = 0;
@@ -491,23 +507,20 @@ int commit_backend(void)
 }
 
 
-
 /*
- * checks if login sequence can start, creates new context, etc
+ * add a connection to the list of idents to be checked
  */
-void login_new(int socket_accept_fd)
+static int server_add_ident_candidate(int socket_accept_fd)
 {
   unsigned char remote_host[16];
   unsigned int remote_port;
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
-  int userip[16];
-  int newsock;
+  unsigned char userip[16];
+  int newsock, fd_ident;
+  unsigned short ident_port = 113;
   wzd_context_t	* context;
-#ifdef WZD_MULTIPROCESS
-#ifdef __CYGWIN__
-  unsigned long shm_key = mainConfig->shm_key;
-#endif /* __CYGWIN__ */
-#endif /* WZD_MULTIPROCESS */
+  int context_index;
+  int i;
 
   newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
   if (newsock <0)
@@ -534,10 +547,256 @@ void login_new(int socket_accept_fd)
     socket_close(newsock);
     out_log(LEVEL_HIGH,"Failed login from %s: global ip rejected\n",
       inet_buf);
-    return;
+    return 1;
   }
 
   out_log(LEVEL_NORMAL,"Connection opened from %s\n", inet_buf);
+    
+  /* 1. create new context */
+  context = context_find_free(context_list);
+  if (!context) {
+    out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
+    close(newsock);
+    return 1;
+  }
+  context_index = ( (unsigned long)(context-context_list) ) / sizeof(wzd_context_t);
+
+  /* don't forget init is done before */
+  context->magic = CONTEXT_MAGIC;
+  context->state = STATE_CONNECTING;
+  context->controlfd = newsock;
+  time (&context->login_time);
+
+  memcpy(context->hostip,userip,16);
+
+  /* switch to tls mode ? */
+  /* TODO XXX FIXME to be done AFTER ident check */
+#ifdef SSL_SUPPORT
+  if (mainConfig->tls_type == TLS_IMPLICIT) {
+    if (tls_auth("SSL",context)) {
+      close(newsock);
+      out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
+      /* mark context as free */
+      context->magic = 0;
+      return 1;
+    }
+    context->connection_flags |= CONNECTION_TLS;
+  }
+  context->ssl.data_mode = TLS_CLEAR;
+#endif
+
+  /* try to open ident connection */
+  fd_ident = socket_connect(*(unsigned long*)&userip,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
+
+  if (fd_ident == -1) {
+    if (errno == ECONNREFUSED) {
+      server_login_accept(context);
+      return 0;
+    }
+    out_log(LEVEL_NORMAL,"Could not get ident (error: %s)\n",strerror(errno));
+    return 1;
+  }
+
+  /* add connection to ident list */
+  i=0;
+  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) i += 3;
+  server_ident_list[i] = -1; /* read */
+  server_ident_list[i+1] = fd_ident; /* write */
+  server_ident_list[i+2] = context_index;
+  server_ident_list[i+3] = -1;
+  server_ident_list[i+4] = -1;
+  server_ident_list[i+5] = -1;
+
+  return 0;
+}
+
+/*
+ * add idents to the correct fd_set
+ */
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, int * maxfd)
+{
+  int i=0;
+
+  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) {
+    if (server_ident_list[i] != -1)
+    {
+      FD_SET(server_ident_list[i],r_fds);
+      FD_SET(server_ident_list[i],e_fds);
+      *maxfd = MAX(*maxfd,server_ident_list[i]);
+    }
+    if (server_ident_list[i+1] != -1)
+    {
+      FD_SET(server_ident_list[i+1],w_fds);
+      FD_SET(server_ident_list[i+1],e_fds);
+      *maxfd = MAX(*maxfd,server_ident_list[i+1]);
+    }
+    i += 3;
+  }
+}
+
+/*
+ * add a connection to the list of idents to be checked
+ */
+static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
+{
+  char buffer[BUFFER_LEN];
+  const char * ptr;
+  int i=0;
+  wzd_context_t * context;
+  unsigned short remote_port;
+  unsigned short local_port;
+  int fd_ident;
+  int ret;
+
+  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) {
+    if (server_ident_list[i] != -1)
+    {
+      if (FD_ISSET(server_ident_list[i],e_fds)) { /* error */
+        /* remove ident connection from list and continues with no ident */
+        goto continue_connection;
+      }
+      if (FD_ISSET(server_ident_list[i],r_fds)) { /* get ident */
+        fd_ident = server_ident_list[i];
+        context = &context_list[server_ident_list[i+2]];
+
+        /* 4- try to read response */
+        ret = recv(fd_ident,buffer,sizeof(buffer),0);
+        if (ret < 0) {
+#ifdef _MSC_VER
+          errno = WSAGetLastError();
+          socket_close(fd_ident);
+          /* remove ident connection from list and continues with no ident */
+          goto continue_connection;
+#endif
+          if (errno == EINPROGRESS) continue;
+          out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
+          socket_close(fd_ident);
+          /* remove ident connection from list and continues with no ident */
+          goto continue_connection;
+        }
+        buffer[ret] = '\0';
+
+        socket_close(fd_ident);
+
+        /* 5- decode response */
+        ptr = strrchr(buffer,':');
+        if (!ptr) {
+          /* remove ident connection from list and continues with no ident */
+          goto continue_connection;
+        }
+        ptr++; /* skip ':' */
+        while (*ptr && isspace(*ptr)) ptr++;
+        strncpy(context->ident,ptr,MAX_IDENT_LENGTH);
+        chop(context->ident);
+
+#ifdef WZD_DBG_IDENT
+        out_log(LEVEL_NORMAL,"received ident %s\n",context->ident);
+#endif
+
+continue_connection:
+        /* remove ident from list and accept login */
+        server_ident_remove(i/3);
+
+        server_login_accept(context);
+      }
+    }
+    else if (server_ident_list[i+1] != -1)
+    {
+      if (FD_ISSET(server_ident_list[i+1],e_fds)) { /* error */
+        /* remove ident connection from list and continues with no ident */
+        goto continue_connection;
+        ret = 0;
+      }
+      if (FD_ISSET(server_ident_list[i+1],w_fds)) { /* write ident request */
+        fd_ident = server_ident_list[i+1];
+        context = &context_list[server_ident_list[i+2]];
+
+        /* 2- get local and remote ports */
+
+        /* get remote port number */
+        local_port = socket_get_local_port(context->controlfd);
+        remote_port = socket_get_remote_port(context->controlfd);
+
+        snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",local_port,remote_port);
+
+        /* 3- try to write */
+        ret = send(fd_ident,buffer,strlen(buffer),0);
+        if (ret < 0) {
+#ifdef _MSC_VER
+          errno = WSAGetLastError();
+          socket_close(fd_ident);
+          /* remove ident connection from list and continues with no ident */
+          goto continue_connection;
+#endif
+          if (errno == EINPROGRESS) continue;
+          out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
+          socket_close(fd_ident);
+          /* remove ident connection from list and continues with no ident */
+          goto continue_connection;
+        }
+        /* now we wait ident answer */
+        server_ident_list[i] = fd_ident;
+        server_ident_list[i+1] = -1;
+      }
+    }
+    i += 3;
+  }
+}
+
+/*
+ * removes ident from list by replacing this entry by the last
+ */
+static void server_ident_remove(int index)
+{
+  int i;
+
+  index *= 3;
+  i = index;
+  while (server_ident_list[i] != -1 && server_ident_list[i+1] != -1)
+    i += 3;
+  if (i == 0) { /* only one entry */
+    server_ident_list[0] = -1;
+    server_ident_list[1] = -1;
+    server_ident_list[2] = -1;
+    return;
+  }
+  i -= 3;
+
+#ifdef DEBUG
+  if (i < 0 || i >= 3*HARD_USERLIMIT)
+    server_crashed(-1);
+#endif
+
+  server_ident_list[index]   = server_ident_list[i];
+  server_ident_list[index+1] = server_ident_list[i+1];
+  server_ident_list[index+2] = server_ident_list[i+2];
+  server_ident_list[i]   = -1;
+  server_ident_list[i+1] = -1;
+  server_ident_list[i+2] = -1;
+}
+
+/*
+ * checks if login sequence can start, creates new context, etc
+ */
+static void server_login_accept(wzd_context_t * context)
+{
+  char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
+  unsigned char * userip;
+#ifdef WZD_MULTIPROCESS
+#ifdef __CYGWIN__
+  unsigned long shm_key = mainConfig->shm_key;
+#endif /* __CYGWIN__ */
+#endif /* WZD_MULTIPROCESS */
+
+
+  userip = context->hostip;
+#if !defined(IPV6_SUPPORT)
+  inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
+#else
+  inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
+  if (IN6_IS_ADDR_V4MAPPED(userip))
+    out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
+#endif
 
   /* start child process */
 #ifdef WZD_MULTIPROCESS
@@ -589,26 +848,12 @@ void login_new(int socket_accept_fd)
     signal(SIGTERM,child_interrupt);
 #endif /* WZD_MULTIPROCESS */
     
-    /* 1. create new context */
-/*  context = malloc(sizeof(wzd_context_t));*/
-    context = context_find_free(context_list);
-    if (!context) {
-      out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
-      close(newsock);
-      return;
-    }
-
-    /* don't forget init is done before */
-    context->magic = CONTEXT_MAGIC;
-    context->controlfd = newsock;
-
-    memcpy(context->hostip,userip,16);
 
     /* switch to tls mode ? */
 #ifdef SSL_SUPPORT
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
-	close(newsock);
+	close(context->controlfd);
 	out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
 	/* mark context as free */
 	context->magic = 0;
@@ -627,14 +872,14 @@ void login_new(int socket_accept_fd)
 #else /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTITHREAD
 #ifdef _MSC_VER
-	{
-		HANDLE thread;
-		unsigned long threadID;
+    {
+      HANDLE thread;
+      unsigned long threadID;
 
-		thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)clientThreadProc, context, 0, &threadID);
+      thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)clientThreadProc, context, 0, &threadID);
 
-		context->pid_child = (unsigned long)thread;
-	}
+      context->pid_child = (unsigned long)thread;
+    }
 #else /* WIN32 */
     {
       int ret;
@@ -667,6 +912,29 @@ void login_new(int socket_accept_fd)
 #endif
 }
 
+/*
+ * removes timed out ident connections
+ */
+static void server_ident_timeout_check(void)
+{
+  int i;
+  wzd_context_t * context;
+
+  for (i=0; server_ident_list[i] != -1 || server_ident_list[i+1] != -1; i += 3)
+  {
+    context = &context_list[server_ident_list[i+2]];
+
+    if ( (server_time - context->login_time) > HARD_IDENT_TIMEOUT )
+    {
+      if (server_ident_list[i]) socket_close(server_ident_list[i]);
+      if (server_ident_list[i+1]) socket_close(server_ident_list[i+1]);
+      /* remove ident from list and accept login */
+      server_ident_remove(i/3);
+
+      server_login_accept(context);
+    }
+  }
+}
 
 /** IMPERATIVE STOP REQUEST - exit */
 void interrupt(int signum)
@@ -797,7 +1065,8 @@ void server_crashed(int signum)
 void serverMainThreadProc(void *arg)
 {
   int ret;
-  fd_set r;
+  fd_set r_fds, w_fds, e_fds;
+  int maxfd;
   struct timeval tv;
   int i;
   unsigned int length=0, size_context, size_user, size_group;
@@ -969,6 +1238,11 @@ void serverMainThreadProc(void *arg)
     serverMainThreadExit(-1);
   }
 
+  /* clear ident list */
+  server_ident_list[0] = -1;
+  server_ident_list[1] = -1;
+  server_ident_list[2] = -1;
+
   /****** set up site functions *****/
   if (site_init(mainConfig)) {
     out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
@@ -1006,14 +1280,21 @@ void serverMainThreadProc(void *arg)
 
   mainConfig->serverstop=0;
   while (!mainConfig->serverstop) {
-    FD_ZERO(&r);
-    FD_SET(mainConfig->mainSocket,&r);
+    FD_ZERO(&r_fds);
+    FD_ZERO(&w_fds);
+    FD_ZERO(&e_fds);
+    FD_SET(mainConfig->mainSocket,&r_fds);
+    FD_SET(mainConfig->mainSocket,&e_fds);
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
+    maxfd = mainConfig->mainSocket;
+    server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
-    ret = select(0, &r, NULL, NULL, &tv);
+    ret = select(0, &r_fds, &w_fds, &e_fds, &tv);
 #else
-    ret = select(mainConfig->mainSocket+1, &r, NULL, NULL, &tv);
+    ret = select(maxfd+1, &r_fds, &w_fds, &e_fds, &tv);
 #endif
+
+    time (&server_time);
     
     switch (ret) {
     case -1: /* error */
@@ -1027,13 +1308,24 @@ void serverMainThreadProc(void *arg)
         strerror(errno), __FILE__, __LINE__);
       serverMainThreadExit(-1);
       /* we abort, so we never returns */
+#if 0
     case 0: /* timeout */
       /* check for timeout logins */
       break;
+#endif
     default: /* input */
-      mainConfig->stats.num_connections++;
-      if (FD_ISSET(mainConfig->mainSocket,&r)) {
-        login_new(mainConfig->mainSocket);
+      server_ident_check(&r_fds,&w_fds,&e_fds);
+      /* TODO XXX check ident timeout */
+      server_ident_timeout_check();
+      if (FD_ISSET(mainConfig->mainSocket,&r_fds)) {
+        if (server_add_ident_candidate(mainConfig->mainSocket)) {
+          out_log(LEVEL_NORMAL,"could not add connection for ident (%s) :%s:%d\n",
+              strerror(errno), __FILE__, __LINE__);
+          continue; /* possible cause of error: global ip rejected */
+/*          serverMainThreadExit(-1);*/
+          /* we abort, so we never returns */
+        }
+        mainConfig->stats.num_connections++;
       }
     }
 

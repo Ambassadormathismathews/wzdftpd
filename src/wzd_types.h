@@ -171,6 +171,11 @@
 #endif /* _MSC_VER */
 
 
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#endif
+
 
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
 
