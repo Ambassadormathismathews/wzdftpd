@@ -40,6 +40,7 @@
 #include <sys/types.h>
 
 #ifdef WIN32
+#define _WIN32_WINNT    0x500
 #include <windows.h>
 #else
 #include <unistd.h>
@@ -49,6 +50,8 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_mutex.h"
+
+#include "wzd_debug.h"
 
 
 
@@ -80,7 +83,7 @@ wzd_mutex_t * wzd_mutex_create(unsigned long key)
     ret = pthread_mutex_init(&(m->_mutex), NULL);
   }
 #else
-  InitializeCriticalSection(&mutex->_mutex);
+  InitializeCriticalSection(&m->_mutex);
   ret = 0;
 #endif
   
@@ -112,9 +115,11 @@ int wzd_mutex_lock(wzd_mutex_t * mutex)
 #ifndef WIN32
     return pthread_mutex_lock(&mutex->_mutex);
 #else
-    return EnterCriticalSection(&mutex->_mutex);
+    EnterCriticalSection(&mutex->_mutex);
+    return 0;
 #endif
   }
+  return 1;
 }
 
 
@@ -128,6 +133,7 @@ int wzd_mutex_trylock(wzd_mutex_t * mutex)
     return TryEnterCriticalSection(&mutex->_mutex);
 #endif
   }
+  return 1;
 }
 
 
@@ -138,8 +144,10 @@ int wzd_mutex_unlock(wzd_mutex_t * mutex)
 #ifndef WIN32
     return pthread_mutex_unlock(&mutex->_mutex);
 #else
-    return LeaveCriticalSection(&mutex->_mutex);
+    LeaveCriticalSection(&mutex->_mutex);
+    return 0;
 #endif
   }
+  return 1;
 }
 

@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040605
+AppVerName=wzdftpd 0.4cvs-20040705
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040605
+OutputBaseFilename=wzdftpd-0.4cvs-20040705
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -49,6 +49,7 @@ Source: ..\..\AUTHORS; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\ChangeLog; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\COPYING; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\INSTALL; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\NEWS; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\Permissions.ReadMeFirst; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\README; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\TLS.ReadmeFirst; DestDir: {app}; Flags: ignoreversion
