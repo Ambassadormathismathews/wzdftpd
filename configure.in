@@ -76,6 +76,7 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime],,exit 1)
+AC_CHECK_FUNC(getopt_long,[AC_DEFINE(HAVE_GETOPT)])
 AC_CHECK_FUNCS([inet_ntop])
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
@@ -165,6 +166,8 @@ AC_DEFINE_UNQUOTED(WZD_BUILD_OPTS,"$WZD_BUILD_OPTS")
 
 AH_TEMPLATE([WZD_BUILD_OPTS],
             [Build options.])
+AH_TEMPLATE([HAVE_GETOPT],
+            [System has the getopt_long function.])
 
 BUILDNUM="`date +\"%Y%m%d\"`"
 

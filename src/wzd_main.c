@@ -77,6 +77,7 @@ void display_usage(void)
          WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
   fprintf(stderr, "\nusage: wzdftpd [arguments]\n");
   fprintf(stderr,"\narguments:\r\n");
+#ifdef HAVE_GETOPT
   fprintf(stderr," -h, --help                  - Display this text \n");
 #if DEBUG
   fprintf(stderr," -b, --background            - Force background \n");
@@ -85,6 +86,17 @@ void display_usage(void)
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s, --force-foreground      - Stay in foreground \n");
   fprintf(stderr," -V, --version               - Show version \n");
+#else /* HAVE_GETOPT */
+  fprintf(stderr," -h                          - Display this text \n");
+#if DEBUG
+  fprintf(stderr," -b                          - Force background \n");
+#endif
+  fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
+  fprintf(stderr," -f <file>                   - Load alternative config file \n");
+  fprintf(stderr," -s                          - Stay in foreground \n");
+  fprintf(stderr," -V                          - Show version \n");
+
+#endif /* HAVE_GETOPT */
 }
 
 void cleanup_shm(void)
@@ -161,6 +173,7 @@ int main_parse_args(int argc, char **argv)
   int opt;
 
 
+#ifdef HAVE_GETOPT
   static struct option long_options[] =
   {
     /* Options without arguments: */
@@ -174,7 +187,11 @@ int main_parse_args(int argc, char **argv)
 
   /* please keep options ordered ! */
 /*  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {*/
-  while ((opt=getopt_long(argc, argv, "hbdf:sV", long_options, (int *)0)) != -1) {
+  while ((opt=getopt_long(argc, argv, "hbdf:sV", long_options, (int *)0)) != -1)
+#else /* HAVE_GETOPT */
+  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1)
+#endif /* HAVE_GETOPT */
+  {
     switch((char)opt) {
     case 'b':
       stay_foreground = 0;
