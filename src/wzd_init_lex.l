@@ -248,6 +248,7 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
 
+  if (!strcmp(word,"reject_unknown_users")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_ca_file")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_ca_path")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_certificate")) return CFG_KEYWORD;

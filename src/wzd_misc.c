@@ -71,6 +71,14 @@
 #ifndef _MSC_VER
 #include <sys/param.h>
 
+#if HAVE_SYS_STATFS_H
+#include <sys/statfs.h> /* statfs */
+#endif
+
+#if HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h> /* statfs */
+#endif
+
 #if HAVE_SYS_VFS_H
 #include <sys/vfs.h> /* statfs */
 #endif
@@ -93,7 +101,7 @@
 #endif /* WZD_USE_PCH */
 
 
-#if defined(WIN32) || defined(BSD)
+#if defined(WIN32) || defined(BSD) || defined(__sun__)
 #define LONGBITS  0x20
 #else
 /* needed  for LONGBITS */
@@ -246,7 +254,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 
   return 0;
 #endif
-#if BSD || defined(_MSC_VER)
+#if BSD || defined(_MSC_VER) || defined(__sun__)
   return -1;
 #else
 /*  struct in_addr *ina = void_in;*/
@@ -278,6 +286,20 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 /** returns info on device containing dir/file */
 int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_blocks, long *f_free)
 {
+#ifdef HAVE_STATVFS
+  struct statvfs fs;
+
+  if (statvfs(file,&fs)==0) {
+    if (f_bsize) *f_bsize = fs.f_bsize;
+    if (f_type) *f_type = -1; /* not filled in statvfs */
+    if (f_blocks) *f_blocks = fs.f_blocks;
+    if (f_free) *f_free = fs.f_bavail; /* f_bavail: free blocks avail to non-superuser */
+
+    return 0;
+  }
+
+#else /* HAVE_STATVFS */
+
 #ifndef WIN32
   struct statfs fs;
 
@@ -313,6 +335,8 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
     if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
   }
 #endif
+
+#endif /* HAVE_STATVFS */
   return -1;
 }
 

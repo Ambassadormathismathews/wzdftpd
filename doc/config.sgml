@@ -393,6 +393,20 @@ port ( &lt; 1024 )</emphasis></para>
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_reject_unknown_usres'><term>reject_unknown_users (default: 1)</term>
+<listitem>
+<para>This options defines the behaviour of the server if the user is not accepted.
+The default (1) will immediatly reject user and close connection, while setting 0 will
+cause the server to continue the login process (sending a password request) and reject
+user after.
+<screen>reject_unknown_users = 0</screen>
+</para>
+<para>This option can be used for more security, to prevent a client from detecting
+user names.
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_server_uid'><term>server_uid (default: none)</term>
 <listitem>
 <para>[Linux] Server will drop privileges and change its uid to server_uid

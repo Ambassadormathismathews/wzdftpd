@@ -60,7 +60,7 @@
 #include <process.h> /* _getpid() */
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) || defined(__sun__)
 /* cygwin does not support ipv6 */
 #define INET_ADDRSTRLEN 16
 #define INET6_ADDRSTRLEN 46
@@ -316,7 +316,7 @@ int check_server_dynamic_ip(void)
     {
       struct hostent* host_info;
       // try to decode dotted quad notation
-#ifdef WIN32
+#if defined(WIN32) || defined(__sun__)
       if ((sa_config.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
       if(!inet_aton(ip, &sa_config.sin_addr))
@@ -825,7 +825,7 @@ void interrupt(int signum)
   int ret;
   /* closing properly ?! */
 #ifdef DEBUG
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__sun__)
 fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
 #else
 fprintf(stderr,"Received signal %d\n",signum);
@@ -1095,12 +1095,8 @@ void serverMainThreadProc(void *arg)
   /* catch broken pipe ! */
 #ifdef __SVR4
   sigignore(SIGPIPE);
-  sigset(SIGCHLD,cleanchild);
 #else
   signal(SIGPIPE,SIG_IGN);
-#ifndef WZD_MULTITHREAD
-  signal(SIGCHLD,cleanchild);
-#endif /* WZD_MULTITHREAD */
 #endif
 #endif /* _MSC_VER */
 

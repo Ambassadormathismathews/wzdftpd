@@ -101,7 +101,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   {
     struct hostent* host_info;
     // try to decode dotted quad notation
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__sun__)
     if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
     if(!inet_aton(ip, &sai.sin_addr))
@@ -491,13 +491,13 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 /* Returns the local/remote port for the socket. */
 int get_sock_port(int sock, int local)
 {
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__sun__)
   struct sockaddr_storage from;
   char strport[NI_MAXSERV];
 #else
   struct sockaddr_in from;
 #endif
-  socklen_t fromlen;
+  size_t fromlen;
 
   /* Get IP address of client. */
   fromlen = sizeof(from);
@@ -514,7 +514,7 @@ int get_sock_port(int sock, int local)
     }
   }
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) && !defined(__sun__)
   /* Work around Linux IPv6 weirdness */
   if (from.ss_family == AF_INET6)
     fromlen = sizeof(struct sockaddr_in6);

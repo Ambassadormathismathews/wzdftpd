@@ -59,6 +59,11 @@
 #include <regex.h>
 
 #include <syslog.h>
+
+#if defined(__sun__)
+# define LOG_FTP LOG_DAEMON
+#endif
+
 #endif
 
 #include <errno.h>

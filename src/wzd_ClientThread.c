@@ -3042,6 +3042,8 @@ int do_user_ip(const char *username, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  if (!user) return E_USER_IDONTEXIST;
+
 #if !defined(IPV6_SUPPORT)
   inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
 #else
@@ -3103,10 +3105,17 @@ static int do_login_loop(wzd_context_t * context)
   char username[HARD_USERNAME_LENGTH];
   int ret;
   int user_ok=0, pass_ok=0;
+  int reject_nonexistant=1;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   int tls_ok=0;
 #endif
   int command;
+
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "reject_unknown_users", (void**)&ptr) == 0)
+  {
+    if (ptr && strcmp(ptr,"0")==0)
+      reject_nonexistant = 0;
+  }
 
   *username = '\0';
 
@@ -3160,6 +3169,8 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       ret = do_user(token,context);
       switch (ret) {
       case E_USER_REJECTED: /* user was not accepted */
+        if (!reject_nonexistant)
+          break;
         ret = send_message_with_args(421,context,"User rejected");
         return 1;
       case E_USER_NUMLOGINS: /* too many logins */
@@ -3177,7 +3188,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       /* validate ip for user */
       ret = do_user_ip(token,context);
-      if (ret) { /* user was not accepted */
+      if (reject_nonexistant && ret) { /* user was not accepted */
         ret = send_message_with_args(421,context,"IP not allowed");
         return 1;
       }

@@ -35,6 +35,10 @@
 
 #include <sys/types.h>
 
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
+#endif
+
 
 #if defined(_MSC_VER)
 
@@ -299,11 +303,11 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 
 /* unsigned int, 64 bits: u64_t */
 #define i16_t int16_t
-#define u16_t u_int16_t
+#define u16_t uint16_t
 #define i32_t int32_t
-#define u32_t u_int32_t
+#define u32_t uint32_t
 #define i64_t int64_t
-#define u64_t u_int64_t
+#define u64_t uint64_t
 #include <sys/time.h> /* struct timeval */
 
 #define DIR_CONTINUE continue;
@@ -340,6 +344,10 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 	((((const ULONG *)(a))[0] == 0) \
 	&& (((const ULONG *)(a))[1] == 0) \
 	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
+#endif
+
+#ifndef INADDR_NONE
+# define INADDR_NONE ((unsigned long int) 0xffffffff)
 #endif
 
 

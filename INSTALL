@@ -16,6 +16,11 @@ Windows:
 * visual c++
 * if you want ssl support, openssl-devel headers and libs
 
+Solaris:
+* gcc, flex, binutils from sunfreeware
+* the library name containing gethostbyname (see man)
+ex: LDFLAGS="-lxnet -lposix4" ./configure [...]
+
 
 All paths are relative to rep wzdftpd (root)
 

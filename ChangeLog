@@ -1,3 +1,9 @@
+2005-01-14  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: use statvfs instead of statfs if detected
+	* feature: option "reject_unknown_user" to reject users after USER command
+	* feature: the main part (server+lib) now compiles on solaris
+
 2005-01-12  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: server sending garbage on 64-bits platforms
