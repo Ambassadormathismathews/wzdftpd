@@ -1430,9 +1430,7 @@ int do_site_vfsdel(char * command_line, wzd_context_t * context)
   return 0;
 }
 
-/* TODO XXX FIXME *several* memory leaks in this function:
- *  tests missing
- *  return with directory opened ...
+/* TODO XXX FIXME tests missing
  */
 static int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
