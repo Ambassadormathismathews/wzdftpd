@@ -1,3 +1,15 @@
+# May, 21 2003
+- fixed supid bug were fields were not correctly initialized when creating
+  new user
+- fixed segfault on rename dir
+- bugfix: permission sometime disappear when renaming file
+
+# May, 12 2003
+- added some functions to debug: test if a file descriptor is valid, etc.
+
+# May, 09 2003
+- fixed some small memory leaks
+
 # May, 07 2003
 - syslog integration
 - fixed several bugs
