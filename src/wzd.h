@@ -61,7 +61,11 @@
 #include "wzd_action.h"
 #include "wzd_misc.h"
 
-#if SSL_SUPPORT
+#if !SSL_SUPPORT
+#define	SSL	void
+#define	SSL_CTX	void
+#endif
+
 typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
 
 typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t;
@@ -75,7 +79,6 @@ typedef struct {
   SSL *		data_ssl;
   ssl_fd_mode_t	ssl_fd_mode;
 } wzd_ssl_t;
-#endif
 
 typedef enum {
   ASCII=0,
@@ -121,9 +124,7 @@ typedef struct {
   wzd_bw_limiter current_dl_limiter;
   time_t	idle_time_start;
   time_t	idle_time_data_start;
-#if SSL_SUPPORT
   wzd_ssl_t   	ssl;
-#endif
 } wzd_context_t;
 
 
@@ -162,12 +163,10 @@ typedef struct {
   wzd_module_t	*module;
   unsigned long	server_opts;
   wzd_server_stat_t	stats;
-#if SSL_SUPPORT
   char		tls_certificate[256];
   char          tls_cipher_list[256];
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
-#endif
   unsigned long	shm_key;
   wzd_command_perm_t	* perm_list;
 /*  wzd_bw_limiter	* limiter_ul;
