@@ -7,6 +7,10 @@
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#else
+#define	SSL	void
+#define	SSL_CTX	void
+#define	FILE	void
 #endif /* SSL_SUPPORT */
 
 #define Sleep(x)        usleep((x)*1000)
@@ -25,6 +29,7 @@
 #include "wzd_file.h"
 #include "wzd_mod.h"
 #include "wzd_data.h"
+#include "wzd_ServerThread.h"
 
 void data_close(wzd_context_t * context)
 {
@@ -130,8 +135,8 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       }
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_dl,n,0);*/
-      limiter_add_bytes(&mainConfig->global_dl_limiter,n,0);
-      limiter_add_bytes(&context->current_dl_limiter,n,0);
+      limiter_add_bytes(&mainConfig->global_dl_limiter,limiter_sem,n,0);
+      limiter_add_bytes(&context->current_dl_limiter,limiter_sem,n,0);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
       user->bytes_dl_total += n;
       context->idle_time_data_start = time(NULL);
@@ -163,8 +168,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       write(context->current_action.current_file,buffer,n);
       context->current_action.bytesnow += n;
 /*      limiter_add_bytes(mainConfig->limiter_ul,n,0);*/
-      limiter_add_bytes(&mainConfig->global_ul_limiter,n,0);
-      limiter_add_bytes(&context->current_ul_limiter,n,0);
+      limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_sem,n,0);
+      limiter_add_bytes(&context->current_ul_limiter,limiter_sem,n,0);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
       user->bytes_ul_total += n;
       context->idle_time_data_start = time(NULL);
