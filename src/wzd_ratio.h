@@ -25,7 +25,7 @@
 #ifndef __WZD_RATIO_H__
 #define __WZD_RATIO_H__
 
-unsigned long long ratio_get_credits(wzd_user_t * user);
+u_int64_t ratio_get_credits(wzd_user_t * user);
 int ratio_check_download(const char *path, wzd_context_t *context);
 
 #endif /* __WZD_RATIO_H__ */

@@ -22,23 +22,12 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_CLIENT_THREAD__
-#define __WZD_CLIENT_THREAD__
+/* wzd_types.h : system types */
+#ifndef __WZD_TYPES__
+#define __WZD_TYPES__
 
-int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
-int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+#include <sys/types.h>
 
-void * clientThreadProc(void *arg);
+/* unsigned int, 64 bits: u_int64_t */
 
-void client_die(wzd_context_t * context);
-
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
-#ifdef SSL_SUPPORT
-#define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"
-#else
-#define TEMP_FEAT GLOBAL_FEATURES
-#endif
-
-#define SUPPORTED_FEATURES (TEMP_FEAT "End")
-
-#endif /* __WZD_CLIENT_THREAD__ */
+#endif /* __WZD_TYPES__ */

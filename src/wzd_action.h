@@ -66,6 +66,7 @@
 #define TOK_PRET        35
 
 #define TOK_XCRC        36
+#define TOK_XMD5        37
 
 #define	TOK_NOTHING	64
 

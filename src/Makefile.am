@@ -22,6 +22,8 @@ libwzd_la_SOURCES =  \
 	wzd_libmain.h   \
 	wzd_log.c       \
 	wzd_log.h       \
+	wzd_md5.c       \
+	wzd_md5.h       \
 	wzd_messages.c  \
 	wzd_messages.h  \
 	wzd_misc.c      \
@@ -32,6 +34,7 @@ libwzd_la_SOURCES =  \
 	wzd_section.h   \
 	wzd_shm.c       \
 	wzd_shm.h       \
+	wzd_types.h     \
 	wzd_vfs.c       \
 	wzd_vfs.h
 
@@ -70,8 +73,8 @@ wzdftpd_SOURCES =    \
 	wzd_savecfg.h      \
 	wzd_site.c         \
 	wzd_site.h         \
-	wzd_site_group.c    \
-	wzd_site_group.h    \
+	wzd_site_group.c   \
+	wzd_site_group.h   \
 	wzd_site_user.c    \
 	wzd_site_user.h    \
 	wzd_socket.c       \

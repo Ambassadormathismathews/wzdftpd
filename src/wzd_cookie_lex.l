@@ -339,7 +339,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   int convert=0;
   float val;
   char c;
-  unsigned long long total;
+  u_int64_t total;
   unsigned int send_buffer_ptr=0;
   unsigned short use_colors=0;
   char * out_buffer_ptr;

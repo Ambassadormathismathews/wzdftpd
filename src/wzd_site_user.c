@@ -1301,7 +1301,7 @@ int do_site_give(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user, *me;
   int uid;
-  unsigned long long kbytes;
+  u_int64_t kbytes;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -1383,7 +1383,7 @@ int do_site_take(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user, *me;
   int uid;
-  unsigned long long kbytes;
+  u_int64_t kbytes;
   short is_gadmin;
 
   me = GetUserByID(context->userid);

@@ -387,7 +387,7 @@ int read_section_users(FILE * file_user, char * line)
   int err;
   long num;
   unsigned long u_num;
-  unsigned long long ul_num;
+  u_int64_t ul_num;
   char *ptr;
   unsigned long i;
 

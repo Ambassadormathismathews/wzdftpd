@@ -5,8 +5,9 @@
 '********'
 - XCRC/XMD5 command
  -> XCRC / OK
+ -> XMD5 / OK
  -> implement calc_crc32 on file portion
- -> XMD5
+ -> implement calc_md5 on file portion
 '********'
 - announce:
 Tue Sep 10 12:28:49 2002 SFV: "/path/to/rlz/" "Got SFV for rlz_name. Expecting 50."
@@ -19,6 +20,7 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
 - sfv checker:
   verify zip integrity / OK
   extract .diz info / OK
+  if no .diz present in dir, extract .diz from zip
 '********'
 - v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
   220- ... 220 command ok (easier !)

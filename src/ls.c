@@ -185,7 +185,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
                 (int)st.st_nlink,
                 user->username,
                 "ftp",
-                (unsigned long long)st.st_size,
+                (u_int64_t)st.st_size,
                 datestr,
                 ptr);
                 
@@ -273,7 +273,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		(int)st.st_nlink,
 		(owner)?owner->username:"unknown",
 		"ftp",
-		(unsigned long long)st.st_size,
+		(u_int64_t)st.st_size,
 		datestr,
 		buffer_name);
 

@@ -68,6 +68,7 @@
 #include "wzd_vfs.h"
 #include "wzd_crc32.h"
 #include "wzd_file.h"
+#include "wzd_md5.h"
 #include "wzd_ratio.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
@@ -165,6 +166,8 @@ int identify_token(char *token)
     return TOK_PRET;
   if (strcmp("xcrc",token)==0)
     return TOK_XCRC;
+  if (strcmp("xmd5",token)==0)
+    return TOK_XMD5;
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
@@ -1853,6 +1856,73 @@ void do_xcrc(char *param, wzd_context_t * context)
   ret = send_message_with_args(550,context,"XCRC","File inexistant or no access ?");
 }
 
+/*************** do_xmd5 *****************************/
+void do_xmd5(char *param, wzd_context_t * context)
+{
+  char path[2048];
+  char buffer[1024];
+  char * ptr;
+  char * ptest;
+  struct stat s;
+  int ret;
+  unsigned char crc[16];
+  unsigned char md5str[33];
+  unsigned long startpos = 0;
+  unsigned long length = (unsigned long)-1;
+  unsigned int i;
+
+  /* get filename and args:
+   * "filename" must be quoted
+   * startpos and length are optional
+   */
+  ptr = param;
+  if (*ptr == '"') {
+    ptr++;
+    while (*ptr && *ptr != '"') ptr++;
+    if (!*ptr) {
+      ret = send_message_with_args(501,context,"Syntax error");
+      return;
+    }
+    memcpy(buffer,param+1,ptr-param-1);
+    buffer[ptr-param-1] = '\0';
+    ptr++;
+    /* optional: read startpos AND length */
+    startpos = strtoul(ptr,&ptest,0);
+    if (ptest && ptest != ptr)
+    {
+      ptr = ptest;
+      length = strtoul(ptr,&ptest,0);
+      if (!ptest || ptest == ptr) {
+        ret = send_message_with_args(501,context,"Syntax error");
+        return;
+      }
+    } else
+      startpos = 0;
+    param = buffer;
+  }
+
+  if (!checkpath(param,path,context)) {
+    if (path[strlen(path)-1]=='/')
+      path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+    if (is_hidden_file(path)) {
+      ret = send_message_with_args(501,context,"Go away bastard");
+      return;
+    }
+
+
+    if (stat(path,&s)==0) {
+      ret = calc_md5(path,crc,startpos,length);
+      for (i=0; i<16; i++)
+        snprintf(md5str+i*2,3,"%02x",crc[i]);
+      ret = send_message_with_args(250,context,md5str,"");
+      return;
+    }
+  }
+  ret = send_message_with_args(550,context,"XMD5","File inexistant or no access ?");
+}
+
 /*************** do_pass *****************************/
 
 /* return E_OK if ok, E_PASS_REJECTED if wrong pass, E_LOGIN_NO_HOME if ok but homedir does not exist */
@@ -2808,6 +2878,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
           case TOK_XCRC:
 	    token = strtok_r(NULL,"\r\n",&ptr);
             do_xcrc(token,context);
+            break;
+          case TOK_XMD5:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+            do_xmd5(token,context);
             break;
 	  case TOK_NOTHING:
 	    break;

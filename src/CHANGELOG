@@ -1,3 +1,8 @@
+# Nov, 18 2003
+- removed 'unsigned long long' type, replaced with 'u_int64_t'
+- added md5 code to main lib
+- implemented 'XMD5' command
+
 # Nov, 17 2003
 - started implementation of 'PRET' command (see lftp, GridFTPD, DrFTPD)
 - sfv module: diz/sfv files are processed to guess number of files to be uploaded

@@ -58,6 +58,7 @@
 | site version   | show server version                          | r,s,n,g    |
 | site who       | show who's online                            | r,s,n,g    |
 | xcrc           | returns CRC32 value of specified file        | all        |
+| xmd5           | returns MD5 checksum of specified file       | all        |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
 |                                                                            |

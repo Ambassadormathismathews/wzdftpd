@@ -40,9 +40,9 @@
 #include "wzd_ratio.h"
 #include "wzd_misc.h"
 
-unsigned long long ratio_get_credits(wzd_user_t * user)
+u_int64_t ratio_get_credits(wzd_user_t * user)
 {
-  if (!user->ratio) return (unsigned long long)-1;
+  if (!user->ratio) return (u_int64_t)-1;
 
   return user->credits;
 }
@@ -50,7 +50,7 @@ unsigned long long ratio_get_credits(wzd_user_t * user)
 int ratio_check_download(const char *path, wzd_context_t *context)
 {
   wzd_user_t * me;
-  unsigned long long credits;
+  u_int64_t credits;
   struct stat s;
   unsigned long needed=0;
 
