@@ -210,37 +210,6 @@ static wzd_context_t * context_find_free(List * context_list)
   return context;
 }
 
-/** \brief remove a context from the list */
-int context_remove(List * context_list, wzd_context_t * context)
-{
-  ListElmt * elmnt;
-  void * data;
-
-  if (!context_list->head) return -1;
-  wzd_mutex_lock(server_mutex);
-
-  if (context == context_list->head->data)
-  {
-    list_rem_next(context_list, NULL, &data);
-    wzd_free(context);
-    wzd_mutex_unlock(server_mutex);
-    return 0;
-  }
-
-  for (elmnt=context_list->head; elmnt; elmnt=list_next(elmnt))
-  {
-    if ( list_next(elmnt) && context == list_next(elmnt)->data )
-    {
-      list_rem_next(context_list, elmnt, &data);
-      wzd_free(context);
-      wzd_mutex_unlock(server_mutex);
-      return 0;
-    }
-  }
-  wzd_mutex_unlock(server_mutex);
-
-  return -1;
-}
 
 void reset_stats(wzd_server_stat_t * stats)
 {

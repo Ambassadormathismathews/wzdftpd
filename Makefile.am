@@ -4,7 +4,7 @@ if HAVE_PERL
   MAYBE_PERL = libwzd-perl
 endif
 
-SUBDIRS = ac-helpers m4 libwzd-base libwzd-auth libwzd src backends modules $(MAYBE_PERL) tools init.d doc man
+SUBDIRS = ac-helpers m4 libwzd-base libwzd-auth libwzd src backends modules $(MAYBE_PERL) tools init.d doc man tests
 
 bin_SCRIPTS = wzd-config
 

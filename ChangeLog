@@ -1,3 +1,7 @@
+2005-03-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: added simple test suite (unit tests)
+
 2005-03-01  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: use permissions from command list

@@ -284,6 +284,7 @@ AC_CONFIG_FILES([Makefile
                  modules/test/Makefile
                  src/Makefile
                  src/wzd.cfg.sample
+                 tests/Makefile
                  tools/Makefile
                  tools/siteconfig/Makefile
                  tools/siteuptime/Makefile
