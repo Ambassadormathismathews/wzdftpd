@@ -7,7 +7,7 @@
 <simplesect>
 <title>Description</title>
 <para>
-This modules comes with some utilities functions to handle sfv files, and associated files (diz,
+This module comes with some utilities functions to handle sfv files, and associated files (diz,
 zip, etc).
 </para>
 <para>
@@ -109,6 +109,70 @@ uploaded.
 as usual.</para></listitem>
 <listitem><screen>site sfv create sfv_name</screen>
 <para>Creates a SFV file in current dir.
+</para></listitem>
+</itemizedlist>
+</simplesect>
+
+</sect1>
+
+
+
+
+<sect1>
+<title>TCL module</title>
+
+<simplesect>
+<title>Description</title>
+<para>
+This module has an embedded TCL interpreter, and offers several
+facilities based on TCL language.
+</para>
+<para>
+The main feature is to add a protocol for hooks, it means that
+instead of giving the path to an executable (or script) in a
+<link linkend="cfg_cscript">csript directive</link> or in a
+<link linkend="cfg_site_cmd">custom site command</link>, you can
+use a TCL script with direct access to server internals
+</para>
+<para>
+TCL is provided as a module, keeping main server from adding
+many useless dependancies.
+</para>
+</simplesect>
+
+<simplesect>
+<title>Installation</title>
+<para>
+Just add the line
+<screen>module = /path/to/libwzd_tcl.so</screen>
+in your config file.
+</para>
+<para>
+You must ensure that the tcl shared library (for ex
+libtcl8.4.so, or tcl8.4.dll) is accessible (in the PATH
+or in the same directory), or module loading will fail.
+</para>
+</simplesect>
+
+<simplesect>
+<title>Available TCL commands and variables</title>
+<itemizedlist>
+<listitem><screen>send_message</screen>
+<para>Use the string given in argument to send reply to client.
+</para><para>This function can be called only once.
+</para></listitem>
+<listitem><screen>send_message_raw</screen>
+<para>Sends the string given in argument to client, without
+any processing. It must be a valid FTP reply.
+</para><para>This function must be use with care.
+</para><para>Example:
+<screen>send_message_raw "200-test line\r\n"</screen>
+</para><para>If reply is complete, script must set variable
+wzd_reply to "1" to indicate that reply has been completed.
+</para></listitem>
+<listitem><screen>wzd_reply_code</screen>
+<para>Use this variable contains the current reply code used
+by server. This must be used with caution.
 </para></listitem>
 </itemizedlist>
 </simplesect>

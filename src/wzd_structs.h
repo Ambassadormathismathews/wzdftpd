@@ -210,6 +210,7 @@ typedef struct {
   time_t		last_login;
 } wzd_user_t;
 
+/** @brief Group definition */
 typedef struct {
   char                  groupname[128];
   wzd_perm_t            groupperms;

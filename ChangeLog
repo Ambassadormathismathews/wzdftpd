@@ -1,4 +1,13 @@
+2004-02-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: first implementation of protocols (used in custom
+        scripts and custom site commands)
+	* tcl: site tcl, tcl protocol - module is basically working
+	* configure.in: mysql headers and lib detection
+	* doc: several updates
+
 2004-02-28  Roman Bogorodskiy <bogorodskiy@inbox.ru>
+
 	* backends: mysql backend started
 
 2004-02-27  Pierre Chifflier  <pollux@wzdftpd.net>

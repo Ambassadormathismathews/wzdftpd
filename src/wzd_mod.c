@@ -85,6 +85,68 @@ struct event_entry_t event_tab[] = {
   { 0, NULL },
 };
 
+typedef int (*fcn_handler)(const char*, const char *);
+
+typedef struct _protocol_handler_t {
+  char *sig;
+  unsigned int siglen;
+  fcn_handler handler;
+  struct _protocol_handler_t * next_proto;
+} protocol_handler_t;
+
+static protocol_handler_t * proto_handler_list=NULL;
+
+int hook_add_protocol(const char *signature, unsigned int sig_len, int (*handler)(const char *, const char *))
+{
+  protocol_handler_t * proto;
+
+  if (!signature || !handler || sig_len==0) return -1;
+
+  proto = wzd_malloc (sizeof(protocol_handler_t));
+  proto->sig = wzd_malloc(sig_len+1);
+  memcpy(proto->sig,signature,sig_len);
+  proto->sig[sig_len] = '\0';
+  proto->siglen = sig_len;
+  proto->handler = handler;
+  proto->next_proto = proto_handler_list;
+
+  proto_handler_list = proto;
+
+  return 0;
+}
+
+void hook_free_protocols(void)
+{
+  protocol_handler_t * proto, * next_proto;
+  proto = proto_handler_list;
+
+  while (proto)
+  {
+    next_proto = proto->next_proto;
+    if (proto->sig) wzd_free(proto->sig);
+    wzd_free(proto);
+    proto = next_proto;
+  }
+  proto_handler_list = NULL;
+}
+
+protocol_handler_t * hook_check_protocol(const char *str)
+{
+  protocol_handler_t * proto;
+
+  proto = proto_handler_list;
+  while (proto)
+  {
+    if (strncmp(str,proto->sig,proto->siglen)==0)
+      return proto;
+    proto = proto->next_proto;
+  }
+
+  return NULL;
+}
+
+
+
 /** free hook list */
 void hook_free(wzd_hook_t **hook_list)
 {
@@ -246,22 +308,32 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   char buffer[1024];
   FILE *command_output;
   unsigned int l_command;
+  protocol_handler_t * proto;
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
   if (l_command+strlen(args)>=1022) return 1;
   strcpy(buffer,hook->external_command);
-  *(buffer+l_command++) = ' ';
-  strcpy(buffer+l_command,args);
-  if ( (command_output = popen(buffer,"r")) == NULL ) {
-    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
-    return 1;
-  }
-  while (fgets(buffer,1023,command_output) != NULL)
+  /* we can use protocol hooks here */
+  proto = hook_check_protocol(buffer);
+  if (proto)
   {
-    send_message_raw(buffer,context);
+    return (*proto->handler)(buffer+proto->siglen,args);
   }
-  pclose(command_output);
+  else
+  {
+    *(buffer+l_command++) = ' ';
+    strcpy(buffer+l_command,args);
+    if ( (command_output = popen(buffer,"r")) == NULL ) {
+      out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
+      return 1;
+    }
+    while (fgets(buffer,1023,command_output) != NULL)
+    {
+      send_message_raw(buffer,context);
+    }
+    pclose(command_output);
+  }
 
   return 0;
 }
@@ -271,22 +343,32 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   char buffer[1024];
   FILE *command_output;
   unsigned int l_command;
+  protocol_handler_t * proto;
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
   if (l_command+strlen(args)>=1022) return 1;
   strcpy(buffer,hook->external_command);
-  *(buffer+l_command++) = ' ';
-  strcpy(buffer+l_command,args);
-  if ( (command_output = popen(buffer,"r")) == NULL ) {
-    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
-    return 1;
-  }
-  while (fgets(buffer,1023,command_output) != NULL)
+  /* we can use protocol hooks here */
+  proto = hook_check_protocol(buffer);
+  if (proto)
   {
-    out_log(LEVEL_INFO,"hook: %s\n",buffer);
+    return (*proto->handler)(buffer+proto->siglen,args);
   }
-  pclose(command_output);
+  else
+  {
+    *(buffer+l_command++) = ' ';
+    strcpy(buffer+l_command,args);
+    if ( (command_output = popen(buffer,"r")) == NULL ) {
+      out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
+      return 1;
+    }
+    while (fgets(buffer,1023,command_output) != NULL)
+    {
+      out_log(LEVEL_INFO,"hook: %s\n",buffer);
+    }
+    pclose(command_output);
+  }
 
   return 0;
 }

@@ -33,6 +33,12 @@ int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook);
 int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command);
 int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const char *command);
 
+/** registers a new protocol-like handler for hooks.
+ * ex: tcl:/path/to/file
+ */
+int hook_add_protocol(const char *signature, unsigned int sig_len, int (*handler)(const char *, const char *));
+void hook_free_protocols(void);
+
 /** remove hook from list */
 int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook);
 

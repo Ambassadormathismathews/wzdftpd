@@ -63,9 +63,11 @@ EXPORTS
 	hook_add
 	hook_add_custom_command
 	hook_add_external
+	hook_add_protocol
 	hook_call_custom
 	hook_call_external
 	hook_free
+	hook_free_protocols
 	hook_remove
 	inet_ntop
 	inet_pton

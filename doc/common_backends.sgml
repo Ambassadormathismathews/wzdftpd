@@ -17,4 +17,15 @@ and will be overwritten next time backend is commited.
 </para>
 </sect1>
 
+
+
+
+<sect1>
+<title>Mysql</title>
+
+<para>
+Users/Groups definitions are stored in a mysql database.
+<emphasis>Work in progress !</emphasis>
+</para>
+</sect1>
 </chapter>

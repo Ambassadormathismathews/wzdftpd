@@ -52,17 +52,17 @@ const char * module_name="plaintext";
 
 char USERS_FILE[256]="/etc/wzdFTPd/users";
 
-wzd_user_t * user_pool;
-int user_count, user_count_max=0;
+static wzd_user_t * user_pool;
+static int user_count, user_count_max=0;
 
-wzd_group_t * group_pool;
-int group_count, group_count_max=0;
+static wzd_group_t * group_pool;
+static int group_count, group_count_max=0;
 
-regex_t reg_line;
-regmatch_t regmatch[3];
+static regex_t reg_line;
+static regmatch_t regmatch[3];
 
-char varname[2048];
-char value[2048];
+static char varname[2048];
+static char value[2048];
 
 /* directives */
 #define	D_NONE		0
@@ -70,11 +70,11 @@ char value[2048];
 
 #define	D_NUM		1
 
-const char *tab_directives[] = {
+static const char *tab_directives[] = {
   "privgroup"
 };
 
-unsigned int find_directive(const char *name)
+static unsigned int find_directive(const char *name)
 {
   int i=0;
 
@@ -87,7 +87,7 @@ unsigned int find_directive(const char *name)
 
 
 /* IP allowing */
-int user_ip_add(wzd_user_t * user, const char *newip)
+static int user_ip_add(wzd_user_t * user, const char *newip)
 {
   int i;
 
@@ -107,7 +107,7 @@ int user_ip_add(wzd_user_t * user, const char *newip)
   return 1; /* full */
 }
 
-int group_ip_add(wzd_group_t * group, const char *newip)
+static int group_ip_add(wzd_group_t * group, const char *newip)
 {
   int i;
 
@@ -127,7 +127,7 @@ int group_ip_add(wzd_group_t * group, const char *newip)
   return 1; /* full */
 }
 
-void user_init_struct(wzd_user_t * user)
+static void user_init_struct(wzd_user_t * user)
 {
   register int i;
 
@@ -159,7 +159,7 @@ void user_init_struct(wzd_user_t * user)
 }
 
 
-int write_user_file(void)
+static int write_user_file(void)
 {
 #ifndef _MSC_VER
   sigset_t mask;
@@ -355,7 +355,7 @@ int write_user_file(void)
   return 0;
 }
 
-int read_section_users(FILE * file_user, char * line)
+static int read_section_users(FILE * file_user, char * line)
 {
   char c;
   int err;
@@ -585,7 +585,7 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
 }
 
 
-int read_section_groups(FILE * file_user, char * line)
+static int read_section_groups(FILE * file_user, char * line)
 {
   char c;
   char *token, *ptr;
@@ -696,7 +696,7 @@ fprintf(stderr,"Houston, we have a problem\n");
 }
 
 
-int read_section_hosts(FILE * file_user, char * line)
+static int read_section_hosts(FILE * file_user, char * line)
 {
   char c;
 
@@ -720,7 +720,7 @@ fprintf(stderr,"Entering section HOSTS\n");
 }
 
 
-int read_files(const char *filename)
+static int read_files(const char *filename)
 {
   FILE *file_user;
   char * line, * token, *ptr;

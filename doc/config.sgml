@@ -97,6 +97,25 @@ This penalty will be increased if you use cookies.</para>
 
 </simplesect>
 
+<simplesect>
+<title>Users and Groups</title>
+
+<para>wzdftpd, unlike many other ftpd daemons, is very oriented on groups. The idea
+is to create groups with specific properties, and make users belong
+to several groups. It simplifies configuration, because instead of configuring
+each user, you just have to configure groups. However, please remember that the first
+group of a user is special (it is its main group).
+</para>
+<para>For example, setting the defaultpath in a group is specially important, because
+it will be used as a default value each time you create a user. The default ratio
+will also be taken from the group's ratio.</para>
+<para>Also, do not forget that when a user is created, it has no default ip allowed.
+If you authorize an ip for the group, it will be allowed for all users.</para>
+<para>For users without specific idle time limit, the value of the group will be
+checked. So, user value is needed only if different from group.</para>
+
+</simplesect>
+
 </sect1>
 
 <sect1>
@@ -127,6 +146,16 @@ the backend used, see backend definition for details.
 </para>
 <para>
 This line must come <emphasis>after</emphasis> the definition of the backend.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_cscript'><term>cscript</term>
+<listitem>
+<para>Custom scripts (or binaries) to be executed before/after
+certain commands.
+<screen>cscript = /path/to/exe</screen>
+<screen>cscript = tcl:/path/to/script</screen>
 </para>
 </listitem>
 </varlistentry>
@@ -298,6 +327,22 @@ port ( &lt; 1024 )</emphasis></para>
 <para>This is used to run two or more servers on the same machine</para>
 <para>Remember wzdftpd uses <emphasis>two</emphasis> shared memory zones,
 shm_key and shm_key-1</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_site_cmd'><term>site_cmd</term>
+<listitem>
+<para>Custom site commands.
+<screen>site_cmd = my_free /path/to/free.sh</screen>
+<screen>site_cmd = my_tcl tcl:/path/to/script</screen>
+</para>
+<para>
+This will define a new site command, "my_free".
+</para>
+<para><emphasis>
+Do not forget to add a permission line, or your command will
+not be accessible !
+</emphasis></para>
 </listitem>
 </varlistentry>
 

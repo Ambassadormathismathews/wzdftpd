@@ -3,6 +3,9 @@
 - use 'rats','splint' for security audit
 
 '********'
+- mistake in backends/mysql/libmysql_main.c:
+    s/WZD_FINI/FCN_FINI/
+'********'
 - modules: activate/desactivate module, remove from list
 '********'
 - siteconfig: get bw, etc. change stats, mkdir open, etc.

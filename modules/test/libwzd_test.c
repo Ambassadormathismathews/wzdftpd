@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -37,7 +39,7 @@
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 
 /***** EVENT HOOKS *****/
-int my_event_hook(unsigned long event_id, const char *p1, const char *p2);
+static int my_event_hook(unsigned long event_id, wzd_context_t * context, const char *p1, const char *p2);
 
 /***********************/
 /* WZD_MODULE_INIT     */
@@ -49,10 +51,10 @@ int WZD_MODULE_INIT(void)
   return 0;
 }
 
-int my_event_hook(unsigned long event_id, const char *p1, const char *p2)
+static int my_event_hook(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
-  fprintf(stderr,"*** ID: %lx, %s %s\n",event_id,
-      (p1)?p1:"(NULL)",(p2)?p2:"(NULL)");
+  fprintf(stderr,"*** ID: %lx, [%s] [%s]\n",event_id,
+      (token)?token:"(NULL)",(args)?args:"(NULL)");
   return 0;
 }
 
