@@ -149,6 +149,11 @@ available after an upload/download</para></footnote>
 <tbody>
 <row><entry>Cookie</entry><entry>Description</entry></row>
 
+<row><entry>%bwtotaldl</entry><entry>Current bandwidth used for downloads, in bytes/sec</entry></row>
+<row><entry>%bwtotaldl2</entry><entry>Current bandwidth used for downloads, in bytes/sec, converted in units</entry></row>
+<row><entry>%bwtotalul</entry><entry>Current bandwidth used for uploads, in bytes/sec</entry></row>
+<row><entry>%bwtotalul2</entry><entry>Current bandwidth used for uploads, in bytes/sec, converted in units</entry></row>
+
 <row><entry>%sectionname</entry><entry>Name of current section</entry></row>
 <row><entry>%spacefree</entry><entry>Remaining space on device, converted in units</entry></row>
 <row><entry>%spacetotal</entry><entry>Total space on device, converted in units</entry></row>
