@@ -45,7 +45,7 @@
 #define SSL     void
 #define SSL_CTX void
 
-#include <wzd_structs.h>
+#include "wzd_structs.h"
 
 #include "wzd_log.h"
 #include "wzd_socket.h"
