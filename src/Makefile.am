@@ -29,8 +29,9 @@ libwzd_la_SOURCES =  \
 	wzd_shm.c       \
 	wzd_shm.h       \
 	wzd_crontab.c   \
-	wzd_crontab.h	\
-	wzd_cookie_lex.l
+	wzd_crontab.h
+
+nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
 
 libwzd_la_LDFLAGS = @PTHREAD_FLAGS@ -avoid-version -module -no-undefined
 
@@ -74,8 +75,9 @@ wzdftpd_SOURCES =    \
 	wzd_socket.h       \
 	wzd_structs.h      \
 	wzd_tls.c          \
-	wzd_tls.h          \
-	wzd_init_lex.l
+	wzd_tls.h
+
+nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
 wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ @PTHREAD_FLAGS@ @DL_FLAGS@
 
@@ -96,7 +98,7 @@ uninstall-hook:
 	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs
 
 # them while "make clean", use CLEANFILES
-DISTCLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
+CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
 
-EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO
+EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO wzd_cookie_lex.l wzd_init_lex.l
 
