@@ -181,6 +181,7 @@ static void context_init(wzd_context_t * context)
   context->current_ul_limiter.bytes_transfered = 0;
   context->current_dl_limiter.maxspeed = 0;
   context->current_dl_limiter.bytes_transfered = 0;
+  memset(context->ident, 0, MAX_IDENT_LENGTH);
 #ifdef HAVE_OPENSSL
   context->ssl.obj = NULL;
   context->ssl.data_ssl = NULL;
