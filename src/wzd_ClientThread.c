@@ -354,10 +354,12 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
     context->pasvsock = -1;
   }
   if (context->datafd >= 0) {
+	/** \bug TODO: if TLS, shutdown TLS before closing data connection */
     socket_close(context->datafd);
     FD_UNREGISTER(context->datafd,"Client data fd");
   }
   context->datafd = -1;
+  /** \bug TODO: if TLS, shutdown TLS before closing control connection */
   socket_close(context->controlfd);
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;

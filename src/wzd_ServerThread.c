@@ -575,7 +575,9 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
     {
       if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
-        out_log(LEVEL_NORMAL,"error reading ident response %d %s\n",errno,strerror(errno));
+        out_log(LEVEL_INFO,"error reading ident response %d %s\n",errno,strerror(errno));
+        FD_UNREGISTER(fd_ident,"Ident socket");
+        socket_close(fd_ident);
         goto continue_connection;
       } else
       if (FD_ISSET(ident_context->read_fd,r_fds)) { /* get ident */
@@ -587,15 +589,15 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
         if (ret < 0) {
 #ifdef _MSC_VER
           errno = WSAGetLastError();
-          socket_close(fd_ident);
           FD_UNREGISTER(fd_ident,"Ident socket");
+          socket_close(fd_ident);
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
 #endif
           if (errno == EINPROGRESS) continue;
           out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
-          socket_close(fd_ident);
           FD_UNREGISTER(fd_ident,"Ident socket");
+          socket_close(fd_ident);
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
         }
@@ -634,7 +636,9 @@ continue_connection:
       fd_ident = ident_context->write_fd;
       if (FD_ISSET(ident_context->write_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
-        out_log(LEVEL_NORMAL,"error sending ident request %d %s\n",errno,strerror(errno));
+        out_log(LEVEL_INFO,"error sending ident request %d %s\n",errno,strerror(errno));
+        FD_UNREGISTER(fd_ident,"Ident socket");
+        socket_close(fd_ident);
         goto continue_connection;
         ret = 0;
       }
@@ -654,8 +658,8 @@ continue_connection:
         if (ret < 0) {
 #ifdef _MSC_VER
           errno = WSAGetLastError();
-          socket_close(fd_ident);
           FD_UNREGISTER(fd_ident,"Ident socket");
+          socket_close(fd_ident);
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
 #endif

@@ -34,6 +34,11 @@
 #if defined(_MSC_VER)
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+#define EINPROGRESS WSAEINPROGRESS
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#define EISCONN     WSAEISCONN
+
 #else
 #include <unistd.h>
 #include <sys/socket.h>
@@ -311,6 +316,59 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
   return new_sock;
 }
 
+
+
+#ifdef WIN32
+
+/*
+ * waitconnect() returns:
+ * 0    fine connect
+ * -1   select() error
+ * 1    select() timeout
+ * 2    select() returned with an error condition
+ */
+static int _waitconnect(int sockfd, /* socket */
+                int timeout_msec)
+{
+  fd_set fd;
+  fd_set errfd;
+  struct timeval interval;
+  int rc;
+
+  /* now select() until we get connect or timeout */
+  FD_ZERO(&fd);
+  FD_SET(sockfd, &fd);
+
+  FD_ZERO(&errfd);
+  FD_SET(sockfd, &errfd);
+
+  interval.tv_sec = timeout_msec/1000;
+  timeout_msec -= interval.tv_sec*1000;
+
+  interval.tv_usec = timeout_msec*1000;
+
+  rc = select(sockfd+1, NULL, &fd, &errfd, &interval);
+  if(-1 == rc)
+    /* error, no connect here, try next */
+    return -1;
+  
+  else if(0 == rc)
+    /* timeout, no connect today */
+    return 1;
+
+  if(FD_ISSET(sockfd, &errfd))
+    /* error condition caught */
+    return 2;
+
+  /* we have a connect! */
+  return 0;
+}
+
+
+#endif /* WIN32 */
+
+
+
 /*************** socket_connect *************************/
 
 int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout)
@@ -324,6 +382,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   size_t len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
+  int error;
 
   if (family == WZD_INET4)
   {
@@ -433,6 +492,44 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 #endif
 
 #if defined(_MSC_VER)
+
+
+    ret = connect(sock, sai, len);
+    if (ret == -1) {
+      long timeout_ms=300000; /* default to 5 min */
+      error = WSAGetLastError();
+
+      switch (error) {
+        case EINPROGRESS:
+        case WSAEWOULDBLOCK:
+        case EAGAIN:
+          ret = _waitconnect(sock,timeout_ms);
+          error = WSAGetLastError();
+          if (ret==1) ret=0; /* if we get a timeout here, we do as if we were connected */
+          break;
+        default:
+          out_log(LEVEL_INFO,"Connect failed %s:%d\n", __FILE__, __LINE__);
+          out_log(LEVEL_INFO," errno: %d\n",error);
+          break;
+      }
+    }
+
+    if (ret == 0 || error==0 || error==WSAEWOULDBLOCK || error==WSAEISCONN) {
+      out_err(LEVEL_FLOOD,"Connection OK\n");
+      return sock;
+    }
+
+
+    out_log(LEVEL_INFO,"Connect failed %s:%d\n", __FILE__, __LINE__);
+    out_log(LEVEL_INFO," errno: %d\n",error);
+    socket_close (sock);
+    return -1;
+
+
+
+
+
+
     ret = connect(sock, sai, len);
     if (ret == SOCKET_ERROR) {
       errno = WSAGetLastError();
@@ -469,10 +566,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       out_log(LEVEL_INFO,"Error during connection %d: %s\n",errno,strerror(errno));
       save_errno = WSAGetLastError();
       socket_close(sock);
-      errno = save_errno;
-#ifdef WIN32
       WSASetLastError(save_errno);
-#endif
       return -1;
     }
   }
@@ -662,7 +756,7 @@ int socket_wait_to_write(int sock, unsigned int timeout)
       if (!FD_ISSET(sock,&wfds)) /* timeout */
         return 1;
 #endif
-      break;
+      return 0;
     }
     return 0;
   } /* timeout */
