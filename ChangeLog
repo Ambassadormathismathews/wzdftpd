@@ -1,3 +1,9 @@
+2004-04-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: datafd set to 0 (could cause problems in release mode)
+	* bugfix: service is registered with config file name (visual)
+	* bugfix: more work on possible unclosed fd
+
 2004-04-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: failed logins are loggued (message LOGIN_FAILED)

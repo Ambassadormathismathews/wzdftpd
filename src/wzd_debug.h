@@ -37,6 +37,10 @@
 
 #endif
 
+#ifdef _MSC_VER
+# define __FUNCTION__ "unknown"
+#endif
+
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd);
 

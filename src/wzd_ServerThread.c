@@ -526,7 +526,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     out_log(LEVEL_HIGH,"Error while accepting\n");
     serverMainThreadExit(-1); /** \todo do not exit server, just client */
   }
-  FD_REGISTER(newsock,"Client socket");
+  FD_REGISTER(newsock,"Client control socket");
 
   memcpy(userip,remote_host,16);
 
@@ -661,7 +661,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 #ifdef _MSC_VER
           errno = WSAGetLastError();
           socket_close(fd_ident);
-          FD_UNREGISTER(newsock,"Ident socket");
+          FD_UNREGISTER(fd_ident,"Ident socket");
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
 #endif

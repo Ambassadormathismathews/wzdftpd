@@ -402,8 +402,8 @@ typedef struct {
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
-  unsigned int  controlfd;
-  unsigned int  datafd;
+  int  controlfd;
+  int  datafd;
   data_mode_t   datamode;
   net_family_t  datafamily;
   unsigned long	pid_child;

@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.3cvs-7
+OutputBaseFilename=wzdftpd-0.3cvs-20040405
 ShowLanguageDialog=yes
 
 [Tasks]

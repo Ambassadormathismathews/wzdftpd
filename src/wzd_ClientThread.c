@@ -361,7 +361,7 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   }
   if (context->datafd >= 0) {
     socket_close(context->datafd);
-    FD_UNREGISTER(context->pasvsock,"Client data fd");
+    FD_UNREGISTER(context->datafd,"Client data fd");
   }
   context->datafd = -1;
   socket_close(context->controlfd);
@@ -606,6 +606,7 @@ int waitaccept(wzd_context_t * context)
 #endif
 
   socket_close (context->pasvsock);
+  FD_UNREGISTER(context->pasvsock,"Client PASV socket");
   context->pasvsock = sock;
 
   context->datafd = sock;
@@ -828,6 +829,7 @@ printf("path: '%s'\n",path);
       ret = send_message_with_args(501,context,"PASV connection failed");
       return E_PASV_FAILED;
     }
+    context->pasvsock = -1;
   }
   FD_REGISTER(sock,"Client LIST socket");
 
@@ -845,6 +847,7 @@ printf("path: '%s'\n",path);
 #endif
   ret = socket_close(sock);
   FD_UNREGISTER(sock,"Client LIST socket");
+  context->datafd = -1;
 
   return E_OK;
 }
@@ -2594,7 +2597,7 @@ void * clientThreadProc(void *arg)
 
   while (!exitclient) {
 #ifdef DEBUG
-    if (!context->magic == CONTEXT_MAGIC || sockfd != context->controlfd)
+    if (!context->magic == CONTEXT_MAGIC || sockfd != (unsigned int)context->controlfd)
     {
       out_err(LEVEL_CRITICAL,"Omar m'a tuer !\n");
       out_err(LEVEL_CRITICAL,"sock %d\n",sockfd);

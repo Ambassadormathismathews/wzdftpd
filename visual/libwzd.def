@@ -155,6 +155,8 @@ EXPORTS
 	wzd_cache_read
 	wzd_cache_update
 	wzd_cache_write
+	wzd_debug_init
+	wzd_debug_fini
 	wzd_free
 	wzd_malloc
 	wzd_sem_create

@@ -91,8 +91,20 @@ SERVICE_STATUS              service_status;
 SERVICE_STATUS_HANDLE       service_status_handle;
 #endif
 
+typedef enum {
+  CMD_NONE=0,
+  CMD_CLEANUP_SHM,
+#ifdef _MSC_VER
+  CMD_SRV_REGISTER,
+  CMD_SRV_UNREGISTER,
+  CMD_SRV_START,
+  CMD_SRV_STOP,
+#endif
+} wzd_arg_command_t;
+
 char configfile_name[256];
 int stay_foreground=0;
+static wzd_arg_command_t start_command=CMD_NONE;
 
 extern short created_shm;
 
@@ -127,6 +139,12 @@ void display_usage(void)
   fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s                          - Stay in foreground \n");
+#ifdef _MSC_VER
+  fprintf(stderr," -si                         - Register service \n");
+  fprintf(stderr," -sd                         - Unregister service \n");
+  fprintf(stderr," -ss                         - Start service (must be registered) \n");
+  fprintf(stderr," -st                         - Stop service (must be registered) \n");
+#endif
   fprintf(stderr," -V                          - Show version \n");
 
 #endif /* HAVE_GETOPT */
@@ -239,8 +257,8 @@ int main_parse_args(int argc, char **argv)
       break;
     case 'd':
 /*      readConfigFile("wzd.cfg");*/
-      cleanup_shm();
-      return 1;
+      start_command = CMD_CLEANUP_SHM;
+      break;
     case 'f':
       if (strlen(optarg)>=255) {
         fprintf(stderr,"filename too long (>255 chars)\n");
@@ -277,17 +295,17 @@ int main_parse_args(int argc, char **argv)
           fprintf(stderr,"missing filename after -f option\n");
           return 1;
         }
-        break;
+        continue;
       }
       if (!strcmp(argv[optindex],"-b")) {
         stay_foreground = 0;
         optindex++;
-        break;
+        continue;
       }
       if (!strcmp(argv[optindex],"-s")) {
         stay_foreground = 1;
         optindex++;
-        break;
+        continue;
       }
       if (!strcmp(argv[optindex],"-h")) {
         display_usage();
@@ -299,21 +317,26 @@ int main_parse_args(int argc, char **argv)
         return 1;
       }
       if (!strcmp(argv[optindex],"-si")) {
-        nt_service_register();
-        return 1;
+        start_command = CMD_SRV_REGISTER;
+        optindex++;
+        continue;
       }
       if (!strcmp(argv[optindex],"-sd")) {
-        nt_service_unregister();
-        return 1;
+        start_command = CMD_SRV_UNREGISTER;
+        optindex++;
+        continue;
       }
       if (!strcmp(argv[optindex],"-ss")) {
-        nt_service_start();
-        return 1;
+        start_command = CMD_SRV_START;
+        optindex++;
+        continue;
       }
       if (!strcmp(argv[optindex],"-st")) {
-        nt_service_stop();
-        return 1;
+        start_command = CMD_SRV_STOP;
+        optindex++;
+        continue;
       }
+      break;
     }
   }
 #endif /* _MSC_VER */
@@ -327,8 +350,6 @@ int main(int argc, char **argv)
   int ret, i;
   int forkresult;
   wzd_config_t * config;
-  struct stat s;
-  const char * ptr;
 
   wzd_debug_init();
 
@@ -337,7 +358,7 @@ int main(int argc, char **argv)
   fprintf(stderr,"\n");
   fprintf(stderr,"This is a beta release, in active development\n");
   fprintf(stderr,"Things may break from version to version\n");
-  fprintf(stderr,"Want stability ? Use a 0.2 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"Want stability ? Use a 0.3 version. YOU WERE WARNED!\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");
@@ -355,6 +376,19 @@ int main(int argc, char **argv)
     if (ret) {
       return 0;
     }
+#ifdef _MSC_VER
+    switch (start_command) {
+      case CMD_SRV_UNREGISTER:
+        nt_service_unregister();
+        exit (0);
+      case CMD_SRV_START:
+        nt_service_start();
+        exit (0);
+      case CMD_SRV_STOP:
+        nt_service_stop();
+        exit (0);
+    }
+#endif
   }
 
   if (!stay_foreground) {
@@ -396,7 +430,33 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  /* TODO use values given in command-line ? */
+  config->config_filename = wzd_strdup(config_files[i]);
+
+
+  /* \todo XXX use values given in command-line ? */
+  switch (start_command) {
+    case CMD_CLEANUP_SHM:
+      cleanup_shm();
+      exit(0);
+#ifdef _MSC_VER
+    case CMD_SRV_REGISTER:
+      mainConfig = config;
+      nt_service_register();
+      exit (0);
+    case CMD_SRV_UNREGISTER:
+      mainConfig = config;
+      nt_service_unregister();
+      exit (0);
+    case CMD_SRV_START:
+      mainConfig = config;
+      nt_service_start();
+      exit (0);
+    case CMD_SRV_STOP:
+      mainConfig = config;
+      nt_service_stop();
+      exit (0);
+#endif
+  }
 
   mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
@@ -590,7 +650,14 @@ int nt_service_register(void)
   SC_HANDLE schService, schSCManager;
   LPCTSTR binaryPathName;
   char buffer[MAX_PATH+1];
-  char *p;
+  char config_fullpath[MAX_PATH+1];
+  char startcmd[MAX_PATH+1];
+
+  if ( !mainConfig || !mainConfig->config_filename ||
+    !_fullpath(config_fullpath,mainConfig->config_filename,MAX_PATH) ) {
+    fprintf(stderr,"fullpath failed %d\n",GetLastError());
+    return -1;
+  }
 
   /* obtain a handler to the SC Manager database */
   schSCManager = OpenSCManager(
@@ -603,6 +670,8 @@ int nt_service_register(void)
   GetModuleFileName(NULL,buffer,sizeof(buffer));
   binaryPathName = buffer;
 
+  snprintf(startcmd,MAX_PATH,"%s -f \"%s\"",binaryPathName,config_fullpath);
+
   schService = CreateService(
       schSCManager,             /* SCManager database */
       "wzdftpd",                /* name of service */
@@ -611,7 +680,7 @@ int nt_service_register(void)
       SERVICE_WIN32_OWN_PROCESS,/* service type */
       SERVICE_DEMAND_START,     /* start type */
       SERVICE_ERROR_NORMAL,     /* error control type */
-      binaryPathName,           /* service's binary */
+      startcmd,                 /* service's binary */
       NULL,                     /* no load ordering group */
       NULL,                     /* no tag identifier */
       NULL,                     /* no dependancies */

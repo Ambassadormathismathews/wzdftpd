@@ -69,6 +69,7 @@
 #include "wzd_cache.h"
 #include "wzd_savecfg.h"
 
+#include "wzd_debug.h"
 
 extern int serverstop;
 extern time_t server_start;

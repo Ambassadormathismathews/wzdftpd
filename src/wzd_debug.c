@@ -63,6 +63,7 @@ static void fd_init(void);
 
 int fd_register(int fd, const char *desc, const char *file, unsigned int line, const char *function);
 int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function);
+void fd_dump(void);
 
 /** init all debug functions */
 void wzd_debug_init(void)

@@ -59,6 +59,8 @@
 #include "wzd_crc32.h"
 #include "wzd_vfs.h" /* checkabspath */
 
+#include "wzd_debug.h"
+
 #include "libwzd_sfv.h"
 #include "libwzd_sfv_zip.h"
 
