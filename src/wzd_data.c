@@ -73,7 +73,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (!context) return -1;
 
@@ -111,6 +111,9 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       context->idle_time_data_start = time(NULL);
     } else { /* end */
       close(context->current_action.current_file);
+
+      out_xferlog(context);
+
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
@@ -140,7 +143,11 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       user->bytes_ul_total += n;
       context->idle_time_data_start = time(NULL);
     } else { /* consider it is finished */
+      file_unlock(context->current_action.current_file);
       close(context->current_action.current_file);
+
+      out_xferlog(context);
+
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
