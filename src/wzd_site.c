@@ -94,6 +94,49 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
   ret = send_message_with_args(200,context,buffer);
 }
 
+/********************* do_site_checkperm *******************/
+void do_site_checkperm(const char * commandline, wzd_context_t * context)
+{
+  unsigned long word;
+  char buffer[BUFFER_LEN];
+  char *username, *filename, *perms;
+  char *ptr;
+  wzd_user_t userstruct;
+
+  strncpy(buffer,commandline,BUFFER_LEN-1);
+  ptr = &buffer[0];
+  
+  username = strtok_r(buffer," \t\r\n",&ptr);
+  if (!username) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+  filename = strtok_r(NULL," \t\r\n",&ptr);
+  if (!filename) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+  perms = strtok_r(NULL,"\r\n",&ptr);
+  if (!perms) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+
+  word = right_text2word(perms);
+
+  if (backend_find_user(username,&userstruct)) {
+    send_message_with_args(501,context,"User does not exist");
+    return;
+  }
+
+  /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+  if (checkpath(filename,buffer,context)) {
+    send_message_with_args(501,context,"file does not exist");
+    return;
+  }
+ 
+  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+
+  if (_checkPerm(buffer,word,&userstruct)==0) {
+    strcpy(buffer,"right ok");
+  } else {
+    strcpy(buffer,"refused");
+  }
+  
+  send_message_with_args(200,context,buffer);
+}
+
 /********************* do_site_print_file ******************/
 void do_site_print_file(const char * filename, wzd_context_t * context)
 {
@@ -200,6 +243,11 @@ int do_site(char *command_line, wzd_context_t * context)
     }
   }
 
+/****************** CHECKPERM *******************/
+  if (strcasecmp(token,"CHECKPERM")==0) {
+    do_site_checkperm(command_line+10,context); /* 10 = strlen("checkperm")+1 */
+    return 0;
+  } else
 /******************* CHMOD **********************/
   if (strcasecmp(token,"CHMOD")==0) {
     do_site_chmod(command_line+6,context); /* 6 = strlen("chmod")+1 */

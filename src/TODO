@@ -1,6 +1,5 @@
 ## IN PROGRESS ##
 
-- add size parameter in cookies : %num.cookie
 - use options in ls
 - hide some filenames in list: .dirinfo .dirmsg
 - modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
@@ -21,23 +20,17 @@
 - hide IP in site who, except for admin
 - add a flag for users: hide in WHO
 - ACL: ascendant recursion for permissions ? need to check if >= rootpath !
-- data connection: either management in a thread, either rewrite of
-   list, retr & stor
 - pass arguments for LIST
 - bandwith limitations: global / group / user
     + possibility of relatives restrictions: 75g == 75 % of the group limit (for 1 user)
 - implement permissions
 - create a .dirinfo in each dir, to implement permissions
 - dir perms are useless now ?!
-- if no .dirinfo is found, use global dir reps ?
 - finish implementation of ssl: explicit, port, data protection, buffer size
 - invert args in strncmp in wzd_ClientThread.c (risk segfault if buffer = PAS\0 ?? )
-- specify PASV range
 - give choice between hard/soft chroot
 - use fork
 - pid_child is useless now (in wzd_context_t) - HOWTO DO AN ABORT NOW ?!
-- if data connection is started, we CANT receive commands - not important
-    if non blocking (check timeouts !)
 
 
 ## NORMAL ##

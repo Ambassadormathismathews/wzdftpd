@@ -18,6 +18,9 @@ void limiter_free(wzd_bw_limiter *l);
 /* cookies */
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_context);
 
+/* used to translate text to binary word for rights */
+unsigned long right_text2word(const char * text);
+
 
 #endif /* __WZD_MISC__ */
 

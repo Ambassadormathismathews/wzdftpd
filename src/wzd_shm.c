@@ -60,7 +60,7 @@ void wzd_shm_free(wzd_shm_t * shm)
 }
 
 /* cleanup if previous exec has crashed */
-void wzd_shm_cleanup(unsigned long_key)
+void wzd_shm_cleanup(unsigned long key)
 {
 }
 

@@ -33,6 +33,16 @@
 #include <pthread.h>
 #include <dlfcn.h>
 
+/* colors */
+
+#define CLR_BOLD	"[1m"
+
+#define	CLR_BLUE	"[34m"
+#define	CLR_CYAN	"[36m"
+#define	CLR_GREEN	"[32m"
+#define	CLR_RED		"[31m"
+
+#define	CLR_NOCOLOR	"[0m"
 
 /* must be first */
 #include "wzd_hardlimits.h"
@@ -122,6 +132,8 @@ typedef struct {
   write_fct_t	write_fct;
   int		mainSocket;
   int		port;
+  unsigned long	pasv_low_range;
+  unsigned long	pasv_up_range;
 #if SSL_SUPPORT
   char		tls_certificate[256];
   char          tls_cipher_list[256];

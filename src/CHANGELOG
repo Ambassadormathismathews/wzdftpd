@@ -1,3 +1,10 @@
+# Jul, 29 2002
+- specify PASV ip range
+- site checkperm user file perms: ensure user has a specific perm on a dir/file
+
+# Jul, 23 2002
+- fixed problems with these damn '\r' under windows
+
 # Jul, 12 2002
 - site shutdown now kills the server IMMEDIATLY
 - cookie: usergroup

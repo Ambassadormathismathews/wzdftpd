@@ -50,6 +50,12 @@ int backend_validate(const char *backend)
   ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_FIND_GROUP);
   ret = ret & (ptr!=NULL);
+  ptr = dlsym(handle,STR_MOD_USER);
+  ret = ret & (ptr!=NULL);
+  ptr = dlsym(handle,STR_MOD_GROUP);
+  ret = ret & (ptr!=NULL);
+  ptr = dlsym(handle,STR_COMMIT_CHANGES);
+  ret = ret & (ptr!=NULL);
   if (!ret) {
     out_log(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
     return 1;
@@ -95,6 +101,9 @@ int backend_init(const char *backend)
   mainConfig->backend.back_validate_pass  = dlsym(handle,STR_VALIDATE_PASS);
   mainConfig->backend.back_find_user  = dlsym(handle,STR_FIND_USER);
   mainConfig->backend.back_find_group  = dlsym(handle,STR_FIND_GROUP);
+  mainConfig->backend.back_mod_user  = dlsym(handle,STR_MOD_USER);
+  mainConfig->backend.back_mod_group  = dlsym(handle,STR_MOD_GROUP);
+  mainConfig->backend.back_commit_changes  = dlsym(handle,STR_COMMIT_CHANGES);
 
   if (ptr) {
     ret = (*init_fcn)();
@@ -104,6 +113,9 @@ int backend_init(const char *backend)
       mainConfig->backend.back_validate_pass = NULL;
       mainConfig->backend.back_find_user = NULL;
       mainConfig->backend.back_find_group = NULL;
+      mainConfig->backend.back_mod_user = NULL;
+      mainConfig->backend.back_mod_group = NULL;
+      mainConfig->backend.back_commit_changes = NULL;
       dlclose(handle);
     }
   } else {

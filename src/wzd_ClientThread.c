@@ -253,7 +253,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     length = strlen(tmppath);
     if (length>1 && tmppath[length-1]=='/')
       tmppath[length-1] = '\0';
-    ret = _checkPerm(tmppath,RIGHT_CWD,context);
+    ret = _checkPerm(tmppath,RIGHT_CWD,&context->userinfo);
   
     if (ret) { /* no access */
       return 1;
@@ -445,7 +445,7 @@ printf("path: '%s'\n",path);
 #endif
 
 /*  ret = backend_chek_perm(&context->userinfo,RIGHT_LIST,path);*/ /* CHECK PERM */
-  ret = _checkPerm(path,RIGHT_LIST,context);
+  ret = _checkPerm(path,RIGHT_LIST,&context->userinfo);
 
   if (ret) { /* no access */
     ret = send_message_with_args(550,context,"LIST","No access");
@@ -584,7 +584,7 @@ void do_pasv(wzd_context_t * context)
   unsigned char *myip;
 
   size = sizeof(struct sockaddr_in);
-  port = 1025; /* FIXME use pasv range min */
+  port = mainConfig->pasv_low_range; /* use pasv range min */
 
   /* close existing pasv connections */
   if (context->pasvsock > 0) {
@@ -600,7 +600,7 @@ void do_pasv(wzd_context_t * context)
     return;
   }
 
-  while (port < 65536) { /* FIXME use pasv range max */
+  while (port < mainConfig->pasv_up_range) { /* use pasv range max */
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;

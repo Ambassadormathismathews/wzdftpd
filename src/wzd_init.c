@@ -20,6 +20,9 @@ int set_default_options(void)
   tempConfig.limiter_ul = NULL;
   tempConfig.limiter_dl = NULL;
 
+  tempConfig.pasv_low_range = 1025;
+  tempConfig.pasv_up_range = 65536;
+
   tempConfig.logfilename = malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");
 
@@ -99,8 +102,11 @@ int readConfigFile(const char *fileName)
       continue;
 
     /* trim trailing space, because fgets keep a \n */
-    *(ptr+length-1) = '\0';
-    length--;
+    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
+      *(ptr+length-1) = '\0';
+      length--;
+    }
+    if (length <= 0) continue;
 
     reg_line.re_nsub = 2;
     err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
@@ -133,8 +139,13 @@ int readConfigFile(const char *fileName)
 //  mainConfig = malloc(sizeof(wzd_config_t));
   mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
-    fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
-    exit(1);
+    /* 2nd chance */
+    wzd_shm_cleanup(tempConfig.shm_key-1);
+    mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
+    if (mainConfig_shm == NULL) {
+      fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
+      exit(1);
+    }
   }
   mainConfig = mainConfig_shm->datazone;
   memcpy(mainConfig,&tempConfig,sizeof(wzd_config_t));
@@ -229,6 +240,30 @@ int parseVariable(const char *varname, const char *value)
     }
     out_log(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
     tempConfig.limiter_dl = limiter_new(l);
+    return 0;
+  }
+  /* PASV_LOW_RANGE (unsigned long)
+   */
+  if (strcasecmp("pasv_low_range",varname)==0)
+  {
+    errno = 0;
+    l = strtol(value,(char**)NULL, 0);
+    if (errno==ERANGE)
+      return 1;
+    out_log(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
+    tempConfig.pasv_low_range = l;
+    return 0;
+  }
+  /* PASV_UP_RANGE (unsigned long)
+   */
+  if (strcasecmp("pasv_up_range",varname)==0)
+  {
+    errno = 0;
+    l = strtol(value,(char**)NULL, 0);
+    if (errno==ERANGE)
+      return 1;
+    out_log(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
+    tempConfig.pasv_up_range = l;
     return 0;
   }
   /* SHM_KEY (unsigned long)

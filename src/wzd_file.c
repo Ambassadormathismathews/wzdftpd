@@ -19,9 +19,9 @@ typedef struct _wzd_file_t {
   struct _wzd_file_t	*next_file;
 } wzd_file_t;
 
-int _default_perm(unsigned long wanted_right, wzd_context_t * context)
+int _default_perm(unsigned long wanted_right, wzd_user_t * user)
 {
-  return (( wanted_right & context->userinfo.perms ) == 0);
+  return (( wanted_right & user->perms ) == 0);
 }
 
 void free_file_recursive(wzd_file_t * file)
@@ -240,7 +240,7 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
 
 /* dir MUST be / terminated */
 /* wanted_file MUST be a single file name ! */
-int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_context_t *context)
+int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
   char perm_filename[BUFFER_LEN];
   unsigned int length, neededlength;
@@ -266,22 +266,22 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
 
   ret = readPermFile(perm_filename,&file_list);
   if (ret) { /* no permissions file */
-    return _default_perm(wanted_right,context);
+    return _default_perm(wanted_right,user);
   }
 
   file_cur = find_file(wanted_file,file_list);
 
   if (file_cur) { /* wanted_file is in list */
     /* now find corresponding acl */
-    acl_cur = find_acl(context->userinfo.username,file_cur);
+    acl_cur = find_acl(user->username,file_cur);
 
     if (!acl_cur) { /* ! in acl list */
-      /* TODO check if context->userinfo is owner or group of file, and use perms */
+      /* TODO check if user is owner or group of file, and use perms */
 
-      /* FIXME XXX search in parent dirs ???????? XXX FIXME */
+      /* FIXME XXX search in parent dirs - group perm ???????? XXX FIXME */
       free_file_recursive(file_list);
       file_list = NULL;
-      return _default_perm(wanted_right,context);
+      return _default_perm(wanted_right,user);
     }
 
     is_dir = ( strcmp(wanted_file,".")==0 );
@@ -316,13 +316,13 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
     /* FIXME XXX search in parent dirs ???????? XXX FIXME */
     free_file_recursive(file_list);
     file_list = NULL;
-    return _default_perm(wanted_right,context);
+    return _default_perm(wanted_right,user);
   } /* ! in acl */
 
 }
 
 /* MUST NOT be / terminated (except /) */
-int _checkPerm(const char *filename, unsigned long wanted_right, wzd_context_t *context)
+int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * user)
 {
   char dir[BUFFER_LEN];
   char stripped_filename[BUFFER_LEN];
@@ -358,7 +358,13 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_context_t *
     strcat(dir,"/");
   }
 
-  return _checkFileForPerm(dir,stripped_filename,wanted_right,context);
+  /* check if file is in user's root path */
+  if (strncmp(dir,user->rootpath,strlen(user->rootpath))!=0)
+  {
+    return 1;
+  }
+
+  return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
 }
 
 /* MUST NOT be / terminated (except /) */
@@ -585,9 +591,9 @@ FILE * file_open(const char *filename, const char *mode, unsigned long wanted_ri
   int ret;
 
   if (*mode == 'r')
-    ret = _checkPerm(filename,RIGHT_RETR,context);
+    ret = _checkPerm(filename,RIGHT_RETR,&context->userinfo);
   else
-    ret = _checkPerm(filename,RIGHT_STOR,context);
+    ret = _checkPerm(filename,RIGHT_STOR,&context->userinfo);
   if (ret)
     return NULL;
   
@@ -623,8 +629,8 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   ptr = strrchr(path,'/');
   if (!ptr) return 1;
   *ptr = '\0';
-  ret = _checkPerm(old_filename,RIGHT_RNFR,context);
-  ret = ret || _checkPerm(path,RIGHT_STOR,context);
+  ret = _checkPerm(old_filename,RIGHT_RNFR,&context->userinfo);
+  ret = ret || _checkPerm(path,RIGHT_STOR,&context->userinfo);
   if (ret)
     return 1;
 

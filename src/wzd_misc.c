@@ -294,3 +294,41 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
   memcpy(buffer,work_buffer,buffersize);
   return 0;
 }
+
+
+/* used to translate text to binary word for rights */
+unsigned long right_text2word(const char * text)
+{
+  unsigned long word=0;
+  const char * ptr = text;
+
+  do {
+    while ( (*ptr)==' ' || (*ptr)=='\t' || (*ptr)=='+' || (*ptr)=='|' ) {
+      ptr++;
+    }
+    if (*ptr == '\0' || *ptr == '\r' || *ptr=='\n') break;
+
+    if (strncasecmp(ptr,"RIGHT_LIST",strlen("RIGHT_LIST"))==0) {
+     word += RIGHT_LIST;
+     ptr += strlen("RIGHT_LIST");
+    }
+    if (strncasecmp(ptr,"RIGHT_RETR",strlen("RIGHT_RETR"))==0) {
+     word += RIGHT_RETR;
+     ptr += strlen("RIGHT_RETR");
+    }
+    if (strncasecmp(ptr,"RIGHT_STOR",strlen("RIGHT_STOR"))==0) {
+     word += RIGHT_STOR;
+     ptr += strlen("RIGHT_STOR");
+    }
+    if (strncasecmp(ptr,"RIGHT_CWD",strlen("RIGHT_CWD"))==0) {
+     word += RIGHT_CWD;
+     ptr += strlen("RIGHT_CWD");
+    }
+    if (strncasecmp(ptr,"RIGHT_RNFR",strlen("RIGHT_RNFR"))==0) {
+     word += RIGHT_RNFR;
+     ptr += strlen("RIGHT_RNFR");
+    }
+  } while (*ptr);
+
+  return word;
+}

@@ -149,6 +149,9 @@ void login_new(int socket_accept_fd)
 
 #ifdef WZD_MULTITHREAD
   if (fork()==0) { /* child */
+#ifdef __CYGWIN__
+/* XXX FIXME with windows, shared memory is NOT inherited FIXME XXX */
+#endif /* __CYGWIN__ */
     close (mainConfig->mainSocket);
     out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
     context->pid_child = getpid();
@@ -216,6 +219,17 @@ void serverMainThreadProc(void *arg)
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
   signal(SIGKILL,interrupt);
+
+#ifdef POSIX
+  /* set fork() limit */
+  {
+    struct rlimit rlim;
+
+    getrlimit(RLIMIT_NOFILE, &rlim);
+    rlim.rlim_cur = rlim.rlim_max;
+    setrlim(RLIMIT_NOFILE, &rlim);
+  }
+#endif /* POSIX */
 
   ret = mainConfig->mainSocket = socket_make(&mainConfig->port);
   if (ret == -1) {
