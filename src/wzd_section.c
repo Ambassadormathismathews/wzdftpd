@@ -22,6 +22,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include <stdlib.h>
 #include <sys/time.h>	/* time_t (wzd_structs.h) */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -30,6 +31,7 @@
 
 #include <sys/stat.h>
 #include <string.h>	/* strdup */
+#include <regex.h>
 
 /* speed up compilation */
 #define SSL	void
@@ -46,16 +48,31 @@ struct wzd_section_t {
   char *        sectionname;
   char *        sectionmask;
 
+  regex_t *	pathfilter;
+
   struct wzd_section_t * next_section;
 };
 
-int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char *mask)
+int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char *mask, const char *filter)
 {
   wzd_section_t * section_new, * section;
+  int err;
 
   if (!section_list || !name || !mask) return -1;
 
   section_new = malloc(sizeof(wzd_section_t));
+  if (filter)
+  {
+    section_new->pathfilter = malloc(sizeof(regex_t));
+    err = regcomp(section_new->pathfilter,filter,REG_EXTENDED | REG_NOSUB);
+    if (err) {
+      free(section_new->pathfilter);
+      free(section_new);
+      return -1;
+    }
+  }
+  else
+    section_new->pathfilter = NULL;
   section_new->sectionname = strdup(name);
   section_new->sectionmask = strdup(mask);
   section_new->next_section = NULL;
@@ -93,6 +110,8 @@ int section_free(wzd_section_t **section_list)
     section_next = section->next_section;
     free(section->sectionname);
     free(section->sectionmask);
+    if (section->pathfilter)
+    { regfree(section->pathfilter); free(section->pathfilter); }
     free(section);
     section = section_next;
   }
@@ -106,6 +125,14 @@ int section_check(wzd_section_t * section, const char *path)
 {
   /* TODO we can restrict sections to users/groups, etc */
   if (my_str_compare(path, section->sectionmask)) return 1;
+  return 0;
+}
+
+/* \return 1 if in path matches filter or section has no filter, else 0 */
+int section_check_filter(wzd_section_t * section, const char *path)
+{
+  if (section->pathfilter && !regexec(section->pathfilter,path,0,NULL,0))
+    return 1;
   return 0;
 }
 

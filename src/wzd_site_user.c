@@ -1121,7 +1121,6 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
 }
 
 
-#ifdef WZD_MULTIPROCESS
 /** site kill: kill a PID
  *
  * kill &lt;pid&gt;
@@ -1139,23 +1138,21 @@ int do_site_kill(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  /* preliminary check: i can't kill myself */
-  if (pid==getpid()) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* checks that pid is really one of the users */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
-      i++;
-    }
+  switch(kill_child(pid,context)) {
+  case 0:
+    ret = send_message_with_args(200,context,"KILL signal sent");
+    break;
+  case 1:
+    ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+    break;
+  case -1:
+    ret = send_message_with_args(501,context,"Invalid PID");
+    break;
+  default:
+    ret = send_message_with_args(501,context,"We should NOT have passed here - NEVER !");
+    break;
   }
-  if (!found) { ret = send_message_with_args(501,context,"Invalid PID"); return 0; }
 
-  /* send TERM message to child, it will trap signal and exit */
-  kill (pid,SIGTERM);
-
-  ret = send_message_with_args(200,context,"TERM signal sent");
   return 0;
 }
 
@@ -1206,121 +1203,17 @@ int do_site_kick(char *command_line, wzd_context_t * context)
 	  test_username = GetUserByID(context_list[i].userid)->username;
 	if (strcmp(username,test_username)==0) {
 	  found = 1;
-	  kill (context_list[i].pid_child,SIGTERM);
+	  kill_child(context_list[i].pid_child,context);
 	}
       }
       i++;
     }
   }
   if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
-  else { ret = send_message_with_args(200,context,"TERM signal sent"); }
+  else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
   return 0;
 }
-
-#else /* WZD_MULTIPROCESS */
-
-#ifdef WZD_MULTITHREAD
-/** site kill: kill a PID
- *
- * kill &lt;pid&gt;
- */
-int do_site_kill(char *command_line, wzd_context_t * context)
-{
-  char *ptr;
-  int ret;
-  unsigned long pid;
-  int found = 0;
-
-  pid = strtoul(command_line,&ptr,0);
-  if (*ptr!='\0') {
-    ret = send_message_with_args(501,context,"Usage: site kill <pid>");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-  if (pid==context->pid_child) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* checks that pid is really one of the users */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"Invalid PID"); return 0; }
-
-  /* send cancel request to child thread */
-  ret = pthread_cancel(pid);
-
-  ret = send_message_with_args(200,context,"CANCEL signal sent");
-  return 0;
-}
-
-/** site kick: kick off a user from the site (killing all its connections)
- *
- * kick &lt;user&gt;
- */
-int do_site_kick(char *command_line, wzd_context_t * context)
-{
-  char *username, *test_username;
-  char *ptr;
-  int ret;
-  int found = 0;
-  wzd_user_t user;
-  int uid;
-
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
-    ret = send_message_with_args(501,context,"Usage: site kick <user>");
-    return 0;
-  }
-  /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
-    test_username = context->userinfo.username;
-  } else 
-#endif
-    test_username = GetUserByID(context->userid)->username;
-  if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* kill'em all ! */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-#if BACKEND_STORAGE
-	if (mainConfig->backend.backend_storage==0) {
-	  test_username = context_list[i].userinfo.username;
-	} else 
-#endif
-	  test_username = GetUserByID(context_list[i].userid)->username;
-	if (strcmp(username,test_username)==0) {
-	  found = 1;
-	  /* send cancel request to child thread */
-	  ret = pthread_cancel(context_list[i].pid_child);
-	}
-      }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
-  else { ret = send_message_with_args(200,context,"TERM signal sent"); }
-
-  return 0;
-}
-
-#endif /* WZD_MULTITHREAD */
-
-#endif /* WZD_MULTIPROCESS */
 
 void do_site_help_give(wzd_context_t * context)
 {

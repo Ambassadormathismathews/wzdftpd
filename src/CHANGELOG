@@ -1,5 +1,17 @@
+#--- cvs commit
+# Apr, 17 2003
+- string analysis in cookie parser rewritten using a flex parser
+  this has many benefits, allowing to use nested if/for statements, colors, etc.
+- new flag FLAG_COLOR to enable colors in ftp answers (default: disabled)
+
+# Apr, 14 2003
+- user lose credits and stats when deleting files
+- put permission files in cache (should speed up server a lot !)
+- site kill/kick changed to use same code in all modes (mt/mp)
+
 # Apr, 09 2003
 - big patch to compile and run on OpenBSD
+- sections, using path-filters to enforce dir names when created
 
 # Apr, 07 2003
 - build method changed to automake/autoconf

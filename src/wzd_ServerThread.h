@@ -33,4 +33,6 @@ extern wzd_sem_t limiter_sem;
 
 int runMainThread(int argc, char **argv);
 
+int kill_child(unsigned long pid, wzd_context_t * context);
+
 #endif /* __WZD_SERVER_THREAD__ */

@@ -848,11 +848,9 @@ int do_mkdir(char *param, wzd_context_t * context)
     ptr = strrchr(path,'/');
     if (ptr) {
       *ptr='\0';
-      out_err(LEVEL_HIGH,"searching path %s\n",path);
       section = section_find(mainConfig->section_list,path);
-      if (section) {
-	out_err(LEVEL_HIGH,"Found matching section\n");
-      }
+      if (section && !section_check_filter(section,ptr+1))
+	  return 1;
     }
   }
 
@@ -1386,8 +1384,20 @@ int do_dele(char *param, wzd_context_t * context)
 {
   char path[2048];
   int ret;
+  struct stat s;
+  off_t file_size;
+  wzd_user_t * user, * owner;
 
-  if (!param || strlen(param)==0 || checkpath(param,path,context)) return 1;
+  if (!param || strlen(param)==0 || checkpath(param,path,context)) {
+    ret = send_message_with_args(501,context,"Syntax error");
+    return 1;
+  }
+
+  user = GetUserByID(context->userid);
+  if (!user) {
+    ret = send_message_with_args(501,context,"Mama says I don't exist !");
+    return 1;
+  }
 
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
@@ -1397,9 +1407,47 @@ int do_dele(char *param, wzd_context_t * context)
     return 1;
   }
 
+  if (stat(path,&s)) {
+    /* non-existent file ? */
+    ret = send_message_with_args(501,context,"File does not exist");
+    return 1;
+  } 
+  if (S_ISREG(s.st_mode))
+    file_size = s.st_size;
+  else
+    file_size = 0;
+  owner = file_getowner(path,context);
+
   out_err(LEVEL_FLOOD,"Removing file '%s'\n",path);
 
-  return file_remove(path,context);
+  ret = file_remove(path,context);
+
+  /* decrement user credits and upload stats */
+  /* TODO XXX FIXME we should adjust stats for REAL OWNER of file */
+  if (!ret && file_size)
+  {
+    if (owner && strcmp(owner->username,"nobody"))
+    {
+     if (owner->ratio) {
+       if (owner->credits > owner->ratio*file_size)
+	 owner->credits -= (owner->ratio * file_size);
+       else
+	 owner->credits = 0;
+     }
+    }
+    if (owner->bytes_ul_total > file_size)
+      owner->bytes_ul_total -= file_size;
+    else
+      owner->bytes_ul_total = 0;
+    if (owner->files_ul_total)
+      owner->files_ul_total--;
+  }
+
+  if (!ret)
+    ret = send_message_with_args(250,context,"DELE","command successfull");
+  else
+    ret = send_message_with_args(501,context,"DELE failed");
+  return ret;
 }
 
 /*************** do_rnfr *****************************/
@@ -2245,10 +2293,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    break;
 	  case TOK_DELE:
 	    token = strtok_r(NULL,"\r\n",&ptr);
-	    if (!do_dele(token,context))
-	      ret = send_message_with_args(250,context,"DELE","command successfull");
-	    else
-	      ret = send_message_with_args(501,context,"DELE failed");
+	    do_dele(token,context);
 	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_ABOR:

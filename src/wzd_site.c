@@ -565,220 +565,29 @@ int do_site_invite(char *command_line, wzd_context_t * context)
 
 
 /********************* do_site_print_file ******************/
-void do_site_print_file(const char * filename, void * param, wzd_context_t * context)
+void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context)
 {
-  struct stat s;
-  char buffer[1024];
-  int ret;
-  struct wzd_cache_t * fp;
-  wzd_user_t *user, *me;
-	short is_gadmin;
-
-	me = GetUserByID(context->userid);
-	is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
-
-  if (strlen(filename)==0) {
-    ret = send_message_with_args(501,context,"Tell the admin to configure his site correctly");
-    return;
-  }
-
-  if (stat(filename,&s)==-1) {
-    ret = send_message_with_args(501,context,"Problem reading the rules file - inexistant ? - check your config");
-    return;
-  }
-
+  wzd_cache_t * fp;
+  char * file_buffer;
+  unsigned int size, filesize;
   fp = wzd_cache_open(filename,O_RDONLY,0644);
-  if (!fp) {
-    ret = send_message_with_args(501,context,"Problem reading the file - check your config");
+  filesize = wzd_cache_getsize(fp);
+  file_buffer = malloc(filesize+1);
+  if ( (size=wzd_cache_read(fp,file_buffer,filesize)!=filesize) )
+  {
+    fprintf(stderr,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
+    wzd_cache_close(fp);
     return;
   }
-
-  if ( (wzd_cache_gets(fp,buffer,1022)) == NULL) {
-    ret = send_message_with_args(501,context,"File is empty");
-    return;
-  }
+  file_buffer[filesize]='\0';
 
   /* send header */
   send_message_raw("200-\r\n",context);
 
-  do {
-    if (strncmp(buffer,"%forallusersconnected",strlen("%forallusersconnected"))==0) {
-      char * tab_line[256];
-      int i, j;
-      wzd_context_t * tab_context = context_list;
-      for (i=0; i<256; i++) tab_line[i] = NULL;
-      i=0;
-      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
-	tab_line[i] = malloc(1024);
-	strcpy(tab_line[i],buffer);
-	i++;
-      } /* while */
-      i=0;
-      while (i<HARD_USERLIMIT) {
-	if (tab_context[i].magic == CONTEXT_MAGIC) {
-#if 0
-#if BACKEND_STORAGE
-          if (tab_context[i].userinfo.flags &&
-              strchr(tab_context[i].userinfo.flags,FLAG_HIDDEN) &&
-              strcmp(tab_context[i].userinfo.username,context->userinfo.username)!=0 /* do not hide to self ! */
-#endif
-#endif
-          if (GetUserByID(tab_context[i].userid)->flags &&
-            strchr(GetUserByID(tab_context[i].userid)->flags,FLAG_HIDDEN) &&
-            tab_context[i].userid != context->userid /* do not hide to self ! */
-              )
-          { i++; continue; }
-	  j=0;
-	  while (tab_line[j]) {
-	    memcpy(buffer,tab_line[j],1024);
-            ret = cookies_replace(buffer,1024,tab_context+i,context); /* TODO test ret */
-            send_message_raw(buffer,context);
-	    j++;
-	  }
-	}
-	i++;
-      } /* while */
-      j=0;
-      while (tab_line[j]) {
-	free(tab_line[j]);
-	tab_line[j] = NULL;
-      }
-      continue;
-    } else /* forallusersconnected */
-
-    if (strncmp(buffer,"%forallgroupmembers",strlen("%forallgroupmembers"))==0) {
-      char * tab_line[256];
-      int i, j;
-      int gid;
-      wzd_context_t dummy_context;
-
-      if (!me->group_num) {continue;}
-      /* we verify here that param (void*) is really a context (magic ?) */
-      if ( ((wzd_context_t*)param)->magic != CONTEXT_MAGIC ) {
-#ifdef DEBUG
-	out_err(LEVEL_CRITICAL,"*** TRYING TO CAST A WRONG POINTER *** %s:%d\n",__FILE__,__LINE__);
-#endif
-	continue;
-      }
-      gid = ((wzd_context_t*)param)->userid; /* yes, I know ! */
-
-      for (i=0; i<256; i++) tab_line[i] = NULL;
-      i=0;
-      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
-	tab_line[i] = malloc(1024);
-	strcpy(tab_line[i],buffer);
-	i++;
-      } /* while */
-      i=0;
-      while (i<HARD_DEF_USER_MAX) {
-	if (GetUserByID(i)->username[0] != '\0') {
-	  /* TODO find if user is in group */
-	  if (is_user_in_group(GetUserByID(i),gid)==1)
-	  {
-	    dummy_context.userid = i;
-	    j=0;
-	    while (tab_line[j]) {
-	      memcpy(buffer,tab_line[j],1024);
-	      ret = cookies_replace(buffer,1024,&dummy_context,context); /* TODO test ret */
-	      send_message_raw(buffer,context);
-	      j++;
-	    }
-	  }
-	} /* is user in group */
-	i++;
-      } /* while */
-      j=0;
-      while (tab_line[j]) {
-	free(tab_line[j]);
-	tab_line[j] = NULL;
-      }
-      continue;
-    } else /* forallgroupmembers */
-
-    if (strncmp(buffer,"%forallusers",strlen("%forallusers"))==0) {
-      char * tab_line[256];
-      int i, j;
-      wzd_context_t dummy_context;
-      for (i=0; i<256; i++) tab_line[i] = NULL;
-      i=0;
-      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
-	tab_line[i] = malloc(1024);
-	strcpy(tab_line[i],buffer);
-	i++;
-      } /* while */
-      i=0;
-      while (i<HARD_DEF_USER_MAX) {
-	if (GetUserByID(i)->username[0] != '\0') {
-#if 0
-#if BACKEND_STORAGE
-          if (tab_context[i].userinfo.flags &&
-              strchr(tab_context[i].userinfo.flags,FLAG_HIDDEN) &&
-              strcmp(tab_context[i].userinfo.username,context->userinfo.username)!=0 /* do not hide to self ! */
-#endif
-#endif
-#if 0
-          if (GetUserByID(i)->flags &&
-            strchr(GetUserByID(i)->flags,FLAG_HIDDEN)
-            /* XXX do not hide to self ! */
-              )
-          { i++; continue; }
-#endif
-	  dummy_context.userid = i;
-	  j=0;
-	  while (tab_line[j]) {
-	    memcpy(buffer,tab_line[j],1024);
-            ret = cookies_replace(buffer,1024,&dummy_context,context); /* TODO test ret */
-            send_message_raw(buffer,context);
-	    j++;
-	  }
-	}
-	i++;
-      } /* while */
-      j=0;
-      while (tab_line[j]) {
-	free(tab_line[j]);
-	tab_line[j] = NULL;
-      }
-      continue;
-    } /* forallusers */
-
-    if (strncmp(buffer,"%if ",strlen("%if "))==0) {
-      int i;
-      char flag;
-      int test_result=0;
-
-      if (strlen(buffer)<=strlen("%if ")) continue;
-      /* XXX FIXME we should verify here that param (void*) is really a context (magic ?) */
-      if ( ((wzd_context_t*)param)->magic != CONTEXT_MAGIC ) {
-#ifdef DEBUG
-	out_err(LEVEL_CRITICAL,"*** TRYING TO CAST A WRONG POINTER *** %s:%d\n",__FILE__,__LINE__);
-#endif
-	continue;
-      }
-      user = GetUserByID( ((wzd_context_t*)param)->userid);
-      /* read condition and test it */
-      /* TODO only works for flags */
-      flag = buffer[4];
-      if ( user && user->flags && strchr(user->flags,flag) )
-	test_result = 1;
-
-
-      i=0;
-      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endif",strlen("%endif")) ) {
-	if (test_result) {
-	  ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
-	  send_message_raw(buffer,context);
-	}
-	i++;
-      } /* while */
-      continue;
-    } /* if */
- 
-    ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
-    send_message_raw(buffer,context);
-  } while ( (wzd_cache_gets(fp,buffer,1022)) != NULL);
+  cookie_parse_buffer(file_buffer,user,group,context);
 
   wzd_cache_close(fp);
+
   send_message_raw("200 \r\n",context);
 }
 
@@ -899,9 +708,9 @@ void do_site_user(char *command_line, wzd_context_t * context)
   user_context.magic = CONTEXT_MAGIC;
 
 /*#if BACKEND_STORAGE*/
-  do_site_print_file(mainConfig->site_config.file_user,&user_context,context);
+  do_site_print_file(mainConfig->site_config.file_user,&user,NULL,context);
 /*#endif
-  do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),context);*/
+  do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),NULL,context);*/
   user_context.magic = 0;
 }
 
@@ -999,6 +808,67 @@ int do_site_utime(char *command_line, wzd_context_t * context)
 int do_site_version(char * ignored, wzd_context_t * context)
 {
   send_message_with_args(200,context,WZD_VERSION_STR);
+  return 0;
+}
+
+/********************* do_site_wipe ************************/
+/** wipe: [-r] file1 [file2 ...]
+ */
+
+int do_site_wipe(char *command_line, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * firstarg, *filename;
+  int is_recursive;
+  int ret;
+  wzd_user_t user;
+  int uid;
+  struct stat s;
+
+  ptr = command_line;
+  firstarg = strtok_r(command_line," \t\r\n",&ptr);
+  if (!firstarg) {
+    do_site_help("wipe",context);
+    return 1;
+  }
+  /* check if wiping is recursive */
+  if ( strcasecmp(firstarg,"-r")==0 ) {
+    is_recursive=1;
+    filename = strtok_r(NULL," \t\r\n",&ptr);
+    if( !filename) {
+      do_site_help("wipe",context);
+      return 1;
+    }
+  }
+  else
+    filename = firstarg;
+
+  do
+  {
+    /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+    /* TODO XXX FIXME wipe file | if_recursive dir/file */
+    if (stat(buffer,&s)) {
+      ret = send_message_with_args(501,context,"File does not exist");
+      return 1;
+    }
+    if (!is_recursive && S_ISDIR(s.st_mode)) {
+      ret = send_message_with_args(501,context,"Use -r to wipe dirs");
+      return 1;
+    }
+    if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+      ret = file_remove(buffer,context);
+      if (ret) {
+	ret = send_message_with_args(501,context,"WIPE failed");
+	return 1;
+      }
+    }
+  }
+  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) );
+
+  ret = send_message_with_args(200,context,"File(s) wiped");
+
   return 0;
 }
 
@@ -1102,6 +972,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"UTIME",&do_site_utime)) return 1;
   if (site_command_add(&config->site_list,"VERSION",&do_site_version)) return 1;
   /* who */
+  if (site_command_add(&config->site_list,"WIPE",&do_site_wipe)) return 1;
   /* uptime */
   /* shutdown */
   return 0;
@@ -1254,7 +1125,7 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
     /* TODO check if there are arguments, and call specific help */
-    do_site_print_file(mainConfig->site_config.file_help,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_help,NULL,NULL,context);
     return 0;
   } else
 #if 0
@@ -1297,7 +1168,7 @@ int do_site(char *command_line, wzd_context_t * context)
   } else
 /******************* RULES **********************/
   if (strcasecmp(token,"RULES")==0) {
-    do_site_print_file(mainConfig->site_config.file_rules,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_rules,NULL,NULL,context);
     return 0;
   } else
 #if 0
@@ -1306,11 +1177,13 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_sfv(command_line+4,context); /* 4 = strlen("sfv")+1 */
     return 0;
   } else
+#endif /* 0 */
 /******************* SWHO ***********************/
   if (strcasecmp(token,"SWHO")==0) {
-    do_site_print_file(mainConfig->site_config.file_swho,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_swho,NULL,NULL,context);
     return 0;
   } else
+#if 0
 /******************** TAGLINE *******************/
   if (strcasecmp(token,"TAGLINE")==0) {
     return do_site_tagline(command_line+8,context); /* 8 = strlen("tagline")+1 */
@@ -1328,7 +1201,7 @@ int do_site(char *command_line, wzd_context_t * context)
   } else
 /******************* USERS **********************/
   if (strcasecmp(token,"USERS")==0) {
-    do_site_print_file(mainConfig->site_config.file_users,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_users,NULL,NULL,context);
     return 0;
   } else
 #if 0
@@ -1345,7 +1218,7 @@ int do_site(char *command_line, wzd_context_t * context)
 #endif /* 0 */
 /******************* WHO ************************/
   if (strcasecmp(token,"WHO")==0) {
-    do_site_print_file(mainConfig->site_config.file_who,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_who,NULL,NULL,context);
     return 0;
   } else
 /******************* UPTIME *********************/

@@ -669,6 +669,44 @@ void child_interrupt(int signum)
 }
 #endif /* WZD_MULTIPROCESS */
 
+/* \return 0 if ok, -1 if error, 1 if trying to kill myself */
+int kill_child(unsigned long pid, wzd_context_t * context)
+{
+  int found=0;
+  int i;
+  int ret;
+
+#if defined(WZD_MULTIPROCESS)
+  /* preliminary check: i can't kill myself */
+  if (pid==getpid()) return 1;
+
+  /* checks that pid is really one of the users */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
+  }
+  if (!found) return -1;
+
+  ret = kill(pid,SIGTERM);
+
+#elif defined(WZD_MULTITHREAD)
+
+  /* preliminary check: i can't kill myself */
+  if (pid==context->pid_child) return 1;
+
+  /* checks that pid is really one of the users */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
+  }
+  if (!found) return -1;
+
+  ret = pthread_cancel(pid);
+
+#elif
+#endif
+  return 0;
+}
 
 /************************************************************************/
 /*********************** SERVER MAIN THREAD *****************************/
@@ -956,6 +994,7 @@ void serverMainThreadExit(int retcode)
   hook_free(&mainConfig->hook);
   module_free(&mainConfig->module);
   cronjob_free(&crontab);
+  section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
   perm_free_recursive(mainConfig->perm_list);
   site_cleanup(mainConfig);

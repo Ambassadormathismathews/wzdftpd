@@ -1,10 +1,10 @@
 .----------------------------------------------------------------------------.
 |                         »   S i T e     u s E R    «                       |
 .----------------\----------------------------------------------/------------.
-|  username      : %40.username                  |
+|  username      : %!red%40.username%!0                  |
 |  User's group  : %40.usergroup                  |
 |  Flags         : %40.userflags                  |
-%if G
+%if(+G)
 |  Slots         : user: %10.userslots    leech: %10.userleechslots                     |
 %endif
 |  Stats         : dl: %15.usertotal_dl2    ul: %15.usertotal_ul2                |

@@ -24,7 +24,6 @@
 
 /* used to include files */
 %x incl
-%x str
 
 %{
 
@@ -382,6 +381,7 @@ int cfg_read_backend(void)
   name = strtok_r(line," \t\r\n",&ptr);
   if (!name) {
     out_err(LEVEL_HIGH,"missing backend name\n");
+    free(line);
     return 1;
   }
   predicate = strtok_r(NULL," \t\r\n",&ptr);
@@ -389,30 +389,10 @@ int cfg_read_backend(void)
     version = strtok_r(NULL," \t\r\n",&ptr);
   if (predicate && !version) {
     out_err(LEVEL_HIGH,"missing backend version\n");
+    free(line);
     return 1;
   }
 
-#if 0
-  if ( (token=yylex()) != CFG_ID ) {
-    out_err(LEVEL_HIGH,"line should be 'backend = name [> version]'\n");
-    return 1;
-  }
-  if (strlen(yytext)>=HARD_BACKEND_NAME_LENGTH) {
-    out_err(LEVEL_HIGH,"backend name is too long (>= %d chars)\n",HARD_BACKEND_NAME_LENGTH);
-    return 1;
-  }
-  strcpy(name,yytext);
-
-  token = yylex();
-  if (token=='>') {
-    predicate=strdup(">");
-    if ( (token = yylex()) != CFG_NUM || strlen(yytext)>=10) {
-      out_err(LEVEL_HIGH,"backend version should be an integer (e.g 122)\n");
-      return 1;
-    }
-    version=strdup(yytext);
-  }
-#endif /* 0 */
 #ifdef DEBUG
   out_err(LEVEL_INFO,"trying backend; '%s'\n",name);
 #endif
@@ -425,8 +405,7 @@ int cfg_read_backend(void)
       i=0;
     }
   }
-  if (predicate) free(predicate);
-  if (version) free(version);
+  free(line);
   return i;
 }
 
@@ -1204,6 +1183,8 @@ int cfg_read_section(void)
 {
   char *sectionmask;
   char *sectionname;
+  char *filter, *ptr;
+  char buffer[256];
   unsigned int token;
 
   token = yylex();
@@ -1212,25 +1193,34 @@ int cfg_read_section(void)
     return 1;
   }
   if ( (token=yylex()) != CFG_ID ) {
-    out_err(LEVEL_HIGH,"line should be 'section = <name> <mask>'\n");
+    out_err(LEVEL_HIGH,"line should be 'section = <name> <mask> <regexp>'\n");
     return 1;
   }
   sectionname = strdup(yytext);
   /* TODO check section unicity ? */
 
-  if( !(sectionmask=read_until_eol(256)) ) {
+  if( !(ptr=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"line should be 'section = <name> <mask> <regexp>'\n");
+    return 1;
+  }
+
+  strncpy(buffer,ptr,256);
+  free(ptr);
+
+  sectionmask = strtok_r(buffer," \t\n\r",&ptr);
+  if( !sectionmask ) {
     out_err(LEVEL_HIGH,"invalid mask\n");
     return 1;
   }
 
-  if (section_add(&tempConfig.section_list,sectionname,sectionmask))
+  filter = strtok_r(NULL,"\n\r",&ptr);
+
+  if (section_add(&tempConfig.section_list,sectionname,sectionmask,filter))
   {
     free(sectionname);
-    free(sectionmask);
     return 1;
   }
   free(sectionname);
-  free(sectionmask);
   return 0;
 }
 

@@ -182,6 +182,7 @@ typedef struct {
 #define	FLAG_GADMIN	'G'
 #define	FLAG_TLS	'k'	/* explicit and implicit connections only */
 #define	FLAG_ANONYMOUS	'A'	/* anonymous users cannot modify filesystem */
+#define	FLAG_COLOR	'5'	/* enable use of colors */
 
 /************************ MODULES *************************/
 

@@ -81,6 +81,12 @@ wzd_cache_t * wzd_cache_find(unsigned long hash)
   return NULL;
 }
 
+unsigned int wzd_cache_getsize(wzd_cache_t *c)
+{
+  if (!c) return (unsigned int)-1;
+  return c->datasize;
+}
+
 wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 {
   wzd_cache_t * cache;
@@ -184,14 +190,26 @@ wzd_cache_t* wzd_cache_refresh(wzd_cache_t *c, const char *file, int flags, unsi
 int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
 {
   int ret;
-  out_err(LEVEL_FLOOD,"cache read\n");
-  /* TODO XXX FIXME if in cache, read data and pay attention to size ! */
-  /* update current_location */
-  if (c) {
-    ret = read( c->fd, buf, count );
-    if (ret>0) c->current_location += ret;
-    return ret;
-  }
+/*  out_err(LEVEL_FLOOD,"cache read\n");*/
+  /* if in cache, read data and pay attention to size ! */
+  /* is file stored in cache ? */
+  if (c->data) {
+    if ( (c->current_location+count) <= c->datasize ) {
+      memcpy(buf,c->data + c->current_location,count);
+      c->current_location += count;
+      return count;
+    }
+    memcpy(buf,c->data + c->current_location,c->datasize-c->current_location);
+    c->current_location = c->datasize;
+    return c->datasize-c->current_location;
+  } else { /* not in cache */
+    /* update current_location */
+    if (c) {
+      ret = read( c->fd, buf, count );
+      if (ret>0) c->current_location += ret;
+      return ret;
+    }
+  } /* file in cache ? */
   return -1;
 }
 

@@ -2,13 +2,13 @@
 
 
 '********'
-- define a mask for dir creation to force directory names styles
-  (and avoid directory locking ;) path-filter
- -- implement regexp in wzd_section.c (and wzd_init_lex.l)
+- write a 'site color' command (visibility: all but anonymous) to toggle
+  color use
+'********'
+- permissions: siteop always have all perms on files (wzd_perm.c) / OK
+  and gadmins on their group files
 '********'
 - finish cache implementation
-'********'
-- convert strings analysis in do_site_print_file to a lex file
 '********'
 - write a proper way to modify banner(220) / welcome_msg(230) / goodbye_msg
  ++ add possibility to use multi-line directives in .cfg and/or
@@ -42,8 +42,10 @@
 '********'
 - stats on ul/dl
   -- number of files uploaded/downloaded / OK
-  -- decrement credits when deleting files
-  -- site wipe
+  -- decrement credits when deleting files / OK
+   -- adjust stats for real owner ! -> create fct GetFileOwner /OK
+  -- site wipe /OK
+  -- site wipe -r
 '********'
 - sfv checker:
   verify zip integrity

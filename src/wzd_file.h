@@ -42,6 +42,8 @@ int file_remove(const char *filename, wzd_context_t * context);
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context);
 int file_rmdir(const char *dirname, wzd_context_t * context);
 
+wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
+
 /* returns 1 if file is currently locked, else 0 */
 int file_lock(int fd, short lock_mode);
 int file_unlock(int fd);

@@ -63,6 +63,8 @@ void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int for
 void limiter_free(wzd_bw_limiter *l);
 
 /* cookies */
+/* defined in wzd_cookie_lex.l */
+int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context);
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context);
 
 /* print_file : read file, replace cookies and prints it

@@ -53,7 +53,6 @@
 
 /* prototypes */
 void do_site_help(const char *site_command, wzd_context_t * context);
-void do_site_print_file(const char * filename, void * param, wzd_context_t * context);
 
 
 
@@ -219,7 +218,7 @@ int do_site_ginfo(char *command_line, wzd_context_t * context)
   user_context.magic = CONTEXT_MAGIC;
 
   /* TODO XXX FIXME gadmins can see ginfo only on their primary group ? */
-  do_site_print_file(mainConfig->site_config.file_ginfo,&user_context,context);
+  do_site_print_file(mainConfig->site_config.file_ginfo,NULL,&group,context);
   user_context.magic = 0;
 
   return 0;
@@ -254,9 +253,9 @@ int do_site_gsinfo(char *command_line, wzd_context_t * context)
   user_context.magic = CONTEXT_MAGIC;
 
 /*#if BACKEND_STORAGE*/
-  do_site_print_file(mainConfig->site_config.file_group,&user_context,context);
+  do_site_print_file(mainConfig->site_config.file_group,NULL,&group,context);
 /*#endif
-  do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),context);*/
+  do_site_print_file(mainConfig->site_config.file_user,NULL,GetGroupByID(uid),context);*/
   user_context.magic = 0;
 
   return 0;

@@ -354,10 +354,14 @@ fprintf(stderr,"CRITICAL: could not shmat, key %lu - errno is %d (%s)\n",
     return NULL;
   }
 
-  shm->semid = semget(key,1,0);
+  /* TODO XXX FIXME here we need to GET an existing semaphore ...
+   * works on multiprocess, but in mt ?!
+   */
 #if WZD_MULTITHREAD
+  shm->semid = (struct sem_t*)semget(key,1,0);
   if (!shm->semid) {
 #else
+  shm->semid = semget(key,1,0);
   if (shm->semid == -1) {
 #endif
 fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));

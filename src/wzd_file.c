@@ -48,6 +48,7 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_file.h"
+#include "wzd_cache.h"
 
 
 
@@ -215,7 +216,8 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
 /** \todo should be "atomic" */
 int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
 {
-  FILE *fp;
+/*  FILE *fp;*/
+  wzd_cache_t * fp;
   char line_buffer[BUFFER_LEN];
   wzd_file_t *current_file, *ptr_file;
   char * token1, *token2, *token3, *token4, *token5;
@@ -225,12 +227,14 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
 
   current_file = *pTabFiles;
 
-  fp = fopen(permfile,"r");
+/*  fp = fopen(permfile,"r");*/
+  fp = wzd_cache_open(permfile,O_RDONLY,0644);
   if (!fp) return 1;
 
   ptr = (char*)current_file;
   current_file = NULL;
-  while ( fgets(line_buffer,BUFFER_LEN-1,fp) )
+/*  while ( fgets(line_buffer,BUFFER_LEN-1,fp) )*/
+  while ( wzd_cache_gets(fp,line_buffer,BUFFER_LEN-1) )
   {
     token1 = strtok_r(line_buffer," \t\r\n",&ptr);
     if (!token1) continue; /* malformed line */
@@ -264,7 +268,8 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
     }
   }
 
-  fclose(fp);
+/*  fclose(fp);*/
+  wzd_cache_close(fp);
   return 0;
 }
 
@@ -327,6 +332,10 @@ int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_
   if ( length+neededlength > 4095 )
       return -1;
 
+  /* siteop always hav all permissions */
+  if (user->flags && strchr(user->flags,FLAG_SITEOP))
+    return 0;
+  
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
 /*
@@ -1009,6 +1018,61 @@ fprintf(stderr,"remove error %d (%s)\n", errno, strerror(errno));
   }
 
   return 0;
+}
+
+wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
+{
+  char perm_filename[BUFFER_LEN];
+  char stripped_filename[BUFFER_LEN];
+  char * ptr;
+  int ret;
+  wzd_user_t * user;
+  wzd_file_t * file_list=NULL, * file_cur;
+  int neededlength, length;
+  struct stat s;
+
+  if (stat(filename,&s))
+    return NULL;
+
+  /* find the dir containing the perms file */
+  strncpy(perm_filename,filename,BUFFER_LEN);
+  ptr = strrchr(perm_filename,'/');
+  if (!ptr || *(ptr+1)=='\0') return NULL;
+  strcpy(stripped_filename,ptr+1);
+  if (ptr != perm_filename) *(ptr+1)='\0';
+  neededlength = strlen(HARD_PERMFILE);
+  length = strlen(perm_filename);
+  /* check if !overflow */
+  if ( length+neededlength > 4095 )
+      return NULL;
+
+  strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
+
+  /* remove name in perm file !! */
+  ret = readPermFile(perm_filename,&file_list);
+  if (!ret) {
+    /* we have a permission file */
+    file_cur = file_list;
+    while (file_cur)
+    {
+      if (strcmp(stripped_filename,file_cur->filename)==0) {
+	if (file_cur->owner[0]!='\0')
+	{
+	  free_file_recursive(file_list);
+	  return GetUserByName(file_cur->owner);
+	}
+	else
+	{
+	  free_file_recursive(file_list);
+	  return GetUserByName("nobody");
+	}
+      }
+      file_cur = file_cur->next_file;
+    }
+    free_file_recursive(file_list);
+  }
+
+  return GetUserByName("nobody");
 }
 
 int file_lock(int fd, short lock_mode)

@@ -240,6 +240,7 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 -site_utime = *
 -site_version = +O
 -site_who = -admin
+-site_wipe = +O
 
 # REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
 -site_my_free = *
