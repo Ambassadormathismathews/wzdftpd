@@ -304,7 +304,7 @@ void serverMainThreadProc(void *arg)
   /* sets start time, for uptime */
   time(&server_start);
 
-  out_log(LEVEL_INFO,WZD_VERSION_STR " started\n");
+  out_log(LEVEL_INFO,"%s started (build %lu)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
 
   /* now waiting for a connection */
   out_log(LEVEL_FLOOD,"Waiting for connections (main)\n");

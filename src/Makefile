@@ -8,7 +8,9 @@ else
 CC=gcc
 endif
 
-COMMON_CFLAGS=-Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT)
+WZD_BUILD_NUM:=$(shell date +"%Y%m%d")
+
+COMMON_CFLAGS=-Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)
 COMMON_LIBS=
 
 OBJS=wzd_misc.o wzd_site.o wzd_socket.o wzd_backend.o wzd_messages.o \
@@ -34,6 +36,9 @@ endif
 .SUFFIXES: .c .o .do .po
 
 all: debug
+
+intel:
+	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT)'
 
 release: $(OBJS)
 ifeq ($(PLATFORM),Linux)

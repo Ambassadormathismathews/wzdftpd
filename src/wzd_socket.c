@@ -23,7 +23,8 @@ char * ul2a(unsigned long q)
 int socket_make(int *port, int nListen)
 {
   struct sockaddr_in sai;
-  int sock, c;
+  unsigned int c;
+  int sock;
 
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
     out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
@@ -56,11 +57,12 @@ int socket_make(int *port, int nListen)
 
 /*************** socket_accept **************************/
 
-int socket_accept(int sock, unsigned long *remote_host, int *remote_port)
+int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_port)
 {
   int new_sock;
   struct sockaddr_in from;
-  int len = sizeof(struct sockaddr_in), i;
+  unsigned int len = sizeof(struct sockaddr_in);
+  int i;
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
 
@@ -88,7 +90,8 @@ int socket_connect(unsigned long remote_host, int remote_port)
 {
   int sock;
   struct sockaddr_in sai;
-  int len = sizeof(struct sockaddr_in), ret;
+  unsigned int len = sizeof(struct sockaddr_in);
+  int ret;
 
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
     out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);

@@ -1,3 +1,19 @@
+# Sep, 18 2002
+- clear_read function is now non-blocking (it timeout > 0)
+- tls_auth_cont is now non-blocking (TLS control connection)
+- tls_read and tls_write have been changed to handle correctly
+    non-blocking I/O - all tls fct are now subject to timeouts
+- bugfix: fixed critical bug in mkdir, not allowing absolute paths
+- bugfix: small bug in do_site_backend fixed
+- moved user ip checking from backend to main prog
+
+# Sep, 16 2002
+- some changes to have compatibility with intel c compiler (tested with v6.0.139)
+    changes were mainly little corrections of warnings concerning signed / unsigned variables :)
+- bugfix: fixed critical bug in wzd_data.c where if SSL was enabled data were sent crypted
+    even if data connection was in clear (PROT C)
+- added -V option (display version & build number)
+
 #--- cvs commit
 # Sep, 13 2002
 - bugfix: fixed stupid critical bug where read & write functions were stored in mainConfig,

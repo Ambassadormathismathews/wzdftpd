@@ -133,6 +133,7 @@ typedef struct {
   int		port;
   unsigned long	pasv_low_range;
   unsigned long	pasv_up_range;
+  unsigned char	pasv_ip[4];
   int		login_pre_ip_check;
   wzd_ip_t	*login_pre_ip_allowed;
   wzd_ip_t	*login_pre_ip_denied;
@@ -182,7 +183,7 @@ extern wzd_context_t *	context_list;
 #include "ls.h"
 
 /* Version */
-#define	WZD_VERSION_NUM	"0.1"
+#define	WZD_VERSION_NUM	"0.1" 
 
 #ifdef WZD_MULTIPROCESS
 #define	WZD_MP	" mp "

@@ -117,10 +117,36 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
 int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
+/*  ret = send(sock,msg,length,0);*/
   int ret;
-/*fprintf(stderr,".");
-fflush(stderr);*/
-  ret = send(sock,msg,length,0);
+  int save_errno;
+  fd_set fds, efds;
+  struct timeval tv;
+
+  if (timeout==0)
+    ret = send(sock,msg,length,0);
+  else {
+    while (1) {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
+
+      ret = select(sock+1,NULL,&fds,&efds,&tv);
+      save_errno = errno;
+
+      if (FD_ISSET(sock,&efds)) {
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
+        return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+        return 0;
+      break;
+    }
+    ret = send(sock,msg,length,0);
+  } /* timeout */
 
   return ret;
 }
@@ -179,7 +205,7 @@ unsigned char * getmyip(int sock)
 {
   static unsigned char myip[4];
   struct sockaddr_in sa;
-  int size;
+  unsigned int size;
 
   size = sizeof(struct sockaddr_in);
   memset(myip,0,sizeof(myip));
@@ -197,7 +223,6 @@ unsigned char * getmyip(int sock)
 
 void client_die(wzd_context_t * context)
 {
-  int i;
   int ret;
 
   FORALL_HOOKS(EVENT_LOGOUT)
@@ -214,11 +239,6 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
 #endif
 
   limiter_free(context->current_limiter);
-  for (i=0; i<context->userinfo.ip_allowed_num; i++)
-  {
-    free(context->userinfo.ip_allowed[i]);
-  }
-  context->userinfo.ip_allowed_num = 0;
   context->magic = 0;
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
@@ -667,10 +687,16 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   if (!param || !param[0]) return 1;
 
-  strcpy(cmd,".");
-  if (checkpath(cmd,path,context)) return 1;
+  if (param[0] != '/') {
+    strcpy(cmd,".");
+    if (checkpath(cmd,path,context)) return 1;
 
-  strncat(path,param,2047);
+    strncat(path,param,2047);
+  } else {
+    strcpy(cmd,param);
+    if (checkpath(cmd,path,context)) return 1;
+    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+  }
 
   ret = checkpath(param,buffer,context);
 
@@ -796,7 +822,19 @@ void do_pasv(wzd_context_t * context)
 
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
-  ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
+  if (mainConfig->pasv_ip[0] == 0) {
+    ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
+  } else {
+    /* do NOT send pasv_ip if used from private network */
+    if (context->hostip[0]==10 ||
+      (context->hostip[0] == 172 && context->hostip[1] == 16) ||
+      (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
+      (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
+      ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
+    else
+      ret = send_message_with_args(227,context,mainConfig->pasv_ip[0], mainConfig->pasv_ip[1],
+	mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
+  }
 }
 
 /*************** do_retr *****************************/
@@ -1236,14 +1274,14 @@ int do_user(const char *username, wzd_context_t * context)
 
 int do_user_ip(const char *username, wzd_context_t * context)
 {
-  int ret;
   char ip[30];
-  const char *userip = context->hostip;
+  const unsigned char *userip = context->hostip;
 
   snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
-  ret = backend_validate_ip(username,ip);
+  if (ip_inlist(context->userinfo.ip_allowed,ip)==1)
+    return 0;
   
-  return ret;
+  return 1;
 }
 
 /*************** do_login_loop ***********************/
@@ -1668,8 +1706,8 @@ fprintf(stderr,"RAW: '%s'",buffer);
 	  case TOK_REST:
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    j=0;
-	    i = sscanf(token,"%ld",&j);
-	    if (i>0 && j>=0) {
+	    i = sscanf(token,"%lu",&j);
+	    if (i>0) {
 	      char buf[256];
 	      snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",j);
 	      ret = send_message_with_args(350,context,buf);

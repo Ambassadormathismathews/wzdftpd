@@ -21,7 +21,6 @@ typedef struct {
   void * handle;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
-  int (*back_validate_ip)(const char *, const char *);
   int (*back_find_user) (const char *, wzd_user_t *);
   int (*back_find_group) (int, wzd_group_t *);
   int (*back_chpass) (const char *, const char *);
@@ -41,10 +40,6 @@ typedef struct {
 /* int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user) */
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
-
-/* int FCN_VALIDATE_IP(const char *name, const char *ip) */
-#define	FCN_VALIDATE_IP		wzd_validate_ip
-#define	STR_VALIDATE_IP		"wzd_validate_ip"
 
 /* int FCN_FIND_USER(const char *name, wzd_user_t * user) */
 #define	FCN_FIND_USER		wzd_find_user
@@ -86,8 +81,6 @@ int backend_find_group(int num, wzd_group_t * group);
 int backend_validate_login(const char *name, wzd_user_t * user);
 
 int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user);
-
-int backend_validate_ip(const char *name, const char *ip);
 
 int backend_chpass(const char *username, const char *new_pass);
 

@@ -16,7 +16,7 @@ void do_site_test(const char *command, wzd_context_t * context)
   out_err(LEVEL_CRITICAL,"FLAGS '%s'\n",context->userinfo.flags);*/
   {
     wzd_sfv_file sfv;
-    unsigned char buffer[BUFFER_LEN];
+    char buffer[BUFFER_LEN];
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if ( (ret = checkpath(command,buffer,context)) == 0 ) {
       buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
@@ -98,6 +98,7 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     }
     return;
   } /* commit */
+  do_site_help("backend",context);
 }
 
 /********************* do_site_chown ***********************/
@@ -340,7 +341,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
  */
 void do_site_sfv(char *command_line, wzd_context_t * context)
 {
-  unsigned char buffer[BUFFER_LEN];
+  char buffer[BUFFER_LEN];
   char * ptr;
   char * command, *name;
   int ret;

@@ -99,22 +99,23 @@ int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, v
   fd_set fd_r, fd_w;
   struct timeval tv;
 
+  /* FIXME bad conception of parameters ... */
+  if (sock == context->controlfd)
+  {
+    ssl = context->ssl.obj;
+  }
+  else
+  {
+    ssl = context->ssl.data_ssl;
+    /* XXX we assume that if sock != context->controlfd, then we have datas ... */
+  }
   do {
-    /* FIXME bad conception of parameters ... */
-    if (sock == context->controlfd)
-    {
-      ssl = context->ssl.obj;
-    }
-    else
-    {
-      ssl = context->ssl.data_ssl;
-      /* XXX we assume that if sock != context->controlfd, then we have datas ... */
-    }
     ret = SSL_read(ssl, msg, length);
     sslerr = SSL_get_error(ssl, ret);
-
-    if (sslerr >= 0)
-      return ret;
+    if (ret>0) {
+      r = 1;
+      break;
+    }
 
     FD_ZERO(&fd_r);
     FD_ZERO(&fd_w);
@@ -129,6 +130,11 @@ int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, v
       FD_SET(sock,&fd_w);
       break;
     default:
+      /* FIXME - could also mean peer has closed connection - test error code ? */
+      if (sslerr == SSL_ERROR_ZERO_RETURN) { /* remote host has closed connection */
+	return -1;
+      }
+      out_err(LEVEL_CRITICAL,"SSL_read failed %d\n",sslerr);
       return -1;
     }
 
@@ -152,18 +158,20 @@ int tls_write(int sock, const char *msg, unsigned int length, int flags, int tim
   fd_set fd_r, fd_w;
   struct timeval tv;
 
+  /* FIXME bad conception of parameters ... */
+  if (sock == context->controlfd)
+    ssl = context->ssl.obj;
+  else
+    ssl = context->ssl.data_ssl;
+    /* XXX we assume that if sock != context->controlfd, then we have datas ... */
   do {
-    /* FIXME bad conception of parameters ... */
-    if (sock == context->controlfd)
-      ssl = context->ssl.obj;
-    else
-      ssl = context->ssl.data_ssl;
-      /* XXX we assume that if sock != context->controlfd, then we have datas ... */
     ret = SSL_write(ssl, msg, length);
     sslerr = SSL_get_error(ssl, ret);
 
-    if (sslerr >= 0)
-      return ret;
+    if (ret > 0) {
+      r = 1;
+      break;
+    }
 
     FD_ZERO(&fd_r);
     FD_ZERO(&fd_w);
@@ -178,6 +186,7 @@ int tls_write(int sock, const char *msg, unsigned int length, int flags, int tim
       FD_SET(sock,&fd_w);
       break;
     default:
+      out_err(LEVEL_CRITICAL,"SSL_write failed\n");
       return -1;
     }
 
@@ -226,26 +235,56 @@ int tls_auth (const char *type, wzd_context_t * context)
 
 int tls_auth_cont(wzd_context_t * context)
 {
-  int ret;
+/* non blocking test */
+#if 1
+  SSL * ssl = context->ssl.obj;
+  int fd, ret, status, sslerr;
+  fd_set fd_r, fd_w;
+  struct timeval tv;
 
-  ret = SSL_accept(context->ssl.obj);
-  if (ret == 1) {
-  } else {
-    context->ssl.ssl_fd_mode = TLS_NONE;
-    switch (ret) {
-    case SSL_ERROR_WANT_READ:
-      context->ssl.ssl_fd_mode = TLS_READ;
+  SSL_set_accept_state(ssl);
+  fd = SSL_get_fd(ssl);
+  /* ensure socket is non-blocking */
+  fcntl(fd,F_SETFL,(fcntl(fd,F_GETFL)|O_NONBLOCK));
+  do {
+    status = SSL_accept(ssl);
+    sslerr = SSL_get_error(ssl,status);
+    if (status == 1) {
+      out_log(LEVEL_FLOOD,"control connection succesfully switched to ssl\n");
+      ret = 1;
       break;
-    case SSL_ERROR_WANT_WRITE:
-      context->ssl.ssl_fd_mode = TLS_WRITE;
-      break;
-    default:
-      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
-        ERR_error_string(SSL_get_error(context->ssl.obj,ret),NULL));
-      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
-	  ERR_error_string(ERR_get_error(),NULL));
-      return 1;
+    } else {
+      context->ssl.ssl_fd_mode = TLS_NONE;
+      FD_ZERO(&fd_r);
+      FD_ZERO(&fd_w);
+      tv.tv_usec = 0;
+      tv.tv_sec = 5;
+      switch (sslerr) {
+      case SSL_ERROR_WANT_READ:
+	FD_SET(fd,&fd_r);
+        context->ssl.ssl_fd_mode = TLS_READ;
+        break;
+      case SSL_ERROR_WANT_WRITE:
+	FD_SET(fd,&fd_w);
+        context->ssl.ssl_fd_mode = TLS_WRITE;
+        break;
+      default:
+        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
+          ERR_error_string(SSL_get_error(context->ssl.obj,ret),NULL));
+        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
+  	  ERR_error_string(ERR_get_error(),NULL));
+        return 1;
+      }
+      ret = select(fd+1,&fd_r,&fd_w,NULL,&tv);
+      if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
+	return -1;
+      }
     }
+  } while (status == -1 && ret != 0);
+
+  if (ret==0) {
+    out_err(LEVEL_CRITICAL,"tls_auth_cont failed\n");
+    return -1;
   }
 
   context->ssl.data_ssl = NULL;
@@ -255,6 +294,37 @@ int tls_auth_cont(wzd_context_t * context)
   context->write_fct = (write_fct_t)tls_write;
 
   return 0;
+#else
+  int ret;
+  
+  ret = SSL_accept(context->ssl.obj);
+  if (ret == 1) {
+  } else {
+    context->ssl.ssl_fd_mode = TLS_NONE;
+    switch (ret) {
+    case SSL_ERROR_WANT_READ:
+      context->ssl.ssl_fd_mode = TLS_READ;
+      break;
+    case SSL_ERROR_WANT_WRITE: 
+      context->ssl.ssl_fd_mode = TLS_WRITE;
+      break;
+    default:
+      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
+        ERR_error_string(SSL_get_error(context->ssl.obj,ret),NULL));
+      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
+          ERR_error_string(ERR_get_error(),NULL));
+      return 1;
+    }     
+  }   
+    
+  context->ssl.data_ssl = NULL;
+  
+  /* set read/write functions */
+  context->read_fct = (read_fct_t)tls_read;
+  context->write_fct = (write_fct_t)tls_write;
+  
+  return 0;
+#endif
 }
 
 /*************** tls_init_datamode *******************/

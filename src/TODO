@@ -1,7 +1,8 @@
 ## IN PROGRESS ##
 
+- pasv_ip: accept hostnames: pasv_ip = kakao.no-ip.org
+- rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
-- change login in wzd_tls.c to become non-blocking
 - FIND A SOLUTION FOR THIS MEMORY IN SHARED LIB !!!
    for allowed_ip, context, etc
 - IP checking (per group)

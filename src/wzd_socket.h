@@ -3,7 +3,7 @@
 
 int socket_make(int *port, int nListen);
 
-int socket_accept(int sock, unsigned long *remote_host, int *remote_port);
+int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_port);
 
 int socket_connect(unsigned long remote_host, int remote_port);
 

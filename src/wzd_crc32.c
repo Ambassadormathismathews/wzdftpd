@@ -78,7 +78,7 @@ void sfv_init(wzd_sfv_file *sfv)
  */
 int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
 {
-  unsigned char missing[1024], bad[1024];
+  char missing[1024], bad[1024];
   unsigned long real_crc;
   int ret, fd;
   struct stat s;
@@ -147,8 +147,8 @@ void sfv_free(wzd_sfv_file *sfv)
 int sfv_read(const char *filename, wzd_sfv_file *sfv)
 {
   FILE *in;
-  unsigned char buf[BUFSIZ];
-  unsigned char * ptr;
+  char buf[BUFSIZ];
+  char * ptr;
   char *err_ptr;
   size_t i;
   int count_comments=0, count_entries=0;
@@ -216,8 +216,8 @@ int sfv_check(const char * sfv_file)
 {
   int ret=0, thisret;
   char * ptr;
-  unsigned char dir[1024];
-  unsigned char filename[2048];
+  char dir[1024];
+  char filename[2048];
   wzd_sfv_file sfv;
   int i;
   unsigned long crc;
@@ -348,9 +348,9 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 int sfv_process_new(const char *sfv_file)
 {
   wzd_sfv_file sfv;
-  unsigned char dir[1024];
-  unsigned char filename[2048];
-  unsigned char *ptr;
+  char dir[1024];
+  char filename[2048];
+  char *ptr;
   int i;
 
   if (strlen(sfv_file) >= 1024) return -1;

@@ -6,7 +6,6 @@ void backend_clear_struct(wzd_backend_t *backend)
   backend->handle = NULL;
   backend->back_validate_login = NULL;
   backend->back_validate_pass = NULL;
-  backend->back_validate_ip = NULL;
   backend->back_find_user = NULL;
   backend->back_find_group = NULL;
   backend->back_chpass = NULL;
@@ -63,8 +62,6 @@ int backend_validate(const char *backend)
   ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_VALIDATE_PASS);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_VALIDATE_IP);
-  ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_FIND_USER);
   ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_FIND_GROUP);
@@ -119,16 +116,15 @@ int backend_init(const char *backend)
   }
 
   mainConfig->backend.handle = handle;
-  ptr = init_fcn = dlsym(handle,STR_INIT);
-  mainConfig->backend.back_validate_login = dlsym(handle,STR_VALIDATE_LOGIN);
-  mainConfig->backend.back_validate_pass  = dlsym(handle,STR_VALIDATE_PASS);
-  mainConfig->backend.back_validate_ip  = dlsym(handle,STR_VALIDATE_IP);
-  mainConfig->backend.back_find_user  = dlsym(handle,STR_FIND_USER);
-  mainConfig->backend.back_find_group  = dlsym(handle,STR_FIND_GROUP);
-  mainConfig->backend.back_chpass  = dlsym(handle,STR_CHPASS);
-  mainConfig->backend.back_mod_user  = dlsym(handle,STR_MOD_USER);
-  mainConfig->backend.back_mod_group  = dlsym(handle,STR_MOD_GROUP);
-  mainConfig->backend.back_commit_changes  = dlsym(handle,STR_COMMIT_CHANGES);
+  ptr = init_fcn = (int (*)(void))dlsym(handle,STR_INIT);
+  mainConfig->backend.back_validate_login = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_LOGIN);
+  mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_PASS);
+  mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_FIND_USER);
+  mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_FIND_GROUP);
+  mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,STR_CHPASS);
+  mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_MOD_USER);
+  mainConfig->backend.back_mod_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_MOD_GROUP);
+  mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,STR_COMMIT_CHANGES);
   strncpy(mainConfig->backend.name,backend,1023);
 
   if (ptr) {
@@ -223,17 +219,6 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user)
     return 1;
   }
   ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
-  return ret;
-}
-
-int backend_validate_ip(const char *name, const char *ip)
-{
-  int ret;
-  if (!mainConfig->backend.handle) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return 1;
-  }
-  ret = (*mainConfig->backend.back_validate_ip)(name,ip);
   return ret;
 }
 

@@ -55,6 +55,8 @@ int set_default_options(void)
 
   tempConfig.shm_key = 0x1331c0d3;
 
+  memset(tempConfig.pasv_ip,0,4);
+
   return 0;
 }
 
@@ -270,6 +272,21 @@ int parseVariable(const char *varname, const char *value)
       return 1;
     out_log(LEVEL_INFO,"******* setting pasv_up_range : %lu\n",l);
     tempConfig.pasv_up_range = l;
+    return 0;
+  }
+  /* PASV_IP (ip)
+   */
+  if (strcasecmp("pasv_ip",varname)==0)
+  {
+    unsigned int new_ip[4];
+    int r;
+    r = sscanf(value,"%u.%u.%u.%u",&new_ip[0],&new_ip[1],&new_ip[2],&new_ip[3]);
+    if (r!=4 || new_ip[0] >= 255 || new_ip[1] >= 255 || new_ip[2] >= 255 || new_ip[3] >= 255)
+      return 1;
+    tempConfig.pasv_ip[0] = (unsigned char)new_ip[0];
+    tempConfig.pasv_ip[1] = (unsigned char)new_ip[1];
+    tempConfig.pasv_ip[2] = (unsigned char)new_ip[2];
+    tempConfig.pasv_ip[3] = (unsigned char)new_ip[3];
     return 0;
   }
   /* LOGIN_PRE_IP_CHECK (int)

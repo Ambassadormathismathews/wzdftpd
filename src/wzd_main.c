@@ -1,5 +1,7 @@
 #include "wzd.h"
 
+#include <regex.h>
+
 void display_usage(void)
 {
   fprintf(stderr,"Usage:\r\n");
@@ -10,7 +12,70 @@ void display_usage(void)
 
 void cleanup_shm(void)
 {
-  wzd_shm_cleanup(mainConfig->shm_key);
+  char buffer[1024];
+  char value[1024];
+  char varname[1024];
+  char *ptr;
+  regex_t reg_line;
+  regmatch_t regmatch[3];
+  FILE *configfile;
+  int length, err;
+  unsigned long shm_key=0x1331c0d3;
+
+  configfile = fopen("wzd.cfg","r");
+  if (!configfile)
+    return;
+
+  while (fgets(buffer,1024,configfile))
+  {
+    ptr = buffer;
+    length = strlen(buffer); /* fgets put a '\0' at the end */
+    /* trim leading spaces */
+    while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
+      ptr++;
+    if ((*ptr)=='#' || length<=1)       /* comment and empty lines */
+      continue;
+
+    /* TODO if line contains a " and is not ended, it is a multi-line */
+    /* TODO replace special chars (\n,\t,\xxx,etc) */
+
+    /* trim trailing space, because fgets keep a \n */
+    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
+      *(ptr+length-1) = '\0';
+      length--;
+    }
+    if (length <= 0) continue;
+
+    reg_line.re_nsub = 2;
+    err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
+    if (err) {
+      out_log(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
+      out_log(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
+      exit (1);
+    }
+
+    err = regexec(&reg_line,ptr,3,regmatch,0);
+    if (err) {
+      out_log(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
+    } else {
+      memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
+      varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
+      memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
+      value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
+
+      if (strcasecmp(varname,"shm_key")==0) {
+	unsigned long new_key=0;
+	errno = 0;
+	new_key = strtoul(value,(char**)NULL,0);
+	if (errno == ERANGE) return;
+	shm_key = new_key;
+      }
+    }
+  }
+  fclose(configfile);
+
+  wzd_shm_cleanup(shm_key-1);
+  wzd_shm_cleanup(shm_key);
 }
 
 
@@ -18,14 +83,18 @@ int main_parse_args(int argc, char **argv)
 {
   int opt;
 
-  while ((opt=getopt(argc, argv, "hdf:")) != -1) {
-    switch(tolower((char)opt)) {
+  /* please keep options ordered ! */
+  while ((opt=getopt(argc, argv, "hdf:V")) != -1) {
+    switch((char)opt) {
     case 'h':
       display_usage();
       return 1;
     case 'd':
-      readConfigFile("wzd.cfg");
+/*      readConfigFile("wzd.cfg");*/
       cleanup_shm();
+      return 1;
+    case 'V':
+      fprintf(stderr,"%s build %lu\n",WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM);
       return 1;
     }
   }

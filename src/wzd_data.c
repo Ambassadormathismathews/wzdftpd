@@ -72,7 +72,12 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   case TOK_RETR:
     n = fread(buffer,1,sizeof(buffer),context->current_action.current_file);
     if (n>0) {
-      ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+#if SSL_SUPPORT
+      if (context->ssl.data_mode == TLS_CLEAR)
+	ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+      else
+#endif
+        ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
 	fclose(context->current_action.current_file);
@@ -100,7 +105,12 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     }
     break;
   case TOK_STOR:
-    n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+#if SSL_SUPPORT
+      if (context->ssl.data_mode == TLS_CLEAR)
+	n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+      else
+#endif
+      n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
       fwrite(buffer,1,n,context->current_action.current_file);
       context->current_action.bytesnow += n;
