@@ -504,6 +504,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
 #ifdef WZD_DBG_COOKIES
         out_err(LEVEL_HIGH, "unterminated if loop\n" );
 #endif
+        free(tmpbuf);
         return 1;
       }
       /* flush buffer before executing 'for' loop */
@@ -532,6 +533,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         if (current_user->flags && strchr(user->flags,condition[1]))
           cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
       }
+      free(tmpbuf);
     }
     break;
     case COOKIE_FOR:
