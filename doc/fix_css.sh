@@ -11,6 +11,7 @@ if [ -d $1 ]; then
     rm tmp
     ../add_header_footer.pl tmp2 > $file
     rm tmp2
+#    mv $file `basename $file .html`.php
   done
 else
   sed -e 's:></HEAD:><link rel="STYLESHEET" href="../../css/design2.css"></HEAD:g' $file > tmp
@@ -19,4 +20,5 @@ else
   mv tmp2 $file
   ../add_header_footer.pl tmp2 > $file
   rm tmp2
+#  mv $file `basename $file .html`.php
 fi

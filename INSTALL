@@ -1,4 +1,4 @@
-This is a small set of directives for building wzdFTPd
+This is a small set of directives for building wzdftpd
 
 Prerequisites:
 
@@ -13,7 +13,7 @@ Linux:
 * a lexical analyser generator (flex)
 
 Windows:
-* Cygwin, with gcc, make
+* visual c++
 * if you want ssl support, openssl-devel headers and libs
 
 
@@ -27,7 +27,7 @@ autoconf
 2) Configure
 ./configure [args]
 (./configure --help to know args, common args are: --enable-ssl, --enable-debug and
---enable-winsock and --prefix
+and --prefix
 
 3) Build executable and backends / modules
 make
@@ -37,7 +37,7 @@ make install
 
 6) Executable can be found in src
 The _MINIMUM_ installation is composed of:
-- the exe (wzdFTPd for linux, wzdFTPd.exe for win32)
+- the exe (wzdftpd for linux, wzdftpd.exe for win32)
 - the lib (libwzd.so for linux, libwzd.dll for win32)
 - the config file (wzd.cfg)
 - ONE backend at least, with the backend's config files (libwzdplaintext.so, users)

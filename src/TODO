@@ -3,7 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-=======
 - create manpages !
 - move some files to doc/examples
 - package wzdftpd-dev

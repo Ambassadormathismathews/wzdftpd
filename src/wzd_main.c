@@ -79,6 +79,15 @@ int stay_foreground=0;
 
 extern short created_shm;
 
+static const char * config_files[] = {
+  "",
+  WZD_DEFAULT_CONF,
+  "wzd.cfg",
+  "/etc/wzdftpd/wzd.cfg",
+  "/etc/wzd.cfg",
+  NULL /* do NOT remove */
+};
+
 void display_usage(void)
 {
   fprintf(stderr,"%s build %s (%s)\n", WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
@@ -104,6 +113,13 @@ void display_usage(void)
   fprintf(stderr," -V                          - Show version \n");
 
 #endif /* HAVE_GETOPT */
+}
+
+static wzd_config_t * load_config_file(const char *name, wzd_config_t ** config)
+{
+  *config = readConfigFile(name);
+
+  return *config;
 }
 
 void cleanup_shm(void)
@@ -235,10 +251,11 @@ int main_parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  int ret;
+  int ret, i;
   int forkresult;
   wzd_config_t * config;
   struct stat s;
+  const char * ptr;
 
 #if 0
   fprintf(stderr,"--------------------------------------\n");
@@ -285,6 +302,19 @@ int main(int argc, char **argv)
   wzd_server_uid = geteuid();
 #endif
 
+  config = NULL;
+  config_files[0] = configfile_name;
+
+  for (i=0; config_files[i]; i++)
+  {
+    if (load_config_file(config_files[i],&config)) break;
+  }
+  if (!config) {
+    fprintf(stderr,"No valid config file found, aborting !\n");
+    exit(1);
+  }
+
+#if 0
   /* find config file */
   if (stat(configfile_name,&s)) {
     strcpy(configfile_name,WZD_DEFAULT_CONF);
@@ -302,6 +332,7 @@ int main(int argc, char **argv)
 
   config = NULL;
   config = readConfigFile(configfile_name);
+#endif
   
   if (!config) {
     out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");

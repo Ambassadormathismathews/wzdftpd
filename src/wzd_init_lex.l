@@ -1855,7 +1855,7 @@ wzd_config_t * readConfigFile(const char *fileName)
 
   yyin = fopen(fileName,"r");
   if (!yyin) {
-    fprintf(stderr,"Unable to open file\n");
+/*    fprintf(stderr,"Unable to open file\n");*/
     return NULL;
   }
 
