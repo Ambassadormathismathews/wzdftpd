@@ -102,8 +102,10 @@ int server_try_socket(void)
 
   /* TLS mode ? */
 #if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
-  ret = socket_tls_switch();
-  if (ret < 0) goto server_try_socket_abort; /* XXX abort, or continue in clear mode ? */
+  if ( !(_config->options & OPTION_NOTLS) ) {
+    ret = socket_tls_switch();
+    if (ret < 0 && OPTION_TLS) goto server_try_socket_abort; /* abort only if TLS was forced */
+  }
 #endif /* HAVE_GNUTLS */
 
   /* USER name */
@@ -311,7 +313,7 @@ int socket_tls_switch(void)
   int ret;
 
   if (!_config) return -1;
-  if ( (_config->options & OPTION_TLS) ) return -1; /* already switched ?! */
+  if ( (_config->options & OPTION_NOTLS) ) return -1; /* we don't want TLS */
   if (_config->sock < 0) return -1;
 
   buffer = malloc(1024);

@@ -55,6 +55,7 @@ static char * _host = NULL;
 static int _port = 0;
 static char * _user = NULL;
 static char * _pass = NULL;
+static unsigned long _options = 0;
 
 
 
@@ -67,7 +68,7 @@ int wzd_parse_args(int argc, char **argv)
   int opt;
   int val;
 
-  while ((opt=getopt(argc, argv, "u:w:h:p:")) != -1)
+  while ((opt=getopt(argc, argv, "u:w:h:p:st")) != -1)
   {
     switch ((char)opt) {
       case 'u':
@@ -89,6 +90,12 @@ int wzd_parse_args(int argc, char **argv)
         val = atoi(optarg); /* FIXME no test ... */
         _port = val;
         break;
+      case 's':
+        _options |= OPTION_TLS;
+        break;
+      case 't':
+        _options |= OPTION_NOTLS;
+        break;
     }
   }
 
@@ -106,6 +113,7 @@ int wzd_init(void)
   _config->port = (_port) ? _port : 21;
   _config->user = (_user) ? _user : "wzdftpd";
   _config->pass = (_pass) ? _pass : "wzdftpd";
+  _config->options = _options;
 
   /* 1- connect to server */
   if (_connect_server()<0) { free(_config); return -1; }
@@ -125,9 +133,9 @@ int wzd_fini(void)
   if (_config) {
     wzd_send_message("QUIT\r\n",6,NULL,0);
 #ifdef WIN32
-    Sleep(1000);
+    Sleep(100);
 #else
-    sleep(1);
+    usleep(100);
 #endif
     free(_config);
     _config = NULL;

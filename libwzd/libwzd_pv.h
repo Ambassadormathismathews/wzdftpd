@@ -47,7 +47,8 @@ struct libwzd_connector {
   int (*is_secure)(void);
 };
 
-#define OPTION_TLS 0x00000010L
+#define OPTION_TLS      0x00000010L     /* force tls */
+#define OPTION_NOTLS    0x00000100L     /* prevent using tls */
 
 struct libwzd_config {
   char * host;
