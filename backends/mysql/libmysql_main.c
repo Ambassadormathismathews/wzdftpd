@@ -136,7 +136,7 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
     wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     mysql_close(&mysql);
     return -1;
-  } 
+  }
 #ifdef DEBUG
   else
     fprintf(stderr, "Connected to database");
@@ -178,10 +178,9 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
-      /* more than 1 result !!!! */
-      /** \todo warn user */
+      /* 0 or more than 1 result  */
       mysql_free_result(res);
-      return 1;
+      return -1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -236,10 +235,9 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
-      /* more than 1 result !!!! */
-      /** \todo warn user */
+      /* 0 or more than 1 result */
       mysql_free_result(res);
-      return 1;
+      return -1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -260,7 +258,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
     mysql_free_result(res);
 
-    if (strlen(stored_pass) == 0) 
+    if (strlen(stored_pass) == 0)
       return uid;	// passworldless login
     /** NO ! The 'anything' pass is '%' ! */
 
@@ -308,10 +306,9 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
-      /* more than 1 result !!!! */
-      /** \todo warn user */
+      /* 0 or more than 1 result */
       mysql_free_result(res);
-      return 1;
+      return -1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -427,7 +424,7 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_row_get_uint(&user->ratio, row, UCOL_RATIO);
   if (wzd_row_get_uint(&i, row, UCOL_USER_SLOTS)==0) user->user_slots = i;
   if (wzd_row_get_uint(&i, row, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
-  
+
   mysql_free_result(res);
 
   /* Now get IP */
@@ -445,7 +442,7 @@ wzd_user_t * FCN_GET_USER(int uid)
     wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
-  
+
   i =0;
   while ( (row = mysql_fetch_row(res)) ) {
     if (i >= HARD_IP_PER_USER) {
@@ -473,7 +470,7 @@ wzd_user_t * FCN_GET_USER(int uid)
     wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
   }
-  
+
   i =0;
   while ( (row = mysql_fetch_row(res)) ) {
     if (i >= HARD_IP_PER_USER) {
@@ -542,7 +539,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     return NULL;
   }
   wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, row, GCOL_GROUPNAME);
-  
+
   mysql_free_result(res);
 
   return group;
@@ -634,7 +631,7 @@ static int * wzd_mysql_get_user_list(void)
   query = malloc(512);
   snprintf(query, 512, "SELECT uid FROM users");
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
@@ -672,7 +669,7 @@ static int * wzd_mysql_get_group_list(void)
   query = malloc(512);
   snprintf(query, 512, "SELECT gid FROM groups");
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
