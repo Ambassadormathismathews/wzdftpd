@@ -207,7 +207,7 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 
-HOSTOS=`uname -o`
+HOSTOS=`uname -s`
 if test x$HOSTOS = xCygwin; then
   echo "Patching libtool ! ..."
   sed -e 's/deplibs_check_method="file_magic \^x86 archive import|\^x86 DLL"/deplibs_check_method="file_magic ^x86 archive import|^x86 DLL|^x86 archive static"/' libtool > libtool2
