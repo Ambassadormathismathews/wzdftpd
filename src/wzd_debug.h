@@ -76,9 +76,6 @@ void fd_dump(void);
 # define FD_UNREGISTER(fd,desc)
 #endif
 
-/* Test backend storage */
-#define BACKEND_STORAGE
-
 
 #ifdef DEBUG
 
@@ -102,6 +99,9 @@ void fd_dump(void);
 
 /* modules loading/unloading */
 /*#define WZD_DBG_MODULES*/
+
+/* do not call abort() when trapping SIGSEGV */
+/*#define WZD_DBG_NOABORT*/
 
 /* debug permissions */
 /*#define WZD_DBG_PERMS*/

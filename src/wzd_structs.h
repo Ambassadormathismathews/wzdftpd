@@ -251,7 +251,7 @@ typedef struct {
 
 
 typedef struct {
-  char name[HARD_BACKEND_NAME_LENGTH];
+  char * name;
   void * param;
   void * handle;
   int (*back_validate_login)(const char *, wzd_user_t *);

@@ -1320,10 +1320,7 @@ void do_site_user(char *command_line, wzd_context_t * context)
     return;
   }
 
-/*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_user,&user,NULL,context);
-/*#endif
-  do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),NULL,context);*/
 }
 
 /********************* do_site_utime ***********************/

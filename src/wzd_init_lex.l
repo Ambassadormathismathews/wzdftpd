@@ -422,7 +422,6 @@ int do_permission_line(const char *permname, const char *permline)
  */
 int cfg_read_backend(void)
 {
-/*  char name[HARD_BACKEND_NAME_LENGTH];*/
   char *line;
   char *name, *ptr;
   char * predicate = NULL, *version=NULL;
@@ -435,7 +434,7 @@ int cfg_read_backend(void)
     return 1;
   }
 
-  if( !(line=read_until_eol(HARD_BACKEND_NAME_LENGTH)) ) {
+  if( !(line=read_until_eol(256)) ) {
     out_err(LEVEL_HIGH,"invalid argument\n");
     return 1;
   }
@@ -465,7 +464,7 @@ int cfg_read_backend(void)
   if (!i) {
     if (tempConfig.backend.handle == NULL) {
       /*        i = backend_init(value);*/
-      strncpy(tempConfig.backend.name,name,HARD_BACKEND_NAME_LENGTH-1);
+      tempConfig.backend.name = wzd_strdup(name);
     } else { /* multiple backends ?? */
       i=0;
     }

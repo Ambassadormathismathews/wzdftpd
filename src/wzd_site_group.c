@@ -349,10 +349,7 @@ int do_site_gsinfo(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-/*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_group,NULL,group,context);
-/*#endif
-  do_site_print_file(mainConfig->site_config.file_user,NULL,GetGroupByID(uid),context);*/
 
   return 0;
 }

@@ -30,33 +30,6 @@
 #include "wzd_hardlimits.h"
 #include "wzd_structs.h"
 
-#if 0
-/* IMPORTANT:
- *
- * all validation functions have the following return code:
- *   0 = success
- *   !0 = failure
- *
- * the last parameter of all functions is a ptr to current user
- */
-
-
-typedef struct {
-  char name[1024];
-  void * handle;
-  int backend_storage;
-  int (*back_validate_login)(const char *, wzd_user_t *);
-  int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
-  wzd_user_t * (*back_get_user)(int uid);
-  wzd_group_t * (*back_get_group)(int gid);
-  int (*back_find_user) (const char *, wzd_user_t *);
-  int (*back_find_group) (const char *, wzd_group_t *);
-  int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
-  int (*back_mod_group) (const char *, wzd_group_t *, unsigned long);
-  int (*back_commit_changes) (void);
-} wzd_backend_t;
-#endif
-
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING		0
 #define	_USER_USERNAME		1<<0
@@ -147,11 +120,8 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 /**
  * \brief loads backend
  * \param backend The backend name
- * \param backend_storage (output) Address of integer which indicates if backend stores data itself
- * \param user_list Memory zone to be filled dy user_data. Must be allocated
- * \param user_max Max number of users to store in user_list
- * \param group_list Memory zone to be filled dy group_data. Must be allocated
- * \param group_max Max number of group to store in group_list
+ * \param user_max Max number of users to store in user_list (NOT used! !)
+ * \param group_max Max number of group to store in group_list (NOT used! !)
  */
 int backend_init(const char *backend, unsigned int user_max, unsigned int group_max);
 

@@ -987,12 +987,14 @@ void server_crashed(int signum)
 {
   printf("Server has crashed of signal %d\n",signum);
 #ifdef DEBUG
+#ifndef WZD_DBG_NOABORT
   printf("I'll try to dump current memory to a core file (in the current dir)\n");
   printf("To use this core file you need to run:\n");
   printf("  gdb wzdftpd -core=core_file\n");
   printf("When prompted type be following command:\n");
   printf("  bt\n");
   abort();
+#endif
 #endif
 }
 
@@ -1567,5 +1569,12 @@ void serverMainThreadExit(int retcode)
   fprintf(stdout,"%s",CLR_NOCOLOR);
   fprintf(stderr,"%s",CLR_NOCOLOR);
 #endif
+
+#ifndef WIN32
+  /* restore default handler for SIGSEGV before exiting
+   */
+  signal(SIGSEGV,SIG_DFL);
+#endif
+
   exit (retcode);
 }

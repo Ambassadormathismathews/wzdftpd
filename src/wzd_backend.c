@@ -107,7 +107,8 @@ static void backend_clear_struct(wzd_backend_t *backend)
     wzd_free(backend->param);
     backend->param = NULL;
   }
-  backend->name[0] = '\0';
+  wzd_free(backend->name);
+  backend->name = NULL;
   backend->handle = NULL;
   backend->back_validate_login = NULL;
   backend->back_validate_pass = NULL;
@@ -226,7 +227,6 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   } /* if (pred) */
 
   dlclose(handle);
-/*  strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);*/
 
   return 0;
 }
@@ -288,11 +288,13 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
   if (backend != mainConfig->backend.name) /* strings must not overlap */
-    strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);
+  {
+    wzd_free(mainConfig->backend.name);
+    mainConfig->backend.name = wzd_strdup(backend);
+  }
 
   if (ptr) {
     ret = (*init_fcn)(user_max, group_max, mainConfig->backend.param);
-/*    ret = (*init_fcn)(backend_storage, user_list, user_max, group_list, group_max, NULL);*/
     if (ret) { /* backend says NO */
       backend_clear_struct(&mainConfig->backend);
       dlclose(handle);
@@ -312,6 +314,8 @@ int backend_close(const char *backend)
 {
   int (*fini_fcn)(void);
   int ret;
+
+  if (!backend || !mainConfig->backend.name) return 1;
 
   /* step 1: check that backend == mainConfig->backend.name */
   if (strcmp(backend,mainConfig->backend.name)!=0) return 1;
@@ -397,7 +401,7 @@ wzd_user_t * GetUserByID(unsigned int id)
 {
   wzd_user_t *user, *user_return;
 
-  if (!mainConfig || !mainConfig->user_list) return NULL;
+  if (!mainConfig) return NULL;
 
   /* try cache first */
   if ( (user = usercache_getbyuid( id )) )
@@ -419,7 +423,7 @@ wzd_user_t * GetUserByName(const char *name)
   unsigned int uid;
   wzd_user_t * user=NULL;
 
-  if (!mainConfig || !mainConfig->user_list || !name || strlen(name)<=0) return NULL;
+  if (!mainConfig || !name || strlen(name)<=0) return NULL;
 out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
 
   /* try cache first */
@@ -485,7 +489,7 @@ wzd_group_t * GetGroupByID(unsigned int id)
 {
   wzd_group_t * group = NULL, * group_return;
 
-  if (!mainConfig || !mainConfig->group_list) return NULL;
+  if (!mainConfig) return NULL;
 
   /* try cache first */
   if ( (group = groupcache_getbygid( id )) )
@@ -507,7 +511,7 @@ wzd_group_t * GetGroupByName(const char *name)
   unsigned int gid;
   wzd_group_t * group = NULL;
 
-  if (!mainConfig || !mainConfig->group_list || !name || strlen(name)<=0) return NULL;
+  if (!mainConfig || !name || strlen(name)<=0) return NULL;
 
   /* try cache first */
   if ( (group = groupcache_getbyname( name )) )
