@@ -3,6 +3,9 @@
 
 typedef unsigned int uint32;
 
+#define MD5_DIGEST_SIZE 16
+typedef unsigned char MD5_DIGEST[MD5_DIGEST_SIZE];
+
 struct MD5Context {
     uint32 buf[4];
     uint32 bits[2];
@@ -32,6 +35,8 @@ void strtomd5(char *ptr,char **ptest, unsigned char *crc);
  * in crc. Returns 0 on success, nonzero on error.
  */
 int calc_md5( const char *fname, unsigned char md5_crc[16], unsigned long startpos, unsigned long length );
+
+void md5_digest(const void *msg, unsigned int len, MD5_DIGEST);
 
 #endif /* __WZD_MD5_H__ */
 

@@ -3,35 +3,16 @@
 
 /*#include "wzd_all.h"*/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "wzd_md5.h"
 #include "wzd_md5crypt.h"
 
-#include "wzd_md5.h"
-/*
-* This is needed to make RSAREF happy on some MS-DOS compilers.
-*/
+#define TEST
 
-#ifdef _WIN32
-typedef struct MD5Context MD5_CTX;
-#endif
-
-static unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
-  "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-
-
-static void
-to64(char *s, unsigned long v, int n)
-{
-  while (--n >= 0) {
-    *s++ = itoa64[v&0x3f];
-    v >>= 6;
-  }
-}
-
-
+#ifndef TEST
 
 /*
  * UNIX password
@@ -142,3 +123,24 @@ char * md5_crypt(const char *pw, const char *salt)
 
   return passwd;
 }
+
+
+#else
+
+char * md5_hash_r(const char *pw, char * out, size_t len)
+{
+  MD5_DIGEST digest;
+  int j;
+
+  if (!pw) return NULL;
+  if (len <= 2*sizeof(digest)) return NULL;
+
+  md5_digest(pw, strlen(pw), digest);
+
+  for (j=0; j<sizeof(digest); j++)
+    sprintf(out+2*j, "%02x", digest[j]);
+
+  return out;
+}
+
+#endif

@@ -329,3 +329,12 @@ int calc_md5( const char *fname, unsigned char md5_crc[16], unsigned long startp
   MD5Name(MD5Final(md5_crc,&crc));
   return 0;
 }
+
+void md5_digest(const void *msg, unsigned int len, MD5_DIGEST d)
+{
+  struct MD5Context c;
+
+  MD5Name(MD5Init(&c));
+  MD5Name(MD5Update(&c, msg, len));
+  MD5Name(MD5Final(d, &c));
+}

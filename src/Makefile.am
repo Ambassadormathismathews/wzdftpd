@@ -23,6 +23,7 @@ libwzd_core_la_HEADERS = \
 	wzd_ip.h         \
 	wzd_libmain.h    \
 	wzd_log.h        \
+	wzd_md5crypt.h   \
 	wzd_md5.h        \
 	wzd_messages.h   \
 	wzd_misc.h       \
@@ -31,6 +32,7 @@ libwzd_core_la_HEADERS = \
 	wzd_perm.h       \
 	wzd_section.h    \
 	wzd_shm.h        \
+	wzd_string.h     \
 	wzd_structs.h    \
 	wzd_types.h      \
 	wzd_utf8.h       \
@@ -53,6 +55,7 @@ libwzd_core_la_SOURCES = \
 	wzd_ip.c         \
 	wzd_libmain.c    \
 	wzd_log.c        \
+	wzd_md5crypt.c   \
 	wzd_md5.c        \
 	wzd_messages.c   \
 	wzd_misc.c       \
@@ -61,6 +64,7 @@ libwzd_core_la_SOURCES = \
 	wzd_perm.c       \
 	wzd_section.c    \
 	wzd_shm.c        \
+	wzd_string.c     \
 	wzd_utf8.c       \
 	wzd_vars.c       \
 	wzd_vfs.c
@@ -107,7 +111,7 @@ wzdftpd_DEPENDENCIES = libwzd_core.la
 wzdftpd_LDADD = libwzd_core.la
 wzdftpd_LDFLAGS = $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
-AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir)/libwzd-base $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
 dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \
