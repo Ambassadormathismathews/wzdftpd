@@ -5,37 +5,39 @@
 #include <fcntl.h>
 #include <malloc.h>
 
+#include "wzd_cache.h"
+
 struct wzd_cache_t  {
   int fd;
 };
 
-struct wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
+wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 {
-  struct wzd_cache_t * cache;
+  wzd_cache_t * cache;
   int fd;
 
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
 
-  cache = (struct wzd_cache_t*)malloc(sizeof(struct wzd_cache_t));
+  cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
   cache->fd = fd;
   
   return cache;
 }
 
-int wzd_cache_read(struct wzd_cache_t * c, void *buf, unsigned int count)
+int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
 {
   if (c) return read( c->fd, buf, count );
   return -1;
 }
 
-int wzd_cache_write(struct wzd_cache_t * c, void *buf, unsigned int count)
+int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
 {
   if (c) return write( c->fd, buf, count );
   return -1;
 }
 
-char * wzd_cache_gets(struct wzd_cache_t * c, char *buf, unsigned int size)
+char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
 {
   off_t position;
   int fd = c->fd;
@@ -72,8 +74,8 @@ char * wzd_cache_gets(struct wzd_cache_t * c, char *buf, unsigned int size)
   return buf;
 }
 
-void wzd_cache_close(struct wzd_cache_t * c)
+void wzd_cache_close(wzd_cache_t * c)
 {
-  if (c) close( c->fd );
+  if (c) { close( c->fd ); free(c); } 
 }
 
