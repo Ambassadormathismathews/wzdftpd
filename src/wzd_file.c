@@ -612,7 +612,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (mode & O_RDONLY)
     ret = _checkPerm(filename,RIGHT_RETR,user);
@@ -621,8 +621,42 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   if (ret)
     return 0;
   
-  fd = open(filename,mode,0666);
+  /* IMPORTANT NOTE: we can't use flock/lockf because cygwin does not
+   * implement it.
+   * fcntl allow lock manipulations ONLY if opened in read-write mode ...
+   * so untile we have a better solution, we need to open files
+   * two times, with the risk of race conditions ...
+   */
+  /* lock state detection */
+  fd = open(filename,O_RDWR,0666);
 
+  /* when opened in write mode, lock file */
+  if (fd != -1) {
+    /* first politely ask if we can get lock */
+    if ( file_islocked(fd,F_WRLCK) ) {
+      /* already locked by some file */
+      close(fd);
+      return -1;
+    }
+    if ( (file_lock(fd,F_RDLCK))==-1 ) {
+      out_log(LEVEL_HIGH,"Could not lock file %s\n",filename);
+      close(fd);
+      return -1;
+    }
+  } else { /* ! O_RDWR */
+    /* test if file does not exist, but we are going to create it */
+    if (! (mode & O_WRONLY)) {
+      /* if file is locked, it is currently being uploaded */
+      if ( CFG_GET_DENY_ACCESS_FILES_UPLOADED(mainConfig) && file_islocked(fd,F_WRLCK) ) {
+	close(fd);
+	return -1;
+	/* FIXME TODO what to do now ? */
+      }
+    }
+  } /* O_RDWR */
+
+  close(fd);
+  fd = open(filename,mode,0666);
   return fd;
 }
 
@@ -652,7 +686,7 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
     user = &context->userinfo;
   } else 
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_MKDIR,user);
   if (ret) return -1;
@@ -671,7 +705,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
     user = &context->userinfo;
   } else 
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_RMDIR,user);
   if (ret) return -1;
@@ -733,7 +767,7 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   strncpy(path,new_filename,2048);
   ptr = strrchr(path,'/');
@@ -757,3 +791,47 @@ fprintf(stderr,"rename error %d (%s)\n", errno, strerror(errno));
 
   return 0;
 }
+
+int file_lock(int fd, short lock_mode)
+{
+  struct flock lck;
+  lck.l_type = lock_mode;
+  lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
+  lck.l_start = 0;
+  lck.l_len = 0;
+  if (fcntl(fd, F_SETLK, &lck) < 0) {
+    return -1;
+  }
+  return 0;
+}
+
+int file_unlock(int fd)
+{
+  struct flock lck;
+  lck.l_type = F_UNLCK;
+  lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
+  lck.l_start = 0;
+  lck.l_len = 0;
+  if (fcntl(fd, F_SETLK, &lck) < 0) {
+    return -1;
+  }
+  return 0;
+}
+
+int file_islocked(int fd, short lock_mode)
+{
+  struct flock lck;
+  lck.l_type = lock_mode;
+  lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
+  lck.l_start = 0;
+  lck.l_len = 0;
+  if (fcntl(fd, F_SETLK, &lck) < 0) {
+    return 1;
+  }
+  lck.l_type = F_UNLCK;
+  if (fcntl(fd, F_SETLK, &lck) == -1) {
+    return -1;
+  }
+  return 0;
+}
+

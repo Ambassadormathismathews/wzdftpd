@@ -17,6 +17,11 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context);
 int file_rmdir(const char *dirname, wzd_context_t * context);
 
+/* returns 1 if file is currently locked, else 0 */
+int file_lock(int fd, short lock_mode);
+int file_unlock(int fd);
+int file_islocked(int fd, short lock_mode);
+
 /* low-level func */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, wzd_context_t * context);
