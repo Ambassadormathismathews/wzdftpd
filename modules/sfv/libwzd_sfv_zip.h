@@ -48,7 +48,11 @@
 
 #ifdef HAVE_ZLIB
 
+#ifndef _MSC_VER
 #include <zlib.h>
+#else
+#include "../../visual/zlib/include/zlib.h"
+#endif
 
 typedef voidp zipFile;
 
