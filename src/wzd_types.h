@@ -203,7 +203,5 @@
 
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
 
-#define WZD_MAX_PATH 1024
-
 
 #endif /* __WZD_TYPES__ */

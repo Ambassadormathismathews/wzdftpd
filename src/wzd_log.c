@@ -164,10 +164,12 @@ void out_log(int level,const char *fmt,...)
 #ifdef DEBUG
       if (mainConfig->logfile) {
 	vfprintf(stdout,new_format,argptr);
+        fflush(stdout);
 /*        vfprintf(mainConfig->logfile,fmt,argptr);
 	  fflush(mainConfig->logfile);*/
       } else { /* security - will be used iff log is not opened at this time */
 	vfprintf(stderr,new_format,argptr);
+        fflush(stderr);
       }
 #else
       if (mainConfig->logfile) {
@@ -257,6 +259,7 @@ void out_err(int level, const char *fmt,...)
       /*  if (level >= mainConfig->loglevel) {*/
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vfprintf(stderr,new_format,argptr);
+      fflush(stderr);
       /*  }*/
     } /* syslog */
   } /* > loglevel ? */

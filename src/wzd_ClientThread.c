@@ -716,7 +716,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  if (strlen(param) >= (WZD_MAX_PATH-10))
+  if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
   {
     ret = send_message_with_args(501,context,"Argument or parameter too big.");
     return E_PARAM_BIG;
@@ -971,6 +971,7 @@ int do_rmdir(char * param, wzd_context_t * context)
   int ret;
 
   if (!param || !param[0]) return E_PARAM_NULL;
+  if (strlen(param)>WZD_MAX_PATH-1) return E_PARAM_BIG;
 
   if (checkpath(param,path,context)) return E_WRONGPATH;
 
@@ -1401,6 +1402,16 @@ int do_retr(char *param, wzd_context_t * context)
     return E_NO_DATA_CTX;
   }
 
+  if (!param || strlen(param)==0) {
+    ret = send_message_with_args(501,context,"Incorrect filename");
+    return E_PARAM_INVALID;
+  }
+
+  if (strlen(param)>WZD_MAX_PATH-1) {
+    ret = send_message_with_args(501,context,"Filename too long");
+    return E_PARAM_BIG;
+  }
+
   if (checkpath(param,path,context)) {
     ret = send_message_with_args(501,context,"Invalid file name");
     return E_PARAM_INVALID;
@@ -1520,6 +1531,11 @@ int do_stor(char *param, wzd_context_t * context)
   if (!param || strlen(param)==0) {
     ret = send_message_with_args(501,context,"Incorrect filename");
     return E_PARAM_INVALID;
+  }
+
+  if (strlen(param)>WZD_MAX_PATH-1) {
+    ret = send_message_with_args(501,context,"Filename too long");
+    return E_PARAM_BIG;
   }
 
   if (param[0]=='/') { /* absolute path */
@@ -1659,6 +1675,11 @@ void do_mdtm(char *param, wzd_context_t * context)
   struct stat s;
   int ret;
 
+  if (!param || strlen(param)>=WZD_MAX_PATH) {
+    ret = send_message_with_args(501,context,"Incorrect argument");
+    return;
+  }
+
   if (!checkpath(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
@@ -1686,6 +1707,10 @@ void do_size(char *param, wzd_context_t * context)
   struct stat s;
   int ret;
 
+  if (!param || strlen(param)>=WZD_MAX_PATH) {
+    ret = send_message_with_args(501,context,"Incorrect argument");
+    return;
+  }
   if (!checkpath(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
@@ -1715,7 +1740,7 @@ int do_dele(char *param, wzd_context_t * context)
   off_t file_size;
   wzd_user_t * user, * owner;
 
-  if (!param || strlen(param)==0 || checkpath(param,path,context)) {
+  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH || checkpath(param,path,context)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
@@ -1765,13 +1790,13 @@ int do_dele(char *param, wzd_context_t * context)
        else
 	 owner->credits = 0;
      }
+     if (owner->stats.bytes_ul_total > file_size)
+       owner->stats.bytes_ul_total -= file_size;
+     else
+       owner->stats.bytes_ul_total = 0;
+     if (owner->stats.files_ul_total)
+       owner->stats.files_ul_total--;
     }
-    if (owner->stats.bytes_ul_total > file_size)
-      owner->stats.bytes_ul_total -= file_size;
-    else
-      owner->stats.bytes_ul_total = 0;
-    if (owner->stats.files_ul_total)
-      owner->stats.files_ul_total--;
   }
 
   if (!ret)
@@ -1787,7 +1812,7 @@ void do_rnfr(const char *filename, wzd_context_t * context)
   char path[WZD_MAX_PATH];
   int ret;
 
-  if (!filename || strlen(filename)==0 || checkpath(filename,path,context)) {
+  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath(filename,path,context)) {
     ret = send_message_with_args(550,context,"RNFR","file does not exist");
     return;
   }
@@ -1815,7 +1840,7 @@ void do_rnto(const char *filename, wzd_context_t * context)
   char path[WZD_MAX_PATH];
   int ret;
 
-  if (!filename || strlen(filename)==0) {
+  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH) {
     ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
     return;
   }
@@ -1868,7 +1893,7 @@ void do_xcrc(char *param, wzd_context_t * context)
   unsigned long startpos = 0;
   unsigned long length = (unsigned long)-1;
 
-  if (!param || strlen(param)==0) {
+  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Syntax error");
     return;
   }
@@ -1946,7 +1971,7 @@ void do_xmd5(char *param, wzd_context_t * context)
   unsigned long length = (unsigned long)-1;
   unsigned int i;
 
-  if (!param || strlen(param)==0) {
+  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Syntax error");
     return;
   }
@@ -2431,7 +2456,7 @@ void * clientThreadProc(void *arg)
   wzd_context_t	 * context;
   int p1,p2;
   unsigned long i,j;
-  char buffer[BUFFER_LEN];
+  char *buffer = NULL;
   char * param;
   int save_errno;
   int sockfd;
@@ -2510,6 +2535,8 @@ void * clientThreadProc(void *arg)
   /* update last login time */
   time(&user->last_login);
 
+  buffer = malloc(WZD_BUFFER_LEN);
+
   /* main loop */
   exitclient=0;
   context->idle_time_start = time(NULL);
@@ -2586,7 +2613,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
       if (check_timeout(context)) break;
       continue;
     }
-    ret = (context->read_fct)(sockfd,buffer,BUFFER_LEN-1,0,0,context); /* timeout = 0, we know there's something to read */
+    ret = (context->read_fct)(sockfd,buffer,WZD_BUFFER_LEN-1,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
     if (ret==0 || ret==-1) {
@@ -2991,6 +3018,8 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
   } /* while (!exitclient) */
 
 /*	Sleep(2000);*/
+
+  free(buffer);
 
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER

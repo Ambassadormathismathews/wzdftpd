@@ -1457,5 +1457,11 @@ int WZD_MODULE_INIT(void)
 
 int WZD_MODULE_CLOSE(void)
 {
+  hook_remove(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
+  hook_remove(&getlib_mainConfig()->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
+  hook_remove(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&sfv_hook_site);
+#ifdef DEBUG
+  out_err(LEVEL_INFO,"module sfv: hooks unregistered\n");
+#endif
   return 0;
 }

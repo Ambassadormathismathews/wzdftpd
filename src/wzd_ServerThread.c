@@ -1389,10 +1389,13 @@ static void free_config(wzd_config_t * config)
 void serverMainThreadExit(int retcode)
 {
   out_log(LEVEL_HIGH,"Server exiting, retcode %d\n",retcode);
-	close(mainConfig->mainSocket);
-#ifdef SSL_SUPPORT
-  tls_exit();
+
+  /* ignore standard signals from now, we are exiting */
+#ifndef _MSC_VER
+  signal(SIGINT,SIG_IGN);
 #endif
+  
+  close(mainConfig->mainSocket);
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER
   /* kill all childs threads */
@@ -1423,11 +1426,14 @@ void serverMainThreadExit(int retcode)
 #else
   Sleep(1000);
 #endif
-  backend_close(mainConfig->backend.name);
+#ifdef SSL_SUPPORT
+  tls_exit();
+#endif
   wzd_cache_purge();
   server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);
   module_free(&mainConfig->module);
+  backend_close(mainConfig->backend.name);
   cronjob_free(&crontab);
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);

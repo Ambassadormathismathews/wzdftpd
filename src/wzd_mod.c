@@ -59,6 +59,8 @@
 #include "wzd_misc.h"
 #include "wzd_messages.h"
 
+#include "wzd_debug.h"
+
 /* BSD exports symbols in .so files prefixed with a _ !! */
 #ifdef BSD
 #define DL_PREFIX "_"
@@ -198,6 +200,45 @@ int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const cha
 
   return 0;
 
+}
+
+/** remove hook from list */
+int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
+{
+  wzd_hook_t * current_hook, * previous_hook=NULL;
+
+  if (!hook_list || !hook) return 1;
+
+  current_hook = *hook_list;
+
+  while (current_hook)
+  {
+    if (current_hook->mask == mask && current_hook->hook == hook)
+    {
+      if (previous_hook)
+        previous_hook->next_hook = current_hook->next_hook;
+      else
+        *hook_list = current_hook->next_hook;
+
+      if (current_hook->external_command)
+        free(current_hook->external_command);
+      if (current_hook->opt) free(current_hook->opt);
+#ifdef DEBUG
+      current_hook->mask = 0;
+      current_hook->hook = NULL;
+      current_hook->external_command = NULL;
+      current_hook->opt=NULL;
+      current_hook->next_hook = NULL;
+#endif /* DEBUG */
+      free(current_hook);
+
+      return 0;
+    }
+    previous_hook = current_hook;
+    current_hook = current_hook->next_hook;
+  }
+
+  return 1; /* not found */
 }
 
 int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args)
@@ -439,22 +480,85 @@ int module_load(wzd_module_t *module)
 
   ret = (f_init)();
 
+  module->handle = handle;
+
+#ifdef WZD_DBG_MODULES
+  out_log(LEVEL_INFO,"MODULE: loaded '%s' at address %p\n",filename,handle);
+#endif
+
   return ret;
+}
+
+/** unload module, and remove it from list */
+int module_unload(wzd_module_t **module_list, const char *name)
+{
+  wzd_module_t * current_module, * previous_module=NULL;
+  fcn_module_close f_close;
+
+  current_module = *module_list;
+  if (!current_module || !name) return 1; /* not found */
+
+  while (current_module) {
+
+    if (strcmp(current_module->name,name)==0)
+    {
+#ifdef WZD_DBG_MODULES
+      out_log(LEVEL_INFO,"MODULE: unloading '%s' at address %p\n",current_module->name,current_module->handle);
+#endif
+      f_close = (fcn_module_close)dlsym(current_module->handle,DL_PREFIX STR_MODULE_CLOSE);
+      if (f_close) (*f_close)();
+
+/* XXX FIXME
+ * dlclose() on a shared lib in a multithread application will likely cause a segfault
+ * when thread exits, because thread will try to free some specific thread-vars
+ */
+/*      dlclose(current_module->handle);*/
+    
+      if (previous_module)
+        previous_module->next_module = current_module->next_module;
+      else
+        *module_list = current_module->next_module;
+
+      if (current_module->name)
+        free(current_module->name);
+#ifdef DEBUG
+      current_module->handle = NULL;
+      current_module->name = NULL;
+      current_module->next_module = NULL;
+#endif /* DEBUG */
+      free(current_module);
+      return 0;
+    }
+
+    previous_module = current_module;
+    current_module = current_module->next_module;
+  }
+  return 1; /* not found */
 }
 
 /** free module list */
 void module_free(wzd_module_t ** module_list)
 {
   wzd_module_t * current_module, * next_module;
+  fcn_module_close f_close;
 
   current_module = *module_list;
 
   while (current_module) {
     next_module = current_module->next_module;
 
+#ifdef WZD_DBG_MODULES
+    out_log(LEVEL_INFO,"MODULE: unloading '%s' at address %p\n",current_module->name,current_module->handle);
+#endif
+    f_close = (fcn_module_close)dlsym(current_module->handle,DL_PREFIX STR_MODULE_CLOSE);
+    if (f_close) (*f_close)();
+
+    dlclose(current_module->handle);
+    
     if (current_module->name)
       free(current_module->name);
 #ifdef DEBUG
+    current_module->handle = NULL;
     current_module->name = NULL;
     current_module->next_module = NULL;
 #endif /* DEBUG */

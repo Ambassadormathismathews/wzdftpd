@@ -57,6 +57,9 @@ char * wzd_strdup(const char *s);
 /* locking/unlocking files */
 /*#define WZD_DBG_LOCK*/
 
+/* modules loading/unloading */
+/*#define WZD_DBG_MODULES*/
+
 /* debug permissions */
 /*#define WZD_DBG_PERMS*/
 

@@ -3,6 +3,8 @@
 - use 'rats','splint' for security audit
 
 '********'
+- modules: activate/desactivate module, remove from list
+'********'
 - siteconfig: get bw, etc. change stats, mkdir open, etc.
 '********'
 - remove limit on msg

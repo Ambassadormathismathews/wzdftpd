@@ -46,7 +46,7 @@ libwzd_la_SOURCES =  \
 
 nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
 
-libwzd_la_LDFLAGS = @PTHREAD_LIBS@ -avoid-version -module -no-undefined
+libwzd_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -avoid-version -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 

@@ -1,3 +1,17 @@
+2004-02-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: WZD_MODULE_CLOSE function called (if existing) before module unload
+	* feature: module_unload()
+	* feature: hook_unload()
+	* feature: new module: TCL
+	* bugfix: persistant color codes on console, resulting in a disco-console after a crash
+	* bugfix: modules were not dlclosed
+	* bugfix: server do not reply on site command which does not exist but is permitted
+	* bugfix: tls lib freed before all childs are dead
+	* bugfix: segfault when deleting file with no owner
+	* bugfix: some static buffers converted to dynamic
+	* bugfix: ignore SIGINT when exiting
+
 2004-02-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: incorrect path displayed in DELDIR event

@@ -219,6 +219,8 @@ AH_TEMPLATE([HAVE_STRTOK_R],
 AH_TEMPLATE([HAVE_STRTOULL],
             [System has the strtoull function.])
 
+AM_CONDITIONAL([HAVE_TCL], [test "$wzd_have_tcl" = "yes"])
+
 WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
 AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
 AH_TEMPLATE([WZD_BUILD_NUM],
@@ -270,6 +272,7 @@ AC_CONFIG_FILES([Makefile
                  init.d/wzdftpd
                  modules/Makefile
                  modules/sfv/Makefile
+                 modules/tcl/Makefile
                  modules/test/Makefile
                  src/Makefile
                  src/wzd.cfg

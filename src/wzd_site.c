@@ -115,9 +115,11 @@ int do_site_test(char *command, wzd_context_t * context)
   out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
 
+  ret = module_unload(&mainConfig->module,command);
+
 /*  libtest();*/
 
-  ret = 0;
+/*  ret = 0;*/
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
@@ -1571,6 +1573,7 @@ int do_site(char *command_line, wzd_context_t * context)
   char *token, *ptr;
   int ret=0;
   site_fct_t fct;
+  int catched = 0;
   
   token = ptr = command_line;
   token = strtok_r(command_line," \t\r\n",&ptr);
@@ -1679,6 +1682,7 @@ int do_site(char *command_line, wzd_context_t * context)
 
   FORALL_HOOKS(EVENT_SITE)
     typedef int (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
+    catched = 1;
     if (hook->hook)
       ret = (*(site_hook)hook->hook)(EVENT_SITE,context,token,command_line+strlen(token)+1);
     /* custom site commands */
@@ -1694,7 +1698,7 @@ int do_site(char *command_line, wzd_context_t * context)
     }
   END_FORALL_HOOKS
 
-  if (ret)
+  if (ret || !catched)
     ret = send_message_with_args(250,context,"SITE ","command unknown, ok");
 
   return 0;

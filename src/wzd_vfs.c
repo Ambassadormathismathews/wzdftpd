@@ -440,19 +440,22 @@ char *stripdir(char * dir, char *buf, int maxlen)
 
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 {
-  char allowed[WZD_MAX_PATH];
-  char cmd[WZD_MAX_PATH];
+  char *allowed;
+  char *cmd;
+
+  allowed = malloc(WZD_MAX_PATH);
+  cmd = malloc(WZD_MAX_PATH);
   
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage == 0) {
-    sprintf(allowed,"%s/",context->userinfo.rootpath);
-    sprintf(cmd,"%s%s",context->userinfo.rootpath,context->currentpath);
+    snprintf(allowed,WZD_MAX_PATH,"%s/",context->userinfo.rootpath);
+    snprintf(cmd,WZD_MAX_PATH,"%s%s",context->userinfo.rootpath,context->currentpath);
   } else
 #endif
   {
-    sprintf(allowed,"%s/",GetUserByID(context->userid)->rootpath);
+    snprintf(allowed,WZD_MAX_PATH,"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    sprintf(cmd,"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
+    snprintf(cmd,WZD_MAX_PATH,"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
   }
   if (cmd[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
@@ -468,7 +471,7 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 #endif*/
 /*  if (!realpath(cmd,path)) return 1;*/
-  if (!stripdir(cmd,path,WZD_MAX_PATH)) return 1;
+  if (!stripdir(cmd,path,WZD_MAX_PATH)) { free(allowed); free(cmd); return 1; }
 /*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
 #endif*/
@@ -479,10 +482,12 @@ printf("Converted to: '%s'\n",path);
   if (path[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
   /* check if user is allowed to even see the path */
-  if (DIRNCMP(cmd,allowed,strlen(allowed))) return 1;
+  if (DIRNCMP(cmd,allowed,strlen(allowed))) { free(allowed); free(cmd); return 1; }
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,WZD_MAX_PATH,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
+  free(allowed);
+  free(cmd);
   return 0;
 }
 

@@ -33,6 +33,9 @@ int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook);
 int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command);
 int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const char *command);
 
+/** remove hook from list */
+int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook);
+
 int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args);
 int hook_call_external(wzd_hook_t *hook, const char *args);
 
@@ -64,6 +67,9 @@ int module_add(wzd_module_t ** module_list, const char * name);
 /* load a module - module really should have been checked before ! */
 int module_load(wzd_module_t *module);
 
+/** unload module, and remove it from list */
+int module_unload(wzd_module_t **module_list, const char *name);
+
 /* free module list */
 void module_free(wzd_module_t ** module_list);
 
@@ -75,5 +81,7 @@ void module_free(wzd_module_t ** module_list);
 typedef int (*fcn_module_init)(void);
 
 #define	WZD_MODULE_CLOSE	wzd_module_close
+#define STR_MODULE_CLOSE	"wzd_module_close"
+typedef int (*fcn_module_close)(void);
 
 #endif /* __WZD_MOD_H__ */

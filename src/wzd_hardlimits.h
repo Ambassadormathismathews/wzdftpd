@@ -67,8 +67,12 @@
 
 #define	HARD_LS_BUFFERSIZE	4096
 
+/* do NOT ever change the following ! */  
+#define WZD_BUFFER_LEN	1024
+#define WZD_MAX_PATH 1024
+
 #define	HARD_BACKEND_NAME_LENGTH	256
-#define	HARD_LAST_COMMAND_LENGTH	1024
+#define	HARD_LAST_COMMAND_LENGTH	(WZD_BUFFER_LEN)
 #define	HARD_USERNAME_LENGTH		256
 
 #endif /* __WZD_HARD_LIMITS__ */

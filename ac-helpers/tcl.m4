@@ -129,7 +129,7 @@ AC_DEFUN(WZD_LIB_TCL,
     ;;
     "std" )
       WZD_TCL_INCLUDES=
-      WZD_TCL_LIBS="-lpq"
+      WZD_TCL_LIBS="-ltcl8.4"
       wzd_lib_tcl=yes
       AC_DEFINE(HAVE_TCL, 1, [Define if using tcl])
       m4_ifval([$1])
@@ -138,14 +138,14 @@ AC_DEFUN(WZD_LIB_TCL,
       header="`echo $found | sed -e 's/:.*$//'`"
       lib="`echo $found | sed -e 's/^.*://'`"
       WZD_TCL_INCLUDES="-I$header"
-      WZD_TCL_LIBS="-L$lib -lpq"
+      WZD_TCL_LIBS="-L$lib -ltcl8.4"
       wzd_lib_tcl=yes
       AC_DEFINE(HAVE_TCL, 1, [Define if using tcl])
       m4_ifval([$1])
     ;;
     * )
       WZD_TCL_INCLUDES="-I$found/include"
-      WZD_TCL_LIBS="-L$found/lib -lpq"
+      WZD_TCL_LIBS="-L$found/lib -ltcl8.4"
       wzd_lib_tcl=yes
       AC_DEFINE(HAVE_TCL, 1, [Define if using tcl])
       m4_ifval([$1])
