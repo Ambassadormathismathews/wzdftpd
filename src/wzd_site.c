@@ -114,28 +114,22 @@ int do_site_test(char *command, wzd_context_t * context)
   /* prints some stats */
   out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
+  ret = 0;
 
 /*  fd_dump();*/
 
   {
-    struct wzd_dir_t * dir;
-    struct wzd_file_t * file;
-    dir = dir_open(command,context);
-    if (dir) {
-      out_err(LEVEL_INFO,"    + %s\n",dir->dirname);
-      while ( (file = dir_read(dir,context)) )
-      {
-        out_err(LEVEL_INFO,"    | %s\n",file->filename);
-      }
-      dir_close(dir);
-    }
+    char buffer[WZD_MAX_PATH+1];
+    ret = checkpath_new(command, buffer, context);
+    if (!ret)
+      out_err(LEVEL_INFO,"[%s] => [%s]\n",command,buffer);
+    else
+      out_err(LEVEL_INFO,"[%s] : error %d\n",command,ret);
   }
 
 /*  ret = module_unload(&mainConfig->module,command);*/
 
-/*  libtest();*/
-
-  ret = 0;
+/*  libtest(); ret = 0; */
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
@@ -347,7 +341,7 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
     _setPerm(buffer,username,0,0,str_perms,0,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"CHACL: '%s'",command_line);
+  snprintf(buffer,BUFFER_LEN,"acl successfully set");
   ret = send_message_with_args(200,context,buffer);
   return 0;
 }
@@ -390,7 +384,7 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
     _setPerm(buffer,0,0,groupname,0,0,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"CHGRP: '%s'",command_line);
+  snprintf(buffer,BUFFER_LEN,"group changed to '%s'",groupname);
   ret = send_message_with_args(200,context,buffer);
 
   return 0;
@@ -438,7 +432,7 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
     _setPerm(buffer,0,0,0,0,long_perms,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"CHMOD: '%s'",command_line);
+  snprintf(buffer,BUFFER_LEN,"mode changed to '%o'",long_perms);
   ret = send_message_with_args(200,context,buffer);
   return 0;
 }
@@ -476,7 +470,7 @@ int do_site_chown(char *command_line, wzd_context_t * context)
     _setPerm(buffer,0,username,0,0,0,context);
   }
 
-  snprintf(buffer,BUFFER_LEN,"CHOWN: '%s'",command_line);
+  snprintf(buffer,BUFFER_LEN,"owner changed to '%s'",username);
   ret = send_message_with_args(200,context,buffer);
 
   return 0;
@@ -608,7 +602,7 @@ int do_site_free(char *command_line, wzd_context_t * context)
     return;
   }*/
 
-  if (checkpath(".",buffer,context)) {
+  if (checkpath_new(".",buffer,context)) {
     send_message_with_args(501,context,". does not exist ?!");
     return -1;
   }
@@ -630,7 +624,7 @@ int do_site_free(char *command_line, wzd_context_t * context)
     total /= 1024.f;
   }
 
-  snprintf(buffer,2047,"[FREE] + [home: %.2f / %.2f %c] -",free,total,unit);
+  snprintf(buffer,2047,"[FREE] + [current dir: %.2f / %.2f %c] -",free,total,unit);
 
   ret = send_message_with_args(200,context,buffer);
 
@@ -686,12 +680,12 @@ int do_site_link(char *command_line, wzd_context_t * context)
   int ret;
 
   ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = read_token(command_line, &ptr);
   if (!command) {
     do_site_help("link",context);
     return 1;
   }
-  dirname = strtok_r(NULL," \t\r\n",&ptr);
+  dirname = read_token(NULL, &ptr);
   if (!dirname) {
     do_site_help("link",context);
     return 1;
@@ -706,7 +700,7 @@ int do_site_link(char *command_line, wzd_context_t * context)
 
   if (strcasecmp(command,"CREATE")==0)
   {
-    linkname = strtok_r(NULL," \t\r\n",&ptr);
+    linkname = read_token(NULL, &ptr);
     if (!linkname) {
       do_site_help("link",context);
       return 1;
@@ -755,12 +749,12 @@ int do_site_msg(char *command_line, wzd_context_t * context)
     return 1;
   }
 
-  if (checkpath(".",msg_file,context)) {
+  if (checkpath_new(".",msg_file,context)) {
     send_message_with_args(501,context,". does not exist ?!");
     return 1;
   } else {
     length = strlen(msg_file);
-    if (msg_file[length-1] != '/') msg_file[length++] = '/';
+    if (msg_file[length-1] != '/') msg_file[length++] = '/'; /** \bug now we are _sure_ that checkpath_new appends a / so we can remove check ? */
     strncpy(other_file,msg_file,2048);
     strncpy(msg_file+length,mainConfig->dir_message,2048-length-1);
   }

@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='command_ref'>
 <title>Commands Reference</title>
 
 <variablelist>
@@ -11,8 +11,9 @@
 This will allow user <quote>toto</quote> to connect from all ip
 beggining by <quote>127.</quote>
 </para>
-<para><emphasis>NOTE: ident is currently NOT supported, but is planned for next
-release</emphasis></para>
+<para>To check ident when user is connecting, just add 'ident@' before the ip.
+</para>
+<programlisting>site addip toto foobar@127.*</programlisting>
 <para>If you are a gadmin, you can only change users from your group.</para>
 </listitem>
 </varlistentry>
@@ -370,12 +371,13 @@ site grpaddip &lt;group&gt; &lt;ip&gt;
 </term>
 <listitem>
 <para>Add IP to a group.
-<screen>site addip idlers 127.*</screen>
+<screen>site grpaddip idlers 127.*</screen>
 This will allow users from group <quote>idlers</quote> to connect from all ip
 beggining by <quote>127.</quote>
 </para>
-<para><emphasis>NOTE: ident is currently NOT supported, but is planned for next
-release</emphasis></para>
+<para>To check ident when user is connecting, just add 'ident@' before the ip.
+</para>
+<programlisting>site grpaddip idlers foobar@127.*</programlisting>
 </listitem>
 </varlistentry>
 
@@ -391,6 +393,7 @@ site grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
 
 <row><entry>name</entry><entry>This will change the group name.
 <emphasis>The modification is immediate, even if a user is currently loggued !</emphasis></entry></row>
+<row><entry>tagline</entry><entry>Group's tagline.</entry></row>
 <row><entry>homedir</entry><entry>This will change the group's default homedir.</entry></row>
 <row><entry>max_idle</entry><entry>Set the maximum idle time for this
 group.</entry></row>
@@ -541,7 +544,7 @@ site kill &lt;pid&gt;
 <listitem>
 <para>Kill a PID</para>
 <screen>site kill 345</screen>
-<para>This will kill pid #345 (if it belongs to a glftpd user)</para>
+<para>This will kill pid #345 (if it belongs to a wzdftpd user)</para>
 </listitem>
 </varlistentry>
 
@@ -551,10 +554,11 @@ site link create &lt;dir&gt; &lt;linkname&gt;
 <term>site link remove &lt;linkname&gt;</term>
 <listitem>
 <para>Create or removes symbolic links.</para>
-<para><emphasis>NOTE: the underlying filesystem must support symbolink
-links or equivalents !</emphasis> Most unix filesystem supports
-symbolic links, on win32 NTFS supports junctions (which is almost
-equivalent, but a bit slower), and FAT does not.</para>
+<para>Both paths are given relative to the current user homedir.</para>
+<para>NOTE: if the underlying filesystem supports symbolic
+links, they will be used, otherwise an abstraction layer is provided to have
+similar behaviour. Most unix filesystem supports symbolic links.
+</para>
 </listitem>
 </varlistentry>
 

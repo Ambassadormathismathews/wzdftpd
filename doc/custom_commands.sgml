@@ -1,7 +1,7 @@
-<chapter>
+<chapter id='custom_commands'>
 <title>Custom Commands</title>
 
-<sect1>
+<sect1 id='add_site_command'>
 <title>Adding SITE commands</title>
 
 <para>
@@ -23,7 +23,7 @@ will not be accessible.
 
 
 
-<sect1>
+<sect1 id='connecting_events'>
 <title>Connecting events to commands</title>
 
 <para>

@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='freebsd'>
 <title>wzdftpd FreeBSD notes</title>
 
 <para>If you are a FreeBSD user, you can install wzdftpd using FreeBSD Port Collection.

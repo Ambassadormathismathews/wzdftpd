@@ -1,4 +1,4 @@
-<chapter>
+<chapter id='cookies'>
 <title>Cookies Reference</title>
 
 <para>
@@ -106,6 +106,12 @@ available during an upload/download</para></footnote>
 </entry></row>
 <row><entry>%filecrc</entry><entry>CRC of uploaded/downloaded file
 </entry></row>
+<row><entry>%lastfilename</entry><entry>Full path to last uploaded/downloaded file <footnote><para>
+available after an upload/download</para></footnote>
+</entry></row>
+<row><entry>%lastfilesize</entry><entry>Last transfered file size</entry></row>
+<row><entry>%lastfilespeed</entry><entry>Last transfered file speed (bytes/sec)</entry></row>
+<row><entry>%lastfiletime</entry><entry>Last transfered file time (sec)</entry></row>
 
 </tbody>
 </tgroup>

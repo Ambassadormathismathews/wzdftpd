@@ -1,7 +1,7 @@
-<chapter>
+<chapter id='introduction'>
   <title>Introduction</title>
 
-<sect1>
+<sect1 id='background'>
 <title>Background</title>
 
 <para>
@@ -11,7 +11,7 @@ entirely configurable online using SITE commands.
 
 </sect1>
 
-<sect1>
+<sect1 id='features'>
 <title>Features</title>
 
 <para>
@@ -51,13 +51,13 @@ passive ip accordingly</para></listitem>
 
 </sect1>
 
-<sect1>
+<sect1 id='compilation'>
 <title>Compilation</title>
 
 <para>In order to compile wzdftpd you need the following:
 <itemizedlist>
 <listitem><screen>a C compiler</screen>
-<para>compilation has been tested with gcc versions 2.95, 3.0, 3.1 and 3.2; cygwin; and icc (Intel C
+<para>compilation has been tested with gcc versions 2.95, 3.0 to 3.3; and icc (Intel C
 Compiler)
 </para></listitem>
 <listitem><screen>flex</screen>
@@ -68,13 +68,28 @@ url="http://www.gnu.org/software/flex/">Flex's official page</ulink>.
 </para>
 
 <para>
-The following packages are optionnal, depending on your configuration
+The following packages are optional, depending on your configuration
 <itemizedlist>
-<listitem><screen>Automake, Autoconf, Libtool</screen>
-<para>Required only if you want to compile from cvs
+<listitem><para>Automake, Autoconf, Libtool</para>
+<para>Required only if you want to compile from cvs. CVS build assumes you have
+basic knowledge of autotools. The following should run all autotools and
+configure package for you:
+<programlisting>./autogen.sh [arguments to ./configure if any]</programlisting>
 </para></listitem>
-<listitem><screen>OpenSSL development headers and libraries</screen>
-<para>Required only if you want to compile with SSL support enabled
+<listitem><para>OpenSSL development headers and libraries</para>
+<para>Required only if you want to compile with SSL support enabled.
+</para></listitem>
+<listitem><para>libz development headers and libraries</para>
+<para>Required only if you want to enable zip processing in SFV module.
+</para></listitem>
+<listitem><para>TCL development headers and libraries</para>
+<para>Required only if you want to compile TCL module.
+</para></listitem>
+<listitem><para>PAM development headers and libraries</para>
+<para>Required only if you want to compile PAM backend.
+</para></listitem>
+<listitem><para>MySQL development headers and libraries</para>
+<para>Required only if you want to compile MySQL backend.
 </para></listitem>
 </itemizedlist>
 </para>
@@ -90,13 +105,6 @@ wzdftpd's sourceforge page</ulink>.
 
 <para>Configure script accept the following arguments
 <itemizedlist>
-<listitem><screen>--enable-ssl</screen>
-<para>Enable SSL/TLS support (requires openssl headers & libraries)
-</para></listitem>
-<listitem><screen>--enable-winsock</screen>
-<para><emphasis>Win32 only </emphasis>Use winsock instead of classic Berkeley
-sockets (it is supposed to improve performances)
-</para></listitem>
 <listitem><screen>--enable-debug</screen>
 <para>Compile with debug info (you should use it only for testing reasons)
 </para></listitem>
@@ -106,15 +114,14 @@ sockets (it is supposed to improve performances)
 </itemizedlist>
 </para>
 
-<para><emphasis>If you want the win32 version AND ssl support, you will need
-the tls wrapper (look on <ulink url="https://sourceforge.net/projects/wzdftpd/">
-sourceforge</ulink>).
-</emphasis></para>
-
 </sect1>
 
-<sect1>
+<sect1 id='installation'>
 <title>Installation</title>
+
+<para>The recommended way to install is to use packages from your distribution,
+or the windows installer. The following only apply if you want to install from
+the sources.</para>
 
 <para>
 The best way is to follow to classical installation method:

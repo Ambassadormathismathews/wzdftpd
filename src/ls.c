@@ -141,6 +141,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
     /* format is long */
 
     switch (file->kind) {
+      case FILE_LNK:
       case FILE_VFS:
         ptr_to_buffer = (char*)file->data;
         break;

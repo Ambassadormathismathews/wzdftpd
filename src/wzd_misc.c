@@ -150,6 +150,9 @@ char *time_to_str(time_t time)
   return(workstr);
 }
 
+/** \todo replace this with: char units[]="bkMGT";
+ * char * ptr = units; -> while (*value > 1024.f) { ... *unit = *ptr++; }
+ */
 int bytes_to_unit(float *value, char *unit)
 {
   *unit='b';
@@ -361,9 +364,9 @@ static int _int_rename(const char * src, const char *dst)
     rmdir(src);
   } else
   if (S_ISLNK(s.st_mode)) {
-    char buf[2048];
-    memset(buf,0,2048);
-    ret = readlink(src,buf,2047);
+    char buf[WZD_MAX_PATH+1];
+    memset(buf,0,sizeof(buf));
+    ret = readlink(src,buf,WZD_MAX_PATH);
     /* FIXME this will work iff the symlink is _relative_ to src
      * otherwise we need to re-build a path from buf
      */
@@ -378,7 +381,7 @@ static int _int_rename(const char * src, const char *dst)
     /* FIXME XXX would it be wise to test functions return values ? :-P */
     fd_from = open(src,O_RDONLY);
     fd_to = open(dst,O_CREAT | O_WRONLY); /* XXX will overwite existing files */
-    while ( (ret=read(fd_from,buffer,32768)) > 0)
+    while ( (ret=read(fd_from,buffer,sizeof(buffer))) > 0)
     {
       ret = write(fd_to,buffer,ret);
     }
@@ -786,7 +789,6 @@ int print_file(const char *filename, int code, void * void_context)
 {
   wzd_context_t * context = void_context;
   void * param;
-  struct stat s;
   char complete_buffer[1024];
   char * buffer = complete_buffer + 4;
   int ret;
@@ -794,10 +796,6 @@ int print_file(const char *filename, int code, void * void_context)
 
   if (strlen(filename)==0) {
     out_log(LEVEL_HIGH,"Trying to print file (null) with code %d\n",code);
-    return 1;
-  }
-  if (stat(filename,&s)==-1) {
-    out_log(LEVEL_HIGH,"File %s does not exist (code %d)\n",filename,code);
     return 1;
   }
   fp = fopen(filename,"r");
@@ -942,6 +940,52 @@ void ascii_lower(char * s, unsigned int length)
   }
 }
 
+/** \brief read next token
+ * \return a pointer to the next token, or NULL if not found, or if there is \
+ * only whitespaces, or if quotes are unbalanced
+ * Read next token separated by a whitespace, except if string begins
+ * with a ´ or ", in this case it searches the matching character.
+ * Note: input string is modified as a \0 is written.
+ */
+char * read_token(char *s, char **endptr)
+{
+  char *tok, c;
+  char sep[2];
+
+  if (s == NULL && (s = *endptr) == NULL)
+  {
+    return NULL;
+  }
+
+  /* skip leading spaces */
+  while ( (c = *s) && isspace(c) ) s++;
+  if (*s == '\0') /* only whitespaces */
+  { *endptr = NULL; return NULL; }
+
+  /* search for any whitespace or quote */
+  tok = strpbrk(s, " \t\r\n\"'");
+
+  if (!tok) {
+    /* nothing, we return string */
+    endptr = NULL;
+    return s;
+  }
+
+  /* the first char is a quote ? */
+  if (*tok == '"' || *tok == '\'') {
+    sep[0] = *tok;
+    sep[1] = '\0';
+    if (!strchr(tok+1,*tok)) { /* unbalanced quotes */
+      *endptr = NULL;
+      return NULL;
+    }
+    /** \bug we can't have escaped characters */
+    return strtok_r(tok, sep, endptr);
+  }
+
+  /* normal case, we search a whitespace */
+  return strtok_r(s, " \t\r\n", endptr);
+}
 
 /* replace all \ with / and lower string */
 void win_normalize(char * s, unsigned int length)

@@ -49,6 +49,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_vfs.h"
+#include "wzd_file.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
@@ -443,7 +444,9 @@ char *stripdir(char * dir, char *buf, int maxlen)
     return buf;
 }       
 
-
+/** \brief convert ftp-style path to system path
+ * \deprecated use \ref checkpath_new
+ */
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
 {
   char *allowed;
@@ -583,3 +586,182 @@ int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context
 
   return 0;
 }
+
+/** converts wanted_path (in ftp-style) to path (system path), checking
+ * for errors and permissions
+ *
+ * \param path MUST have a minimum size of WZD_MAX_PATH
+ *
+ * If the return is 0, then we are SURE the result exists.
+ * If the real path points to a directory, then the result is / terminated
+ */
+int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
+{
+  int ret;
+  char * ftppath, *syspath, *ptr, *lpart, *rpart;
+  char * ptr_ftppath;
+  wzd_user_t * user;
+  wzd_group_t * group;
+  unsigned int sys_offset;
+  struct stat s;
+  struct wzd_file_t * perm_list, * entry;
+
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
+  if (!user) return E_USER_IDONTEXIST;
+
+  if (!wanted_path) return E_PARAM_NULL;
+
+  if (strlen(user->rootpath) + strlen(wanted_path) >= WZD_MAX_PATH) return E_PARAM_BIG;
+
+  ftppath = malloc(WZD_MAX_PATH+1);
+  syspath = malloc(WZD_MAX_PATH+1);
+
+  strncpy(syspath, user->rootpath, WZD_MAX_PATH);
+  sys_offset = strlen(syspath);
+
+  /* if wanted_path is relative */
+  if (wanted_path[0] != '/') {
+
+    strncpy(ftppath, context->currentpath, WZD_MAX_PATH);
+    ptr_ftppath = ftppath + strlen(ftppath) - 1;
+    if (*ptr_ftppath != '/') {
+      *++ptr_ftppath = '/';
+      *++ptr_ftppath = '\0';
+    }
+    if (ptr_ftppath == ftppath) ptr_ftppath++; /* ftppath is / */
+    strcpy(ptr_ftppath, wanted_path);
+    path_simplify(ftppath);
+    
+    ret = checkpath_new(ftppath, syspath, context);
+    if (!ret || ret == E_FILE_NOEXIST)
+      strncpy(path, syspath, WZD_MAX_PATH);
+    free(syspath); free(ftppath);
+    return ret;
+
+    /** \bug the following will never be executed */
+    sys_offset = strlen(syspath);
+    /* remove trailing / */
+    if (syspath[sys_offset-1] == '/' && sys_offset > 2)
+      syspath[--sys_offset] = '\0';
+  } else { /* wanted_path is absolute */
+    strncpy(ftppath, wanted_path, WZD_MAX_PATH);
+
+    path_simplify(ftppath); /** \todo check that \ref path_simplify works as expected */
+  }
+
+  /* here we assume syspath contains the user's homedir
+   * syspath is not / terminated (for now)
+   */
+  ptr_ftppath = ftppath;
+  if (*ptr_ftppath == '/')
+    ptr_ftppath++;
+  syspath[sys_offset++] = '/';
+
+  while (ptr_ftppath[0] != '\0')
+  {
+    /* start from the top-level dir */
+    lpart = ptr_ftppath;
+    ptr = strchr(lpart,'/');
+    if (!ptr) {
+      ptr = lpart + strlen(lpart); /* position of \0 */
+    }
+
+    if (!ptr || ptr <= lpart)
+    {
+      /* we have finished ? */
+
+      strncpy(path, syspath, WZD_MAX_PATH);
+      free(ftppath);
+      free(syspath);
+      return 0;
+    }
+    *ptr = '\0';
+    rpart = ptr+1;
+
+/*    out_err(LEVEL_INFO,"   %s | %s\n",lpart,rpart);*/
+
+    strcpy(syspath+sys_offset, lpart);
+
+    /** \todo check permissions here */
+    if (lstat(syspath,&s)) {
+      /* file/dir does not exist
+       * 3 cases: error, vfs, symlink */ 
+      
+      /* read permission file for parent */
+      strcpy(syspath+sys_offset, HARD_PERMFILE);
+      perm_list = NULL;
+      ret = readPermFile(syspath, &perm_list);
+      syspath[sys_offset] = '\0';
+
+      ret = 1;
+      /* check for symlink */
+      for (entry=perm_list; entry; entry = entry->next_file)
+      {
+        if (entry->kind == FILE_LNK && strcmp(lpart,entry->filename) == 0)
+        {
+          /* bingo, symlink */
+          /* we overwrite syspath ! */
+          if ( ((char*)entry->data)[0] == '/' ) { /* symlink target is absolute */
+            strncpy(syspath, (char*)entry->data, WZD_MAX_PATH);
+            sys_offset = strlen(syspath);
+            ret = 0;
+            break;
+          }
+        }
+      }
+
+      free_file_recursive(perm_list);
+
+      /* even if found, check the new destination exists */
+      if (ret || lstat(syspath,&s)) { /* this time, it is really not found */
+        if (!rpart || *rpart=='\0') {
+          /* we return the 'what it would have been' path anyway, so it can be used */
+          strcpy(syspath+sys_offset, lpart);
+          strncpy(path, syspath, WZD_MAX_PATH);
+          ret = E_FILE_NOEXIST;
+        } else {
+          ret = E_WRONGPATH;
+        }
+        free(ftppath);
+        free(syspath);
+        return ret;
+      }
+
+    } else {
+      /* existing file/dir */
+      sys_offset += strlen(lpart);
+    } /* stat */
+
+    /* 2 possibilities:
+     *   - regular directory
+     *   - file
+     */
+    if (S_ISDIR(s.st_mode)) {
+      syspath[sys_offset++] = '/';
+      if (_checkFileForPerm(syspath,".",RIGHT_CWD,user)) {
+        /* no permissions ! */
+        free(ftppath);
+        free(syspath);
+        return E_NOPERM;
+      }
+    } else
+    {
+    }
+
+
+    /* loop */
+    ptr_ftppath = rpart;
+  }
+
+  strncpy(path, syspath, WZD_MAX_PATH);
+  free(ftppath);
+  free(syspath);
+  return 0;
+}
+

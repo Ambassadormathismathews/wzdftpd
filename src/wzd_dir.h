@@ -80,4 +80,17 @@ char * path_getbasename(const char *file, const char *suffix);
  */
 char * path_gettrailingname(const char *file, unsigned int n);
 
+/** \brief remove // /./ and /../ from filename
+ *
+ * Return filename with any useless component removed: double /
+ * /./ or /../
+ * Modifications does not check that filename is valid.
+ * WARNING: this function does NOT check anything on filename, it just
+ * operates on the raw string (i.e it is the responsability of the caller
+ * eo check that there is no path injection in string
+ * (eg: "c:/../d:/pathname" )
+ * This function modify filename !
+ */
+char * path_simplify(char *filename);
+
 #endif /* __WZD_DIR__ */

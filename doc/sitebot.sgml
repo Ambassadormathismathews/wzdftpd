@@ -1,7 +1,7 @@
-<chapter>
+<chapter id='sitebot'>
 <title>Sitebot</title>
 
-<simplesect>
+<simplesect id='sitebot_prereq'>
 <title>Prerequisites</title>
 <para>
 You need the following to install and use the sitebot for wzdftpd:
@@ -18,7 +18,7 @@ tools section of wzdftpd)</para></listitem>
 
 </simplesect>
 
-<simplesect>
+<simplesect id='sitebot_install'>
 <title>Installation</title>
 
 <para>
@@ -29,7 +29,7 @@ directory.
 </simplesect>
 
 
-<simplesect>
+<simplesect id='sitebot_config'>
 <title>Configuration</title>
 
 <para>

@@ -89,5 +89,25 @@ int file_force_unlock(const char *file);
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context);
 
+
+void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
+
+/** Copy a wzd_file_t object and all its data.
+ * Please not that one field is changed: next_file is set to NULL to
+ * avoid side effects.
+ */
+struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
+
+/** \brief get file status
+ *
+ * This function return information about the specified file. You do not need any
+ * special right on the file, but you need search rights on any directory on the
+ * path to the file.
+ *
+ * If filename is a symbolic link, the destination is stat-ed, not the link itself.
+ */
+struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context);
+
+
 #endif /* __WZD_FILE__ */
 

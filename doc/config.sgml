@@ -1,10 +1,10 @@
-<chapter>
+<chapter id='config_file'>
 <title>Config file directives</title>
 
-<sect1>
+<sect1 id='conf'>
 <title>General configuration</title>
 
-<simplesect>
+<simplesect id='ip_and_ident'>
 <title>IPs and ident</title>
 
 <para>wzdftpd gives the possibility to check user identity on connection.</para>
@@ -62,7 +62,7 @@ don't give any ident as an implicit authorization for all idents).
 
 </simplesect>
 
-<simplesect>
+<simplesect id='vfs'>
 <title>Virtual File system (VFS)</title>
 
 <para>wzdftpd offers the possibility to use virtual directories, also known as VFS.
@@ -137,7 +137,7 @@ as you can use group values when you create users.</para>
 
 </simplesect>
 
-<simplesect>
+<simplesect id='files_messages'>
 <title>Files and messages</title>
 
 <para>You can customize server replies (under certain conditions,
@@ -182,7 +182,7 @@ cookie name will be written as is: '%username' will return 'username'
 
 </sect1>
 
-<sect1>
+<sect1 id='directives_ref'>
 <title>Directives reference</title>
 <variablelist>
 

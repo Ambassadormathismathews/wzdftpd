@@ -1,10 +1,10 @@
-<chapter>
+<chapter id='common_modules'>
 <title>Common modules</title>
 
-<sect1>
+<sect1 id='module_sfv'>
 <title>SFV module</title>
 
-<simplesect>
+<simplesect id='mod_sfv_desc'>
 <title>Description</title>
 <para>
 This module comes with some utilities functions to handle sfv files, and associated files (diz,
@@ -25,7 +25,7 @@ NOTE to w_nd0ws users: although a (stupid) os can give you bad habits,
 files <emphasis>ARE CASE SENSITIVE !</emphasis></para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_sfv_whatis'>
 <title>What is a SFV file ?</title>
 <para>
 A SFV file is a small verification file added to dirs, that stores records
@@ -38,7 +38,7 @@ md5 sums, this is similar - with a different algorithm).
 </para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_sfv_install'>
 <title>Installation</title>
 <para>
 Just add the line
@@ -47,7 +47,7 @@ in your config file.
 </para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_sfv_param'>
 <title>Parameters</title>
 <para>
 The following parameters are available, you can set them in the config file (don't forget the prefix
@@ -71,7 +71,7 @@ files has changed.
 </para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_sfv_feat'>
 <title>Features</title>
 <itemizedlist>
 <listitem><para>
@@ -101,7 +101,7 @@ uploaded.
 </itemizedlist>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_sfv_commands'>
 <title>Available commands</title>
 <itemizedlist>
 <listitem><screen>site sfv check sfv_name</screen>
@@ -118,10 +118,10 @@ as usual.</para></listitem>
 
 
 
-<sect1>
+<sect1 id='module_tcl'>
 <title>TCL module</title>
 
-<simplesect>
+<simplesect id='mod_tcl_desc'>
 <title>Description</title>
 <para>
 This module has an embedded TCL interpreter, and offers several
@@ -141,7 +141,7 @@ many useless dependancies.
 </para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_tcl_install'>
 <title>Installation</title>
 <para>
 Just add the line
@@ -155,10 +155,17 @@ or in the same directory), or module loading will fail.
 </para>
 </simplesect>
 
-<simplesect>
+<simplesect id='mod_tcl_commands'>
 <title>Available TCL commands and variables</title>
 <itemizedlist>
-<listitem><screen>putlog level "message"</screen>
+<listitem><screen>ftp2sys "path"<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
+<para>Converts the path for the current user (relative to the ftp
+homedir) to an absolute filename (for the system).
+<screen>ftp2sys "/upload"</screen>
+</para><para>Note that the returned path can be different for different
+users, if they have different home directories.
+</para></listitem>
+<listitem><screen>putlog level "message"<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
 <para>Put the message in log file, only if level is greater or equal to
 the current loglevel. level is an integer in range 0 to 10, 0 is the
 lowest level (reserved to debug) and 10 is reserved to critical error
@@ -195,9 +202,25 @@ has a sense only for connected users).
 <para>Create or remove a directory.
 Directory name <emphasis>must</emphasis> be an absolute path !.
 </para></listitem>
-<listitem><screen>vfs symlink create/remove [dirname] linkname</screen>
-<para>Create or remove a symbolink link.
-Directory name <emphasis>must</emphasis> be an absolute path !.
+<listitem><screen>vfs read filename/dirname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
+<para>Get infos on file or directory.
+Returned string has format:
+<programlisting>"user/group/mode"</programlisting>
+User and group are names (or "unknown"), and mode is the octal number
+corresponding to file permissions.
+</para></listitem>
+<listitem><screen>vfs link create dirname linkname</screen>
+<para>Create a symbolic link linkname to the <emphasis>existing</emphasis>
+directory dirname. Both paths are relative to user homedir (so, "." is the user
+current directory, and / is the homedir of the current user).
+</para></listitem>
+<listitem><screen>vfs link create -f dirname linkname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
+<para>This function is identical to the precedent, except that dirname is given
+for filesystem (so it <emphasis>must</emphasis> be an absolute path).
+<programlisting>vfs link create -f c:\real lnk</programlisting>
+</para></listitem>
+<listitem><screen>vfs link remove linkname</screen>
+<para>Remove a symbolic link (path is relative to user homedir).
 </para></listitem>
 <listitem><screen>wzd_reply_code</screen>
 <para>Use this variable contains the current reply code used
@@ -205,6 +228,15 @@ by server. This is used for custom replies (see send_message_raw).
 This must be used with caution.
 </para></listitem>
 </itemizedlist>
+</simplesect>
+
+<simplesect id='mod_tcl_example'>
+<title>A complete example</title>
+<para>
+The following example will teach you how to create a tcl script that is called
+after each file upload, and checks if zip files are valid by calling an external
+application (not provided here).
+</para>
 </simplesect>
 
 </sect1>

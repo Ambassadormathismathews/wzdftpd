@@ -34,7 +34,7 @@
 &a_ref;
 &license;
 
-<glossary>
+<glossary id='glossary'>
 <glossentry id='gloss_backend'><glossterm>backend</glossterm>
 <indexterm><primary>backend</primary></indexterm>
 <glossdef>

@@ -1341,8 +1341,8 @@ void serverMainThreadProc(void *arg)
 #endif
 
     time (&server_time);
-    out_err(LEVEL_FLOOD,".");
-    fflush(stderr);
+/*    out_err(LEVEL_FLOOD,".");*/
+/*    fflush(stderr);*/
     
     switch (ret) {
     case -1: /* error */

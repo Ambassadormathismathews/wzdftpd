@@ -1,12 +1,12 @@
-<chapter>
+<chapter id='programming_modules'>
 <title>Programming modules</title>
 
-<sect1>
+<sect1 id='modules_kernel'>
 <title>Kernel-level modules</title>
 
 <para>This section describes how to create a new module in C.</para>
 
-<simplesect>
+<simplesect id='modules_kernel_internals'>
 <title>Internals</title>
 
 <para>You must add the following headers to your source code:
@@ -37,7 +37,7 @@ names of other modules
 
 </simplesect>
 
-<simplesect>
+<simplesect id='modules_kernel_prereq'>
 <title>Prerequisites</title>
 <para>
 You need the following to compile and use new modules for wzdftpd:
@@ -49,14 +49,14 @@ You need the following to compile and use new modules for wzdftpd:
 
 </simplesect>
 
-<simplesect>
+<simplesect id='modules_kernel_compilation'>
 <title>Compilation</title>
 
 <para>If you are using auto* tools, just configure and make.</para>
 
 </simplesect>
 
-<simplesect>
+<simplesect id='modules_kernel_license'>
 <title>License considerations</title>
 
 <para>wzdftpd is distributed under <link linkend='license'>GPL</link>.
@@ -69,14 +69,14 @@ from a big amount of functions, and that it has taken much time to do it. The on
 contribution that is asked in exchange is to make your work accessible, so others
 can benefit it.</para>
 <para>If these terms of license are not suitable for you, then you cannot use kernel-level
-modules. However, you can use <link linkend='external_modules'>external modules</link>
+modules. However, you can use <link linkend='modules_external'>external modules</link>
 without any license restriction.</para>
 
 </simplesect>
 
 </sect1>
 
-<sect1 id='external_modules'>
+<sect1 id='modules_external'>
 <title>External modules</title>
 
 <para>This sections describes how to develop an external module, which must be an

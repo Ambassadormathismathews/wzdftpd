@@ -147,6 +147,7 @@ void free_file_recursive(struct wzd_file_t * file)
         acl_current = acl_next;
       } while (acl_current);
     }
+    if (file->data) free(file->data);
     wzd_free (file);
     file = next_file;
   } while (file);
@@ -194,6 +195,48 @@ struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **first)
   return NULL;
 }
 
+void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
+{
+  struct wzd_file_t *it  = *tab;
+  struct wzd_file_t *itp = NULL;
+
+  if ( ! *tab ) {
+    *tab = entry;
+    return;
+  }
+
+  while (it) {
+    if (strcmp(entry->filename,it->filename)>0)
+    {
+      itp = it;
+      it = it->next_file;
+      continue;
+    }
+
+    /* we insert here */
+
+    /* head insertion */
+    if (itp == NULL) {
+      entry->next_file = *tab;
+      *tab = entry;
+      return;
+    }
+
+    /* middle-insertion */
+    entry->next_file = it;
+    itp->next_file = entry;
+
+    return;
+  }
+
+  /* tail insertion */
+  /* itp can't be NULL here, the first case would have trapped it */
+  itp->next_file = entry;
+  
+  return;
+}
+
+
 wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
 {
   wzd_acl_line_t *current = file->acl;
@@ -233,6 +276,40 @@ struct wzd_file_t * add_new_file(const char *name, const char *owner, const char
   return new_file;
 }
 
+struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
+{
+  struct wzd_file_t * new_file=NULL;
+  wzd_acl_line_t * acl_current, * acl_new, *acl_next;
+
+  if (!file_cur) return NULL;
+
+  new_file = wzd_malloc(sizeof(struct wzd_file_t));
+  memcpy(new_file, file_cur, sizeof(struct wzd_file_t));
+  if (file_cur->data)
+    new_file->data = strdup( (char*)file_cur->data ); /** \todo we do not know size */
+
+  if (file_cur->acl) {
+    acl_new = malloc(sizeof(wzd_acl_line_t));
+    memcpy(acl_new, file_cur->acl, sizeof(wzd_acl_line_t));
+    acl_new->next_acl = NULL;
+    new_file->acl = acl_new;
+    acl_current = acl_current->next_acl;
+    while (acl_current) {
+      acl_next = malloc(sizeof(wzd_acl_line_t));
+      memcpy(acl_next, file_cur->acl, sizeof(wzd_acl_line_t));
+      acl_next->next_acl = NULL;
+      acl_new->next_acl = acl_next;
+      acl_new = acl_next;
+      acl_current = acl_current->next_acl;
+    }
+  }
+
+  /* exception: we set next_file to NULL to avoid side effects */
+  new_file->next_file = NULL;
+
+  return new_file;
+}
+
 /** replace or add acl rule */
 void addAcl(const char *filename, const char *user, const char *rights, struct wzd_file_t * file)
 {
@@ -266,31 +343,28 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
 /** \todo should be "atomic" */
 int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 {
-/*  FILE *fp;*/
   wzd_cache_t * fp;
   char line_buffer[BUFFER_LEN];
   struct wzd_file_t *current_file, *ptr_file;
-  char * token1, *token2, *token3, *token4, *token5;
+  char * token1, *token2, *token3, *token4, *token5, *token6;
   char *ptr;
 
   if ( !pTabFiles ) return E_PARAM_NULL;
 
   current_file = *pTabFiles;
 
-/*  fp = fopen(permfile,"r");*/
   fp = wzd_cache_open(permfile,O_RDONLY,0644);
   if (!fp) { wzd_cache_close(fp); return E_FILE_NOEXIST; }
 
   ptr = (char*)current_file;
   current_file = NULL;
-/*  while ( fgets(line_buffer,BUFFER_LEN-1,fp) )*/
   while ( wzd_cache_gets(fp,line_buffer,BUFFER_LEN-1) )
   {
     token1 = strtok_r(line_buffer," \t\r\n",&ptr);
     if (!token1) continue; /* malformed line */
-    token2 = strtok_r(NULL," \t\r\n",&ptr);
+    token2 = read_token(NULL, &ptr); /* we can have spaces here */
     if (!token2) continue; /* malformed line */
-    token3 = strtok_r(NULL," \t\r\n",&ptr);
+    token3 = read_token(NULL, &ptr); /* we can have spaces here */
     if (!token3) continue; /* malformed line */
     token4 = strtok_r(NULL," \t\r\n",&ptr);
     if (!token4) continue; /* malformed line */
@@ -310,15 +384,33 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
         if (ptr==token5) continue;
         ptr_file->permissions = ul;
       } else { /* default user/group permission */
-        ptr_file->permissions = 0755; /* TODO XXX FIXME */
+        ptr_file->permissions = 0755; /** \todo FIXME hardcoded */
       }
     }
     else if (strcmp(token1,"perm")==0) {
       addAcl(token2,token3,token4,ptr_file);
     }
+    else if (strcmp(token1,"link")==0) {
+      /** \todo FIXME handle links: set type to link, set destination, set owner/perms */
+      token5 = strtok_r(NULL," \t\r\n",&ptr);
+      if (!token5) continue; /* malformed line */
+      token6 = strtok_r(NULL," \t\r\n",&ptr);
+
+      ptr_file->kind = FILE_LNK;
+      ptr_file->data = wzd_strdup(token3);
+      strncpy(ptr_file->owner,token4,256);
+      strncpy(ptr_file->group,token5,256);
+      if (token6) {
+        unsigned long ul;
+        ul = strtoul(token6,&ptr,8);
+        if (ptr==token6) continue;
+        ptr_file->permissions = ul;
+      } else { /* default user/group permission */
+        ptr_file->permissions = 0755; /** \todo FIXME hardcoded */
+      }
+    }
   }
 
-/*  fclose(fp);*/
   wzd_cache_close(fp);
   return E_OK;
 }
@@ -341,20 +433,27 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   fp = fopen(permfile,"w"); /* overwrite any existing file */
   if (!fp) return -1;
 
+  /** \bug if file_cur->filename contains spaces, we MUST quote it when writing name */
   while (file_cur) {
-    /* first write owner if available */
-    if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
-      snprintf(buffer,4096,"owner\t%s\t%s\t%s\t%lo\n",
-          file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
+    if (file_cur->kind == FILE_LNK) {
+      snprintf(buffer,sizeof(buffer),"link\t%s\t%s\t%s\t%s\t%lo\n",
+          file_cur->filename,(char*)file_cur->data,file_cur->owner,file_cur->group,file_cur->permissions);
       fwrite(buffer,strlen(buffer),1,fp);
-    }
-    acl_cur = file_cur->acl;
-    while (acl_cur) {
-      snprintf(buffer,4096,"perm\t%s\t%s\t%c%c%c\n",
-          file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
-      fwrite(buffer,strlen(buffer),1,fp);
-      acl_cur = acl_cur->next_acl;
-    }
+    } else { /* not a link */
+      /* first write owner if available */
+      if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
+        snprintf(buffer,sizeof(buffer),"owner\t%s\t%s\t%s\t%lo\n",
+            file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
+        fwrite(buffer,strlen(buffer),1,fp);
+      }
+      acl_cur = file_cur->acl;
+      while (acl_cur) {
+        snprintf(buffer,sizeof(buffer),"perm\t%s\t%s\t%c%c%c\n",
+            file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
+        fwrite(buffer,strlen(buffer),1,fp);
+        acl_cur = acl_cur->next_acl;
+      }
+    } /* not a link */
     file_cur = file_cur->next_file;
   } /* ! while */
 
@@ -371,7 +470,7 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
  */
 int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
-  char perm_filename[BUFFER_LEN];
+  char perm_filename[WZD_MAX_PATH+1];
   unsigned int length, neededlength;
   struct wzd_file_t * file_list=NULL, * file_cur;
   wzd_acl_line_t * acl_cur;
@@ -379,11 +478,11 @@ int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_
   int is_dir;
 
   /* find the dir containing the perms file */
-  strncpy(perm_filename,dir,BUFFER_LEN);
+  strncpy(perm_filename,dir,WZD_MAX_PATH);
   neededlength = strlen(HARD_PERMFILE);
   length = strlen(perm_filename);
   /* check if !overflow */
-  if ( length+neededlength > 4095 )
+  if ( length+neededlength >= WZD_MAX_PATH )
       return -1;
 
   /* siteop always hav all permissions */
@@ -534,8 +633,8 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
 /** MUST NOT be / terminated (except /) */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * user)
 {
-  char dir[BUFFER_LEN];
-  char stripped_filename[BUFFER_LEN];
+  char dir[WZD_MAX_PATH+1];
+  char stripped_filename[WZD_MAX_PATH+1];
   char *ptr;
   struct stat s;
 
@@ -546,7 +645,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   out_err(LEVEL_HIGH,"_checkPerm(%s,%ld,%s)\n",filename,wanted_right,user->username);
 #endif
 
-  strncpy(dir,filename,BUFFER_LEN); 
+  strncpy(dir,filename,WZD_MAX_PATH); 
 
   if (user->flags && strchr(user->flags,FLAG_ANONYMOUS))
   {
@@ -587,10 +686,15 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     strcat(dir,"/");
   }
 
+  /** \bug we need to find a way to know if file is in 'visible' path of user.
+   * We can't do that without a function to convert syspath to ftppath
+   */
+#if 0
   /* check if file is in user's root path */
   if (strncmp(dir,user->rootpath,strlen(user->rootpath))!=0)
   {
     /* if the file is in a global vfs, it does not need to be in user's rootpath */
+    /** \bug it can be a symlink ! */
     wzd_vfs_t * vfs = mainConfig->vfs;
     while(vfs) {
       if (strncmp(dir,vfs->physical_dir,strlen(vfs->physical_dir))==0)
@@ -606,6 +710,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     }
     return 1;
   }
+#endif
 
   return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
 }
@@ -613,9 +718,9 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
 /** MUST NOT be / terminated (except /) */
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context)
 {
-  char dir[BUFFER_LEN];
-  char stripped_filename[BUFFER_LEN];
-  char perm_filename[BUFFER_LEN];
+  char dir[WZD_MAX_PATH+1];
+  char stripped_filename[WZD_MAX_PATH+1];
+  char perm_filename[WZD_MAX_PATH+1];
   char *ptr;
   struct stat s;
   unsigned int length, neededlength;
@@ -625,7 +730,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   if (!filename || filename[0] == '\0')
     return -1;
 
-  strncpy(dir,filename,BUFFER_LEN);
+  strncpy(dir,filename,WZD_MAX_PATH);
 
   if (stat(filename,&s)==-1) return -1; /* inexistant ? */
   if (S_ISDIR(s.st_mode)) { /* isdir */
@@ -643,11 +748,11 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   }
 
   /* find the dir containing the perms file */
-  strncpy(perm_filename,dir,BUFFER_LEN);
+  strncpy(perm_filename,dir,WZD_MAX_PATH);
   neededlength = strlen(HARD_PERMFILE);
   length = strlen(perm_filename);
   /* check if !overflow */
-  if ( length+neededlength > 4095 )
+  if ( length+neededlength >= WZD_MAX_PATH )
       return -1;
 
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
@@ -672,9 +777,11 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   if (owner || group)
   {
     if (owner) strncpy(file_cur->owner,owner,256);
-/*    else strcpy(file_cur->owner,"nobody");*/
+    if (file_cur->owner[0] == '\0')
+      strcpy(file_cur->owner,"nobody");
     if (group) strncpy(file_cur->group,group,256);
-/*    else strcpy(file_cur->group,"nogroup");*/
+    if (file_cur->group[0] == '\0')
+      strcpy(file_cur->group,"nogroup");
   }
 
   /* add the new acl */
@@ -1013,6 +1120,97 @@ int RemoveJunctionPoint(LPCTSTR szDir)
 
 #endif
 
+int softlink_create(const char *target, const char *linkname)
+{
+  char perm_filename[WZD_MAX_PATH];
+  char stripped_filename[WZD_MAX_PATH];
+  char *ptr;
+  unsigned int length;
+  struct wzd_file_t * perm_list=NULL, * file_cur;
+  int ret;
+
+  /* get permission file */
+
+  strncpy(perm_filename,linkname,WZD_MAX_PATH);
+  length = strlen(perm_filename);
+  if (length > 1 && perm_filename[length-1] == '/') perm_filename[--length] = '\0';
+
+  ptr = strrchr(perm_filename,'/');
+  ptr++; /* position is just after last / */
+  strncpy(stripped_filename, ptr, WZD_MAX_PATH);
+  strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));
+
+  /* read perm file */
+  ret = readPermFile(perm_filename,&perm_list);
+
+  /* create new entry */
+  if (ret) { /* no permission file */
+    file_cur = add_new_file(stripped_filename, 0, 0, &perm_list);
+  } else {
+    file_cur = find_file(stripped_filename, perm_list);
+    if (file_cur) {
+      /* error, an entry already exists with the same name */
+      free_file_recursive(perm_list);
+      return EEXIST;
+    }
+    file_cur = add_new_file(stripped_filename, 0, 0, &perm_list);
+  }
+
+  file_cur->kind = FILE_LNK;
+  file_cur->data = strdup(target);
+
+  /** \todo set owner/group of symlink ? */
+  strncpy(file_cur->owner,"nobody",256);
+  strncpy(file_cur->group,"nogroup",256);
+
+  /* write modified permission file on disk */
+  ret = writePermFile(perm_filename, &perm_list);
+
+  free_file_recursive(perm_list);
+  perm_list = NULL;
+
+  return 0;
+}
+
+int softlink_remove(const char *linkname)
+{
+  char perm_filename[WZD_MAX_PATH];
+  char stripped_filename[WZD_MAX_PATH];
+  char *ptr;
+  unsigned int length;
+  struct wzd_file_t * perm_list=NULL, * file_cur;
+  int ret;
+
+  /* get permission file */
+
+  strncpy(perm_filename,linkname,WZD_MAX_PATH);
+  length = strlen(perm_filename);
+  if (length > 1 && perm_filename[length-1] == '/') perm_filename[--length] = '\0';
+
+  ptr = strrchr(perm_filename,'/');
+  ptr++; /* position is just after last / */
+  strncpy(stripped_filename, ptr, WZD_MAX_PATH);
+  strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));
+
+  /* read perm file */
+  ret = readPermFile(perm_filename,&perm_list);
+
+  /* remove entry */
+  if (!ret) {
+    file_cur = remove_file(stripped_filename, &perm_list);
+
+    /* write modified permission file on disk */
+    ret = writePermFile(perm_filename, &perm_list);
+
+    free_file_recursive(file_cur);
+    free_file_recursive(perm_list);
+  }
+
+  perm_list = NULL;
+
+  return 0;
+}
+
 
 /************ PUBLIC FUNCTIONS ***************/
 
@@ -1325,7 +1523,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
 /*  strcpy(stripped_filename,ptr+1);*/
 /*  if (ptr != perm_filename) *(ptr+1)='\0';*/
 
-  neededlength = strlen(HARD_PERMFILE);
+  neededlength = strlen(HARD_PERMFILE)+1;
   length = strlen(perm_filename);
   /* check if !overflow */
   if ( length+neededlength > 4095 )
@@ -1347,11 +1545,13 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
       if (strcmp(stripped_filename,file_cur->filename)==0) {
         if (file_cur->owner[0]!='\0')
         {
+          /** \bug !! we free file list before accessing data !! */
           free_file_recursive(file_list);
           return GetUserByName(file_cur->owner);
         }
         else
         {
+          /** \bug !! we free file list before accessing data !! */
           free_file_recursive(file_list);
           return GetUserByName("nobody");
         }
@@ -1362,6 +1562,72 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   }
 
   return GetUserByName("nobody");
+}
+
+struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
+{
+  char perm_filename[WZD_MAX_PATH+1];
+  char stripped_filename[WZD_MAX_PATH+1];
+  char * ptr;
+  struct wzd_file_t * file_list=NULL, * file_cur, *file;
+  int neededlength, length;
+  struct stat s;
+
+  if (stat(filename,&s))
+    return NULL;
+
+  file = NULL;
+
+  /* find the dir containing the perms file */
+  strncpy(perm_filename,filename,WZD_MAX_PATH);
+  length = strlen(perm_filename);
+  if (length >1 && perm_filename[length-1]=='/')
+    perm_filename[--length] = '\0';
+  ptr = strrchr(perm_filename,'/');
+  if (!ptr || *(ptr+1)=='\0') return NULL;
+
+  if (S_ISDIR(s.st_mode)) { /* isdir */
+    strcpy(stripped_filename,".");
+  } else { /* ! isdir */
+    ptr = strrchr(perm_filename,'/');
+    if (ptr) {
+      strcpy(stripped_filename,ptr+1);
+      *ptr = 0;
+    }
+  } /* ! isdir */
+
+
+/*  strcpy(stripped_filename,ptr+1);*/
+/*  if (ptr != perm_filename) *(ptr+1)='\0';*/
+
+  neededlength = strlen(HARD_PERMFILE)+1;
+  length = strlen(perm_filename);
+  /* check if !overflow */
+  if ( length+neededlength >= WZD_MAX_PATH )
+      return NULL;
+
+  if (perm_filename[length-1] != '/' ) {
+    ++length;
+    perm_filename[length-1] = '/';
+  }
+  strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
+
+  /* remove name in perm file !! */
+  if ( ! readPermFile(perm_filename,&file_list) ) {
+    /* we have a permission file */
+    file_cur = file_list;
+    while (file_cur)
+    {
+      if (strcmp(stripped_filename,file_cur->filename)==0) {
+        file = file_deep_copy(file_cur);
+        break;
+      }
+      file_cur = file_cur->next_file;
+    }
+    free_file_recursive(file_list);
+  }
+
+  return file;
 }
 
 /* if program crash, locks acquired by fcntl (POSIX) or _locking (VISUAL)
@@ -1482,25 +1748,32 @@ int file_write(int fd,const void *data,unsigned int length)
 }
 
 /* symlink operations */
+
+/** \brief create symlink
+ * paths must be absolute
+ * \todo if paths are relative, convert them ?
+ */
 int symlink_create(const char *existing, const char *link)
 {
-#if !defined(_MSC_VER) && !defined(__CYGWIN__)
-  return symlink(existing,link);
+  /** \todo XXX FIXME check that symlink dest is inside user authorized path */
+#ifndef WIN32
+  return symlink(existing, link);
 #else
-  /* TODO XXX FIXME check that symlink dest is inside user authorized path */
-  return CreateJunctionPoint(link,existing);
+  return softlink_create(existing, link);
+/*  return CreateJunctionPoint(link, existing);*/
 #endif
 }
 
 int symlink_remove(const char *link)
 {
-#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+#ifndef WIN32
   struct stat s;
 
   if (lstat(link,&s)) return E_FILE_NOEXIST;
   if ( !S_ISLNK(s.st_mode) ) return E_FILE_TYPE;
   return unlink(link);
 #else
-  return RemoveJunctionPoint(link);
+  return softlink_remove(link);
+/*  return RemoveJunctionPoint(link);*/
 #endif
 }

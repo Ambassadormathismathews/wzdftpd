@@ -495,6 +495,7 @@ int check_timeout(wzd_context_t * context)
 
 int do_chdir(const char * wanted_path, wzd_context_t *context)
 {
+  int ret;
   char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH];
   struct stat buf;
   wzd_user_t * user;
@@ -508,7 +509,8 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
 
   if (!wanted_path) return E_WRONGPATH;
-  if (checkpath(wanted_path,path,context)) return E_WRONGPATH;
+  ret = checkpath_new(wanted_path,path,context);
+  if (ret) return ret;
   snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
 
   /* deny retrieve to permissions file */
@@ -529,11 +531,13 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
       if (length != 3) /* root of a logical dir */
 #endif
       tmppath[length-1] = '\0';
-    ret = _checkPerm(tmppath,RIGHT_CWD,user);
+#if 0
+    ret = _checkPerm(tmppath,RIGHT_CWD,user); /** \bug checkpath_new already checks for RIGHT_CWD */
   
     if (ret) { /* no access */
       return E_NOPERM;
     }
+#endif
   }
 
 
@@ -812,7 +816,7 @@ int do_list(char *name, char *param, wzd_context_t * context)
 printf("path before: '%s'\n",cmd);
 #endif*/
 
-  if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
+  if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
     return E_PARAM_INVALID;
   }

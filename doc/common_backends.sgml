@@ -1,7 +1,7 @@
-<chapter>
+<chapter id='common_backends'>
 <title>Common backends</title>
 
-<sect1>
+<sect1 id='backend_plaintext'>
 <title>Plaintext</title>
 
 <para>
@@ -19,7 +19,7 @@ and will be overwritten next time backend is commited.
 
 
 
-<sect1>
+<sect1 id='backend_pam'>
 <title>PAM</title>
 
 <para>
@@ -37,7 +37,7 @@ allowed for all users. The root user is automatically promoted to siteop.
 
 
 
-<sect1>
+<sect1 id='backend_mysql'>
 <title>Mysql</title>
 
 <para>

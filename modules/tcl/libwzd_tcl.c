@@ -78,7 +78,7 @@
 #include "wzd_misc.h"
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
-#include "wzd_file.h" /* file_mkdir */
+#include "wzd_file.h" /* file_mkdir, file_stat */
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 #include "wzd_vars.h" /* needed to access variables */
 
@@ -102,9 +102,11 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
 static int tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
+static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
@@ -135,9 +137,11 @@ int WZD_MODULE_INIT(void)
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
     return -1;
   }
+  Tcl_CreateCommand(interp,"ftp2sys",tcl_ftp2sys,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"putlog",tcl_putlog,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message",tcl_send_message,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"stat",tcl_stat,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
@@ -238,18 +242,35 @@ static void do_tcl_help(wzd_context_t * context)
 
 /******* TCL functions ********/
 
+static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char *path;
+
+  if (argc != 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  path = wzd_malloc(WZD_MAX_PATH+1);
+  if ( checkpath_new(argv[1], path, current_context) ) {
+    wzd_free(path);
+    return TCL_ERROR;
+  }
+  Tcl_SetResult(interp, path, (Tcl_FreeProc *)&wzd_free);
+
+  return TCL_OK;
+}
+
 static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
   char *ptr;
   unsigned long level;
 
-  if (argc != 2) return TCL_ERROR;
+  if (argc != 3) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
   /** \todo XXX we could format the string using argv[2,] */
 
   level = strtoul(argv[1],&ptr,0);
-  if ( *ptr=='\0') return TCL_ERROR;
+  if (*ptr!='\0') return TCL_ERROR;
 
   out_log( (int)level, argv[2] );
 
@@ -284,6 +305,38 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
   snprintf(ptr,length+4," %s\r\n",argv[1]);
 
   ret = send_message_raw(ptr,current_context);
+
+  return TCL_OK;
+}
+
+static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char * path;
+  char * buffer;
+  struct wzd_file_t * file;
+
+  if (argc != 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  path = wzd_malloc(WZD_MAX_PATH+1);
+  if ( checkpath_new(argv[1], path, current_context) ) {
+    wzd_free(path);
+    return TCL_ERROR;
+  }
+  file = file_stat(path, current_context);
+  wzd_free(path);
+  buffer = wzd_malloc(256);
+
+  if (file) {
+    snprintf(buffer,256,"%s/%s/%o", file->owner, file->group, file->permissions);
+  } else {
+    /* we know nothing about this file */
+    snprintf(buffer,256,"%s/%s/%o", "unknown", "unknown", 0755);
+  }
+
+  free_file_recursive(file);
+
+  Tcl_SetResult(interp, buffer, (Tcl_FreeProc *)&wzd_free);
 
   return TCL_OK;
 }
@@ -349,6 +402,7 @@ static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const ch
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
   int ret;
+  char buffer_link[WZD_MAX_PATH+1];
 
   if (argc <= 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
@@ -360,13 +414,30 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
   else if (!strcmp(argv[1],"rmdir")) {
     ret = file_rmdir(argv[2],current_context);
   }
+  else if (!strcmp(argv[1],"read")) {
+    return tcl_stat(data, interp, argc-1, argv+1); /* pass through tcl_stat */
+  }
   else if (!strcmp(argv[1],"link")) {
+    /* TODO move this code to symlink_create ? */
     if (argc <= 3) return TCL_ERROR;
     if (!strcmp(argv[2],"create")) {
-      ret = symlink_create(argv[3],argv[4]);
+      if (!strcmp(argv[3],"-f")) { /* ex: vfs link create -f c:\real linkname */
+        if (argc <= 5) return TCL_ERROR;
+        if (checkpath_new(argv[5],buffer_link,current_context) != E_FILE_NOEXIST)
+          return TCL_ERROR;
+        ret = symlink_create(argv[4],buffer_link);
+      } else { /* ex: vfs link create /path/from/ftproot linkname */
+        char buffer_real[WZD_MAX_PATH+1];
+        if (argc <= 4) return TCL_ERROR;
+        if (checkpath_new(argv[4],buffer_link,current_context) != E_FILE_NOEXIST)
+          return TCL_ERROR;
+        if (checkpath_new(argv[3],buffer_real,current_context)) return TCL_ERROR;
+        ret = symlink_create(buffer_real,buffer_link);
+      }
     }
     else if (!strcmp(argv[2],"remove")) {
-      ret = symlink_remove(argv[3]);
+      if (checkpath_new(argv[3],buffer_link,current_context)) return TCL_ERROR;
+      ret = symlink_remove(buffer_link);
     }
     else
       ret = TCL_ERROR;

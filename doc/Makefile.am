@@ -19,6 +19,9 @@ pdf: wzdftpd-doc/wzdftpd.pdf
 html-online: html
 	./fix_css.sh wzdftpd-doc
 
+php: $(ALL_SGML_FILES) $(HTML_DEPS) wzd_custom.dsl
+	$(JW) -d wzd_custom.dsl#html -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
+
 wzdftpd-doc/index.html: $(ALL_SGML_FILES) $(HTML_DEPS)
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
 	$(JW) -o wzdftpd-doc -b html $(MAIN_SGML_FILE)

@@ -73,8 +73,10 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   char * perm_file_name;
   size_t length;
   char * ptr, * dir_filename;
+  char buffer_file[WZD_MAX_PATH+1];
   int ret;
   struct stat st;
+  unsigned short sorted = 0;
 
 #ifndef _MSC_VER
   DIR * dir;
@@ -113,6 +115,12 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   if ( (ret=readPermFile(perm_file_name,&perm_list)) && ret != E_FILE_NOEXIST)
     { free(perm_file_name); free(_dir->dirname); free(_dir); return NULL; }
   free(perm_file_name);
+
+  strncpy(buffer_file, name, WZD_MAX_PATH);
+  length = strlen(buffer_file);
+  if (length > 1 && buffer_file[length-1] != '/')
+  { buffer_file[length] = '/'; buffer_file[++length] = '\0'; }
+  ptr = buffer_file + length;
 
   insertion_point = &_dir->first_entry;
 
@@ -161,20 +169,46 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
 
     if (!entry) { /* not listed in permission file */
-      entry = wzd_malloc(sizeof(struct wzd_file_t));
-      strncpy(entry->filename,dir_filename,sizeof(entry->filename));
-      entry->owner[0] = '\0';
-      entry->group[0] = '\0';
-      entry->permissions = 0755; /** \todo FIXME default permission */
-      entry->acl = NULL;
-      entry->kind = FILE_NOTSET; /* can be reg file or symlink */
-      entry->data = NULL;
-      entry->next_file = NULL;
-    }
+      
+      /* if entry is a directory, we must query dir for more infos */
+      strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
+      if (stat(buffer_file,&st)) {
+        /* we have a big problem here ! */
+        itp = it;
+        it = it->next_file;
+        continue;
+      }
+      if (S_ISDIR(st.st_mode)) {
+        /* if this is a dir, we look inside the directory for infos
+         * NULL here is no problem, if will be handled by the next test
+         */
+        entry = file_stat(buffer_file, context);
+        if (entry) { /* we correct the name (currently .) */
+          strncpy(entry->filename, dir_filename, sizeof(entry->filename));
+        }
+      }
+
+      if (!entry) {
+        entry = wzd_malloc(sizeof(struct wzd_file_t));
+
+        strncpy(entry->filename,dir_filename,sizeof(entry->filename));
+        entry->owner[0] = '\0';
+        entry->group[0] = '\0';
+        entry->permissions = 0755; /** \todo FIXME default permission */
+        entry->acl = NULL;
+        entry->kind = FILE_NOTSET; /* can be reg file or symlink */
+        entry->data = NULL;
+        entry->next_file = NULL;
+      }
+    } /* not listed in permission file */
 
     /** \todo sorted insertion */
-    (*insertion_point) = entry;
-    insertion_point = &entry->next_file;
+    if (sorted) {
+      file_insert_sorted(entry,&_dir->first_entry);
+    } else {
+      (*insertion_point) = entry;
+      insertion_point = &entry->next_file;
+    }
 
     DIR_CONTINUE
   } /* for all directory entries */
@@ -212,13 +246,55 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
       if (entry) {
         /** \todo sorted insertion */
-        (*insertion_point) = entry;
-        insertion_point = &entry->next_file;
+        if (sorted) {
+          file_insert_sorted(entry,&_dir->first_entry);
+        } else {
+          (*insertion_point) = entry;
+          insertion_point = &entry->next_file;
+        }
       }
 
       vfs = vfs->next_vfs;
     } /* while (vfs) */
   } /* add vfs entries */
+
+  /* XXX add symlinks */
+  {
+    it = perm_list;
+    itp = NULL;
+    while (it)
+    {
+      if (it->kind == FILE_LNK)
+      {
+        entry = it;
+
+        if (!itp) { /* first element */
+          it = perm_list = perm_list->next_file;
+          entry->next_file = NULL;
+        } else {
+          itp->next_file = it->next_file;
+          it->next_file = NULL;
+        }
+        /** \todo sorted insertion */
+        if (sorted) {
+          file_insert_sorted(entry,&_dir->first_entry);
+        } else {
+          (*insertion_point) = entry;
+          insertion_point = &entry->next_file;
+        }
+        if (it == perm_list) {
+          itp = NULL;
+          continue;
+        }
+      }
+      else
+      {
+        /** \todo warn user, useless entries in perm file. clean up ? */
+      }
+      itp = it;
+      it = it->next_file;
+    }
+  } /* add symlinks */
 
   _dir->current_entry = _dir->first_entry;
 
@@ -353,3 +429,64 @@ char * path_gettrailingname(const char *file, unsigned int n)
 
   return name;
 }
+
+/* \brief remove // /./ and /../ from filename
+ *
+ * Return filename with any useless component removed: double /
+ * /./ or /../
+ * Modifications does not check that filename is valid.
+ * WARNING: this function does NOT check anything on filename, it just
+ * operates on the raw string (i.e it is the responsability of the caller
+ * eo check that there is no path injection in string
+ * (eg: "c:/../d:/pathname" )
+ * This function modify filename !
+ */
+char * path_simplify(char *filename)
+{
+  int pos, pos2;
+
+  pos = pos2 = 0;
+
+  while(filename[pos] != '\0')
+  {
+    switch (filename[pos])
+    {
+      case '/':
+        if (filename[pos+1] == '/') ;
+        else if ((strncmp(filename + pos, "/./", 3) == 0) ||
+            (strcmp(filename + pos, "/.") == 0))
+          pos++;
+        else if ((strncmp(filename + pos, "/../", 4) == 0) ||
+            (strcmp(filename + pos, "/..") == 0))
+        {
+          if (pos2 > 1)
+            pos2--;
+          while ((pos2 > 0) && (filename[pos2] != '/'))
+            pos2--;
+          pos += 2; /* /.. */
+          if (filename[pos2] != '/') /* ex: toto/../dir */
+            pos++;
+        }
+        else
+        {
+          filename[pos2] = '/';
+          pos2++;
+        }
+        break;
+      default:
+        filename[pos2] = filename[pos];
+        pos2++;
+    }
+    pos++;
+  }
+  
+  if (pos2 == '\0')
+  {
+    filename[pos2] = '/';
+    pos2++;
+  }
+  filename[pos2] = '\0';
+
+  return filename;
+}
+

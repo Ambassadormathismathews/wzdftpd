@@ -120,13 +120,14 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
-  FD_REGISTER(fd,"Cached file");
 
   if (fstat(fd,&s)) { close(fd); return NULL; }
+  FD_REGISTER(fd,"Cached file");
 
   c = wzd_cache_find(hash);
   if (c) {
     close(fd);
+    FD_UNREGISTER(fd,"Cached file");
     /* detect if file has changed */
     if ((unsigned long)s.st_size != c->datasize || s.st_mtime > c->mtime) {
       /* REFRESH */

@@ -1,3 +1,16 @@
+2004-05-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: system path management rewritten from scratch (obsoletes: checkpath)
+	* feature: soft symlinks (mainly for win32, will avoid crappy ms
+        junctions, never worked correctly)
+	* feature: TCL module updated (stat, vfs link)
+	* bugfix: forgot to unregister fd on cache hit
+	* bugfix: site chacl, chgrp, chmod and chmod replies are more verbose
+	* bugfix: permissions are displayed correctly on LIST (closes: #929764)
+	* doc: update on TCL module, many corrections
+	* doc: finally I begin to understand how to customize docbook output
+	with a dsl file
+
 2004-04-30  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: log file empty on win32 (except if forcing use_syslog = 0)
@@ -48,7 +61,7 @@
 2004-04-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: failed logins are loggued (message LOGIN_FAILED)
-	* debug: functions to debug file descriptos (FD_REGISTER)
+	* debug: functions to debug file descriptors (FD_REGISTER)
 	* bugfix: possible unclosed file descriptors in RETR and STOR
 
 2004-04-05  Pierre Chifflier  <pollux@wzdftpd.net>

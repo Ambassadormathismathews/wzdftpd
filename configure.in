@@ -25,18 +25,6 @@ sinclude(ac-helpers/unicode.m4)
 
 AM_MAINTAINER_MODE
 
-AH_TEMPLATE([HARD_USERLIMIT],
-            [Defines the maximum number of users
-             simultaneously connected.])
-
-AC_ARG_VAR(HARD_USERLIMIT,[max number of simultaneous logins allowed])
-if eval "test x$HARD_USERLIMIT = x"; then
-  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,128)
-  HARD_USERLIMIT=128
-else
-  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,$HARD_USERLIMIT)
-fi
-
 # Checks for programs.
 CFLAGS=""
 AC_PROG_CC
@@ -44,6 +32,8 @@ AM_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+
+AC_SYS_LARGEFILE
 
 dnl not building static libraries makes compilation fail on *bsd !
 dnl AC_DISABLE_STATIC
@@ -142,11 +132,9 @@ if eval "test x$enable_debug = xyes"; then
   AM_WITH_MPATROL
 fi
 
-
 if eval "test x$wzd_lib_openssl = xyes"; then
   WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}ssl"
 fi
-
 
 AC_MSG_CHECKING(whether to build ipv6 support)
 
@@ -187,6 +175,17 @@ if eval "test x$CC = xicc"; then
 #  CPPFLAGS="$CPPFLAGS -I/usr/include"
 fi
 
+AC_ARG_VAR(HARD_USERLIMIT,[max number of simultaneous logins allowed])
+if eval "test x$HARD_USERLIMIT = x"; then
+  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,128)
+  HARD_USERLIMIT=128
+else
+  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,$HARD_USERLIMIT)
+fi
+AH_TEMPLATE([HARD_USERLIMIT],
+            [Defines the maximum number of users
+             simultaneously connected.])
+
 AC_DEFINE_UNQUOTED(WZD_BUILD_OPTS,"$WZD_BUILD_OPTS")
 
 AH_TEMPLATE([WZD_BUILD_OPTS],
@@ -201,16 +200,16 @@ AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
 AH_TEMPLATE([WZD_BUILD_NUM],
             [Build number.])
 
-# 
-#  --------- 
+#
+#  ---------
 # ( moo moo )
-#  --------- 
+#  ---------
 #         o   ^__^
 #          o  (0_)\_______
 #             (__)\       )\/\
 #                 ||----w |
 #                 ||     ||
-# 
+#
 if eval "test x$sysconfdir == x\${prefix}/etc"; then
   sysconfdir="${prefix}/etc/wzdftpd"
 fi
