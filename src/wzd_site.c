@@ -345,7 +345,7 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
 /** chown: user file1 [file2 ...]
  */
 
-void do_site_chown(char *command_line, wzd_context_t * context)
+int do_site_chown(char *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
@@ -358,12 +358,12 @@ void do_site_chown(char *command_line, wzd_context_t * context)
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
     do_site_help("chown",context);
-    return;
+    return 1;
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
-    return;
+    return 1;
   }
 
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
@@ -376,6 +376,8 @@ void do_site_chown(char *command_line, wzd_context_t * context)
 
   snprintf(buffer,BUFFER_LEN,"CHOWN: '%s'",command_line);
   ret = send_message_with_args(200,context,buffer);
+
+  return 0;
 }
 
 /********************* do_site_chpass **********************/
@@ -577,6 +579,10 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   char * file_buffer;
   unsigned int size, filesize;
   fp = wzd_cache_open(filename,O_RDONLY,0644);
+  if (!fp) {
+    send_message_with_args(501,context,"Inexistant file");
+    return;
+  }
   filesize = wzd_cache_getsize(fp);
   file_buffer = malloc(filesize+1);
   if ( (size=wzd_cache_read(fp,file_buffer,filesize)!=filesize) )
@@ -1208,6 +1214,13 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"GINFO")==0) {
     return do_site_ginfo(command_line+6,context); /* 6 = strlen("ginfo")+1 */
   } else
+#endif /* 0 */
+/******************* GINFO **********************/
+  if (strcasecmp(token,"GROUPS")==0) {
+    do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);
+    return 0;
+  } else
+#if 0
 /******************* GRPADD *********************/
   if (strcasecmp(token,"GRPADD")==0) {
     return do_site_grpadd(command_line+7,context); /* 7 = strlen("grpadd")+1 */

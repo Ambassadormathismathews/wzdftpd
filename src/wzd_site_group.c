@@ -298,7 +298,7 @@ int do_site_ginfo(char *command_line, wzd_context_t * context)
   ptr = command_line;
   groupname = strtok_r(command_line," \t\r\n",&ptr);
   if (!groupname) {
-    do_site_help("gsinfo",context);
+    do_site_help("ginfo",context);
     return 0;
   }
   /* check if group exists */
@@ -507,6 +507,7 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context)
       ret = send_message_with_args(501,context,"Invalid ip slot number");
       return 0;
     }
+    ul--; /* to index slot number from 1 */
     if (group.ip_allowed[ul][0] == '\0') {
       ret = send_message_with_args(501,context,"Slot is already empty");
       return 0;

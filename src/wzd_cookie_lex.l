@@ -467,6 +467,19 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	  }
 	  current_user = user;
 	} /* allusers */
+	else if (strcmp(condition,"allgroups")==0)
+	{
+	  wzd_group_t * loop_group;
+	  for (i=0; i<HARD_DEF_GROUP_MAX; i++)
+	  {
+	    loop_group = GetGroupByID(i);
+	    current_group = loop_group;
+	    if (loop_group->groupname[0] != '\0') {
+	      cookie_parse_buffer(tmpbuf,current_user,loop_group,context);
+	    }
+	  }
+	  current_group = group;
+	} /* allgroups */
 	else if (strcmp(condition,"allgroupmembers")==0)
 	{
 	  wzd_user_t * loop_user;

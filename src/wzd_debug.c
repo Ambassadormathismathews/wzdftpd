@@ -47,9 +47,14 @@
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd)
 {
+  /* cygwin does NOT accept testing winsock fd's */
+#if defined(__CYGWIN__) && defined(WINSOCK_SUPPORT)
+  return 1;
+#else
   static struct stat s;
 
   if (fstat(fd,&s)<0) return 0;
   return 1;
+#endif
 }
 

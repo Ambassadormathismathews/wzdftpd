@@ -123,6 +123,7 @@ typedef struct wzd_command_perm_t wzd_command_perm_t;
 typedef struct {
   char	file_ginfo[256];
   char	file_group[256];
+  char	file_groups[256];
   char	file_help[256];
   char	file_rules[256];
   char	file_swho[256];

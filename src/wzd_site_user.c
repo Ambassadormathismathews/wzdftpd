@@ -544,6 +544,7 @@ int do_site_delip(char *command_line, wzd_context_t * context)
       ret = send_message_with_args(501,context,"Invalid ip slot number");
       return 0;
     }
+    ul--; /* to index slot number from 1 */
     if (user.ip_allowed[ul][0] == '\0') {
       ret = send_message_with_args(501,context,"Slot is already empty");
       return 0;
@@ -847,7 +848,14 @@ int do_site_change(char *command_line, wzd_context_t * context)
     }
   }
 
-  ret = send_message_with_args(200,context,"User field change successfull");
+  if ( (user.flags && strchr(user.flags,FLAG_GADMIN)) &&
+      (user.flags && strchr(user.flags,FLAG_SITEOP)))
+  {
+    ret = send_message_with_args(200,context,"Change ok - You have set flags G and O, THIS IS NOT WHAT YOU WANT - repeat: THIS IS STUPID !!");
+  }
+  else
+    ret = send_message_with_args(200,context,"User field change successfull");
+
   return 0;
 }
 

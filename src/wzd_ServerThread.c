@@ -723,6 +723,19 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   return 0;
 }
 
+void server_crashed(int signum)
+{
+  printf("Server has crashed of signal %d\n",signum);
+#ifdef DEBUG
+  printf("I'll try to dump current memory to a core file (in the current dir)\n");
+  printf("To use this core file you need to run:\n");
+  printf("  gdb wzdftpd -core=core_file\n");
+  printf("When prompted type be following command:\n");
+  printf("  bt\n");
+  abort();
+#endif
+}
+
 /************************************************************************/
 /*********************** SERVER MAIN THREAD *****************************/
 /************************************************************************/
@@ -764,14 +777,22 @@ void serverMainThreadProc(void *arg)
 
     getrlimit(RLIMIT_NOFILE, &rlim);
     rlim.rlim_cur = rlim.rlim_max;
-    setrlim(RLIMIT_NOFILE, &rlim);
-
-    /* no core file ! */
-    getrlim(RLIMIT_CORE, &rlim);
-    rlim.rlim_cur = 0;
-    setrlim(RLIMIT_CORE, &rlim);
+    setrlimit(RLIMIT_NOFILE, &rlim);
   }
 #endif /* POSIX */
+
+#if defined(DEBUG) && !defined(__CYGWIN__)
+  signal(SIGSEGV,server_crashed);
+#else
+  {
+    struct rlimit rlim;
+
+    /* no core file ! */
+    getrlimit(RLIMIT_CORE, &rlim);
+    rlim.rlim_cur = 0;
+    setrlimit(RLIMIT_CORE, &rlim);
+  }
+#endif
 
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
   /* Start Winsock up */

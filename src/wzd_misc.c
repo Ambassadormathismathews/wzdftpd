@@ -909,7 +909,7 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
       snprintf(buffer,29,"%d.%d.%d.%d",
         host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
 #if DEBUG
-out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
 #endif
       if (my_str_compare(buffer,ip)==1)
         return 1;
@@ -1022,7 +1022,7 @@ int user_ip_inlist(wzd_user_t * user, const char *ip)
       snprintf(buffer,29,"%d.%d.%d.%d",
         host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
 #if DEBUG
-out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
 #endif
       if (my_str_compare(buffer,ip)==1)
         return 1;
@@ -1118,7 +1118,7 @@ int group_ip_inlist(wzd_group_t * group, const char *ip)
       snprintf(buffer,29,"%d.%d.%d.%d",
         host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
 #if DEBUG
-out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+out_err(LEVEL_FLOOD,"HOST IP %s\n",buffer);
 #endif
       if (my_str_compare(buffer,ip)==1)
         return 1;

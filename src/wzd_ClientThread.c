@@ -472,9 +472,14 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 #endif
     user = GetUserByID(context->userid);
 
+
   if (checkpath(wanted_path,path,context)) return E_WRONGPATH;
   snprintf(allowed,2048,"%s/",user->rootpath);
 
+  /* deny retrieve to permissions file */
+  if (is_hidden_file(path)) {
+    return E_FILE_FORBIDDEN;
+  }
 
   {
     int ret;
@@ -1396,16 +1401,20 @@ int do_stor(char *param, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-  /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
-/* XXX if (strrchr(param,'/'))
-    param = strrchr(param,'/')+1; XXX */
+  if (param[0]=='/') { /* absolute path */
+    strcpy(path,user->rootpath);
+  } else { /* absolute path */
+    /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
+/*   XXX if (strrchr(param,'/'))
+      param = strrchr(param,'/')+1; XXX */
 
-  strcpy(cmd,".");
-  if (checkpath(cmd,path,context)) {
-    ret = send_message_with_args(501,context,"Incorrect filename");
-    return E_PARAM_INVALID;
-  }
-  if (path[strlen(path)-1] != '/') strcat(path,"/");
+    strcpy(cmd,".");
+    if (checkpath(cmd,path,context)) {
+      ret = send_message_with_args(501,context,"Incorrect filename");
+      return E_PARAM_INVALID;
+    }
+    if (path[strlen(path)-1] != '/') strcat(path,"/");
+  } /* absolute path */
   strcat(path,param);
 
   /* TODO call checkpath again ? see do_mkdir */
@@ -2186,7 +2195,7 @@ void * clientThreadProc(void *arg)
       remote_host = h->h_name;
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     log_message("LOGIN","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
-	remote_host,
+	(remote_host)?remote_host:"no host !",
 	userip[0],userip[1],userip[2],userip[3],
 	user->username,
 	(groupname)?groupname:"No Group",

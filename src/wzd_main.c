@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
@@ -213,13 +214,14 @@ int main(int argc, char **argv)
   int ret;
   int forkresult;
   wzd_config_t * config;
+  struct stat s;
 
 #if 0
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"This is a beta release, in active development\n");
   fprintf(stderr,"Things may break from version to version\n");
-  fprintf(stderr,"Want stability ? Use a 0.1rc3 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"Want stability ? Use a 0.1rc4 version. YOU WERE WARNED!\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");
@@ -254,6 +256,18 @@ int main(int argc, char **argv)
 #ifndef __CYGWIN__
   wzd_server_uid = geteuid();
 #endif
+
+  /* find config file */
+  if (stat(configfile_name,&s)) {
+    strcpy(configfile_name,"/etc/wzd.cfg");
+    if (stat(configfile_name,&s)) {
+      strcpy(configfile_name,"/etc/wzdftpd/wzd.cfg");
+      if (stat(configfile_name,&s)) {
+	out_err(LEVEL_CRITICAL,"Could not find config file\n");
+	exit(1);
+      }
+    }
+  }
 
   config = NULL;
   config = readConfigFile(configfile_name);

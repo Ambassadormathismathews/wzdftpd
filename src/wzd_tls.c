@@ -178,7 +178,25 @@ int tls_init(void)
   tls_wrapper_fct->tls_write = ptr;
 
   ret = (tls_wrapper_fct->tls_init)(&mainConfig->tls_ctx,mainConfig->tls_certificate);
-  if (ret) out_err(LEVEL_CRITICAL,"tls_init returned %d\n",ret);
+  switch (ret) {
+  case 0:
+    return 0;
+  case 1:
+    out_err(LEVEL_CRITICAL,"tls_init error: SSL_CTX_new failed\n");
+    break;
+  case 2:
+    out_err(LEVEL_CRITICAL,"tls_init error: SSL_CTX_use_certificate_file failed\n");
+    out_err(LEVEL_CRITICAL,"  probable error causes: missing certificate,\n");
+    out_err(LEVEL_CRITICAL,"  incorrect path, permissions etc.\n");
+    break;
+  case 3:
+    out_err(LEVEL_CRITICAL,"tls_init error: SSL_CTX_use_PrivateKey_file failed\n");
+    out_err(LEVEL_CRITICAL,"  probable error causes: missing certificate,\n");
+    out_err(LEVEL_CRITICAL,"  incorrect path, permissions etc.\n");
+    break;
+  default:
+    out_err(LEVEL_CRITICAL,"tls_init returned %d\n",ret);
+  }
   return ret;
 }
 

@@ -314,6 +314,9 @@ int set_default_options(void)
   tempConfig.param_list = NULL;
 
   /* site config */
+  tempConfig.site_config.file_ginfo[0] = '\0';
+  tempConfig.site_config.file_group[0] = '\0';
+  tempConfig.site_config.file_groups[0] = '\0';
   tempConfig.site_config.file_help[0] = '\0';
   tempConfig.site_config.file_rules[0] = '\0';
   tempConfig.site_config.file_swho[0] = '\0';
@@ -1468,6 +1471,8 @@ int cfg_read_sitefile(const char *type)
   ret = 1;
   if (strcasecmp("ginfo",type)==0)
   { strncpy(tempConfig.site_config.file_ginfo,filename,256); ret = 0; }
+  if (strcasecmp("groups",type)==0)
+  { strncpy(tempConfig.site_config.file_groups,filename,256); ret = 0; }
   if (strcasecmp("group",type)==0)
   { strncpy(tempConfig.site_config.file_group,filename,256); ret = 0; }
   if (strcasecmp("help",type)==0)

@@ -1,3 +1,22 @@
+# May, 31 2003
+- fixed potential bug with syslog()
+- index slot number from 1 in site delip and grpdelip
+- better error message for tls wrapper init (cygwin)
+- bugfix: stor with an absolute path name does not work
+- try default/arg conf, then /etc/wzd.cfg and /etc/wzdftpd/wzd.cfg for config
+  file
+- added special cookie forallgroups
+
+# May, 28 2003
+- added 'site groups' command to list groups
+- fixed bug with do_site_print_file when file was not present
+- do not check file descriptors using winsock, cygwin fstat fails
+- fixed vfs add always reporting as failure
+- fixed: chdir not checking if file was hidden
+- updated configure to use a more standard installation
+- updated docs: How to report bugs
+- warn user when setting both flags SITEOP and GADMIN
+
 # May, 23 2003
 - bugfix: permission file not correctly updated if several modifications
   happens in the same second (mtime field in filesystem is not updated)
@@ -6,9 +25,11 @@
 - symlinks are now displayed as 'name -> target' in LIST
 - sfv: progressmeter is shown after uploading the sfv file
 - doc updated (installation, config, sfv module)
+- sfv parameters (progressmeter, etc) are server parameters (thus defined in
+  config file)
 
 # May, 21 2003
-- fixed supid bug were fields were not correctly initialized when creating
+- fixed stupid bug were fields were not correctly initialized when creating
   new user
 - fixed segfault on rename dir
 - bugfix: permission sometime disappear when renaming file
