@@ -46,6 +46,37 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
+/** remove a vfs from list */
+int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
+{
+  wzd_vfs_t * current_vfs, * next_vfs;
+  wzd_vfs_t * previous_vfs = NULL;
+  
+  current_vfs = *vfs_list;
+  while(current_vfs)
+  {
+    next_vfs = current_vfs->next_vfs;
+    
+    if ( (strcmp( current_vfs->virtual_dir, vpath) == 0) )
+    {
+      if (current_vfs == *vfs_list)
+      {
+        *vfs_list = next_vfs;
+        free (current_vfs);
+      } else {
+        free (current_vfs);
+        previous_vfs->next_vfs = next_vfs;
+      }
+      return 0;
+    }
+    
+    previous_vfs = current_vfs;
+    current_vfs = next_vfs;
+  }
+
+  return 2;
+}
+
 /** free vfs list */
 int vfs_free(wzd_vfs_t **vfs_list)
 {
@@ -75,11 +106,22 @@ int vfs_free(wzd_vfs_t **vfs_list)
   return 0;
 }
 
-/** register a new vfs entry */
-int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
+/** register a new vfs entry, with a condition */
+int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target)
 {
   wzd_vfs_t * current_vfs, * new_vfs;
   struct stat s;
+
+  current_vfs = *vfs_list;
+  while (current_vfs)
+  {
+    if( (strcmp(vpath, current_vfs->virtual_dir)==0) )
+    {
+      /* virtual path already set */
+      return 2;
+  }
+    current_vfs = current_vfs->next_vfs;
+  }
 
   if (stat(path,&s)) {
     /* destination does not exist */
@@ -91,7 +133,10 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
 
   new_vfs->virtual_dir = strdup(vpath);
   new_vfs->physical_dir = strdup(path);
-  new_vfs->target = NULL;
+  if (target)
+  new_vfs->target = strdup(target);
+  else
+    new_vfs->target = NULL;
   new_vfs->next_vfs = NULL;
   new_vfs->prev_vfs = NULL;
 
@@ -112,41 +157,10 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
   return 0;
 }
 
-/** register a new vfs entry, with a condition */
-int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target)
+/** register a new vfs entry */
+int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
 {
-  wzd_vfs_t * current_vfs, * new_vfs;
-  struct stat s;
-
-  if (stat(path,&s)) {
-    /* destination does not exist */
-    return 1;
-  }
-
-  new_vfs = malloc(sizeof(wzd_vfs_t));
-  if (!new_vfs) return 1;
-
-  new_vfs->virtual_dir = strdup(vpath);
-  new_vfs->physical_dir = strdup(path);
-  new_vfs->target = strdup(target);
-  new_vfs->next_vfs = NULL;
-  new_vfs->prev_vfs = NULL;
-
-  current_vfs = *vfs_list;
-
-  if (!current_vfs) {
-    *vfs_list = new_vfs;
-    return 0;
-  }
-
-  while (current_vfs->next_vfs) {
-    current_vfs = current_vfs->next_vfs;
-  }
-
-  current_vfs->next_vfs = new_vfs;
-  new_vfs->prev_vfs = current_vfs;
-
-  return 0;
+  return vfs_add_restricted (vfs_list,vpath,path,NULL);
 }
 
 /** \return 1 if user match corresponding line */

@@ -85,7 +85,9 @@ AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_BUILD_NUM=@BUILDNUM@ -DWZD_VERSION_NUM=\"@VER
 
 dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
-	file_users.txt  file_who.txt  file_groups.txt  users
+	file_users.txt  file_who.txt  file_groups.txt  \
+	file_vfs.txt \
+	users
 
 #sysconfdir = ${prefix}/etc/wzdftpd
 

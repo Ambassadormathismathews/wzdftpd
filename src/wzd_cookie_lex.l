@@ -114,6 +114,9 @@ typedef enum {
   COOKIE_USERTOTAL_DL2,
   COOKIE_USERTOTAL_UL,
   COOKIE_USERTOTAL_UL2,
+  COOKIE_VFSVIRTUAL,
+  COOKIE_VFSPHYSICAL,
+  COOKIE_VFSTARGET,
 } sc_cookie_t;
 
 /* this var defines a 'prefered' minimal buffer size before sending */
@@ -134,6 +137,7 @@ int cookie_include_stack_ptr = 0;
 wzd_user_t * current_user=NULL;
 wzd_group_t * current_group=NULL;
 wzd_context_t * current_context=NULL;
+wzd_vfs_t * current_vfs=NULL;
 
 %}
 
@@ -149,6 +153,7 @@ IF_END		"%endif"("\r"?)"\n"
 C_START		"%"
 C_GROUP		([0-9]+".")?"group"
 C_USER		([0-9]+".")?"user"
+C_VFS    ([0-9]+".")?"vfs"
 
 %option nounput
 %option noyywrap
@@ -276,6 +281,9 @@ C_USER		([0-9]+".")?"user"
 <sc_cook>{C_USER}total_dl	BEGIN(INITIAL); return COOKIE_USERTOTAL_DL;
 <sc_cook>{C_USER}total_ul2	BEGIN(INITIAL); return COOKIE_USERTOTAL_UL2;
 <sc_cook>{C_USER}total_ul	BEGIN(INITIAL); return COOKIE_USERTOTAL_UL;
+<sc_cook>{C_VFS}virtual  BEGIN(INITIAL); return COOKIE_VFSVIRTUAL;
+<sc_cook>{C_VFS}physical  BEGIN(INITIAL); return COOKIE_VFSPHYSICAL;
+<sc_cook>{C_VFS}target  BEGIN(INITIAL); return COOKIE_VFSTARGET;
 
 <sc_cook>.	BEGIN(INITIAL); return COOKIE_INVALID;
 
@@ -497,6 +505,15 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	  }
 	  current_user = user;
 	} /* allgroupmembers */
+  else if (strcmp(condition,"allvfs")==0)
+  {
+    current_vfs = mainConfig->vfs;
+    while(current_vfs)
+    {
+      cookie_parse_buffer(tmpbuf,current_user,current_group,context);
+      current_vfs = current_vfs->next_vfs;
+    }
+  } /* allvfs */
         free(tmpbuf);
       }
       break;
@@ -1097,6 +1114,39 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	send_buffer_ptr=0;
       }
       continue;
+    case COOKIE_VFSVIRTUAL:
+      get_cookie_format(yytext,&padding);
+      if (current_vfs)
+  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->virtual_dir);
+      else
+  snprintf(internalbuffer,IBUFSIZE,"virtual_dir");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_VFSPHYSICAL:
+      get_cookie_format(yytext,&padding);
+      if (current_vfs)
+  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->physical_dir);
+      else
+  snprintf(internalbuffer,IBUFSIZE,"physical_dir");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_VFSTARGET:
+      get_cookie_format(yytext,&padding);
+      if (current_vfs)
+      {
+        if (current_vfs->target)
+  snprintf(internalbuffer,IBUFSIZE,"%s",current_vfs->target);
+        else
+  snprintf(internalbuffer,IBUFSIZE,"not restricted");
+      }
+
+      else
+  snprintf(internalbuffer,IBUFSIZE,"target");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     default:
       cookie_ptr = yytext;
       cookie_length = strlen(cookie_ptr);

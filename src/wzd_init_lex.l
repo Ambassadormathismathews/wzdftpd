@@ -327,6 +327,7 @@ int set_default_options(void)
   tempConfig.site_config.file_user[0] = '\0';
   tempConfig.site_config.file_users[0] = '\0';
   tempConfig.site_config.file_who[0] = '\0';
+  tempConfig.site_config.file_vfs[0] = '\0';
 
 #ifdef SSL_SUPPORT
   memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
@@ -1489,6 +1490,8 @@ int cfg_read_sitefile(const char *type)
   { strncpy(tempConfig.site_config.file_users,filename,256); ret = 0; }
   if (strcasecmp("who",type)==0)
   { strncpy(tempConfig.site_config.file_who,filename,256); ret = 0; }
+  if (strcasecmp("vfs",type)==0)
+  { strncpy(tempConfig.site_config.file_vfs,filename,256); ret = 0; }
 
   free (filename);
   return ret;

@@ -130,6 +130,7 @@ typedef struct {
   char	file_user[256];
   char	file_users[256];
   char	file_who[256];
+  char	file_vfs[256];
 } wzd_site_config_t;
 
 /* opaque struct */

@@ -1,5 +1,17 @@
+# Sep, 11 2003
+- contributions from Cyprien Laplace:
+- added 'vfs_remove' function, to remove a vfs entry
+- added special cookie forallvfs
+- added cookies vfsvirtual, vfsphysical, vfstarget
+- added 'file_vfs.txt'
+- added 'site vfsls', 'site vfsadd', 'site vfsdel' commands, to list
+  active virtual filesystems, add a vfs, and remove a vfs
+
+
 # Sep, 10 2003
 - bugfix: incorrect section match (closes: unable to create dirs in sections)
+- bugfix: incorrect config file parsing (closes: unable to have section names beginning with
+  anything but a letter)
 
 # Sep, 08 20003
 - Display real owner in LIST (this implementation is particularly bad - we rely on the cache)

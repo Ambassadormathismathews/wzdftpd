@@ -201,6 +201,7 @@ sitefile_swho	= @e_datadir@/@PACKAGE@/file_swho.txt
 sitefile_user	= @e_datadir@/@PACKAGE@/file_user.txt
 sitefile_users	= @e_datadir@/@PACKAGE@/file_users.txt
 sitefile_who	= @e_datadir@/@PACKAGE@/file_who.txt
+sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically
@@ -283,6 +284,9 @@ sitefile_who	= @e_datadir@/@PACKAGE@/file_who.txt
 -site_version = +O
 -site_who = -admin
 -site_wipe = +O
+-site_vfsls = +O
+-site_vfsadd = +O
+-site_vfsdel = +O
 
 # REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
 -site_my_free = *

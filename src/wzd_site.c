@@ -882,6 +882,141 @@ int do_site_version(char * ignored, wzd_context_t * context)
   return 0;
 }
 
+/********************* do_site_vfsls ***********************/
+
+/* XXX : just send last vfs */
+
+int do_site_vfsls(char * ignored, wzd_context_t * context)
+{
+//  wzd_vfs_t * current_vfs;
+//  char tmp[1024];
+  
+  do_site_print_file(mainConfig->site_config.file_vfs,NULL,NULL,context);
+  /*
+  current_vfs = mainConfig->vfs;
+  if (current_vfs == NULL)
+    send_message_with_args(200,context, "There's no VFS");
+  
+  while (current_vfs)
+  {
+    snprintf (tmp, 1024, "vfs: %s => %s", current_vfs->virtual_dir, current_vfs->physical_dir);
+    current_vfs = current_vfs->next_vfs;
+  }
+  send_message_with_args(200,context, tmp);
+  */
+  return 0;
+}
+
+/********************* do_site_vfsadd **********************/
+/** vfsadd |/home/vfsroot|/physical/path| +O =user
+ */
+
+int do_site_vfsadd(char * command_line, wzd_context_t * context)
+{
+  char *vpath, *ppath, *target;
+  int i, ret;
+  char sep;
+  const char *ptr;
+  char * dstptr;
+  unsigned int dstlen, length;
+  char buffer[1024];
+
+  strncpy(buffer,command_line,1024);
+
+  /* allocate enough memory */
+  length = strlen(buffer);
+  vpath = malloc(length);
+  ppath = malloc(length);
+
+  /* parse command line */
+  ptr = buffer;
+  sep = *ptr++;
+
+  dstptr = vpath;
+  dstlen = 0;
+
+  while (*ptr) {
+    if (*ptr == sep) break; /* end */
+    if (dstlen++ == length-1) break; /* too long */
+    *dstptr++ = *ptr++;
+  }
+  if (!*ptr || *ptr != sep) {
+    free(vpath); free(ppath);
+    send_message_with_args(501,context,"site vfsadd |/home/vfsroot|/physical/path| [PERM]");
+    return 1;
+  }
+  *dstptr = '\0';
+
+  dstptr = ppath;
+  dstlen = 0;
+  ptr++;
+
+  while (*ptr) {
+    if (*ptr == sep) break; /* end */
+    if (dstlen++ == length-1) break; /* too long */
+    *dstptr++ = *ptr++;
+  }
+  if (!*ptr || *ptr != sep) {
+    free(vpath); free(ppath);
+    send_message_with_args(501,context,"site vfsadd |/home/vfsroot|/physical/path| [PERM]");
+    return 1;
+  }
+  *dstptr = '\0';
+ 
+  target = NULL;
+  ptr++;
+
+  if (*ptr) {
+    while( *ptr && (*ptr==' ' || *ptr=='\t')) ptr++;
+    if (*ptr)
+      target = (char*)ptr;
+  }
+ 
+  if( target )
+    ret = vfs_add_restricted( &mainConfig->vfs, vpath, ppath, target );
+  else
+    ret = vfs_add( &mainConfig->vfs, vpath, ppath );
+
+  if (ret==1)
+    send_message_with_args(501,context,"site vfsadd |/home/vfsroot|/physical/path| [PERM]");
+  else if (ret==2)
+  {
+    char tmp[80];
+    snprintf( tmp, 80, "vfs %s already set", vpath );
+    send_message_with_args(501,context,tmp);
+  }  else
+    send_message_with_args(200,context,"VFSADD command ok");
+  
+  free(vpath); free(ppath);
+
+  return 0;
+}
+
+/********************* do_site_vfsdel **********************/
+/** vfsdel /home/vfsroot
+ */
+
+int do_site_vfsdel(char * command_line, wzd_context_t * context)
+{
+  int ret;
+
+  if (command_line[0]!=0)
+    ret = vfs_remove( &mainConfig->vfs, command_line );
+  else ret = 1;
+
+  if (ret==1)
+    send_message_with_args(501,context,"site vfsdel /home/vfsroot");
+  else if (ret==2)
+  {
+    char tmp[80];
+    snprintf( tmp, 80, "vfs %s does not exist", command_line );
+    send_message_with_args(501,context,tmp);
+  } else
+    send_message_with_args(200,context,"VFSDEL command ok");
+  
+  return 0;
+}
+
 int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
   struct stat s;
@@ -1089,6 +1224,10 @@ int site_init(wzd_config_t * config)
   /* users */
   if (site_command_add(&config->site_list,"UTIME",&do_site_utime)) return 1;
   if (site_command_add(&config->site_list,"VERSION",&do_site_version)) return 1;
+  /* vfs */
+  if (site_command_add(&config->site_list,"VFSLS",&do_site_vfsls)) return 1;
+  if (site_command_add(&config->site_list,"VFSADD",&do_site_vfsadd)) return 1;
+  if (site_command_add(&config->site_list,"VFSDEL",&do_site_vfsdel)) return 1;
   /* who */
   if (site_command_add(&config->site_list,"WIPE",&do_site_wipe)) return 1;
   /* uptime */
