@@ -737,15 +737,15 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...)
 unsigned long get_bandwidth(unsigned long *dl, unsigned long *ul)
 {
   unsigned long ul_bandwidth=0, dl_bandwidth=0;
-  unsigned int i;
   unsigned int id;
+  ListElmt * elmnt;
   wzd_user_t * user;
   wzd_context_t * context;
 
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    if (context_list[i].magic == CONTEXT_MAGIC) {
-      context = &context_list[i];
-      id = context_list[i].userid;
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt)) {
+    context = list_data(elmnt);
+    if (context && context->magic == CONTEXT_MAGIC) {
+      id = context->userid;
       user = GetUserByID(id);
       if (strncasecmp(context->last_command,"retr",4)==0) {
         dl_bandwidth += (unsigned long)context->current_dl_limiter.current_speed;
@@ -1038,21 +1038,22 @@ void win_normalize(char * s, unsigned int length, unsigned int lower)
 /* \return 0 if ok, -1 if error, 1 if trying to kill myself */
 int kill_child_new(unsigned long pid, wzd_context_t * context)
 {
+  ListElmt * elmnt;
   int found=0;
-  int i;
 
   /* preliminary check: i can't kill myself */
   if (pid==context->pid_child) return 1;
 
   /* checks that pid is really one of the users */
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
+    context = list_data(elmnt);
+    if (context && context->magic == CONTEXT_MAGIC && context->pid_child == pid) { found = 1; break; }
   }
   if (!found) return -1;
 
   /* \todo XXX FIXME remove/fix test !! */
-  context_list[i].exitclient = 1;
+  context->exitclient = 1;
 /*  ret = TerminateThread((HANDLE)pid,0);*/
 /*  ret = pthread_cancel(pid);*/
 
@@ -1101,7 +1102,6 @@ int group_remove_user(wzd_user_t * user, unsigned int gid)
 /** wrappers to context list */
 void * GetMyContext(void)
 {
-  int i;
 #ifdef WZD_MULTIPROCESS
   wzd_context_t * context=NULL;
   pid_t pid;
@@ -1118,31 +1118,32 @@ void * GetMyContext(void)
   }
 
 #elif defined(WZD_MULTITHREAD)
+  ListElmt * elmnt;
   wzd_context_t * context=NULL;
 
 #ifdef _MSC_VER
   unsigned long thread_id;
 
   thread_id = (unsigned long)GetCurrentThreadId();
-  context = &context_list[0];
   /* TODO search context list and cleanup context */
   for (i=0; i<HARD_USERLIMIT; i++)
   {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].thread_id == thread_id) {
-      return (&context_list[i]);
+    context = list_data(elmnt);
+    if (context && context->magic == CONTEXT_MAGIC && context->thread_id == thread_id) {
+      return context;
     }
   }
 #else /* _MSC_VER */
   pthread_t thread_id;
 
   thread_id = pthread_self();
-  context = &context_list[0];
   /* TODO search context list and cleanup context */
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC &&
-      pthread_equal((pthread_t)context_list[i].thread_id,thread_id)) {
-        return (&context_list[i]);
+    context = list_data(elmnt);
+    if (context && context->magic == CONTEXT_MAGIC &&
+      pthread_equal((pthread_t)context->thread_id,thread_id)) {
+        return context;
     }
   }
 #endif /* _MSC_VER */

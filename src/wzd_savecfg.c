@@ -117,8 +117,8 @@ static void save_pasvrange (FILE *file)
   fprintf( file, "# specify this if you want to get a specific range\n");
   fprintf( file, "#pasv_low_range = 2500\n");
   fprintf( file, "#pasv_high_range  = 3000\n");
-  fprintf( file, "pasv_low_range = %lu\n", mainConfig->pasv_low_range);
-  fprintf( file, "pasv_high_range  = %lu\n", mainConfig->pasv_high_range);
+  fprintf( file, "pasv_low_range = %u\n", mainConfig->pasv_low_range);
+  fprintf( file, "pasv_high_range  = %u\n", mainConfig->pasv_high_range);
   fprintf( file, "\n" );
 }
 

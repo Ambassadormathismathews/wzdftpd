@@ -1,3 +1,8 @@
+2004-12-01  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: context_list changed to be a real dynamic list, as well as
+	ident_list. This removes the hard limitation on connected users.
+
 2004-11-29  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: MySQL backend now almost working !

@@ -282,6 +282,9 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 #else /* _MSC_VER */
 
 /* unsigned int, 64 bits: u64_t */
+#define i32_t int32_t
+#define u32_t u_int32_t
+#define i64_t int64_t
 #define u64_t u_int64_t
 #include <sys/time.h> /* struct timeval */
 
@@ -341,5 +344,7 @@ size_t strlcat(char *dst, const char *src, size_t size);
 #ifndef HAVE_STRTOK_R
 char * strtok_r(char *s, const char *delim, char **last);
 #endif
+
+#include <libwzd-base/list.h>
 
 #endif /* __WZD_TYPES__ */

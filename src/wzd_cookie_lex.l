@@ -417,6 +417,8 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   unsigned short use_colors=0;
   char * out_buffer_ptr;
   wzd_context_t * real_context;
+  wzd_context_t * loop_context;
+  ListElmt * elmnt;
 
   if (!context) return -1;
   real_context = GetMyContext();
@@ -598,13 +600,14 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       if (strcmp(condition,"allusersconnected")==0)
       {
         wzd_user_t * loop_user;
-        for (i=0; i<HARD_USERLIMIT; i++)
+        for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
         {
-          if (context_list[i].magic == CONTEXT_MAGIC)
+          loop_context = list_data(elmnt);
+          if (loop_context->magic == CONTEXT_MAGIC)
           {
-            loop_user = GetUserByID(context_list[i].userid);
+            loop_user = GetUserByID(loop_context->userid);
             current_user = loop_user;
-            current_context = &context_list[i];
+            current_context = loop_context;
             if (loop_user->username[0] != '\0') {
               /* check if user is hidden */
               if (loop_user->flags && strchr(loop_user->flags,FLAG_HIDDEN)
@@ -805,19 +808,19 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
     case COOKIE_TOTAL_DL:
       get_cookie_format(yytext,&padding);
       {
-		float speed;
-		wzd_context_t * it;
+        float speed;
+        wzd_context_t * it;
 
         /* iterate through users and sum */
         speed = 0.f;
-        for (i=0; i<HARD_USERLIMIT; i++)
+        for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
         {
-          if (context_list[i].magic == CONTEXT_MAGIC)
+          it = list_data(elmnt);
+          if (it->magic == CONTEXT_MAGIC)
           {
-		    it = &context_list[i];
             if (strncasecmp(it->last_command,"retr",4)==0)
               speed += it->current_dl_limiter.current_speed;
-	      }
+          }
         }
         if (convert) {
           bytes_to_unit(&speed,&c);
@@ -834,19 +837,19 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
     case COOKIE_TOTAL_UL:
       get_cookie_format(yytext,&padding);
       {
-		float speed;
-		wzd_context_t * it;
+        float speed;
+        wzd_context_t * it;
 
         /* iterate through users and sum */
         speed = 0.f;
-        for (i=0; i<HARD_USERLIMIT; i++)
+        for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
         {
-          if (context_list[i].magic == CONTEXT_MAGIC)
+          it = list_data(elmnt);
+          if (it->magic == CONTEXT_MAGIC)
           {
-		    it = &context_list[i];
             if (strncasecmp(it->last_command,"stor",4)==0)
               speed += it->current_ul_limiter.current_speed;
-	      }
+          }
         }
         if (convert) {
           bytes_to_unit(&speed,&c);
@@ -867,12 +870,13 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
     case COOKIE_CONNECTED_USERS:
       get_cookie_format(yytext,&padding);
       {
-		unsigned int count=0;
+        unsigned int count=0;
 
-        for (i=0; i<HARD_USERLIMIT; i++)
+        for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
         {
-          if (context_list[i].magic == CONTEXT_MAGIC)
-		    count++;
+          loop_context = list_data(elmnt);
+          if (loop_context->magic == CONTEXT_MAGIC)
+            count++;
         }
         snprintf(internalbuffer,IBUFSIZE,"%d",count);
       }
@@ -965,7 +969,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_dl_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_group->max_dl_speed);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"groupmaxdl");
@@ -987,7 +991,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_ul_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_group->max_ul_speed);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"groupmaxul");
@@ -1513,7 +1517,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_dl_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_user->max_dl_speed);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usermaxdl");
@@ -1535,7 +1539,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_user)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_user->max_ul_speed);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_user->max_ul_speed);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usermaxul");

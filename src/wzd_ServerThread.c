@@ -107,11 +107,17 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port);
 
 int server_switch_to_config(wzd_config_t *config);
 
+typedef struct {
+  int read_fd;
+  int write_fd;
+  wzd_context_t * context;
+} wzd_ident_context_t;
+
 /************ VARS *****************/
 wzd_config_t *	mainConfig;
 wzd_shm_t *	mainConfig_shm;
 
-wzd_context_t *	context_list;
+List *	context_list;
 wzd_shm_t *	context_shm;
 
 wzd_mutex_t	* limiter_mutex;
@@ -136,11 +142,11 @@ int runMainThread(int argc, char **argv)
 
 static void free_config(wzd_config_t * config);
 
-static unsigned int server_ident_list[3*HARD_USERLIMIT];
+static List server_ident_list;
 static int server_add_ident_candidate(unsigned int socket_accept_fd);
 static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
-static void server_ident_remove(int index);
+static void server_ident_remove(wzd_ident_context_t * ident_context);
 static void server_ident_timeout_check(void);
 
 static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);;
@@ -227,9 +233,23 @@ static void context_init(wzd_context_t * context)
   context->write_fct = (write_fct_t)clear_write;
 }
 
-static wzd_context_t * context_find_free(wzd_context_t * context_list)
+static wzd_context_t * context_find_free(List * context_list)
 {
   wzd_context_t * context=NULL;
+
+  wzd_mutex_lock(server_mutex);
+  context = wzd_malloc(sizeof(wzd_context_t));
+  context_init(context);
+  if (list_ins_next(context_list, NULL, context))
+  {
+    wzd_free(context);
+    context = NULL;
+  }
+  else {
+    context->magic = CONTEXT_MAGIC; /* set magic number inside lock ! */
+  }
+  wzd_mutex_unlock(server_mutex);
+#if 0
   int i=0;
 
   wzd_mutex_lock(server_mutex);
@@ -250,6 +270,7 @@ fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",
   }
   wzd_mutex_unlock(server_mutex);
 
+#endif /* 0 */
   return context;
 }
 
@@ -560,7 +581,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   unsigned short ident_port = 113;
   wzd_context_t * context;
   int context_index;
-  int i;
+  wzd_ident_context_t * ident_context;
 
   newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
   if (newsock <0)
@@ -592,6 +613,17 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     return 1;
   }
 
+  if (mainConfig->max_threads > 0 &&
+      list_size(context_list) >= mainConfig->max_threads) { /* too many connections */
+    /* XXX FIXME close socket without warning ! */
+    clear_write(newsock, "421 Too many connections\r\n", 25, 0, 2, NULL);
+    socket_close(newsock);
+    FD_UNREGISTER(newsock,"Client socket");
+    out_log(LEVEL_INFO,"Failed login from %s: too many connections\n",
+      inet_buf);
+    return 2;
+  }
+
   out_log(LEVEL_NORMAL,"Connection opened from %s (socket %d)\n", inet_buf,newsock);
 
   /* 1. create new context */
@@ -600,7 +632,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
-    return 2;
+    return 3;
   }
   context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
@@ -634,19 +666,21 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     out_log(LEVEL_INFO,"Could not get ident (error: %d %s)\n",errno,strerror(errno));
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
-    return 3;
+    return 4;
   }
   FD_REGISTER(fd_ident,"Ident socket"); /** \todo add more info to description: client number, etc */
 
   /* add connection to ident list */
-  i=0;
-  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) i += 3;
-  server_ident_list[i] = -1; /* read */
-  server_ident_list[i+1] = fd_ident; /* write */
-  server_ident_list[i+2] = context_index;
-  server_ident_list[i+3] = -1;
-  server_ident_list[i+4] = -1;
-  server_ident_list[i+5] = -1;
+  ident_context = malloc(sizeof(wzd_ident_context_t));
+  ident_context->read_fd = -1;
+  ident_context->write_fd = fd_ident;
+  ident_context->context = context;
+  if (list_ins_next(&server_ident_list, NULL, ident_context)) {
+    free(ident_context);
+    socket_close(newsock);
+    FD_UNREGISTER(newsock,"Client socket");
+    return 5;
+  }
 
   return 0;
 }
@@ -656,22 +690,24 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
  */
 static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd)
 {
-  int i=0;
+  ListElmt * elmnt;
+  wzd_ident_context_t * ident_context;
 
-  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) {
-    if (server_ident_list[i] != -1)
+  for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt)) {
+    ident_context = list_data(elmnt);
+    if (!ident_context) continue;
+    if (ident_context->read_fd != -1)
     {
-      FD_SET(server_ident_list[i],r_fds);
-      FD_SET(server_ident_list[i],e_fds);
-      *maxfd = MAX(*maxfd,server_ident_list[i]);
+      FD_SET(ident_context->read_fd,r_fds);
+      FD_SET(ident_context->read_fd,e_fds);
+      *maxfd = MAX(*maxfd,ident_context->read_fd);
     }
-    if (server_ident_list[i+1] != -1)
+    if (ident_context->write_fd != -1)
     {
-      FD_SET(server_ident_list[i+1],w_fds);
-      FD_SET(server_ident_list[i+1],e_fds);
-      *maxfd = MAX(*maxfd,server_ident_list[i+1]);
+      FD_SET(ident_context->write_fd,w_fds);
+      FD_SET(ident_context->write_fd,e_fds);
+      *maxfd = MAX(*maxfd,ident_context->write_fd);
     }
-    i += 3;
   }
 }
 
@@ -682,24 +718,29 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 {
   char buffer[1024];
   const char * ptr;
-  int i=0;
   wzd_context_t * context=NULL;
   unsigned short remote_port;
   unsigned short local_port;
   int fd_ident;
   int ret;
+  ListElmt * elmnt;
+  wzd_ident_context_t * ident_context;
 
-  while (server_ident_list[i] != -1 || server_ident_list[i+1] != -1) {
-    if (server_ident_list[i] != -1)
+  if (!server_ident_list.head) return;
+
+  for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt)) {
+    ident_context = list_data(elmnt);
+    if (!ident_context) continue;
+    if (ident_context->read_fd != -1)
     {
-      if (FD_ISSET(server_ident_list[i],e_fds)) { /* error */
+      if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
         out_log(LEVEL_NORMAL,"error reading ident response %d %s\n",errno,strerror(errno));
         goto continue_connection;
       } else
-      if (FD_ISSET(server_ident_list[i],r_fds)) { /* get ident */
-        fd_ident = server_ident_list[i];
-        context = &context_list[server_ident_list[i+2]];
+      if (FD_ISSET(ident_context->read_fd,r_fds)) { /* get ident */
+        fd_ident = ident_context->read_fd;
+        context = ident_context->context;
 
         /* 4- try to read response */
         ret = recv(fd_ident,buffer,sizeof(buffer),0);
@@ -740,22 +781,25 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 
 continue_connection:
         /* remove ident from list and accept login */
-        server_ident_remove(i/3);
+        server_ident_remove(ident_context);
+        elmnt = server_ident_list.head;
 
         server_login_accept(context);
+
+        if (!elmnt) return;
       }
     }
-    else if (server_ident_list[i+1] != -1)
+    else if (ident_context->write_fd != -1)
     {
-      fd_ident = server_ident_list[i+1];
-      if (FD_ISSET(server_ident_list[i+1],e_fds)) { /* error */
+      fd_ident = ident_context->write_fd;
+      if (FD_ISSET(ident_context->write_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
         out_log(LEVEL_NORMAL,"error sending ident request %d %s\n",errno,strerror(errno));
         goto continue_connection;
         ret = 0;
       }
-      if (FD_ISSET(server_ident_list[i+1],w_fds)) { /* write ident request */
-        context = &context_list[server_ident_list[i+2]];
+      if (FD_ISSET(ident_context->write_fd,w_fds)) { /* write ident request */
+        context = ident_context->context;
 
         /* 2- get local and remote ports */
 
@@ -783,46 +827,45 @@ continue_connection:
           goto continue_connection;
         }
         /* now we wait ident answer */
-        server_ident_list[i] = fd_ident;
-        server_ident_list[i+1] = -1;
+        ident_context->read_fd = fd_ident;
+        ident_context->write_fd = -1;
       }
     }
-    i += 3;
   }
 }
 
 /*
  * removes ident from list by replacing this entry by the last
  */
-static void server_ident_remove(int index)
+static void server_ident_remove(wzd_ident_context_t * ident_context)
 {
-  int i;
+  ListElmt * elmnt;
+  void * data;
 
-  index *= 3;
-  i = index;
-  while ((i < 3*HARD_USERLIMIT) && (server_ident_list[i] != -1 || server_ident_list[i+1] != -1))
-    i += 3;
-  if (i == 0) { /* only one entry */
-    server_ident_list[0] = -1;
-    server_ident_list[1] = -1;
-    server_ident_list[2] = -1;
+  if (!server_ident_list.head) return;
 
+  if (ident_context == server_ident_list.head->data)
+  {
+    list_rem_next(&server_ident_list, NULL, &data);
+    free(ident_context);
     return;
   }
-  i -= 3;
+
+  for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt))
+  {
+    if ( list_next(elmnt) && ident_context == list_next(elmnt)->data )
+    {
+      list_rem_next(&server_ident_list, elmnt, &data);
+      free(ident_context);
+      return;
+    }
+  }
+
+  /* we should never be here ! */
 
 #ifdef DEBUG
-  if (i < 0 || i >= 3*HARD_USERLIMIT)
-    server_crashed(-1);
+  server_crashed(-1);
 #endif
-
-  server_ident_list[index]   = server_ident_list[i];
-  server_ident_list[index+1] = server_ident_list[i+1];
-  server_ident_list[index+2] = server_ident_list[i+2];
-  server_ident_list[i]   = -1;
-  server_ident_list[i+1] = -1;
-  server_ident_list[i+2] = -1;
-
 }
 
 /*
@@ -966,19 +1009,22 @@ static void server_login_accept(wzd_context_t * context)
  */
 static void server_ident_timeout_check(void)
 {
-  int i;
+  ListElmt * elmnt;
+  wzd_ident_context_t * ident_context;
   wzd_context_t * context;
 
-  for (i=0; server_ident_list[i] != -1 || server_ident_list[i+1] != -1; i += 3)
+  for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt))
   {
-    context = &context_list[server_ident_list[i+2]];
+    ident_context = list_data(elmnt);
+    if (!ident_context) continue;
+    context = ident_context->context;
 
     if ( (server_time - context->login_time) > HARD_IDENT_TIMEOUT )
     {
-      if (server_ident_list[i]) socket_close(server_ident_list[i]);
-      if (server_ident_list[i+1]) socket_close(server_ident_list[i+1]);
+      if (ident_context->read_fd > 0) socket_close(ident_context->read_fd);
+      if (ident_context->write_fd > 0) socket_close(ident_context->write_fd);
       /* remove ident from list and accept login */
-      server_ident_remove(i/3);
+      server_ident_remove(ident_context);
 
       server_login_accept(context);
     }
@@ -1045,8 +1091,9 @@ void child_interrupt(int signum)
 /* \return 0 if ok, -1 if error, 1 if trying to kill myself */
 int kill_child(unsigned long pid, wzd_context_t * context)
 {
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
   int found=0;
-  int i;
 #ifndef WIN32
   int ret;
 #endif
@@ -1070,15 +1117,16 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   if (pid==context->pid_child) return 1;
 
   /* checks that pid is really one of the users */
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
+    loop_context = list_data(elmnt);
+    if (loop_context && loop_context->magic == CONTEXT_MAGIC && loop_context->pid_child == pid) { found = 1; break; }
   }
   if (!found) return -1;
 
 #ifdef _MSC_VER
   /* \todo XXX FIXME remove/fix test !! */
-  context_list[i].exitclient = 1;
+  loop_context->exitclient = 1;
 /*  ret = TerminateThread((HANDLE)pid,0);*/
 #else
   ret = pthread_cancel(pid);
@@ -1117,7 +1165,6 @@ int server_switch_to_config(wzd_config_t *config)
 {
   int fd;
   int backend_storage;
-  int i;
   unsigned int length=0, size_context, size_user, size_group;
   int ret;
 
@@ -1204,11 +1251,14 @@ int server_switch_to_config(wzd_config_t *config)
   context_list = context_shm->datazone;
 #endif
 
+/*  context_list = wzd_malloc(size_context);*/
+  context_list = wzd_malloc(sizeof(List));
+  config->user_list = wzd_malloc(size_user);
+  config->group_list = wzd_malloc(size_group);
+
+#if 0
   context_list = wzd_malloc(length);
 
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    context_init(context_list+i);
-  }
 #ifndef _MSC_VER
   config->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   config->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
@@ -1216,6 +1266,12 @@ int server_switch_to_config(wzd_config_t *config)
   config->user_list = (wzd_user_t*)((char*)context_list + size_context);
   config->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
 #endif
+#endif /* 0 */
+
+  list_init(context_list, wzd_free);
+/*  for (i=0; i<HARD_USERLIMIT; i++) {
+    context_init(context_list+i);
+  }*/
 
 #ifdef WIN32
   /* cygwin sux ... shared library variables are NOT set correctly
@@ -1441,9 +1497,7 @@ void serverMainThreadProc(void *arg)
 
 
   /* clear ident list */
-  server_ident_list[0] = -1;
-  server_ident_list[1] = -1;
-  server_ident_list[2] = -1;
+  list_init(&server_ident_list, free);
 
   /********* set up functions *******/
   if (command_list_init(&(mainConfig->command_list))) {
@@ -1538,8 +1592,11 @@ void serverMainThreadProc(void *arg)
       server_ident_timeout_check();
       if (FD_ISSET(mainConfig->mainSocket,&r_fds)) {
         if ((ret=server_add_ident_candidate(mainConfig->mainSocket))) {
-          out_log(LEVEL_NORMAL,"could not add connection for ident: %d (errno: %d: %s) :%s:%d\n",
-              ret, errno, strerror(errno), __FILE__, __LINE__);
+          if (ret != 1 /* global ip rejected */ &&
+              ret != 2 /* too many connections */
+             )
+            out_log(LEVEL_NORMAL,"could not add connection for ident: %d (errno: %d: %s) :%s:%d\n",
+                ret, errno, strerror(errno), __FILE__, __LINE__);
           continue; /* possible cause of error: global ip rejected */
 /*          serverMainThreadExit(-1);*/
           /* we abort, so we never returns */
@@ -1639,10 +1696,12 @@ void serverMainThreadExit(int retcode)
   /* kill all childs threads */
   if (context_list)
   {
-    unsigned int i;
-    for (i=0; i<HARD_USERLIMIT; i++)
+    ListElmt * elmnt;
+    wzd_context_t * loop_context;
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
-      context_list[i].exitclient = 1;
+      if ((loop_context = list_data(elmnt)))
+        loop_context->exitclient = 1;
     }
   }
 #endif
@@ -1680,6 +1739,8 @@ void serverMainThreadExit(int retcode)
   if (context_shm) wzd_shm_free(context_shm);
 #endif
 
+  list_destroy(&server_ident_list);
+  list_destroy(context_list);
   wzd_free(context_list);
 
   context_list = NULL;

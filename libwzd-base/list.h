@@ -26,18 +26,18 @@
 #define __LIST__
 
 typedef struct ListElmt_ {
-	void 			* data;
-	struct ListElmt_	* next;
+  void 			* data;
+  struct ListElmt_	* next;
 } ListElmt;
 
 typedef struct List {
-	int		size;
+  int		size;
 
-	int		(*test)(const void *val1, const void *val2);
-	void		(*destroy)(void *data);
+  int		(*test)(const void *val1, const void *val2);
+  void		(*destroy)(void *data);
 
-	ListElmt	*head;
-	ListElmt	*tail;
+  ListElmt	*head;
+  ListElmt	*tail;
 } List;
 
 /* INTERFACE */

@@ -550,7 +550,6 @@ int waitaccept(wzd_context_t * context)
   unsigned int sock;
   unsigned char remote_host[16];
   unsigned int remote_port;
-  int ret;
 
   {
     wzd_user_t * user;
@@ -585,8 +584,10 @@ int waitaccept(wzd_context_t * context)
   }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_PRIV)
+  if (context->ssl.data_mode == TLS_PRIV) {
+    int ret;
     ret = tls_init_datamode(sock, context);
+  }
 #endif
 
   socket_close (context->pasvsock);
@@ -2727,12 +2728,14 @@ int do_user(const char *username, wzd_context_t * context)
   /* count logins from user */
   if (me->num_logins)
   {
+    ListElmt * elmnt;
+    wzd_context_t * loop_context;
     int count=0;
-    int i;
-    for (i=0; i<HARD_USERLIMIT; i++)
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
-        if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
-          count++;
+      loop_context = list_data(elmnt);
+      if (loop_context && loop_context->magic == CONTEXT_MAGIC && context->userid == loop_context->userid)
+        count++;
     } /* for (i=0; i<HARD_USERLIMIT; i... */
 
     /* we substract 1, because the current login attempt is counted */
@@ -2746,16 +2749,19 @@ int do_user(const char *username, wzd_context_t * context)
 
   /* foreach group of user, check num_logins */
   {
+    ListElmt * elmnt;
+    wzd_context_t * loop_context;
     unsigned int i,j;
     wzd_group_t * group;
     wzd_user_t * user;
     unsigned int num_logins[HARD_DEF_GROUP_MAX];
     memset(num_logins,0,HARD_DEF_GROUP_MAX*sizeof(int));
     /* try to do it in one pass only */
-    for (i=0; i<HARD_USERLIMIT; i++)
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-        user = GetUserByID(context_list[i].userid);
+      loop_context = list_data(elmnt);
+      if (loop_context->magic == CONTEXT_MAGIC) {
+        user = GetUserByID(loop_context->userid);
         for (j=0; j<user->group_num; j++)
           num_logins[ user->groups[j] ]++;
       }

@@ -823,21 +823,22 @@ int killpath(const char *path, wzd_context_t * context)
 
   /* kill'em all ! */
   {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-        user = GetUserByID(context_list[i].userid);
+    ListElmt * elmnt;
+    wzd_context_t * ctxt;
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt)) {
+      ctxt = list_data(elmnt);
+      if (ctxt->magic == CONTEXT_MAGIC) {
+        user = GetUserByID(ctxt->userid);
         WZD_ASSERT( user != NULL );
-        if (context_list[i].userid == context->userid) { i++; continue; } /* no suicide */
-        if (checkpath_new(context_list[i].currentpath,test_realpath,&context_list[i]) == 0) {
+        if (ctxt->userid == context->userid) { continue; } /* no suicide */
+        if (checkpath_new(ctxt->currentpath,test_realpath,ctxt) == 0) {
           if (strncmp(path,test_realpath,length)==0) {
             found++;
-            kill_child_new(context_list[i].pid_child,context);
+            kill_child_new(ctxt->pid_child,context);
           }
         }
       }
-      i++;
-    }
+    } /* for all contexts */
   }
 
   free(test_realpath);

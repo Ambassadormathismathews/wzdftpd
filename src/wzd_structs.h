@@ -108,7 +108,7 @@ typedef unsigned long wzd_perm_t;
  */
 typedef struct limiter
 {
-  unsigned int maxspeed;
+  u32_t maxspeed;
 #ifndef _MSC_VER
   struct timeval current_time;
 #else
@@ -199,7 +199,7 @@ typedef struct {
 /** @brief User definition
  */
 typedef struct {
-  unsigned int          uid;
+  u32_t                 uid;
   char                  username[HARD_USERNAME_LENGTH];
   char			userpass[MAX_PASS_LENGTH];
   char                  rootpath[WZD_MAX_PATH];
@@ -209,8 +209,8 @@ typedef struct {
   time_t	        max_idle_time;
   wzd_perm_t            userperms;      /**< @brief default permissions */
   char                  flags[MAX_FLAGS_NUM];
-  unsigned long         max_ul_speed;
-  unsigned long         max_dl_speed;   /**< @brief bytes / sec */
+  u32_t                 max_ul_speed;
+  u32_t                 max_dl_speed;   /**< @brief bytes / sec */
   unsigned short	num_logins;	/**< @brief number of simultaneous logins allowed */
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   wzd_stats_t		stats;
@@ -229,8 +229,8 @@ typedef struct {
   wzd_perm_t            groupperms;
   time_t		max_idle_time;
   unsigned short	num_logins;	/**< number of simultaneous logins allowed */
-  unsigned long         max_ul_speed;
-  unsigned long         max_dl_speed;
+  u32_t                 max_ul_speed;
+  u32_t                 max_dl_speed;
   unsigned int		ratio;
   char			ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
   char			defaultpath[WZD_MAX_PATH];
@@ -429,8 +429,9 @@ typedef enum {
 
 /** @brief Client-specific data
  */
-typedef struct {
+typedef struct _context_t {
   unsigned long	magic;
+
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
@@ -441,11 +442,11 @@ typedef struct {
   net_family_t  datafamily;
   unsigned long	pid_child;
   unsigned long	thread_id;
-  int	        portsock;
-  int	        pasvsock;
-  read_fct_t	read_fct;
-  write_fct_t	write_fct;
-  int	        dataport;
+  int           portsock;
+  int           pasvsock;
+  read_fct_t    read_fct;
+  write_fct_t   write_fct;
+  int           dataport;
   unsigned char dataip[16];
   unsigned long	resume;
   unsigned long	connection_flags;
@@ -524,8 +525,8 @@ typedef struct {
   unsigned char	ip[MAX_IP_LENGTH];
   unsigned char	dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;
-  unsigned long	pasv_low_range;
-  unsigned long	pasv_high_range;
+  u32_t         pasv_low_range;
+  u32_t         pasv_high_range;
   unsigned char	pasv_ip[16];
   int		login_pre_ip_check;
   wzd_ip_t	*login_pre_ip_allowed;
@@ -557,7 +558,7 @@ typedef struct {
 } wzd_config_t;
 
 extern wzd_config_t *	mainConfig;
-extern wzd_context_t *	context_list;
+extern List * context_list;
 
 /************************ LIST ****************************/
 

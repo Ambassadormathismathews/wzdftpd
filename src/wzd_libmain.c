@@ -37,7 +37,7 @@
 #endif /* WZD_USE_PCH */
 
 wzd_config_t *  mainConfig;
-wzd_context_t * context_list;
+List * context_list;
 static int _wzd_server_uid;
 
 wzd_config_t * getlib_mainConfig(void)
@@ -46,10 +46,10 @@ wzd_config_t * getlib_mainConfig(void)
 void setlib_mainConfig(wzd_config_t *c)
 { mainConfig = c; }
 
-wzd_context_t * getlib_contextList(void)
+List * getlib_contextList(void)
 { return context_list; }
 
-void setlib_contextList(wzd_context_t *c)
+void setlib_contextList(List *c)
 { context_list = c; }
 
 int getlib_server_uid(void)

@@ -102,11 +102,11 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcasecmp(varname,"pasv_low")==0) {
-    snprintf(data,datalength,"%lu",config->pasv_low_range);
+    snprintf(data,datalength,"%u",config->pasv_low_range);
     return 0;
   }
   if (strcasecmp(varname,"pasv_high")==0) {
-    snprintf(data,datalength,"%lu",config->pasv_high_range);
+    snprintf(data,datalength,"%u",config->pasv_high_range);
     return 0;
   }
   if (strcasecmp(varname,"port")==0) {
@@ -162,6 +162,13 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
       return 0;
     }
   }
+  if (strcasecmp(varname,"max_threads")==0) {
+    ul = strtoul(data,&ptr,0);
+    if (ptr && *ptr == '\0') {
+      config->max_threads = ul;
+      return 0;
+    }
+  }
   if (strcasecmp(varname,"max_ul")==0) {
     ul = strtoul(data,&ptr,0);
     if (ptr && *ptr == '\0') {
@@ -212,11 +219,11 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     return 0;
   }
   if (strcasecmp(varname,"max_dl")==0) {
-    snprintf(data,datalength,"%lu",user->max_dl_speed);
+    snprintf(data,datalength,"%u",user->max_dl_speed);
     return 0;
   }
   if (strcasecmp(varname,"max_ul")==0) {
-    snprintf(data,datalength,"%lu",user->max_ul_speed);
+    snprintf(data,datalength,"%u",user->max_ul_speed);
     return 0;
   }
   if (strcasecmp(varname,"credits")==0) {
@@ -549,11 +556,11 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
     return 0;
   }
   if (strcasecmp(varname,"max_dl")==0) {
-    snprintf(data,datalength,"%lu",group->max_dl_speed);
+    snprintf(data,datalength,"%u",group->max_dl_speed);
     return 0;
   }
   if (strcasecmp(varname,"max_ul")==0) {
-    snprintf(data,datalength,"%lu",group->max_ul_speed);
+    snprintf(data,datalength,"%u",group->max_ul_speed);
     return 0;
   }
   if (strcasecmp(varname,"name")==0) {

@@ -605,11 +605,13 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
  */
 int do_site_grpkill(char *command_line, wzd_context_t * context)
 {
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
   char * ptr;
   char * groupname;
   int ret;
   wzd_group_t * group;
-  int i,found=0;
+  int found=0;
   wzd_user_t * user, * me;
 
   me = GetUserByID(context->userid);
@@ -625,13 +627,14 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC) {
-      user = GetUserByID(context_list[i].userid);
+    loop_context = list_data(elmnt);
+    if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
+      user = GetUserByID(loop_context->userid);
       if (strcmp(me->username,user->username) && is_user_in_group(user,group->gid)) {
         found=1;
-        kill_child(context_list[i].pid_child,context);
+        kill_child(loop_context->pid_child,context);
       }
     }
   }

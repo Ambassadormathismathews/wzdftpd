@@ -1,7 +1,7 @@
 
 noinst_LTLIBRARIES = libwzd_base.la
 
-libwzd_base_ladir = ${e_prefix}/include/wzdftpd
+libwzd_base_ladir = ${e_prefix}/include/wzdftpd/libwzd-base
 
 noinst_HEADERS = \
 	wzd_strtok_r.h

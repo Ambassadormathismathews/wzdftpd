@@ -154,7 +154,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   {
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
     return 1;
-  } 
+  }
   ret = lstat(filename,&statbuf);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
@@ -227,7 +227,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 
   dlclose(handle);
 /*  strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);*/
-  
+
   return 0;
 }
 
@@ -265,7 +265,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   {
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
     return 1;
-  } 
+  }
 
   /* test dlopen */
   handle = dlopen(filename,DL_ARG);
@@ -660,7 +660,9 @@ int backend_commit_changes(const char *backend)
 
 int backend_inuse(const char *backend)
 {
-  int count, i;
+  int count;
+  ListElmt * elmnt;
+  wzd_context_t * context;
   /* unusually, if backend is not loaded it is not in use ... so no error here */
   if (!mainConfig->backend.handle) {
     return -1;
@@ -671,8 +673,9 @@ int backend_inuse(const char *backend)
 
   /* count user logged */
   count = 0;
-  for (i=0; i<HARD_USERLIMIT; i++) {
-    if (context_list[i].magic == CONTEXT_MAGIC) {
+  for (elmnt=list_head(context_list); elmnt != NULL; elmnt = list_next(elmnt)) {
+    context = list_data(elmnt);
+    if (context->magic == CONTEXT_MAGIC) {
       count++;
     }
   }
@@ -729,14 +732,16 @@ static int _backend_check_function(void * handle, const char *name, const char *
 
 static int _trigger_user_max_dl(wzd_user_t * user)
 {
-  int i;
+  ListElmt * el;
+  wzd_context_t * context;
 
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (el = list_head(context_list); el != NULL; el = list_next(el))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC &&
-        context_list[i].userid == user->uid)
+    context = list_data(el);
+    if (context->magic == CONTEXT_MAGIC &&
+        context->userid == user->uid)
     {
-      context_list[i].current_dl_limiter.maxspeed = user->max_dl_speed;
+      context->current_dl_limiter.maxspeed = user->max_dl_speed;
     }
   }
 
@@ -745,14 +750,16 @@ static int _trigger_user_max_dl(wzd_user_t * user)
 
 static int _trigger_user_max_ul(wzd_user_t * user)
 {
-  int i;
+  ListElmt * el;
+  wzd_context_t * context;
 
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (el = list_head(context_list); el != NULL; el = list_next(el))
   {
-    if (context_list[i].magic == CONTEXT_MAGIC &&
-        context_list[i].userid == user->uid)
+    context = list_data(el);
+    if (context->magic == CONTEXT_MAGIC &&
+        context->userid == user->uid)
     {
-      context_list[i].current_ul_limiter.maxspeed = user->max_ul_speed;
+      context->current_ul_limiter.maxspeed = user->max_ul_speed;
     }
   }
 

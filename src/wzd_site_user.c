@@ -1323,17 +1323,18 @@ int do_site_kick(char *command_line, wzd_context_t * context)
 
   /* kill'em all ! */
   {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-        test_username = GetUserByID(context_list[i].userid)->username;
+    ListElmt * elmnt;
+    wzd_context_t * loop_context;
+    for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
+      loop_context = list_data(elmnt);
+      if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
+        test_username = GetUserByID(loop_context->userid)->username;
         if (strcmp(username,test_username)==0) {
           found = 1;
-          kill_child(context_list[i].pid_child,context);
+          kill_child(loop_context->pid_child,context);
         }
       }
-      i++;
-    }
+    } /* for all contexts */
   }
   if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }

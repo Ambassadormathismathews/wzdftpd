@@ -194,7 +194,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   }
   c->next_cache = global_cache;
   global_cache = c;
-  
+
   return cache;
 }
 
@@ -239,7 +239,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
     FD_UNREGISTER(c->fd,"Cached file");
     c->fd = -1;
   }
-  
+
   return cache;
 
 }
@@ -406,7 +406,7 @@ void wzd_cache_close(wzd_cache_t * c)
     /** \bug XXX FIXME possible leak here if big file, fd is not closed */
  /*   close( c->fd );
     free(c);*/
-  } 
+  }
 }
 
 void wzd_cache_purge(void)
@@ -520,7 +520,7 @@ wzd_user_t * usercache_add(wzd_user_t * user)
 wzd_user_t * usercache_get( predicate_user_t p, void * arg )
 {
   unsigned int i;
-  
+
   if (!cache_user_pool) return NULL;
 
   for (i=0; i < HARD_DEF_USER_MAX; i++) {
@@ -539,7 +539,7 @@ void usercache_invalidate( predicate_user_t p, void * arg )
   unsigned int i;
 
   if (!arg) return;
-  
+
   for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] != '\0') {
       /* test entry */
@@ -612,7 +612,7 @@ void groupcache_invalidate( predicate_group_t p, void * arg )
   unsigned int i;
 
   if (!arg) return;
-  
+
   for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_group_pool[i].groupname[0] != '\0') {
       /* test entry */
