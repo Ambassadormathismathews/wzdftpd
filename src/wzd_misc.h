@@ -93,6 +93,9 @@ unsigned long right_text2word(const char * text);
 /* dst can be composed of wildcards */
 int my_str_compare(const char * src, const char *dst);
 
+/* lower only characters in A-Z ! */
+void ascii_lower(char * s, unsigned int length);
+
 /* IP allowing */
 int ip_add(wzd_ip_t **list, const char *newip);
 int ip_inlist(wzd_ip_t *list, const char *ip);

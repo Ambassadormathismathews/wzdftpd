@@ -79,17 +79,6 @@
 
 #define BUFFER_LEN	4096
 
-static inline void _ascii_lower(char * s, unsigned int length)
-{
-  register int i=0;
-  while (i<length) {
-    if (s[i] >= 'A' && s[i] <= 'Z') {
-      s[i] |= 0x20;
-    }
-    i++;
-  }
-}
-
 /*************** identify_token **********************/
 
 int identify_token(char *token)
@@ -97,7 +86,7 @@ int identify_token(char *token)
   unsigned int length;
   if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
-  _ascii_lower(token,length);
+  ascii_lower(token,length);
 /* TODO order the following by probability order */
   if (strcmp("user",token)==0)
     return TOK_USER;

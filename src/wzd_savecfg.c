@@ -185,7 +185,7 @@ static void save_logging (FILE *file)
   fprintf( file, "\n");
   fprintf( file, "# if you prefer syslog (default: yes, except for cygwin)\n");
   fprintf( file, "#use_syslog = 1\n");
-  fprintf( file, "use_syslog = %d\n", CFG_GET_USE_SYSLOG(mainConfig)?1:0);
+  fprintf( file, "use_syslog = %d\n", CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)?1:0);
   fprintf( file, "\n");
   fprintf( file, "# log file for transfered files (default: do not log)\n");
   if (mainConfig->xferlog_name)
@@ -255,7 +255,7 @@ static void save_denyaccessfilesuploaded (FILE *file)
   fprintf( file, "# if you say 1 here, users trying to download file whereas\n");
   fprintf( file, "# the file is being uploaded will be denied\n");
   fprintf( file, "deny_access_files_uploaded = %d\n",
-      CFG_GET_DENY_ACCESS_FILES_UPLOADED(mainConfig)?1:0);
+      CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED)?1:0);
   fprintf( file, "\n");
 }
 
@@ -265,7 +265,7 @@ static void save_hidedottedfiles (FILE *file)
   fprintf( file, "# hide_dotted_files (default: 0)\n");
   fprintf( file, "# hide files beggining by a '.'\n");
   fprintf( file, "hide_dotted_files = %d\n",
-      CFG_GET_HIDE_DOTTED_FILES(mainConfig)?1:0);
+      CFG_GET_OPTION(mainConfig,CFG_OPT_HIDE_DOTTED_FILES)?1:0);
   fprintf( file, "\n");
 }
 
@@ -289,6 +289,13 @@ static void save_shmkey (FILE *file)
   fprintf( file, "# shm_key: use for share memory (default: 0x1331c0d3)\n");
   fprintf( file, "#shm_key = 0x2442c0d3\n");
   fprintf( file, "shm_key = 0x%08x\n", mainConfig->shm_key);
+  fprintf( file, "\n");
+  fprintf( file, "# force_shm_cleanup: server will always try to delete shm if existing (default: 0)\n");
+  fprintf( file, "# WARNING: if you enable this and a server really exists, ...\n");
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_FORCE_SHM_CLEANUP))
+    fprintf( file, "force_shm_cleanup = 1\n");
+  else
+    fprintf( file, "#force_shm_cleanup = 1\n");
   fprintf( file, "\n");
 }
 

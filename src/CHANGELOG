@@ -1,3 +1,9 @@
+# Oct, 27 2003
+- Try to search config file in path given in ./configure
+- bugfix: erasing server options after setting default values ...
+- option to force shm cleanup if existing when starting
+- bugfix: syslog was not used even if enabling it
+
 #--- cvs commit TAG: rel-0-1
 # Oct, 20 2003
 - added periodic commit of backend

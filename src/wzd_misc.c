@@ -468,11 +468,11 @@ int is_hidden_file(const char *filename)
   ptr = strrchr(filename,'/');
   if (ptr) {
     if (strcasecmp(ptr+1,HARD_PERMFILE)==0) return 1;
-    if (*(ptr+1)=='.' && CFG_GET_HIDE_DOTTED_FILES(mainConfig)) return 1;
+    if (*(ptr+1)=='.' && CFG_GET_OPTION(mainConfig,CFG_OPT_HIDE_DOTTED_FILES)) return 1;
     if (mainConfig->dir_message[0]!='\0' && strcasecmp(ptr+1,mainConfig->dir_message)==0) return 1;
   } else {
     if (strcasecmp(filename,HARD_PERMFILE)==0) return 1;
-    if (filename[0]=='.' && CFG_GET_HIDE_DOTTED_FILES(mainConfig)) return 1;
+    if (filename[0]=='.' && CFG_GET_OPTION(mainConfig,CFG_OPT_HIDE_DOTTED_FILES)) return 1;
     if (mainConfig->dir_message[0]!='\0' && strcasecmp(filename,mainConfig->dir_message)==0) return 1;
   }
   return 0;
@@ -901,6 +901,18 @@ int my_str_compare(const char * src, const char *dst)
   return 0;
 }
   
+/* lower only characters in A-Z ! */
+void ascii_lower(char * s, unsigned int length)
+{
+  register int i=0;
+  while (i<length) {
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      s[i] |= 0x20;
+    }
+    i++;
+  }
+}
+
 
 int ip_inlist(wzd_ip_t *list, const char *ip)
 {

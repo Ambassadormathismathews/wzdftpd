@@ -63,7 +63,7 @@ void out_log(int level,const char *fmt,...)
 
   if (level >= mainConfig->loglevel) {
 
-    if (CFG_GET_USE_SYSLOG(mainConfig)) {
+    if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
       char buffer[1024];
       switch (level) {
       case LEVEL_CRITICAL:
@@ -160,7 +160,7 @@ void out_err(int level, const char *fmt,...)
 
   if (!mainConfig || level >= mainConfig->loglevel) {
 
-/*    if (CFG_GET_USE_SYSLOG(mainConfig)) {*/
+/*    if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {*/
     if (0) {
       char buffer[1024];
       switch (level) {

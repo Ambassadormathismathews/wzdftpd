@@ -240,7 +240,7 @@ int main(int argc, char **argv)
   fprintf(stderr,"\n");
   fprintf(stderr,"This is a beta release, in active development\n");
   fprintf(stderr,"Things may break from version to version\n");
-  fprintf(stderr,"Want stability ? Use a 0.1rc4 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"Want stability ? Use a 0.1 version. YOU WERE WARNED!\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");
@@ -278,12 +278,15 @@ int main(int argc, char **argv)
 
   /* find config file */
   if (stat(configfile_name,&s)) {
-    strcpy(configfile_name,"/etc/wzd.cfg");
+    strcpy(configfile_name,WZD_DEFAULT_CONF);
     if (stat(configfile_name,&s)) {
-      strcpy(configfile_name,"/etc/wzdftpd/wzd.cfg");
+      strcpy(configfile_name,"/etc/wzd.cfg");
       if (stat(configfile_name,&s)) {
-	out_err(LEVEL_CRITICAL,"Could not find config file\n");
-	exit(1);
+        strcpy(configfile_name,"/etc/wzdftpd/wzd.cfg");
+        if (stat(configfile_name,&s)) {
+          out_err(LEVEL_CRITICAL,"Could not find config file\n");
+          exit(1);
+        }
       }
     }
   }
@@ -296,13 +299,17 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  /* TODO use values given in command-line ? */
+
   mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
     /* 2nd chance ? */
-#if 0
-    wzd_shm_cleanup(config->shm_key-1);
-    mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
-#endif
+    if (CFG_GET_OPTION(config,CFG_OPT_FORCE_SHM_CLEANUP)) {
+      out_err(LEVEL_NORMAL,"Forcing shm cleanup on request");
+      wzd_shm_cleanup(config->shm_key-1);
+      wzd_shm_cleanup(config->shm_key);
+      mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
+    }
     if (mainConfig_shm == NULL) {
       fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
       exit(1);
@@ -313,7 +320,7 @@ int main(int argc, char **argv)
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 
-  if (CFG_GET_USE_SYSLOG(mainConfig)) {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
     openlog("wzdftpd", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_FTP);
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 

@@ -82,6 +82,7 @@ typedef enum {
   CFG_DENY_ACCESS_FUP,
   CFG_DIR_MESSAGE,
   CFG_DYNAMIC_IP,
+  CFG_FORCE_SHM_CLEANUP,
   CFG_HIDE_DOTTED_FILES,
   CFG_INTERNAL_SFV,
   CFG_IP,
@@ -117,7 +118,7 @@ typedef enum {
   CFG_UNKNOWN
 } wzd_config_token_t;
 
-unsigned int cfg_is_keyword(const char *word);
+unsigned int cfg_is_keyword(char *word);
 
 int mylineno=0;
 
@@ -198,48 +199,50 @@ include		BEGIN(incl);
 
 %%
 
-unsigned int cfg_is_keyword(const char *word)
+unsigned int cfg_is_keyword(char *word)
 {
+  ascii_lower(word,strlen(word));
   /* order IS important for some keywords (site) */
-  if (!strcasecmp(word,"backend")) return CFG_BACKEND;
-  if (!strncasecmp(word,"backend_param_",strlen("backend_param_")))
+  if (!strcmp(word,"backend")) return CFG_BACKEND;
+  if (!strncmp(word,"backend_param_",strlen("backend_param_")))
     return CFG_BACKEND_PARAM;
-  if (!strcasecmp(word,"cronjob")) return CFG_CRONJOB;
-  if (!strcasecmp(word,"cscript")) return CFG_CSCRIPT;
-  if (!strcasecmp(word,"deny_access_files_uploaded")) return CFG_DENY_ACCESS_FUP;
-  if (!strcasecmp(word,"dir_message")) return CFG_DIR_MESSAGE;
-  if (!strcasecmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
-  if (!strcasecmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
-  if (!strcasecmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
-  if (!strcasecmp(word,"ip")) return CFG_IP;
-  if (!strcasecmp(word,"logfile")) return CFG_LOGFILE;
-  if (!strcasecmp(word,"loglevel")) return CFG_LOGLEVEL;
-  if (!strcasecmp(word,"login_pre_ip_allowed")) return CFG_LOG_PRE_IP_ALLOW;
-  if (!strcasecmp(word,"login_pre_ip_check")) return CFG_LOG_PRE_CHECK;
-  if (!strcasecmp(word,"login_pre_ip_denied")) return CFG_LOG_PRE_IP_DENY;
-  if (!strcasecmp(word,"max_dl_speed")) return CFG_MAX_DL_SPEED;
-  if (!strcasecmp(word,"max_threads")) return CFG_MAX_THREADS;
-  if (!strcasecmp(word,"max_ul_speed")) return CFG_MAX_UL_SPEED;
-  if (!strncasecmp(word,"message_",strlen("message_"))) return CFG_MESSAGE;
-  if (!strcasecmp(word,"module")) return CFG_MODULE;
-  if (!strncasecmp(word,"param_",strlen("param_"))) return CFG_PARAM;
-  if (!strcasecmp(word,"pasv_ip")) return CFG_PASV_IP;
-  if (!strcasecmp(word,"pasv_low_range")) return CFG_PASV_LOW;
-  if (!strcasecmp(word,"pasv_high_range")) return CFG_PASV_HIGH;
-  if (!strcasecmp(word,"pid_file")) return CFG_PID_FILE;
-  if (!strcasecmp(word,"port")) return CFG_PORT;
-  if (!strcasecmp(word,"section")) return CFG_SECTION;
-  if (!strcasecmp(word,"server_uid")) return CFG_SERVER_UID;
-  if (!strcasecmp(word,"shm_key")) return CFG_SHM_KEY;
-  if (!strcasecmp(word,"site_cmd")) return CFG_SITECMD;
-  if (!strncasecmp(word,"sitefile_",strlen("sitefile_"))) return CFG_SITEFILE;
-  if (!strncasecmp(word,"site_",strlen("site_"))) return CFG_SITE;
-  if (!strcasecmp(word,"tls_certificate")) return CFG_TLS_CERT;
-  if (!strcasecmp(word,"tls_cipher_list")) return CFG_TLS_CIPHER_LIST;
-  if (!strcasecmp(word,"tls_mode")) return CFG_TLS_MODE;
-  if (!strcasecmp(word,"use_syslog")) return CFG_USE_SYSLOG;
-  if (!strcasecmp(word,"vfs")) return CFG_VFS;
-  if (!strcasecmp(word,"xferlog")) return CFG_XFERLOG;
+  if (!strcmp(word,"cronjob")) return CFG_CRONJOB;
+  if (!strcmp(word,"cscript")) return CFG_CSCRIPT;
+  if (!strcmp(word,"deny_access_files_uploaded")) return CFG_DENY_ACCESS_FUP;
+  if (!strcmp(word,"dir_message")) return CFG_DIR_MESSAGE;
+  if (!strcmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
+  if (!strcmp(word,"force_shm_cleanup")) return CFG_FORCE_SHM_CLEANUP;
+  if (!strcmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
+  if (!strcmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
+  if (!strcmp(word,"ip")) return CFG_IP;
+  if (!strcmp(word,"logfile")) return CFG_LOGFILE;
+  if (!strcmp(word,"loglevel")) return CFG_LOGLEVEL;
+  if (!strcmp(word,"login_pre_ip_allowed")) return CFG_LOG_PRE_IP_ALLOW;
+  if (!strcmp(word,"login_pre_ip_check")) return CFG_LOG_PRE_CHECK;
+  if (!strcmp(word,"login_pre_ip_denied")) return CFG_LOG_PRE_IP_DENY;
+  if (!strcmp(word,"max_dl_speed")) return CFG_MAX_DL_SPEED;
+  if (!strcmp(word,"max_threads")) return CFG_MAX_THREADS;
+  if (!strcmp(word,"max_ul_speed")) return CFG_MAX_UL_SPEED;
+  if (!strncmp(word,"message_",strlen("message_"))) return CFG_MESSAGE;
+  if (!strcmp(word,"module")) return CFG_MODULE;
+  if (!strncmp(word,"param_",strlen("param_"))) return CFG_PARAM;
+  if (!strcmp(word,"pasv_ip")) return CFG_PASV_IP;
+  if (!strcmp(word,"pasv_low_range")) return CFG_PASV_LOW;
+  if (!strcmp(word,"pasv_high_range")) return CFG_PASV_HIGH;
+  if (!strcmp(word,"pid_file")) return CFG_PID_FILE;
+  if (!strcmp(word,"port")) return CFG_PORT;
+  if (!strcmp(word,"section")) return CFG_SECTION;
+  if (!strcmp(word,"server_uid")) return CFG_SERVER_UID;
+  if (!strcmp(word,"shm_key")) return CFG_SHM_KEY;
+  if (!strcmp(word,"site_cmd")) return CFG_SITECMD;
+  if (!strncmp(word,"sitefile_",strlen("sitefile_"))) return CFG_SITEFILE;
+  if (!strncmp(word,"site_",strlen("site_"))) return CFG_SITE;
+  if (!strcmp(word,"tls_certificate")) return CFG_TLS_CERT;
+  if (!strcmp(word,"tls_cipher_list")) return CFG_TLS_CIPHER_LIST;
+  if (!strcmp(word,"tls_mode")) return CFG_TLS_MODE;
+  if (!strcmp(word,"use_syslog")) return CFG_USE_SYSLOG;
+  if (!strcmp(word,"vfs")) return CFG_VFS;
+  if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
   return 0;
 }
 
@@ -291,10 +294,15 @@ int set_default_options(void)
 
   tempConfig.dir_message[0] = 0;
 
-#ifndef __CYGWIN__
-    CFG_SET_USE_SYSLOG(&tempConfig);
-#else
-    CFG_CLEAR_USE_SYSLOG(&tempConfig);
+  tempConfig.server_opts = 0;
+
+#if !defined(DEBUG)
+#if !defined(__CYGWIN__)
+    CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
+#endif /* __CYGWIN__ */
+#else /* DEBUG */
+printf("Clearing option syslog\n");
+    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif
 
 /*  tempConfig.logfilename = malloc(256);
@@ -343,8 +351,6 @@ int set_default_options(void)
   tempConfig.shm_key = 0x1331c0d3;
 
   memset(tempConfig.pasv_ip,0,4);
-
-  tempConfig.server_opts = 0;
 
   return 0;
 }
@@ -624,9 +630,9 @@ int cfg_read_deny_access_fup(void)
     return 1;
 
   if (l)
-    CFG_SET_DENY_ACCESS_FILES_UPLOADED(&tempConfig);
+    CFG_SET_OPTION(&tempConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
   else
-    CFG_CLEAR_DENY_ACCESS_FILES_UPLOADED(&tempConfig);
+    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
 
   return 0;
 }
@@ -709,6 +715,37 @@ int cfg_read_dynamic_ip(void)
   return 0;
 }
 
+/* FORCE_SHM_CLEANUP (integer)
+*/
+int cfg_read_force_shm_cleanup(void)
+{
+  unsigned int token;
+  unsigned long l;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'force_shm_cleanup = 0|1'\n");
+    return 1;
+  }
+
+  if( (token=yylex()) != CFG_NUM ) {
+    out_err(LEVEL_HIGH,"line should be 'force_shm_cleanup = 0|1'\n");
+    return 1;
+  }
+
+  errno = 0;
+  l = strtoul(yytext,(char**)NULL, 0);
+  if (errno==ERANGE)
+    return 1;
+
+  if (l)
+    CFG_SET_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
+  else
+    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
+
+  return 0;
+}
+
 /* HIDE_DOTTED_FILES (integer)
 */
 int cfg_read_hide_dotted_files(void)
@@ -733,9 +770,9 @@ int cfg_read_hide_dotted_files(void)
     return 1;
 
   if (l)
-    CFG_SET_HIDE_DOTTED_FILES(&tempConfig);
+    CFG_SET_OPTION(&tempConfig,CFG_OPT_HIDE_DOTTED_FILES);
   else
-    CFG_CLEAR_HIDE_DOTTED_FILES(&tempConfig);
+    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_HIDE_DOTTED_FILES);
 
   return 0;
 }
@@ -1682,9 +1719,9 @@ int cfg_read_use_syslog(void)
     return 1;
 
   if (l)
-    CFG_SET_USE_SYSLOG(&tempConfig);
+    CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
   else
-    CFG_CLEAR_USE_SYSLOG(&tempConfig);
+    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 
   return 0;
 }
@@ -1857,6 +1894,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_DYNAMIC_IP:
       ret = cfg_read_dynamic_ip();
+      break;
+    case CFG_FORCE_SHM_CLEANUP:
+      ret = cfg_read_force_shm_cleanup();
       break;
     case CFG_HIDE_DOTTED_FILES:
       ret = cfg_read_hide_dotted_files();

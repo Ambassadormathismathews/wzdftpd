@@ -16,8 +16,8 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.1, pollux@wzdftpd.net)
-AM_INIT_AUTOMAKE(wzdftpd,0.1,no-define)
+AC_INIT(wzdftpd, 0.2cvs, pollux@wzdftpd.net)
+AM_INIT_AUTOMAKE(wzdftpd,0.2cvs,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -207,6 +207,12 @@ BUILDNUM="`date +\"%Y%m%d\"`"
 e_prefix=`echo $prefix | sed -e 's|NONE|/usr/local|'`
 e_sysconfdir=`echo $sysconfdir | sed -e "s|\\${prefix}|$e_prefix|"`
 e_datadir=`echo $datadir | sed -e "s|\\${prefix}|$e_prefix|"`
+
+default_config=$e_sysconfdir/wzd.cfg
+AC_DEFINE_UNQUOTED(WZD_DEFAULT_CONF,"$default_config")
+
+AH_TEMPLATE([WZD_DEFAULT_CONF],
+            [Default config file.])
 
 AC_SUBST(e_prefix)
 AC_SUBST(e_datadir)

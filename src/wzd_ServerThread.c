@@ -315,7 +315,7 @@ void server_restart(int signum)
   }
 
   /* 5. Re-open log files */
-  if ( !CFG_GET_USE_SYSLOG(mainConfig) )
+  if ( !CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG) )
   {
     int fd;
     struct stat s;
@@ -1036,7 +1036,7 @@ static void free_config(wzd_config_t * config)
     close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     free(mainConfig->xferlog_name);
-  if (CFG_GET_USE_SYSLOG(mainConfig)) {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
     closelog();
   }
   if (mainConfig->logfile)

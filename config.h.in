@@ -256,6 +256,9 @@
 /* Build options. */
 #undef WZD_BUILD_OPTS
 
+/* Default config file. */
+#undef WZD_DEFAULT_CONF
+
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #undef YYTEXT_POINTER

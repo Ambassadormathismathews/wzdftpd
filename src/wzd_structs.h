@@ -431,18 +431,13 @@ typedef struct {
 #define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
 #define	CFG_OPT_HIDE_DOTTED_FILES		0x00000002
 #define	CFG_OPT_USE_SYSLOG			0x00000010
+#define CFG_OPT_FORCE_SHM_CLEANUP               0x00000100
 
-#define	CFG_CLEAR_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts &= ~CFG_OPT_DENY_ACCESS_FILES_UPLOADED
-#define	CFG_CLEAR_HIDE_DOTTED_FILES(c)	(c)->server_opts &= ~CFG_OPT_HIDE_DOTTED_FILES
-#define	CFG_CLEAR_USE_SYSLOG(c)	(c)->server_opts &= ~CFG_OPT_USE_SYSLOG
 
-#define	CFG_SET_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts |= CFG_OPT_DENY_ACCESS_FILES_UPLOADED
-#define	CFG_SET_HIDE_DOTTED_FILES(c)	(c)->server_opts |= CFG_OPT_HIDE_DOTTED_FILES
-#define	CFG_SET_USE_SYSLOG(c)	(c)->server_opts |= CFG_OPT_USE_SYSLOG
+#define CFG_CLEAR_OPTION(c,opt) (c)->server_opts &= ~(opt)
+#define CFG_SET_OPTION(c,opt)   (c)->server_opts |= (opt)
+#define CFG_GET_OPTION(c,opt)   ( (c)->server_opts & (opt) )
 
-#define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
-#define	CFG_GET_HIDE_DOTTED_FILES(c)	( (c)->server_opts & CFG_OPT_HIDE_DOTTED_FILES )
-#define	CFG_GET_USE_SYSLOG(c)	( (c)->server_opts & CFG_OPT_USE_SYSLOG )
 
 /** @brief Server config
  *

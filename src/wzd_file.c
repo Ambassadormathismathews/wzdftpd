@@ -831,7 +831,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
     else {
       if (is_locked) {
 /*	fprintf(stderr,"%s is locked, trying to read\n",filename);*/
-	if ( CFG_GET_DENY_ACCESS_FILES_UPLOADED(mainConfig) ) {
+	if ( CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED) ) {
 	  close(fd);
 	  return -1;
 	}

@@ -3,6 +3,10 @@
 - use 'rats','splint' for security audit
 
 '********'
+- sfv checker:
+  verify zip integrity
+  extract .diz info
+'********'
 - v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
   220- ... 220 command ok (easier !)
 '********'
@@ -38,10 +42,6 @@
 - implement recursive chown/chmod
 '********'
 - implement group flags
-'********'
-- sfv checker:
-  verify zip integrity
-  extract .diz info
 '********'
 - hide files should be configurable: hide = .* recycler recycled *ioftpd*
 '********'
