@@ -1,6 +1,9 @@
-# Nov, 7 2003
+# Nov, 07 2003
 - contributions from Cyprien Laplace:
 - added a "site group" command to administrate groups
+
+# Nov, 02 2003
+- bugfix: segfault when adding section failed
 
 # Oct, 27 2003
 - Try to search config file in path given in ./configure
@@ -522,7 +525,7 @@
 
 #--- cvs commit
 # Sep, 18 2002
-- clear_read function is now non-blocking (it timeout > 0)
+- clear_read function is now non-blocking (if timeout > 0)
 - tls_auth_cont is now non-blocking (TLS control connection)
 - tls_read and tls_write have been changed to handle correctly
     non-blocking I/O - all tls fct are now subject to timeouts
