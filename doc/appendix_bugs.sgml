@@ -69,7 +69,7 @@ to a url where the files are accessible to the developpers.
 
   <simplesect><title id="crash">Crashes</title>
   <para>
-    You have to run gdb inside gdb and send us the complete output or if
+    You have to run wzdftpd inside gdb and send us the complete output or if
 you have a core dump of the crash you can extract useful information from the
 Core file. Here's how:
   </para>

@@ -3,7 +3,8 @@
 
 <variablelist>
 
-<varlistentry id='site_addip'><term>site addip &lt;user&gt; &lt;ip&gt;</term>
+<varlistentry id='site_addip'><term>site addip &lt;user&gt; &lt;ip1&gt;
+[&lt;ip2&gt; ...]</term>
 <listitem>
 <para>Add IP to  user.
 <screen>site addip toto 127.*</screen>
@@ -224,7 +225,7 @@ site color
 </varlistentry>
 
 <varlistentry id='site_delip'><term>
-site delip &lt;user&gt; &lt;ip/slot&gt;
+site delip &lt;user&gt; &lt;ip1/slot1&gt; [&lt;ip2/slot2&gt; ...]
 </term>
 <listitem>
 <para>Delete ip from user. You can also use the ip number (given by
