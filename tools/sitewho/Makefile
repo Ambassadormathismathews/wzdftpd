@@ -1,5 +1,4 @@
-#EDIT ME !
-SSL_SUPPORT=1
+include ../../src/Makefile.config
 
 
 ifeq ($(PLATFORM),Linux)
@@ -8,12 +7,21 @@ else
 CC=gcc
 endif
 CFLAGS=-g -I../../src -Wall -Wstrict-prototypes -DSSL_SUPPORT=${SSL_SUPPORT}
-#LDFLAGS=-L../../src -lwzd -ldl -Wl,-rpath,../../src
+#LDFLAGS=-L../../src -lwzd -ldl -lpthread -Wl,-rpath,../../src  -Wl,-rpath,.
 
 all: sitewho
 
 debug: sitewho
 release: sitewho
+
+install: release
+	install --mode=755 sitewho $(DESTDIR)/tools
+
+installdebug: debug
+	install --mode=755 sitewho $(DESTDIR)-debug/tools
+
+uninstall: release
+	rm -f $(DESTDIR)/tools/sitewho
 
 clean:
 	@rm -f sitewho.o
