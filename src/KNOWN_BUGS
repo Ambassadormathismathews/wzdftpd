@@ -18,3 +18,9 @@ lftp pollux@127.0.0.1:/vfs2> ls ..
 drwxr-xr-x   2 pollux ftp          4096 Oct 19 16:50 vfs2
 drwxr-xr-x   3 pollux ftp          4096 Oct 12 13:58 TEST-SFV
 drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO
+
+- If a vfs is defined with the same name than an existing dir, LIST will show
+  both
+
+- rename dir1/dirname dir2/ does not work,
+  rename dir1/dirname dir2/dirname is ok - is it expected ?

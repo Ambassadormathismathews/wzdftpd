@@ -27,6 +27,8 @@
 
 #include "wzd_hardlimits.h"
 
+#include <sys/time.h> /* struct timeval */
+
 /*********************** ERRORS ***************************/
 
 typedef enum {

@@ -22,15 +22,29 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <dirent.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <wzd.h>
+/*#include "wzd.h"*/
+#include "wzd_structs.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_libmain.h"
+#include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
+
+#include "libwzd_sfv_zip.h"
 
 #define BUFFER_LEN      4096
 
@@ -1012,6 +1026,116 @@ void do_site_help_sfv(wzd_context_t * context)
   send_message_with_args(501,context,buffer);
 }
 
+/********************* do_site_zip *************************/
+/* called after a zip file is uploaded
+ * zip_file must be an ABSOLUTE path to a file
+ * retuns -1 if error
+ * 0 else
+ */
+int _internal_sfv_check_zip(const char *zip_file, wzd_context_t *context)
+{
+#ifdef HAVE_ZLIB
+
+#define UNZIP_BUFFER_SIZE       (8192)
+
+  zipFile s;
+  zip_global_info gi;
+  zip_file_info file_info;
+  int err;
+  unsigned int size_buf = UNZIP_BUFFER_SIZE;
+  unsigned char buf[UNZIP_BUFFER_SIZE];
+  char filename_inzip[256];
+  unsigned int i;
+
+  s = unzipOpen(zip_file);
+
+  err = unzipGetGlobalInfo(s,&gi);
+  if (err != ZIP_OK)
+  {
+    unzipClose(s);
+    return 1;
+  }
+
+  for (i=0; i<gi.number_entry; i++)
+  {
+    err = unzipGetCurrentFileInfo(s,&file_info,
+        filename_inzip,sizeof(filename_inzip),
+        NULL, 0, NULL, 0);
+    if (err != ZIP_OK)
+    {
+      unzipClose(s);
+      return 1;
+/*      fprintf(stderr,"error %d with zipfile in unzipGetCurrentFileInfo\n",err);*/
+/*      break;*/
+    }
+
+    if ( (err=unzipOpenCurrentFile(s)) != ZIP_OK) {
+/*      fprintf(stderr,"Error opening zip file ! (%d)\n",err);*/
+      unzipClose(s);
+      return 1;
+    } else {
+      do {
+        err = unzipReadCurrentFile(s,buf,size_buf);
+        if (err < 0)
+        {
+          unzipCloseCurrentFile(s);
+          unzipClose(s);
+          return 1;
+/*          fprintf(stderr,"Error %d with zipfile in unzipReadCurrentFile\n",err);*/
+/*          break;*/
+        }
+      } while (err > 0);
+      unzipCloseCurrentFile(s);
+    }
+
+    
+    if ((i+1) < gi.number_entry)
+    {
+      err = unzipGoToNextFile(s);
+      if (err != ZIP_OK)
+      {
+        unzipClose(s);
+        return 1;
+/*        fprintf(stderr,"error %d with zipfile in unzipGoToNextFile\n",err);*/
+/*        break;*/
+      }
+    }
+  }
+
+
+  unzipClose(s);
+#endif /* HAVE_ZLIB */
+  return 0;
+}
+
+int sfv_process_zip(const char *zip_file, wzd_context_t *context)
+{
+  char * bad;
+  int ret;
+  int fd;
+  unsigned int length;
+  struct stat s;
+
+  ret = _internal_sfv_check_zip(zip_file,context);
+
+  length = strlen(zip_file);
+  bad = malloc(length + 4);
+  strncpy(bad,zip_file,length);
+  memcpy(bad+length,".bad",4);
+  bad[length+4] = '\0';
+
+  if (ret)
+  {
+    fd = open(bad,O_WRONLY|O_CREAT,0666);
+  } else { /* if .bad exists, remove it */
+    if (!stat(bad,&s)) { unlink(bad); }
+  }
+
+  free(bad);
+
+  return ret;
+}
+
 /********************* do_site_sfv *************************/
 /* sfv: add / check / create
  * check sfv_name
@@ -1125,6 +1249,8 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   if (length >= 4) {
     if (strcasecmp(filename+length-4,".sfv")==0) /* Process a new sfv file */
       return sfv_process_new(filename,context);
+    if (strcasecmp(filename+length-4,".zip")==0) /* Process a zip file */
+      return sfv_process_zip(filename,context);
   }
   crc = 0;
   ret = sfv_find_sfv(filename,&sfv,&entry);

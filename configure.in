@@ -51,9 +51,11 @@ AC_PROG_MAKE_SET
 
 dnl not building static libraries makes compilation fail on *bsd !
 dnl AC_DISABLE_STATIC
-CXX=no
-#F77=no
-#GCJ=no
+if eval "test x$CYGWIN != xyes"; then
+  CXX=no
+  #F77=no
+  #GCJ=no
+fi
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
@@ -92,6 +94,22 @@ AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
 
 WZD_LIB_PGSQL
+
+# check for zlib (optional, used in module sfv)
+AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
+AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cvs_zlib_h=no])
+AC_MSG_CHECKING(zlib)
+if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes"
+then
+  #
+  # If both library and header were found, use them
+  #
+  AC_MSG_RESULT(ok)
+  AC_DEFINE(HAVE_ZLIB,1,"Define to 1 if you have the `zlib' library (-lz)")
+else
+  AC_MSG_RESULT(failed)
+fi
+AM_CONDITIONAL(USE_ZLIB, test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes")
 
 # Build options string
 WZD_BUILD_OPTS="threads"

@@ -4,7 +4,7 @@
 
 '********'
 - sfv checker:
-  verify zip integrity
+  verify zip integrity / OK
   extract .diz info
 '********'
 - v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
@@ -106,6 +106,8 @@ current objectives:
 
 ## NORMAL ##
 
+- special files auto-deleted after download, possibility to reserve
+  for one user only
 - multiple binds / restricted binds: bind to only specified ip(s)
 - change / add / remove vfs with site commands
 - global config flag to close server except for users having this flag

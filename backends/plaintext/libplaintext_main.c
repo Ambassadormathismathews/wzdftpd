@@ -124,7 +124,7 @@ int user_ip_add(wzd_user_t * user, const char *newip)
   int i;
 
   /* of course this should never happen :) */
-  if (user == NULL || newip==NULL);
+  if (user == NULL || newip==NULL) return -1;
 
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
@@ -144,7 +144,7 @@ int group_ip_add(wzd_group_t * group, const char *newip)
   int i;
 
   /* of course this should never happen :) */
-  if (group == NULL || newip==NULL);
+  if (group == NULL || newip==NULL) return -1;
 
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */

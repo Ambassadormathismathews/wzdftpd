@@ -1428,7 +1428,6 @@ int cfg_read_section(void)
 
   if (section_add(&tempConfig.section_list,sectionname,sectionmask,filter))
   {
-    free(sectionname);
     return 1;
   }
   return 0;
