@@ -13,11 +13,7 @@ PCFLAGS=-g -DDEBUG -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return 
 LDFLAGS=-shared -lcrypt
 WINLDFLAGS=-shared -lcrypt
 
-ifeq ($(PLATFORM),Linux)
-CC=gcc-3.2
-else
 CC=gcc
-endif
 
 .SUFFIXES: .c .o .do .po
 

@@ -1,11 +1,8 @@
 include ../../src/Makefile.config
 
 
-ifeq ($(PLATFORM),Linux)
-CC=gcc-3.2
-else
 CC=gcc
-endif
+
 CFLAGS=-g -I../../src -Wall -Wstrict-prototypes -DSSL_SUPPORT=${SSL_SUPPORT}
 #LDFLAGS=-L../../src -lwzd -ldl -lpthread -Wl,-rpath,../../src  -Wl,-rpath,.
 
