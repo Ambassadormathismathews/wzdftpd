@@ -24,8 +24,8 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/** \file libwzd.c
- *  \brief Routines to access wzdftpd from applications
+/** \file libwzd_tls.c
+ *  \brief SSL/TLS functions for libwzd
  */
 
 #ifdef HAVE_CONFIG_H

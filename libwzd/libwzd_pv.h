@@ -31,6 +31,10 @@
 #ifndef __LIBWZD_PV__
 #define __LIBWZD_PV__
 
+/*! \addtogroup libwzd
+ *  @{
+ */
+
 enum connection_mode {
   CNT_NONE=0,
   CNT_NAMEDPIPE,
@@ -54,7 +58,7 @@ struct libwzd_config {
   char * host;
   int port;
   char * user;
-  char * pass; /** \fixme we should avoid storing that in clear */
+  char * pass; /**< \bug we should avoid storing that in clear */
   int sock;
   struct libwzd_connector connector;
   unsigned long options;
@@ -71,6 +75,8 @@ extern struct libwzd_config * _config;
 #define snprintf        _snprintf
 
 #endif /* WIN32 */
+
+/*! @} */
 
 #endif /* __LIBWZD_PV__ */
 

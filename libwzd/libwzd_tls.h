@@ -31,6 +31,10 @@
 #ifndef __LIBWZD_TLS__
 #define __LIBWZD_TLS__
 
+/*! \addtogroup libwzd
+ *  @{
+ */
+
 int tls_init(void);
 int tls_deinit(void);
 
@@ -38,6 +42,8 @@ int tls_handshake(int);
 
 int tls_read(char *buffer, int length);
 int tls_write(const char *buffer, int length);
+
+/*! @} */
 
 #endif /* __LIBWZD_TLS__ */
 

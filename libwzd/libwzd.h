@@ -31,6 +31,11 @@
 #ifndef __LIBWZD__
 #define __LIBWZD__
 
+/*! \addtogroup libwzd
+ *  Library for wzdftpd
+ *  @{
+ */
+
 typedef struct {
   int code;
   char **data;
@@ -81,6 +86,8 @@ wzd_reply_t * wzd_send_message(const char *buffer, int length);
 # define strncasecmp strnicmp
 
 #endif /* WIN32 */
+
+/*! @} */
 
 #endif /* __LIBWZD__ */
 

@@ -31,7 +31,13 @@
 #ifndef __LIBWZD_SOCKET__
 #define __LIBWZD_SOCKET__
 
+/*! \addtogroup libwzd
+ *  @{
+ */
+
 int server_try_socket(void);
+
+/*! @} */
 
 #endif /* __LIBWZD_SOCKET__ */
 
