@@ -29,9 +29,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <io.h>
+#else
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,8 +44,10 @@
 
 #include <netdb.h>
 
-#include <fcntl.h> /* O_WRONLY */
 #include <syslog.h>
+#endif
+
+#include <fcntl.h> /* O_WRONLY */
 
 /* speed up compilation */
 #define SSL     void
@@ -86,6 +92,7 @@ void out_log(int level,const char *fmt,...)
 
   if (level >= mainConfig->loglevel) {
 
+#ifndef _MSC_VER
     if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
       char buffer[1024];
       switch (level) {
@@ -112,7 +119,9 @@ void out_log(int level,const char *fmt,...)
       vsnprintf(buffer,1023,fmt,argptr);
       syslog(prior,"%s",buffer);
 
-    } else { /* syslog */
+    } else
+#endif /* _MSC_VER */
+	{ /* syslog */
 
     char new_format[1024];
 
@@ -183,6 +192,7 @@ void out_err(int level, const char *fmt,...)
 
   if (!mainConfig || level >= mainConfig->loglevel) {
 
+#ifndef _MSC_VER
 /*    if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {*/
     if (0) {
       char buffer[1024];
@@ -210,7 +220,9 @@ void out_err(int level, const char *fmt,...)
       vsnprintf(buffer,1023,fmt,argptr);
       syslog(prior,"%s",buffer);
 
-    } else { /* syslog */
+    } else
+#endif /* _MSC_VER */
+	{ /* syslog */
 
 
       switch (level) {
@@ -253,7 +265,7 @@ void out_err(int level, const char *fmt,...)
 int xferlog_open(const char *filename, unsigned int filemode)
 {
   int fd;
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, filemode);
 #else /* ! BSD */
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, filemode);

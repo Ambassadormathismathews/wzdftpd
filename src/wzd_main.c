@@ -37,9 +37,14 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include <time.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+
+#include "../visual/gnu_regex_dist/regex.h"
+#else
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,10 +52,12 @@
 #include <arpa/inet.h>
 
 #include <regex.h>
-#include <errno.h>
-#include <fcntl.h>
 
 #include <syslog.h>
+#endif
+
+#include <errno.h>
+#include <fcntl.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -172,6 +179,7 @@ void cleanup_shm(void)
 
 int main_parse_args(int argc, char **argv)
 {
+#ifndef _MSC_VER
   int opt;
 
 
@@ -221,7 +229,7 @@ int main_parse_args(int argc, char **argv)
       return 1;
     }
   }
-
+#endif /* _MSC_VER */
   return 0;
 }
 
@@ -229,7 +237,6 @@ int main_parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-  int fd;
   int ret;
   int forkresult;
   wzd_config_t * config;
@@ -260,7 +267,11 @@ int main(int argc, char **argv)
   }
 
   if (!stay_foreground) {
+#ifndef _MSC_VER
     forkresult = fork();
+#else
+	forkresult = 0;
+#endif
 
     if ((int)forkresult == -1)
       out_err(LEVEL_CRITICAL,"Could not fork into background\n");
@@ -272,7 +283,7 @@ int main(int argc, char **argv)
   srand((int)(time(NULL)+0x13313043));
 
   /* not really usefull, but will also initialize var if not used :) */
-#ifndef __CYGWIN__
+#ifndef WIN32
   wzd_server_uid = geteuid();
 #endif
 
@@ -321,10 +332,14 @@ int main(int argc, char **argv)
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
+#ifndef _MSC_VER
     openlog("wzdftpd", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_FTP);
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
+#else
+	out_err(LEVEL_HIGH,"Syslog is NOT supported by platform !");
+#endif
   }
   else {
     if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
@@ -332,7 +347,6 @@ int main(int argc, char **argv)
       out_err(LEVEL_CRITICAL,"Could not open log file.\n");
       return 1;
     }
-    mainConfig->logfile = fdopen(fd,"a");
   }
 
 #ifdef SSL_SUPPORT

@@ -22,8 +22,17 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef HAVE_STRTOK_R
+#ifndef __WZD_STRTOULL__
+#define __WZD_STRTOULL__
 
-char * strtok_r(char *s, const char *delim, char **last);
+#define HAVE_STRTOULL 0 /* FIXME VISUAL */
 
-#endif
+#define i64_t	__int64 /* FIXME VISUAL */
+
+#if (!HAVE_STRTOULL )
+
+i64_t strtoull (const char *nptr, char **endptr, int baseignore);
+
+#endif /* HAVE_STRTOULL */
+
+#endif /* __WZD_STRTOULL__ */

@@ -22,7 +22,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #else
 #include <unistd.h>
@@ -69,7 +69,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   struct sockaddr_in6 sai6;
 #endif
   unsigned int c;
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   SOCKET sock;
 #else
   int sock;
@@ -81,7 +81,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   {
     struct hostent* host_info;
     // try to decode dotted quad notation
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
     if(!inet_aton(ip, &sai.sin_addr))
@@ -111,14 +111,14 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 
   c = 1;
 #ifndef WINSOCK_SUPPORT
-  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&c,sizeof(c));
+  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&c,sizeof(c));
 #endif
 
 /*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
 
 #if !defined(IPV6_SUPPORT)
   sai.sin_family = PF_INET;
-  sai.sin_port = htons(*port); /* any port */
+  sai.sin_port = htons((unsigned short)*port); /* any port */
 
   if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))==-1) {
 #ifdef __CYGWIN__
@@ -162,7 +162,7 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 /*************** socket_close ***************************/
 int socket_close(int sock)
 {
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   char acReadBuffer[256];
   int nNewBytes;
 
@@ -226,7 +226,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
     return -1;
   }
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   {
     unsigned long noBlock=1;
     ioctlsocket(sock,FIONBIO,&noBlock);
@@ -238,12 +238,17 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 #ifndef LINUX
 #ifndef WINSOCK_SUPPORT
 /* see lundftpd : socket.c for explanation */
-  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, &i, sizeof(i));
+  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, (char*)&i, sizeof(i));
 #endif
 #endif
 
 #if !defined(IPV6_SUPPORT)
+#ifndef _MSC_VER
   bcopy((const char*)&from.sin_addr.s_addr, (char*)remote_host, sizeof(unsigned long));
+#else
+  /* FIXME VISUAL memory zones must NOT overlap ! */
+  memcpy((char*)remote_host, (const char*)&from.sin_addr.s_addr, sizeof(unsigned long));
+#endif
   *remote_port = ntohs(from.sin_port);
 #else
   bcopy((const char*)&from.sin6_addr.s6_addr, (char*)remote_host, 16);
@@ -272,17 +277,17 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
   /* If we can't, just let the computer choose a port for us */
   sai.sin_family = AF_INET;
   getsockname(fd,(struct sockaddr *)&sai,&len);
-  sai.sin_port = htons(localport);
+  sai.sin_port = htons((unsigned short)localport);
 
 #ifndef WINSOCK_SUPPORT
-  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&on,sizeof(on));
+  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
 #endif
 
   /* attempt to bind the socket - if it doesn't work, it is not a problem */
   bind(sock,(struct sockaddr *)&sai,sizeof(sai));
 
   /* makes the connection */
-  sai.sin_port = htons(remote_port);
+  sai.sin_port = htons((unsigned short)remote_port);
   sai.sin_family = AF_INET;
   memcpy(&sai.sin_addr,&remote_host,sizeof(remote_host));
 
@@ -291,7 +296,7 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #ifndef LINUX
 #ifndef WINSOCK_SUPPORT
 /* see lundftpd : socket.c for explanation */
-  setsockopt(sock, SOL_SOCKET, SO_SNDLOWAT, &ret, sizeof(ret));
+  setsockopt(sock, SOL_SOCKET, SO_SNDLOWAT, (char*)&ret, sizeof(ret));
 #endif
 #endif
 

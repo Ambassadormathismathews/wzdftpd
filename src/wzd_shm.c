@@ -29,11 +29,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
 #include <sys/types.h>
+
+#ifdef _MSC_VER
+#include <windows.h>
+#else
+#include <unistd.h>
 #include <semaphore.h>
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -45,7 +49,7 @@
 
 #ifdef WZD_MULTITHREAD
 
-#if !defined(__CYGWIN__)
+#if !defined(WIN32)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif /* __CYGWIN__ */
@@ -54,33 +58,52 @@
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {
   wzd_sem_t sem;
+#ifndef WIN32
   sem = malloc(sizeof(sem_t));
   sem_init((sem_t*)sem,0,1);
+#else
+  sem = malloc(sizeof(CRITICAL_SECTION));
+  InitializeCriticalSection(sem);
+#endif
   return sem;
 }
 
 /** destroy sem */
 void wzd_sem_destroy(wzd_sem_t sem)
 {
+#ifndef WIN32
   sem_destroy((sem_t*)sem);
+#else
+  DeleteCriticalSection(sem);
+#endif
   free(sem);
 }
 
 /** locks a semaphore */
 int wzd_sem_lock(wzd_sem_t sem, int n)
 {
+#ifndef WIN32
   return sem_wait((sem_t*)sem);
+#else
+  EnterCriticalSection(sem);
+  return 0;
+#endif
 }
 
 /** unlocks a semaphore */
 int wzd_sem_unlock(wzd_sem_t sem, int n)
 {
+#ifndef WIN32
   return sem_post((sem_t*)sem);
+#else
+  LeaveCriticalSection(sem);
+  return 0;
+#endif
 }
 
 #endif /* WZD_MULTITHREAD */
 
-#ifdef __CYGWIN__
+#ifdef WIN32
 
 #ifndef WZD_MULTITHREAD
 /** create a semaphore */
@@ -194,7 +217,7 @@ void wzd_shm_cleanup(unsigned long key)
 }
 
 
-#else /* __CYGWIN__ */
+#else /* WIN32 */
 
 #include <sys/sem.h>
 
@@ -493,4 +516,4 @@ void wzd_shm_cleanup(unsigned long key)
 }
 
 
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */

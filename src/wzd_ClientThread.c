@@ -22,9 +22,21 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#ifdef WIN32
+#define        INET_ADDRSTRLEN         16
+#define        INET6_ADDRSTRLEN        46
+#endif
+
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+
+#ifdef __CYGWIN__
 #include <w32api/ws2tcpip.h>
+#endif
 
 #else
 
@@ -35,24 +47,21 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
-#ifdef __CYGWIN__
-#define        INET_ADDRSTRLEN         16
-#define        INET6_ADDRSTRLEN        46
-#endif
-
 #endif /* __CYGWIN__ && WINSOCK_SUPPORT */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+
+#ifndef _MSC_VER
+#include <unistd.h>
 #include <pthread.h>
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -198,7 +207,7 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
       ret = select(0,&fds,NULL,&efds,&tv);
 #else
       ret = select(sock+1,&fds,NULL,&efds,&tv);
@@ -243,7 +252,7 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
 	FD_SET(sock,&efds);
 	tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
 	ret = select(0,NULL,&fds,&efds,&tv);
 #else
 	ret = select(sock+1,NULL,&fds,&efds,&tv);
@@ -371,10 +380,16 @@ int check_timeout(wzd_context_t * context)
 
   /* reset global ul/dl counters */
   mainConfig->global_ul_limiter.bytes_transfered = 0;
+#ifndef _MSC_VER
   gettimeofday(&(mainConfig->global_ul_limiter.current_time),NULL);
   mainConfig->global_dl_limiter.bytes_transfered = 0;
   gettimeofday(&(mainConfig->global_dl_limiter.current_time),NULL);
-  
+#else
+  _ftime(&(mainConfig->global_ul_limiter.current_time));
+  mainConfig->global_dl_limiter.bytes_transfered = 0;
+  _ftime(&(mainConfig->global_dl_limiter.current_time));
+#endif
+
   /* check the timeout of control connection */
   t = time(NULL);
   delay = t - context->idle_time_start;
@@ -1408,7 +1423,11 @@ int do_retr(char *param, wzd_context_t * context)
   {*/
     context->current_dl_limiter.maxspeed = user->max_dl_speed;
     context->current_dl_limiter.bytes_transfered = 0;
+#ifndef _MSC_VER
     gettimeofday(&context->current_dl_limiter.current_time,NULL);
+#else
+    _ftime(&context->current_dl_limiter.current_time);
+#endif
 /*  }
   else
     context->current_dl_limiter.maxspeed = 0;*/
@@ -1579,7 +1598,11 @@ int do_stor(char *param, wzd_context_t * context)
   {*/
     context->current_ul_limiter.maxspeed = user->max_ul_speed;
     context->current_ul_limiter.bytes_transfered = 0;
+#ifndef WIN32 /* FIXME VISUAL */
     gettimeofday(&context->current_ul_limiter.current_time,NULL);
+#else
+    _ftime(&context->current_ul_limiter.current_time);
+#endif
 /*  }
   else
     context->current_ul_limiter.maxspeed = 0;*/
@@ -2357,10 +2380,12 @@ void * clientThreadProc(void *arg)
   sockfd = context->controlfd;
 	
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
+#ifndef _MSC_VER
 #ifdef WZD_MULTITHREAD
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
   pthread_cleanup_push((void (*) (void *))client_die, (void *) context);
 #endif /* WZD_MULTITHREAD */
+#endif
 
   ret = do_login(context);
 
@@ -2816,7 +2841,11 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	       * the reason is unknown, but seems to be link to network
 	       * (not lock)
 	       */
-      sleep(5);
+#ifndef _MSC_VER
+          sleep(5);
+#else
+		  Sleep(5000);
+#endif
 	      if (context->current_action.token == TOK_STOR) {
 		file_unlock(context->current_action.current_file);
 		file_close(context->current_action.current_file,context);
@@ -2833,7 +2862,11 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
               context->current_action.bytesnow = 0;
               context->current_action.token = TOK_UNKNOWN;
               data_close(context);
-      sleep(5);
+#ifndef _MSC_VER
+          sleep(5);
+#else
+		  Sleep(5000);
+#endif
 	    }
 	    ret = send_message(226,context);
 	    break;
@@ -2892,7 +2925,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 /*	Sleep(2000);*/
 
 #ifdef WZD_MULTITHREAD
+#ifndef _MSC_VER
       pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
+#endif
 #else /* WZD_MULTITHREAD */
       client_die(context);
 #endif /* WZD_MULTITHREAD */

@@ -22,8 +22,11 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -46,7 +49,6 @@
 #define Sleep(x)        usleep((x)*1000)
 
 #include <time.h>
-#include <sys/time.h>
 
 
 #include "wzd_hardlimits.h"

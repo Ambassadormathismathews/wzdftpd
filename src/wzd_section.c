@@ -23,15 +23,21 @@
  */
 
 #include <stdlib.h>
-#include <sys/time.h>	/* time_t (wzd_structs.h) */
 #include <sys/types.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include "../visual/gnu_regex_dist/regex.h"
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
 
+#include <regex.h>
+#endif
+
 #include <sys/stat.h>
 #include <string.h>	/* strdup */
-#include <regex.h>
 
 /* speed up compilation */
 #define SSL	void

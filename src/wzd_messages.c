@@ -22,7 +22,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #else
 #include <sys/types.h>
@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
 #include <fcntl.h> /* O_RDONLY */
 
@@ -243,8 +242,13 @@ int write_message_footer(int code, wzd_context_t * context)
     total /= 1024.f;
   }
 
+#ifndef _MSC_VER
   bytes_dl = (float)user->stats.bytes_dl_total;
   bytes_ul = (float)user->stats.bytes_ul_total;
+#else
+  bytes_dl = (float)(__int64)user->stats.bytes_dl_total;
+  bytes_ul = (float)(__int64)user->stats.bytes_ul_total;
+#endif
 
   bytes_to_unit(&bytes_dl,&unit_dl);
   bytes_to_unit(&bytes_ul,&unit_ul);
@@ -257,7 +261,11 @@ int write_message_footer(int code, wzd_context_t * context)
   }
 
   if (user->ratio) {
+#ifndef _MSC_VER
     bytes_credits = (float)user->credits;
+#else
+    bytes_credits = (float)(__int64)user->credits;
+#endif
     bytes_to_unit(&bytes_credits,&unit_credits);
     snprintf(buffer,2047,"%3d - %s[Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] - [Cred: %.2f %c] -\r\n",
       code,buf_section,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,

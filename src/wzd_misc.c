@@ -34,10 +34,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <direct.h>
+#include <io.h>
+#else
+#include <unistd.h>
 #include <sys/ioctl.h>
 
 #include <sys/types.h>
@@ -47,8 +53,10 @@
 
 #include <net/if.h>
 #include <netdb.h>
-#include <errno.h>
+
 #include <dirent.h>
+#endif
+
 #include <fcntl.h>
 #include <time.h>
 /* for intel compiler */
@@ -56,6 +64,7 @@
 # define __SWORD_TYPE   int
 #endif /* __INTEL_COMPILER */
 
+#ifndef _MSC_VER
 #include <sys/param.h>
 
 #ifdef BSD
@@ -64,6 +73,8 @@
 #else
 #include <sys/vfs.h> /* statfs */
 #endif
+#endif /* _MSC_VER */
+
 
 /* speed up compilation */
 #define SSL     void
@@ -76,7 +87,7 @@
 #include "wzd_messages.h"
 #include "wzd_ServerThread.h"
 
-#if defined(__CYGWIN__) || defined(BSD)
+#if defined(WIN32) || defined(BSD)
 #define LONGBITS  0x20
 #else
 /* needed  for LONGBITS */
@@ -202,7 +213,7 @@ int split_filename(const char *filename, char *path, char *stripped_filename,
 /** returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina)
 {
-#if BSD
+#if BSD || defined(_MSC_VER)
   return -1;
 #else
 /*  struct in_addr *ina = void_in;*/
@@ -357,6 +368,7 @@ static const char * inet_ntop6(const unsigned char *src, char *dst, socklen_t si
 /** returns info on device containing dir/file */
 int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_blocks, long *f_free)
 {
+#ifndef WIN32
   struct statfs fs;
 
   if (statfs(file,&fs)==0) {
@@ -368,6 +380,19 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
     if (f_free) *f_free = fs.f_bfree;
     return 0;
   }
+#else
+  struct _diskfree_t df;
+  unsigned int err;
+  unsigned int drive;
+
+  drive = 3; /* c: ?? TODO XXX FIXME */
+  err = _getdiskfree(drive, &df);
+  if (!err) {
+    if (f_free) *f_free = df.avail_clusters * df.sectors_per_cluster;
+	if (f_bsize) *f_bsize = df.bytes_per_sector;
+	if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
+  }
+#endif
   return -1;
 }
 
@@ -385,8 +410,17 @@ int _int_rename(const char * src, const char *dst)
     unsigned int length_src=2048;
     unsigned int length_dst=2048;
     char * ptr_src, * ptr_dst;
+#ifndef _MSC_VER
     DIR *dir;
     struct dirent *entr;
+#else
+    HANDLE dir;
+	WIN32_FIND_DATA fileData;
+	int finished;
+	char dirfilter[2048];
+#endif
+	const char *filename;
+
     ret = mkdir(dst,s.st_mode & 0xffff);
     ret = chmod(dst,s.st_mode & 0xffff);
     memset(buf_src,0,2048);
@@ -400,18 +434,48 @@ int _int_rename(const char * src, const char *dst)
     *ptr_src++ = '/'; /* no need to add '\0', the memset had already filled buffer with 0 */
     *ptr_dst++ = '/';
     /* TODO read dir and recurse function for all entries */
+#ifndef _MSC_VER
     if ((dir=opendir(src))==NULL) return -1;
     while ((entr=readdir(dir))!=NULL) {
+	  filename = entr->d_name;
       if (entr->d_name[0]=='.') {
-	if (strcmp(entr->d_name,".")==0 ||
-	    strcmp(entr->d_name,"..")==0)
-	  continue;
+	    if (strcmp(entr->d_name,".")==0 ||
+	      strcmp(entr->d_name,"..")==0)
+	    continue;
       }
-      strncpy(ptr_src,entr->d_name,length_src-1); /* FIXME check ret */
-      strncpy(ptr_dst,entr->d_name,length_dst-1); /* FIXME check ret */
+#else
+	snprintf(dirfilter,2048,"%s/*",src);
+	if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+
+	finished = 0;
+	while (!finished)
+	{
+	  filename = fileData.cFileName;
+      if (filename[0]=='.') {
+        if (strcmp(filename,".")==0 ||
+	    strcmp(filename,"..")==0)
+		{
+		  if (!FindNextFile(dirfilter,&fileData))
+		  {
+             if (GetLastError() == ERROR_NO_MORE_FILES)
+             finished = 1;
+		  }
+          continue;
+		}
+      }
+#endif
+      strncpy(ptr_src,filename,length_src-1); /* FIXME check ret */
+      strncpy(ptr_dst,filename,length_dst-1); /* FIXME check ret */
       ret = _int_rename(buf_src,buf_dst); /* FIXME check ret */
       *ptr_src = '\0';
       *ptr_dst = '\0';
+#ifdef _MSC_VER
+	  if (!FindNextFile(dirfilter,&fileData))
+	  {
+        if (GetLastError() == ERROR_NO_MORE_FILES)
+        finished = 1;
+	  }
+#endif
     }
     rmdir(src);
   } else
@@ -720,20 +784,30 @@ void format_message(int code, unsigned int length, char *buffer, ...)
 wzd_bw_limiter * limiter_new(int maxspeed)
 {
   wzd_bw_limiter *l_new;
+#ifndef _MSC_VER
   struct timezone tz;
+#endif
 
   l_new = malloc(sizeof(wzd_bw_limiter));
   l_new->maxspeed = maxspeed;
   l_new->bytes_transfered = 0;
+#ifndef _MSC_VER
   gettimeofday(&(l_new->current_time),&tz);
+#else
+  _ftime(&(l_new->current_time));
+#endif
 
   return l_new;
 }
 
 void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check)
 {
+#ifndef WIN32 /* FIXME VISUAL */
   struct timeval tv;
   struct timezone tz;
+#else
+  struct _timeb tb;
+#endif
   double elapsed;
   double pause_time;
   double rate_ratio;
@@ -750,9 +824,15 @@ wzd_sem_unlock(sem,1);
    * and determine how much time to wait */
 /*  if ( (l->bytes_transfered >= l->maxspeed) || force_check )
   {*/
+#ifndef _MSC_VER
     gettimeofday( &tv, &tz );
     elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
     elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
+#else
+	_ftime(&tb);
+    elapsed = (double) (tb.time - l->current_time.time);
+    elapsed += (double) (tb.millitm - l->current_time.millitm) / (double)1000;
+#endif
     if (elapsed==(double)0) elapsed=0.01;
 /*    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);*/
     l->current_speed = (float)((double)l->bytes_transfered / elapsed);
@@ -764,7 +844,11 @@ wzd_sem_unlock(sem,1);
   }
   rate_ratio = (double)bw_rate / (double)l->maxspeed;
   pause_time = (rate_ratio - (double)1)*elapsed;
+#ifndef _MSC_VER
   usleep ((unsigned long)(pause_time * (double)1000000));
+#else
+  Sleep((unsigned long)(pause_time * (double)1000));
+#endif
 /*  gettimeofday( &tv, &tz );
   l->current_time.tv_sec = tv.tv_sec;
   l->current_time.tv_usec = tv.tv_usec;

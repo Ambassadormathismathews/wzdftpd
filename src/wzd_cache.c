@@ -22,17 +22,25 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined  __CYGWIN__ && defined WINSOCK_SUPPORT)
 #include <winsock2.h>
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _MSC_VER
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
+
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -42,16 +50,6 @@
 /* speed up compilation */
 #define SSL     void
 #define SSL_CTX void
-
-/* struct in_addr */
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
-#include <winsock2.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
 
 #include "wzd_structs.h"
 #include "wzd_log.h"

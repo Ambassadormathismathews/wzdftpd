@@ -22,7 +22,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined __CYGWIN__ && defined WINSOCK_SUPPORT)
 #include <winsock2.h>
 #else
 #include <unistd.h>
@@ -48,7 +48,7 @@
 int fd_is_valid(int fd)
 {
   /* cygwin does NOT accept testing winsock fd's */
-#if defined(__CYGWIN__) && defined(WINSOCK_SUPPORT)
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   return 1;
 #else
   static struct stat s;

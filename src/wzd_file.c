@@ -25,19 +25,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <io.h>
+#include <direct.h> /* _mkdir */
+#else
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <errno.h>
 #include <dirent.h>
-#include <fcntl.h>
+#endif
+
+#include <fcntl.h> /* O_RDONLY */
 
 /* speed up compilation */
 #define SSL     void
@@ -52,7 +59,7 @@
 
 
 
-#define _HAS_MMAP
+/*#define _HAS_MMAP*/
 
 #ifdef _HAS_MMAP
 #include <sys/mman.h>
@@ -899,17 +906,46 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 
   /* is dir empty ? */
   {
+#ifndef _MSC_VER
     DIR * dir;
     struct dirent *entr;
+#else
+    HANDLE dir;
+	WIN32_FIND_DATA fileData;
+	int finished;
+	char dirfilter[2048];
+#endif
     char path_perm[2048];
+	const char *filename;
 
+#ifndef _MSC_VER
     if ((dir=opendir(dirname))==NULL) return 0;
+#else
+	snprintf(dirfilter,2048,"%s/*",dirname);
+	if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+#endif
     
+#ifndef _MSC_VER
     while ((entr=readdir(dir))!=NULL) {
-      if (strcmp(entr->d_name,".")==0 ||
-          strcmp(entr->d_name,"..")==0 ||
-          strcmp(entr->d_name,HARD_PERMFILE)==0) /* XXX hide perm file ! */
+	  filename = entr->d_name;
+#else
+	finished = 0;
+	while (!finished) {
+	  filename = fileData.cFileName;
+#endif
+      if (strcmp(filename,".")==0 ||
+          strcmp(filename,"..")==0 ||
+          strcmp(filename,HARD_PERMFILE)==0) /* XXX hide perm file ! */
+	  {
+#ifdef _MSC_VER
+		if (!FindNextFile(dirfilter,&fileData))
+		{
+		  if (GetLastError() == ERROR_NO_MORE_FILES)
+		    finished = 1;
+		}
+#endif
         continue;
+	  }
       closedir(dir);
       return 1; /* dir not empty */
     }
@@ -1109,6 +1145,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
 
 int file_lock(int fd, short lock_mode)
 {
+#ifndef _MSC_VER
   struct flock lck;
   lck.l_type = lock_mode;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1117,11 +1154,15 @@ int file_lock(int fd, short lock_mode)
   if (fcntl(fd, F_SETLK, &lck) < 0) {
     return -1;
   }
+#else
+  /* FIXME VISUAL use LockFile() */
+#endif
   return 0;
 }
 
 int file_unlock(int fd)
 {
+#ifndef _MSC_VER
   struct flock lck;
   lck.l_type = F_UNLCK;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1130,11 +1171,15 @@ int file_unlock(int fd)
   if (fcntl(fd, F_SETLK, &lck) < 0) {
     return -1;
   }
+#else
+  /* FIXME VISUAL use UnlockFile() */
+#endif
   return 0;
 }
 
 int file_islocked(int fd, short lock_mode)
 {
+#ifndef _MSC_VER
   struct flock lck;
   lck.l_type = lock_mode;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1145,6 +1190,20 @@ int file_islocked(int fd, short lock_mode)
     return -1;
   }
   if (lck.l_type == F_RDLCK || lck.l_type == F_WRLCK) return 1;
+#else
+  /* FIXME VISUAL use ???() */
+#endif
   return 0;
 }
 
+
+/* wrappers just to keep things in same memory zones */
+int file_read(int fd,void *data,unsigned int length)
+{
+	return read(fd,data,length);
+}
+
+int file_write(int fd,const void *data,unsigned int length)
+{
+	return write(fd,data,length);
+}

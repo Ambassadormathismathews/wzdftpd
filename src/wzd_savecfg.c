@@ -25,16 +25,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#else
+#include <unistd.h>
+
 #include <pwd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -140,7 +145,7 @@ static void save_serveruid (FILE *file)
   fprintf( file, "# you can specify a user login name\n");
   fprintf( file, "# This will only be used if run by root !\n");
   fprintf( file, "#server_uid = pollux\n");
-#ifndef __CYGWIN__
+#ifndef WIN32
   {
     struct passwd * p;
 #warning "FIXME server does not always have a uid"
@@ -148,7 +153,7 @@ static void save_serveruid (FILE *file)
     if (p!=NULL)
       fprintf( file, "server_uid = %s\n", p->pw_name );
   }
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */
   fprintf( file, "\n");
 }
 
@@ -752,7 +757,9 @@ int wzd_savecfg( void )
  
   fclose(file);
 
+#ifndef _MSC_VER
 #warning "Rename files, .NEW -> .cfg"
+#endif
 
   return 0;
 }

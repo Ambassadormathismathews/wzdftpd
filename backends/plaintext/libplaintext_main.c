@@ -24,18 +24,26 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <signal.h>
+
+#ifndef _MSC_VER
+#include <unistd.h>
 #include <sys/param.h>
 #ifndef BSD
 #include <crypt.h>
 #endif /* BSD */
-#include <sys/types.h>
 #include <sys/time.h>
 #include <regex.h>
-#include <signal.h>
 
 #include <wzd_backend.h>
+#else
+#include "../../visual/gnu_regex_dist/regex.h"
+
+#include "../../src/wzd_backend.h"
+#endif
+
 
 /*#define	USERS_FILE		"users"*/
 
@@ -193,7 +201,9 @@ void user_init_struct(wzd_user_t * user)
 
 int write_user_file(void)
 {
+#ifndef _MSC_VER
   sigset_t mask;
+#endif
   char filename[256];
   char filenamenew[256];
   char filenameold[256];
@@ -257,11 +267,13 @@ int write_user_file(void)
   /* from this point we block signals, to avoid being interrupted when
    * file is not fully written.
    */
+#ifndef _MSC_VER
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
   if (sigprocmask(SIG_BLOCK,&mask,NULL)<0) {
     fprintf(stderr,"Unable to block SIGINT with sigprocmask\n");
   }
+#endif
   
   file = freopen(filename,"w+",file);
   if (!file) {
@@ -364,9 +376,11 @@ int write_user_file(void)
   fclose(file);
 
   /* unblock signals - if a SIGINT is pending, it should be harmless now */
+#ifndef _MSC_VER
   if (sigprocmask(SIG_UNBLOCK,&mask,NULL)<0) {
     fprintf(stderr,"Unable to unblock SIGINT with sigprocmask\n");
   }
+#endif
 
   /* FIXME need to release mutex */
   
@@ -387,7 +401,7 @@ int read_section_users(FILE * file_user, char * line)
   int err;
   long num;
   unsigned long u_num;
-  u_int64_t ul_num;
+  u64_t ul_num;
   char *ptr;
   unsigned long i;
 

@@ -1,1 +1,5 @@
 tags
+wzd_init_lex.c
+wzd_init_lex.l.c
+wzd_cookie_lex.c
+wzd_cookie_lex.l.c

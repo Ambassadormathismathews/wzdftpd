@@ -22,8 +22,12 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef HAVE_STRTOK_R
+#ifndef __WZD_MD5CRYPT__
+#define __WZD_MD5CRYPT__
 
-char * strtok_r(char *s, const char *delim, char **last);
+#define MD5_MAGIC "$1$"
+#define MD5_MAGIC_LEN 3
 
-#endif
+char * md5_crypt(const char *pw, const char *salt);
+
+#endif /* __WZD_MD5CRYPT__ */

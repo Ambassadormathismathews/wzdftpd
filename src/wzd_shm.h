@@ -28,9 +28,9 @@
 /* this file is ultra platform dependant, as long as cygwin does not implement IPC */
 /* note that read/write functions are encapsulated, to avoid concurrent access */
 
-#ifdef __CYGWIN__
+#ifdef WIN32
 typedef void * wzd_sem_t;
-#else /* __CYGWIN__ */
+#else /* WIN32 */
 #ifdef WZD_MULTITHREAD
 typedef struct sem_t * wzd_sem_t;
 #else /* WZD_MULTITHREAD */
@@ -41,11 +41,11 @@ typedef int wzd_sem_t;
 
 /* You'd better NEVER touch this */
 typedef struct {
-#ifdef __CYGWIN__
+#ifdef WIN32
   void * handle;
-#else /* __CYGWIN__ */
+#else /* WIN32 */
   int shmid;
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */
   void * datazone;
   wzd_sem_t semid;
 } wzd_shm_t;

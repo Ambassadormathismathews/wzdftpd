@@ -25,19 +25,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#else
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <pthread.h>
+#endif
+
 #include <errno.h>
 #include <signal.h>
-#include <pthread.h>
 
 /* speed up compilation */
 #define SSL     void

@@ -29,8 +29,6 @@
 
 #include "wzd_types.h"
 
-#include <sys/time.h> /* struct timeval */
-
 /*********************** ERRORS ***************************/
 
 typedef enum {
@@ -104,7 +102,11 @@ typedef unsigned long wzd_perm_t;
 typedef struct limiter
 {
   int maxspeed;
+#ifndef _MSC_VER
   struct timeval current_time;
+#else
+  struct _timeb current_time;
+#endif
   int bytes_transfered;
   float current_speed;
 } wzd_bw_limiter;

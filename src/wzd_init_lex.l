@@ -26,8 +26,9 @@
 %x incl
 
 %{
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include <io.h>
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,13 +39,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>	/* ULONG_MAX */
 #include <signal.h>     /* kill() */
 
-#ifndef __CYGWIN__
+#ifndef WIN32
 #include <pwd.h>	/* getpwnam() */
 #endif
 
@@ -309,7 +309,7 @@ printf("Clearing option syslog\n");
   strcpy(tempConfig.logfilename,"wzd.log");*/
   tempConfig.logfilename = NULL;
 
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND;
 #else /* ! BSD */
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;
@@ -1332,7 +1332,11 @@ int cfg_read_pid_file(void)
     }
     close(fd);
     /* check no process is running with this pid */
+#ifndef _MSC_VER
     ret = kill(l,0);
+#else
+    ret = raise(l,0);
+#endif
     if (!ret || (ret==-1 && errno==EPERM)) {
       out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",filename);
       return 1;
@@ -1454,7 +1458,7 @@ int cfg_read_server_uid(void)
     l = strtoul(yytext,(char**)&ptr, 0);
     wzd_server_uid = (unsigned int)l;
     return 0;
-#ifndef __CYGWIN__
+#ifndef WIN32
   case CFG_ID:
     { /* not a number, try a login */
       struct passwd * p;

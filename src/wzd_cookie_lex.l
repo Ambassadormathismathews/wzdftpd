@@ -26,10 +26,16 @@
 %x sc_cook
 
 %{
+#ifdef WIN32
+#define        INET_ADDRSTRLEN         16
+#define        INET6_ADDRSTRLEN        46
+#endif
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#ifdef __CYGWIN__
 #include <w32api/ws2tcpip.h>
+#endif
 
 #else
 
@@ -40,23 +46,17 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
-#ifdef __CYGWIN__
-#define        INET_ADDRSTRLEN         16
-#define        INET6_ADDRSTRLEN        46
-#endif
-
 #endif /* __CYGWIN__ && WINSOCK_SUPPORT */
 
-#ifndef __CYGWIN__
+#ifndef WIN32
 # include <sys/types.h>
 # include <sys/ipc.h>
 # include <sys/shm.h>
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */
 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -179,7 +179,8 @@ C_VFS    ([0-9]+".")?"vfs"
 /*%option debug*/
 %option never-interactive
 %option prefix="cookie"
-%option outfile="lex.yy.c"
+/*%option outfile="lex.yy.c"*/
+/* VISUAL TODO XXX FIXME that *will* break linux bsd */
 %%
 
 <INITIAL>\r	/* ignore */
@@ -704,7 +705,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 	  }
 	}
 	if (convert) {
+#ifndef _MSC_VER
 	  val = (float)total;
+#else
+	  val = (float)(__int64)total;
+#endif
 	  bytes_to_unit(&val,&c);
 	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
 	} else
@@ -737,7 +742,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 	  }
 	}
 	if (convert) {
+#ifndef _MSC_VER
 	  val = (float)total;
+#else
+	  val = (float)(__int64)total;
+#endif
 	  bytes_to_unit(&val,&c);
 	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
 	} else
@@ -760,7 +769,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 	{
 	  total = current_user->credits;
 	  if (convert) {
-	    val = (float)total;
+#ifndef _MSC_VER
+	  val = (float)total;
+#else
+	  val = (float)(__int64)total;
+#endif
 	    bytes_to_unit(&val,&c);
 	    snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
 	  } else
@@ -1067,7 +1080,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       {
 	total = current_user->stats.bytes_dl_total;
 	if (convert) {
+#ifndef _MSC_VER
 	  val = (float)total;
+#else
+	  val = (float)(__int64)total;
+#endif
 	  bytes_to_unit(&val,&c);
 	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
 	} else
@@ -1087,7 +1104,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       {
 	total = current_user->stats.bytes_ul_total;
 	if (convert) {
+#ifndef _MSC_VER
 	  val = (float)total;
+#else
+	  val = (float)(__int64)total;
+#endif
 	  bytes_to_unit(&val,&c);
 	  snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
 	} else

@@ -25,11 +25,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <process.h> /* _getpid() */
+#include <direct.h> /* _rmdir() */
+#include <sys/utime.h>
+#else
+#include <unistd.h>
 #include <sys/resource.h>
 
 #include <sys/types.h>
@@ -37,11 +43,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <utime.h>
+
+#include <dirent.h> /* opendir, readdir, closedir */
+#endif
+
 #include <errno.h>
 #include <signal.h>
-#include <utime.h>
 #include <fcntl.h>
-#include <dirent.h> /* opendir, readdir, closedir */
 
 /* speed up compilation */
 #define SSL     void
@@ -626,6 +635,7 @@ int do_site_reload(char * ignored, wzd_context_t * context)
   }
   out_log(LEVEL_CRITICAL,"Target pid: %d\n",pid);
 
+#ifndef WIN32
   ret = send_message_raw("200-Sending SIGHUP to main server, waiting for result\r\n",context);
   ret = kill(pid,SIGHUP);
   if (ret)
@@ -633,6 +643,10 @@ int do_site_reload(char * ignored, wzd_context_t * context)
   else
     snprintf(buffer,255,"200 kill returned ok\r\n");
   ret = send_message_raw(buffer,context);
+#else
+  ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");
+  return 1;
+#endif
   return 0;
 }
 
@@ -640,6 +654,7 @@ int do_site_reload(char * ignored, wzd_context_t * context)
 
 int do_site_rusage(char * ignored, wzd_context_t * context)
 {
+#ifndef _MSC_VER
   int ret;
   char buffer[256];
   struct rusage ru;
@@ -690,6 +705,9 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
   send_message_raw(buffer,context);
 
   send_message_raw("200 \r\n",context);
+#else /* _MSC_VER */
+  send_message_with_args(501,context,"can't be implemented on win32 !");
+#endif /* _MSC_VER */
   return 0;
 }
 
@@ -697,9 +715,10 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
 int do_site_savecfg(char *command_line, wzd_context_t * context)
 {
 	if( wzd_savecfg() )
-    send_message_with_args(501,context,"Cannot save server config");
+      send_message_with_args(501,context,"Cannot save server config");
 	else
-    send_message_with_args(200,context,"Server config saved");
+      send_message_with_args(200,context,"Server config saved");
+	return 0;
 }
 
 #if 0
@@ -803,8 +822,10 @@ void do_site_user(char *command_line, wzd_context_t * context)
 
 int do_site_utime(char *command_line, wzd_context_t * context)
 {
+#ifdef HAVE_STRPTIME
   extern char *strptime (__const char *__restrict __s,
     __const char *__restrict __fmt, struct tm *__tp);
+#endif
   char buffer[BUFFER_LEN];
   char * ptr;
   char * filename;
@@ -1031,12 +1052,24 @@ int do_site_vfsdel(char * command_line, wzd_context_t * context)
   return 0;
 }
 
+/* TODO XXX FIXME *several* memory leaks in this function:
+ *  tests mising
+ *  return with directory opened ...
+ */
 int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
   struct stat s;
   int ret;
+#ifndef _MSC_VER
   DIR * dir;
   struct dirent * entry;
+#else
+  HANDLE dir;
+  WIN32_FIND_DATA fileData;
+  int finished;
+  char dirfilter[MAX_PATH];
+#endif
+  char *dir_filename;
   char buffer[1024];
   char path[1024];
   char * ptr;
@@ -1054,24 +1087,53 @@ int do_internal_wipe(const char *filename, wzd_context_t * context)
     strcpy(buffer,filename);
     ptr = buffer + strlen(buffer);
     *ptr++ = '/';
+#ifndef _MSC_VER
     dir = opendir(filename);
+#else
+    snprintf(dirfilter,2048,"%s/*",filename);
+    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+#endif
 
+#ifndef _MSC_VER
     while ( (entry=readdir(dir)) )
     {
-      if (strcmp(entry->d_name,".")==0 || strcmp(entry->d_name,"..")==0)
-	continue;
-      if (strlen(buffer)+strlen(entry->d_name)>=1024) return 1;
-      strncpy(ptr,entry->d_name,256);
+		dir_filename = entr->d_name;
+#else
+    finished = 0;
+    while (!finished)
+    {
+      dir_filename = fileData.cFileName;
+#endif
+      if (strcmp(dir_filename,".")==0 || strcmp(dir_filename,"..")==0)
+	  {
+#ifdef _MSC_VER
+		if (!FindNextFile(dir,&fileData))
+		{
+		  if (GetLastError() == ERROR_NO_MORE_FILES)
+		    finished = 1;
+		}
+#endif
+        continue;
+	  }
+      if (strlen(buffer)+strlen(dir_filename)>=1024) { closedir(dir); return 1; }
+      strncpy(ptr,dir_filename,256);
 
-      if (stat(buffer,&s)) return -1;
+      if (stat(buffer,&s)) { closedir(dir); return -1; }
       if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
-	ret = file_remove(buffer,context);
-	if (ret) return 1;
+        ret = file_remove(buffer,context);
+        if (ret) { closedir(dir); return 1; }
       }
       if (S_ISDIR(s.st_mode)) {
-	ret = do_internal_wipe(buffer,context);
-	if (ret) return 1;
+        ret = do_internal_wipe(buffer,context);
+        if (ret) { closedir(dir); return 1; }
       }
+#ifdef _MSC_VER
+      if (!FindNextFile(dir,&fileData))
+	  {
+		if (GetLastError() == ERROR_NO_MORE_FILES)
+		finished = 1;
+	  }
+#endif
     }
 
     closedir(dir);

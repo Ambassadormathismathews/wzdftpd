@@ -22,8 +22,11 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef HAVE_STRTOK_R
+#ifndef __WZD_CRYPT__
+#define __WZD_CRYPT__
 
-char * strtok_r(char *s, const char *delim, char **last);
+void encrypt (char *block, int edflag);
+void setkey (char *key);
+char * crypt (const char *key, const char *salt);
 
-#endif
+#endif /* __WZD_CRYPT__ */

@@ -22,9 +22,12 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+
+#ifdef __CYGWIN__
 #include <w32api/ws2tcpip.h>
+#endif
 
 #else
 
@@ -42,20 +45,25 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <sys/resource.h>
-#include <unistd.h>
 #include <time.h>
-#include <regex.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+
+#ifndef _MSC_VER
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#include <regex.h>
 #include <dlfcn.h>
 #include <pthread.h>
 #include <syslog.h>
+#else
+#include <io.h>
+#include <process.h> /* _getpid() */
+#endif
 
-#ifdef __CYGWIN__
+#ifdef WIN32
 /* cygwin does not support ipv6 */
 #define INET_ADDRSTRLEN 16
 #define INET6_ADDRSTRLEN 46
@@ -129,6 +137,7 @@ int runMainThread(int argc, char **argv)
 static void free_config(wzd_config_t * config);
 
 static void cleanchild(int nr) {
+#ifndef _MSC_VER
   wzd_context_t * context;
   int i;
   pid_t pid;
@@ -161,6 +170,7 @@ static void cleanchild(int nr) {
 /*  if (nr == context->pid_child) {
     context->pid_child = 0;
   }*/
+#endif /* _MSC_VER */
 }
 
 static void context_init(wzd_context_t * context)
@@ -327,7 +337,7 @@ void server_restart(int signum)
     }
     if (mainConfig->xferlog_name && !stat(mainConfig->xferlog_name,&s)) {
       close(mainConfig->xferlog_fd);
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
       fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND ,0600);
 #else /* ! BSD */
       fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
@@ -418,7 +428,7 @@ int check_server_dynamic_ip(void)
     {
       struct hostent* host_info;
       // try to decode dotted quad notation
-#ifdef __CYGWIN__
+#ifdef WIN32
       if ((sa_config.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
       if(!inet_aton(ip, &sa_config.sin_addr))
@@ -616,6 +626,16 @@ void login_new(int socket_accept_fd)
     context->pid_child = getpid();
 #else /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTITHREAD
+#ifdef _MSC_VER
+	{
+		HANDLE thread;
+		unsigned long threadID;
+
+		thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)clientThreadProc, context, 0, &threadID);
+
+		context->pid_child = (unsigned long)thread;
+	}
+#else /* WIN32 */
     {
       int ret;
       pthread_t thread;
@@ -634,6 +654,7 @@ void login_new(int socket_accept_fd)
       context->pid_child = (unsigned long)thread;
       pthread_attr_destroy(&thread_attr); /* not needed anymore */
     }
+#endif /* _MSC_VER */
 #else /* WZD_MULTITHREAD */
     clientThreadProc(context);
 #endif /* WZD_MULTITHREAD */
@@ -653,7 +674,7 @@ void interrupt(int signum)
   int ret;
   /* closing properly ?! */
 #ifdef DEBUG
-#ifndef __CYGWIN__
+#ifndef WIN32
 fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
 #else
 fprintf(stderr,"Received signal %d\n",signum);
@@ -736,7 +757,11 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   }
   if (!found) return -1;
 
+#ifdef _MSC_VER
+  ret = TerminateThread((HANDLE)pid,0);
+#else
   ret = pthread_cancel(pid);
+#endif
 
 #elif
 #endif
@@ -745,7 +770,11 @@ int kill_child(unsigned long pid, wzd_context_t * context)
 
 uid_t get_server_uid(void)
 {
+#ifndef _MSC_VER
   return getuid(); 
+#else
+  return GetCurrentProcessId();
+#endif
 }
 
 void server_crashed(int signum)
@@ -771,13 +800,14 @@ void serverMainThreadProc(void *arg)
   fd_set r;
   struct timeval tv;
   int i;
-  unsigned int length=0;
+  unsigned int length=0, size_context, size_user, size_group;
   int backend_storage;
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   WSADATA wsaData;
   int nCode;
 #endif
 
+#ifndef _MSC_VER
   /* catch broken pipe ! */
 #ifdef __SVR4
   sigignore(SIGPIPE);
@@ -788,12 +818,15 @@ void serverMainThreadProc(void *arg)
   signal(SIGCHLD,cleanchild);
 #endif /* WZD_MULTITHREAD */
 #endif
+#endif /* _MSC_VER */
 
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
+#ifndef _MSC_VER
   signal(SIGKILL,interrupt);
 
   signal(SIGHUP,server_restart);
+#endif
 
 #if defined(POSIX) && ! defined(BSD) /* NO, winblows is NOT posix ! */
   /* set fork() limit */
@@ -819,7 +852,7 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   /* Start Winsock up */
   if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
     out_log(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
@@ -855,7 +888,7 @@ void serverMainThreadProc(void *arg)
     }
   }
 
-#ifndef __CYGWIN__
+#ifndef WIN32
   /* if running as root, we must give up root rigths for security */
   {
     /* effective uid if 0 if run as root or setuid */
@@ -884,9 +917,10 @@ void serverMainThreadProc(void *arg)
   }
 
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  length += HARD_USERLIMIT*sizeof(wzd_context_t);
-  length += HARD_DEF_USER_MAX*sizeof(wzd_user_t);
-  length += HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
+  size_context = HARD_USERLIMIT*sizeof(wzd_context_t);
+  size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+  size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
+  length = size_context + size_user + size_group;
   context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
   if (context_shm == NULL) {
     out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
@@ -896,10 +930,15 @@ void serverMainThreadProc(void *arg)
   for (i=0; i<HARD_USERLIMIT; i++) {
     context_init(context_list+i);
   }
+#ifndef _MSC_VER
   mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+#else
+  mainConfig->user_list = (char*)context_list + size_context;
+  mainConfig->group_list = (char*)context_list + size_context + size_user;
+#endif
 
-#ifdef __CYGWIN__
+#ifdef WIN32
   /* cygwin sux ... shared library variables are NOT set correctly
    * on dlopenín'
    * remember me to slap the one who told me to make this prog portable ... oops
@@ -966,7 +1005,7 @@ void serverMainThreadProc(void *arg)
     FD_ZERO(&r);
     FD_SET(mainConfig->mainSocket,&r);
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     ret = select(0, &r, NULL, NULL, &tv);
 #else
     ret = select(mainConfig->mainSocket+1, &r, NULL, NULL, &tv);
@@ -1011,33 +1050,21 @@ void serverMainThreadProc(void *arg)
 
 static void free_config(wzd_config_t * config)
 {
-  wzd_ip_t * current_ip, * next_ip;
-
 /*  limiter_free(mainConfig->limiter_ul);
   limiter_free(mainConfig->limiter_dl);*/
 
-  current_ip = mainConfig->login_pre_ip_allowed;
-  while (current_ip) {
-    next_ip = current_ip->next_ip;
-    free(current_ip->regexp);
-    free(current_ip);
-    current_ip = next_ip;
-  }
+  ip_free(mainConfig->login_pre_ip_allowed);
 
-  current_ip = mainConfig->login_pre_ip_denied;
-  while (current_ip) {
-    next_ip = current_ip->next_ip;
-    free(current_ip->regexp);
-    free(current_ip);
-    current_ip = next_ip;
-  }
+  ip_free(mainConfig->login_pre_ip_denied);
 
   if (mainConfig->xferlog_fd != -1)
     xferlog_close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     free(mainConfig->xferlog_name);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
+#ifndef _MSC_VER
     closelog();
+#endif
   }
   if (mainConfig->logfile)
     log_close();
@@ -1061,6 +1088,7 @@ void serverMainThreadExit(int retcode)
   tls_exit();
 #endif
 #ifdef WZD_MULTITHREAD
+#ifndef _MSC_VER
   /* kill all childs threads */
   if (context_list)
   {
@@ -1081,9 +1109,14 @@ void serverMainThreadExit(int retcode)
       }
     }
   }
+#endif /* _MSC_VER */
 #endif
   /* we need to wait for child threads to be effectively dead */
+#ifndef _MSC_VER
   sleep(1);
+#else
+  Sleep(1000);
+#endif
   backend_close(mainConfig->backend.name);
   wzd_cache_purge();
   server_clear_param(&mainConfig->param_list);
@@ -1104,7 +1137,7 @@ void serverMainThreadExit(int retcode)
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
-#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   WSACleanup();
 #endif
 #ifdef DEBUG

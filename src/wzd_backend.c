@@ -26,16 +26,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <time.h>
+#include <errno.h>
 
+#ifdef _MSC_VER
+#include <winsock2.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <errno.h>
 #include <dlfcn.h>
+#endif
+
 
 #ifdef BSD
 #define	DL_ARG	DL_LAZY
@@ -66,7 +70,7 @@ char *backend_get_version(wzd_backend_t *backend)
 	char ** version_found;
 	
 	if (backend->handle)
-	  version_found = dlsym(backend->handle,DL_PREFIX "module_version");
+	  version_found = (char**)dlsym(backend->handle,DL_PREFIX "module_version");
 	else
 		return NULL;
 
@@ -78,7 +82,7 @@ char *backend_get_name(wzd_backend_t *backend)
 	char ** backend_name;
 	
 	if (backend->handle)
-	  backend_name = dlsym(backend->handle,DL_PREFIX "module_name");
+	  backend_name = (char**)dlsym(backend->handle,DL_PREFIX "module_name");
 	else
 		return NULL;
 
@@ -120,7 +124,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
-#ifdef __CYGWIN__
+#ifdef WIN32
     length = snprintf(filename,1024,"%slibwzd%s.dll",path,backend);
 #else
     length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
@@ -186,20 +190,25 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     if (strcmp(pred,">")==0) { /* need a minimum version */
       char ** version_found;
       if (!version) {
-	out_err(LEVEL_CRITICAL,"We need a version number to do this test !\n");
-	dlclose(handle);
-	return 1;
+        out_err(LEVEL_CRITICAL,"We need a version number to do this test !\n");
+        dlclose(handle);
+        return 1;
       }
-      version_found = dlsym(handle,DL_PREFIX "module_version");
-      if ( (dlerror()) != NULL ) {
-	out_err(LEVEL_CRITICAL,"Backend does not contain any \"module_version\" information\n");
-	dlclose(handle);
-	return 1;
+      version_found = (char**)dlsym(handle,DL_PREFIX "module_version");
+#ifndef _MSC_VER
+      if ( (dlerror()) != NULL )
+#else
+      if ( !version_found )
+#endif
+	  {
+        out_err(LEVEL_CRITICAL,"Backend does not contain any \"module_version\" information\n");
+        dlclose(handle);
+        return 1;
       }
       if (strcmp(*version_found,version)<=0) {
-	out_err(LEVEL_CRITICAL,"Backend version is NOT > %s\n",version);
-	dlclose(handle);
-	return 1;
+        out_err(LEVEL_CRITICAL,"Backend version is NOT > %s\n",version);
+        dlclose(handle);
+        return 1;
       }
     } /* if (strcmp(pred,">")>0) */
   } /* if (pred) */

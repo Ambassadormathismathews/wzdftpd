@@ -25,15 +25,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <sys/types.h>
+
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <direct.h> /* _getcwd */
+#else
+#include <unistd.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -370,8 +376,13 @@ char *stripdir(char * dir, char *buf, int maxlen)
   last = buf + maxlen;
   ldots = 0; 
   *out  = 0;
-        
-  if (*in != '/') {
+
+#ifndef _MSC_VER
+  if (*in != '/')
+#else
+  if (*in != '/' && *(in+1) != ':')
+#endif
+  {
     if (getcwd(buf, maxlen - 2) ) {
       out = buf + strlen(buf) - 1;
       if (*out != '/') *(++out) = '/';

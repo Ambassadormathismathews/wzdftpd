@@ -22,8 +22,6 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#include <sys/time.h>
-
 /* speed up compilation */
 #define SSL     void
 #define SSL_CTX void
