@@ -7,4 +7,4 @@ siteuptime_SOURCES = siteuptime.c
 
 siteuptime_LDFLAGS = @SSL_LDFLAGS@
 
-AM_CPPFLAGS = -DSSL_SUPPORT=1
+AM_CPPFLAGS = @SSL_CPPFLAGS@
