@@ -211,6 +211,10 @@ SOURCE=..\src\wzd_shm.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_strlcat.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_strptime.c
 # End Source File
 # Begin Source File
@@ -300,6 +304,10 @@ SOURCE=..\src\wzd_section.h
 # Begin Source File
 
 SOURCE=..\src\wzd_shm.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_strlcat.h
 # End Source File
 # Begin Source File
 
