@@ -78,8 +78,54 @@ void do_site_help(const char *site_command, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
 
-  snprintf(buffer,BUFFER_LEN,"Syntax error in command %s",site_command);
-  send_message_with_args(501,context,buffer);
+  send_message_raw("501-\r\n",context);
+  if (strcasecmp(site_command,"backend")==0) {
+    send_message_raw("501-operations on backend\r\n",context);
+    send_message_raw("501-site backend command backend_name\r\n",context);
+    send_message_raw("501-command can be one of:\r\n",context);
+    send_message_raw("501- close   (unloads backend)\r\n",context);
+    send_message_raw("501- commit  (commits changes synchronously)\r\n",context);
+    send_message_raw("501- init    (loads new backend)\r\n",context);
+    send_message_raw("501- reload  (close and init)\r\n",context);
+    send_message_raw("501-\r\n",context);
+    send_message_raw("501-e.g: site backend commit plaintext\r\n",context);
+    send_message_raw("501-\r\n",context);
+    send_message_raw("501- THIS IS A DANGEROUS COMMAND\r\n",context);
+  } else
+  if (strcasecmp(site_command,"checkperm")==0) {
+    send_message_raw("501-checks access for a user on a file/dir\r\n",context);
+    send_message_raw("501-site checkperm user file rights\r\n",context);
+    send_message_raw("501- rights can be one of:\r\n",context);
+    send_message_raw("501- RIGHT_LIST\r\n",context);
+    send_message_raw("501- RIGHT_CWD\r\n",context);
+    send_message_raw("501- RIGHT_RETR\r\n",context);
+    send_message_raw("501- RIGHT_STOR\r\n",context);
+    send_message_raw("501- RIGHT_RNFR\r\n",context);
+    send_message_raw("501-e.g: site checkperm toto dir RIGHT_CWD\r\n",context);
+  } else
+  if (strcasecmp(site_command,"chmod")==0) {
+    send_message_raw("501-change permissions of a file or directory\r\n",context);
+    send_message_raw("501-usage: site chmod mode file1 [file2 ...]\r\n",context);
+    send_message_raw("501-e.g: site chmod 644 file1\r\n",context);
+  } else
+  if (strcasecmp(site_command,"chown")==0) {
+    send_message_raw("501-change the owner of a file or directory\r\n",context);
+    send_message_raw("501-usage: site chown user file1 [file2 ...]\r\n",context);
+    send_message_raw("501-e.g: site chown toto file1\r\n",context);
+  } else
+  if (strcasecmp(site_command,"chpass")==0) {
+    send_message_raw("501-change the password of a user\r\n",context);
+    send_message_raw("501-site chpass user new_pass\r\n",context);
+  } else
+  if (strcasecmp(site_command,"user")==0) {
+    send_message_raw("501-show user info\r\n",context);
+    send_message_raw("501-site user username\r\n",context);
+  } else
+  {
+    snprintf(buffer,BUFFER_LEN,"501-Syntax error in command %s\r\n",site_command);
+    send_message_raw(buffer,context);
+  }
+  send_message_raw("501 \r\n",context);
 }
 
 /********************* do_site_backend *********************/
@@ -294,9 +340,13 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
   char * ptr;
   char * username, *new_pass;
   int ret;
-  wzd_user_t user;
+  wzd_user_t user, *me;
   int uid;
+  short is_gadmin;
 
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+  
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
@@ -307,6 +357,15 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return;
+  }
+
+  /* GAdmin ? */
+  if (is_gadmin)
+  {
+    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+      ret = send_message_with_args(501,context,"You can't change this user");
+      return ;
+    }
   }
 
   new_pass = strtok_r(NULL," \t\r\n",&ptr);
@@ -337,11 +396,11 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   ptr = &buffer[0];
   
   username = strtok_r(buffer," \t\r\n",&ptr);
-  if (!username) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+  if (!username) { do_site_help("checkperm",context); return; }
   filename = strtok_r(NULL," \t\r\n",&ptr);
-  if (!filename) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+  if (!filename) { do_site_help("checkperm",context); return; }
   perms = strtok_r(NULL,"\r\n",&ptr);
-  if (!perms) { send_message_with_args(501,context,"SITE CHECKPERM user file rights"); return; }
+  if (!perms) { do_site_help("checkperm",context); return; }
 
   word = right_text2word(perms);
   if (word == 0) {
@@ -426,6 +485,42 @@ int do_site_free(char *command_line, wzd_context_t * context)
   return 0;
 }
 
+/********************* do_site_invite **********************/
+/* invite: ircnick
+ */
+
+void do_site_invite(char *command_line, wzd_context_t * context)
+{
+  char * ptr;
+  char * ircnick;
+  int ret;
+  wzd_user_t *user;
+  wzd_group_t *group;
+  char buffer[2048], path[2048];
+
+  ptr = command_line;
+  ircnick = strtok_r(command_line," \t\r\n",&ptr);
+  if (!ircnick) {
+    do_site_help("invite",context);
+    return;
+  }
+  /* TODO check that user is allowed to be invited ? */
+  user = GetUserByID(context->userid);
+  group = GetGroupByID(user->groups[0]);
+
+  strcpy(buffer,context->currentpath);
+  stripdir(buffer,path,2047);
+
+  log_message("INVITE","\"%s\" \"%s\" \"%s\" \"%s\"",
+      path, /* ftp-absolute path */
+      user->username,
+      (group->groupname)?group->groupname:"No Group",
+      ircnick);
+
+  ret = send_message_with_args(200,context,"SITE INVITE command ok");
+}
+
+
 
 /********************* do_site_print_file ******************/
 void do_site_print_file(const char * filename, void * param, wzd_context_t * context)
@@ -434,6 +529,7 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
   char buffer[1024];
   int ret;
   struct wzd_cache_t * fp;
+  wzd_user_t *user;
 
   if (strlen(filename)==0) {
     ret = send_message_with_args(501,context,"Tell the admin to configure his site correctly");
@@ -549,6 +645,39 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       }
       continue;
     } /* forallusers */
+
+    if (strncmp(buffer,"%if ",strlen("%if "))==0) {
+      int i;
+      char flag;
+      int test_result=0;
+
+      if (strlen(buffer)<=strlen("%if ")) continue;
+      /* XXX FIXME we should verify here that param (void*) is really a context (magic ?) */
+      if ( ((wzd_context_t*)param)->magic != CONTEXT_MAGIC ) {
+#ifdef DEBUG
+	out_err(LEVEL_CRITICAL,"*** TRYING TO CAST A WRONG POINTER *** %s:%d\n",__FILE__,__LINE__);
+#endif
+	continue;
+      }
+      user = GetUserByID( ((wzd_context_t*)param)->userid);
+      /* read condition and test it */
+      /* TODO only works for flags */
+      flag = buffer[4];
+      if ( user && user->flags && strchr(user->flags,flag) )
+	test_result = 1;
+
+
+      i=0;
+      while ( (wzd_cache_gets(fp,buffer,1022)) && strncmp(buffer,"%endif",strlen("%endif")) ) {
+	if (test_result) {
+	  ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
+	  send_message_raw(buffer,context);
+	}
+	i++;
+      } /* while */
+      continue;
+    } /* if */
+ 
     ret = cookies_replace(buffer,1024,param,context); /* TODO test ret */
     send_message_raw(buffer,context);
   } while ( (wzd_cache_gets(fp,buffer,1022)) != NULL);
@@ -668,11 +797,13 @@ void do_site_user(char *command_line, wzd_context_t * context)
 /*  user_context.controlfd = context->controlfd;*/
 /*  memcpy(&user_context.userinfo,&user,sizeof(wzd_user_t));*/
   user_context.userid = uid;
+  user_context.magic = CONTEXT_MAGIC;
 
 /*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_user,&user_context,context);
 /*#endif
   do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),context);*/
+  user_context.magic = 0;
 }
 
 /********************* do_site_utime ***********************/
@@ -868,12 +999,18 @@ int do_site(char *command_line, wzd_context_t * context)
   } else
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
+    /* TODO check if there are arguments, and call specific help */
     do_site_print_file(mainConfig->site_config.file_help,NULL,context);
     return 0;
   } else
 /******************* IDLE ***********************/
   if (strcasecmp(token,"IDLE")==0) {
     return do_site_idle(command_line+5,context); /* 5 = strlen("idle")+1 */
+  } else
+/******************** INVITE ********************/
+  if (strcasecmp(token,"INVITE")==0) {
+    do_site_invite(command_line+7,context); /* 7 = strlen("invite")+1 */
+    return 0;
   } else
 /******************* KICK ***********************/
   if (strcasecmp(token,"KICK")==0) {
@@ -951,7 +1088,7 @@ int do_site(char *command_line, wzd_context_t * context)
   if (strcasecmp(token,"UPTIME")==0) {
     time_t t;
     time(&t);
-    t = t - server_start;
+    t = t - mainConfig->server_start;
     snprintf(buffer,4096,"Uptime: %s",time_to_str(t));
     ret = send_message_with_args(200,context,buffer);
     return 0;
