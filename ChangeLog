@@ -1,3 +1,8 @@
+2004-02-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: incorrect path displayed in DELDIR event
+	* bugfix: possible buffer overflow in LIST command
+
 2004-02-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* docs: added notes for FreeBSD (contribution from Roman Bogorodskiy)

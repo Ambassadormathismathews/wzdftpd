@@ -716,6 +716,12 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
+  if (strlen(param) >= (WZD_MAX_PATH-10))
+  {
+    ret = send_message_with_args(501,context,"Argument or parameter too big.");
+    return E_PARAM_BIG;
+  }
+
   if (context->pasvsock < 0 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
@@ -739,7 +745,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
       else param = param+n;
     }
 
-    strcpy(cmd,param);
+    strncpy(cmd,param,sizeof(cmd));
     if (cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
 
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
@@ -1001,9 +1007,13 @@ int do_rmdir(char * param, wzd_context_t * context)
       groupname = GetGroupByID(user->groups[0])->groupname;
     }
 
-    strcpy(buffer,context->currentpath);
-    strcat(buffer,"/");
-    strcat(buffer,param);
+    if (param[0] != '/') {
+      strcpy(buffer,context->currentpath);
+      strcat(buffer,"/");
+      strcat(buffer,param);
+    } else {
+      strcpy(buffer,param);
+    }
     stripdir(buffer,path,WZD_MAX_PATH-1);
     
     log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
@@ -2576,7 +2586,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
       if (check_timeout(context)) break;
       continue;
     }
-    ret = (context->read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
+    ret = (context->read_fct)(sockfd,buffer,BUFFER_LEN-1,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
     if (ret==0 || ret==-1) {
