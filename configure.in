@@ -7,14 +7,14 @@
 #WZD_MULTITHREAD=1
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.3, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.4, pollux@wzdftpd.net)
 
 #AC_CANONICAL_HOST
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(wzdftpd,0.3,no-define)
+AM_INIT_AUTOMAKE(wzdftpd,0.4,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 
@@ -212,6 +212,10 @@ AH_TEMPLATE([WZD_BUILD_NUM],
 #                 ||----w |
 #                 ||     ||
 # 
+if eval "test x$sysconfdir == x\${prefix}/etc"; then
+  sysconfdir="${prefix}/etc/wzdftpd"
+fi
+
 e_prefix=`echo $prefix | sed -e 's|NONE|/usr/local|'`
 e_sysconfdir=`echo $sysconfdir | sed -e "s|\\${prefix}|$e_prefix|"`
 e_datadir=`echo $datadir | sed -e "s|\\${prefix}|$e_prefix|"`

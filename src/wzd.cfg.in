@@ -64,9 +64,9 @@ max_threads = 32
 # e.g: backend = plaintext > 120
 # ONE BACKEND IS NEEDED !
 # backend name SHOULD NEVER contains spaces !
-#backend = plaintext > 122
-backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 122
-backend_param_plaintext = @e_sysconfdir@/@PACKAGE@/users
+#backend = plaintext > 123
+backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 123
+backend_param_plaintext = @e_sysconfdir@/users
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
 
@@ -192,16 +192,16 @@ section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 #site_cmd = my_free ./free.sh
 
 ##### SITE FILES
-sitefile_ginfo	= @e_sysconfdir@/@PACKAGE@/file_ginfo.txt
-sitefile_group	= @e_sysconfdir@/@PACKAGE@/file_group.txt
-sitefile_groups	= @e_sysconfdir@/@PACKAGE@/file_groups.txt
-sitefile_help	= @e_sysconfdir@/@PACKAGE@/file_help.txt
-sitefile_rules	= @e_sysconfdir@/@PACKAGE@/file_rules.txt
-sitefile_swho	= @e_sysconfdir@/@PACKAGE@/file_swho.txt
-sitefile_user	= @e_sysconfdir@/@PACKAGE@/file_user.txt
-sitefile_users	= @e_sysconfdir@/@PACKAGE@/file_users.txt
-sitefile_who	= @e_sysconfdir@/@PACKAGE@/file_who.txt
-sitefile_vfs	= @e_sysconfdir@/@PACKAGE@/file_vfs.txt
+sitefile_ginfo	= @e_sysconfdir@/file_ginfo.txt
+sitefile_group	= @e_sysconfdir@/file_group.txt
+sitefile_groups	= @e_sysconfdir@/file_groups.txt
+sitefile_help	= @e_sysconfdir@/file_help.txt
+sitefile_rules	= @e_sysconfdir@/file_rules.txt
+sitefile_swho	= @e_sysconfdir@/file_swho.txt
+sitefile_user	= @e_sysconfdir@/file_user.txt
+sitefile_users	= @e_sysconfdir@/file_users.txt
+sitefile_who	= @e_sysconfdir@/file_who.txt
+sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically

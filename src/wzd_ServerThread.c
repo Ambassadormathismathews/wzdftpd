@@ -350,7 +350,7 @@ void server_restart(int signum)
     if (mainConfig->logfile==NULL) {
       out_err(LEVEL_CRITICAL,"Could not reopen log file !!!\n");
     }
-    if (mainConfig->xferlog_name && !stat(mainConfig->xferlog_name,&s)) {
+    if (mainConfig->xferlog_name && !fstat(fd,&s)) {
       close(mainConfig->xferlog_fd);
 #if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
       fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND ,0600);

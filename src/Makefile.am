@@ -115,10 +115,10 @@ dist_sysconf_DATA = wzd.cfg wzd.pem \
 	users
 
 install-data-hook:
-	${INSTALL_PROGRAM} -m 775 -d @datadir@/wzdftpd/logs || true
+	${INSTALL_PROGRAM} -m 775 -d @localstatedir@/log/wzdftpd || true
 
 uninstall-hook:
-	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs
+	rmdir --ignore-fail-on-non-empty @localstatedir@/log/wzdftpd
 
 # them while "make clean", use CLEANFILES
 CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c

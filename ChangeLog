@@ -1,3 +1,9 @@
+2004-04-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault when exiting on error unable to bind
+	* bugfix: try to fix race conditions with stat/open
+	* change: paths for log files and config files have changed
+
 2004-04-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- cvs commit TAG: rel-0-3

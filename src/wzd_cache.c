@@ -114,10 +114,19 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   hash = compute_hashval(file,strlen(file));
 /*  out_err(LEVEL_FLOOD,"HASH %s: %lu\n",file,hash);*/
 
-  if (stat(file,&s)) return NULL;
+#ifdef _MSC_VER
+  flags |= _O_BINARY;
+#endif
+
+  fd = open(file,flags,mode);
+  if (fd==-1) return NULL;
+  FD_REGISTER(fd,"Cached file");
+
+  if (fstat(fd,&s)) { close(fd); return NULL; }
 
   c = wzd_cache_find(hash);
   if (c) {
+    close(fd);
     /* detect if file has changed */
     if ((unsigned long)s.st_size != c->datasize || s.st_mtime > c->mtime) {
       /* REFRESH */
@@ -143,14 +152,6 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 #ifdef WZD_DBG_CACHE
   out_err(LEVEL_FLOOD,"Cache MISS %s\n",file);
 #endif
-
-#ifdef _MSC_VER
-  flags |= _O_BINARY;
-#endif
-
-  fd = open(file,flags,mode);
-  if (fd==-1) return NULL;
-  FD_REGISTER(fd,"Cached file");
 
   cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
   c = malloc(sizeof(wzd_internal_cache_t));
@@ -192,11 +193,11 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 
   hash = compute_hashval(file,strlen(file));
 
-  if (stat(file,&s)) return NULL;
-
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
   FD_REGISTER(fd,"Cached file");
+
+  if (fstat(fd,&s)) { close(fd); return NULL; }
 
   if (c->fd != -1) { close(c->fd); FD_UNREGISTER(fd,"Cached file"); }
   if (c->data) free(c->data);
@@ -237,8 +238,6 @@ void wzd_cache_update(const char *file)
 
   hash = compute_hashval(file,strlen(file));
 /*  out_err(LEVEL_FLOOD,"HASH %s: %lu\n",file,hash);*/
-
-  if (stat(file,&s)) return;
 
   c = wzd_cache_find(hash);
   if (c) {

@@ -547,6 +547,7 @@ int module_add(wzd_module_t ** module_list, const char *name)
   if (!new_module) return 1;
 
   new_module->name = strdup(name);
+  new_module->handle = NULL;
   new_module->next_module = NULL;
 
   current_module = *module_list;
@@ -684,10 +685,12 @@ void module_free(wzd_module_t ** module_list)
 #ifdef WZD_DBG_MODULES
     out_log(LEVEL_INFO,"MODULE: unloading '%s' at address %p\n",current_module->name,current_module->handle);
 #endif
-    f_close = (fcn_module_close)dlsym(current_module->handle,DL_PREFIX STR_MODULE_CLOSE);
-    if (f_close) (*f_close)();
+    if (current_module->handle) {
+      f_close = (fcn_module_close)dlsym(current_module->handle,DL_PREFIX STR_MODULE_CLOSE);
+      if (f_close) (*f_close)();
 
-    dlclose(current_module->handle);
+      dlclose(current_module->handle);
+    }
     
     if (current_module->name)
       free(current_module->name);

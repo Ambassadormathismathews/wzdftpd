@@ -215,6 +215,8 @@ int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int
 #endif
       save_errno = errno;
 
+      if (FD_ISSET(sock,&fds)) /* ok */
+        break;
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
         out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
@@ -260,6 +262,8 @@ int clear_write(unsigned int sock, const char *msg, unsigned int length, int fla
 #endif
         save_errno = errno;
 
+        if (FD_ISSET(sock,&fds)) /* break */
+          break;
         if (FD_ISSET(sock,&efds)) {
           if (save_errno == EINTR) continue;
           out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
@@ -2046,7 +2050,7 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
   switch (cmd) {
     case TOK_PWD:
       context->resume = 0;
-      ret = send_message_with_args(257,context,context->currentpath,"is current directory");
+      ret = send_message_with_args(257,context,context->currentpath,"is current directory.");
       break;
     case TOK_ALLO:
     case TOK_NOOP:
@@ -2911,7 +2915,7 @@ void * clientThreadProc(void *arg)
   }
 
   /* user+pass ok */
-  send_message_raw("230- command ok\r\n",context);
+  send_message_raw("230-command ok\r\n",context);
   FORALL_HOOKS(EVENT_LOGIN)
     typedef int (*login_hook)(unsigned long, const char*);
     if (hook->hook)
