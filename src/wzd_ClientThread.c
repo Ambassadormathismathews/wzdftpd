@@ -3251,6 +3251,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     command = identify_token(token);
 
     switch (command) {
+    case TOK_HELP:
+        send_message_with_args(530,context,"Login with USER and PASS");
+        break;
     case TOK_USER:
       if (user_ok) { /* USER command issued 2 times */
         ret = send_message_with_args(421,context,"USER command issued twice");
