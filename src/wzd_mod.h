@@ -6,6 +6,7 @@ int hook_free(wzd_hook_t **hook_list);
 
 /* register a new hook */
 int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook);
+int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command);
 
 #define FORALL_HOOKS(test_mask)	{ \
   wzd_hook_t * hook; \
@@ -18,10 +19,7 @@ int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook);
 }
 
 /* module hook struct, used in modules */
-typedef struct {
-  unsigned long	event_id;
-  void_fct	fct;
-} module_hook_t;
+typedef struct { unsigned long	event_id; void_fct	fct; } module_hook_t;
 
 /* check a module file */
 int module_check(const char *filename);

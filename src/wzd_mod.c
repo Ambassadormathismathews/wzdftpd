@@ -53,6 +53,35 @@ int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook)
 
   new_hook->mask = mask;
   new_hook->hook = hook;
+  new_hook->external_command = NULL;
+  new_hook->next_hook = NULL;
+
+  current_hook = *hook_list;
+
+  if (!current_hook) {
+    *hook_list = new_hook;
+    return 0;
+  }
+
+  while (current_hook->next_hook) {
+    current_hook = current_hook->next_hook;
+  }
+
+  current_hook->next_hook = new_hook;
+
+  return 0;
+}
+
+int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command)
+{
+  wzd_hook_t * current_hook, * new_hook;
+
+  new_hook = malloc(sizeof(wzd_hook_t));
+  if (!new_hook) return 1;
+
+  new_hook->mask = mask;
+  new_hook->hook = NULL;
+  new_hook->external_command = strdup(command);
   new_hook->next_hook = NULL;
 
   current_hook = *hook_list;
@@ -100,11 +129,13 @@ int module_check(const char *filename)
   }
 
   /* basic type check */
+#if 0
 #ifdef DEBUG
   if (S_ISLNK(s.st_mode))
     out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
   if (S_ISREG(s.st_mode))
       out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
+#endif
 #endif
 
   /* test dlopen */
