@@ -100,9 +100,6 @@ install-arch:
 	# debian/tmp.
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-	install -m 755 -d debian/tmp/usr/include/wzdftpd
-	install -m 644 src/*.h debian/tmp/usr/include/wzdftpd/
-
 	# TODO since we install in standard dir, the following is becoming useless ??
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/html
 	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/wzdftpd/html
