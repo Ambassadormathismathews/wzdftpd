@@ -82,10 +82,13 @@
 static Tcl_Interp * interp=NULL;
 static wzd_context_t * current_context=NULL;
 
+static int tcl_fd_errlog=-1;
+
 #define TCL_ARGS        "wzd_args"
 #define TCL_CURRENT_USER "wzd_current_user"
 #define TCL_REPLY_CODE  "wzd_reply_code"
 #define TCL_HAS_REPLIED "wzd_replied"
+#define TCL_ERRORLOGNAME "tclerr.log"
 
 #define WZDOUT  ((ClientData)1)
 #define WZDERR  ((ClientData)2)
@@ -148,7 +151,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context);
 
 /***********************/
 MODULE_NAME(tcl);
-MODULE_VERSION(105);
+MODULE_VERSION(106);
 
 /***********************/
 /* WZD_MODULE_INIT     */
@@ -182,6 +185,31 @@ int WZD_MODULE_INIT(void)
   if (!interp) {
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
     return -1;
+  }
+
+  {
+    char * logdir;
+    int ret;
+
+    ret = -1;
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0)
+    {
+      int fd;
+
+      wzd_string_t *str = str_allocate();
+      str_sprintf(str,"%s/%s", logdir, TCL_ERRORLOGNAME);
+      fd = open(str_tochar(str),O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
+      if (fd >= 0) {
+        tcl_fd_errlog = fd;
+        ret = 0;
+      }
+      str_deallocate(str);
+    }
+    if (ret) {
+      out_log(LEVEL_HIGH,"tcl: i found no 'logdir' in your config file\n");
+      out_log(LEVEL_HIGH,"tcl: this means I will be unable to log TCL errors\n");
+      out_log(LEVEL_HIGH,"tcl: please refer to the 'logdir' config directive in help\n");
+    }
   }
 
   /* replace stdout and stderr */
@@ -226,6 +254,10 @@ void WZD_MODULE_CLOSE(void)
   interp = NULL;
 /*  Tcl_Exit(0);*/
   Tcl_Finalize();
+  if (tcl_fd_errlog >= 0) {
+    close(tcl_fd_errlog);
+    tcl_fd_errlog = -1;
+  }
   out_log(LEVEL_INFO,"TCL module unloaded\n");
 }
 
@@ -881,8 +913,11 @@ static int channel_output(ClientData instance, const char *buf, int bufsiz, int 
   result = bufsiz;
   if (instance == WZDOUT)
     out_err(LEVEL_INFO,"tcl OUT: [%s]\n", str);
-  else if (instance == WZDERR)
+  else if (instance == WZDERR) {
     out_err(LEVEL_HIGH,"tcl ERR: [%s]\n", str);
+    if (tcl_fd_errlog >= 0)
+      write(tcl_fd_errlog, str, bufsiz);
+  }
   else {
     Tcl_SetErrno(EBADF);
     if (errptr) *errptr = EBADF;

@@ -220,7 +220,6 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
   if (!strcmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
   if (!strcmp(word,"ip")) return CFG_IP;
-  if (!strcmp(word,"logdir")) return CFG_LOGDIR;
   if (!strcmp(word,"logfile")) return CFG_LOGFILE;
   if (!strcmp(word,"loglevel")) return CFG_LOGLEVEL;
   if (!strcmp(word,"login_pre_ip_allowed")) return CFG_LOG_PRE_IP_ALLOW;
@@ -249,6 +248,7 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
 
+  if (!strcmp(word,"logdir")) return CFG_KEYWORD;
   if (!strcmp(word,"reject_unknown_users")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_ca_file")) return CFG_KEYWORD;
   if (!strcmp(word,"tls_ca_path")) return CFG_KEYWORD;
@@ -887,30 +887,6 @@ int cfg_read_ip(void)
     out_err(LEVEL_INFO,"ip: read token %d (%c) yytext:\n",token,token,yytext);
     break;
   }
-
-  return 0;
-}
-
-/* LOGDIR
- * absolute dir name
- */
-int cfg_read_logdir(void)
-{
-  unsigned int token;
-  char * filename;
-
-  token = yylex();
-  if (token!='=') {
-    out_err(LEVEL_HIGH,"line should be 'logdir = ...'\n");
-    return 1;
-  }
-
-  if( !(filename=read_until_eol(256)) ) {
-    out_err(LEVEL_HIGH,"invalid file name\n");
-    return 1;
-  }
-
-  tempConfig.logdir = filename; /* will be freed at server exit */
 
   return 0;
 }
@@ -1921,9 +1897,6 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_IP:
       ret = cfg_read_ip();
-      break;
-    case CFG_LOGDIR:
-      ret = cfg_read_logdir();
       break;
     case CFG_LOGFILE:
       ret = cfg_read_logfile();
