@@ -93,6 +93,8 @@ typedef enum {
   COOKIE_CYAN,
   COOKIE_WHITE,
 
+  COOKIE_FILEPATH,
+
   COOKIE_GROUPHOME,
   COOKIE_GROUPIP_ALLOW,
   COOKIE_GROUPMAXDL,
@@ -130,7 +132,9 @@ typedef enum {
   COOKIE_USERMAXUL,
   COOKIE_USERNAME,
   COOKIE_USERNUM_LOGINS,
+  COOKIE_USERPATH,
   COOKIE_USERPID,
+  COOKIE_USERPWD,
   COOKIE_USERRATIO,
   COOKIE_USERSLOTS,
   COOKIE_USERSPEED,
@@ -177,6 +181,7 @@ IF_BEGIN	"%if("("+"|"=")?{LETTER}+")"("\r"?)"\n"
 IF_END		"%endif"("\r"?)"\n"
 
 C_START		"%"
+C_FILE		([0-9]+".")?"file"
 C_GROUP		([0-9]+".")?"group"
 C_USER		([0-9]+".")?"user"
 C_VFS    ([0-9]+".")?"vfs"
@@ -268,6 +273,8 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>!cyan	BEGIN(INITIAL); return COOKIE_CYAN;
 <sc_cook>!white	BEGIN(INITIAL); return COOKIE_WHITE;
 
+<sc_cook>{C_FILE}path		BEGIN(INITIAL); return COOKIE_FILEPATH;
+
 <sc_cook>{C_GROUP}home		BEGIN(INITIAL); return COOKIE_GROUPHOME;
 <sc_cook>{C_GROUP}ip_allow[0-9]+	BEGIN(INITIAL); return COOKIE_GROUPIP_ALLOW;
 <sc_cook>{C_GROUP}maxdl		BEGIN(INITIAL); return COOKIE_GROUPMAXDL;
@@ -304,7 +311,9 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}maxul		BEGIN(INITIAL); return COOKIE_USERMAXUL;
 <sc_cook>{C_USER}name		BEGIN(INITIAL); return COOKIE_USERNAME;
 <sc_cook>{C_USER}num_logins	BEGIN(INITIAL); return COOKIE_USERNUM_LOGINS;
+<sc_cook>{C_USER}path		BEGIN(INITIAL); return COOKIE_USERPATH;
 <sc_cook>{C_USER}pid		BEGIN(INITIAL); return COOKIE_USERPID;
+<sc_cook>{C_USER}pwd		BEGIN(INITIAL); return COOKIE_USERPWD;
 <sc_cook>{C_USER}ratio		BEGIN(INITIAL); return COOKIE_USERRATIO;
 <sc_cook>{C_USER}slots		BEGIN(INITIAL); return COOKIE_USERSLOTS;
 <sc_cook>{C_USER}speed		BEGIN(INITIAL); return COOKIE_USERSPEED;
@@ -596,6 +605,20 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       free(tmpbuf);
     }
     break;
+/*** FILE cookies ***/
+    case COOKIE_FILEPATH:
+      get_cookie_format(yytext,&padding);
+      if (context) {
+        if (context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR)
+	  snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
+        else
+	  snprintf(internalbuffer,IBUFSIZE,"(null)");
+      }
+      else
+	snprintf(internalbuffer,IBUFSIZE,"filepath");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
 /*** GROUP cookies ***/
     case COOKIE_GROUPHOME:
       get_cookie_format(yytext,&padding);
@@ -1103,6 +1126,26 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
+    case COOKIE_USERPATH:
+      get_cookie_format(yytext,&padding);
+      if (context) {
+	char dev_buffer[WZD_MAX_PATH+1];
+	/* check FLAG_SEE_HOME for self */
+	if (me->flags && strchr(me->flags,FLAG_SEE_HOME)) {
+	  if (checkpath(context->currentpath,dev_buffer,context)) {
+	  snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
+	  } else {
+	    strncpy(internalbuffer,dev_buffer,IBUFSIZE);
+          }
+        } else {
+	  snprintf(internalbuffer,IBUFSIZE,"- some where -");
+        }
+      }
+      else
+	snprintf(internalbuffer,IBUFSIZE,"userpwd");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_USERPID:
       get_cookie_format(yytext,&padding);
       if (current_context)
@@ -1115,6 +1158,16 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       }
       else
 	snprintf(internalbuffer,IBUFSIZE,"userpid");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_USERPWD:
+      get_cookie_format(yytext,&padding);
+      if (context) {
+	snprintf(internalbuffer,IBUFSIZE,"%s",context->currentpath);
+      }
+      else
+	snprintf(internalbuffer,IBUFSIZE,"userpwd");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;

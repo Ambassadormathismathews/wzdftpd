@@ -170,6 +170,11 @@ any processing. It must be a valid FTP reply.
 </para><para>If reply is complete, script must set variable
 wzd_reply to "1" to indicate that reply has been completed.
 </para></listitem>
+<listitem><screen>vars get/set variable_name [value]</screen>
+<para>This function gives access to server internal variables.
+Use the 'get' method to read variables, the 'set' method to
+change variables (you need to provide a new value).
+</para></listitem>
 <listitem><screen>wzd_reply_code</screen>
 <para>Use this variable contains the current reply code used
 by server. This must be used with caution.

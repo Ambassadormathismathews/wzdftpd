@@ -32,12 +32,6 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
 '********'
 - commit backend iff it was modified
 '********'
-- replace 'extern unsigned int wzd_server_uid' (wzd_init_lex.l) with
-  functions get_serveruid() (to be implemented)
-'********'
-- create section "cygwin" in doc to document tls & co
-  -- pem name _must_ be written in win-form when using winsock+tls
-'********'
 - getmyip does not seems to work with ipv6 ...
 '********'
 - permissions: siteop always have all perms on files (wzd_perm.c) / OK

@@ -195,7 +195,6 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
-      context->current_action.token = TOK_UNKNOWN;
       context->state = STATE_COMMAND;
       data_close(context);
       ret = send_message(226,context);
@@ -204,6 +203,18 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
+      FORALL_HOOKS(EVENT_POSTDOWNLOAD)
+        typedef int (*login_hook)(unsigned long, const char*, const char *);
+        if (hook->hook)
+          ret = (*(login_hook)hook->hook)(EVENT_POSTDOWNLOAD,user->username,context->current_action.arg);
+        else {
+          char argbuf[1024];
+          /* TODO XXX FIXME what happens if filename contains spaces ? :) */
+          snprintf(argbuf,1024,"%s %s",user->username,context->current_action.arg);
+          ret = hook_call_external(hook,argbuf);
+        }
+      END_FORALL_HOOKS
+      context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
     }
     break;
