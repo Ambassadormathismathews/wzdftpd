@@ -110,6 +110,12 @@ case "$1" in
 	signal stop
 	;;
 
+    clean)
+	echo -n "Cleaning up previous $NAME session..."
+	$DAEMON -f $CONFIG -d
+	echo " done."
+	;;
+
     reload)
 	echo -n "Reloading $NAME configuration..."
 	signal reload
@@ -133,7 +139,7 @@ case "$1" in
 	;;
 
     *)
-	echo "Usage: /etc/init.d/$NAME {start|force-start|stop|force-stop|reload|restart|force-reload}"
+	echo "Usage: /etc/init.d/$NAME {start|force-start|stop|force-stop|clean|reload|restart|force-reload}"
 	exit 1
 	;;
 esac
