@@ -530,7 +530,6 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   user.leech_slots=0;
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
   ret = backend_mod_user(config->backend.name,username,&user,_USER_ALL);
 
   return ret;

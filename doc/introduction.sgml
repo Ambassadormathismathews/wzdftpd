@@ -28,6 +28,13 @@ removed.</para></listitem>
 </itemizedlist>
 </para>
 
+<para>
+<emphasis>NOTE: </emphasis>This is a frequently asked question, so it
+is important to insist on the fact that wzdftpd has <emphasis>NOTHING</emphasis> to
+do with illegal things ! For those who can't figure it by themselves,
+wzd is for "wizard" !
+</para>
+
 </sect1>
 
 <sect1 id='features'>
@@ -91,13 +98,13 @@ url="http://www.gnu.org/software/flex/">Flex's official page</ulink>.
 <para>
 The following packages are optional, depending on your configuration
 <itemizedlist>
-<listitem><para>Automake, Autoconf, Libtool</para>
+<listitem><para>Automake (&gt;= 1.5), Autoconf, Libtool</para>
 <para>Required only if you want to compile from cvs. CVS build assumes you have
 basic knowledge of autotools. The following should run all autotools and
 configure packages for you:
 <programlisting>./bootstrap</programlisting>
 </para></listitem>
-<listitem><para>OpenSSL development headers and libraries</para>
+<listitem><para>GnuTLS or OpenSSL development headers and libraries</para>
 <para>Required only if you want to compile with SSL support enabled.
 </para></listitem>
 <listitem><para>libz development headers and libraries</para>

@@ -139,6 +139,12 @@ use a TCL script with direct access to server internals
 TCL is provided as a module, keeping main server from adding
 many useless dependancies.
 </para>
+<para>
+Standard channels are redirected to internal functions in wzdftpd:
+messages sent to stderr are logged in the file "tclerr.log", located
+in the directory specified in the <link
+linkend='cfg_logdir'>logdir</link> directive of the config file.
+</para>
 </simplesect>
 
 <simplesect id='mod_tcl_install'>
@@ -207,6 +213,12 @@ for connected users: for example, you can't get the current ip (this
 has a sense only for connected users).</para>
 <para>See <link linkend="vars_user">User variables</link>
 </para></listitem>
+
+<listitem><screen>vars_user new username password group</screen>
+<para>Use this function to create a new user.
+</para>
+</listitem>
+
 <listitem><screen>vfs mkdir/rmdir dirname</screen>
 <para>Create or remove a directory.
 Directory name <emphasis>must</emphasis> be an absolute path !.
@@ -346,6 +358,12 @@ for connected users: for example, you can't get the current ip (this
 has a sense only for connected users).</para>
 <para>See <link linkend="vars_user">User variables</link>
 </para></listitem>
+
+<listitem><screen>wzd::vars_user "new", username, password, group</screen>
+<para>Use this function to create a new user.
+</para>
+</listitem>
+
 <listitem><screen>wzd::vfs "mkdir"/"rmdir", dirname</screen>
 <para>Create or remove a directory.
 Directory name <emphasis>must</emphasis> be an absolute path !.

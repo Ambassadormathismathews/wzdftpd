@@ -305,6 +305,14 @@ mainly for server with multiples interfaces).
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_logdir'><term>logdir (default: do not use log directory)</term>
+<listitem>
+<para>Location of a directory where the server will put various log files.
+<screen>logdir = /var/log/wzdftpd</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_logfile'><term>logfile (default: do not use log file)</term>
 <listitem>
 <para>Log file for server activity (see <link linkend='cfg_use_syslog'>
