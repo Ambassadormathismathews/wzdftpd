@@ -600,6 +600,27 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	cookie = tmp_buffer;
 	cookielength = strlen(cookie);
       } else
+      if (strncmp(srcptr,"credits",7)==0) {
+	float val;
+	char c;
+	short convert=0;
+	if (*(srcptr+7)=='2') convert=1;
+	if (user->ratio) {
+	  if (convert) {
+	    val = (float)user->credits;
+	    bytes_to_unit(&val,&c);
+	    snprintf(tmp_buffer,4096,"%.2f %c",val,c);
+	  } else
+	    snprintf(tmp_buffer,4096,"%lld",user->credits);
+	} else {
+	  snprintf(tmp_buffer,4096,"unlimited");
+	}
+	cookie = tmp_buffer;
+	cookielength = strlen(cookie);
+	srcptr += 7; /* strlen("credits"); */
+	if (convert) srcptr++;
+      }
+
       /* ip */
       if (strncmp(srcptr,"ip",2)==0) {
         if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {

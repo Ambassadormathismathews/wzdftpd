@@ -187,8 +187,8 @@ int write_message_footer(int code, wzd_context_t * context)
   int ret;
   long f_type, f_bsize, f_blocks, f_free;
   float free,total;
-  float bytes_ul, bytes_dl;
-  char unit, unit_dl, unit_ul;
+  float bytes_ul, bytes_dl, bytes_credits;
+  char unit, unit_dl, unit_ul, unit_credits;
   wzd_user_t * user;
 
   if (checkpath(".",buffer,context)) {
@@ -221,8 +221,16 @@ int write_message_footer(int code, wzd_context_t * context)
   bytes_to_unit(&bytes_dl,&unit_dl);
   bytes_to_unit(&bytes_ul,&unit_ul);
 
-  snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Ul: %.2f %c] - [Dl: %.2f %c] -\r\n",
+  if (user->ratio) {
+    bytes_credits = (float)user->credits;
+    bytes_to_unit(&bytes_credits,&unit_credits);
+    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Ul: %.2f %c] - [Dl: %.2f %c] - [Cred: %.2f %c] -\r\n",
+      code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,
+      bytes_credits,unit_credits);
+  } else {
+    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Ul: %.2f %c] - [Dl: %.2f %c] -\r\n",
       code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul);
+  }
   ret = send_message_raw(buffer, context);
 
   return 0;

@@ -40,8 +40,11 @@ pasv_high_range  = 3000
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
 
+# log file for server activity
+logfile = @prefix@/share/wzdftpd/logs/wzd.log
+
 # log file for transfered files (default: do not log)
-xferlog = xferlog
+xferlog = @prefix@/share/wzdftpd/logs/xferlog
 
 # max number of child threads (default: 32)
 max_threads = 32
@@ -151,14 +154,14 @@ module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
 #site_cmd = my_free ./free.sh
 
 ##### SITE FILES
-sitefile_ginfo	= @prefix@/etc/wzdftpd/file_ginfo.txt
-sitefile_group	= @prefix@/etc/wzdftpd/file_group.txt
-sitefile_help	= @prefix@/etc/wzdftpd/file_help.txt
-sitefile_rules	= @prefix@/etc/wzdftpd/file_rules.txt
-sitefile_swho	= @prefix@/etc/wzdftpd/file_swho.txt
-sitefile_user	= @prefix@/etc/wzdftpd/file_user.txt
-sitefile_users	= @prefix@/etc/wzdftpd/file_users.txt
-sitefile_who	= @prefix@/etc/wzdftpd/file_who.txt
+sitefile_ginfo	= @prefix@/share/wzdftpd/file_ginfo.txt
+sitefile_group	= @prefix@/share/wzdftpd/file_group.txt
+sitefile_help	= @prefix@/share/wzdftpd/file_help.txt
+sitefile_rules	= @prefix@/share/wzdftpd/file_rules.txt
+sitefile_swho	= @prefix@/share/wzdftpd/file_swho.txt
+sitefile_user	= @prefix@/share/wzdftpd/file_user.txt
+sitefile_users	= @prefix@/share/wzdftpd/file_users.txt
+sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically
@@ -204,6 +207,7 @@ sitefile_who	= @prefix@/etc/wzdftpd/file_who.txt
 -site_flags = -admin
 -site_free = *
 -site_ginfo = +O +G
+-site_give = *
 -site_grpadd = +O
 -site_grpaddip = +O
 -site_grpdel = +O
@@ -224,6 +228,7 @@ sitefile_who	= @prefix@/etc/wzdftpd/file_who.txt
 -site_shutdown = =pollux =wzdftpd
 -site_swho = -admin
 -site_tagline = !=guest *
+-site_take = +O
 -site_uptime = *
 -site_user = +O +G
 -site_users = -admin

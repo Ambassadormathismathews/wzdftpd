@@ -74,29 +74,30 @@
 #define	CFG_DYNAMIC_IP		306
 #define	CFG_INTERNAL_SFV	307
 #define	CFG_IP			308
-#define	CFG_LOGLEVEL		309
-#define	CFG_LOG_PRE_CHECK	310
-#define	CFG_LOG_PRE_IP_ALLOW	311
-#define	CFG_LOG_PRE_IP_DENY	312
-#define	CFG_MAX_DL_SPEED	313
-#define	CFG_MAX_THREADS		314
-#define	CFG_MAX_UL_SPEED	315
-#define	CFG_MESSAGE		316
-#define	CFG_MODULE		317
-#define	CFG_PASV_IP		318
-#define	CFG_PASV_LOW		319
-#define	CFG_PASV_HIGH		320
-#define	CFG_PORT		321
-#define	CFG_SERVER_UID		322
-#define	CFG_SHM_KEY		323
-#define	CFG_SITE		324
-#define	CFG_SITECMD		325
-#define	CFG_SITEFILE		326
-#define	CFG_TLS_CERT		327
-#define	CFG_TLS_CIPHER_LIST	328
-#define	CFG_TLS_MODE		329
-#define	CFG_VFS			330
-#define	CFG_XFERLOG		331
+#define	CFG_LOGFILE		309
+#define	CFG_LOGLEVEL		310
+#define	CFG_LOG_PRE_CHECK	311
+#define	CFG_LOG_PRE_IP_ALLOW	312
+#define	CFG_LOG_PRE_IP_DENY	313
+#define	CFG_MAX_DL_SPEED	314
+#define	CFG_MAX_THREADS		315
+#define	CFG_MAX_UL_SPEED	316
+#define	CFG_MESSAGE		317
+#define	CFG_MODULE		318
+#define	CFG_PASV_IP		319
+#define	CFG_PASV_LOW		320
+#define	CFG_PASV_HIGH		321
+#define	CFG_PORT		322
+#define	CFG_SERVER_UID		323
+#define	CFG_SHM_KEY		324
+#define	CFG_SITE		325
+#define	CFG_SITECMD		326
+#define	CFG_SITEFILE		327
+#define	CFG_TLS_CERT		328
+#define	CFG_TLS_CIPHER_LIST	329
+#define	CFG_TLS_MODE		330
+#define	CFG_VFS			331
+#define	CFG_XFERLOG		332
 
 #define	CFG_UNKNOWN	511
 
@@ -193,6 +194,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
   if (!strcasecmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
   if (!strcasecmp(word,"ip")) return CFG_IP;
+  if (!strcasecmp(word,"logfile")) return CFG_LOGFILE;
   if (!strcasecmp(word,"loglevel")) return CFG_LOGLEVEL;
   if (!strcasecmp(word,"login_pre_ip_allowed")) return CFG_LOG_PRE_IP_ALLOW;
   if (!strcasecmp(word,"login_pre_ip_check")) return CFG_LOG_PRE_CHECK;
@@ -726,6 +728,31 @@ int cfg_read_ip(void)
     out_err(LEVEL_INFO,"ip: read token %d (%c) yytext:\n",token,token,yytext);
     break;
   }
+
+  return 0;
+}
+
+/* LOGFILE
+ * absolute file name (default: wzd.log)
+ */
+int cfg_read_logfile(void)
+{
+  unsigned int token;
+  char * filename;
+  int fd;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'logfile = ...'\n");
+    return 1;
+  }
+
+  if( !(filename=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid file name\n");
+    return 1;
+  }
+
+  tempConfig.logfilename = filename; /* will be freed at server exit */
 
   return 0;
 }
@@ -1519,7 +1546,10 @@ int cfg_read_xferlog(void)
 
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
   if (fd == -1)
+  {
+    out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n",filename);
     return 1;
+  }
   tempConfig.xferlog_name = filename; /* will be freed at server exit */
   tempConfig.xferlog_fd = fd;
 
@@ -1587,6 +1617,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_IP:
       ret = cfg_read_ip();
+      break;
+    case CFG_LOGFILE:
+      ret = cfg_read_logfile();
       break;
     case CFG_LOG_PRE_IP_ALLOW:
       ret = cfg_read_login_pre_ip_allow();

@@ -1073,6 +1073,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"FLAGS",&do_site_flags)) return 1;
   if (site_command_add(&config->site_list,"FREE",&do_site_free)) return 1;
   if (site_command_add(&config->site_list,"GINFO",&do_site_ginfo)) return 1;
+  if (site_command_add(&config->site_list,"GIVE",&do_site_give)) return 1;
   if (site_command_add(&config->site_list,"GRPADD",&do_site_grpadd)) return 1;
   if (site_command_add(&config->site_list,"GRPADDIP",&do_site_grpaddip)) return 1;
   if (site_command_add(&config->site_list,"GRPDEL",&do_site_grpdel)) return 1;
@@ -1090,6 +1091,7 @@ int site_init(wzd_config_t * config)
   /* rules */
   /* swho */
   if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
+  if (site_command_add(&config->site_list,"TAKE",&do_site_take)) return 1;
   if (site_command_add(&config->site_list,"TEST",&do_site_test)) return 1;
   /* user */
   /* users */

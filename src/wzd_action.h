@@ -51,10 +51,8 @@
 #define TOK_DELE        23
 #define TOK_ABOR        24
 
-#ifdef SSL_SUPPORT
 #define TOK_PBSZ        25
 #define TOK_PROT        26
-#endif
 
 #define TOK_SITE        27
 #define TOK_FEAT        28

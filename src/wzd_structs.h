@@ -121,6 +121,7 @@ typedef struct {
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   unsigned long long	bytes_ul_total;
   unsigned long long	bytes_dl_total;
+  unsigned long long	credits;
   unsigned int		ratio;
   unsigned short	user_slots;	/**< user slots for gadmins */
   unsigned short	leech_slots;	/**< leech slots for gadmins */
@@ -370,6 +371,7 @@ typedef struct {
   unsigned long	shm_key;
   wzd_command_perm_t	* perm_list;
   wzd_site_fct_t	* site_list;
+  wzd_section_t		* section_list;
 /*  wzd_bw_limiter	* limiter_ul;
   wzd_bw_limiter	* limiter_dl;*/
   wzd_bw_limiter	global_ul_limiter;

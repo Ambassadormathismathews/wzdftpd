@@ -73,10 +73,11 @@ typedef struct {
 #define	_USER_IP		1<<12
 #define	_USER_BYTESUL		1<<13
 #define	_USER_BYTESDL		1<<14
-#define	_USER_NUMLOGINS		1<<15
-#define	_USER_USERSLOTS		1<<16
-#define	_USER_LEECHSLOTS	1<<17
-#define	_USER_RATIO		1<<18
+#define	_USER_CREDITS		1<<15
+#define	_USER_NUMLOGINS		1<<16
+#define	_USER_USERSLOTS		1<<17
+#define	_USER_LEECHSLOTS	1<<18
+#define	_USER_RATIO		1<<19
 #define _USER_ALL	0xffffffff
 
 #define _GROUP_NOTHING		0

@@ -37,6 +37,8 @@ int do_site_delip(char *command_line, wzd_context_t * context);
 
 int do_site_chgrp(char *command_line, wzd_context_t * context);
 int do_site_chratio(char *command_line, wzd_context_t * context);
+int do_site_give(char *command_line, wzd_context_t * context);
+int do_site_take(char *command_line, wzd_context_t * context);
 
 int do_site_change(char *command_line, wzd_context_t * context);
 

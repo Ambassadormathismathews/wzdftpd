@@ -1318,3 +1318,168 @@ int do_site_kick(char *command_line, wzd_context_t * context)
 
 #endif /* WZD_MULTIPROCESS */
 
+void do_site_help_give(wzd_context_t * context)
+{
+  send_message_with_args(501,context,"site give <user> <kbytes>");
+}
+
+/** site give: gives credits to user
+ *
+ * give user kbytes
+ */
+int do_site_give(char *command_line, wzd_context_t * context)
+{
+  char *ptr;
+  char * str_give, *username;
+  int ret;
+  wzd_user_t user, *me;
+  int uid;
+  unsigned long long kbytes;
+  short is_gadmin;
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+  ptr = command_line;
+  username = strtok_r(command_line," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help_give(context);
+    return 0;
+  }
+  str_give = strtok_r(NULL," \t\r\n",&ptr);
+  if (!str_give) {
+    do_site_help_give(context);
+    return 0;
+  }
+
+  /* check if user already exists */
+  if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return 0;
+  }
+
+  kbytes = strtoull(str_give,&ptr,0);
+  if (*ptr!='\0') {
+    do_site_help_give(context);
+    return 0;
+  }
+  kbytes *= 1024;
+
+#if 0
+  /* TODO find user group or take current user */
+  if (is_gadmin)
+  {
+    /* GAdmins cannot change user from different group */
+    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    {
+      ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
+      return 0;
+    }
+  }
+#endif /* 0 */
+
+  /* check user credits */
+  if (me->credits && me->credits < kbytes) {
+    ret = send_message_with_args(501,context,"You don't have enough credits !");
+    return 0;
+  }
+
+  user.credits += kbytes;
+  if (me->credits)
+    me->credits -= kbytes;
+
+  /* add it to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext",username,&user,_USER_CREDITS);
+
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem changing value");
+  } else {
+    ret = send_message_with_args(200,context,"Credits given");
+  }
+  return 0;
+}
+
+void do_site_help_take(wzd_context_t * context)
+{
+  send_message_with_args(501,context,"site take <user> <kbytes>");
+}
+
+/** site take: removes credits to user
+ *
+ * take user kbytes
+ */
+int do_site_take(char *command_line, wzd_context_t * context)
+{
+  char *ptr;
+  char * str_take, *username;
+  int ret;
+  wzd_user_t user, *me;
+  int uid;
+  unsigned long long kbytes;
+  short is_gadmin;
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+  ptr = command_line;
+  username = strtok_r(command_line," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help_take(context);
+    return 0;
+  }
+  str_take = strtok_r(NULL," \t\r\n",&ptr);
+  if (!str_take) {
+    do_site_help_take(context);
+    return 0;
+  }
+
+  /* check if user already exists */
+  if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return 0;
+  }
+
+  kbytes = strtoull(str_take,&ptr,0);
+  if (*ptr!='\0') {
+    do_site_help_take(context);
+    return 0;
+  }
+  kbytes *= 1024;
+
+#if 0
+  /* TODO find user group or take current user */
+  if (is_gadmin)
+  {
+    /* GAdmins cannot change user from different group */
+    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    {
+      ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
+      return 0;
+    }
+  }
+#endif /* 0 */
+
+  /* check user credits */
+  if (user.ratio==0) {
+    ret = send_message_with_args(501,context,"User has unlimited credits !");
+    return 0;
+  }
+
+  if (user.credits > kbytes)
+    user.credits -= kbytes;
+  else
+    user.credits = 0;
+
+  /* add it to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext",username,&user,_USER_CREDITS);
+
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem changing value");
+  } else {
+    ret = send_message_with_args(200,context,"Credits removed");
+  }
+  return 0;
+}
+
