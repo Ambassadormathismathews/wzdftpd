@@ -102,7 +102,7 @@ int server_try_socket(void)
     goto server_try_socket_abort;
 
   /* TLS mode ? */
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
   ret = socket_tls_switch();
   if (ret < 0) goto server_try_socket_abort; /* XXX abort, or continue in clear mode ? */
 #endif /* HAVE_GNUTLS */
@@ -201,7 +201,7 @@ int socket_disconnect(void)
   if (!_config) return -1;
 
   if (_config->sock < 0) return -1;
-#ifdef HAVE_GNUTLS
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
   if (_config->options & OPTION_TLS) {
     tls_deinit();
   }

@@ -45,7 +45,110 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_GNUTLS
+#ifdef HAVE_OPENSSL
+
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+
+static char * certificate = "/home/pollux/DEL/etc/wzdftpd/wzd.pem";
+static SSL_CTX * tls_ctx = NULL;
+static SSL * tls_obj = NULL;
+
+int tls_init(void)
+{
+  int status;
+  
+  ERR_load_ERR_strings();
+  SSL_load_error_strings();
+  SSL_library_init();
+
+  tls_ctx = SSL_CTX_new(SSLv23_client_method());
+  if (!tls_ctx) return -1;
+
+  if (RAND_status() != 1) return -1;
+
+  SSL_CTX_set_options(tls_ctx, SSL_OP_NO_SSLv2);
+  SSL_CTX_set_default_verify_paths(tls_ctx);
+
+  /* set certificate */
+  status = SSL_CTX_use_certificate_chain_file(tls_ctx, certificate);
+  if (status <= 0) {
+    SSL_CTX_free(tls_ctx);
+    tls_ctx = NULL;
+    return -1;
+  }
+
+  /* set private key file - usually the same */
+  status = SSL_CTX_use_PrivateKey_file(tls_ctx, certificate, X509_FILETYPE_PEM);
+  if (status <= 0) {
+    SSL_CTX_free(tls_ctx);
+    tls_ctx = NULL;
+    return -1;
+  }
+
+  return 0;
+}
+
+int tls_deinit(void)
+{
+  if (!_config) return -1;
+  if ( !(_config->options & OPTION_TLS) ) return -1;
+  if (_config->sock < 0) return -1;
+  if (!tls_ctx || tls_obj) return -1;
+
+  SSL_free(tls_obj);
+  SSL_CTX_free(tls_ctx);
+
+  return 0;
+}
+
+int tls_handshake(int fd)
+{
+  int ret;
+  int status;
+
+  if (!_config) return -1;
+  if ( (_config->options & OPTION_TLS) ) return -1; /* already in TLS mode ?! */
+  if (fd < 0) return -1;
+  if (!tls_ctx || tls_obj) return -1;
+
+  tls_obj = SSL_new(tls_ctx);
+  SSL_set_cipher_list(tls_obj,"ALL"); /* XXX hardcoded */
+  ret = SSL_set_fd(tls_obj,fd);
+  if (ret != 1) return -1;
+
+  SSL_set_connect_state(tls_obj);
+  status = SSL_do_handshake(tls_obj);
+  if (status <= 0) {
+    /* FIXME this is wrong, because SSL_ERROR_WANT_READ/WRITE can be returned ! */
+    return -1;
+  }
+
+  return 0;
+}
+
+int tls_read(char *buffer, int length)
+{
+  if (!_config) return -1;
+  if ( !(_config->options & OPTION_TLS) ) return -1;
+  if (_config->sock < 0) return -1;
+  if (!tls_ctx || !tls_obj) return -1;
+
+  return SSL_read( tls_obj, buffer, length );
+}
+
+int tls_write(const char *buffer, int length)
+{
+  if (!_config) return -1;
+  if ( !(_config->options & OPTION_TLS) ) return -1;
+  if (_config->sock < 0) return -1;
+  if (!tls_ctx || !tls_obj) return -1;
+
+  return SSL_write( tls_obj, buffer, length );
+}
+
+#elif HAVE_GNUTLS
 
 #include <gnutls/gnutls.h>
 #include <gcrypt.h>
