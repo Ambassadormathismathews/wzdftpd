@@ -290,6 +290,7 @@ int tls_auth_cont(wzd_context_t * context)
       }
       ret = select(fd+1,&fd_r,&fd_w,NULL,&tv);
       if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
+	out_err(LEVEL_HIGH,"tls_auth_cont failed\n");
 	return -1;
       }
     }
