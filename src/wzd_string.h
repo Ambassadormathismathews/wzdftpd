@@ -31,57 +31,67 @@ wzd_string_t * str_allocate(void);
 void str_deallocate(wzd_string_t *st);
 
 
-/* str_fromchar
- * returns a pointer to a new string which is a duplicate of the string str.
+/** returns a pointer to a new string which is a duplicate of the string str.
  */
 wzd_string_t * str_fromchar(const char *str);
 
 #define STR(x) str_fromchar((x))
 
-/* str_tochar
- * returns a pointer to the data contained in the string str.
+/** returns a pointer to the data contained in the string str.
  * These data must NOT be modified !
  */
 const char * str_tochar(const wzd_string_t *str);
 
 
 
-/* str_dup
- * returns a pointer to a new string which is a duplicate of the string src.
+/** \brief returns a pointer to a new string which is a duplicate of the string src.
  */
 wzd_string_t * str_dup(const wzd_string_t *src);
 
-/* str_copy
- * copies the string pointed to by src (including the terminating `\0'
+/** \brief copies the string pointed to by src (including the terminating `\\0'
  * character) to the array pointed to by  dest.
  */
 wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src);
 
-/* str_append
- * append 'tail' to string pointed to by str
+/** \brief append 'tail' to string pointed to by str
  */
 wzd_string_t * str_append(wzd_string_t * str, const char *tail);
 
+/** \brief prepend 'head' to string pointed to by str
+ */
+wzd_string_t * str_prepend(wzd_string_t * str, const char *head);
 
+/** \brief remove all leading and trailing spaces from input string
+ */
+wzd_string_t * str_trim(wzd_string_t * str);
+wzd_string_t * str_trim_left(wzd_string_t *str);
+wzd_string_t * str_trim_right(wzd_string_t *str);
 
-/* str_sprintf
- * Produce output according to format and variable number of arguments,
+/** \brief Convert string to lower case
+ * \note
+ * This function modifies its input string
+ */
+wzd_string_t * str_tolower(wzd_string_t *str);
+
+/** \brief Extract token from string str
+ * \note
+ * This function modifies its input string
+ */
+wzd_string_t * str_tok(wzd_string_t *str, const char *delim);
+
+/** \brief Produce output according to format and variable number of arguments,
  * and write output to str.
  */
 int str_sprintf(wzd_string_t *str, const char *format, ...);
 
+/** \brief Convert utf8 string to other charset
+ * \note
+ * Require unicode support
+ */
+int str_utf8_to_local(wzd_string_t *str, const char * charset);
+
 
 /******* XXX to be implemented XXX **********/
-wzd_string_t * str_prepend(wzd_string_t * str, const char *head);
-
-wzd_string_t * str_trim(wzd_string_t * str);
-
-/* str_tok
- * Extract token from string str
- *  !! str is modified !!
- */
-wzd_string_t * str_tok(wzd_string_t *str, const char *delim);
-
 
 #endif /* __WZD_STRING__ */
 

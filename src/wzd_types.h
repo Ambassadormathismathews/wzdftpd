@@ -22,7 +22,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 /** \file
-  * \brief System types
+  * \brief Standard wzdftpd types, defined for ease-of-use and portability.
   * \warning This file contains many platform-dependant code.
   */
 

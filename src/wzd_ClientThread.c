@@ -73,6 +73,7 @@
 #include "wzd_ratio.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
+#include "wzd_string.h"
 #include "wzd_socket.h"
 #include "wzd_tls.h"
 #include "wzd_utf8.h"
@@ -751,7 +752,7 @@ int do_list(char *name, char *param, wzd_context_t * context)
     }
 
     strncpy(cmd,param,sizeof(cmd));
-    if (cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
+    if (cmd[0] != '\0' && cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
 
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
     {
@@ -3035,7 +3036,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 }
 
 /*************** login sequence **********************/
-int do_login(wzd_context_t * context)
+static int do_login(wzd_context_t * context)
 {
   int ret;
 
@@ -3059,12 +3060,11 @@ void * clientThreadProc(void *arg)
   char *buffer = NULL;
   int save_errno;
   unsigned int sockfd;
-  unsigned int length;
   int ret;
-  char *token;
-  char *ptr;
   wzd_user_t * user;
   wzd_command_t * command;
+  wzd_string_t * command_buffer;
+  wzd_string_t * token;
 #ifndef _MSC_VER
   int oldtype;
 #endif
@@ -3091,13 +3091,7 @@ void * clientThreadProc(void *arg)
 
   ret = do_login(context);
 
-/** \todo XXX FIXME what is the utility of these lines ?! */
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = GetUserByID(context->userid);
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (ret) { /* USER not logged in */
     const char * groupname = NULL;
@@ -3263,59 +3257,52 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 
     if (buffer[0]=='\0') continue;
 
+    command_buffer = STR(buffer);
+
 #ifdef HAVE_UTF8
     if (context->connection_flags & CONNECTION_UTF8)
     {
-      char utf_buf[WZD_BUFFER_LEN];
-
-      if (utf8_to_local_charset(buffer, utf_buf, WZD_BUFFER_LEN, local_charset()))
+      if (str_utf8_to_local(command_buffer, local_charset()))
       {
         /* XXX FIXME error, but use buffer anyway */
-        out_log(LEVEL_NORMAL,"error converting UTF-8 input '%s'\n", buffer);
-      }
-      else
-      {
-        wzd_strncpy(buffer, utf_buf, WZD_BUFFER_LEN);
+        out_log(LEVEL_NORMAL,"error converting UTF-8 input '%s'\n", str_tochar(command_buffer));
       }
     }
 #endif
 
-    {
-      int length = strlen(buffer);
-      while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
-        buffer[length-- -1] = '\0';
-      wzd_strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
-    }
+    str_trim_right(command_buffer);
+    wzd_strncpy(context->last_command,str_tochar(command_buffer),HARD_LAST_COMMAND_LENGTH-1);
+
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
-out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
+out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,str_tochar(command_buffer));
 #endif
 
     /* 2. get next token */
-    ptr = &buffer[0];
-    token = strtok_r(buffer," \t\r\n",&ptr);
+    token = str_tok(command_buffer, " \t\r\n");
 
-    if (!token || (length=strlen(token))==0)
+    if (!token)
       command = NULL;
     else
     {
-      ascii_lower(token,length);
-      command = command_list_find(token);
+      str_tolower(token);
+      command = command_list_find(str_tochar(token));
     }
 
     if (command) {
-      char * command_name = token;
-      token = strtok_r(NULL,"\r\n",&ptr);
-      ret = (*(command->command))(command_name,token,context);
+      ret = (*(command->command))(str_tochar(token),str_tochar(command_buffer),context);
       continue;
     } else {
       ret = send_message(202,context);
     }
 
+    str_deallocate(token);
+
   } /* while (!exitclient) */
 
 /*	Sleep(2000);*/
 
+  str_deallocate(command_buffer);
   free(buffer);
 
 #ifdef WZD_MULTITHREAD

@@ -31,10 +31,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <ctype.h> /* isspace */
+
 #include "wzd_string.h"
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+#include "wzd_misc.h" /* ascii_lower */
+
+#ifdef HAVE_UTF8
+# include "wzd_utf8.h"
+#endif
 
 
 #include "wzd_debug.h"
@@ -177,6 +184,121 @@ wzd_string_t * str_append(wzd_string_t * str, const char *tail)
   return str;
 }
 
+/** \brief prepend 'head' to string pointed to by str
+ */
+wzd_string_t * str_prepend(wzd_string_t * str, const char *head)
+{
+  size_t length;
+  char * buf;
+
+  if (!str) return NULL;
+  if (!head) return str;
+
+  length = strlen(head);
+
+  buf = wzd_malloc(str->length + length + 1);
+  wzd_strncpy(buf, head, length);
+  if (str->buffer) {
+    memcpy(buf + length, str->buffer, str->length);
+    length += str->length;
+    wzd_free(str->buffer);
+  }
+  buf[length] = '\0';
+  str->buffer = buf;
+  str->length = length;
+
+  return str;
+}
+
+
+/** \brief remove all leading and trailing spaces from input string
+ */
+wzd_string_t * str_trim(wzd_string_t * str)
+{
+  return str_trim_left(str_trim_right(str));
+}
+
+wzd_string_t * str_trim_left(wzd_string_t *str)
+{
+  unsigned int i=0;
+
+  if (!str || !str->buffer)
+    return NULL;
+
+  while (isspace(str->buffer[i])) {
+    ++i;
+  }
+
+  if (i==0) {
+    unsigned int j=0;
+    for (;i!=str->length;i++)
+    {
+      str->buffer[j++] = str->buffer[i];
+    }
+    str->length -= i;
+  }
+
+  return str;
+}
+
+wzd_string_t * str_trim_right(wzd_string_t *str)
+{
+  size_t len;
+
+  if (!str || !str->buffer)
+    return NULL;
+
+  if (str->length == 0) return str;
+
+  len = str->length;
+
+  while ((--len >= 0) &&
+      (isspace(str->buffer[len]) ||
+       str->buffer[len] == '\n')) {
+    str->buffer[len] = '\0';
+    str->length--;
+  }
+  return str;
+}
+
+/** \brief Convert string to lower case
+ * \note
+ * This function modifies its input string
+ */
+wzd_string_t * str_tolower(wzd_string_t *str)
+{
+  if (str && str->buffer)
+    ascii_lower(str->buffer, str->length);
+
+  return str;
+}
+
+
+/** \brief Extract token from string str
+ * \note
+ * This function modifies its input string
+ */
+wzd_string_t * str_tok(wzd_string_t *str, const char *delim)
+{
+  wzd_string_t * token;
+  char *ptr, *t;
+  char * buffer;
+
+  if (!str || !str->buffer || str->length == 0) return NULL;
+  if (!delim) return NULL;
+
+  buffer = wzd_strdup(str->buffer);
+  t = strtok_r(buffer, delim, &ptr);
+
+  token = STR(t);
+  if (t) {
+    str->length = strlen(ptr);
+    wzd_strncpy(str->buffer, ptr, str->length+1);
+  }
+  wzd_free(buffer);
+
+  return token;
+}
 
 
 
@@ -209,6 +331,44 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
 
   return result;
 }
+
+/** \brief Convert utf8 string to other charset
+ * \note
+ * Require unicode support
+ */
+#ifdef HAVE_UTF8
+int str_utf8_to_local(wzd_string_t *str, const char * charset)
+{
+  char * utf_buf;
+  size_t length;
+
+  if (!utf8_valid(str->buffer, str->length)) {
+    return -1;
+  }
+
+  length = strlen(str->buffer) + 10; /* we allocate more, small security */
+  utf_buf = wzd_malloc(length);
+
+  if (utf8_to_local_charset(str->buffer, utf_buf, length, charset))
+  {
+    /* error during conversion */
+    wzd_free(utf_buf);
+    return -1;
+  }
+
+  wzd_free(str->buffer);
+  str->buffer = utf_buf;
+  str->allocated = length;
+  str->length = strlen(utf_buf);
+
+  return 0;
+}
+#else
+int str_utf8_to_local(wzd_string_t *str, const char * charset)
+{
+  return -1;
+}
+#endif /* HAVE_UTF8 */
 
 
 

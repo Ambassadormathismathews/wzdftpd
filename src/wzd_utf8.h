@@ -25,6 +25,10 @@
 #ifndef __WZD_UTF8__
 #define __WZD_UTF8__
 
+/** \file wzd_utf8.h
+ * \brief Functions operating on Unicode characters and UTF-8 strings.
+ */
+
 /** Detect if system is UTF-8 capable
  */
 void utf8_detect(wzd_config_t * config);
@@ -40,5 +44,15 @@ const char * local_charset(void);
 int local_charset_to_utf8(const char *src, char *dst_utf8, size_t max_len, const char *local_charset);
 
 int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const char *local_charset);
+
+
+/** \brief Valid UTF-8 check
+ *
+ * taken from RFC2640, adapted to remove warnings :)
+ * Checks if a byte sequence is valid UTF-8.
+ *
+ * \return 1 if input string is valid UTF-8, else 0
+ */
+int utf8_valid(const unsigned char *buf, unsigned int len);
 
 #endif /* __WZD_UTF8__ */

@@ -181,13 +181,13 @@ const char * charset_detect_local(void)
   }
   codeset = locale; /* something like language_COUNTRY.charset */
   out_log(LEVEL_FLOOD,"env: %s\n",codeset);
-  
+
   /* we need to try to translate that into an understandable
    * codeset for iconv (see `iconv --list`)
    */
-  
+
 # endif
- 
+
 #else /* !WIN32 */
   static char buf[2 + 10 + 1];
 
@@ -277,7 +277,7 @@ int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const
 /** \brief Valid UTF-8 check
  *
  * taken from RFC2640, adapted to remove warnings :)
- * Checks if a bte sequence is valid UTF-8.
+ * Checks if a byte sequence is valid UTF-8.
  *
  * \return 1 if input string is valid UTF-8, else 0
  */
