@@ -10,6 +10,8 @@ include_dir="@includedir@"
 wzd_include_dir="@includedir@/@PACKAGE@"
 lib_dir="@libdir@"
 
+ssl_flags="@WZD_SSL_LIBS@"
+
 usage()
 {
     cat <<EOF
@@ -95,9 +97,9 @@ else
 fi
 
 if test "$lib_dir" != "/usr/lib"; then
-    libs="-L$lib_dir -ldl -lwzd"
+    libs="-L$lib_dir -ldl -lwzd $ssl_flags"
 else
-    libs="-lwzd"
+    libs="-lwzd $ssl_flags"
 fi
 
 if test "$echo_cflags" = "yes"; then
