@@ -73,9 +73,9 @@ char * ul2a(unsigned long q)
  */
 int socket_make(const char *ip, unsigned int *port, int nListen)
 {
-  struct sockaddr_in sai;
+  struct sockaddr_in sai = { 0 };
 #if defined(IPV6_SUPPORT)
-  struct sockaddr_in6 sai6;
+  struct sockaddr_in6 sai6 = { 0 };
 #endif
 /*  unsigned int c;*/
   size_t c;
