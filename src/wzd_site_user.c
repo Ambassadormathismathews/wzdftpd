@@ -778,7 +778,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   /* perms */
   else if (strcmp(field,"perms")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_IDLE; user.userperms = ul;} 
+    if (!*ptr) { mod_type = _USER_PERMS; user.userperms = ul;} 
   }
   /* flags */ /* TODO accept modifications style +f or -f */
   else if (strcmp(field,"flags")==0) {
