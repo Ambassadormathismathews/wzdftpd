@@ -1,5 +1,9 @@
 #if SSL_SUPPORT
 
+#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -7,6 +11,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
@@ -14,6 +19,204 @@
 #include "wzd_tls.h"
 
 #include "wzd_messages.h"
+
+
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+
+
+typedef int (*imp_tls_init)(SSL_CTX **ctx, const char *certificate);
+typedef int (*imp_tls_exit)(SSL_CTX **tls_ctx);
+
+typedef int (*imp_tls_auth)(const char *type, wzd_context_t * context, wzd_config_t * config);
+typedef int (*imp_tls_auth_cont)(wzd_context_t * context);
+typedef int (*imp_tls_init_datamode)(int sock, wzd_ssl_t * wzd_ssl,SSL_CTX * tls_ctx, const char * tls_cipher_list);
+typedef int (*imp_tls_close_data)(wzd_ssl_t * ssl);
+typedef int (*imp_tls_free)(wzd_ssl_t * ssl);
+
+typedef int (*imp_tls_auth_data_cont)(wzd_ssl_t * wzd_ssl);
+
+typedef int (*imp_tls_read)(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+typedef int (*imp_tls_write)(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+
+#define TLS_WRAPPER_NAME "./wzd_tlswrap.dll"
+
+typedef struct {
+  void *		handle;
+  imp_tls_init		tls_init;
+  imp_tls_exit		tls_exit;
+  imp_tls_auth		tls_auth;
+  imp_tls_auth_cont	tls_auth_cont;
+  imp_tls_init_datamode	tls_init_datamode;
+  imp_tls_close_data	tls_close_data;
+  imp_tls_free		tls_free;
+  imp_tls_auth_data_cont	tls_auth_data_cont;
+  imp_tls_read		tls_read;
+  imp_tls_write		tls_write;
+} tls_wrapper_fct_t;
+
+tls_wrapper_fct_t * tls_wrapper_fct=NULL;
+
+int tls_init(void)
+{
+  void * handle;
+  void * ptr;
+  int ret;
+
+  out_err(LEVEL_FLOOD,"Loading TLS wrapper\n");
+
+  handle = dlopen(TLS_WRAPPER_NAME,RTLD_NOW);
+  if (!handle)
+  {
+    out_err(LEVEL_CRITICAL,"Could not open wrapper %s (error %s)\n",
+	TLS_WRAPPER_NAME, dlerror());
+    return 1;
+  }
+  
+  tls_wrapper_fct = malloc(sizeof(tls_wrapper_fct_t));
+  tls_wrapper_fct->handle = handle;
+
+  ptr = dlsym(handle,"tls_init");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_init\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_init = ptr;
+  ptr = dlsym(handle,"tls_exit");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_exit\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_exit = ptr;
+  ptr = dlsym(handle,"tls_auth");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_auth\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_auth = ptr;
+  ptr = dlsym(handle,"tls_auth_cont");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_auth_cont\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_auth_cont = ptr;
+  ptr = dlsym(handle,"tls_init_datamode");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_init_datamode\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_init_datamode = ptr;
+  ptr = dlsym(handle,"tls_close_data");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_close_data\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_close_data = ptr;
+  ptr = dlsym(handle,"tls_free");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_free\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_free = ptr;
+  ptr = dlsym(handle,"tls_auth_data_cont");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_auth_data_cont\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_auth_data_cont = ptr;
+  ptr = dlsym(handle,"tls_read");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_read\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_read = ptr;
+  ptr = dlsym(handle,"tls_write");
+  if (!ptr) {
+    out_err(LEVEL_CRITICAL,"Missing function tls_write\n");
+    free(tls_wrapper_fct);
+    return 1;
+  }
+  tls_wrapper_fct->tls_write = ptr;
+
+  ret = (tls_wrapper_fct->tls_init)(&mainConfig->tls_ctx,mainConfig->tls_certificate);
+  if (ret) out_err(LEVEL_CRITICAL,"tls_init returned %d\n",ret);
+  return ret;
+}
+
+int tls_exit(void)
+{
+  int ret;
+  if (!tls_wrapper_fct) return 1;
+  ret = (tls_wrapper_fct->tls_exit)(&mainConfig->tls_ctx);
+  free(tls_wrapper_fct);
+  tls_wrapper_fct = NULL;
+  return ret;
+}
+
+int tls_auth (const char *type, wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_auth)(type,context,mainConfig);
+}
+
+int tls_auth_cont(wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_auth_cont)(context);
+}
+
+int tls_init_datamode(int sock, wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_init_datamode)(sock,&context->ssl,
+      mainConfig->tls_ctx, mainConfig->tls_cipher_list);
+}
+
+int tls_close_data(wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_close_data)(&context->ssl);
+}
+
+int tls_free(wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_free)(&context->ssl);
+}
+
+int tls_auth_data_cont(wzd_context_t * context)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_auth_data_cont)(&context->ssl);
+}
+
+int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_read)(sock,msg,length,flags,timeout,vcontext);
+}
+
+int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+{
+  if (!tls_wrapper_fct) return 1;
+  return (tls_wrapper_fct->tls_write)(sock,msg,length,flags,timeout,vcontext);
+}
+
+
+
+
+
+#else /* defined __CYGWIN__ && defined WINSOCK_SUPPORT */
+
 
 /*************** tls_auth_setfd_set *********************/
 
@@ -222,6 +425,7 @@ int tls_auth (const char *type, wzd_context_t * context)
 {
   int ret;
 
+#if 0
   if (!type || type[0]==0) return 1;
 
   if (strcasecmp(type,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
@@ -232,6 +436,7 @@ int tls_auth (const char *type, wzd_context_t * context)
   if (mainConfig->tls_type != TLS_IMPLICIT) {
     ret = send_message_with_args(234, context, type);
   }
+#endif
 
   context->ssl.obj = SSL_new(mainConfig->tls_ctx);
   SSL_set_cipher_list(context->ssl.obj,mainConfig->tls_cipher_list);
@@ -258,7 +463,14 @@ int tls_auth_cont(wzd_context_t * context)
   SSL_set_accept_state(ssl);
   fd = SSL_get_fd(ssl);
   /* ensure socket is non-blocking */
+#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+    {
+    unsigned long noBlock=1;
+    ioctlsocket(fd,FIONBIO,&noBlock);
+  }
+#else
   fcntl(fd,F_SETFL,(fcntl(fd,F_GETFL)|O_NONBLOCK));
+#endif
   do {
     status = SSL_accept(ssl);
     sslerr = SSL_get_error(ssl,status);
@@ -360,7 +572,14 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 
   SSL_set_cipher_list(context->ssl.data_ssl, mainConfig->tls_cipher_list);
 
+#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+  {
+    unsigned long noBlock=1;
+    ioctlsocket(sock,FIONBIO,&noBlock);
+  }
+#else
   fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
+#endif
   if (SSL_set_fd(context->ssl.data_ssl, sock) != 1)
   /* FIXME PORT ? */
     out_log(LEVEL_CRITICAL,"SSL_set_fd error\n");
@@ -450,5 +669,7 @@ int tls_free(wzd_context_t * context)
 
   return 0;
 }
+
+#endif /* defined __CYGWIN__ && defined WINSOCK_SUPPORT */
 
 #endif /* SSL_SUPPORT */
