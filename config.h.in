@@ -41,6 +41,9 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define if you have the iconv() function. */
+#undef HAVE_ICONV
+
 /* Define to 1 if you have the `inet_ntoa' function. */
 #undef HAVE_INET_NTOA
 
@@ -52,6 +55,39 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `iswalnum' function. */
+#undef HAVE_ISWALNUM
+
+/* Define to 1 if you have the `iswalpha' function. */
+#undef HAVE_ISWALPHA
+
+/* Define to 1 if you have the `iswcntrl' function. */
+#undef HAVE_ISWCNTRL
+
+/* Define to 1 if you have the `iswdigit' function. */
+#undef HAVE_ISWDIGIT
+
+/* Define to 1 if you have the `iswgraph' function. */
+#undef HAVE_ISWGRAPH
+
+/* Define to 1 if you have the `iswlower' function. */
+#undef HAVE_ISWLOWER
+
+/* Define to 1 if you have the `iswprint' function. */
+#undef HAVE_ISWPRINT
+
+/* Define to 1 if you have the `iswpunct' function. */
+#undef HAVE_ISWPUNCT
+
+/* Define to 1 if you have the `iswspace' function. */
+#undef HAVE_ISWSPACE
+
+/* Define to 1 if you have the `iswupper' function. */
+#undef HAVE_ISWUPPER
+
+/* Define to 1 if you have the `iswxdigit' function. */
+#undef HAVE_ISWXDIGIT
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #undef HAVE_LIBSSL
@@ -193,6 +229,12 @@
 /* Define if using tcl */
 #undef HAVE_TCL
 
+/* Define to 1 if you have the `towlower' function. */
+#undef HAVE_TOWLOWER
+
+/* Define to 1 if you have the `towupper' function. */
+#undef HAVE_TOWUPPER
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -218,6 +260,15 @@
    longer depend upon `wait3'. */
 #undef HAVE_WAIT3
 
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the <wctype.h> header file. */
+#undef HAVE_WCTYPE_H
+
+/* Define if you are using the system's wchar_t functions. */
+#undef HAVE_WC_FUNCS
+
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK
 
@@ -226,6 +277,9 @@
 
 /* "Define to 1 if you have the `zlib' library (-lz)" */
 #undef HAVE_ZLIB
+
+/* Define as const if the declaration of iconv() needs const. */
+#undef ICONV_CONST
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -290,6 +344,9 @@
 /* Define to rpl_malloc if the replacement function should be used. */
 #undef malloc
 
+/* Define to 'int' if system headers don't define. */
+#undef mbstate_t
+
 /* Define to `long' if <sys/types.h> does not define. */
 #undef off_t
 
@@ -301,3 +358,9 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #undef vfork
+
+/* Define to 'int' if system headers don't define. */
+#undef wchar_t
+
+/* Define to 'int' if system headers don't define. */
+#undef wint_t

@@ -974,14 +974,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       {
 	/* check FLAG_SEE_IP for self */
 	if (me->flags && strchr(me->flags,FLAG_SEE_IP)) {
-#if !defined(IPV6_SUPPORT)
-  inet_ntop(AF_INET,current_context->hostip,internalbuffer,INET_ADDRSTRLEN);
-#else
-  inet_ntop(AF_INET6,current_context->hostip,internalbuffer,INET6_ADDRSTRLEN);
-#endif
-/*	  snprintf(internalbuffer,IBUFSIZE,"%d.%d.%d.%d",current_context->hostip[0],
-	      current_context->hostip[1],current_context->hostip[2],
-	      current_context->hostip[3]);*/
+          inet_ntop(CURRENT_AF,current_context->hostip,internalbuffer,sizeof(internalbuffer));
 	} else { /* not allowed to see */
 	  snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
 	}

@@ -434,22 +434,12 @@ int check_timeout(wzd_context_t * context)
       /* TIMEOUT ! */
       send_message_with_args(421,context,"Timeout, closing connection");
       {
-	const char * groupname = NULL;
-	const unsigned char * userip = context->hostip;
-	const char * remote_host;
-	struct hostent *h;
-	h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
-	if (h==NULL)
-	  remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
-	else
-	  remote_host = h->h_name;
-	if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-	log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
+        char inet_str[256];
+        inet_str[0] = '\0';
+        inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+	log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
 	    user->username,
-            *(unsigned char *)&userip[0],
-            *(unsigned char *)&userip[1],
-            *(unsigned char *)&userip[2],
-            *(unsigned char *)&userip[3],
+            inet_str,
 	    delay
 	    );
       }
@@ -470,26 +460,16 @@ int check_timeout(wzd_context_t * context)
         /* TIMEOUT ! */
         send_message_with_args(421,context,"Timeout, closing connection");
 	{
-	  const char * groupname = NULL;
-	  const unsigned char * userip = context->hostip;
-	  const char * remote_host;
-	  struct hostent *h;
-	  h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
-	  if (h==NULL)
-	    remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
-	  else
-	    remote_host = h->h_name;
-	  if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-	  log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
-	      user->username,
-              *(unsigned char *)&userip[0],
-              *(unsigned char *)&userip[1],
-              *(unsigned char *)&userip[2],
-              *(unsigned char *)&userip[3],
-	      delay
-	      );
-	}
-	client_die(context);
+          char inet_str[256];
+          inet_str[0] = '\0';
+          inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+          log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
+              user->username,
+              inet_str,
+              delay
+              );
+        }
+        client_die(context);
 #ifdef WZD_MULTIPROCESS
 	exit(0);
 #else /* WZD_MULTIPROCESS */
@@ -2483,22 +2463,22 @@ void * clientThreadProc(void *arg)
     const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+    char inet_str[256];
+    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    inet_str[0] = '\0';
+    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
     if (h==NULL)
-      remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+      remote_host = inet_str;
     else
       remote_host = h->h_name;
-    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-    log_message("LOGIN","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
+    log_message("LOGIN","%s (%s) \"%s\" \"%s\" \"%s\"",
 	(remote_host)?remote_host:"no host !",
-	*(unsigned char *)&userip[0],
-	*(unsigned char *)&userip[1],
-	*(unsigned char *)&userip[2],
-	*(unsigned char *)&userip[3],
-	user->username,
+        inet_str,
+        user->username,
 	(groupname)?groupname:"No Group",
 	user->tagline
-	);
+        );
   }
 
   /* user+pass ok */
@@ -2628,18 +2608,18 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         const unsigned char * userip = context->hostip;
         const char * remote_host;
         struct hostent *h;
-        h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+        char inet_str[256];
+        if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+        inet_str[0] = '\0';
+        inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+        h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
         if (h==NULL)
-          remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+          remote_host = inet_str;
         else
           remote_host = h->h_name;
-        if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-        log_message("LOGOUT","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
+        log_message("LOGOUT","%s (%s) \"%s\" \"%s\" \"%s\"",
             remote_host,
-            *(unsigned char *)&userip[0],
-            *(unsigned char *)&userip[1],
-            *(unsigned char *)&userip[2],
-            *(unsigned char *)&userip[3],
+            inet_str,
             user->username,
             (groupname)?groupname:"No Group",
             user->tagline

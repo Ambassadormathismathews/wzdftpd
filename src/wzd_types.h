@@ -183,6 +183,12 @@
 #endif /* _MSC_VER */
 
 
+#ifdef IPV6_SUPPORT
+#define CURRENT_AF AF_INET6
+#else
+#define CURRENT_AF AF_INET
+#endif
+
 #ifndef MAX
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
