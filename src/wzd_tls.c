@@ -677,7 +677,6 @@ int tls_auth (const char *type, wzd_context_t * context)
     if (gnutls_error_is_fatal(ret)) {
       out_log(LEVEL_HIGH,"GnuTLS: handshake failed: %s\n",gnutls_strerror(ret));
       gnutls_deinit(session);
-      free(session);
       return 1;
     }
     switch (ret) {
@@ -688,7 +687,6 @@ int tls_auth (const char *type, wzd_context_t * context)
       default:
         out_log(LEVEL_HIGH,"GnuTLS: handshake failed, unknown non-fatal error: %s\n",gnutls_strerror(ret));
         gnutls_deinit(session);
-        free(session);
         return 1;
     }
 
@@ -705,7 +703,6 @@ int tls_auth (const char *type, wzd_context_t * context)
     if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
       out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
       gnutls_deinit(session);
-      free(session);
       return 1;
     }
     ret = 1;
@@ -765,7 +762,6 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     if (gnutls_error_is_fatal(ret)) {
       out_log(LEVEL_HIGH,"GnuTLS: handshake failed: %s\n",gnutls_strerror(ret));
       gnutls_deinit(session);
-      free(session);
       return 1;
     }
     switch (ret) {
@@ -776,7 +772,6 @@ int tls_init_datamode(int sock, wzd_context_t * context)
       default:
         out_log(LEVEL_HIGH,"GnuTLS: handshake failed, unknown non-fatal error: %s\n",gnutls_strerror(ret));
         gnutls_deinit(session);
-        free(session);
         return 1;
     }
 
@@ -793,7 +788,6 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
       out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
       gnutls_deinit(session);
-      free(session);
       return 1;
     }
     ret = 1;
