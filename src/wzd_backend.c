@@ -577,6 +577,9 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
     return 1;
   }
   ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
+
+  usercache_invalidate( predicate_name, (void *)name );
+
   return ret;
 }
 
