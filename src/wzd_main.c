@@ -115,6 +115,7 @@ static const char * config_files[] = {
   "wzd.cfg",
   "/etc/wzdftpd/wzd.cfg",
   "/etc/wzd.cfg",
+  "/usr/local/etc/wzd.cfg",
   NULL /* do NOT remove */
 };
 
