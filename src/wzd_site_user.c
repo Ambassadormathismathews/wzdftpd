@@ -357,7 +357,7 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
-  
+
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
 

@@ -766,9 +766,9 @@ void limiter_add_bytes(wzd_bw_limiter *l, wzd_mutex_t * mutex, int byte_count, i
 #else
   struct _timeb tb;
 #endif
-  double elapsed;
-  double pause_time;
-  double rate_ratio;
+  unsigned long elapsed;
+  unsigned long pause_time;
+/*  double rate_ratio;*/
   unsigned int bw_rate;
 
   if (!l) return;
@@ -784,28 +784,30 @@ wzd_mutex_unlock(mutex);
   {*/
 #ifndef _MSC_VER
     gettimeofday( &tv, &tz );
-    elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
-    elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
+    elapsed = (tv.tv_sec - l->current_time.tv_sec) * 1000000;
+    elapsed += (tv.tv_usec - l->current_time.tv_usec);
 #else
     _ftime(&tb);
-    elapsed = (double) (tb.time - l->current_time.time);
-    elapsed += (double) (tb.millitm - l->current_time.millitm) / (double)1000;
+    elapsed = (double) (tb.time - l->current_time.time) * 1000000;
+    elapsed += (double) (tb.millitm - l->current_time.millitm) * 1000;
 #endif
-    if (elapsed==(double)0) elapsed=0.01;
+    if (elapsed==0) elapsed=1;
 /*    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);*/
-    l->current_speed = (float)((double)l->bytes_transfered / elapsed);
+    l->current_speed = (float)( (l->bytes_transfered * 1000000.f) / elapsed);
     bw_rate = (unsigned int)l->current_speed;
 /*  }*/
-/*fprintf(stderr,"speed: %d max:%d\n",bw_rate,l->maxspeed);*/
   if (l->maxspeed == 0 || bw_rate <= l->maxspeed) {
     return;
   }
-  rate_ratio = (double)bw_rate / (double)l->maxspeed;
-  pause_time = (rate_ratio - (double)1)*elapsed;
+/*fprintf(stderr,"received: %d\n",l->bytes_transfered);*/
+/*fprintf(stderr,"speed: %d max:%d\n",bw_rate,l->maxspeed);*/
+/*  rate_ratio = (double)bw_rate / (double)l->maxspeed;*/
+/*  pause_time = (rate_ratio - (double)1)*elapsed;*/
+  pause_time = (bw_rate-l->maxspeed) * (elapsed / l->maxspeed);
 #ifndef _MSC_VER
-  usleep ((unsigned long)(pause_time * (double)1000000));
+  usleep (pause_time);
 #else
-  Sleep((unsigned long)(pause_time * (double)1000));
+  Sleep((unsigned long)(pause_time / (double)1000));
 #endif
 /*  gettimeofday( &tv, &tz );
   l->current_time.tv_sec = tv.tv_sec;
@@ -928,13 +930,13 @@ int my_str_compare(const char * src, const char *dst)
     ptr_dst++;
     ptr_src++;
   }
-  
+
   /* test if checking was complete */
   if (*ptr_dst == '\0' || (*ptr_dst=='*' && *(ptr_dst+1)=='\0') ) return 1;
 
   return 0;
 }
-  
+
 /* lower only characters in A-Z ! */
 void ascii_lower(char * s, unsigned int length)
 {
