@@ -1093,7 +1093,7 @@ int group_remove_user(wzd_user_t * user, unsigned int gid)
     user->groups[i] = user->groups[i+1];
   }
   user->group_num--;
-  
+
   return 0;
 }
 

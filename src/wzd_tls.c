@@ -655,7 +655,7 @@ int tls_auth (const char *type, wzd_context_t * context)
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
- 
+
 
   session = initialize_tls_session();
 
@@ -735,7 +735,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
- 
+
   if (context->tls.data_session) {
     out_log(LEVEL_NORMAL,"tls_init_datamode: a data session already exist (%p) !\n",
         context->tls.data_session);
@@ -800,7 +800,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 
   context->tls.data_session = malloc(sizeof(gnutls_session));
   *( (gnutls_session*)context->tls.data_session) = session;
-  
+
   return 0;
 }
 

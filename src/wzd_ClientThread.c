@@ -1278,7 +1278,7 @@ int do_rmdir(char *name, char * param, wzd_context_t * context)
       strcpy(buffer,param);
     }
     stripdir(buffer,path,WZD_MAX_PATH-1);
-    
+
     log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
         path, /* ftp-absolute path */
         user->username,

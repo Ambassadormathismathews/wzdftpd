@@ -176,7 +176,7 @@ static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **fir
   struct wzd_file_t *current=*first,*prev,*removed;
 
   if (!current) return NULL;
-  
+
   /* first to be removed ? */
   if (strcmp(name,current->filename)==0) {
     removed = current;
@@ -184,7 +184,7 @@ static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **fir
     removed->next_file = NULL;
     return removed;
   }
-  
+
   prev = current;
   current = current->next_file;
 
@@ -238,7 +238,7 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
   /* tail insertion */
   /* itp can't be NULL here, the first case would have trapped it */
   itp->next_file = entry;
-  
+
   return;
 }
 
@@ -510,7 +510,7 @@ int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_
   /* siteop always hav all permissions */
   if (user->flags && strchr(user->flags,FLAG_SITEOP))
     return 0;
-  
+
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
 /*
@@ -567,7 +567,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
           group = GetGroupByID(user->groups[i]);
           if (group && strcmp(group->groupname,file_cur->group)==0) {
             /* NOTE all results are inverted (!=) because we return 0 on success ! */
-  	    switch (wanted_right) {
+            switch (wanted_right) {
               case RIGHT_LIST:
               case RIGHT_RETR:
                 ret = (file_cur->permissions & 0040);
@@ -936,7 +936,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
     file_cur = remove_file(dst_stripped_filename,&dst_file_list);
     free_file_recursive(file_cur);
   } else {
-    
+
     if (ret) { /* no permissions file */
       file_cur = add_new_file(dst_stripped_filename,file_dst->owner,file_dst->group,&dst_file_list);
     } else { /* permission file */
@@ -948,7 +948,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
         if (group) strncpy(file_cur->group,file_dst->group,256);
       }
     }
-  
+
     /* replace the new acl */
     acl = file_cur->acl;
     file_cur->acl = file_dst->acl;
@@ -1355,7 +1355,7 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
-  
+
   user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_MKDIR,user);
@@ -1374,7 +1374,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   struct stat s;
-  
+
   user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_RMDIR,user);
@@ -1404,7 +1404,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
     snprintf(dirfilter,2048,"%s/*",dirname);
     if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
 #endif
-    
+
 #ifndef _MSC_VER
     while ((entr=readdir(dir))!=NULL) {
       filename = entr->d_name;
@@ -1470,7 +1470,7 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
 
   /* change file name in perm file !! */
   ret = _movePerm(old_filename,new_filename,0,0,context);
-  
+
   ret = safe_rename(old_filename,new_filename);
   if (ret==-1) {
 #ifdef DEBUG
@@ -1533,7 +1533,7 @@ int file_remove(const char *filename, wzd_context_t * context)
     if (perm_check("delete", context, mainConfig) == 0) ret = 0; /* specified in config file */
 
   }
-  
+
   if (ret)
     return 1;
 
