@@ -83,7 +83,7 @@ int ip_compare(const char * ip, const char * pattern)
     if (!host) return 0;
     memcpy(buffer2, host->h_addr, sizeof(buffer2));
 
-    if (memcmp(buffer1,buffer2,sizeof(in_addr_t))==0) /** and for IPv6 ?! */
+    if (memcmp(buffer1,buffer2,4)==0) /** and for IPv6 ?! */
       return 1;
 
     /* other aliases for host ?! */
@@ -111,7 +111,7 @@ int ip_compare(const char * ip, const char * pattern)
     return 1;
 
   /* try reverse lookup */
-  host = gethostbyaddr(buffer1,sizeof(in_addr_t),AF_INET); /** \todo will not work with IPv6 */
+  host = gethostbyaddr(buffer1,4,AF_INET); /** \todo will not work with IPv6 */
   if (!host) return 0;
   if (my_str_compare(host->h_name,pattern)==1)
     return 1;

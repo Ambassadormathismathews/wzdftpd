@@ -52,6 +52,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_libmain.h"
 #include "wzd_messages.h"

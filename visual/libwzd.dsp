@@ -175,6 +175,10 @@ SOURCE=..\src\wzd_file.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_ip.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_libmain.c
 # End Source File
 # Begin Source File
@@ -280,6 +284,10 @@ SOURCE=..\src\wzd_dir.h
 # Begin Source File
 
 SOURCE=..\src\wzd_file.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_ip.h
 # End Source File
 # Begin Source File
 

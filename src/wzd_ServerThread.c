@@ -71,6 +71,7 @@
 #include "wzd_log.h"
 #include "wzd_tls.h"
 #include "wzd_init.h"
+#include "wzd_ip.h"
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
 #include "wzd_ClientThread.h"

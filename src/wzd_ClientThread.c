@@ -64,6 +64,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_mod.h"
