@@ -198,7 +198,7 @@ void sfv_free(wzd_sfv_file *sfv)
  */
 int sfv_read(const char *filename, wzd_sfv_file *sfv)
 {
-  FILE *in;
+  wzd_cache_t * fp;
   struct stat st;
   char buf[BUFSIZ];
   char * ptr;
@@ -209,12 +209,12 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
 
   if (stat(filename,&st) < 0) return -1;
   if (!S_ISREG(st.st_mode)) return -1;
-  if ((in=fopen(filename,"r")) == NULL) return -1;
+  if ((fp=wzd_cache_open(filename,O_RDONLY,0644)) == NULL) return -1;
 
   sfv->comments = malloc(50*sizeof(char*));
   sfv->sfv_list = malloc(50*sizeof(wzd_sfv_entry*));
 
-  while ( fgets(buf,BUFSIZ-1,in) != NULL) {
+  while ( wzd_cache_gets(fp,buf,BUFSIZ-1) != NULL) {
 /*    if (i == -1) return -1;*/
     ptr = buf;
     length = strlen(buf); /* fgets put a '\0' at the end */
@@ -259,7 +259,7 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   sfv->comments[count_comments] = NULL;
   sfv->sfv_list[count_entries] = NULL;
 
-  fclose(in);
+  wzd_cache_close(fp);
 
   return 0;
 }
@@ -1203,6 +1203,7 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
   if (ret)
   {
     fd = open(bad,O_WRONLY|O_CREAT,0666);
+    close(fd);
   } else { /* if .bad exists, remove it */
     if (!stat(bad,&s)) { unlink(bad); }
   }
@@ -1238,11 +1239,11 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
    *  NOTE 0 is sometime replaced with O
    */
 
-  fd = wzd_cache_open(diz_file,O_RDONLY,0644);
-  if (!fd) { return -1; } /* error opening .diz file */
-
   ret = regcomp(&reg_format, "[[<]([0-9xXo0]+)/([0-9o0]+)[]>]", REG_EXTENDED);
   if (ret) { return -1; } /* bad regex, could not be compiled */
+
+  fd = wzd_cache_open(diz_file,O_RDONLY,0644);
+  if (!fd) { return -1; } /* error opening .diz file */
 
   while ( wzd_cache_gets(fd,buffer,MAX_LINE-1) )
   {

@@ -150,6 +150,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
+  FD_REGISTER(fd,"Cached file");
 
   cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
   c = malloc(sizeof(wzd_internal_cache_t));
@@ -172,6 +173,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     c->datasize = length;
     /* we can close the fd here */
     close(c->fd);
+    FD_UNREGISTER(c->fd,"Cached file");
     c->fd = -1;
   }
   c->next_cache = global_cache;
@@ -194,8 +196,9 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
+  FD_REGISTER(fd,"Cached file");
 
-  if (c->fd != -1) close(c->fd);
+  if (c->fd != -1) { close(c->fd); FD_UNREGISTER(fd,"Cached file"); }
   if (c->data) free(c->data);
 
   cache = malloc(sizeof(wzd_cache_t));
@@ -217,6 +220,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
     c->datasize = length;
     /* we can close the fd here */
     close(c->fd);
+    FD_UNREGISTER(c->fd,"Cached file");
     c->fd = -1;
   }
   
@@ -386,6 +390,7 @@ void wzd_cache_close(wzd_cache_t * c)
   if (c) {
     c->cache->use--;
     free(c);
+    /** \bug XXX FIXME possible leak here if big file, fd is not closed */
  /*   close( c->fd );
     free(c);*/
   } 

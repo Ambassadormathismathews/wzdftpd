@@ -202,12 +202,11 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
       data_close(context);
-      ret = send_message(226,context);
-#ifdef DEBUG
-out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
-#endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
+
+      /* send message header */
+      send_message_raw("226- command ok\r\n",context);
       FORALL_HOOKS(EVENT_POSTDOWNLOAD)
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
@@ -215,6 +214,12 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         else
           ret = hook_call_external(hook,226);
       END_FORALL_HOOKS
+      
+      ret = send_message(226,context);
+#ifdef DEBUG
+out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
+#endif
+
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
     }
@@ -254,12 +259,11 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
       data_close(context);
-      ret = send_message(226,context);
-#ifdef DEBUG
-      out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
-#endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
+
+      /* send message header */
+      send_message_raw("226- command ok\r\n",context);
       FORALL_HOOKS(EVENT_POSTUPLOAD)
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
@@ -267,6 +271,12 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         else
           ret = hook_call_external(hook,226);
       END_FORALL_HOOKS
+
+      ret = send_message(226,context);
+#ifdef DEBUG
+      out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
+#endif
+
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = time(NULL);
     }

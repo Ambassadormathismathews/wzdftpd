@@ -42,6 +42,11 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
+
+/* uncomment to trace ALL fd registration operations */
+/*#define WZD_DBG_FD*/
+
+
 #define FD_SIG 0xbf07a4fb
 #define WZD_MAX_FD 1024
 
@@ -154,6 +159,14 @@ int fd_register(int fd, const char *desc, const char *file, unsigned int line, c
   strncpy(_wzd_fd_table[fd].file,file,sizeof(_wzd_fd_table[fd].file));
   _wzd_fd_table[fd].line = line;
   strncpy(_wzd_fd_table[fd].function,function,sizeof(_wzd_fd_table[fd].function));
+#ifdef WZD_DBG_FD
+  out_err(LEVEL_HIGH,"added fd: %d [%s]\n\t%s:%d (%s)\n",
+      fd,
+      desc,
+      file,
+      line,
+      function);
+#endif
 
 #endif
   return 0;
@@ -182,6 +195,14 @@ int fd_unregister(int fd, const char *desc, const char *file, unsigned int line,
   memset(_wzd_fd_table[fd].file,0,sizeof(_wzd_fd_table[fd].file));
   _wzd_fd_table[fd].line = 0;
   memset(_wzd_fd_table[fd].function,0,sizeof(_wzd_fd_table[fd].function));
+#ifdef WZD_DBG_FD
+  out_err(LEVEL_HIGH,"removed fd: %d [%s]\n\t%s:%d (%s)\n",
+      fd,
+      desc,
+      file,
+      line,
+      function);
+#endif
 
 #endif
   return 0;

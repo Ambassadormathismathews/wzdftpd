@@ -3,6 +3,7 @@
 	* bugfix: datafd set to 0 (could cause problems in release mode)
 	* bugfix: service is registered with config file name (visual)
 	* bugfix: more work on possible unclosed fd
+	* bugfix: finally, I've found a way to combine cscripts and RFC replies !
 
 2004-04-06  Pierre Chifflier  <pollux@wzdftpd.net>
 

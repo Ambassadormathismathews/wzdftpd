@@ -952,6 +952,8 @@ int do_mkdir(char *param, wzd_context_t * context)
     }
     file_chown(buffer,user->username,groupname,context);
 
+    /* send message header */
+    send_message_raw("257- command ok\r\n",context);
     FORALL_HOOKS(EVENT_MKDIR)
       typedef int (*mkdir_hook)(unsigned long, const char*);
       if (hook->hook)
@@ -2577,6 +2579,7 @@ void * clientThreadProc(void *arg)
   }
 
   /* user+pass ok */
+  send_message_raw("230- command ok\r\n",context);
   FORALL_HOOKS(EVENT_LOGIN)
     typedef int (*login_hook)(unsigned long, const char*);
     if (hook->hook)
@@ -2862,6 +2865,8 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         switch (do_rmdir(token,context)) {
           case E_OK: /* success */
             snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
+            /* send message header */
+            send_message_raw("258- command ok\r\n",context);
             FORALL_HOOKS(EVENT_RMDIR)
               typedef int (*rmdir_hook)(unsigned long, const char*);
             if (hook->hook)

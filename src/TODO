@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- remove race conditions in stat/open
+'********'
 - create manpages !
 - move some files to doc/examples
 - package wzdftpd-dev

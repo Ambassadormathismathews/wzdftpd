@@ -237,25 +237,20 @@ static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, c
 
 static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-  const char *s;
   char *ptr;
   int ret;
-  unsigned long current_code;
+  unsigned int length;
 
   if (argc != 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
-  s = Tcl_GetVar(interp,TCL_REPLY_CODE,TCL_GLOBAL_ONLY);
-  if (!s) return TCL_ERROR;
-  current_code = strtoul(s,&ptr,10);
-  if (ptr && *ptr != '\0') return TCL_ERROR;
+  /** \todo XXX we could format the string using argv[2,] */
 
-  /* XXX FIXME NOTE
-   * in this function the buffer MUST be using \r\n, not simple \n
-   */
-  ret = send_message_with_args(current_code,current_context,argv[1]);
+  length = strlen(argv[1]);
+  ptr = malloc(length+4);
+  snprintf(ptr,length+4," %s\r\n",argv[1]);
 
-  Tcl_SetVar(interp,TCL_HAS_REPLIED,"1",TCL_GLOBAL_ONLY);
+  ret = send_message_raw(ptr,current_context);
 
   return TCL_OK;
 }
