@@ -105,7 +105,7 @@ AC_DEFUN([WZD_LIB_PERL_TRY],
 
     dnl not trying to run, there's no point
     AC_TRY_LINK([#include <EXTERN.h>
-    #include <perl.h>],[PerlInterpreter * interp, * clone; interp=perl_alloc(); clone = perl_clone(interp,0);],[wzd_have_perl=yes],[wzd_have_perl=no])
+    #include <perl.h>],[PerlInterpreter * interp; interp=perl_alloc();],[wzd_have_perl=yes],[wzd_have_perl=no])
 
     LIBS="$wzd_lib_perl_try_save_libs"
     CFLAGS="$wzd_lib_perl_try_save_cflags"

@@ -62,7 +62,6 @@
 #include <perl.h>
 #include <XSUB.h>
 
-
 /*#include <wzd.h>*/
 #include "wzd_structs.h"
 #include "wzd_log.h"
@@ -91,7 +90,7 @@ static wzd_context_t * current_context=NULL;
 
 /***** Private fcts ****/
 static void do_perl_help(wzd_context_t * context);
-static int perl_init(void);
+static PerlInterpreter * perl_init(void);
 static int execute_perl( SV *function, const char *args);
 static void xs_init(pTHX);
 
@@ -137,7 +136,10 @@ MODULE_VERSION(101);
 
 int WZD_MODULE_INIT(void)
 {
-  if (perl_init()) {
+  if (my_perl) /* init already done */
+    return -1;
+
+  if ( !(my_perl = perl_init()) ) {
     out_log(LEVEL_HIGH,"PERL could not create interpreter\n");
     return -1;
   }
@@ -255,7 +257,7 @@ static void do_perl_help(wzd_context_t * context)
 
 
 
-static int perl_init(void)
+static PerlInterpreter * perl_init(void)
 {
   const char perl_definitions[] = {
 "\n"
@@ -292,23 +294,21 @@ static int perl_init(void)
   };
   
   char * perl_args[] = { "", "-e", "0", "-w" };
+  PerlInterpreter * interp = NULL;
 
-  if (my_perl) /* init already done ! */
-    return -1;
-
-  my_perl = perl_alloc();
-  if (!my_perl) return -1;
-  perl_construct(my_perl);
+  interp = perl_alloc();
+  if (!interp) return NULL;
+  perl_construct(interp);
 
   /* set to 4 to have warnings */
-  perl_parse(my_perl, xs_init, 3, perl_args, NULL);
+  perl_parse(interp, xs_init, 3, perl_args, NULL);
 
   /* now initialize the perl interpreter by loading the
    * perl_definitions array.
    */
   eval_pv(perl_definitions, TRUE);
 
-  return 0;
+  return interp;
 }
 
 static void xs_init(pTHX)
@@ -393,7 +393,9 @@ static int _perl_set_slave(void *context)
 
   current_context = context;
   if (found) {
+#ifdef USE_ITHREADS
     PERL_SET_CONTEXT(_slaves[i].interp);
+#endif
     return 0;
   }
 
@@ -402,6 +404,7 @@ static int _perl_set_slave(void *context)
   {
     if ( ! _slaves[i].is_allocated )
     {
+#ifdef USE_ITHREADS
       PERL_SET_CONTEXT(my_perl);
 
       _slaves[i].is_allocated = 1;
@@ -414,6 +417,11 @@ static int _perl_set_slave(void *context)
       /* see perlapi (1) for more info, this flag is needed for win32 */
       
       PERL_SET_CONTEXT(_slaves[i].interp);
+#else /* USE_ITHREADS */
+      _slaves[i].is_allocated = 1;
+      _slaves[i].context = context;
+      _slaves[i].interp = perl_init();
+#endif /* USE_ITHREADS */
 
       return 0;
     }

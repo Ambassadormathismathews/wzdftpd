@@ -105,6 +105,7 @@ int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
 
   mysql_init(&mysql);
 
+  /** \todo XXX FIXME try using CLIENT_SSL for the last arg */
   if (!mysql_real_connect(&mysql, db_hostname, db_user, db_passwd, db, 0, NULL, 0)) {
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     mysql_close(&mysql);
@@ -512,6 +513,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
 
 
 /* basic syntax checking to avoid injections */
+/** \todo XXX FIXME use mysql_real_escape_string() */
 int wzd_mysql_check_name(const char *name)
 {
   if (strpbrk(name,"'\";"))
