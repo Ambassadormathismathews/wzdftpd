@@ -24,32 +24,43 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/** \file libwzd.h
- *  \brief Routines to access wzdftpd from applications
+/** \file libwzd_pv.h
+ *  \brief Routines and structures restricted only to libwzd
  */
 
-#ifndef __LIBWZD__
-#define __LIBWZD__
+#ifndef __LIBWZD_PV__
+#define __LIBWZD_PV__
 
-/** parameters are still being defined
- *
- * wzd_init: connect to server
- * 
- */
-int wzd_init(const char *host, int port, const char *user, const char *pass);
+enum connection_mode {
+  CNT_NONE=0,
+  CNT_NAMEDPIPE,
+  CNT_UNIXSOCKET,
+  CNT_SOCKET,
+};
 
-int wzd_fini(void);
+struct libwzd_connector {
+  enum connection_mode mode;
+  int (*connect)(const char*,int,const char*,const char*);
+  int (*disconnect)(void);
+  int (*read)(char *,int);
+  int (*write)(const char *,int);
+  int (*is_secure)(void);
+};
 
-int wzd_send_message(const char *buffer, int length, char * reply, int reply_length);
+#define OPTION_TLS 0x00000010L
 
-/* TODO missing functions:
- *
- * - disconnect
- * - send_command(const char *)
- *     |-> send_command should check connection status and re-connect if needed
- *
- * shortcuts to send_command: site_who, kick, kill, stop_server, etc.
- */
+struct libwzd_config {
+  char * host;
+  int port;
+  char * user;
+  char * pass; /** \fixme we should avoid storing that in clear */
+  int sock;
+  struct libwzd_connector connector;
+  unsigned long options;
+};
 
-#endif /* __LIBWZD__ */
+
+extern struct libwzd_config * _config;
+
+#endif /* __LIBWZD_PV__ */
 

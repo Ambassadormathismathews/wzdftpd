@@ -28,9 +28,106 @@
  *  \brief Routines to access wzdftpd from applications
  */
 
-#ifdef HAVE_CONFIG
+#ifdef HAVE_CONFIG_H
 # include "../config.h"
 #endif
 
 #include "libwzd.h"
+#include "libwzd_pv.h"
 
+#include "libwzd_socket.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifndef WIN32
+# include <unistd.h>
+#endif
+
+static int _connect_server(void);
+
+struct libwzd_config * _config=NULL;
+
+
+
+/** parameters are still being defined */
+int wzd_init(const char *host, int port, const char *user, const char *pass)
+{
+  /* 0- init structs */
+  if (_config != NULL) return -1; /* init already done */
+  _config = malloc(sizeof(struct libwzd_config));
+  memset(_config,0,sizeof(struct libwzd_config));
+  _config->host = strdup(host);
+  _config->port = port;
+  _config->user = strdup(user);
+  _config->pass = strdup(pass);
+
+  /* 1- connect to server */
+  fprintf(stderr,"Trying to connect\n");
+  if (_connect_server()<0) { free(_config); return -1; }
+
+  /* 2- fill static struct ? */
+
+  return 0;
+}
+
+int wzd_fini(void)
+{
+  if (_config) {
+    wzd_send_message("QUIT\r\n",6,NULL,0);
+    sleep(1);
+    if (_config->host) free(_config->host);
+    if (_config->user) free(_config->user);
+    if (_config->pass) free(_config->pass);
+    free(_config);
+    _config = NULL;
+  }
+
+  return 0;
+}
+
+int wzd_send_message(const char *message, int msg_length, char * reply, int reply_length)
+{
+  int ret;
+  char * buffer;
+  int buffer_length;
+
+  if (!_config) return -1;
+  if (_config->connector.mode == CNT_NONE) return -1;
+  if (!_config->connector.read || !_config->connector.write) return -1;
+  if (!message) return -1;
+
+  /* check connection status ? */
+
+  /* ensure last bytes of message are \r\n ? */
+
+  ret = _config->connector.write(message,msg_length);
+  if (ret != msg_length) return -1;
+
+  buffer_length = (reply_length > 4096) ? reply_length : 4096;
+  buffer = malloc(buffer_length+1);
+  ret = _config->connector.read(buffer,buffer_length);
+
+  if (reply) memcpy(reply,buffer,reply_length);
+
+  return 0;
+}
+
+/*************** STATIC *******************/
+
+/** connect to server and return file descriptor or -1
+ */
+static int _connect_server(void)
+{
+  int ret;
+
+  if (!_config) return -1;
+  
+  /* 1- first, try named pipe ? */
+  /* 2- try unix socket ? */
+  /* 3- try socket ? */
+  if ( (ret = server_try_socket()) >= 0 ) return ret;
+
+  return -1; /* not connected */
+}

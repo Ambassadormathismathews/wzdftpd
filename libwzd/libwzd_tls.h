@@ -24,32 +24,20 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/** \file libwzd.h
- *  \brief Routines to access wzdftpd from applications
+/** \file libwzd_tls.h
+ *  \brief SSL/TLS functions for libwzd
  */
 
-#ifndef __LIBWZD__
-#define __LIBWZD__
+#ifndef __LIBWZD_TLS__
+#define __LIBWZD_TLS__
 
-/** parameters are still being defined
- *
- * wzd_init: connect to server
- * 
- */
-int wzd_init(const char *host, int port, const char *user, const char *pass);
+int tls_init(void);
+int tls_deinit(void);
 
-int wzd_fini(void);
+int tls_handshake(int);
 
-int wzd_send_message(const char *buffer, int length, char * reply, int reply_length);
+int tls_read(char *buffer, int length);
+int tls_write(const char *buffer, int length);
 
-/* TODO missing functions:
- *
- * - disconnect
- * - send_command(const char *)
- *     |-> send_command should check connection status and re-connect if needed
- *
- * shortcuts to send_command: site_who, kick, kill, stop_server, etc.
- */
-
-#endif /* __LIBWZD__ */
+#endif /* __LIBWZD_TLS__ */
 
