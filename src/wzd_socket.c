@@ -35,8 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-
-extern int errno;
+#include <errno.h>
 
 typedef void wzd_context_t;
 
