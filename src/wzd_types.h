@@ -86,16 +86,40 @@
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
 
+#ifndef S_IRUSR
+#   ifdef S_IREAD
+#	define S_IRUSR S_IREAD
+#	define S_IWUSR S_IWRITE
+#	define S_IXUSR S_IEXEC
+#   else
+#	define S_IRUSR 0400
+#	define S_IWUSR 0200
+#	define S_IXUSR 0100
+#   endif
+#endif
+
 #ifndef S_IRGRP
-#   define S_IRUSR S_IREAD
-#   define S_IWUSR S_IWRITE
-#   define S_IXUSR S_IEXEC
-#   define S_IRGRP S_IREAD
-#   define S_IWGRP S_IWRITE
-#   define S_IXGRP S_IEXEC
-#   define S_IROTH S_IREAD
-#   define S_IWOTH S_IWRITE
-#   define S_IXOTH S_IEXEC
+#   ifdef S_IRUSR
+#       define S_IRGRP (S_IRUSR>>3)
+#       define S_IWGRP (S_IWUSR>>3)
+#       define S_IXGRP (S_IXUSR>>3)
+#   else
+#       define S_IRGRP 0040
+#       define S_IWGRP 0020
+#       define S_IXGRP 0010
+#   endif
+#endif
+
+#ifndef S_IROTH
+#   ifdef S_IRUSR
+#       define S_IROTH (S_IRUSR>>6)
+#       define S_IWOTH (S_IWUSR>>6)
+#       define S_IXOTH (S_IXUSR>>6)
+#   else
+#       define S_IROTH 0040
+#       define S_IWOTH 0020
+#       define S_IXOTH 0010
+#   endif
 #endif
 
 #define DIR_CONTINUE \

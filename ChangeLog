@@ -1,3 +1,7 @@
+2004-08-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: permissions not displayed correctly on windows (again)
+
 2004-08-04  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: PORT not working in IPv4 when compiled with IPv6
