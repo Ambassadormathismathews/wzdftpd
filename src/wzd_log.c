@@ -6,15 +6,30 @@ void out_log(int level,const char *fmt,...)
 
 	if (level >= mainConfig.loglevel) {
 		va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-/*		vfprintf(mainConfig.logfile,fmt,argptr);*/
-		vfprintf(stdout,fmt,argptr);
-		fflush(mainConfig.logfile);
+		if (mainConfig.logfile) {
+			vfprintf(stdout,fmt,argptr);
+/*			vfprintf(mainConfig.logfile,fmt,argptr);
+			fflush(mainConfig.logfile);*/
+		} else { /* security - will be used iff log is not opened at this time */
+			vfprintf(stderr,fmt,argptr);
+		}
 	}
+}
+
+void out_err(int level, const char *fmt,...)
+{
+  va_list argptr;
+
+  if (level >= mainConfig.loglevel) {
+    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+    vfprintf(stderr,fmt,argptr);
+  }
 }
 
 void interpret_wsa_error()
 {
-#ifdef __CYGWIN__
+#if 0
+/*#ifdef __CYGWIN__*/
 	int errcode;
 
 	errcode = WSAGetLastError();

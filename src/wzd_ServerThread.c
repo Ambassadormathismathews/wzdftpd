@@ -7,10 +7,6 @@ void serverMainThreadExit(int);
 /************ VARS *****************/
 int serverstop;
 
-/* FIXME */
-#define HARD_USERLIMIT	256
-#define REACTION_TIME 1L
-
 wzd_child_t *pchild[HARD_USERLIMIT];
 
 
@@ -37,8 +33,15 @@ void serverMainThreadProc(void *arg)
 	int newsock;
 	int ret;
 	unsigned char *p;
+	wzd_context_t	* context;
 
-	out_log(LEVEL_INFO,"Thread %ld ok\n",GetCurrentThreadId());
+	/* if no backend available, we must bail out - otherwise there would be no login/pass ! */
+	if (mainConfig.backend.handle == NULL) {
+	  out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
+	  exit (1);
+	}
+
+	out_log(LEVEL_INFO,"Thread %ld ok\n",pthread_self());
 
 	  /* catch broken pipe ! */
 #ifdef __SVR4
@@ -108,7 +111,14 @@ void serverMainThreadProc(void *arg)
 
 		/* start child thread */
 		/* _beginthread(clientThreadProc,0,NULL); */
-		clientThreadProc(&newsock);
+		/* 1. create new context */
+		context = malloc(sizeof(wzd_context_t));
+		context->sockfd = newsock;
+		context->portsock = 0;
+		context->pasvsock = 0;
+		context->dataport=0;
+
+		clientThreadProc(context);
 /* 	}*/
 
 /* 	Sleep(2000);*/

@@ -1,0 +1,15 @@
+/* PRIORITY */
+
+- invert args in strncmp in wzd_ClientThread.c (risk segfault if buffer = PAS\0 ?? )
+- specify PASV range
+- give choice between hard/soft chroot
+- use fork
+
+
+/* NORMAL */
+
+- hide some variables in 'ls' ?
+
+/* I'LL THINK ABOUT IT */
+
+- add quota

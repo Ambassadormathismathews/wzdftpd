@@ -1,9 +1,10 @@
 CC=gcc
-OBJS=wzd_messages.o wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o
-DOBJS=wzd_messages.do wzd_ClientThread.do wzd_ServerThread.do wzd_init.do wzd_log.do wzd_main.do
-POBJS=wzd_messages.po wzd_ClientThread.po wzd_ServerThread.po wzd_init.po wzd_log.po wzd_main.po
-LIBS=
-WINLIBS=$(LIBS) -lws2_32
+OBJS=wzd_backend.o wzd_messages.o wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o ls.o
+DOBJS=$(OBJS:%.o=%.do)
+POBJS=$(OBJS:%.o=%.po)
+SOURCES=$(OBJS:%.o=%.c)
+LIBS=-ldl
+WINLIBS=-lws2_32
 CFLAGS=-O2 -Wall -Wstrict-prototypes
 DCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes
 PCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
@@ -11,17 +12,22 @@ EXEC=wzdFTPs.exe
 
 .SUFFIXES: .c .o .do .po
 
-all: $(OBJS)
+all: debug
+
+release: $(OBJS)
 	if [ `uname` = "Linux" ]; then $(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS); else $(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS); fi
 
 debug: $(DOBJS)
-	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS)
+	if [ `uname` = "Linux" ]; then $(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS); else $(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS); fi
 
 pedantic: $(POBJS)
-	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS)
+	if [ `uname` = "Linux" ]; then $(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS); else $(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS); fi
 
 clean:
-	rm -f $(OBJS) $(DOBJS) $(POBJS) $(EXEC) *~
+	rm -f $(OBJS) $(DOBJS) $(POBJS) *~
+
+distclean: clean
+	rm -f $(EXEC)
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -31,3 +37,15 @@ clean:
 
 .c.po:
 	$(CC) $(PCFLAGS) -c -o $@ $<
+
+###### dependancies
+deps:
+	rm -f Makefile.deps Makefile.deps2; \
+	for obj in $(SOURCES); do $(CC) -MM $$obj >> Makefile.deps; done; \
+	sed s/\.o:/\.do:/g Makefile.deps >> Makefile.deps2; \
+	sed s/\.o:/\.po:/g Makefile.deps >> Makefile.deps2; \
+	cat Makefile.deps2 >> Makefile.deps; \
+	rm -f Makefile.deps2
+
+include Makefile.deps
+
