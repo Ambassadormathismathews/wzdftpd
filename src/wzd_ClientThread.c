@@ -329,6 +329,15 @@ void client_die(wzd_context_t * context)
 {
   int ret;
 
+  /* close opened files */
+  if (context->current_action.current_file >= 0) {
+    file_unlock(context->current_action.current_file);
+    file_close(context->current_action.current_file,context);
+    FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
+    /** \todo XXX call POST_UPLOAD hooks ?!! */
+    context->current_action.current_file = -1;
+  }
+
   FORALL_HOOKS(EVENT_LOGOUT)
     typedef int (*login_hook)(unsigned long, wzd_context_t*, const char*);
     if (hook->hook)
@@ -413,7 +422,7 @@ int check_timeout(wzd_context_t * context)
           ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
       END_FORALL_HOOKS
       file_close(context->current_action.current_file,context);
-      context->current_action.current_file = 0;
+      context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
       data_close(context);
@@ -1131,7 +1140,7 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
 
   context->current_action.token = TOK_MKD;
   strncpy(context->current_action.arg,buffer,HARD_LAST_COMMAND_LENGTH);
-  context->current_action.current_file = 0;
+  context->current_action.current_file = -1;
 
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
@@ -2089,7 +2098,7 @@ int do_abor(char *name, char *arg, wzd_context_t * context)
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
     context->pasvsock=-1;
   }
-  if (context->current_action.current_file) {
+  if (context->current_action.current_file >= 0) {
     /* transfer aborted, we should send a 426 */
     ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
@@ -2119,7 +2128,7 @@ int do_abor(char *name, char *arg, wzd_context_t * context)
         END_FORALL_HOOKS
       }
     }
-    context->current_action.current_file = 0;
+    context->current_action.current_file = -1;
     context->current_action.bytesnow = 0;
     context->current_action.token = TOK_UNKNOWN;
     context->state = STATE_COMMAND;
@@ -2405,7 +2414,7 @@ int do_rnfr(char *name, char *filename, wzd_context_t * context)
 
   context->current_action.token = TOK_RNFR;
   strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
-  context->current_action.current_file = 0;
+  context->current_action.current_file = -1;
   context->current_action.bytesnow = 0;
   context->current_action.tm_start = time(NULL);
 
@@ -2437,7 +2446,7 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
   context->current_action.token = TOK_UNKNOWN;
-  context->current_action.current_file = 0;
+  context->current_action.current_file = -1;
   context->current_action.bytesnow = 0;
 
   ret = file_rename(context->current_action.arg,path,context);

@@ -200,6 +200,7 @@ static void context_init(wzd_context_t * context)
   context->pid_child = 0;
   context->state = STATE_UNKNOWN;
   context->datamode = DATA_PORT;
+  context->current_action.current_file = -1;
   context->current_action.token = TOK_UNKNOWN;
   context->connection_flags = 0;
   context->data_buffer = NULL;

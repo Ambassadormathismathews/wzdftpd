@@ -177,7 +177,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
         /* XXX error/timeout sending data */
         file_close(context->current_action.current_file, context);
         FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
-        context->current_action.current_file = 0;
+        context->current_action.current_file = -1;
         context->current_action.bytesnow = 0;
         context->current_action.token = TOK_UNKNOWN;
         data_close(context);
@@ -205,7 +205,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       out_xferlog(context,1 /* complete */);
       update_last_file(context);
 
-      context->current_action.current_file = 0;
+      context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
       data_close(context);
@@ -263,7 +263,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
        */
       user->stats.files_ul_total++;
 
-      context->current_action.current_file = 0;
+      context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
       data_close(context);

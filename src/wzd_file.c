@@ -1593,13 +1593,13 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
       if (strcmp(stripped_filename,file_cur->filename)==0) {
         if (file_cur->owner[0]!='\0')
         {
-          /** \bug !! we free file list before accessing data !! */
+          wzd_user_t * user;
+          user = GetUserByName(file_cur->owner);
           free_file_recursive(file_list);
-          return GetUserByName(file_cur->owner);
+          return user;
         }
         else
         {
-          /** \bug !! we free file list before accessing data !! */
           free_file_recursive(file_list);
           return GetUserByName("nobody");
         }
