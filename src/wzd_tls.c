@@ -112,7 +112,7 @@ static void _tls_push_ca_list(STACK_OF(X509_NAME) *ca_list, const char *ca_file)
     X509_NAME *name;
 
     name = sk_X509_NAME_value(sk, i);
-    fprintf(stderr,"CA certificate: %s\n",X509_NAME_oneline(name, name_buf, sizeof(name_buf)));
+    out_err(LEVEL_FLOOD,"CA certificate: %s\n",X509_NAME_oneline(name, name_buf, sizeof(name_buf)));
 
     /*
      * note that SSL_load_client_CA_file() checks for duplicates,
@@ -477,9 +477,9 @@ int tls_auth_cont(wzd_context_t * context)
         context->ssl.ssl_fd_mode = TLS_WRITE;
         break;
       default:
-        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
+        out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
           ERR_error_string(SSL_get_error(context->ssl.obj,status),NULL));
-        out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
+        out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
             ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }
@@ -522,9 +522,9 @@ int tls_auth_cont(wzd_context_t * context)
       context->ssl.ssl_fd_mode = TLS_WRITE;
       break;
     default:
-      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
+      out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",ret,SSL_get_error(context->ssl.obj,ret),
         ERR_error_string(SSL_get_error(context->ssl.obj,ret),NULL));
-      out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
+      out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
           ERR_error_string(ERR_get_error(),NULL));
       return 1;
     }
@@ -624,7 +624,7 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_READ\n");
 out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
           break;
         default:
-          out_log(LEVEL_CRITICAL,"tls_auth_data_cont: error accepting: %s\n",
+          out_log(LEVEL_HIGH,"tls_auth_data_cont: error accepting: %s\n",
             (char*)ERR_error_string(sslerr,NULL));
           return 1;
       }
@@ -904,8 +904,6 @@ int tls_init_datamode(int sock, wzd_context_t * context)
         context->tls.data_session);
     return 1;
   }
-
-  out_err(LEVEL_FLOOD,"TLS mode: %s\n",(context->tls_role == TLS_SERVER_MODE) ? "server" : "client");
 
   session = initialize_tls_session( (context->tls_role == TLS_SERVER_MODE) ? GNUTLS_SERVER : GNUTLS_CLIENT );
 

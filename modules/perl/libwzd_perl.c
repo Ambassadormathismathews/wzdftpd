@@ -183,8 +183,11 @@ static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * c
 
     if (SvTRUE(val))
       send_message_with_args(200,context,"PERL command ok");
-    else
+    else {
+      /** \todo log this to perlerr.log */
+      out_err(LEVEL_HIGH,"Perl error: %s\n",SvPV_nolen(ERRSV));
       send_message_with_args(200,context,"PERL command reported errors");
+    }
     return EVENT_HANDLED;
   }
   return EVENT_IGNORED;
@@ -359,6 +362,8 @@ static int execute_perl( SV *function, const char *args)
   sv = GvSV(gv_fetchpv("@", TRUE, SVt_PV));
   if (SvTRUE(sv)) {
     /* perl error */
+      /** \todo log this to perlerr.log */
+      out_err(LEVEL_HIGH,"Perl error: %s\n",SvPV_nolen(ERRSV));
     POPs; /* remove undef from the top of the stack */
   }
   else if (count != 1) {
