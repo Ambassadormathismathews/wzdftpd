@@ -62,11 +62,13 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     return 1;
   }
   /* basic type check */
+#if 0
 #ifdef DEBUG
   if (S_ISLNK(statbuf.st_mode))
     out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
   if (S_ISREG(statbuf.st_mode))
       out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
+#endif
 #endif
 
   /* test dlopen */
