@@ -320,6 +320,7 @@ static int write_user_file(void)
   fprintf(file,"[GROUPS]\n");
   for (i=0; i<group_count; i++)
   {
+    if (group_pool[i].groupname[0]=='\0') continue;
     if (strcmp(group_pool[i].groupname,"nogroup")==0) continue;
     fprintf(file,"privgroup\t%s\n",group_pool[i].groupname);
     if (group_pool[i].max_idle_time)
