@@ -25,15 +25,20 @@
 |                |   site chown user file1 [file2 ...]          |            |
 | site chpass    | change the password of a user                | r,s        |
 |                |   site chpass user new_pass                  |            |
+| site chratio   | change ratio of a user                       | r,s        |
+|                |   site chratio user ratio                    |            |
 | site delip     | delete ip from user                          | r          |
 | site deluser   | delete user                                  | r          |
-| site flags     | display user's flags                         | r,s,n,g     |
+| site flags     | display user's flags                         | r,s,n,g    |
 |                |   site flags [user]                          |            |
 | site free      | show free space                              | r,s,n,g    |
+| site grpadd    | add a new group                              | siteop     |
+| site grpaddip  | add ip to a group                            | siteop     |
+| site grpdel    | delete group                                 | siteop     |
 | site help      | pfff what you are reading !                  | r,s,n,g    |
 | site kick      | kick all connections from a user             | r          |
 | site kill      | kill a pid                                   | r          |
-| site idle      | display/set your tagline                     | r,s,n,g     |
+| site idle      | display/set your tagline                     | r,s,n,g    |
 |                |   site tagline [new tagline]                 |            |
 | site invite    | tell bot to invite you on irc chan           | r          |
 |                |   site invite irc_nick                       |            |
