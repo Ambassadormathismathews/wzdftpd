@@ -1,3 +1,10 @@
+2004-08-31  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: segfault when deleting symlink with non-existent target
+	* bugfix: uptime display broken
+	* feature: added patch from Tobias Bengtsson to allow group members of
+	gid=0 to get siteop access using PAM backend.
+
 2004-08-28  Roman Bogorodskiy <bogorodskiy@inbox.ru>
 	
 	* bugfix: fix build on FreeBSD 4.x

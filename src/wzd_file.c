@@ -1499,15 +1499,21 @@ int file_remove(const char *filename, wzd_context_t * context)
   {
     ret = 1;
     file_cur = file_stat(filename, context);
+
+    /* if file_cur is NULL it means that we have no entry for that file
+     * it happens when deleting a symlink, when destination does not
+     * exist
+     */
     if (file_cur) {
       if (strcmp(user->username, file_cur->owner)==0) ret = 0; /* owner */
-
-      /* check in special permissions from config file */
-      if (perm_check("delete", context, mainConfig) == 0) ret = 0; /* specified in config file */
 
       free_file_recursive(file_cur);
       file_cur = NULL;
     }
+
+    /* check in special permissions from config file */
+    if (perm_check("delete", context, mainConfig) == 0) ret = 0; /* specified in config file */
+
   }
   
   if (ret)
@@ -1629,7 +1635,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   ptr = strrchr(perm_filename,'/');
   if (!ptr || *(ptr+1)=='\0') return NULL;
 
-  if (!stat(filename,&s)) {
+  if (!lstat(filename,&s)) {
     if (S_ISDIR(s.st_mode)) { /* isdir */
       strcpy(stripped_filename,".");
     } else { /* ! isdir */
@@ -1645,9 +1651,9 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
       *ptr = 0;
-      if (stat(perm_filename,&s)) {
+      if (lstat(perm_filename,&s)) {
         out_err(LEVEL_FLOOD, "symlink: destination directory does not exist (%s)\n", perm_filename);
-        return (struct wzd_file_t *)-1;
+        return NULL;
       }
     }
   } /* ! isdir */
@@ -1676,7 +1682,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
     free_file_recursive(file_list);
   }
 
-  if (!file && nx) return (struct wzd_file_t*)-1;
+  if (!file && nx) return NULL;
 
   return file;
 }

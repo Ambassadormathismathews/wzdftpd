@@ -37,6 +37,9 @@
 #include <security/pam_misc.h>
 
 #include <pwd.h>
+#include <grp.h>
+#include <errno.h>
+#include <sys/types.h>
 
 #include "wzd_backend.h"
 
@@ -258,6 +261,9 @@ wzd_group_t * FCN_GET_GROUP(int gid)
 
 static int _pam_adduser(const char *name, int uid, const char *homedir)
 {
+  struct group *gr = NULL;
+  int isOp = 0;
+
   if (_user_count >= _user_max) return -1;
 
   strncpy(user_pool[_user_count].username, name, sizeof(user_pool[_user_count].username));
@@ -265,8 +271,31 @@ static int _pam_adduser(const char *name, int uid, const char *homedir)
   strncpy(user_pool[_user_count].ip_allowed[0],"*",2);
   strncpy(user_pool[_user_count].rootpath, homedir, sizeof(user_pool[_user_count].rootpath));
   user_pool[_user_count].userperms = 0xffffffff;
-  /* root is always siteop */
-  if (uid == 0) strncpy(user_pool[_user_count].flags,"O",MAX_FLAGS_NUM);
+  /* root is always siteop .. */
+  if (uid == 0) isOp = 1;
+  /* .. as well as root/wheel group members */
+  else if ( (gr = getgrgid(0)) ) {
+    char *_name;
+    int i = 0;
+
+    while ( (_name = gr->gr_mem[i ++]) ) {
+      if (strcmp (name,_name) == 0) {
+        isOp = 1;
+        break;
+      }
+    }
+  } else /* an error occured */ {
+    char *mem = malloc (4096);
+    if (mem) {
+      strerror_r (errno, mem, 4096);
+      fprintf (stderr, "%s\n", mem);
+      free (mem);
+    } else { /* no mem here, there? */
+      perror ("wzdftpd");
+    }
+  }
+  if (isOp)
+    strncpy(user_pool[_user_count].flags,"O",MAX_FLAGS_NUM);
 
   _user_count++;
 

@@ -628,6 +628,7 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
 	/* empty file ? */
 	close(creat(filename,0600));
 #endif
+        /** \bug XXX FIXME chown symlink to owner */
       }
     }
   }

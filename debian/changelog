@@ -3,7 +3,7 @@ wzdftpd (0.4.0-1) unstable; urgency=low
   * New upstream version.
   * Added Perl module.
 
- -- Pierre Chifflier <chifflier@cpe.fr>  Sun, 15 Aug 2004 15:22:45 +0200
+ -- Pierre Chifflier <chifflier@cpe.fr>  Fri, 27 Aug 2004 09:56:39 +0200
 
 wzdftpd (0.3.3-1) unstable; urgency=low
 

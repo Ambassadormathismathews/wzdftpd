@@ -129,25 +129,36 @@ int hash_pjw(const char *s)
 }
 
 char *time_to_str(time_t time)
-{ /* This support functionw as written by George Shearer (Dr_Delete) */
+{
 
   static char workstr[100];
   unsigned short int days=(time/86400),hours,mins,secs;
   hours=((time-(days*86400))/3600);
   mins=((time-(days*86400)-(hours*3600))/60);
-  secs=(time-(days*86400)-(hours*3600)-(mins*60));
+  secs = time % 60;
 
-  workstr[0]=(char)0;
-  if(days)
-    snprintf(workstr,sizeof(workstr),"%dd",days);
-  if(hours)
-    snprintf(workstr,sizeof(workstr),"%s%s%dh",workstr,(workstr[0])?", ":"",hours);
-  if(mins)
-    snprintf(workstr,sizeof(workstr),"%s%s%dm",workstr,(workstr[0])?", ":"",mins);
-  if(secs)
-    snprintf(workstr,sizeof(workstr),"%s%s%ds",workstr,(workstr[0])?", ":"",secs);
-  if (!days && !hours && !mins && !secs)
-    snprintf(workstr,sizeof(workstr),"0 seconds");
+  if (days) {
+    snprintf(workstr,sizeof(workstr),"%dd %dh %dm %ds\n",days,hours,mins,secs);
+  }
+  else {
+    if (hours) {
+      snprintf(workstr,sizeof(workstr),"%dh %dm %ds\n",hours,mins,secs);
+    }
+    else {
+      if (mins) {
+        snprintf(workstr,sizeof(workstr),"%dm %ds\n",mins,secs);
+      }
+      else {
+        if (secs) {
+          snprintf(workstr,sizeof(workstr),"%ds\n",secs);
+        }
+        else {
+          snprintf(workstr,sizeof(workstr),"0 seconds");
+        }
+      }
+    }
+  }
+
 
   return(workstr);
 }
