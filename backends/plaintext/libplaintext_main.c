@@ -387,6 +387,10 @@ static int write_user_file(void)
       fprintf(file,"max_idle_time=%u\n",loop_group->max_idle_time);
     if (loop_group->num_logins)
       fprintf(file,"num_logins=%d\n",loop_group->num_logins);
+    if (loop_group->max_ul_speed)
+      fprintf(file,"max_ul_speed=%u\n",loop_group->max_ul_speed);
+    if (loop_group->max_dl_speed)
+      fprintf(file,"max_dl_speed=%u\n",loop_group->max_dl_speed);
     if (strlen(loop_group->tagline)>0)
       fprintf(file,"tagline=%s\n",loop_group->tagline);
     fprintf(file,"gid=%d\n",loop_group->gid);
@@ -863,6 +867,24 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
         }
         group_new->ratio = num;
       } /* else if (strcmp("ratio",... */
+      else if (strcmp("max_dl_speed",varname)==0) {
+        if (!group_count || !group_new) break;
+        num = strtol(value, &ptr, 0);
+        if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+          continue;
+        }
+        group_new->max_dl_speed = num;
+      } /* max_dl_speed */
+      else if (strcmp("max_ul_speed",varname)==0) {
+        if (!group_count || !group_new) break;
+        num = strtol(value, &ptr, 0);
+        if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid max_ul_speed %s\n",value);
+          continue;
+        }
+        group_new->max_ul_speed = num;
+      } /* max_ul_speed */
       else if (strcmp("tagline",varname)==0) {
         strncpy(group_new->tagline,value,MAX_TAGLINE_LENGTH);
       } /* tagline */

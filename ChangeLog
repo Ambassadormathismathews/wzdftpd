@@ -5,6 +5,8 @@
 	* feature: tcl: chmod, chgrp, chown
 	* bugfix: site_cmd not working
 	* bugfix: remove context after client exit
+	* bugfix: segfault when deleting inexistant group
+	* bugfix: max_ul and max_dl not saved for groups (plaintext)
 
 2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
