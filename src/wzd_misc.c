@@ -597,7 +597,7 @@ void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list a
 
   context = GetMyContext();
   user = GetUserByID(context->userid);
-  group = GetGroupByID(user->groups[0]);
+  group = user ? GetGroupByID(user->groups[0]) : NULL;
 
   /* first, replace cookies */
   ret = cookie_parse_buffer(msg, user, group, context, cookies_buf, WORK_BUF_LEN);
@@ -1009,11 +1009,11 @@ char * read_token(char *s, char **endptr)
 }
 
 /* replace all \ with / and lower string */
-void win_normalize(char * s, unsigned int length)
+void win_normalize(char * s, unsigned int length, unsigned int lower)
 {
   register unsigned int i=0;
   while (i<length) {
-    if (s[i] >= 'A' && s[i] <= 'Z') {
+    if (lower && (s[i] >= 'A' && s[i] <= 'Z')) {
       s[i] |= 0x20;
     }
     if (s[i] == '\\') s[i] = '/';
@@ -1352,8 +1352,14 @@ out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
 /** wrappers to user list */
 wzd_user_t * GetUserByID(unsigned int id)
 {
-  if (!mainConfig->user_list || id >= HARD_DEF_USER_MAX) return NULL;
+  if (!mainConfig->user_list) return NULL;
 
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    return backend_get_user( (int)id );
+  }
+#endif
+  if (id >= HARD_DEF_USER_MAX) return NULL;
   return &mainConfig->user_list[id];
 }
 
@@ -1377,8 +1383,14 @@ wzd_user_t * GetUserByName(const char *name)
 /** wrappers to Group list */
 wzd_group_t * GetGroupByID(unsigned int id)
 {
-  if (!mainConfig->group_list || id >= HARD_DEF_GROUP_MAX ) return NULL;
+  if (!mainConfig->group_list) return NULL;
 
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    return backend_get_group( (int)id );
+  }
+#endif
+  if (id >= HARD_DEF_GROUP_MAX ) return NULL;
   return &mainConfig->group_list[id];
 }
 

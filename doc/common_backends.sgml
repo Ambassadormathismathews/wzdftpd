@@ -31,6 +31,10 @@ User's rootpath is set to the real user's homedir, and all ips are automatically
 allowed for all users. The root user is automatically promoted to siteop.
 </para>
 <para>
+To use this backend, you <emphasis>must</emphasis> run the server as root (no
+other than root is allowed to authenticate with pam).
+</para>
+<para>
 <emphasis>Work in progress !</emphasis>
 </para>
 </sect1>

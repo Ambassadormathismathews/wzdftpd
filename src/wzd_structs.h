@@ -248,6 +248,8 @@ typedef struct {
   int backend_storage;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
+  wzd_user_t * (*back_get_user)(int uid);
+  wzd_group_t * (*back_get_group)(int gid);
   int (*back_find_user) (const char *, wzd_user_t *);
   int (*back_find_group) (int, wzd_group_t *);
   int (*back_chpass) (const char *, const char *);
@@ -424,7 +426,6 @@ typedef struct {
   unsigned long	resume;
   unsigned long	connection_flags;
   char          currentpath[WZD_MAX_PATH];
-  wzd_user_t    userinfo; /**< userinfo, only for backend_storage=1 */
   unsigned int	userid;
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
@@ -490,7 +491,7 @@ typedef struct {
   int		xferlog_fd;
   int		loglevel;
   unsigned int  umask;
-  char		dir_message[256]; /** useless */
+  char		dir_message[256];
   unsigned int	mainSocket;
   unsigned char	ip[MAX_IP_LENGTH];
   unsigned char	dynamic_ip[MAX_IP_LENGTH];

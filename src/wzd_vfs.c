@@ -141,8 +141,8 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   new_vfs = wzd_malloc(sizeof(wzd_vfs_t));
   if (!new_vfs) return 1;
 
-  DIRNORM(vpath,strlen(vpath));
-  DIRNORM(path,strlen(path));
+  DIRNORM(vpath,strlen(vpath),0);
+  DIRNORM(path,strlen(path),0);
   new_vfs->virtual_dir = strdup(vpath);
   new_vfs->physical_dir = strdup(path);
   if (target)
@@ -290,12 +290,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
   wzd_user_t * user;
   wzd_group_t * group;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (!user) return NULL;
 
@@ -456,14 +451,6 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
   allowed = malloc(WZD_MAX_PATH);
   cmd = malloc(WZD_MAX_PATH);
   
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 1) {
-    wzd_user_t * user = &context->userinfo;
-    snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
-    if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    snprintf(cmd,WZD_MAX_PATH,"%s%s",user->rootpath,context->currentpath);
-  } else
-#endif
   {
     snprintf(allowed,WZD_MAX_PATH,"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
@@ -479,6 +466,7 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
       strlcat(cmd,wanted_path+1,WZD_MAX_PATH);
     } 
   } 
+  DIRNORM(cmd,strlen(cmd),0);
 /*#ifdef DEBUG
 printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 #endif*/
@@ -508,14 +496,6 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
   char allowed[WZD_MAX_PATH];
   char cmd[WZD_MAX_PATH];
   
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 1) {
-    wzd_user_t * user = &context->userinfo;
-    snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
-    if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    snprintf(cmd,WZD_MAX_PATH,"%s%s",user->rootpath,context->currentpath);
-  } else
-#endif
   {
     snprintf(allowed,strlen(allowed),"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
@@ -606,12 +586,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   struct stat s;
   struct wzd_file_t * perm_list, * entry;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (!user) return E_USER_IDONTEXIST;
 

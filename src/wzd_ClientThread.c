@@ -338,13 +338,6 @@ void client_die(wzd_context_t * context)
       ret = (*(login_hook)hook->hook)(EVENT_LOGOUT, context, GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
-#if 0
-#ifdef BACKEND_STORAGE
-  if (context->userinfo.flags)
-    free(context->userinfo.flags);
-#endif
-#endif
-
 #ifdef DEBUG
 /*  if (context->current_limiter) {
 out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
@@ -382,12 +375,7 @@ int check_timeout(wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 0)
-    user = GetUserByID(context->userid);
-  else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   /* reset global ul/dl counters */
   mainConfig->global_ul_limiter.bytes_transfered = 0;
@@ -499,13 +487,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   struct stat buf;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
-
+  user = GetUserByID(context->userid);
 
   if (!wanted_path) return E_WRONGPATH;
   ret = checkpath_new(wanted_path,path,context);
@@ -713,12 +695,7 @@ int do_list(char *name, char *param, wzd_context_t * context)
   wzd_user_t * user;
   list_type_t listtype;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
   {
@@ -918,12 +895,7 @@ int do_stat(char *name, char *param, wzd_context_t * context)
   list_type_t listtype;
   ssl_data_t old_data_mode;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
   {
@@ -1050,12 +1022,7 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_mkdir; }
   if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_mkdir; }
@@ -1222,12 +1189,7 @@ int do_rmdir(char *name, char * param, wzd_context_t * context)
     wzd_user_t * user;
     char buffer[WZD_MAX_PATH], path[WZD_MAX_PATH];
 
-#ifdef BACKEND_STORAGE
-    if (mainConfig->backend.backend_storage==1) {
-      user = &context->userinfo;
-    } else
-#endif
-      user = GetUserByID(context->userid);
+    user = GetUserByID(context->userid);
 
     if (user->group_num > 0) {
       groupname = GetGroupByID(user->groups[0])->groupname;
@@ -1673,12 +1635,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -1773,6 +1730,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
   context->current_action.current_file = fd;
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
+  gettimeofday(&context->current_action.tv_start,NULL);
 
 /*  if (user->max_dl_speed)
     context->current_limiter = limiter_new(user->max_dl_speed);
@@ -1813,12 +1771,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -1959,6 +1912,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
   context->current_action.current_file = fd;
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
+  gettimeofday(&context->current_action.tv_start,NULL);
 
 /*  if (user->max_ul_speed)
     context->current_limiter = limiter_new(user->max_ul_speed);
@@ -2056,12 +2010,7 @@ int do_abor(char *name, char *arg, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
 /*      if (context->pid_child) kill(context->pid_child,SIGTERM);
       context->pid_child = 0;*/
@@ -2297,12 +2246,7 @@ int do_quit(char *name, char *arg, wzd_context_t * context)
     struct hostent *h;
     char inet_str[256];
 
-#ifdef BACKEND_STORAGE
-    if (mainConfig->backend.backend_storage==1) {
-      user = &context->userinfo;
-    } else
-#endif
-      user = GetUserByID(context->userid);
+    user = GetUserByID(context->userid);
 
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';
@@ -2606,13 +2550,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-/*    user = GetUserByID(context->userid);*/
-    user = NULL;
+  user = NULL;
 
   ret = backend_validate_pass(username,pass,user,&context->userid);
   if (ret) {
@@ -2620,8 +2558,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
     return E_PASS_REJECTED;
   }
 
-  if ( ! mainConfig->backend.backend_storage )
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   /* normalize rootpath */
 
@@ -2655,19 +2592,12 @@ int do_user(const char *username, wzd_context_t * context)
   int ret;
   wzd_user_t * me;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    me = &context->userinfo;
-  } else
-#endif
-/*    me = GetUserByID(context->userid);*/
-    me = NULL;
+  me = NULL;
 
   ret = backend_validate_login(username,me,&context->userid);
   if (ret) return E_USER_REJECTED;
 
-  if ( ! mainConfig->backend.backend_storage )
-    me = GetUserByID(context->userid);
+  me = GetUserByID(context->userid);
 
   /* check if user have been deleted */
   if (me->flags && strchr(me->flags,FLAG_DELETED))
@@ -2685,17 +2615,8 @@ int do_user(const char *username, wzd_context_t * context)
     int i;
     for (i=0; i<HARD_USERLIMIT; i++)
     {
-#ifdef BACKEND_STORAGE
-      /* strcmp user->username , ? */
-      if (mainConfig->backend.backend_storage==1) {
-        if (context_list[i].magic == CONTEXT_MAGIC && !strcmp(context->userinfo.username,context_list[i].userinfo.username))
-          count++;
-      } else
-#endif
-      {
         if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
           count++;
-      }
     } /* for (i=0; i<HARD_USERLIMIT; i... */
 
     /* we substract 1, because the current login attempt is counted */
@@ -2747,12 +2668,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
   wzd_group_t *group;
   unsigned int i;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
 #if !defined(IPV6_SUPPORT)
   inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
@@ -2783,12 +2699,7 @@ int check_tls_forced(wzd_context_t * context)
 /*  wzd_group_t *group;
   int i;*/
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (user->flags && strchr(user->flags,FLAG_TLS)) {
     if ( !(context->connection_flags & CONNECTION_TLS) ) {
@@ -3068,9 +2979,6 @@ void * clientThreadProc(void *arg)
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
-
-    FD_UNREGISTER(sockfd, "client socket");
-    socket_close (sockfd);
 
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';

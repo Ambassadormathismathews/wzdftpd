@@ -408,12 +408,7 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
   int negate;
   const char * entry_target;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (!permname || !context) return -1;
   if (!config->perm_list) return -1;

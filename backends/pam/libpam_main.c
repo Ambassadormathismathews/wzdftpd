@@ -25,6 +25,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_PAM_PAM_APPL_H
 # include <pam/pam_appl.h>
@@ -49,11 +50,14 @@
 
 
 static wzd_user_t *user_pool;
-static int users_count;
+static int _user_count, _user_max;
 
 static const char * pam_service_name = "ftp";
 
-int su_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata)
+static int _pam_adduser(const char *name, int uid, const char *homedir);
+
+
+static int su_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata)
 {
   const struct pam_message *m = *msg;
   struct pam_response *r;
@@ -101,13 +105,33 @@ int su_conv(int num_msg, const struct pam_message **msg, struct pam_response **r
 
 int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max, void *arg)
 {
+  int uid;
+  
+  /* preliminary checks */
+  uid = getuid();
+  if (uid != 0) {
+    fprintf(stderr, "You need to be root to run PAM backend\n");
+    return 1;
+  }
+
+  
   *backend_storage = 1;
+  user_pool = malloc(user_max * sizeof(wzd_user_t));
+  memset(user_pool, 0, user_max * sizeof(wzd_user_t));
+  _user_count = 0;
+  _user_max = user_max;
+
+  /* user nobody */
+  strcpy(user_pool[0].username, "nobody");
+
+  _user_count++;
 
   return 0;
 }
 
 int FCN_FINI()
 {
+  free(user_pool);
   return 0;
 }
 
@@ -116,8 +140,7 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
   pam_handle_t *pamh;
   struct pam_conv PAM_conversation = { su_conv, NULL };
   int ret;
-
-  if (!user) return -1;
+  struct passwd * pwd;
 
   ret = pam_start( pam_service_name, login, &PAM_conversation, &pamh );
 
@@ -130,12 +153,14 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     }
   }
 
-  strncpy(user->username,login,HARD_USERNAME_LENGTH);
-  strncpy(user->ip_allowed[0],"*",2);
+  pwd = getpwnam(login);
+  if (!pwd) return -1;
+
+  _pam_adduser(login, pwd->pw_uid, pwd->pw_dir);
 
   pam_end(pamh, PAM_SUCCESS);
 
-  return 0;
+  return pwd->pw_uid;
 }
 
 /** \todo XXX FIXME is the mixed use of pam and getpwnam correct ? */
@@ -145,8 +170,6 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
   int ret;
   struct pam_conv PAM_conversation = { su_conv, NULL };
   struct passwd * pwd;
-
-  if (!user) return -1;
 
   PAM_conversation.appdata_ptr = &pass;
 
@@ -171,35 +194,28 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
   pam_end(pamh, PAM_SUCCESS);
 
-  strncpy(user->username,login,HARD_USERNAME_LENGTH);
-  strncpy(user->ip_allowed[0],"*",2);
-
   pwd = getpwnam(login);
   if (!pwd) return -1;
 
-  strncpy(user->rootpath,pwd->pw_dir,WZD_MAX_PATH);
-
-  /* root is always siteop */
-  if (pwd->pw_uid == 0) strncpy(user->flags,"O",MAX_FLAGS_NUM);
-
-  user->userperms = 0xffffffff;
-
-  return 0;
+  return pwd->pw_uid;
 }
 
 int FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
+  int i;
+
+  for (i=0; i<_user_count; i++)
+  {
+    if (strcmp(user_pool[i].username, name)==0)
+      return user_pool[i].uid;
+  }
+  
   return -1;
 }
 
 int FCN_FIND_GROUP(int num, wzd_group_t * group)
 {
   return -1;
-}
-
-int FCN_CHPASS(const char *username, const char *new_pass)
-{
-  return 1;
 }
 
 /* if user does not exist, add it */
@@ -216,5 +232,43 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
 int  FCN_COMMIT_CHANGES(void)
 {
   /* we return 0 (no error), we can't change anyting in the pam backend ?! */
+  return 0;
+}
+
+wzd_user_t * FCN_GET_USER(int uid)
+{
+  int i;
+
+  for (i=0; i<_user_count; i++)
+  {
+    if (user_pool[i].uid == uid)
+      return &user_pool[i];
+  }
+  
+  return NULL;
+}
+
+wzd_group_t * FCN_GET_GROUP(int gid)
+{
+  return NULL;
+}
+
+
+
+
+static int _pam_adduser(const char *name, int uid, const char *homedir)
+{
+  if (_user_count >= _user_max) return -1;
+
+  strncpy(user_pool[_user_count].username, name, sizeof(user_pool[_user_count].username));
+  user_pool[_user_count].uid = uid;
+  strncpy(user_pool[_user_count].ip_allowed[0],"*",2);
+  strncpy(user_pool[_user_count].rootpath, homedir, sizeof(user_pool[_user_count].rootpath));
+  user_pool[_user_count].userperms = 0xffffffff;
+  /* root is always siteop */
+  if (uid == 0) strncpy(user_pool[_user_count].flags,"O",MAX_FLAGS_NUM);
+
+  _user_count++;
+
   return 0;
 }

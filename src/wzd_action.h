@@ -76,6 +76,7 @@
 struct last_file_t {
     char	name[WZD_MAX_PATH];
     time_t	time;
+    struct timeval tv;
     u64_t	size;
     unsigned int token;
 };
@@ -89,6 +90,7 @@ typedef struct {
   u64_t	bytesnow;
 
   time_t	tm_start;
+  struct timeval tv_start;
 } wzd_action_t;
 
 #endif /* __WZD_ACTION__ */

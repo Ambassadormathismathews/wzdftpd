@@ -119,7 +119,7 @@ void ascii_lower(char * s, unsigned int length);
 char * read_token(char *s, char **endptr);
 
 /* replace all \ with / and lower string */
-void win_normalize(char * s, unsigned int length);
+void win_normalize(char * s, unsigned int length, unsigned int lower);
 
 /* IP allowing */
 int ip_add(wzd_ip_t **list, const char *newip);

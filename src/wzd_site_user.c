@@ -160,7 +160,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   strncpy(user.userpass,password,255);
   strncpy(user.rootpath,homedir,WZD_MAX_PATH);
   user.tagline[0]='\0';
-  user.uid=0;
+  user.uid=-1; /* will be changed by backend */
   user.group_num=0;
   if (groupname) {
     user.groups[0] = GetGroupIDByName(groupname);
@@ -1072,11 +1072,6 @@ int do_site_flags(char *command_line, wzd_context_t * context)
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    username = context->userinfo.username;
-  } else 
-#endif
     username = GetUserByID(context->userid)->username;
   }
 
@@ -1109,12 +1104,7 @@ int do_site_idle(char *command_line, wzd_context_t * context)
   unsigned long idletime;
 
   /* get our info */
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    username = context->userinfo.username;
-  } else 
-#endif
-    username = GetUserByID(context->userid)->username;
+  username = GetUserByID(context->userid)->username;
   /* check if user exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
@@ -1160,12 +1150,7 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
   int uid;
 
   /* get our info */
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    username = context->userinfo.username;
-  } else 
-#endif
-    username = GetUserByID(context->userid)->username;
+  username = GetUserByID(context->userid)->username;
   /* check if user exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
@@ -1255,12 +1240,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
   }
 
   /* preliminary check: i can't kill myself */
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    test_username = context->userinfo.username;
-  } else 
-#endif
-    test_username = GetUserByID(context->userid)->username;
+  test_username = GetUserByID(context->userid)->username;
   if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
 
   /* kill'em all ! */
@@ -1268,12 +1248,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
     int i=0;
     while (i<HARD_USERLIMIT) {
       if (context_list[i].magic == CONTEXT_MAGIC) {
-#ifdef BACKEND_STORAGE
-        if (mainConfig->backend.backend_storage==1) {
-          test_username = context_list[i].userinfo.username;
-        } else 
-#endif
-          test_username = GetUserByID(context_list[i].userid)->username;
+        test_username = GetUserByID(context_list[i].userid)->username;
         if (strcmp(username,test_username)==0) {
           found = 1;
           kill_child(context_list[i].pid_child,context);

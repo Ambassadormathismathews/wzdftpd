@@ -71,12 +71,17 @@
 
 void update_last_file(wzd_context_t * context)
 {
+  struct timeval tv;
+
+  gettimeofday(&tv, NULL);
   strncpy(context->last_file.name,context->current_action.arg,WZD_MAX_PATH);
   context->last_file.size = context->current_action.bytesnow; /* size */
   if (server_time > context->current_action.tm_start)
     context->last_file.time = (server_time - context->current_action.tm_start); /* size */
   else
     context->last_file.time = 0;
+  context->last_file.tv.tv_sec = tv.tv_sec - context->current_action.tv_start.tv_sec;
+  context->last_file.tv.tv_usec = tv.tv_usec - context->current_action.tv_start.tv_usec;
   context->last_file.token = context->current_action.token;
 }
 
@@ -94,6 +99,7 @@ out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context-
   ret = socket_close(context->datafd);
   FD_UNREGISTER(context->datafd,"Client data socket");
   context->datafd = -1;
+  context->pasvsock = -1;
   context->state = STATE_UNKNOWN;
 }
 

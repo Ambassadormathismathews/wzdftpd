@@ -5,9 +5,10 @@ EXPORTS
 	wzd_fini
 	wzd_validate_login
 	wzd_validate_pass
+	wzd_get_user
+	wzd_get_group
 	wzd_find_user
 	wzd_find_group
-	wzd_chpass
 	wzd_mod_user
 	wzd_mod_group
 	wzd_commit_changes

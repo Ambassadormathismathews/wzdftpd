@@ -440,7 +440,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       /* remove trailing / */
       if (value[strlen(value)-1] == '/' && strcmp(value,"/")!=0)
 	value[strlen(value)-1] = '\0';
-	  DIRNORM(value,strlen(value));
+	  DIRNORM(value,strlen(value),0);
       strncpy(user_pool[user_count-1].rootpath,value,WZD_MAX_PATH);
     }
     else if (strcmp("pass",varname)==0) {
@@ -1072,39 +1072,6 @@ int FCN_FIND_GROUP(int num, wzd_group_t * group)
   return 0;
 } 
 
-int FCN_CHPASS(const char *username, const char *new_pass)
-{
-  unsigned int count;
-  int found;
-  char * cipher;
-
-  count=0;
-  found = 0;
-  while (count<user_count_max) {
-    if (strcmp(username,user_pool[count].username)==0)
-      { found = 1; break; }
-    count++;
-  }
-  
-  if (!found) {
-fprintf(stderr,"User %s not found\n",username);
-    return 1;
-  }
-
-  /* special case: if user_pool[count].userpass == "%" then any pass
-   *  is accepted */
-  if (strcasecmp(new_pass,"%")==0) {
-    strcpy(user_pool[count].userpass,new_pass);
-  }
-  /* TODO choose encryption func ? */
-  else {
-    /* FIXME - crypt is NOT reentrant */
-    /* XXX - md5 hash in crypt function does NOT work with cygwin */
-    cipher = crypt(new_pass,username);
-    strcpy(user_pool[count].userpass,cipher);
-  }
-  return 0;
-}
 
 /* if user does not exist, add it */
 int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
@@ -1141,10 +1108,15 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_USERNAME) strcpy(user_pool[count].username,user->username);
     if (mod_type & _USER_USERPASS) {
       if (strcasecmp(user->userpass,"%")==0) {
+        /* special case: if user_pool[count].userpass == "%" then any pass
+         *  is accepted */
 	strcpy(user_pool[count].userpass,user->userpass);
       } else {
+        /* TODO choose encryption func ? */
 	salt[0] = 'a' + (char)(rand()%26);
 	salt[1] = 'a' + (char)((rand()*72+3)%26);
+        /* FIXME - crypt is NOT reentrant */
+        /* XXX - md5 hash in crypt function does NOT work with cygwin */
 	cipher = crypt(user->userpass, salt);
 	strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
       }
@@ -1174,9 +1146,16 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
   } else { /* user not found, add it */
 /*    fprintf(stderr,"Add user %s\n",name);*/
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
-    if (strcasecmp(user->userpass,"%")!=0) {
+    if (strcasecmp(user->userpass,"%")==0) {
+      /* special case: if user_pool[count].userpass == "%" then any pass
+       *  is accepted */
+      strcpy(user_pool[user_count].userpass,user->userpass);
+    } else {
+      /* TODO choose encryption func ? */
       salt[0] = 'a' + (char)(rand()%26);
       salt[1] = 'a' + (char)((rand()*72+3)%26);
+      /* FIXME - crypt is NOT reentrant */
+      /* XXX - md5 hash in crypt function does NOT work with cygwin */
       cipher = crypt(user->userpass, salt);
       strncpy(user_pool[user_count].userpass,cipher,MAX_PASS_LENGTH-1);
     }
@@ -1248,4 +1227,18 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
 int  FCN_COMMIT_CHANGES(void)
 {
   return write_user_file();
+}
+
+wzd_user_t * FCN_GET_USER(int uid)
+{
+  if (uid < 0 || uid >= user_count_max) return NULL;
+  if (user_pool[uid].username[0] == '\0') return NULL;
+  return &user_pool[uid];
+}
+
+wzd_group_t * FCN_GET_GROUP(int gid)
+{
+  if (gid < 0 || gid >= group_count_max) return NULL;
+  if (group_pool[gid].groupname[0] == '\0') return NULL;
+  return &group_pool[gid];
 }

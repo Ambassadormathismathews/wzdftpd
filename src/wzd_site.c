@@ -116,6 +116,9 @@ int do_site_test(char *command, wzd_context_t * context)
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
   ret = 0;
 
+  out_err(LEVEL_INFO,"sizeof(wzd_context_t) = %d\n", sizeof(wzd_context_t));
+  out_err(LEVEL_INFO,"sizeof(wzd_user_t) = %d\n", sizeof(wzd_user_t));
+
   fd_dump();
 
 #if 0
@@ -489,6 +492,7 @@ int do_site_chpass(char *command_line, wzd_context_t * context)
   wzd_user_t user, *me;
   int uid;
   short is_gadmin;
+  unsigned long mod_type;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -520,7 +524,12 @@ int do_site_chpass(char *command_line, wzd_context_t * context)
     return 1;
   }
 
-  ret = backend_chpass(username,new_pass);
+  mod_type = _USER_USERPASS;
+  strncpy(user.userpass,new_pass,sizeof(user.userpass));
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext",username,&user,mod_type);
 
   if (ret)
     ret = send_message_with_args(501,context,"An error occurred during password change");
@@ -1243,12 +1252,7 @@ int do_site_utime(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   ptr = command_line;
   filename = strtok_r(command_line," \t\r\n",&ptr);

@@ -67,6 +67,11 @@
 #define	DL_PREFIX
 #endif
 
+
+static int _backend_check_function(void * handle, const char *name, const char *backend_name);
+
+
+
 char *backend_get_version(wzd_backend_t *backend)
 {
   char ** version_found;
@@ -101,6 +106,8 @@ void backend_clear_struct(wzd_backend_t *backend)
   backend->handle = NULL;
   backend->back_validate_login = NULL;
   backend->back_validate_pass = NULL;
+  backend->back_get_user = NULL;
+  backend->back_get_group = NULL;
   backend->back_find_user = NULL;
   backend->back_find_group = NULL;
   backend->back_chpass = NULL;
@@ -128,7 +135,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     path[length]='\0';
   }
 
-  DIRNORM(backend,strlen(backend));
+  DIRNORM(backend,strlen(backend),0);
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
@@ -171,22 +178,15 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 
   /* check functions */
   ret = 1;
-  ptr = dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_FIND_USER);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_FIND_GROUP);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_MOD_USER);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_CHPASS);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_MOD_GROUP);
-  ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
-  ret = ret & (ptr!=NULL);
+  ret = (_backend_check_function(handle, STR_VALIDATE_LOGIN, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_VALIDATE_PASS, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_GET_USER, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_GET_GROUP, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_FIND_USER, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_FIND_GROUP, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_MOD_USER, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_MOD_GROUP, backend)) && ret;
+  ret = (_backend_check_function(handle, STR_COMMIT_CHANGES, backend)) && ret;
   if (!ret) {
     out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n",backend);
     dlclose(handle);
@@ -246,7 +246,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
     path[length]='\0';
   }
 
-  DIRNORM(backend,strlen(backend));
+  DIRNORM(backend,strlen(backend),0);
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
@@ -276,9 +276,10 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   ptr = init_fcn = (int (*)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int, void *))dlsym(handle,DL_PREFIX STR_INIT);
   mainConfig->backend.back_validate_login = (int (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
   mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
+  mainConfig->backend.back_get_user  = (wzd_user_t * (*)(int))dlsym(handle,DL_PREFIX STR_GET_USER);
+  mainConfig->backend.back_get_group  = (wzd_group_t * (*)(int))dlsym(handle,DL_PREFIX STR_GET_GROUP);
   mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_FIND_USER);
   mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,DL_PREFIX STR_FIND_GROUP);
-  mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,DL_PREFIX STR_CHPASS);
   mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_USER);
   mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
@@ -324,7 +325,9 @@ int backend_close(const char *backend)
   }
 
   /* close backend */
-  ret = dlclose(mainConfig->backend.handle);
+  ret = 0;
+  if (mainConfig->backend.handle)
+    ret = dlclose(mainConfig->backend.handle);
   if (ret) {
     out_log(LEVEL_CRITICAL,"Could not close backend %s (handle %lu)\n",
       backend,mainConfig->backend.handle);
@@ -350,6 +353,24 @@ int backend_reload(const char *backend)
   mainConfig->backend.backend_storage = backend_storage;
 
   return 0;
+}
+
+wzd_user_t * backend_get_user(int userid)
+{
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
+    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+    return NULL;
+  }
+  return (*mainConfig->backend.back_get_user)(userid);
+}
+
+wzd_group_t * backend_get_group(int groupid)
+{
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
+    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+    return NULL;
+  }
+  return (*mainConfig->backend.back_get_group)(groupid);
 }
 
 int backend_find_user(const char *name, wzd_user_t * user, int * userid)
@@ -394,10 +415,12 @@ int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * u
     return 1;
   }
   ret = (*mainConfig->backend.back_validate_login)(name,user);
-  if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = GetUserByID(ret);*/
-    if (user != NULL)
-      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+  if (ret >= 0) {
+    if (mainConfig->backend.backend_storage == 0) {
+      /*user = GetUserByID(ret);*/
+      if (user != NULL)
+        memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+    }
     *userid = ret;
     return 0;
   }
@@ -412,10 +435,12 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
     return 1;
   }
   ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
-  if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = GetUserByID(ret);*/
-    if (user != NULL)
-      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+  if (ret >= 0) {
+    if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
+      /*user = GetUserByID(ret);*/
+      if (user != NULL)
+        memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+    }
     *userid = ret;
     return 0;
   }
@@ -434,17 +459,6 @@ int backend_commit_changes(const char *backend)
 /*  if (strcmp(backend,mainConfig->backend.name)!=0) return 1;*/
 
   ret = (*mainConfig->backend.back_commit_changes)();
-  return ret;
-}
-
-int backend_chpass(const char *username, const char *new_pass)
-{
-  int ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_chpass) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return 1;
-  }
-  ret = (*mainConfig->backend.back_chpass)(username,new_pass);
   return ret;
 }
 
@@ -491,4 +505,15 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
   }
   ret = (*mainConfig->backend.back_mod_group)(name,group,mod_type);
   return ret;
+}
+
+
+
+static int _backend_check_function(void * handle, const char *name, const char *backend_name)
+{
+  void * ptr;
+  ptr = dlsym(handle,DL_PREFIX name);
+  if (ptr == NULL)
+    out_err(LEVEL_HIGH,"Could not find function %s in backend %s\n",name,backend_name);
+  return (ptr) ? 1 : 0;
 }

@@ -211,8 +211,9 @@ has a sense only for connected users).</para>
 <para>Create or remove a directory.
 Directory name <emphasis>must</emphasis> be an absolute path !.
 </para></listitem>
-<listitem><screen>vfs read filename/dirname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
-<para>Get infos on file or directory.
+<listitem><screen>vfs read [-r/--real] filename/dirname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
+<para>Get infos on file or directory. File path is inside FTP, unless you
+specify the -r option, in this case this is an absolute path.
 Returned string has format:
 <programlisting>"user/group/mode"</programlisting>
 User and group are names (or "unknown"), and mode is the octal number

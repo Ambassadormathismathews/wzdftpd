@@ -291,12 +291,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
   wzd_user_t * user, * owner;
   short vfs_pad=0;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (directory==NULL) return 0;
 

@@ -1265,12 +1265,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   wzd_user_t * user;
   short is_locked;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (mode & O_WRONLY)
     ret = _checkPerm(filename,RIGHT_STOR,user);
@@ -1343,12 +1338,7 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else 
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_MKDIR,user);
   if (ret) return -1;
@@ -1367,12 +1357,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
   wzd_user_t * user;
   struct stat s;
   
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else 
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_RMDIR,user);
   if (ret) return -1;
@@ -1454,12 +1439,7 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   strncpy(path,new_filename,2048);
   ptr = strrchr(path,'/');
@@ -1509,12 +1489,7 @@ int file_remove(const char *filename, wzd_context_t * context)
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
   perm_filename[length+neededlength]='\0';
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = &context->userinfo;
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
 /*  ret = _checkPerm(filename,RIGHT_STOR ,user);*/
   /* to delete, defaults permissions are: owner and siteop can delete file */

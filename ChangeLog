@@ -1,3 +1,11 @@
+2004-06-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: transfer duration gets better precision
+	* feature: killed some static struct, reducing memory usage
+	* backends: removed CHPASS function, part of MOD_USER
+
+	* IMPORTANT: from now, uid MUST be unique for users !
+
 2004-06-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: arguments not passed to custom site commands

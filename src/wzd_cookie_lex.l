@@ -1024,19 +1024,20 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (context)
       {
-	    float f;
+	    float f, time;
 #ifndef _MSC_VER
         f = (float)context->last_file.size;
 #else
         f = (float)(__int64)context->last_file.size;
 #endif
-      /* XXX FIXME assume there is at least 1 sec of download */
-      /** \todo convert to kB/s ? */
         if (context->last_file.name[0]!='\0')
+        {
+          time = (float)context->last_file.tv.tv_sec + ((float)context->last_file.tv.tv_usec/1000000.f);
+          /** convert to kB/s ? */
           snprintf(internalbuffer,IBUFSIZE,"%.1f",
-            ((context->last_file.time!=0) ? 
-              ((f/(float)context->last_file.time)) : f) / 1024.f
-			  );
+            ((time > 1e-5) ? (f / time) : 0.f) / 1024.f
+            );
+        }
         else
           snprintf(internalbuffer,IBUFSIZE,"0");
       }
@@ -1048,7 +1049,8 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     case COOKIE_LASTFILETIME:
       get_cookie_format(yytext,&padding);
       if (context)
-        snprintf(internalbuffer,IBUFSIZE,"%lu",(context->last_file.name[0]!='\0')?context->last_file.time:0);
+        snprintf(internalbuffer,IBUFSIZE,"%.4f",(context->last_file.name[0]!='\0')?
+        (float)context->last_file.tv.tv_sec + ((float)context->last_file.tv.tv_usec/1000000.f) :0);
       else
         snprintf(internalbuffer,IBUFSIZE,"lastfiletime");
       cookie_ptr = internalbuffer;

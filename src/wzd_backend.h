@@ -47,9 +47,10 @@ typedef struct {
   int backend_storage;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
+  wzd_user_t * (*back_get_user)(int uid);
+  wzd_group_t * (*back_get_group)(int gid);
   int (*back_find_user) (const char *, wzd_user_t *);
   int (*back_find_group) (int, wzd_group_t *);
-  int (*back_chpass) (const char *, const char *);
   int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
   int (*back_mod_group) (const char *, wzd_group_t *, unsigned long);
   int (*back_commit_changes) (void);
@@ -109,6 +110,14 @@ typedef struct {
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
 
+/* wzd_user_t * FCN_GET_USER(int uid) */
+#define	FCN_GET_USER		wzd_get_user
+#define	STR_GET_USER	 	"wzd_get_user"
+
+/* wzd_group_t * FCN_GET_GROUP(int gid) */
+#define	FCN_GET_GROUP		wzd_get_group
+#define	STR_GET_GROUP	 	"wzd_get_group"
+
 /* int FCN_FIND_USER(const char *name, wzd_user_t * user) */
 #define	FCN_FIND_USER		wzd_find_user
 #define	STR_FIND_USER	 	"wzd_find_user"
@@ -116,10 +125,6 @@ typedef struct {
 /* int FCN_FIND_GROUP(int num, wzd_group_t * group) */
 #define	FCN_FIND_GROUP		wzd_find_group
 #define	STR_FIND_GROUP	 	"wzd_find_group"
-
-/* int FCN_CHPASS(const char *username, const char *new_pass) */
-#define	FCN_CHPASS		wzd_chpass
-#define	STR_CHPASS	 	"wzd_chpass"
 
 /* int FCN_MOD_USER(const char *name, wzd_user_t * user) */
 #define	FCN_MOD_USER		wzd_mod_user
@@ -153,6 +158,10 @@ int backend_close(const char *backend);
 
 int backend_reload(const char *backend);
 
+wzd_user_t * backend_get_user(int userid);
+
+wzd_group_t * backend_get_group(int groupid);
+
 int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
 int backend_find_group(int num, wzd_group_t * group, int * groupid);
@@ -160,8 +169,6 @@ int backend_find_group(int num, wzd_group_t * group, int * groupid);
 int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid);
 
 int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, unsigned int * userid);
-
-int backend_chpass(const char *username, const char *new_pass);
 
 /* if user does not exist, add it
  * if struct user is NULL, delete user
