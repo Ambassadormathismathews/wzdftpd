@@ -108,6 +108,10 @@ SOURCE=.\libwzd.def
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_action.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_backend.c
 # End Source File
 # Begin Source File
@@ -255,6 +259,10 @@ SOURCE=..\src\wzd_vfs.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\src\wzd_action.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_backend.h
 # End Source File
 # Begin Source File
@@ -284,6 +292,10 @@ SOURCE=..\src\wzd_dir.h
 # Begin Source File
 
 SOURCE=..\src\wzd_file.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_hardlimits.h
 # End Source File
 # Begin Source File
 
@@ -348,6 +360,14 @@ SOURCE=..\src\wzd_strtok_r.h
 # Begin Source File
 
 SOURCE=..\src\wzd_strtoull.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_structs.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_types.h
 # End Source File
 # Begin Source File
 

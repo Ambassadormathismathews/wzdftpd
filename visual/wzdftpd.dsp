@@ -181,19 +181,11 @@ SOURCE=..\src\ls.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_action.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_ClientThread.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\wzd_data.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_hardlimits.h
 # End Source File
 # Begin Source File
 
@@ -233,15 +225,7 @@ SOURCE=..\src\wzd_socket.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_structs.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_tls.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_types.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
