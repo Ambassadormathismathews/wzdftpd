@@ -42,7 +42,7 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
-/* free vfs list */
+/** free vfs list */
 int vfs_free(wzd_vfs_t **vfs_list)
 {
   wzd_vfs_t * current_vfs, * next_vfs;
@@ -54,10 +54,12 @@ int vfs_free(wzd_vfs_t **vfs_list)
 
     free(current_vfs->virtual_dir);
     free(current_vfs->physical_dir);
+    if (current_vfs->target) free(current_vfs->target);
 
 #ifdef DEBUG
     current_vfs->virtual_dir = NULL;
     current_vfs->physical_dir = NULL;
+    current_vfs->target = NULL;
     current_vfs->next_vfs = NULL;
 #endif /* DEBUG */
     free(current_vfs);
@@ -69,7 +71,7 @@ int vfs_free(wzd_vfs_t **vfs_list)
   return 0;
 }
 
-/* register a new vfs entry */
+/** register a new vfs entry */
 int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
 {
   wzd_vfs_t * current_vfs, * new_vfs;
@@ -85,6 +87,7 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
 
   new_vfs->virtual_dir = strdup(vpath);
   new_vfs->physical_dir = strdup(path);
+  new_vfs->target = NULL;
   new_vfs->next_vfs = NULL;
 
   current_vfs = *vfs_list;
@@ -103,8 +106,95 @@ int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path)
   return 0;
 }
 
-/* if needed, replace the vfs in the path */
-int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen)
+/** register a new vfs entry, with a condition */
+int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target)
+{
+  wzd_vfs_t * current_vfs, * new_vfs;
+  struct stat s;
+
+  if (stat(path,&s)) {
+    /* destination does not exist */
+    return 1;
+  }
+
+  new_vfs = malloc(sizeof(wzd_vfs_t));
+  if (!new_vfs) return 1;
+
+  new_vfs->virtual_dir = strdup(vpath);
+  new_vfs->physical_dir = strdup(path);
+  new_vfs->target = strdup(target);
+  new_vfs->next_vfs = NULL;
+
+  current_vfs = *vfs_list;
+
+  if (!current_vfs) {
+    *vfs_list = new_vfs;
+    return 0;
+  }
+
+  while (current_vfs->next_vfs) {
+    current_vfs = current_vfs->next_vfs;
+  }
+
+  current_vfs->next_vfs = new_vfs;
+
+  return 0;
+}
+
+/** \return 1 if user match corresponding line */
+int vfs_match_perm(const char *perms,wzd_user_t *user)
+{
+  char * buffer, *token, *ptr;
+  char c;
+  int i;
+  short negate;
+  wzd_group_t * group;
+
+  if (!perms) return 1;
+  buffer=strdup(perms);
+  ptr=buffer;
+  token = strtok_r(buffer," \t\r\n",&ptr);
+ 
+  while (token) {
+    negate=0;
+    /* FIXME split token to find entry type : user, group, flag */
+    c = *token++;
+    if (c == '!') {
+      negate = 1;
+      c = *token++;
+    }
+    switch (c) {
+    case '=':
+      if (strcasecmp(token,user->username)==0) return (negate) ? 0 : 1;
+      break;
+    case '-':
+      for (i=0; i<user->group_num; i++) {
+	group = GetGroupByID(user->groups[i]);
+	if (strcasecmp(token,group->groupname)==0) return (negate) ? 0 : 1;
+      }
+      break;
+    case '+':
+      if (user->flags && strchr(user->flags,*token)) return (negate) ? 0 : 1;
+      break;
+    case '*':
+      return !negate;
+      break;
+    default:
+      continue;
+    }
+    if (negate)
+      *(--token)='!';
+
+    token = strtok_r(NULL," \t\r\n",&ptr);
+  }
+
+
+  free(buffer);
+  return 0;
+}
+
+/** if needed, replace the vfs in the path */
+int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_context_t * context)
 {
   /* FIXME test length of strings */
   while (vfs_list)
@@ -115,13 +205,20 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen)
 	strcmp(vfs_list->virtual_dir,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
       char buf[4096];
+      /* test perm */
+      if (vfs_list->target) {
+	wzd_user_t *user;
+	user=GetUserByID(context->userid);
+	if (!user) break;
+	if (!vfs_match_perm(vfs_list->target,user)) { vfs_list = vfs_list->next_vfs; continue; }
+      }
 #ifdef DEBUG
-out_err(LEVEL_CRITICAL,"VPATH : %s / %s\n",buffer,vfs_list->virtual_dir);
+out_err(LEVEL_FLOOD,"VPATH : %s / %s\n",buffer,vfs_list->virtual_dir);
 #endif
       strcpy(buf,vfs_list->physical_dir);
       strcpy(buf+strlen(vfs_list->physical_dir),buffer+strlen(vfs_list->virtual_dir));
 #ifdef DEBUG
-out_err(LEVEL_CRITICAL,"converted to %s\n",buf);
+out_err(LEVEL_FLOOD,"converted to %s\n",buf);
 #endif
       strcpy(buffer,buf);
     }
@@ -242,7 +339,7 @@ printf("Converted to: '%s'\n",path);
   /* check if user is allowed to even see the path */
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,2048);
+  vfs_replace(mainConfig->vfs,path,2048,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
@@ -289,7 +386,7 @@ printf("Converted to: '%s'\n",path);
   /* check if user is allowed to even see the path */
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,2048);
+  vfs_replace(mainConfig->vfs,path,2048,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }

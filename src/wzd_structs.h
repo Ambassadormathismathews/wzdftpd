@@ -91,6 +91,8 @@ typedef struct _wzd_vfs_t {
   char	* virtual_dir;
   char	* physical_dir;
 
+  char	* target;
+
   struct _wzd_vfs_t	* next_vfs;
 } wzd_vfs_t;
 

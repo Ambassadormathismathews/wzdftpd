@@ -36,6 +36,9 @@ int vfs_free(wzd_vfs_t **vfs_list);
 int vfs_add(wzd_vfs_t ** vfs_list, const char *vpath, const char *path);
 
 /* if needed, replace the vfs in the path */
-int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen);
+int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_context_t *context);
+
+/** register a new vfs entry, with a condition */
+int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target);
 
 #endif /* __WZD_VFS_H__ */
