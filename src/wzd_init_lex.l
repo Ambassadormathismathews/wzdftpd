@@ -1723,7 +1723,7 @@ int cfg_read_vfs(void)
   if (target)
     ret = vfs_add_restricted(&tempConfig.vfs,virtual_path,physical_path,target);
   else
-    vfs_add(&tempConfig.vfs,virtual_path,physical_path);
+    ret = vfs_add(&tempConfig.vfs,virtual_path,physical_path);
   if (ret) {
     free(buffer);
     out_err(LEVEL_HIGH,"There was a problem adding vfs %s => %s\n",virtual_path,physical_path);
