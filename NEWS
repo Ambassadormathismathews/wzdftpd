@@ -16,11 +16,11 @@
  Major features:
 
 * new commands: STAT
-* UTF-8 support
 * Perl module
 
  Work in Progress (not fully working yet):
 
+* UTF-8 support
 * MySQL backend
 * config file management
 

@@ -136,6 +136,18 @@ work in restricted user-mode (this is REALLY more secure !).
 
 </qandadiv>
 
+<qandadiv><title>FreeBSD</title>
+
+<qandaentry id='faq_shm_badsys'>
+<question><para>I run wzdftpd and after that system says 'Bad system call(Core
+dumped)'</para></question>
+<answer><para>
+It means you need to recompile your kernel with shared memory support.
+</para></answer>
+</qandaentry>
+
+</qandadiv>
+
 <qandadiv><title>Config and commands</title>
 
 <qandaentry id='faq_customsite'>
