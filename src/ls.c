@@ -92,7 +92,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   time_t timeval;
   struct stat st;
   struct tm *ntime;
-  wzd_user_t * user;
+  wzd_user_t * user, * owner;
   short vfs_pad=0;
 
 #if BACKEND_STORAGE
@@ -239,6 +239,8 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	  else buffer_name[255] = '\0';
 	}
 
+	owner = (wzd_user_t*)file_getowner( filename, context);
+
 	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
 		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
 		st.st_mode & S_IRUSR ? 'r' : '-',
@@ -251,7 +253,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		st.st_mode & S_IWOTH ? 'w' : '-',
 		st.st_mode & S_IXOTH ? 'x' : '-',
 		(int)st.st_nlink,
-		user->username,
+		(owner)?owner->username:"NULL",
 		"ftp",
 		(unsigned long long)st.st_size,
 		datestr,

@@ -120,7 +120,7 @@ void setMessage(const char *newMessage, int code)
 {
   if (code < 0 || code > HARD_MSG_LIMIT) return;
   if (msg_tab[code]) free(msg_tab[code]);
-  msg_tab[code] = newMessage;
+  msg_tab[code] = (char*)newMessage;
 }
 
 /*************** send_message ************************/
@@ -187,12 +187,14 @@ else
 int write_message_footer(int code, wzd_context_t * context)
 {
   char buffer[2048];
+  char buf_section[256];
   int ret;
   long f_type, f_bsize, f_blocks, f_free;
   float free,total;
   float bytes_ul, bytes_dl, bytes_credits;
   char unit, unit_dl, unit_ul, unit_credits;
   wzd_user_t * user;
+  wzd_section_t * section;
 
   if (checkpath(".",buffer,context)) {
     send_message_with_args(501,context,". does not exist ?!");
@@ -224,15 +226,22 @@ int write_message_footer(int code, wzd_context_t * context)
   bytes_to_unit(&bytes_dl,&unit_dl);
   bytes_to_unit(&bytes_ul,&unit_ul);
 
+  section = section_find(mainConfig->section_list,context->currentpath);
+  if (section) {
+    snprintf(buf_section,255,"[Section: %s] - ",section_getname(section));
+  } else {
+    buf_section[0] = '\0';
+  }
+
   if (user->ratio) {
     bytes_credits = (float)user->credits;
     bytes_to_unit(&bytes_credits,&unit_credits);
-    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] - [Cred: %.2f %c] -\r\n",
-      code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,
+    snprintf(buffer,2047,"%3d - %s[Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] - [Cred: %.2f %c] -\r\n",
+      code,buf_section,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,
       bytes_credits,unit_credits);
   } else {
-    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] -\r\n",
-      code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul);
+    snprintf(buffer,2047,"%3d - %s[Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] -\r\n",
+      code,buf_section,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul);
   }
   ret = send_message_raw(buffer, context);
 

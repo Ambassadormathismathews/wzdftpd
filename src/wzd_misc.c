@@ -881,7 +881,7 @@ int my_str_compare(const char * src, const char *dst)
   }
   
   /* test if checking was complete */
-  if (*ptr_dst == '\0') return 1;
+  if (*ptr_dst == '\0' || (*ptr_dst=='*' && *(ptr_dst+1)=='\0') ) return 1;
 
   return 0;
 }

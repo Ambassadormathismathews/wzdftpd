@@ -25,6 +25,8 @@
 #ifndef __WZD_SECTION_H__
 #define __WZD_SECTION_H__
 
+char * section_getname(wzd_section_t * section);
+
 int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char *mask, const char *filter);
 
 int section_free(wzd_section_t **section_list);

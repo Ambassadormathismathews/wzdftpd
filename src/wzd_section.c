@@ -42,6 +42,7 @@
 
 #include "wzd_section.h"
 #include "wzd_misc.h"
+#include "wzd_log.h"
 
 
 struct wzd_section_t {
@@ -52,6 +53,12 @@ struct wzd_section_t {
 
   struct wzd_section_t * next_section;
 };
+
+char * section_getname(wzd_section_t * section)
+{
+  if (section) return section->sectionname;
+  return NULL;
+}
 
 int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char *mask, const char *filter)
 {
@@ -66,6 +73,9 @@ int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char
     section_new->pathfilter = malloc(sizeof(regex_t));
     err = regcomp(section_new->pathfilter,filter,REG_EXTENDED | REG_NOSUB);
     if (err) {
+      char buf[512];
+      regerror(err,section_new->pathfilter,buf,512);
+      out_err(LEVEL_HIGH,"Error compiling regexp: %s\n",buf);
       free(section_new->pathfilter);
       free(section_new);
       return -1;
@@ -89,9 +99,10 @@ int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char
     /* do not insert if a section with same name exists */
     if (strcmp(name,section->sectionname)==0) return 1;
     /* FIXME if a section with same or bigger mask exist, warn user ? */
+    if (!section->next_section) break;
     section = section->next_section;
   }
-  while ( section->next_section );
+  while ( section );
 
   section->next_section = section_new;
 

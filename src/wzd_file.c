@@ -1045,14 +1045,31 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   strncpy(perm_filename,filename,BUFFER_LEN);
   ptr = strrchr(perm_filename,'/');
   if (!ptr || *(ptr+1)=='\0') return NULL;
-  strcpy(stripped_filename,ptr+1);
-  if (ptr != perm_filename) *(ptr+1)='\0';
+
+  if (S_ISDIR(s.st_mode)) { /* isdir */
+    strcpy(stripped_filename,".");
+  } else { /* ! isdir */
+    ptr = strrchr(perm_filename,'/');
+    if (ptr) {
+      strcpy(stripped_filename,ptr+1);
+      *ptr = 0;
+    }
+  } /* ! isdir */
+
+
+/*  strcpy(stripped_filename,ptr+1);*/
+/*  if (ptr != perm_filename) *(ptr+1)='\0';*/
+
   neededlength = strlen(HARD_PERMFILE);
   length = strlen(perm_filename);
   /* check if !overflow */
   if ( length+neededlength > 4095 )
       return NULL;
 
+  if (perm_filename[length-1] != '/' ) {
+    ++length;
+    perm_filename[length-1] = '/';
+  }
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
   /* remove name in perm file !! */
