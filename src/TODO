@@ -3,8 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- win32: fix free space display !!
-'********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=
 '********'
 - get_bandwidth(): give download, upload, total
@@ -102,7 +100,6 @@ current objectives:
 
 ## PRIORITY ##
 
-- add GnuTLS code to replace (or just prefer it to) OpenSSL
 - when CWD to a symlink, change CWD to _real_ destination (if inside ftproot)
 - Sub-vfs work, but need to put the physical path after the first node
   e.g:
