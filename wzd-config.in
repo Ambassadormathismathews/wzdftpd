@@ -101,9 +101,9 @@ else
 fi
 
 if test "$lib_dir" != "/usr/lib"; then
-    libs="-L$lib_dir -lwzd $ssl_flags $pth_libs"
+    libs="-L$lib_dir -lwzd_core $ssl_flags $pth_libs"
 else
-    libs="-lwzd $ssl_flags $pth_libs"
+    libs="-lwzd_core $ssl_flags $pth_libs"
 fi
 
 if test "$echo_cflags" = "yes"; then
