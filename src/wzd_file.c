@@ -1129,15 +1129,13 @@ int softlink_create(const char *target, const char *linkname)
   char perm_filename[WZD_MAX_PATH];
   char stripped_filename[WZD_MAX_PATH];
   char *ptr;
-  unsigned int length;
   struct wzd_file_t * perm_list=NULL, * file_cur;
   int ret;
 
   /* get permission file */
 
   strncpy(perm_filename,linkname,WZD_MAX_PATH);
-  length = strlen(perm_filename);
-  if (length > 1 && perm_filename[length-1] == '/') perm_filename[--length] = '\0';
+  REMOVE_TRAILING_SLASH(perm_filename);
 
   ptr = strrchr(perm_filename,'/');
   ptr++; /* position is just after last / */
@@ -1162,6 +1160,7 @@ int softlink_create(const char *target, const char *linkname)
 
   file_cur->kind = FILE_LNK;
   file_cur->data = strdup(target);
+  REMOVE_TRAILING_SLASH( (char*) file_cur->data );
 
   /** \todo set owner/group of symlink ? */
   strncpy(file_cur->owner,"nobody",256);
@@ -1201,6 +1200,13 @@ int softlink_remove(const char *linkname)
 
   /* remove entry */
   if (!ret) {
+    file_cur = find_file(stripped_filename, perm_list);
+    if ( !file_cur || file_cur->kind != FILE_LNK )
+    {
+      free_file_recursive(perm_list);
+      return -1;
+    }
+
     file_cur = remove_file(stripped_filename, &perm_list);
 
     /* write modified permission file on disk */

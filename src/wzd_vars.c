@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/stat.h>
+
 #include "wzd_structs.h"
 
 #include "wzd_misc.h"
@@ -96,13 +98,13 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
   if (strcasecmp(varname,"deny_access_files_uploaded")==0) {
     ul = strtoul(data,NULL,0);
     if (ul==1) { CFG_SET_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
-    if (ul==0) { CFG_CLEAR_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
+    if (ul==0) { CFG_CLR_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
     return 1;
   }
   if (strcasecmp(varname,"hide_dotted_files")==0) {
     ul = strtoul(data,NULL,0);
     if (ul==1) { CFG_SET_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
-    if (ul==0) { CFG_CLEAR_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
+    if (ul==0) { CFG_CLR_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
     return 1;
   }
   if (strcasecmp(varname,"loglevel")==0) {
@@ -149,14 +151,286 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
   return 1;
 }
 
+int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
+{
+  wzd_user_t *user;
+  int i;
+
+  if (!username || !ip) return 1;
+
+  user = GetUserByName(username);
+  if (!user) return -1;
+
+  do {
+
+    /* check if ip is already present or included in list, or if it shadows one present */
+    for (i=0; i<HARD_IP_PER_USER; i++)
+    {
+      if (user->ip_allowed[i][0]=='\0') continue;
+      if (my_str_compare(ip, user->ip_allowed[i])==1) {
+        /* ip is already included in list */
+        return 1;
+      }
+      if (my_str_compare(user->ip_allowed[i],ip)==1) {
+        /* ip will shadow one ore more ip in list */
+        return 2;
+      }
+    }
+
+    /* update user */
+    for (i=0; i<HARD_IP_PER_USER; i++)
+      if (user->ip_allowed[i][0]=='\0') break;
+
+    /* no more slots ? */
+    if (i==HARD_IP_PER_USER) {
+      /* no more slots available - either recompile with more slots, or use them more cleverly */
+      return 3;
+    }
+    /* TODO check ip validity */
+    strncpy(user->ip_allowed[i],ip,MAX_IP_LENGTH-1);
+
+/*    ip = strtok_r(NULL," \t\r\n",&ptr);*/
+    ip = NULL; /** \todo add only one ip (for the moment) */
+  } while (ip);
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  return backend_mod_user("plaintext", username, user, _USER_IP);
+}
+
+int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
+{
+  char *ptr_ul;
+  wzd_user_t *user;
+  int i;
+  unsigned long ul;
+  int found;
+
+  if (!username || !ip) return 1;
+
+  user = GetUserByName(username);
+  if (!user) return -1;
+
+  do {
+
+    /* try to take argument as a slot number */
+    ul = strtoul(ip,&ptr_ul,0);
+    if (*ptr_ul=='\0') {
+      if (ul <= 0 || ul >= HARD_IP_PER_USER) {
+        /* Invalid ip slot number */
+        return 1;
+      }
+      ul--; /* to index slot number from 1 */
+      if (user->ip_allowed[ul][0] == '\0') {
+        /* Slot is already empty */
+        return 2;
+      }
+      user->ip_allowed[ul][0] = '\0';
+    } else { /* if (*ptr=='\0') */
+
+      /* try to find ip in list */
+      found = 0;
+      for (i=0; i<HARD_IP_PER_USER; i++)
+      {
+        if (user->ip_allowed[i][0]=='\0') continue;
+        if (strcmp(ip,user->ip_allowed[i])==0) {
+          user->ip_allowed[i][0] = '\0';
+          found = 1;
+        }
+      }
+
+      if (!found) {
+        /* IP not found */
+        return 3;
+      }
+    } /* if (*ptr=='\0') */
+
+/*    ip = strtok_r(NULL," \t\r\n",&ptr);*/
+    ip = NULL; /** \todo add only one ip (for the moment) */
+  } while (ip);
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  return backend_mod_user("plaintext", username, user, _USER_IP);
+}
+
 int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_user_t * user;
+  unsigned long mod_type;
+  unsigned long ul;
+  char *ptr;
+  int ret;
 
   if (!username || !varname) return 1;
 
   user = GetUserByName(username);
-  if (!user) return 1;
+  if (!user) return -1;
 
-  return 1;
+  /* find modification type */
+  mod_type = _USER_NOTHING;
+
+  /* addip */
+  if (strcmp(varname, "addip")==0) {
+    return vars_user_addip(username, data, config);
+  }
+  /* bytes_ul and bytes_dl should never be changed ... */
+  /* delip */
+  else if (strcmp(varname, "delip")==0) {
+    return vars_user_delip(username, data, config);
+  }
+  /* flags */ /* TODO accept modifications style +f or -f */
+  else if (strcmp(varname, "flags")==0) {
+    mod_type = _USER_FLAGS;
+    strncpy(user->flags, data, MAX_FLAGS_NUM-1);
+  }
+  /* homedir */
+  else if (strcmp(varname, "homedir")==0) {
+    /* check if homedir exist */
+    {
+      struct stat s;
+      if (stat(data,&s) || !S_ISDIR(s.st_mode)) {
+        /* Homedir does not exist */
+        return 1;
+      }
+    }
+    mod_type = _USER_ROOTPATH;
+    strncpy(user->rootpath, data, WZD_MAX_PATH);
+  }
+  /* leech_slots */
+  else if (strcmp(varname, "leech_slots")==0) {
+    ul=strtoul(data, &ptr, 0);
+    /* TODO compare with USHORT_MAX */
+    if (*ptr) return -1;
+    mod_type = _USER_LEECHSLOTS; user->leech_slots = (unsigned short)ul;
+  }
+  /* max_dl */
+  else if (strcmp(varname, "max_dl")==0) {
+    ul=strtoul(data, &ptr, 0);
+    if (*ptr) return -1;
+    mod_type = _USER_MAX_DLS; user->max_dl_speed = ul;
+  }
+  /* max_idle */
+  else if (strcmp(varname, "max_idle")==0) {
+    ul=strtoul(data, &ptr, 0);
+    if (*ptr) return -1;
+    mod_type = _USER_IDLE; user->max_idle_time = ul;
+  }
+  /* max_ul */
+  else if (strcmp(varname, "max_ul")==0) {
+    ul=strtoul(data, &ptr, 0);
+    if (*ptr) return -1;
+    mod_type = _USER_MAX_ULS; user->max_ul_speed = ul;
+  }
+  /* num_logins */
+  else if (strcmp(varname, "num_logins")==0) {
+    ul=strtoul(data, &ptr,0);
+    if (*ptr) return -1;
+    mod_type = _USER_NUMLOGINS; user->num_logins = (unsigned short)ul;
+  }
+  /* pass */
+  else if (strcmp(varname, "pass")==0) {
+    mod_type = _USER_USERPASS;
+    strncpy(user->userpass, data, sizeof(user->userpass));
+  }
+  /* perms */
+  else if (strcmp(varname, "perms")==0) {
+    ul=strtoul(data, &ptr, 0);
+    if (*ptr) return -1;
+    mod_type = _USER_PERMS; user->userperms = ul;
+  }
+  /* ratio */
+  else if (strcmp(varname, "ratio")==0) {
+    ul=strtoul(data, &ptr,0);
+    if (*ptr) return -1;
+    mod_type = _USER_RATIO; user->ratio = ul;
+  }
+  /* tagline */
+  else if (strcmp(varname, "tagline")==0) {
+    mod_type = _USER_TAGLINE;
+    strncpy(user->tagline, data, sizeof(user->tagline));
+  }
+  /* uid */ /* FIXME useless ? */
+  /* username (?) */
+  else if (strcmp(varname, "name")==0) {
+    mod_type = _USER_USERNAME;
+    strncpy(user->username, data, sizeof(user->username));
+  }
+  /* user_slots */
+  else if (strcmp(varname, "user_slots")==0) {
+    ul=strtoul(data, &ptr, 0);
+    /* TODO compare with USHORT_MAX */
+    if (*ptr) return -1;
+    mod_type = _USER_USERSLOTS; user->user_slots = (unsigned short)ul;
+  }
+
+  /* commit to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext", username, user, mod_type);
+
+  return ret;
+}
+
+int vars_user_new(const char *username, const char *pass, const char *groupname, wzd_config_t * config)
+{
+  wzd_user_t user, *test_user;
+  wzd_group_t *group;
+  unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
+  char *homedir;
+  int i, ret;
+
+  if (!username || !groupname || !config) return -1;
+
+  test_user = GetUserByName(username);
+  if (test_user) return 1; /* user exists with same name */
+
+  if (groupname) {
+    group = GetGroupByName(groupname);
+  }
+  if (!group) return 2;
+
+  homedir = group->defaultpath;
+  ratio = group->ratio;
+
+  /* check if homedir exist */
+  {
+    struct stat s;
+    if (stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+      return 3;
+    }
+  }
+
+  /* create new user */
+  strncpy(user.username, username, sizeof(user.username));
+  strncpy(user.userpass, pass, sizeof(user.userpass));
+  strncpy(user.rootpath,homedir,WZD_MAX_PATH);
+  user.tagline[0]='\0';
+  user.uid=0;
+  user.group_num=0;
+  if (groupname) {
+    user.groups[0] = GetGroupIDByName(groupname);
+    if (user.groups[0]) user.group_num=1;
+  }
+  user.max_idle_time=0;
+  user.userperms=0xffffffff;
+  user.flags[0]='\0';
+  user.max_ul_speed=0;
+  user.max_dl_speed=0;
+  user.num_logins=0;
+  for (i=0; i<HARD_IP_PER_USER; i++)
+    user.ip_allowed[i][0]='\0';
+  user.stats.bytes_ul_total=0;
+  user.stats.bytes_dl_total=0;
+  user.stats.files_ul_total=0;
+  user.stats.files_dl_total=0;
+  user.credits = 0;
+  user.ratio = ratio;
+  user.user_slots=0;
+  user.leech_slots=0;
+
+  /* add it to backend */
+  /* FIXME backend name hardcoded */
+  ret = backend_mod_user("plaintext",username,&user,_USER_ALL);
+
+  return ret;
 }

@@ -305,9 +305,10 @@ int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
 }
 
 /** hook_call_custom: custom site commands */
-int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int code)
+int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int code, char *args)
 {
   char buffer[1024];
+  char buffer_args[1024];
   FILE *command_output;
   unsigned int l_command;
   protocol_handler_t * proto;
@@ -321,9 +322,9 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
     wzd_user_t * user = GetUserByID(context->userid);
     wzd_group_t * group = GetGroupByID(user->groups[0]);
 
-    cookie_parse_buffer(hook->external_command,user,group,context,buffer,sizeof(buffer));
+    cookie_parse_buffer(args, user, group, context, buffer_args, sizeof(buffer_args));
   }
-  l_command = strlen(buffer);
+  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
   while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
     buffer[--l_command] = '\0';
   _reply_code = code;
@@ -331,25 +332,12 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   proto = hook_check_protocol(buffer);
   if (proto)
   {
-    /* we need to reformat args */
-    char *buffer_args;
-    if ( *(buffer+proto->siglen) == '"' ) { /* search matching " */
-      buffer_args = strchr(buffer+proto->siglen+1,'"');
-      *buffer_args++ = '\0'; /* eat trailing " */
-      if (*buffer_args==' ') *buffer_args++ = '\0';
-      return (*proto->handler)(buffer+proto->siglen+1,buffer_args);
-    } else
-      buffer_args = strchr(buffer+proto->siglen,' ');
-    if (buffer_args) {
-      *buffer_args++ = '\0';
-    } else {
-      buffer_args = NULL;
-    }
     return (*proto->handler)(buffer+proto->siglen,buffer_args);
   }
   else
   {
-/*    *(buffer+l_command++) = ' ';*/
+    *(buffer+l_command++) = ' ';
+    wzd_strncpy(buffer + l_command, buffer_args, sizeof(buffer) - l_command - 1);
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;

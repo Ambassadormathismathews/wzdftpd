@@ -636,8 +636,13 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     }
     if (ptr_ftppath == ftppath) ptr_ftppath++; /* ftppath is / */
     strcpy(ptr_ftppath, wanted_path);
-    path_simplify(ftppath);
+    if (strncmp(ftppath,"/../",4)==0) {
+      free(syspath); free(ftppath);
+      return E_WRONGPATH;
+    }
     
+    path_simplify(ftppath);
+
     ret = checkpath_new(ftppath, syspath, context);
     if (!ret || ret == E_FILE_NOEXIST)
       strncpy(path, syspath, WZD_MAX_PATH);
@@ -708,7 +713,12 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
         {
           /* bingo, symlink */
           /* we overwrite syspath ! */
-          if ( ((char*)entry->data)[0] == '/' ) { /* symlink target is absolute */
+          if ( ((char*)entry->data)[0] == '/'
+#ifdef WIN32
+            || ((char*)entry->data)[1] == ':'
+#endif
+            )
+          { /* symlink target is absolute */
             strncpy(syspath, (char*)entry->data, WZD_MAX_PATH);
             sys_offset = strlen(syspath);
             ret = 0;

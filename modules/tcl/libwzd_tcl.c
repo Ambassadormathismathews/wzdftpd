@@ -395,6 +395,18 @@ static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const ch
   } else if (!strcmp(argv[1],"set")) {
     ret = vars_user_set(argv[2],argv[3],(void*)argv[4],1024,getlib_mainConfig());
     return (ret)?TCL_ERROR:TCL_OK;
+  } else if (!strcmp(argv[1],"new")) { /* new user creation */
+    ret = vars_user_new(argv[2],argv[3],argv[4],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
+  } else if (!strcmp(argv[1],"addip")) { /* add new ip */
+    ret = vars_user_addip(argv[2],argv[3],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
+  } else if (!strcmp(argv[1],"delip")) { /* remove ip */
+    ret = vars_user_delip(argv[2],argv[3],getlib_mainConfig());
+    /** \todo handle return */
+    return (ret)?TCL_ERROR:TCL_OK;
   }
 
   return TCL_OK;
@@ -437,7 +449,10 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
       }
     }
     else if (!strcmp(argv[2],"remove")) {
-      if (checkpath_new(argv[3],buffer_link,current_context)) return TCL_ERROR;
+      /* we need to convert arg to the link name, _without_ converting the last
+       * component (the link name itself), or the remove will fail
+       */
+      if (checkpath(argv[3],buffer_link,current_context)) return TCL_ERROR;
       ret = symlink_remove(buffer_link);
     }
     else

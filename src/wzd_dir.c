@@ -271,11 +271,11 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
         if (!itp) { /* first element */
           it = perm_list = perm_list->next_file;
-          entry->next_file = NULL;
         } else {
           itp->next_file = it->next_file;
-          it->next_file = NULL;
+          it = itp;
         }
+        entry->next_file = NULL;
         /** \todo sorted insertion */
         if (sorted) {
           file_insert_sorted(entry,&_dir->first_entry);

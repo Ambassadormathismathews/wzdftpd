@@ -78,6 +78,7 @@
 #include "wzd_site.h"
 #include "wzd_socket.h"
 #include "wzd_tls.h"
+#include "wzd_utf8.h"
 #include "ls.h"
 #include "wzd_ClientThread.h"
 
@@ -172,6 +173,8 @@ int identify_token(char *token)
     return TOK_XCRC;
   if (strcmp("xmd5",token)==0)
     return TOK_XMD5;
+  if (strcmp("opts",token)==0)
+    return TOK_OPTS;
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
@@ -872,6 +875,42 @@ printf("path: '%s'\n",path);
 }
 
 /*************** do_stat *****************************/
+int do_opts(char *name, char *param, wzd_context_t * context)
+{
+  char *ptr;
+  int ret;
+
+  ptr = param;
+
+  if (strncasecmp(ptr,"UTF8",4)==0)
+  {
+    ptr += 4;
+    if (*ptr++ != ' ') goto label_opts_error;
+
+#ifdef HAVE_UTF8
+    if (strncasecmp(ptr,"ON",2)==0)
+    {
+      context->connection_flags |= CONNECTION_UTF8;
+      ret = send_message_with_args(200, context, "UTF8 OPTS ON");
+      return 0;
+    }
+    else if (strncasecmp(ptr,"OFF",2)==0)
+    {
+      context->connection_flags &= ~(CONNECTION_UTF8);
+      ret = send_message_with_args(200, context, "UTF8 OPTS OFF");
+      return 0;
+    }
+#endif
+    /* let it go to error return */
+  } /* UTF8 */
+
+label_opts_error:
+  ret = send_message_with_args(501,context,"OPTS option not recognized");
+
+  return 0;
+}
+
+/*************** do_stat *****************************/
 
 int do_stat(char *name, char *param, wzd_context_t * context)
 {
@@ -1058,7 +1097,8 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  if (strcmp(path,buffer) != 0) { ret = E_MKDIR_PARSE; goto label_error_mkdir; }
+  /** \bug why this test ? it breaks mkdir inside symlinks ! */
+/*  if (strcmp(path,buffer) != 0) { ret = E_MKDIR_PARSE; goto label_error_mkdir; }*/
 
   /* check section path-filter */
   {
@@ -3170,11 +3210,25 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 
     if (buffer[0]=='\0') continue;
 
+#ifdef HAVE_UTF8
+    if (context->connection_flags & CONNECTION_UTF8)
+    {
+      char utf_buf[WZD_BUFFER_LEN];
+
+      if (utf8_to_local_charset(buffer, utf_buf, WZD_BUFFER_LEN, local_charset()))
+      {
+        out_log(LEVEL_NORMAL,"error converting UTF-8 input '%s'\n", buffer);
+      }
+
+      wzd_strncpy(buffer, utf_buf, WZD_BUFFER_LEN);
+    }
+#endif
+
     {
       int length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
         buffer[length-- -1] = '\0';
-      strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
+      wzd_strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
     }
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
@@ -3242,7 +3296,7 @@ int command_list_init(wzd_command_t **list)
 {
   wzd_command_t *command, *last_command;
 
-  last_command = (*list) = NEW_STD_COMMAND(site,do_site,do_site_help,TOK_SITE);
+  last_command = (*list) = NEW_STD_COMMAND(site,do_site,NULL,TOK_SITE);
   last_command->next_command = NEW_STD_COMMAND(type,do_type,NULL,TOK_TYPE); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(port,do_port,NULL,TOK_PORT); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(pasv,do_pasv,NULL,TOK_PASV); last_command = last_command->next_command;
@@ -3273,6 +3327,7 @@ int command_list_init(wzd_command_t **list)
   last_command->next_command = NEW_STD_COMMAND(pret,do_pret,NULL,TOK_PRET); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(xcrc,do_xcrc,NULL,TOK_XCRC); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(xmd5,do_xmd5,NULL,TOK_XMD5); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(opts,do_opts,NULL,TOK_OPTS); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(quit,do_quit,NULL,TOK_QUIT); last_command = last_command->next_command;
 #ifdef HAVE_OPENSSL
   last_command->next_command = NEW_STD_COMMAND(prot,do_prot,NULL,TOK_PROT); last_command = last_command->next_command;

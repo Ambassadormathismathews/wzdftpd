@@ -91,6 +91,8 @@ EXPORTS
 	limiter_add_bytes
 	limiter_free
 	limiter_new
+	local_charset
+	local_charset_to_utf8
 	log_close
 	log_message
 	log_open
@@ -145,9 +147,15 @@ EXPORTS
 	time_to_str
 	user_ip_add
 	user_ip_inlist
+	utf8_detect
+	utf8_end
+	utf8_to_local_charset
 	vars_get
 	vars_set
+	vars_user_addip
+	vars_user_delip
 	vars_user_get
+	vars_user_new
 	vars_user_set
 	vfs_add
 	vfs_add_restricted
@@ -180,6 +188,7 @@ EXPORTS
 	wzd_shm_read
 	wzd_shm_write
 	wzd_strdup
+	wzd_strncpy
 	xferlog_close
 	xferlog_open
 	GetGroupByID

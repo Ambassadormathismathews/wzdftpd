@@ -44,6 +44,12 @@ wzd_command_t * command_list_find(const char *name);
 #define TEMP_FEAT GLOBAL_FEATURES
 #endif
 
-#define SUPPORTED_FEATURES (TEMP_FEAT "End")
+#ifdef HAVE_UTF8
+#define TEMP_FEAT2  TEMP_FEAT" UTF8\n"
+#else
+#define TEMP_FEAT2 TEMP_FEAT
+#endif
+
+#define SUPPORTED_FEATURES (TEMP_FEAT2 "End")
 
 #endif /* __WZD_CLIENT_THREAD__ */

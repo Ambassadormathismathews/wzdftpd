@@ -708,7 +708,7 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
     do_site_help_grpchange(context);
     return 0;
   }
-  value = strtok_r(NULL,"\r\n",&ptr);
+  value = read_token(NULL,&ptr);
   if (!value) {
     do_site_help_grpchange(context);
     return 0;

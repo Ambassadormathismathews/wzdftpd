@@ -392,8 +392,6 @@ int main(int argc, char **argv)
 #endif
   }
 
-  charset_detect_local();
-
   if (!stay_foreground) {
 #ifndef _MSC_VER
     forkresult = fork();
@@ -503,6 +501,8 @@ int main(int argc, char **argv)
     return 1;
   }
 #endif
+
+  utf8_detect(mainConfig);
 
 #if defined(DEBUG) || !defined(_MSC_VER)
   ret = runMainThread(argc,argv);

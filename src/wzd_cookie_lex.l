@@ -1227,7 +1227,10 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         if (user->last_login) {
           struct tm *ntime;
           ntime=localtime(&user->last_login);
-          strftime(internalbuffer,IBUFSIZE,"%b %d %H:%M",ntime);
+		  if (ntime)
+			strftime(internalbuffer,IBUFSIZE,"%b %d %H:%M",ntime);
+		  else
+		    snprintf(internalbuffer,IBUFSIZE,"never");
         } else
           snprintf(internalbuffer,IBUFSIZE,"never");
       }

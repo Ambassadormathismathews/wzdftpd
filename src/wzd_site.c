@@ -1012,7 +1012,7 @@ void do_site_print_file_raw(const char *filename, wzd_context_t *context)
   send_message_raw("200--\r\n",context);
 
   strncpy(buffer,"200-",5);
-  while (wzd_cache_gets(fp,buffer+4,1019))
+  while (wzd_cache_gets(fp, buffer+4, sizeof(buffer)-8))
   {
     chop(buffer);
     length = strlen(buffer);
@@ -1058,7 +1058,9 @@ int do_site_reload(char * ignored, wzd_context_t * context)
   ret = send_message_raw(buffer,context);
 #else
   /* FIXME VISUAL : call server_restart explicitely ? */
-  ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");
+  /*ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");*/
+  ret = send_message_with_args(501, context, "restarting server, cross your fingers ...");
+  server_restart();
   return 1;
 #endif
   return 0;
@@ -1821,7 +1823,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
     /* custom site commands */
     if (hook->opt && hook->external_command && strcasecmp(hook->opt,token)==0) {
       send_message_raw("200-\r\n",context);
-      ret = hook_call_custom(context,hook,200);
+      ret = hook_call_custom(context, hook, 200, command_line+strlen(token)+1);
       if (!ret) {
         ret = send_message_with_args(200,context,"SITE command ok");
       } else {

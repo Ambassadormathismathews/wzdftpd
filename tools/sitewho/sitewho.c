@@ -51,11 +51,12 @@ void usage(const char *progname)
 
 int parse_args(int argc, char **argv)
 {
-  int opt;
   unsigned long l;
   char *ptr;
   
 #ifndef _MSC_VER /* FIXME VISUAL */
+  int opt;
+
    /* please keep options ordered ! */
   while ((opt=getopt(argc, argv, "hk:")) != -1) {
     switch (opt) {

@@ -118,6 +118,21 @@ char * wzd_strdup(const char *s)
   return strdup(s);
 }
 
+/** same as strncpy, but write only one zero at end of string */
+char * wzd_strncpy(char *dst, const char *src, size_t n)
+{
+  if (n != 0)
+  {
+    register char *d = dst;
+    register const char *s = src;
+
+    do {
+      if ( (*d++ = *s++) == 0 ) break;
+    } while (--n != 0);
+  }
+  return dst;
+}
+
 #ifdef DEBUG
 /** Initializes fd debug table */
 static void fd_init(void)

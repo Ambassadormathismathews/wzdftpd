@@ -1161,8 +1161,8 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     /* find a free uid */
     {
       unsigned int uid = 0;
-      int uid_is_free = 0;
-      int i;
+      unsigned int uid_is_free = 0;
+      unsigned int i;
 
       while (!uid_is_free) {
         for (i=0; i<user_count; i++)

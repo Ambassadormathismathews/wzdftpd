@@ -25,10 +25,20 @@
 #ifndef __WZD_UTF8__
 #define __WZD_UTF8__
 
+/** Detect if system is UTF-8 capable
+ */
+void utf8_detect(wzd_config_t * config);
+
+/** Disable UTF-8 support, and free all memory used for unicode.
+ */
+void utf8_end(wzd_config_t * config);
+
 const char * charset_detect_local(void);
 
-int local_charset_to_utf8(void);
+const char * local_charset(void);
 
-int utf8_to_local_charset(void);
+int local_charset_to_utf8(const char *src, char *dst_utf8, size_t max_len, const char *local_charset);
+
+int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const char *local_charset);
 
 #endif /* __WZD_UTF8__ */

@@ -54,6 +54,7 @@
 
 #include "wzd_file.h"
 #include "wzd_dir.h"
+#include "wzd_utf8.h"
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
@@ -98,7 +99,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
   char send_buffer[HARD_LS_BUFFERSIZE];
   unsigned int send_buffer_len;
   char datestr[128];
-  char * ptr, * buffer_ptr;
+  char * buffer_ptr;
   size_t length;
   struct stat st;
   time_t timeval;
@@ -184,6 +185,18 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
       if (strlen(file->filename)<sizeof(buffer_name)) buffer_name[strlen(file->filename)]='\0';
       else buffer_name[sizeof(buffer_name)-1] = '\0';
     }
+
+#ifdef HAVE_UTF8
+    if (context->connection_flags & CONNECTION_UTF8)
+    {
+      /* use line as a temp buffer */
+      if (local_charset_to_utf8(buffer_name, line, sizeof(line), local_charset()))
+      {
+        out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", buffer_name);
+      }
+      strncpy(buffer_name, line, sizeof(buffer_name));
+    }
+#endif
 
 #ifndef _MSC_VER
     sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",

@@ -384,6 +384,7 @@ typedef enum {
 
 /** context::connection_flags field */
 #define	CONNECTION_TLS	0x00000040
+#define	CONNECTION_UTF8	0x00000100
 
 typedef int (*read_fct_t)(int,char*,unsigned int,int,int,void *);
 typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
@@ -458,13 +459,14 @@ typedef struct _wzd_command_t {
 #include "wzd_backend.h"
 
 /* macros used with options */
-#define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
-#define	CFG_OPT_HIDE_DOTTED_FILES		0x00000002
-#define	CFG_OPT_USE_SYSLOG			0x00000010
-#define CFG_OPT_FORCE_SHM_CLEANUP               0x00000100
+#define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED  0x00000001
+#define	CFG_OPT_HIDE_DOTTED_FILES           0x00000002
+#define	CFG_OPT_USE_SYSLOG                  0x00000010
+#define CFG_OPT_FORCE_SHM_CLEANUP           0x00000100
+#define CFG_OPT_UTF8_CAPABLE                0x00001000
 
 
-#define CFG_CLEAR_OPTION(c,opt) (c)->server_opts &= ~(opt)
+#define CFG_CLR_OPTION(c,opt)   (c)->server_opts &= ~(opt)
 #define CFG_SET_OPTION(c,opt)   (c)->server_opts |= (opt)
 #define CFG_GET_OPTION(c,opt)   ( (c)->server_opts & (opt) )
 

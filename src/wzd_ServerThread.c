@@ -83,6 +83,7 @@
 #include "wzd_messages.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
+#include "wzd_utf8.h"
 
 #include "wzd_debug.h"
 
@@ -289,7 +290,7 @@ void server_restart(int signum)
     mainConfig->port = config->port;
     mainConfig->pasv_low_range = config->pasv_low_range;
     mainConfig->pasv_high_range = config->pasv_high_range;
-    memcpy(mainConfig->pasv_ip,config->pasv_ip,4);
+    memcpy(mainConfig->pasv_ip, config->pasv_ip, sizeof(mainConfig->pasv_ip));
     mainConfig->login_pre_ip_check = config->login_pre_ip_check;
     /* reload pre-ip lists */
     /* reload vfs lists */
@@ -335,20 +336,14 @@ void server_restart(int signum)
   if ( !CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG) )
   {
     int fd;
-    struct stat s;
-    fclose(mainConfig->logfile);
-    fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
-    mainConfig->logfile = fdopen(fd,"a");
-    if (mainConfig->logfile==NULL) {
+    log_close();
+    if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
+    {
       out_err(LEVEL_CRITICAL,"Could not reopen log file !!!\n");
     }
-    if (mainConfig->xferlog_name && !fstat(fd,&s)) {
-      close(mainConfig->xferlog_fd);
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
-      fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND ,0600);
-#else /* ! BSD */
-      fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
-#endif /* BSD */
+    if (mainConfig->xferlog_name) {
+      xferlog_close(mainConfig->xferlog_fd);
+      fd = xferlog_open(mainConfig->xferlog_name, 0600);
       if (fd==-1)
         out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
             mainConfig->xferlog_name);
@@ -991,7 +986,9 @@ int kill_child(unsigned long pid, wzd_context_t * context)
 {
   int found=0;
   int i;
+#ifndef WIN32
   int ret;
+#endif
 
 #if defined(WZD_MULTIPROCESS)
   /* preliminary check: i can't kill myself */
@@ -1469,6 +1466,7 @@ void serverMainThreadExit(int retcode)
   tls_exit();
 #endif
   wzd_cache_purge();
+  utf8_end(mainConfig);
   server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);
   hook_free_protocols();

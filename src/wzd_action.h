@@ -69,6 +69,8 @@
 #define TOK_XCRC        37
 #define TOK_XMD5        38
 
+#define TOK_OPTS        39
+
 #define	TOK_NOTHING	64
 
 struct last_file_t {
@@ -84,7 +86,7 @@ typedef struct {
 
 /*  FILE *	current_file;*/
   int		current_file;
-  unsigned int	bytesnow;
+  u64_t	bytesnow;
 
   time_t	tm_start;
 } wzd_action_t;

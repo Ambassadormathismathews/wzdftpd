@@ -65,6 +65,8 @@
 #define LOG_INFO	6
 #define LOG_DEBUG	7
 
+#define SIGHUP  1 /* re-read configuration */
+
 #define __S_ISTYPE(mode,mask) (((mode) & _S_IFMT) == (mask))
 
 #define S_ISDIR(mode) __S_ISTYPE((mode), _S_IFDIR)
@@ -188,7 +190,7 @@
 /** remove trailing / */
 #define REMOVE_TRAILING_SLASH(str) \
   do { \
-    size_t _length = strlen(path); \
+    size_t _length = strlen(str); \
     if (_length>1 && (str)[_length-1]=='/') \
       (str)[_length-1] = '\0'; \
   } while(0)

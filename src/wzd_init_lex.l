@@ -301,7 +301,7 @@ int set_default_options(void)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif /* _WIN32 */
 #else /* DEBUG */
-    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
+    CFG_CLR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 #endif
 
 /*  tempConfig.logfilename = wzd_malloc(256);
@@ -634,7 +634,7 @@ int cfg_read_deny_access_fup(void)
   if (l)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
   else
-    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
+    CFG_CLR_OPTION(&tempConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
 
   return 0;
 }
@@ -743,7 +743,7 @@ int cfg_read_force_shm_cleanup(void)
   if (l)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
   else
-    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
+    CFG_CLR_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
 
   return 0;
 }
@@ -774,7 +774,7 @@ int cfg_read_hide_dotted_files(void)
   if (l)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_HIDE_DOTTED_FILES);
   else
-    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_HIDE_DOTTED_FILES);
+    CFG_CLR_OPTION(&tempConfig,CFG_OPT_HIDE_DOTTED_FILES);
 
   return 0;
 }
@@ -1577,7 +1577,7 @@ int cfg_read_sitecmd(void)
     out_err(LEVEL_HIGH,"line should be 'site_cmd = <name> <command>'\n");
     return 1;
   }
-  sitecmdname = strdup(yytext);
+  sitecmdname = wzd_strdup(yytext);
   /* TODO check command unicity ? */
 
   if( !(command=read_until_eol(1024)) ) {
@@ -1730,7 +1730,7 @@ int cfg_read_use_syslog(void)
   if (l)
     CFG_SET_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
   else
-    CFG_CLEAR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
+    CFG_CLR_OPTION(&tempConfig,CFG_OPT_USE_SYSLOG);
 
   return 0;
 }
@@ -1857,6 +1857,10 @@ wzd_config_t * readConfigFile(const char *fileName)
   int ret;
 
   if (!fileName || strlen(fileName)==0) return NULL;
+
+#ifdef WIN32
+  yy_init=1;
+#endif
 
   yyin = fopen(fileName,"r");
   if (!yyin) {

@@ -45,4 +45,19 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
  */
 int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
 
+/** create a new user
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_user_new(const char *username, const char *pass, const char *groupname, wzd_config_t * config);
+
+/** add an authorized ip to user
+ * @return 0 if ok
+ */
+int vars_user_addip(const char *username, const char *ip, wzd_config_t *config);
+
+/** remove an authorized ip to user (ip is either the slot number or the ip)
+ * @return 0 if ok
+ */
+int vars_user_delip(const char *username, const char *ip, wzd_config_t *config);
+
 #endif /* __WZD_VARS__ */
