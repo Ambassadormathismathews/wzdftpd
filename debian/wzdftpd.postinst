@@ -54,9 +54,13 @@ fi
 if [ "$1" = "configure" ]; then
 
     # merge configuration
-    cp /usr/share/doc/wzdftpd/examples/wzd.cfg.sample $CONF_NEW
+    cp /usr/share/wzdftpd/files/wzd.cfg.sample $CONF_NEW
 
     do_update $CONF
+
+    if [ ! -f /etc/wzdftpd/users ]; then
+      cp /usr/share/wzdftpd/files/users.sample /etc/wzdftpd/users
+    fi
 fi
 
 if [ -f $CONF ]; then

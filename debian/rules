@@ -108,7 +108,11 @@ install-arch:
 
 	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
 	install -m 644 src/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
-	install -m 644 src/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples
+	install -m 644 src/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+
+	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/files ;\
+	mv debian/tmp/etc/wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
+	mv debian/tmp/etc/wzdftpd/users.sample debian/wzdftpd/usr/share/wzdftpd/files
 
 	# we don't need them, and dh_install complains !
 	# so i remove them (was proposed on #debian-devel)
