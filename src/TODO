@@ -19,7 +19,7 @@
   better use thread_id instead of pid_child in diplays, etc.
 '********'
 - implement MLSD
-'********'
+'*******'
 - remove race conditions in stat/open
 '********'
 - modules: activate/desactivate module, remove from list
