@@ -1064,6 +1064,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"GIVE",&do_site_give)) return 1;
   if (site_command_add(&config->site_list,"GRPADD",&do_site_grpadd)) return 1;
   if (site_command_add(&config->site_list,"GRPADDIP",&do_site_grpaddip)) return 1;
+  if (site_command_add(&config->site_list,"GRPCHANGE",&do_site_grpchange)) return 1;
   if (site_command_add(&config->site_list,"GRPDEL",&do_site_grpdel)) return 1;
   if (site_command_add(&config->site_list,"GRPDELIP",&do_site_grpdelip)) return 1;
   if (site_command_add(&config->site_list,"GRPKILL",&do_site_grpkill)) return 1;

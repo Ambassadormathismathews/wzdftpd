@@ -37,6 +37,8 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context);
 
 int do_site_grpratio(char *command_line, wzd_context_t * context);
 
+int do_site_grpchange(char *command_line, wzd_context_t * context);
+
 int do_site_grpkill(char *command_line, wzd_context_t * context);
 
 #if 0

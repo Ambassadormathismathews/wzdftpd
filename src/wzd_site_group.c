@@ -656,100 +656,78 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
 }
 
 
-#if 0
-void do_site_help_change(wzd_context_t * context)
+void do_site_help_grpchange(wzd_context_t * context)
 {
-  send_message_raw("501-site change <user> <field> <value>\r\n",context);
+  send_message_raw("501-site grpchange <group> <field> <value>\r\n",context);
   send_message_raw("field can be one of:\r\n",context);
-  send_message_raw(" name        changes the user login name\r\n",context);
-  send_message_raw(" pass        changes user password\r\n",context);
-  send_message_raw(" homedir     changes user chroot's dir\r\n",context);
-  send_message_raw(" tagline     changes user tagline\r\n",context);
-  send_message_raw(" group       add/remove user from group\r\n",context);
+  send_message_raw(" name        changes the group name\r\n",context);
+  send_message_raw(" homedir     changes group's default dir\r\n",context);
   send_message_raw(" max_idle    changes idle time\r\n",context);
-  send_message_raw(" perms       changes default user permissions\r\n",context);
-  send_message_raw(" flags       changes user flags\r\n",context);
+  send_message_raw(" perms       changes default group permissions\r\n",context);
   send_message_raw(" max_ul      changes maximum upload speed\r\n",context);
   send_message_raw(" max_dl      changes maximum download speed\r\n",context);
-  send_message_raw(" ratio       changes user ratio\r\n",context);
+  send_message_raw(" ratio       changes group default ratio\r\n",context);
   send_message_raw(" num_logins  changes maximum simultaneous logins allowed\r\n",context);
-  send_message_raw(" user_slots  changes allowed user slots (for GAdmins)\r\n",context);
-  send_message_raw(" leech_slots changes allowed leech slots (for GAdmins)\r\n",context);
 
-  send_message_raw("501 site change aborted\r\n",context);
+  send_message_raw("501 site grpchange aborted\r\n",context);
 }
 
-/* site change: change a field for a user
- * change <user> <field> <value>
+/** site grpchange: change a field for a group
+ *
+ * grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_change(char *command_line, wzd_context_t * context)
+int do_site_grpchange(char *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * username, * field, * value;
-  unsigned long mod_type;
-  unsigned long ul;
-  unsigned int oldratio;
+  char * groupname, * field, * value;
+  unsigned long mod_type, ul;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
-  int i;
-  short is_gadmin;
+  int gid;
+  wzd_group_t group;
+  wzd_user_t * me;
 
   me = GetUserByID(context->userid);
-  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
 
   ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
-    do_site_help_change(context);
+  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  if (!groupname) {
+    do_site_help_grpchange(context);
     return 0;
   }
   field = strtok_r(NULL," \t\r\n",&ptr);
   if (!field) {
-    do_site_help_change(context);
+    do_site_help_grpchange(context);
     return 0;
   }
   value = strtok_r(NULL,"\r\n",&ptr);
   if (!value) {
-    do_site_help_change(context);
+    do_site_help_grpchange(context);
     return 0;
   }
 
-  /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
+  /* check if group exists */
+  if ( (gid=GetGroupIDByName(groupname))==0 ) {
+    ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
-
-  /* GAdmin ? */
-  if (is_gadmin)
-  {
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
-      ret = send_message_with_args(501,context,"You can't change this user");
-      return 0;
-    }
+  if ( backend_find_group(gid, &group, NULL) ) {
+    ret = send_message_with_args(501,context,"Error getting group info");
+    return 0;
   }
 
   /* find modification type */
   mod_type = _USER_NOTHING;
 
-  /** username (?) **/
+  /* groupname */
   if (strcmp(field,"name")==0) {
-    mod_type = _USER_USERNAME;
-    strncpy(user.username,value,255);
+    mod_type = _GROUP_GROUPNAME;
+    strncpy(group.groupname,value,255);
+    /* NOTE: we do not need to iterate through users, group is referenced
+     * by id, not by name
+     */
   }
-  /** pass **/
-  else if (strcmp(field,"pass")==0) {
-    mod_type = _USER_USERPASS;
-    strncpy(user.userpass,value,255);
-  }
-  /** homedir **/
+  /* homedir */
   else if (strcmp(field,"homedir")==0) {
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
     /* check if homedir exist */
     {
       struct stat s;
@@ -758,229 +736,60 @@ int do_site_change(char *command_line, wzd_context_t * context)
 	return 0;
       }
     }
-    mod_type = _USER_ROOTPATH;
-    strncpy(user.rootpath,value,1023);
+    mod_type = _GROUP_DEFAULTPATH;
+    strncpy(group.defaultpath,value,1023);
   }
-  /** tagline **/
-  else if (strcmp(field,"tagline")==0) {
-    mod_type = _USER_TAGLINE;
-    strncpy(user.tagline,value,255);
-  }
-  /** uid **/ /* FIXME useless ? */
-  /** group **/ /* add or remove group */
-  else if (strcmp(field,"group")==0) {
-    wzd_group_t group;
-    int groupid;
-    int newgroupid=-1;
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
-    /* find corresponding id */
-    for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
-      if (backend_find_group(i,&group,&groupid)!=-1) {
-	if (strcmp(group.groupname,value)==0) { newgroupid = groupid; break; } 
-      }
-    }
-    if (newgroupid != -1) {
-      ret=0;
-      for (i=0; i<user.group_num; i++)
-	if (newgroupid == user.groups[i]) { ret=1; break; } 
-      if (ret) { /* remove from group, shift them */
-	user.groups[i] = 0;
-	for (;i<user.group_num-1; i++)
-	  user.groups[i] = user.groups[i+1];
-	user.group_num -= 1;
-      } else { /* add user to group */
-	user.groups[user.group_num] = newgroupid;
-	user.group_num++;
-      }
-    } /* if (newgroupid != -1) */
-    mod_type = _USER_GROUP | _USER_GROUPNUM;
-  }
-  /** max_idle **/
+  /* max_idle */
   else if (strcmp(field,"max_idle")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_IDLE; user.max_idle_time = ul; }
+    if (!*ptr) { mod_type = _GROUP_IDLE; group.max_idle_time = ul; }
   }
-  /** perms **/
+  /* perms */
   else if (strcmp(field,"perms")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_IDLE; user.userperms = ul;} 
+    if (!*ptr) { mod_type = _GROUP_GROUPPERMS; group.groupperms = ul; }
   }
-  /** flags **/ /* TODO accept modifications style +f or -f */
-  else if (strcmp(field,"flags")==0) {
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
-    mod_type = _USER_FLAGS;
-    strncpy(user.flags,value,MAX_FLAGS_NUM-1);
-  }
-  /** max_ul **/
+  /* max_ul */
   else if (strcmp(field,"max_ul")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_MAX_ULS; user.max_ul_speed = ul; }
+    if (!*ptr) { mod_type = _GROUP_MAX_ULS; group.max_ul_speed = ul; }
   }
-  /** max_dl **/
+  /* max_dl */
   else if (strcmp(field,"max_dl")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_MAX_DLS; user.max_dl_speed = ul; }
+    if (!*ptr) { mod_type = _GROUP_MAX_DLS; group.max_dl_speed = ul; }
   }
-  /** num_logins **/
+  /* num_logins */
   else if (strcmp(field,"num_logins")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_NUMLOGINS; user.num_logins = ul; }
+    if (!*ptr) { mod_type = _GROUP_NUMLOGINS; group.num_logins = ul; }
   }
-  /** ratio **/
+  /* ratio */
   else if (strcmp(field,"ratio")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) {
-      if (is_gadmin && ul==0) { /* GAdmin wants to add a leech access */
-	if (me->leech_slots == 0) {
-	  ret = send_message_with_args(501,context,"No more leech slots available");
-	  return 0;
-	}
+      if ((!me->flags || !strchr(me->flags,FLAG_SITEOP)) && ul==0) {
+	/* wants a leech access for group, but is not siteop */
+	ret = send_message_with_args(501,context,"Only siteops can do that");
+	return 0;
       }
-      oldratio = user.ratio;
-      mod_type = _USER_RATIO; user.ratio = ul;
+      mod_type = _GROUP_RATIO; group.ratio = ul;
     }
   }
-  /** user_slots **/
-  else if (strcmp(field,"user_slots")==0) {
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
-    ul=strtoul(value,&ptr,0);
-    /* TODO compare with USHORT_MAX */
-    if (!*ptr) { mod_type = _USER_USERSLOTS; user.user_slots = (unsigned short)ul; }
-  }
-  /** leech_slots **/
-  else if (strcmp(field,"leech_slots")==0) {
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
-    ul=strtoul(value,&ptr,0);
-    /* TODO compare with USHORT_MAX */
-    if (!*ptr) { mod_type = _USER_LEECHSLOTS; user.leech_slots = (unsigned short)ul; }
-  }
-  /** bytes_ul and bytes_dl should never be changed ... */
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",username,&user,mod_type);
+  ret = backend_mod_group("plaintext",groupname,&group,mod_type);
 
-  if (!ret && is_gadmin) {
-    if ( mod_type & _USER_RATIO ) {
-      if (user.ratio==0) {
-	/* gadmin added a leech access */
-	me->leech_slots--;
-      }
-     if (oldratio==0 && user.ratio) {
-	/* gadmin removed a leech access */
-	me->leech_slots++;
-      }
-    }
-  }
+  if (ret)
+    ret = send_message_with_args(501,context,"Problem occured when committing");
+  else
+    ret = send_message_with_args(200,context,"Group field change successfull");
 
-  ret = send_message_with_args(200,context,"User field change successfull");
   return 0;
 }
 
-void do_site_help_chgrp(wzd_context_t * context)
-{
-  send_message_raw("501-site chgrp <user> <group1> [<group2> ...]\r\n",context);
-  send_message_raw(" Add user to group, or remove it if already in group\r\n",context);
-
-  send_message_raw("501 site chgrp aborted\r\n",context);
-}
-
-/* site chgrp: add/remove user from group
- * chgrp <user> <group1> [<group2> ...]
- */
-int do_site_chgrp(char *command_line, wzd_context_t * context)
-{
-  char *ptr;
-  char * username, * group_name;
-  unsigned long mod_type;
-  int ret;
-  wzd_user_t user;
-  int uid;
-  int i;
-
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
-    do_site_help_chgrp(context);
-    return 0;
-  }
-  group_name = strtok_r(NULL," \t\r\n",&ptr);
-  if (!group_name) {
-    do_site_help_chgrp(context);
-    return 0;
-  }
-
-  /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
-    return 0;
-  }
-
-  /* find modification type */
-  mod_type = _USER_NOTHING;
-
-  /** group **/ /* add or remove group */
-  while (group_name) {
-    wzd_group_t group;
-    int groupid;
-    int newgroupid=-1;
-    /* find corresponding id */
-    for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
-      if (backend_find_group(i,&group,&groupid)!=-1) {
-	if (strcmp(group.groupname,group_name)==0) { newgroupid = groupid; break; } 
-      }
-    }
-    if (newgroupid != -1) {
-      ret=0;
-      for (i=0; i<user.group_num; i++)
-	if (newgroupid == user.groups[i]) { ret=1; break; } 
-      if (ret) { /* remove from group, shift them */
-	user.groups[i] = 0;
-	for (;i<user.group_num-1; i++)
-	  user.groups[i] = user.groups[i+1];
-	user.group_num -= 1;
-      } else { /* add user to group */
-	user.groups[user.group_num] = newgroupid;
-	user.group_num++;
-      }
-    } else { /* if (newgroupid != -1) */
-      char buffer[1024];
-      snprintf(buffer,1023,"Group %s is invalid",group_name);
-      ret = send_message_with_args(501,context,buffer);
-      return 0;
-    }
-    mod_type = _USER_GROUP | _USER_GROUPNUM;
-
-    group_name = strtok_r(NULL," \t\r\n",&ptr);
-  } /* while (group_name) */
-
-  /* commit to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",username,&user,mod_type);
-
-  ret = send_message_with_args(200,context,"User field change successfull");
-  return 0;
-}
-
-
-
-
+#if 0
 /* site flags: display a user's flags
  * flags <user>
  */
@@ -1113,202 +922,6 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
   ret = send_message_with_args(200,context,buffer);
   return 0;
 }
-
-
-#ifdef WZD_MULTIPROCESS
-/* site kill: kill a PID
- * kill <pid>
- */
-int do_site_kill(char *command_line, wzd_context_t * context)
-{
-  char *ptr;
-  int ret;
-  unsigned long pid;
-  int found = 0;
-
-  pid = strtoul(command_line,&ptr,0);
-  if (*ptr!='\0') {
-    ret = send_message_with_args(501,context,"Usage: site kill <pid>");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-  if (pid==getpid()) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* checks that pid is really one of the users */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"Invalid PID"); return 0; }
-
-  /* send TERM message to child, it will trap signal and exit */
-  kill (pid,SIGTERM);
-
-  ret = send_message_with_args(200,context,"TERM signal sent");
-  return 0;
-}
-
-/* site kick: kick off a user from the site (killing all its connections)
- * kick <user>
- */
-int do_site_kick(char *command_line, wzd_context_t * context)
-{
-  char *username, *test_username;
-  char *ptr;
-  int ret;
-  int found = 0;
-  wzd_user_t user;
-  int uid;
-
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
-    ret = send_message_with_args(501,context,"Usage: site kick <user>");
-    return 0;
-  }
-  /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
-    test_username = context->userinfo.username;
-  } else 
-#endif
-    test_username = GetUserByID(context->userid)->username;
-  if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* kill'em all ! */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-#if BACKEND_STORAGE
-	if (mainConfig->backend.backend_storage==0) {
-	  test_username = context_list[i].userinfo.username;
-	} else 
-#endif
-	  test_username = GetUserByID(context_list[i].userid)->username;
-	if (strcmp(username,test_username)==0) {
-	  found = 1;
-	  kill (context_list[i].pid_child,SIGTERM);
-	}
-      }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
-  else { ret = send_message_with_args(200,context,"TERM signal sent"); }
-
-  return 0;
-}
-
-#else /* WZD_MULTIPROCESS */
-
-#ifdef WZD_MULTITHREAD
-/* site kill: kill a PID
- * kill <pid>
- */
-int do_site_kill(char *command_line, wzd_context_t * context)
-{
-  char *ptr;
-  int ret;
-  unsigned long pid;
-  int found = 0;
-
-  pid = strtoul(command_line,&ptr,0);
-  if (*ptr!='\0') {
-    ret = send_message_with_args(501,context,"Usage: site kill <pid>");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-  if (pid==context->pid_child) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* checks that pid is really one of the users */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"Invalid PID"); return 0; }
-
-  /* send cancel request to child thread */
-  ret = pthread_cancel(pid);
-
-  ret = send_message_with_args(200,context,"CANCEL signal sent");
-  return 0;
-}
-
-/* site kick: kick off a user from the site (killing all its connections)
- * kick <user>
- */
-int do_site_kick(char *command_line, wzd_context_t * context)
-{
-  char *username, *test_username;
-  char *ptr;
-  int ret;
-  int found = 0;
-  wzd_user_t user;
-  int uid;
-
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
-  if (!username) {
-    ret = send_message_with_args(501,context,"Usage: site kick <user>");
-    return 0;
-  }
-  /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
-    test_username = context->userinfo.username;
-  } else 
-#endif
-    test_username = GetUserByID(context->userid)->username;
-  if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
-
-  /* kill'em all ! */
-  {
-    int i=0;
-    while (i<HARD_USERLIMIT) {
-      if (context_list[i].magic == CONTEXT_MAGIC) {
-#if BACKEND_STORAGE
-	if (mainConfig->backend.backend_storage==0) {
-	  test_username = context_list[i].userinfo.username;
-	} else 
-#endif
-	  test_username = GetUserByID(context_list[i].userid)->username;
-	if (strcmp(username,test_username)==0) {
-	  found = 1;
-	  /* send cancel request to child thread */
-	  ret = pthread_cancel(context_list[i].pid_child);
-	}
-      }
-      i++;
-    }
-  }
-  if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
-  else { ret = send_message_with_args(200,context,"TERM signal sent"); }
-
-  return 0;
-}
-
-#endif /* WZD_MULTITHREAD */
 #endif /* 0 */
 
 #endif /* WZD_MULTIPROCESS */

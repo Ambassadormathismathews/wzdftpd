@@ -249,6 +249,7 @@ sitefile_who	= @e_datadir@/@PACKAGE@/file_who.txt
 -site_groups = +O
 -site_grpadd = +O
 -site_grpaddip = +O
+-site_grpchange = +O
 -site_grpdel = +O
 -site_grpdelip = +O
 -site_grpkill = +O
