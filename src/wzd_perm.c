@@ -251,7 +251,7 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (!permname || !context) return 1;
   if (!config->perm_list) return 1;
@@ -267,7 +267,7 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
 
   /* try with groups */
   for (i=0; i<user->group_num; i++) {
-    group = &mainConfig->group_list[user->groups[i]];
+    group = GetGroupByID(user->groups[i]);
     perm_entry = perm_find_entry(group->groupname,CP_GROUP,command_perm);
     if (perm_entry == (void*)-1)
       return 1;
