@@ -8,6 +8,7 @@
 <!ENTITY common_modules SYSTEM "common_modules.sgml">
 <!ENTITY common_backends SYSTEM "common_backends.sgml">
 <!ENTITY sitebot SYSTEM "sitebot.sgml">
+<!ENTITY programming_modules SYSTEM "programming_modules.sgml">
 <!ENTITY license SYSTEM "license.sgml">
 <!ENTITY faq SYSTEM "faq.sgml">
 <!ENTITY a_bugs SYSTEM "appendix_bugs.sgml">
@@ -22,6 +23,7 @@
 &common_modules;
 &common_backends;
 &sitebot;
+&programming_modules;
 &faq;
 &a_bugs;
 &license;
