@@ -1,15 +1,17 @@
+
+## Main package attributes
+
 Name: wzdftpd
 Summary: A very capable ftp server.
 Version: 0.2.2
-Release: 1
+Release: 5
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://wzdftpd.sourceforge.net
+Vendor: wzdftpd
 Source: http://heanet.dl.sourceforge.net/sourceforge/wzdftpd/%{name}-%{version}.tar.gz
 License: GPL
 Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-build
-Prefix: /usr/local
-Prefix: %_sysconfdir
 Provides: wzdftpd
 Conflicts: wzdftpd-ssl
 
@@ -23,26 +25,33 @@ limitation (user,group,global), group admins, per command auth
 If you would like to use SSL, please download the package wzdftpd-ssl
 from http://wzdftpd.sourceforge.net
 
+## Development package attributes
+
 %package devel
 Summary: The header files needed to develop new modules for wzdftpd
-Requires: wzdftpd
-Group: Development/Libraries
+Requires: wzdftpd = %{version}
+Group: Development/Libraries/C and C++
 
 %description devel
 
 The header files needed to develop new modules for wzdftpd.
+
 This package requires either wzdftpd or wzdftpd-ssl to be installed.
+
+## Tools package attributes
 
 %package tools
 Summary: Tools for use with wzftpd
-Requires: wzdftpd
+Requires: wzdftpd = %{version}
 Group: Applications/System
 
 %description tools
 
 The site tools for the wzdftpd ftp daemon.
 
-This package requires either wzftpd or wzftpd-ssl to be installed.
+This package requires either wzdftpd or wzdftpd-ssl to be installed.
+
+## Package building
 
 %prep
 
@@ -53,13 +62,15 @@ This package requires either wzftpd or wzftpd-ssl to be installed.
 
 make CFLAGS="$RPM_OPT_FLAGS"
 
+## Package installation
+
 %install
 
 mkdir -p $RPM_BUILD_ROOT/usr/local/{bin,lib,sbin,share}
 mkdir -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/{modules,backends,logs}
 mkdir -p $RPM_BUILD_ROOT%_sysconfdir/init.d/
-%__install src/wzd.cfg $RPM_BUILD_ROOT/%_sysconfdir/
-%__install src/wzd.pem $RPM_BUILD_ROOT/%_sysconfdir/
+%__install src/wzd.cfg $RPM_BUILD_ROOT%_sysconfdir/
+%__install src/wzd.pem $RPM_BUILD_ROOT%_sysconfdir/
 %__install -s tools/siteconfig/.libs/siteconfig $RPM_BUILD_ROOT/usr/local/bin/
 %__install -s tools/siteuptime/siteuptime $RPM_BUILD_ROOT/usr/local/bin/
 %__install -s tools/sitewho/sitewho $RPM_BUILD_ROOT/usr/local/bin/
@@ -90,27 +101,32 @@ touch $RPM_BUILD_ROOT/usr/local/share/wzdftpd/logs/wzd.log
 mkdir -p $RPM_BUILD_ROOT/usr/local/include/wzdftpd
 %__install src/*.h $RPM_BUILD_ROOT/usr/local/include/wzdftpd/
 
-%post
+## Main package pre and post install scripts
 
+%post
 ldconfig
+
+%postun
+
+rmdir -p --ignore-fail-on-non-empty /usr/local/share/wzdftpd/
+
+## Clean
 
 %clean
 rm -Rf $RPM_BUILD_ROOT
 
-%postun
-
-rmdir --ignore-fail-on-non-empty -p $RPM_BUILD_ROOT/usr/local/include/wzdftpd/ $RPM_BUILD_ROOT/usr/local/share/wzdftpd/modules
-rmdir --ignore-fail-on-non-empty -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/backends $RPM_BUILD_ROOT/usr/local/share/wzdftpd/logs $RPM_BUILD_ROOT/%_sysconfdir/init.d
+## Main package files
 
 %files
 
 %doc README NEWS COPYING AUTHORS INSTALL TLS.ReadMeFirst ChangeLog
-%config /%_sysconfdir/wzd.cfg
-%config /%_sysconfdir/wzd.pem
+%config %_sysconfdir/wzd.cfg
+%config %_sysconfdir/wzd.pem
 /usr/local/lib/libwzd.a
 /usr/local/lib/libwzd.la
 /usr/local/lib/libwzd.so
 /usr/local/sbin/wzdftpd
+/usr/local/share/wzdftpd/logs
 /usr/local/share/wzdftpd/backends
 %config /usr/local/share/wzdftpd/file_ginfo.txt
 %config /usr/local/share/wzdftpd/file_group.txt
@@ -122,57 +138,30 @@ rmdir --ignore-fail-on-non-empty -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/back
 %config /usr/local/share/wzdftpd/file_users.txt
 %config /usr/local/share/wzdftpd/file_vfs.txt
 %config /usr/local/share/wzdftpd/file_who.txt
-/usr/local/share/wzdftpd/logs/xferlog
 /usr/local/share/wzdftpd/modules
 %config /usr/local/share/wzdftpd/users
 %_sysconfdir/init.d/wzdftpd
+
+## Tools package files
 
 %files tools
 /usr/local/bin/siteconfig
 /usr/local/bin/siteuptime
 /usr/local/bin/sitewho
 
-%files devel
+## Development package files
 
-/usr/local/include/wzdftpd/list.h
-/usr/local/include/wzdftpd/wzd_cache.h
-/usr/local/include/wzdftpd/wzd_hardlimits.h
-/usr/local/include/wzdftpd/wzd_mod.h
-/usr/local/include/wzdftpd/wzd_site.h
-/usr/local/include/wzdftpd/wzd_types.h
-/usr/local/include/wzdftpd/ls.h
-/usr/local/include/wzdftpd/wzd_crc32.h
-/usr/local/include/wzdftpd/wzd_init.h
-/usr/local/include/wzdftpd/wzd_opts.h
-/usr/local/include/wzdftpd/wzd_site_group.h
-/usr/local/include/wzdftpd/wzd_vfs.h
-/usr/local/include/wzdftpd/stack.h
-/usr/local/include/wzdftpd/wzd_crontab.h
-/usr/local/include/wzdftpd/wzd_libmain.h
-/usr/local/include/wzdftpd/wzd_perm.h
-/usr/local/include/wzdftpd/wzd_site_user.h
-/usr/local/include/wzdftpd/wzd_ClientThread.h
-/usr/local/include/wzdftpd/wzd_data.h
-/usr/local/include/wzdftpd/wzd_log.h
-/usr/local/include/wzdftpd/wzd_ratio.h
-/usr/local/include/wzdftpd/wzd_socket.h
-/usr/local/include/wzdftpd/wzd_ServerThread.h
-/usr/local/include/wzdftpd/wzd_debug.h
-/usr/local/include/wzdftpd/wzd_md5.h
-/usr/local/include/wzdftpd/wzd_savecfg.h
-/usr/local/include/wzdftpd/wzd_strtok_r.h
-/usr/local/include/wzdftpd/wzd_action.h
-/usr/local/include/wzdftpd/wzd_dir.h
-/usr/local/include/wzdftpd/wzd_messages.h
-/usr/local/include/wzdftpd/wzd_section.h
-/usr/local/include/wzdftpd/wzd_structs.h
-/usr/local/include/wzdftpd/wzd_backend.h
-/usr/local/include/wzdftpd/wzd_file.h
-/usr/local/include/wzdftpd/wzd_misc.h
-/usr/local/include/wzdftpd/wzd_shm.h
-/usr/local/include/wzdftpd/wzd_tls.h
+%files devel
+/usr/local/include/wzdftpd/
+
+## Changelog
 
 %changelog
+* Tue Feb 17 2004 Chris Lount <mrlount@tiscali.co.uk>
+- Corrected uninstall problem
+
+* Mon Feb 16 2004 Chris Lount <mrlount@tiscali.co.uk>
+- Just some spec tidying
 
 * Sun Feb 15 2004 Chris Lount <mrlount@tiscali.co.uk>
 - First binary release
