@@ -506,7 +506,7 @@ fprintf(stderr,"Invalid uid %s\n",value);
       i = 0;
       while (i < group_count) {
 	if (strcmp(value,group_pool[i].groupname)==0) {
-	  user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = i; /* ouch */
+	  user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = group_pool[i].gid; /* ouch */
 	  break;
 	}
 	i++;
@@ -1281,7 +1281,7 @@ wzd_user_t * FCN_GET_USER(int uid)
         uid_list[index++] = user_pool[i].uid;
       i++;
     }
-    uid_list[i] = -1;
+    uid_list[index] = -1;
 
     return (wzd_user_t*)uid_list;
   }
@@ -1304,7 +1304,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
         gid_list[index++] = group_pool[i].gid;
       i++;
     }
-    gid_list[i] = -1;
+    gid_list[index] = -1;
 
     return (wzd_group_t*)gid_list;
   }

@@ -27,6 +27,13 @@
 #include <string.h>
 #include <mysql.h>
 
+#ifndef _MSC_VER
+#include <unistd.h>
+#ifndef BSD
+#include <crypt.h>
+#endif /* BSD */
+#endif
+
 #include <wzd_backend.h>
 #include <wzd_debug.h>
 

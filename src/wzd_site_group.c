@@ -205,7 +205,7 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   if (uid_list) {
     for (i=0; uid_list[i] >= 0; i++)
     {
-      user = GetUserByID(i);
+      user = GetUserByID(uid_list[i]);
       if (!user || user->username[0]=='\0') continue;
       if (is_user_in_group(user,gid))
       {
@@ -664,6 +664,10 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
   me = GetUserByID(context->userid);
 
   ptr = command_line;
+  if (!command_line) {
+    do_site_help_grpchange(context);
+    return 0;
+  }
   groupname = strtok_r(command_line," \t\r\n",&ptr);
   if (!groupname) {
     do_site_help_grpchange(context);

@@ -390,24 +390,30 @@ int do_site_purgeuser(char *command_line, wzd_context_t * context)
     /* TODO iterate users and purge those marked as deleted */
     unsigned int i;
     wzd_user_t * user;
+    int * uid_list;
+    uid_list = (int*)backend_get_user(-2);
 
-    for (i=0; i<HARD_DEF_USER_MAX; i++)
+    if (uid_list)
     {
-      user = GetUserByID(i);
-      if (user && user->flags && strchr(user->flags,FLAG_DELETED))
+      for (i=0; uid_list[i] >= 0; i++)
       {
-        /* gadmin ? */
-        if (is_gadmin)
+        user = GetUserByID(uid_list[i]);
+        if (user && user->flags && strchr(user->flags,FLAG_DELETED))
         {
-          if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
-            continue;
+          /* gadmin ? */
+          if (is_gadmin)
+          {
+            if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
+              continue;
+            }
           }
+          /* commit changes to backend */
+          /* FIXME backend name hardcoded */
+          backend_mod_user("plaintext",user->username,NULL,_USER_ALL);
         }
-        /* commit changes to backend */
-        /* FIXME backend name hardcoded */
-        backend_mod_user("plaintext",user->username,NULL,_USER_ALL);
       }
-    }
+      wzd_free (uid_list);
+    } /* if (uid_list) */
     ret = send_message_with_args(200,context,"All deleted users have been purged");
     return 0;
   } /* if (username) */

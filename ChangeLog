@@ -3,6 +3,9 @@
 	* bugfix: wzdftpd broken on debian arm, ppc and s390 (Thanks to zentor)
 	* bugfix: missing va_end when using va_start
 	* bugfix: site grpadd and grpdel not working
+	* bugfix: site change group without arg cause segfault
+	* bugfix: site purge broken
+	* bugfix: misc important problems in backend plaintext
 
 2004-08-31  Pierre Chifflier  <pollux@cpe.fr>
 

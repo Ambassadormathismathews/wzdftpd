@@ -14,6 +14,7 @@
 privgroup	admin
 ip_allowed=127.0.0.1
 default_home=/home
+gid=15
 
 privgroup	users
 default_home=/home
