@@ -756,6 +756,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
     }
     /* find corresponding id */
     for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
+	  /** \todo XXX FIXME the following will NOT work since backend_find_group changed */
       if (backend_find_group(i,&group,&groupid)!=-1) {
         if (strcmp(group.groupname,value)==0) { newgroupid = groupid; break; } 
       }
@@ -931,6 +932,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
     unsigned int newgroupid=(unsigned int)-1;
     /* find corresponding id */
     for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
+	  /** \todo XXX FIXME the following will NOT work since backend_find_group changed */
       if (backend_find_group(i,&group,&groupid)!=-1) {
         if (strcmp(group.groupname,group_name)==0) { newgroupid = groupid; break; } 
       }

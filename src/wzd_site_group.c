@@ -301,7 +301,6 @@ int do_site_ginfo(char *command_line, wzd_context_t * context)
   char * groupname;
   int ret;
   wzd_group_t * group;
-  int gid;
 
   ptr = command_line;
   groupname = strtok_r(command_line," \t\r\n",&ptr);
@@ -327,7 +326,6 @@ int do_site_gsinfo(char *command_line, wzd_context_t * context)
   char * groupname;
   int ret;
   wzd_group_t * group;
-  int gid;
 
   ptr = command_line;
   groupname = strtok_r(command_line," \t\r\n",&ptr);
@@ -365,7 +363,6 @@ int do_site_grpaddip(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
-  int gid;
   int i;
   short is_gadmin;
 
@@ -450,7 +447,6 @@ int do_site_grpdelip(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
-  int gid;
   int i;
   unsigned long ul;
   short is_gadmin;
@@ -534,7 +530,6 @@ int do_site_grpratio(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
-  int gid;
   unsigned int ratio;
   short is_gadmin;
 
@@ -597,7 +592,6 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
   wzd_group_t * group;
   int i,found;
   wzd_user_t * user, * me;
-  int gid;
 
   me = GetUserByID(context->userid);
   ptr = command_line;
@@ -607,7 +601,7 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
     return 0;
   }
   /* check if group exists */
-  if ( (group=GetGroupByName(groupname))==0 ) {
+  if ( (group=GetGroupByName(groupname))==NULL ) {
     ret = send_message_with_args(501,context,"Group does not exist");
     return 0;
   }
@@ -616,7 +610,7 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
   {
     if (context_list[i].magic == CONTEXT_MAGIC) {
       user = GetUserByID(context_list[i].userid);
-      if (strcmp(me->username,user->username) && is_user_in_group(user,gid)) {
+      if (strcmp(me->username,user->username) && is_user_in_group(user,group->gid)) {
         found=1;
         kill_child(context_list[i].pid_child,context);
       }
@@ -657,7 +651,6 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
   char * groupname, * field, * value;
   unsigned long mod_type, ul;
   int ret;
-  int gid;
   wzd_group_t * group;
   wzd_user_t * me;
 
