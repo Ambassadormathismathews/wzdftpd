@@ -75,12 +75,12 @@ AC_PATH_PROG(JW, jw, no)
 AC_SUBST(JW)
 AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 
-WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
+dnl WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_TLS
 WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
-WZD_LIB_PGSQL
+dnl WZD_LIB_PGSQL
 WZD_LIB_TCL(8,3)
 
 # check for zlib (optional, used in module sfv)
