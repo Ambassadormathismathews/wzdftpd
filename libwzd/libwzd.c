@@ -66,7 +66,6 @@ int wzd_init(const char *host, int port, const char *user, const char *pass)
   _config->pass = strdup(pass);
 
   /* 1- connect to server */
-  fprintf(stderr,"Trying to connect\n");
   if (_connect_server()<0) { free(_config); return -1; }
 
   /* 2- fill static struct ? */

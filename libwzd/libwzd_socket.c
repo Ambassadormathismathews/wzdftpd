@@ -245,10 +245,12 @@ int socket_read(char *buffer, int length)
     if (ret < 4) continue;
 
     /* check validity ? */
+#if 0
     if ( buffer[offset] < '0' || buffer[offset] > '9'
         || buffer[offset+1] < '0' || buffer[offset+1] > '9'
         || buffer[offset+2] < '0' || buffer[offset+2] > '9')
       continue;
+#endif
 
     if (buffer[offset+3] == ' ') break;
 
@@ -272,15 +274,27 @@ int socket_read(char *buffer, int length)
  */
 int socket_write(const char *buffer, int length)
 {
+  char * send_buffer;
+  int ret;
+
   if (!_config) return -1;
   if (_config->sock < 0) return -1;
+  if (length < 0) return -1;
+
+  send_buffer = malloc(length+3);
+  snprintf(send_buffer,length+3,"%s\r\n",buffer);
 
 #if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
   if (_config->options & OPTION_TLS) {
-    return tls_write(buffer, length);
+    ret = tls_write(send_buffer, length);
+    free(send_buffer);
+    return ret;
   }
 #endif
-  return write(_config->sock, buffer, length);
+
+  ret = write(_config->sock, send_buffer, length);
+  free(send_buffer);
+  return ret;
 }
 
 int socket_is_secure(void)

@@ -31,15 +31,19 @@
 #ifndef __LIBWZD__
 #define __LIBWZD__
 
-/** parameters are still being defined
- *
- * wzd_init: connect to server
+/* wzd_init: connect to server
  * 
+ * parameters are still being defined
+ *
  */
 int wzd_init(const char *host, int port, const char *user, const char *pass);
 
 int wzd_fini(void);
 
+/* wzd_send_message
+ * 
+ * buffer must be one-line, without CR or LF
+ */
 int wzd_send_message(const char *buffer, int length, char * reply, int reply_length);
 
 /* TODO missing functions:
