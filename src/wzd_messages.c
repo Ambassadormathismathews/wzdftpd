@@ -1,8 +1,13 @@
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-#include <arpa/inet.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -10,6 +15,7 @@
 
 #include "wzd_structs.h"
 #include "wzd_misc.h"
+#include "wzd_log.h"
 
 
 #define DEFAULT_MSG	"No message for this code"
@@ -45,6 +51,7 @@ void init_default_messages(void)
   msg_tab[421] = "%s"; /* Service not available, closing control connection. */
   msg_tab[425] = "Can't open data connection.";
   msg_tab[426] = "Error occured, data connection closed.";
+  msg_tab[431] = "%s"; /* Unable to accept security mechanism. */
   msg_tab[451] = "Transmission error occured.";
   msg_tab[491] = "Data connection already active.";
 
@@ -80,9 +87,14 @@ int send_message(int code, wzd_context_t * context)
 
   format_message(code,BUFFER_LEN,buffer);
 #ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",buffer);
+if (buffer[strlen(buffer)-1]!='\n')
+  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+else
+  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
 #endif
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+/*  sprintf(buffer,"%3d \r\n",code);
+  ret = (context->write_fct)(context->controlfd,buffer,6,0,HARD_XFER_TIMEOUT,context);*/
 
   return ret;
 }
@@ -98,7 +110,10 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
   va_start(argptr,context); /* note: ansi compatible version of va_start */
   v_format_message(code,BUFFER_LEN,buffer,argptr);
 #ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",buffer);
+if (buffer[strlen(buffer)-1]!='\n')
+  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+else
+  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
 #endif
   ret = (context->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
@@ -112,7 +127,10 @@ int send_message_raw(const char *msg, wzd_context_t * context)
   int ret;
 
 /*#ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",msg);
+if (buffer[strlen(buffer)-1]!='\n')
+  out_err(LEVEL_FLOOD,"I answer: %s\n",buffer);
+else
+  out_err(LEVEL_FLOOD,"I answer: %s",buffer);
 #endif*/
   ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
