@@ -1,0 +1,73 @@
+.TH wzdftpd 1 "June 13th, 2004" "0.3.2"
+.SH NAME
+wzdftpd \- a modular and cool ftp server
+.SH SYNOPSIS
+.BR wzdftpd \ [arguments]
+.SH DESCRIPTION
+.B wzdftpd
+is a ftp server designed to be modular and entirely configurable online
+using SITE commands.
+
+wzdftpd offers the following features:
+.TP
+- Simple configuration file, supporting inclusions
+.TP
+- Online administration, using SITE commands
+.TP
+- Backends to store users/groups in different structures
+.TP
+- Modules: internal, using shared librairies, or external
+  (scripts/applications)
+.TP
+- Users are virtual: you do not need to create users in system
+.TP
+- SSL/TLS support
+.TP
+- Server is designed to run as a non-privileged user to enforce security
+.TP
+- Server can detect ip changes (dynamic ips) and set ip and passive ip
+  accordingly
+.TP
+- Cross devices operations (copy/move) (though can be slow)
+.TP
+- Logging support (compatible with the wu-ftpd standard)
+.TP
+- Designed for high performances: coded with C, multithreaded
+
+.SH OPTIONS
+.TP
+.B \-h, --help                  
+Display this text
+.TP
+.B \-d 
+Delete IPC if present (Linux only)
+.TP
+.BI \-f \ filename                   
+Load alternative config file 
+.TP
+.B \-s, --force-foreground
+Stay in foreground
+.TP
+.B \-V, --version
+Show version.
+
+.SH AUTHOR and CREDITS
+wzdftpd is written and maintained by Pierre Chifflier
+.nh
+<pollux@wzdftpd.net>
+.ny
+.PP
+The Official wzdftpd website:
+.nh 
+.B http://www.wzdftpd.net/
+.hy
+.PP
+This manpage was written by Roman Bogorodskiy
+.nh
+<bogorodskiy@inbox.ru>
+.hy
+
+.SH SEE ALSO
+.BR ftp (1),
+.BR services (5), 
+.BR ftpd (8).
