@@ -730,7 +730,7 @@ static XS(XS_wzd_vars_shm)
     if ( ! SvPOK(ST(2)) )
       XSRETURN_UNDEF;
     value = SvPV_nolen(ST(2));
-    ret = vars_set(text,(void*)value,strlen(value)+1,getlib_mainConfig());
+    ret = vars_shm_set(text,(void*)value,strlen(value)+1,getlib_mainConfig());
     if (!ret)
       XSRETURN_PV(value);
     else

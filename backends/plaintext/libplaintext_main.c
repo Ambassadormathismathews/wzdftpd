@@ -52,7 +52,7 @@
 BACKEND_NAME(plaintext);
 BACKEND_VERSION(125);
 
-static char USERS_FILE[256]="/etc/wzdFTPd/users";
+static char USERS_FILE[256]="/etc/wzdftpd/users";
 
 static wzd_user_t * user_pool;
 static unsigned int user_count, user_count_max=0;
@@ -926,7 +926,8 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
   }
 
   if (!found) return -1;
-  return count;
+/*  return count; */ /* used when uid == index */
+  return user_pool[count].uid;
 
 #if 0
   if (!found) {
@@ -980,7 +981,8 @@ fprintf(stderr,"User %s not found\n",login);
     }
   }
 
-  return count;
+/*  return count; */ /* used when uid == index */
+  return user_pool[count].uid;
 
 #if 0
 /*
@@ -1023,7 +1025,8 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
   }
 
   if (!found) return -1;
-  else return count;
+/*  else return count; */ /* used when uid == index */
+  else return user_pool[count].uid;
 
 #if 0
   if (!found) {

@@ -1352,6 +1352,8 @@ out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
 /** wrappers to user list */
 wzd_user_t * GetUserByID(unsigned int id)
 {
+  unsigned int i=0;
+
   if (!mainConfig->user_list) return NULL;
 
 #ifdef BACKEND_STORAGE
@@ -1359,8 +1361,19 @@ wzd_user_t * GetUserByID(unsigned int id)
     return backend_get_user( (int)id );
   }
 #endif
-  if (id >= HARD_DEF_USER_MAX) return NULL;
-  return &mainConfig->user_list[id];
+/*  if (id >= HARD_DEF_USER_MAX) return NULL;*/ /* used when uid == index */
+
+
+/*  return &mainConfig->user_list[id];*/
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (mainConfig->user_list[i].username[0] != '\0' && mainConfig->user_list[i].uid == id) {
+        return &mainConfig->user_list[i];
+    }
+    i++;
+  }
+  return NULL;
 }
 
 wzd_user_t * GetUserByName(const char *name)
@@ -1420,7 +1433,8 @@ unsigned int GetUserIDByName(const char *name)
   {
     if (mainConfig->user_list[i].username[0] != '\0') {
       if (strcmp(name,mainConfig->user_list[i].username)==0)
-        return i;
+/*        return i;*/ /* used when userid == index */
+        return mainConfig->user_list[i].uid;
     }
     i++;
   }

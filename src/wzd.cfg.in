@@ -229,7 +229,7 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 #   message_<num> = My custom message
 # You can also use files to include messages:
 #   message_num = +/path/to/file
-# I STRONGLY recommend to leave messages 227 (pasv reply), 250 (cwd) untouched
+# I STRONGLY recommend to leave messages 227 (pasv reply), 257 (pwd) untouched
 # most interesting messages are:
 #  220 (banner), 230 (welcome message), 221 (logout)
 #message_220 = pollux ftp server ready
@@ -294,6 +294,7 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 -site_savecfg = +O
 -site_sfv = *
 -site_shutdown = +O
+-site_su = +O
 -site_swho = +O
 -site_tagline = !=guest *
 -site_take = +O

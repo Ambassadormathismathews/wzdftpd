@@ -29,6 +29,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #ifdef _MSC_VER
 #include <winsock2.h>
@@ -54,6 +55,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_cache.h"
 #include "wzd_mod.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -78,6 +80,7 @@ struct event_entry_t event_tab[] = {
   { EVENT_LOGOUT, "LOGOUT" },
   { EVENT_PREUPLOAD, "PREUPLOAD" },
   { EVENT_POSTUPLOAD, "POSTUPLOAD" },
+  { EVENT_PREDOWNLOAD, "PREDOWNLOAD" },
   { EVENT_POSTDOWNLOAD, "POSTDOWNLOAD" },
   { EVENT_MKDIR, "MKDIR" },
   { EVENT_RMDIR, "RMDIR" },
@@ -93,6 +96,8 @@ typedef struct _protocol_handler_t {
   fcn_handler handler;
   struct _protocol_handler_t * next_proto;
 } protocol_handler_t;
+
+static int _hook_print_file(const char *filename, wzd_context_t *context);
 
 static protocol_handler_t * proto_handler_list=NULL;
 static unsigned int _reply_code;
@@ -318,6 +323,10 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   l_command = strlen(hook->external_command);
   if (l_command>=1022) return 1;
 
+  if (hook->external_command[0] == '!') { /* file */
+    return _hook_print_file(hook->external_command+1, GetMyContext());
+  }
+
   /* do we have args specified in command ? */
   wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
   ptr = buffer;
@@ -433,7 +442,7 @@ int hook_call_external(wzd_hook_t *hook, unsigned int code)
     {
       out_log(LEVEL_INFO,"hook: %s\n",buffer);
     }
-    pclose(command_output);
+    return pclose(command_output);
   }
 
   return 0;
@@ -727,4 +736,38 @@ void module_free(wzd_module_t ** module_list)
 unsigned int hook_get_current_reply_code(void)
 {
   return _reply_code;
+}
+
+
+static int _hook_print_file(const char *filename, wzd_context_t *context)
+{
+  wzd_cache_t * fp;
+  char * file_buffer;
+  unsigned int size, filesize;
+  wzd_user_t * user = GetUserByID(context->userid);
+  wzd_group_t * group = GetGroupByID(user->groups[0]);
+
+  fp = wzd_cache_open(filename,O_RDONLY,0644);
+  if (!fp) {
+    send_message_raw("200-Inexistant file\r\n",context);
+    return -1;
+  }
+  filesize = wzd_cache_getsize(fp);
+  file_buffer = malloc(filesize+1);
+  if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize )
+  {
+    out_log(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
+    free(file_buffer);
+    wzd_cache_close(fp);
+    return -1;
+  }
+  file_buffer[filesize]='\0';
+
+  cookie_parse_buffer(file_buffer,user,group,context,NULL,0);
+
+  wzd_cache_close(fp);
+
+  free(file_buffer);
+
+  return 0;
 }

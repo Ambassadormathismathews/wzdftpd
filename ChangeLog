@@ -1,3 +1,14 @@
+2004-07-11  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: print text file in custom site command
+	* feature: site SU (Set Userid, steal someone's identity)
+	* feature: event PREDOWNLOAD
+	* feature: PREDOWNLOAD and PREUPLOAD scripts can deny upload
+	* feature: site rusage can now read opened fd on linux 2.6
+	* bugfix: vars_shm set not working in perl
+	
+	* IMPORTANT: from now, uid is NOT user's index in list
+
 2004-07-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: typo in vars, used tagline instead of tag for group
@@ -103,8 +114,8 @@
 2004-04-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: LIST not working for / , and symlinks destination not shown
-	* features: crontab now use hook system and allows protocols, etc.
-	* features: added wzd_utf8.{c,h} (reserved for future UTF-8 extension)
+	* feature: crontab now use hook system and allows protocols, etc.
+	* feature: added wzd_utf8.{c,h} (reserved for future UTF-8 extension)
 	* doc: update on module development, TCL module
 
 2004-04-23  Pierre Chifflier  <pollux@wzdftpd.net>

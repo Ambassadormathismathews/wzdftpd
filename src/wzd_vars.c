@@ -45,6 +45,7 @@
 
 #include "wzd_vars.h"
 #include "wzd_log.h"
+#include "wzd_mutex.h"
 
 #include "wzd_debug.h"
 
@@ -52,6 +53,7 @@
 
 
 static struct wzd_shm_vars_t * _shm_vars[31] = { 0 };
+static wzd_mutex_t * _shm_mutex = NULL;
 
 
 
@@ -601,6 +603,10 @@ static unsigned int _str_hash(const char *key)
 void vars_shm_init(void)
 {
   memset(_shm_vars, 0, sizeof(_shm_vars));
+  if (_shm_mutex) {
+    wzd_mutex_destroy(_shm_mutex);
+  }
+  _shm_mutex = wzd_mutex_create(0x5566423);
 }
 
 void vars_shm_free(void)
@@ -608,6 +614,7 @@ void vars_shm_free(void)
   unsigned int i;
   struct wzd_shm_vars_t * var, * next_var;
 
+  wzd_mutex_lock(_shm_mutex);
   for (i=0; i<32; i++)
   {
     var = _shm_vars[i];
@@ -621,6 +628,11 @@ void vars_shm_free(void)
       wzd_free(var);
       var = next_var;
     }
+  }
+  wzd_mutex_unlock(_shm_mutex);
+  if (_shm_mutex) {
+    wzd_mutex_destroy(_shm_mutex);
+    _shm_mutex = NULL;
   }
 }
 
@@ -684,10 +696,13 @@ int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_c
     memcpy(var->data, data, datalength);
     var->datalength = datalength;
 
+    wzd_mutex_lock(_shm_mutex);
     /* insertion */
     var->next_var = _shm_vars[index];
     _shm_vars[index] = var;
+    wzd_mutex_unlock(_shm_mutex);
   } else {
+    wzd_mutex_lock(_shm_mutex);
     /* modification */
     if (datalength < var->datalength)
       memcpy(var->data, data, datalength);
@@ -696,7 +711,8 @@ int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_c
       memcpy(var->data, data, datalength);
       var->datalength = datalength;
     }
+    wzd_mutex_unlock(_shm_mutex);
   }
 
-  return 1;
+  return 0;
 }

@@ -232,7 +232,7 @@ backend is.
 <screen>backend = /path/to/libwzdplaintext.so</screen>
 <screen>backend = /path/to/libwzdplaintext.so > 122</screen>
 </para>
-<para>In these two examples, backend will be name 'plaintext'</para>
+<para>In these two examples, backend will be called 'plaintext'</para>
 <para>
 You need <emphasis>at least</emphasis> one backend.
 </para>
@@ -440,9 +440,13 @@ shm_key and shm_key-1</para>
 <para>
 This will define a new site command, "my_free".
 </para>
+<para>
+You can also print out the content of a file (parsing all cookies inside).
+<screen>site_cmd = onel !/path/to/onel.txt</screen>
+</para>
 <para><emphasis>
-Do not forget to add a permission line, or your command will
-not be accessible !
+The default permission is to allow ALL users to run command.
+Do not forget to add a permission line if your command needs to be restricted !
 </emphasis></para>
 </listitem>
 </varlistentry>

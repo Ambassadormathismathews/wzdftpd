@@ -53,6 +53,7 @@ typedef enum {
   E_PASV_FAILED,	/**< pasv connection failed */
   E_PORT_INVALIDIP,	/**< invalid address in PORT */
   E_XFER_PROGRESS,	/**< transfer in progress */
+  E_XFER_REJECTED,	/**< transfer explicitely rejected by, for ex., script */
 
   E_CREDS_INSUFF,	/**< insufficient credits */
 
@@ -308,10 +309,13 @@ typedef struct _wzd_module_t {
 
 #define	EVENT_PREUPLOAD		0x00000010
 #define	EVENT_POSTUPLOAD	0x00000020
+#define	EVENT_PREDOWNLOAD	0x00000040
 #define	EVENT_POSTDOWNLOAD	0x00000080
 
-#define	EVENT_MKDIR		0x00000100
-#define	EVENT_RMDIR		0x00000200
+#define	EVENT_PREMKDIR		0x00000100
+#define	EVENT_MKDIR		0x00000200
+#define	EVENT_PRERMDIR		0x00000400
+#define	EVENT_RMDIR		0x00000800
 
 #define	EVENT_SITE		0x00010000
 #define	EVENT_CRONTAB		0x00100000

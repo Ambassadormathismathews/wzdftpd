@@ -8,7 +8,7 @@ General remarks:
 * This is a buggy program
 
 Notes:
-* If you want the internal sfv checker to work, archive files and sfv file
+* If you want the sfv checker to work, archive files and sfv file
     must have same prefix
 
 

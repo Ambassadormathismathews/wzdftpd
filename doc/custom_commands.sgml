@@ -46,11 +46,22 @@ You can use cookies in the arguments, they will be replaced as usual.
 <row><entry>RMDIR</entry><entry>User removed a directory</entry></row>
 <row><entry>PREUPLOAD</entry><entry>User is about to upload file</entry></row>
 <row><entry>POSTUPLOAD</entry><entry>User finished an upload</entry></row>
+<row><entry>PREDOWNLOAD</entry><entry>User is about to download file</entry></row>
 <row><entry>POSTDOWNLOAD</entry><entry>User finished a download</entry></row>
 </tbody>
 </tgroup>
 </table>
 </para>
+
+<para>
+Please note that the return code of your command or program is important: a
+return code of 0 means the command is successfull, other codes are reserved for
+errors.
+</para>
+<para>For example, if you return a code different from 0 for the POSTDOWNLOAD or
+POSTUPLOAD event, then the transfer will be denied.
+</para>
+
 </sect1>
 
 </chapter>

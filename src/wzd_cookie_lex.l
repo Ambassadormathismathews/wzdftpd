@@ -608,11 +608,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       else if (strcmp(condition,"allusers")==0)
       {
         wzd_user_t * loop_user;
-        for (i=0; i<HARD_DEF_USER_MAX; i++)
+        for (i=0; i<=65535; i++) /** \todo XXX this is horrible ! */
         {
           loop_user = GetUserByID(i);
           current_user = loop_user;
-          if (loop_user->username[0] != '\0') {
+          if (loop_user && loop_user->username[0] != '\0') {
             if (out_buffer)
               cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
             else
@@ -643,11 +643,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         int gid;
         if (current_group) {
           gid = GetGroupIDByName(current_group->groupname);
-          for (i=0; i<HARD_DEF_USER_MAX; i++)
+          for (i=0; i<65536; i++) /** \todo XXX þhis is horrible ! */
           {
             loop_user = GetUserByID(i);
             current_user = loop_user;
-            if (loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
+            if (loop_user && loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
               if (out_buffer)
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else

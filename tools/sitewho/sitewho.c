@@ -43,6 +43,28 @@ unsigned long key;
   int optind;
 #endif
 
+static const wzd_user_t user_null = {
+  -1,        /* uid;*/
+  "unknown", /* username[HARD_USERNAME_LENGTH]; */
+  "nopass",  /* userpass[MAX_PASS_LENGTH]; */
+  "nowhere", /* rootpath[WZD_MAX_PATH]; */
+  "notag",   /* tagline[256]; */
+  0,         /* group_num; */
+  { 0 },     /* groups[MAX_GROUPS_PER_USER]; */
+  0,         /* max_idle_time; */
+  0,         /* userperms; */
+  "",        /* flags[MAX_FLAGS_NUM]; */
+  0,         /* max_ul_speed; */
+  0,         /* max_dl_speed; */
+  0,         /* num_logins; */
+  { 0 },     /* ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH]; */
+  { 0 },     /* stats; */
+  0,         /* credits; */
+  0,         /* ratio; */
+  0,         /* user_slots; */
+  0,         /* leech_slots; */
+  0          /* last_login; */
+};
 
 void usage(const char *progname)
 {
@@ -97,6 +119,20 @@ int parse_args(int argc, char **argv)
   return 0;
 }
 
+wzd_user_t * find_id(wzd_user_t * user_list,unsigned int id)
+{
+  wzd_user_t * user = NULL;
+  unsigned int i=0;
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (user_list[i].username[0] != '\0' && user_list[i].uid == id) {
+        return &user_list[i];
+    }
+    i++;
+  }
+  return NULL;
+}
 
 int main(int argc, char *argv[])
 {
@@ -191,7 +227,8 @@ int main(int argc, char *argv[])
         unsigned int id;
 	context = &context_list[i];
         id = context_list[i].userid;
-        user = &user_list[id];
+/*        user = &user_list[id];*/
+        user = find_id(user_list,id);
 	snprintf(hostip,18,"%d.%d.%d.%d",
 	    context->hostip[0],context->hostip[1],context->hostip[2],
 	    context->hostip[3]);

@@ -1124,6 +1124,61 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
    *  LINUX: read directory  /proc/`getpid()`/fd/
    *    contains symlinks, destination is file
    */
+#ifdef __linux__
+  {
+    char dirname[256], buflink[256];
+    unsigned int childs[256];
+    unsigned int child;
+    pid_t mother;
+    DIR * d;
+    struct dirent *dent;
+    int count, i, rdi, fdcount;
+
+    send_message_raw("200- LINUX specific:\r\n",context);
+    mother = getpid();
+    sprintf(buffer,"200-  mother pid: %ld\r\n",(long)mother);
+    send_message_raw(buffer,context);
+
+    /* searching for child threads */
+    count = 0;
+    snprintf(dirname,sizeof(dirname),"/proc/%ld/task",(long)mother); /** \todo XXX 2.6 specific ? */
+    d = opendir(dirname);
+    if (d) {
+      while (dent = readdir(d)) {
+        if (dent->d_name[0] == '.') continue;
+        child = atoi(dent->d_name);
+        childs[count] = child;
+        count ++;
+        sprintf(buffer,"200-   |-> child pid: %s\r\n",dent->d_name);
+        send_message_raw(buffer,context);
+      }
+      closedir(d);
+    }
+
+    sprintf(buffer,"200-  resources for: %d\r\n",mother);
+    send_message_raw(buffer,context);
+    snprintf(dirname,sizeof(dirname),"/proc/%d/task/%d/fd",mother,mother); /** \todo XXX 2.6 specific ? */
+    d = opendir(dirname);
+    if (d) {
+      fdcount = 0;
+      while (dent = readdir(d)) {
+        if (dent->d_name[0] == '.') continue;
+        fdcount ++;
+        snprintf(dirname,sizeof(dirname),"/proc/%d/task/%d/fd/%s",mother,mother,dent->d_name); /** \todo XXX 2.6 specific ? */
+        rdi = readlink(dirname,buflink,sizeof(buflink));
+        if (rdi > 0) {
+          buflink[rdi] = '\0';
+          sprintf(buffer,"200-   |-> %s -> %s\r\n",dent->d_name,buflink);
+          send_message_raw(buffer,context);
+        }
+      }
+      closedir(d);
+
+      sprintf(buffer,"200-  number of open files: %d\r\n",fdcount);
+      send_message_raw(buffer,context);
+    }
+  }
+#endif /* __linux__ */
 
   if (getrlimit(RLIMIT_NOFILE,&rlim)<0) {
     send_message_raw("200- getrlimit(RLIMIT_NOFILE) failed !\r\n",context);
@@ -1687,6 +1742,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"RUSAGE",&do_site_rusage)) return 1;
   /* savecfg */
   if (site_command_add(&config->site_list,"SAVECFG",&do_site_savecfg)) return 1;
+  if (site_command_add(&config->site_list,"SU",&do_site_su)) return 1;
   /* swho */
   if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
   if (site_command_add(&config->site_list,"TAKE",&do_site_take)) return 1;

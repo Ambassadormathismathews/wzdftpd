@@ -1685,6 +1685,20 @@ int do_retr(char *name, char *param, wzd_context_t * context)
     return E_CREDS_INSUFF;
   }
 
+  FORALL_HOOKS(EVENT_PREDOWNLOAD)
+    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
+    ret = 0;
+    if (hook->hook)
+      ret = (*(xfer_hook)hook->hook)(EVENT_PREDOWNLOAD,user->username,path);
+    if (hook->external_command)
+      ret = hook_call_external(hook,0);
+    if (ret) {
+      out_log(LEVEL_NORMAL, "Download denied by hook (returned %d)\n", ret);
+      ret = send_message_with_args(501,context,"Download denied");
+      return E_XFER_REJECTED;
+    }
+  END_FORALL_HOOKS
+
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(550,context,param,"nonexistant file or permission denied");
 /*    socket_close(sock);*/
@@ -1842,6 +1856,21 @@ int do_stor(char *name, char *param, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
+  FORALL_HOOKS(EVENT_PREUPLOAD)
+    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
+    ret = 0;
+    if (hook->hook)
+      ret = (*(xfer_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
+    if (hook->external_command)
+      ret = hook_call_external(hook,0);
+    if (ret) {
+      out_log(LEVEL_NORMAL, "Upload denied by hook (returned %d)\n", ret);
+      ret = send_message_with_args(501,context,"Upload denied");
+      return E_XFER_REJECTED;
+    }
+  END_FORALL_HOOKS
+
+
   /* overwrite protection */
   /* TODO make permissions per-dir + per-group + per-user ? */
 /*  if (context->userinfo.perms & PERM_OVERWRITE) {
@@ -1902,12 +1931,6 @@ int do_stor(char *name, char *param, wzd_context_t * context)
     file_seek(fd,0,SEEK_END);
   else
     file_seek(fd,context->resume,SEEK_SET);
-
-  FORALL_HOOKS(EVENT_PREUPLOAD)
-    typedef int (*login_hook)(unsigned long, const char*, const char *);
-    if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
-  END_FORALL_HOOKS
 
   out_err(LEVEL_FLOOD,"Download: User %s starts uploading %s\n",
     user->username,param);
@@ -2201,7 +2224,10 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
   switch (cmd) {
     case TOK_PWD:
       context->resume = 0;
-      ret = send_message_with_args(257,context,context->currentpath,"is current directory.");
+      /** \todo allow msg 257 customization */
+      /*ret = send_message(257,context);*/
+      snprintf(buffer,sizeof(buffer),"257 \"%s\" is current directory.\r\n",context->currentpath);
+      ret = send_message_raw(buffer,context);
       break;
     case TOK_ALLO:
     case TOK_NOOP:
@@ -2604,6 +2630,7 @@ int do_user(const char *username, wzd_context_t * context)
   if (ret) return E_USER_REJECTED;
 
   me = GetUserByID(context->userid);
+  if (!me) return E_USER_IDONTEXIST;
 
   /* check if user have been deleted */
   if (me->flags && strchr(me->flags,FLAG_DELETED))
@@ -2801,6 +2828,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return 1;
       case E_USER_CLOSED: /* site closed */
         ret = send_message_with_args(421,context,"Site is closed, try again later");
+        return 1;
+      case E_USER_IDONTEXIST: /* i don't exist, probably a problem with backend */
+        ret = send_message_with_args(501,context,"Mama says I don't exist ! (problem with backend ?)");
         return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
         ret = send_message_with_args(421,context,"Too many connections for your group");

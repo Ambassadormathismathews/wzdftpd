@@ -40,6 +40,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <netdb.h> /* gethostbyaddr */
+
 #include <pthread.h>
 #endif
 
@@ -1424,6 +1426,105 @@ int do_site_take(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
     ret = send_message_with_args(200,context,"Credits removed");
+  }
+  return 0;
+}
+
+
+void do_site_help_su(wzd_context_t * context)
+{
+  send_message_with_args(501,context,"site su <user>");
+}
+
+/** site su: become another user
+ *
+ * su user
+ */
+int do_site_su(char *command_line, wzd_context_t * context)
+{
+  char *ptr;
+  char *username;
+  int ret;
+  wzd_user_t user, *me;
+  int uid;
+  short is_gadmin;
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+  ptr = command_line;
+  username = strtok_r(command_line," \t\r\n",&ptr);
+  if (!username) {
+    do_site_help_su(context);
+    return 0;
+  }
+
+  /* check if user already exists */
+  if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return 0;
+  }
+
+  /* for now, this command is strictly restricted to siteops */
+  if (me && me->flags && strchr(me->flags,FLAG_SITEOP)) {
+    ret = send_message_with_args(501,context,"You can't use this command, you are not siteop!");
+    return 0;
+  }
+
+
+  /* if user is a gadmin, he can only steal identify from its group members */
+  if (is_gadmin)
+  {
+    /* GAdmins cannot change user from different group */
+    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    {
+      ret = send_message_with_args(501,context,"You are not allowed to become a user from this group");
+      return 0;
+    }
+  }
+
+
+  /* check user perms */
+  if (user.flags && strchr(user.flags,FLAG_SITEOP)) {
+    ret = send_message_with_args(501,context,"You can't steal a siteop's identity!");
+    return 0;
+  }
+
+  /** \todo XXX there is a problem with homedirs here, SU does not check if new
+   * homedir is even allowed for new identity.
+   */
+  context->userid = GetUserIDByName(user.username);
+  ret = 0;
+
+  out_log(LEVEL_NORMAL,"Doppelganger: %s usurpated %s's identity\n", me->username, user.username);
+
+  {
+    const char * groupname = NULL;
+    const unsigned char * userip = context->hostip;
+    const char * remote_host;
+    struct hostent *h;
+    char inet_str[256];
+    if (me->group_num > 0) groupname = GetGroupByID(me->groups[0])->groupname;
+    inet_str[0] = '\0';
+    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    if (h==NULL)
+      remote_host = inet_str;
+    else
+      remote_host = h->h_name;
+    log_message("DOPPEL","%s (%s) \"%s\" \"%s\" \"%s\"",
+        (remote_host)?remote_host:"no host !",
+        inet_str,
+        me->username,
+        (groupname)?groupname:"No Group",
+        user.username
+        );
+  }
+
+  if (ret) {
+    ret = send_message_with_args(501,context,"Command Failed");
+  } else {
+    ret = send_message_with_args(200,context,"Command OK");
   }
   return 0;
 }

@@ -648,6 +648,24 @@ connection is not closed. You will need to start the server on the machine.
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_su'><term>
+site su &lt;user&gt;
+</term>
+<listitem>
+<para>Changes you current user ID, resulting in a user change. This is similar
+to the 'su' command on unix systems. This allow becoming a user without knowing
+his password and logging in as this user.
+</para>
+<screen>site su foobar</screen>
+<para>This will change your ID to become user foobar.</para>
+<para>If you are a gadmin, you can only become a user from your group.</para>
+<para>Unlike other ftpds, this is NOT emulation, you are really becoming the
+other user, and there is no way to turn back identity. This is why, by security,
+this command is restricted to siteops, and will be logged every time you use it.
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_swho'><term>
 site swho
 </term>

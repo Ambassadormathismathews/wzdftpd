@@ -3,6 +3,10 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- change 257 reply to allow customization, and force valid FTP reply
+'********'
+- override internal site commands (wipe, etc)
+'********'
 - create manpages !
   * create manpages for site* tools (section 1)
 '********'
@@ -14,9 +18,6 @@
 - implement MLSD
 '********'
 - remove race conditions in stat/open
-'********'
-- tcl:
-  create API for locks
 '********'
 - modules: activate/desactivate module, remove from list
 '********'
