@@ -36,6 +36,7 @@
 #endif
 
 #include <stdio.h>
+#include <errno.h>
 
 #ifdef SSL_SUPPORT
 #include <openssl/ssl.h>
