@@ -414,7 +414,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       if (value[strlen(value)-1] == '/' && strcmp(value,"/")!=0)
 	value[strlen(value)-1] = '\0';
 	  DIRNORM(value,strlen(value));
-      strncpy(user_pool[user_count-1].rootpath,value,1024);
+      strncpy(user_pool[user_count-1].rootpath,value,WZD_MAX_PATH);
     }
     else if (strcmp("pass",varname)==0) {
       if (!user_count) break;
@@ -675,7 +675,7 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
         group_ip_add(&group_pool[group_count-1],value);
       } /* ip_allowed */
       else if (strcmp("default_home",varname)==0) {
-	strncpy(group_pool[group_count-1].defaultpath,value,1023);
+	strncpy(group_pool[group_count-1].defaultpath,value,WZD_MAX_PATH);
       } /* default_home */
       else if (strcmp("ratio",varname)==0) {
 	if (!group_count) break;

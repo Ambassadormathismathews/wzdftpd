@@ -20,6 +20,7 @@ AM_INIT_AUTOMAKE(wzdftpd,0.3cvs,no-define)
 AM_CONFIG_HEADER([config.h])
 
 dnl helper macros
+sinclude(ac-helpers/mysql.m4)
 sinclude(ac-helpers/pgsql.m4)
 sinclude(ac-helpers/tcl.m4)
 sinclude(ac-helpers/unicode.m4)
@@ -93,6 +94,7 @@ AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
 
+WZD_LIB_MYSQL
 WZD_LIB_PGSQL
 WZD_LIB_TCL
 AM_ICONV
@@ -219,6 +221,7 @@ AH_TEMPLATE([HAVE_STRTOK_R],
 AH_TEMPLATE([HAVE_STRTOULL],
             [System has the strtoull function.])
 
+AM_CONDITIONAL([HAVE_MYSQL], [test "$wzd_have_mysql" = "yes"])
 AM_CONDITIONAL([HAVE_TCL], [test "$wzd_have_tcl" = "yes"])
 
 WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
