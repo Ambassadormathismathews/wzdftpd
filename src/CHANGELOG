@@ -1,3 +1,9 @@
+#--- cvs commit TAG: rel-0-1rc1
+# Oct, 10 2002
+- bugfix: CRITICAL functions mkdir/rmdir do not check permissions and creates/removes path
+    with no condition
+- bugfix: CRITICAL list/nlst with parameter of form /../*/.. make the server crash
+
 # Oct, 07 2002
 - bugfix: release version working in background (windows) - file descriptors
     were not inherited after fork()

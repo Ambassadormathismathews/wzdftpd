@@ -335,7 +335,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   strncpy(dir,filename,BUFFER_LEN); 
 
   if (stat(filename,&s)==-1) {
-    if (wanted_right != RIGHT_STOR)
+    if (wanted_right != RIGHT_STOR && wanted_right != RIGHT_MKDIR)
       return -1; /* inexistant ? */
     ptr = strrchr(dir,'/');
     if (ptr) {
@@ -638,6 +638,80 @@ void file_close(int fd, wzd_context_t * context)
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context)
 {
   return _setPerm(filename,0,username,groupname,0,context);
+}
+
+int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
+{
+  int ret;
+  wzd_user_t * user;
+  
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else 
+#endif
+    user = &mainConfig->user_list[context->userid];
+
+  ret = _checkPerm(dirname,RIGHT_MKDIR,user);
+  if (ret) return -1;
+  ret = mkdir(dirname,0755);
+
+  return ret;
+}
+
+int file_rmdir(const char *dirname, wzd_context_t * context)
+{
+  int ret;
+  wzd_user_t * user;
+  
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else 
+#endif
+    user = &mainConfig->user_list[context->userid];
+
+  ret = _checkPerm(dirname,RIGHT_RMDIR,user);
+  if (ret) return -1;
+
+  /* is dir empty ? */
+  {
+    DIR * dir;
+    struct dirent *entr;
+    char path_perm[2048];
+
+    if ((dir=opendir(dirname))==NULL) return 0;
+    
+    while ((entr=readdir(dir))!=NULL) {
+      if (strcmp(entr->d_name,".")==0 ||
+          strcmp(entr->d_name,"..")==0 ||
+          strcmp(entr->d_name,HARD_PERMFILE)==0) /* XXX hide perm file ! */
+        continue;
+      return 1; /* dir not empty */
+    }
+
+    closedir(dir);
+
+    /* remove permission file */
+    strcpy(path_perm,dirname); /* path is already ended by / */
+    strcat(path_perm,HARD_PERMFILE);
+    unlink(path_perm);
+  }
+
+#ifdef DEBUG
+fprintf(stderr,"Removing directory '%s'\n",dirname);
+#endif
+
+#ifndef __CYGWIN__
+  {
+    struct stat s;
+    lstat(dirname,&s);
+    if (S_ISLNK(s.st_mode))
+      return unlink(dirname);
+  }
+#endif
+  return rmdir(dirname);
+
 }
 
 /* RENAME

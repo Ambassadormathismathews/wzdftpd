@@ -725,9 +725,16 @@ fprintf(stderr,"PARAM: '%s'\n",param);
     }
 
     strcpy(cmd,param);
+    if (cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
+
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
     {
       if (strrchr(cmd,'/')) { /* probably not in current path - need to readjust path */
+	if (strrchr(cmd,'/') > strrchr(cmd,'*')) {
+	  /* char / is AFTER *, dir style: toto / * / .., we refuse */
+          ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
+          return 1;
+	}
 	strncpy(cmd,strrchr(cmd,'/')+1,2048);
 	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
@@ -737,7 +744,7 @@ fprintf(stderr,"PARAM: '%s'\n",param);
     }
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) { /* wildcards in path ? ough */
       ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
-      exit(0);
+      return 1;
     }
   } else { /* no param, assume list of current dir */
     cmd[0] = '\0';
@@ -747,7 +754,7 @@ fprintf(stderr,"PARAM: '%s'\n",param);
   if (param[0]=='/') param++;
   if (param[0]=='/') {
     ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
-    return 1;;
+    return 1;
   }
 
   cmask = strrchr(mask,'/');
@@ -877,11 +884,11 @@ fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
     return 1;
   }
 
-  ret = mkdir(buffer,0755); /* TODO umask ? - should have a variable here */
+  ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
-  if (!ret) {
+/*  if (!ret) {
     file_chown(buffer,user->username,NULL,context);
-  }
+  }*/
 
 #ifdef DEBUG
 fprintf(stderr,"mkdir returned %d (%s)\n",errno,strerror(errno));
@@ -915,15 +922,9 @@ int do_rmdir(char * param, wzd_context_t * context)
   if (lstat(path,&s)) return 1;
 
   /* check permissions */
-#if 0
-#ifndef __CYGWIN__
-  if (s.st_uid != context->userinfo.uid) {
-    /* check if group or others permissions are ok */
-    return 1;
-  }
-#endif
-#endif /* 0 */
+  return file_rmdir(path,context);
 
+#if 0
   /* is dir empty ? */
   {
     DIR * dir;
@@ -957,6 +958,7 @@ fprintf(stderr,"Removing directory '%s'\n",path);
     return unlink(path);
 #endif
   return rmdir(path);
+#endif
 }
 
 /*************** do_pasv *****************************/
@@ -1151,17 +1153,25 @@ int do_stor(char *param, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock <= 0) && (context->dataport == 0))return 1;
+  if ((context->pasvsock <= 0) && (context->dataport == 0)) {
+    ret = send_message_with_args(503,context,"Issue PORT or PASV First");
+    return 1;
+  }
 
-  if (!param) return 1;
+  if (!param || strlen(param)==0) {
+    ret = send_message_with_args(501,context,"Incorrect filename");
+    return 1;
+  }
 
   /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
 /* XXX if (strrchr(param,'/'))
     param = strrchr(param,'/')+1; XXX */
-  if (strlen(param)==0) return 1;
 
   strcpy(cmd,".");
-  if (checkpath(cmd,path,context)) return 1;
+  if (checkpath(cmd,path,context)) {
+    ret = send_message_with_args(501,context,"Incorrect filename");
+    return 1;
+  }
   strcat(path,param);
 
   /* TODO call checkpath again ? see do_mkdir */
