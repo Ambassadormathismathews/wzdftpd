@@ -14,7 +14,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.5.0-20050210"
+  !define VER_DISPLAY "0.5.0-20050213"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"

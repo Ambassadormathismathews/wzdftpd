@@ -385,7 +385,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   {
     len = sizeof(sai4);
 
-    if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+    if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
       out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
       return -1;
     }
@@ -493,7 +493,8 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 
     ret = connect(sock, sai, len);
     if (ret == -1) {
-      long timeout_ms=300000; /* default to 5 min */
+      /*long timeout_ms=300000;*/ /* default to 5 min */
+	  long timeout_ms=5000;
       error = WSAGetLastError();
 
       switch (error) {

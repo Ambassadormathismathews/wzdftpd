@@ -1,4 +1,4 @@
-2005-02-18  Pierre Chifflier  <pollux@wzdftpd.net>
+2005-02-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: some small memory leaks and potential buffer overflows
 

@@ -413,14 +413,14 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   unsigned int remote_port;
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
   unsigned char userip[16];
-  int newsock, fd_ident;
+  fd_t newsock, fd_ident;
   unsigned short ident_port = 113;
   wzd_context_t * context;
   int context_index;
   wzd_ident_context_t * ident_context;
 
   newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
-  if (newsock <0)
+  if (newsock == (fd_t)-1)
   {
     out_log(LEVEL_HIGH,"Error while accepting\n");
     serverMainThreadExit(-1); /** \todo do not exit server, just client */
@@ -811,6 +811,7 @@ static void server_ident_timeout_check(void)
   for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt))
   {
 lbl_ident_timeout_check_loop:
+    if (!elmnt) break;
     ident_context = list_data(elmnt);
     if (!ident_context) continue;
     context = ident_context->context;

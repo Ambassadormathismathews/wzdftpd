@@ -756,7 +756,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   param = str_tochar(arg);
 
-  if (context->pasvsock < 0 && context->dataport == 0)
+  if (context->pasvsock == (fd_t)-1 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
@@ -861,12 +861,12 @@ printf("path: '%s'\n",path);
     return E_NOPERM;
   }
 
-  if (context->pasvsock < 0) { /* PORT ! */
+  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
 
     /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
 
     sock = waitconnect(context);
-    if (sock < 0) {
+    if (sock == (fd_t)-1) {
       /* note: reply is done in waitconnect() */
       wzd_free(path);
       return E_CONNECTTIMEOUT;
@@ -1563,7 +1563,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   }
 
   /* create socket */
-  if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) < 0) {
+  if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
     context->pasvsock = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
@@ -1814,9 +1814,9 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* create socket */
 #if !defined(IPV6_SUPPORT)
-  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) < 0)
+  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1)
 #else
-  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) < 0)
+  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1)
 #endif
   {
     context->pasvsock = -1;
@@ -1942,7 +1942,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock < 0) && (context->dataport == 0)) {
+  if ((context->pasvsock == (fd_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
     return E_NO_DATA_CTX;
   }
@@ -2009,11 +2009,11 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     bytestot = 0;
   bytesnow = byteslast=context->resume;
 
-  if (context->pasvsock < 0) { /* PORT ! */
+  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
-    if (sock < 0) {
+    if (sock == (fd_t)-1) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
       /* note: reply is done in waitconnect() */
@@ -2025,7 +2025,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
       param, bytestot);*/
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) < 0) {
+    if ((sock=waitaccept(context)) == (fd_t)-1) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
       /* note: reply is done in waitaccept() */
@@ -2100,7 +2100,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock < 0) && (context->dataport == 0)) {
+  if ((context->pasvsock == (fd_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return E_NO_DATA_CTX;
   }
@@ -2197,11 +2197,11 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   FD_REGISTER(fd,"Client file (STOR)");
 
-  if (context->pasvsock < 0) { /* PORT ! */
+  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
-    if (sock < 0) {
+    if (sock == (fd_t)-1) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
       /* note: reply is done in waitconnect() */
@@ -2213,7 +2213,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
       param);*/
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) < 0) {
+    if ((sock=waitaccept(context)) == (fd_t)-1) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
       /* note: reply is done in waitaccept() */

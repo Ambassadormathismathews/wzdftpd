@@ -296,19 +296,20 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
 
       ptr = strchr(ptr_test,'@');
       if (ptr) { /* we have an ident to check */
-        if (!ident || ident[0] == '\0') {
-          continue;
-        }
         ptr_ident = ptr_test;
         ident_length = ptr - ptr_ident;
 #ifdef WZD_DBG_IDENT
         out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
 #endif
         ptr_test = (char*)ptr+1;
-        if ( !(*ptr_ident=='*' && ident_length==1) &&
-            strncmp(ident,ptr_ident,ident_length) != 0) {
-          /* ident does not match */
-          continue;
+        if ( !(*ptr_ident=='*' && ident_length==1) ) {
+          if (!ident || ident[0] == '\0') {
+            continue;
+		  }
+		  if (strncmp(ident,ptr_ident,ident_length) != 0) {
+            /* ident does not match */
+            continue;
+		  }
         }
       }
 
