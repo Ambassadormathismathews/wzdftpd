@@ -87,7 +87,7 @@ void out_log(int level,const char *fmt,...)
 
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vsnprintf(buffer,1023,fmt,argptr);
-      syslog(prior,buffer);
+      syslog(prior,"%s",buffer);
 
     } else { /* syslog */
 
@@ -185,7 +185,7 @@ void out_err(int level, const char *fmt,...)
 
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       vsnprintf(buffer,1023,fmt,argptr);
-      syslog(prior,buffer);
+      syslog(prior,"%s",buffer);
 
     } else { /* syslog */
 
