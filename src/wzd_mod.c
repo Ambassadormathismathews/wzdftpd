@@ -405,7 +405,11 @@ int module_load(wzd_module_t *module)
 
   filename = module->name;
 
+#ifndef _MSC_VER
   if (filename[0] == '/')
+#else
+  if (filename[0] == '/' || filename[1] == ':')
+#endif
     strncpy(path,filename,1023);
   else
   { /* relative path */
