@@ -278,7 +278,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 
 /*************** socket_connect *************************/
 
-int socket_connect(void * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout)
+int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout)
 {
   int sock;
   struct sockaddr *sai;
@@ -289,8 +289,6 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
   unsigned int len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
-  fd_set fds, efds;
-  struct timeval tv;
 
   if (family == WZD_INET4)
   {
@@ -319,7 +317,7 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
     /* makes the connection */
     sai4.sin_port = htons((unsigned short)remote_port);
     sai4.sin_family = AF_INET;
-    memcpy(&sai4.sin_addr,remote_host,sizeof(remote_host));
+    memcpy(&sai4.sin_addr,remote_host,sizeof(sai4.sin_addr));
 
     sai = (struct sockaddr *)&sai4;
 
@@ -386,9 +384,22 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
 #endif
 #endif
 
-#ifdef _MSC_VER
+  if (timeout != 0)
+  {
+
+/* set non-blocking mode */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+    {
+      unsigned long noBlock=1;
+      ret = ioctlsocket(sock,FIONBIO,&noBlock);
+    }
+#else
+    fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
+#endif
+
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     ret = connect(sock, sai, len);
-	if (ret < 0) {
+	if (ret == SOCKET_ERROR) {
 	  errno = WSAGetLastError();
 	  if (errno != WSAEWOULDBLOCK)
 	  {
@@ -399,19 +410,26 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
 	  }
 	} else
 		return sock;
-#endif
-
-  if (timeout != 0)
+  if (ret == SOCKET_ERROR)
   {
-
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
-    {
-      unsigned long noBlock=1;
-      ioctlsocket(sock,FIONBIO,&noBlock);
-    }
-#else
-    fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
-#endif
+	  int retry;
+	  for (retry=0; retry<6; retry++)
+	  {
+		ret = socket_wait_to_write(sock,timeout);
+		if (ret == 0) /* ok */
+		  break;
+		if (ret == 1) /* timeout */
+		{
+		  socket_close(sock);
+		  return -1;
+		}
+		/* error */
+		socket_close(sock);
+        errno = WSAGetLastError();
+		return -1;
+	  }
+  }
+#else /* _MSC_VER || WINSOCK_SUPPORT */
 
     do {
       int sock_error;
@@ -422,9 +440,6 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
           if (errno == EINPROGRESS) {
             continue;
           }
-#ifdef _MSC_VER
-          errno = WSAGetLastError();
-#endif
           socket_close(sock);
           return -1;
         }
@@ -436,6 +451,7 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
       }
       break;
     } while (1);
+#endif /* _MSC_VER || WINSOCK_SUPPORT */
 
   } /* if (timeout) */
 
@@ -501,7 +517,7 @@ int socket_get_local_port(int sock)
   return get_sock_port(sock, 1);
 }
 
-int socket_wait_to_read(int sock, int timeout)
+int socket_wait_to_read(unsigned int sock, int timeout)
 {
   int ret;
   int save_errno;
@@ -540,7 +556,7 @@ int socket_wait_to_read(int sock, int timeout)
   return -1;
 }
 
-int socket_wait_to_write(int sock, int timeout)
+int socket_wait_to_write(unsigned int sock, int timeout)
 {
   int ret;
   int save_errno;

@@ -408,7 +408,7 @@ typedef struct {
   read_fct_t	read_fct;
   write_fct_t	write_fct;
   int	        dataport;
-  int	        dataip[16];
+  unsigned char dataip[16];
   unsigned long	resume;
   unsigned long	connection_flags;
   char          currentpath[2048];

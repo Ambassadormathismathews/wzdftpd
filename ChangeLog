@@ -1,3 +1,8 @@
+2004-01-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: incorrect order of arguments in ident request
+	* bugfix: socket_connect not working on visual
+
 2004-01-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: missing \0 on short msg replies (closes: broken SIZE command)

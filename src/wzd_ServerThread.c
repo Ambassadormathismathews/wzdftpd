@@ -725,7 +725,7 @@ continue_connection:
         local_port = socket_get_local_port(context->controlfd);
         remote_port = socket_get_remote_port(context->controlfd);
 
-        snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",local_port,remote_port);
+        snprintf(buffer,BUFFER_LEN,"%u, %u\r\n",remote_port,local_port);
 
         /* 3- try to write */
         ret = send(fd_ident,buffer,strlen(buffer),0);
