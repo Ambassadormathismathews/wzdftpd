@@ -17,10 +17,6 @@ if [ -f bootstrap.local ]; then
   . ./bootstrap.local
 fi
 
-echo $ACLOCAL
-
-exit 0
-
 
 abort () {
     echo "$1 not found or command failed. Aborting!"
