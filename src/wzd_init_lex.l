@@ -424,6 +424,7 @@ int cfg_read_backend(void)
     return 1;
   }
 
+  /* TODO XXX FIXME we should not use this, it forbids names with spaces */
   ptr = line;
   name = strtok_r(line," \t\r\n",&ptr);
   if (!name) {
@@ -474,7 +475,7 @@ int cfg_read_backend_param(const char *backendname)
 
   ret = 1;
   if (strcasecmp("plaintext",backendname)==0)
-  { tempConfig.backend.param =strdup(param); ret = 0; }
+  { tempConfig.backend.param = strdup(param); ret = 0; }
 
   free (param);
   return ret;

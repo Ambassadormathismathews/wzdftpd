@@ -83,10 +83,6 @@ deny_access_files_uploaded = 1
 # hide files beggining by a '.'
 #hide_dotted_files = 1
 
-# Available ONLY if compiled with INTERNAL_SFV=1
-# Enable internal sfv checking (default: no)
-#internal_sfv_checker = 1
-
 # shm_key: use for share memory (default: 0x1331c0d3)
 #shm_key = 0x2442c0d3
 

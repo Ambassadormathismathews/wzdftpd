@@ -8,30 +8,32 @@ lib_LTLIBRARIES = libwzd.la
 
 
 libwzd_la_SOURCES =  \
+	wzd_backend.c   \
+	wzd_backend.h   \
+	wzd_cache.c     \
+	wzd_cache.h     \
+	wzd_crc32.c     \
+	wzd_crc32.h  	\
+	wzd_crontab.c   \
+	wzd_crontab.h	\
+	wzd_debug.c     \
+	wzd_debug.h     \
 	wzd_libmain.c   \
 	wzd_libmain.h   \
 	wzd_log.c       \
 	wzd_log.h       \
-	wzd_misc.c      \
-	wzd_misc.h      \
-	wzd_backend.c   \
-	wzd_backend.h   \
-	wzd_debug.c     \
-	wzd_debug.h     \
 	wzd_messages.c  \
 	wzd_messages.h  \
+	wzd_misc.c      \
+	wzd_misc.h      \
 	wzd_mod.c       \
 	wzd_mod.h       \
-	wzd_vfs.c       \
-	wzd_vfs.h       \
-	wzd_cache.c     \
-	wzd_cache.h     \
-	wzd_section.c      \
-	wzd_section.h      \
+	wzd_section.c   \
+	wzd_section.h   \
 	wzd_shm.c       \
 	wzd_shm.h       \
-	wzd_crontab.c   \
-	wzd_crontab.h
+	wzd_vfs.c       \
+	wzd_vfs.h
 
 nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
 

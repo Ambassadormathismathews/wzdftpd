@@ -1,3 +1,10 @@
+# Nov, 17 2003
+- started implementation of 'PRET' command (see lftp, GridFTPD, DrFTPD)
+- sfv module: diz/sfv files are processed to guess number of files to be uploaded
+- definitly removed internal sfv checker, but integrated crc32 code in main lib (to be used
+  by other functions)
+- implemented 'XCRC' command
+
 # Nov, 14 2003
 - cookies can be used inside messages and ftp replies
 - bugfix: more checks on size for messages > 1024 bytes

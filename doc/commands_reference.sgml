@@ -652,6 +652,19 @@ Show users online.
 </listitem>
 </varlistentry>
 
+<varlistentry id='xcrc'><term>
+xcrc "filename" [startpos length]
+</term>
+<listitem>
+<para>Gives CRC32 Checksum of the file</para>
+<screen>xcrc "1mB"</screen>
+<para>This will return the crc32 of the file</para>
+<screen>xcrc "1mB" 100 1500</screen>
+<para>This will return the crc32 of the file, only on the portion starting at
+100, and on 1500 bytes.</para>
+</listitem>
+</varlistentry>
+
 </variablelist>
 
 </chapter>

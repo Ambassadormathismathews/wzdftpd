@@ -1347,7 +1347,7 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************** CLOSE *********************/
   if (strcasecmp(token,"CLOSE")==0) {
     mainConfig->site_closed = 1;
-    ret = send_message_with_args(250,context,"SITE:","server is now closed");
+    ret = send_message_with_args(250,context,"SITE: ","server is now closed");
     return 0;
   } else
 #if 0
@@ -1444,7 +1444,7 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************** REOPEN ********************/
   if (strcasecmp(token,"REOPEN")==0) {
     mainConfig->site_closed = 0;
-    ret = send_message_with_args(250,context,"SITE:","server is now opened");
+    ret = send_message_with_args(250,context,"SITE: ","server is now opened");
     return 0;
   } else
 /******************* RULES **********************/
@@ -1515,13 +1515,13 @@ int do_site(char *command_line, wzd_context_t * context)
 #ifndef WZD_MULTITHREAD
   else if (strcasecmp(token,"SHUTDOWN")==0) {
     mainConfig->serverstop = 1;
-    ret = send_message_with_args(250,context,"SITE:","server will shutdown after you logout");
+    ret = send_message_with_args(250,context,"SITE: ","server will shutdown after you logout");
     return 0;
   }
 #endif /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTITHREAD
   else if (strcasecmp(token,"SHUTDOWN")==0) {
-    ret = send_message_with_args(250,context,"SITE:","server will shutdown NOW");
+    ret = send_message_with_args(250,context,"SITE: ","server will shutdown NOW");
     mainConfig->serverstop = 1;
     return 0;
   }
@@ -1546,7 +1546,7 @@ int do_site(char *command_line, wzd_context_t * context)
   END_FORALL_HOOKS
 
   if (ret)
-    ret = send_message_with_args(250,context,"SITE","command unknown, ok");
+    ret = send_message_with_args(250,context,"SITE ","command unknown, ok");
 
   return 0;
 }

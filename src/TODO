@@ -3,9 +3,22 @@
 - use 'rats','splint' for security audit
 
 '********'
+- XCRC/XMD5 command
+ -> XCRC / OK
+ -> implement calc_crc32 on file portion
+ -> XMD5
+'********'
+- announce:
+Tue Sep 10 12:28:49 2002 SFV: "/path/to/rlz/" "Got SFV for rlz_name. Expecting 50."
+Tue Sep 10 12:31:48 2002 UPDATE: "/path/to/rlz/" "kakao was the first to upload file in rlz_name. Expecting 715.3 mB."
+Tue Sep 10 12:49:57 2002 HALFWAY: "/path/to/rlz/" "rlz_name is in halfway. Leading uploader is kakao/pubbers [357.6M/25F/100%/76KB/s]. Leading group is pubbers [357.6M/25F/100%/76KB/s]."
+Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69kB/s - 22h 54m 57s] was completed by 1 racer(s) from (1) group(s). Compression method: m5. Slowest upload by kakao/pubbers at 58KB/s. Fastest upload by kakao/pubbers at 89KB/s."
+'********'
+- finish 'PRET' command implementation
+'********'
 - sfv checker:
   verify zip integrity / OK
-  extract .diz info
+  extract .diz info / OK
 '********'
 - v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
   220- ... 220 command ok (easier !)
@@ -20,9 +33,6 @@
 '********'
 - getmyip does not seems to work with ipv6 ...
 - ipv6: RFC 2428
-'********'
-- configure: --enable-internal-sfv || remove wzd_crc32.c file from sources (disable internal
-  sfv)
 '********'
 - permissions: siteop always have all perms on files (wzd_perm.c) / OK
   and gadmins on their group files
@@ -129,9 +139,6 @@ _ possibility to link a backend statically (instead of dll)
 - quota per user/group
 - ratio: per user/group, credit (time to re-add ?)
 - add size limit for directories
-- XCRC command
-- sfv checker / sfv creation
 - dupe checker
 - default backend hard-coded ?
 - per-dir special permissions (glftpd like)
-- cache permissions in memory (parent-process shm zone ?)

@@ -64,9 +64,9 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_data.h"
-#include "wzd_debug.h"
 #include "wzd_messages.h"
 #include "wzd_vfs.h"
+#include "wzd_crc32.h"
 #include "wzd_file.h"
 #include "wzd_ratio.h"
 #include "wzd_section.h"
@@ -76,6 +76,7 @@
 #include "ls.h"
 #include "wzd_ClientThread.h"
 
+#include "wzd_debug.h"
 
 #define BUFFER_LEN	4096
 
@@ -160,6 +161,10 @@ int identify_token(char *token)
     return TOK_EPSV;
   if (strcmp("eprt",token)==0)
     return TOK_EPRT;
+  if (strcmp("pret",token)==0)
+    return TOK_PRET;
+  if (strcmp("xcrc",token)==0)
+    return TOK_XCRC;
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
@@ -1702,7 +1707,7 @@ int do_dele(char *param, wzd_context_t * context)
   }
 
   if (!ret)
-    ret = send_message_with_args(250,context,"DELE","command successfull");
+    ret = send_message_with_args(250,context,"DELE"," command successfull");
   else
     ret = send_message_with_args(501,context,"DELE failed");
   return ret;
@@ -1763,8 +1768,89 @@ void do_rnto(const char *filename, wzd_context_t * context)
   if (ret) {
     ret = send_message_with_args(550,context,"RNTO","command failed");
   } else {
-    ret = send_message_with_args(250,context,"RNTO","command OK");
+    ret = send_message_with_args(250,context,"RNTO"," command OK");
   }
+}
+
+/*************** do_pret *****************************/
+void do_pret(char *param, wzd_context_t * context)
+{
+  int ret;
+
+  /* TODO XXX FIXME PRET *MUST* be sent before the PASV command */
+
+  /* TODO check next token (RETR STOR STOU LIST NLST APPE) and
+   * run specific commands ...
+   */
+  /* e.g: if RETR, open file to have it in cache ? */
+
+  ret = send_message_with_args(200,context,"Command OK");
+}
+
+/*************** do_xcrc *****************************/
+void do_xcrc(char *param, wzd_context_t * context)
+{
+  char path[2048];
+  char buffer[1024];
+  char * ptr;
+  char * ptest;
+  struct stat s;
+  int ret;
+  unsigned long crc;
+  unsigned long startpos = 0;
+  unsigned long length = (unsigned long)-1;
+
+  /* get filename and args:
+   * "filename" must be quoted
+   * startpos and length are optional
+   */
+  ptr = param;
+  if (*ptr == '"') {
+    ptr++;
+    while (*ptr && *ptr != '"') ptr++;
+    if (!*ptr) {
+      ret = send_message_with_args(501,context,"Syntax error");
+      return;
+    }
+    memcpy(buffer,param+1,ptr-param-1);
+    buffer[ptr-param-1] = '\0';
+    ptr++;
+    /* optional: read startpos AND length */
+    startpos = strtoul(ptr,&ptest,0);
+    if (ptest && ptest != ptr)
+    {
+      ptr = ptest;
+      length = strtoul(ptr,&ptest,0);
+      if (!ptest || ptest == ptr) {
+        ret = send_message_with_args(501,context,"Syntax error");
+        return;
+      }
+    } else
+      startpos = 0;
+    param = buffer;
+  }
+
+  if (!checkpath(param,path,context)) {
+    if (path[strlen(path)-1]=='/')
+      path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+    if (is_hidden_file(path)) {
+      ret = send_message_with_args(501,context,"Go away bastard");
+      return;
+    }
+
+
+    if (stat(path,&s)==0) {
+      ret = calc_crc32(path,&crc,startpos,length);
+      snprintf(buffer,1024,"%lX\r\n",crc);
+/*      snprintf(buffer,1024,"%d %lX\r\n",250,crc);*/
+/*      ret = send_message_raw(buffer,context);*/
+      ret = send_message_with_args(250,context,buffer,"");
+      return;
+    }
+  }
+  ret = send_message_with_args(550,context,"XCRC","File inexistant or no access ?");
 }
 
 /*************** do_pass *****************************/
@@ -2468,7 +2554,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
 	      /** \todo TOK_CWD: print message file */
 /*	      print_file("/home/pollux/.message",250,context);*/
-	      ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
+	      ret = send_message_with_args(250,context,context->currentpath," now current directory.");
 	      break;
 	    }
 	    if (do_chdir(param,context)) {
@@ -2477,7 +2563,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    }
 	      /** \todo TOK_CWD: print message file */
 /*            print_file("/home/pollux/.message",250,context);*/
-	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
+	    ret = send_message_with_args(250,context,context->currentpath," now current directory.");
 	    break;
 	  case TOK_LIST:
 	    context->resume = 0;
@@ -2703,11 +2789,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    do_site(token,context); /* do_site send message ! */
 	    break;
 	  case TOK_FEAT:
-#ifdef SSL_SUPPORT
-	    ret = send_message_with_args(211,context,"AUTH TLS\n PBSZ\n PROT\n MDTM\n SIZE\n SITE\n REST\n NON-FREE FTPD SUCKS");
-#else
-	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST\n NON-FREE FTPD SUCKS");
-#endif
+	    ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
 	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_RNFR:
@@ -2719,6 +2801,14 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    do_rnto(token,context);
 	    context->idle_time_start = time(NULL);
 	    break;
+          case TOK_PRET:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+            do_pret(token,context);
+            break;
+          case TOK_XCRC:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+            do_xcrc(token,context);
+            break;
 	  case TOK_NOTHING:
 	    break;
 	  default:

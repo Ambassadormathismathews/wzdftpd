@@ -57,6 +57,7 @@
 | site users     | give list of users on this server            | r          |
 | site version   | show server version                          | r,s,n,g    |
 | site who       | show who's online                            | r,s,n,g    |
+| xcrc           | returns CRC32 value of specified file        | all        |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
 |                                                                            |
