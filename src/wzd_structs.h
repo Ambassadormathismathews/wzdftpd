@@ -102,6 +102,8 @@ typedef struct {
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   unsigned long		bytes_ul_total;
   unsigned long		bytes_dl_total;
+  unsigned short	user_slots;	/* user slots for gadmins */
+  unsigned short	leech_slots;	/* leech slots for gadmins */
 } wzd_user_t;
 
 typedef struct {
@@ -111,6 +113,7 @@ typedef struct {
   unsigned long         max_ul_speed;
   unsigned long         max_dl_speed;
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
+  char			defaultpath[1024];
 } wzd_group_t;
 
 /*********************** BACKEND **************************/
@@ -297,11 +300,13 @@ typedef struct {
 #define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
 
 typedef struct {
+  char *	config_filename;
+  time_t	server_start;
   int		serverstop;
   wzd_backend_t	backend;
   int		max_threads;
   char *	logfilename;
-  char *	logfilemode;
+  unsigned int	logfilemode;
   FILE *	logfile;
   char *	xferlog_name;
   int		xferlog_fd;
