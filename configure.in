@@ -108,12 +108,15 @@ AC_ARG_ENABLE(debug, [  --enable-debug          enable debug mode],
     WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}release"
 )
 
+if eval "test x$enable_debug = xyes"; then
+  AM_WITH_MPATROL
+fi
 
 if eval "test x$CYGWIN = xyes"; then
 
 AC_MSG_CHECKING(whether to enable winsock support)
 
-AC_ARG_ENABLE(winsock, [  --enable-winsock        enable winsock support (win32 only)],
+AC_ARG_ENABLE(winsock, [  --enable-winsock        enable winsock support (win32 only) (default:yes)],
     if eval "test x$enable_winsock = xyes"; then
       AC_MSG_RESULT(yes)
       CPPFLAGS="$CPPFLAGS -DWINSOCK_SUPPORT"
@@ -122,7 +125,10 @@ AC_ARG_ENABLE(winsock, [  --enable-winsock        enable winsock support (win32 
     else
       AC_MSG_RESULT(no)
     fi,
-    AC_MSG_RESULT(no)
+    AC_MSG_RESULT(yes)
+    CPPFLAGS="$CPPFLAGS -DWINSOCK_SUPPORT"
+    LDFLAGS="$LDFLAGS -lwsock32"
+    WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}winsock"
 )
 
 fi
