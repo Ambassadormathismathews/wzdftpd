@@ -1,6 +1,29 @@
    NEWS file for wzdftpd
 
-0.4.2: September 29 2004
+0.5.0: February 21 2005
+
+Many changes: no more shared memory ! (and associated error messages ), the
+mysql backend is fully working, no more limitations on numbers of users/groups,
+big efforts made on security, new authentication library to unify methods:
+crypt, md5, pam, SSL certificates, etc, new library to send commands from other
+programs, perl backend in development, new memory model with hash tables to get
+faster access to data and improve speed, many new commands: site vars,
+vars_user, vars_group, killpath, etc, ,GnuTLS support, new commands: SSCN, CPSV,
+HELP (secure FXP), new events: file delection, and many, many bugfixes.
+
+0.4.4: December 07 2004
+
+Fixed problems with symbolic links, permissions (delete) and LIST command.
+Some new variables for server for passive range and speed limits; changing max
+speed for users/groups/server is now applied immediatly. The 'perms' field is
+now effective for users, allowing a finer control on authorized commands.
+
+0.4.3: October 28 2004
+
+Things are getting better, but several problems were identified, some of them
+could crash the server of corrupt data.
+
+0.4.2: October 05 2004
 
 Again, bugfixes. Problems were detected and fixed on permissions, gadmins,
 groups, and paths on windows.

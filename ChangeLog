@@ -1,3 +1,7 @@
+2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-5-0
+
 2005-02-20  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: misc problems with str_dup, str_copy

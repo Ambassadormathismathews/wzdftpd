@@ -3,7 +3,7 @@
 
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.4.4
+Version: 0.5.0
 Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://www.wzdftpd.net
@@ -116,6 +116,9 @@ rm -Rf $RPM_BUILD_ROOT
 /usr/lib/libwzd.a
 /usr/lib/libwzd.la
 /usr/lib/libwzd.so*
+/usr/lib/libwzd_core.a
+/usr/lib/libwzd_core.la
+/usr/lib/libwzd_core.so*
 /usr/sbin/wzdftpd
 /var/logs/wzdftpd
 /usr/lib/wzdftpd/backends/libwzdplaintext.so
@@ -157,6 +160,9 @@ rm -Rf $RPM_BUILD_ROOT
 ## Changelog
 
 %changelog
+* Mon Feb 21 2005 Pierre Chifflier <chifflier@cpe.fr>
+- New upstream release
+
 * Tue Dec 07 2004 Pierre Chifflier <chifflier@cpe.fr>
 - New upstream release
 
