@@ -15,7 +15,7 @@
 #INTERNAL_SFV=1
 
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.53)
 AC_INIT(wzdftpd, 0.1cvs, pollux@wzdftpd.net)
 AM_INIT_AUTOMAKE(wzdftpd,0.1cvs,no-define)
 AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
@@ -70,7 +70,6 @@ AC_FUNC_LSTAT
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 AC_FUNC_MKTIME
-AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
@@ -78,7 +77,7 @@ AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
-AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime],,exit 1)
+AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime],,exit 1)
 AC_CHECK_FUNC(getopt_long,[AC_DEFINE(HAVE_GETOPT)])
 AC_CHECK_FUNCS([inet_ntop])
 
