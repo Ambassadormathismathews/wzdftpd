@@ -2037,7 +2037,7 @@ int do_pret(char *name, char *param, wzd_context_t * context)
 }
 
 /*************** do_print_message ********************/
-int do_print_message(char *name, const char *filename, wzd_context_t * context)
+int do_print_message(char *name, char *filename, wzd_context_t * context)
 {
   int cmd;
   int ret;
@@ -2083,7 +2083,7 @@ int do_prot(char *name, char *arg, wzd_context_t * context)
 #endif
 
 /*************** do_quit *****************************/
-int do_quit(char *name, const char *arg, wzd_context_t * context)
+int do_quit(char *name, char *arg, wzd_context_t * context)
 {
   int ret;
 
@@ -2126,7 +2126,7 @@ int do_quit(char *name, const char *arg, wzd_context_t * context)
 }
 
 /*************** do_rest *****************************/
-int do_rest(char *name, const char *arg, wzd_context_t * context)
+int do_rest(char *name, char *arg, wzd_context_t * context)
 {
   int ret;
   unsigned long ul;
@@ -2151,7 +2151,7 @@ int do_rest(char *name, const char *arg, wzd_context_t * context)
 }
 
 /*************** do_rnfr *****************************/
-int do_rnfr(char *name, const char *filename, wzd_context_t * context)
+int do_rnfr(char *name, char *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2180,7 +2180,7 @@ int do_rnfr(char *name, const char *filename, wzd_context_t * context)
 }
 
 /*************** do_rnto *****************************/
-int do_rnto(char *name, const char *filename, wzd_context_t * context)
+int do_rnto(char *name, char *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2832,6 +2832,8 @@ void * clientThreadProc(void *arg)
 
 #ifdef _MSC_VER
   context->thread_id = GetCurrentThreadId();
+#else
+  context->thread_id = pthread_self();
 #endif
 
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
