@@ -104,3 +104,42 @@ void out_err(int level, const char *fmt,...)
     vfprintf(stderr,new_format,argptr);
 /*  }*/
 }
+
+void out_xferlog(wzd_context_t * context)
+{
+  char buffer[2048];
+  char datestr[128];
+  time_t timeval;
+  struct tm * ntime;
+  const char * remote_host;
+  struct hostent *h;
+  char * username;
+
+  if (mainConfig->xferlog_fd == -1) return;
+  
+  h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+  if (h==NULL)
+    remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+  else
+    remote_host = h->h_name;
+  username = GetUserByID(context->userid)->username;
+  timeval = time(NULL);
+  ntime = localtime( &timeval );
+  strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
+  snprintf(buffer,2047,"%s %lu %s %lu %s %c %c %c %c %s ftp 1 * %c\n",
+      datestr,
+      time(NULL)-context->current_action.tm_start, /* transfer time */
+      remote_host?remote_host:"(null)", /* remote-host */
+      (unsigned long)context->current_action.bytesnow, /* file-size */
+      context->current_action.arg, /* filename */
+      'b', /* transfer type: b(inary) / a(scii) */
+      '_', /* special action flag: C(ompressed), U(ncompressed),
+	      T(ar'ed) _ (no action) */
+      (context->current_action.token==TOK_RETR)?'o':'i',
+        /* direction: o (outgoing) i (incoming) */
+      'r', /* access-mode: a (anonymous) g (guest) r (real-user) */
+      username,
+      'c' /* c (complete) i (incomplete) */
+      );
+  write(mainConfig->xferlog_fd,buffer,strlen(buffer));
+}
