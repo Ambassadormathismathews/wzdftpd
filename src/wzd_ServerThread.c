@@ -1178,6 +1178,19 @@ int server_switch_to_config(wzd_config_t *config)
     return -1;
   }
 
+  /** \todo XXX FIXME open log dir */
+  if (config->logdir) {
+    struct stat s;
+    if (stat(config->logdir,&s)) {
+      out_err(LEVEL_HIGH,"Could not open log dir (%s)\n", config->logdir);
+      return 1;
+    }
+    if (!S_ISDIR(s.st_mode)) {
+      out_err(LEVEL_HIGH,"Log dir (%s) is NOT a directory, I'm confused!\n", config->logdir);
+      return 1;
+    }
+  }
+
   if (config->xferlog_name) {
     fd = xferlog_open(config->xferlog_name, 0600);
     if (fd == -1)
@@ -1483,6 +1496,7 @@ static void free_config(wzd_config_t * config)
     xferlog_close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     wzd_free(mainConfig->xferlog_name);
+  if (mainConfig->logdir) wzd_free(mainConfig->logdir);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
 #ifndef _MSC_VER
     closelog();

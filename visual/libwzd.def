@@ -188,6 +188,11 @@ EXPORTS
 	wzd_debug_fini
 	wzd_free
 	wzd_malloc
+	wzd_mutex_create
+	wzd_mutex_destroy
+	wzd_mutex_lock
+	wzd_mutex_trylock
+	wzd_mutex_unlock
 	wzd_realloc
 	wzd_sem_create
 	wzd_sem_destroy

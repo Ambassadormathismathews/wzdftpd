@@ -56,6 +56,7 @@
 #include <sys/shm.h>
 #endif /* __CYGWIN__ */
 
+
 /** creates a semaphore */
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {

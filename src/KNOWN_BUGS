@@ -28,8 +28,8 @@ drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO
 - FreeBSD (at least 5.2): ./autogen.sh fails with error ltconfig: No such file or directory
   -> solution: this is a conflict in several libtool installation - install ONE version !
 
-- FreeBSD: ./autogen.sh conplains it cannot find autoconf/libtool
-  -> solution: go to /usr/local/bin and create symlinks autoconf -> autoconf257, libtool -> libtool15,
-    libtoolize -> libtoolize15
+- FreeBSD: ./autogen.sh fails with error 'Can't locate object method "path" via package
+  "Autom4te::Request"'
+    -> rm -rf .autom4te.cache/
 
 - FreeBSD: listening to an IPv6 socket does NOT listen to the same IPv4 socket !

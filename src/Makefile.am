@@ -36,6 +36,8 @@ libwzd_la_SOURCES =  \
 	wzd_misc.h      \
 	wzd_mod.c       \
 	wzd_mod.h       \
+	wzd_mutex.c     \
+	wzd_mutex.h     \
 	wzd_perm.c      \
 	wzd_perm.h      \
 	wzd_section.c   \

@@ -23,7 +23,6 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
-
 %x sc_buf
 %x sc_cook
 
@@ -83,6 +82,8 @@ typedef enum {
   COOKIE_ENDFOR,
   COOKIE_IF,
   COOKIE_ENDIF,
+
+  COOKIE_INCLUDE,
 
   COOKIE_INVALID,
 
@@ -369,6 +370,8 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_VFS}virtual  BEGIN(INITIAL); return COOKIE_VFSVIRTUAL;
 <sc_cook>{C_VFS}physical  BEGIN(INITIAL); return COOKIE_VFSPHYSICAL;
 <sc_cook>{C_VFS}target  BEGIN(INITIAL); return COOKIE_VFSTARGET;
+
+<sc_cook>include         BEGIN(INITIAL); return COOKIE_INCLUDE;
 
 <sc_cook>.	BEGIN(INITIAL); return COOKIE_INVALID;
 
@@ -667,6 +670,102 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         }
       } /* allvfs */
       free(tmpbuf);
+    }
+    break;
+    case COOKIE_INCLUDE:
+    {
+      wzd_cache_t * fp;
+      char * tmpbuf;
+      char filename[256];
+      char c;
+      unsigned int i=0;
+
+      c = input();
+      if (c != '(')
+      {
+#ifdef WZD_DBG_COOKIES
+        out_err(LEVEL_HIGH, "invalid 'include' directive\n");
+#endif
+        break;
+      }
+
+      while ( (c=input()) && c != ')' && c != '\r' && c != '\n' && i < sizeof(filename))
+        filename[i++] = c;
+      if (c != ')') /* error */
+        break;
+      filename[i] = '\0';
+
+#ifdef WZD_DBG_COOKIES
+      out_err(LEVEL_HIGH,"  including [%s]\n", filename);
+#endif
+
+      /** \todo resolve realpath() before opening filename ? */
+      fp = wzd_cache_open(filename, O_RDONLY, 0);
+      if (!fp)
+      {
+#ifdef WZD_DBG_COOKIES
+        out_err(LEVEL_HIGH, "invalid 'include' directive (could not open file)\n");
+#endif
+        break; /* invalid file name */
+      }
+
+      i = wzd_cache_getsize(fp);
+      tmpbuf = wzd_malloc(i+1);
+      if (wzd_cache_read(fp, tmpbuf, i) != i) {
+#ifdef WZD_DBG_COOKIES
+        out_err(LEVEL_HIGH, "invalid 'include' directive (error reading file)\n");
+#endif
+        wzd_free(tmpbuf);
+        wzd_cache_close(fp);
+        break;
+      }
+      wzd_cache_close(fp);
+      tmpbuf[i] = '\0';
+
+
+      /* flush buffer before executing 'include' */
+#ifdef WZD_DBG_COOKIES
+      out_log(LEVEL_HIGH,"flushing buffer on [31mINCLUDE[0m\n");
+#endif
+      /* flush buffer */
+      if (out_buffer) {
+        unsigned int l = send_buffer_ptr;
+        if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+          out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+          l = out_buffer_len - 1;
+        }
+        memcpy(out_buffer_ptr,send_buffer,l);
+        out_buffer_ptr[l] = '\0';
+        out_buffer_ptr += l;
+        send_buffer_ptr=0; /** \todo XXX i added this line, wasn'r present - could be a bug in all
+        other flushes (FOR, etc ?! */
+      } else {
+        send_buffer[send_buffer_ptr]='\0';
+        send_message_raw(send_buffer,real_context);
+        send_buffer_ptr=0;
+      }
+
+out_err(LEVEL_HIGH, "Before parsing include: [%s]\n", out_buffer);
+      if (out_buffer) {
+        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+
+        i = strlen(out_buffer_ptr);
+        if (send_buffer_ptr + i >= sizeof(send_buffer)) {
+          out_log(LEVEL_HIGH, "Buffer overflow\n");
+          return 1;
+        }
+        memcpy(send_buffer+send_buffer_ptr, out_buffer_ptr, i);
+        send_buffer_ptr += i;
+      }
+      else
+        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+out_err(LEVEL_HIGH, "After parsing include: [%s]\n", out_buffer);
+
+      wzd_free(tmpbuf);
+
+      BEGIN(INITIAL);
     }
     break;
 /*** Bandwidth cookies ***/

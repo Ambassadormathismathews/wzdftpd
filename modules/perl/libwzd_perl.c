@@ -407,7 +407,7 @@ static int _perl_set_slave(void *context)
 #ifdef WIN32
       _slaves[i].interp = perl_clone(my_perl,CLONEf_CLONE_HOST);
 #else
-      _slaves[i].interp = perl_clone(my_perl,NULL);
+      _slaves[i].interp = perl_clone(my_perl,0);
 #endif
       /* see perlapi (1) for more info, this flag is needed for win32 */
       

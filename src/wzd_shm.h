@@ -28,6 +28,7 @@
 /* this file is ultra platform dependant, as long as cygwin does not implement IPC */
 /* note that read/write functions are encapsulated, to avoid concurrent access */
 
+
 #ifdef WIN32
 typedef void * wzd_sem_t;
 #else /* WIN32 */

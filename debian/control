@@ -20,7 +20,8 @@ Description: A portable, modular, not user-friendly ftp server
  dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server.
+ a powerful event-driven system to extend server. More information at
+ http://www.wzdftpd.net
 
 Package: wzdftpd-back-mysql
 Architecture: any

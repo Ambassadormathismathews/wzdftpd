@@ -3,8 +3,33 @@
 
 <para>
 Cookies are special sequences in text files, replaced by values by server before sending
-replies.
+replies.</para>
 
+<para>Cookies are designed the same way as a programming language, so you can get simple
+loops and tests (but it is NOT a scripting language, if you want one just use perl etc.).
+Test if user has a flag:
+<programlisting>
+  %if(+G)
+  This text is shown only for users with G flag (groupadmins)
+  %endif
+</programlisting>
+
+Here is a loop on all users:
+<programlisting>
+  %for(allusers)
+  user: %username
+  %endfor
+</programlisting>
+
+Loop on all connected users:
+<programlisting>
+  %for(allusersconnected)
+  user: %username
+  %endfor
+</programlisting>
+</para>
+
+<para>
 <table frame='all' id="cookies_colors">
 <title>Color Cookies</title>
 <tgroup cols='1' align='left' colsep='0' rowsep='0'>
@@ -126,6 +151,9 @@ available after an upload/download</para></footnote>
 <row><entry>%sectionname</entry><entry>Name of current section</entry></row>
 <row><entry>%spacefree</entry><entry>Remaining space on device, converted in units</entry></row>
 <row><entry>%spacetotal</entry><entry>Total space on device, converted in units</entry></row>
+
+<row><entry>%include(filename)</entry><entry>Include another file, and parse its contents
+<footnote><para>You MUST take care to create no recursion in file inclusions</para></footnote></entry></row>
 
 </tbody>
 </tgroup>

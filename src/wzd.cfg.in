@@ -56,6 +56,9 @@ logfile = @e_localstatedir@/log/@PACKAGE@/wzd.log
 # log file for transfered files (default: do not log)
 xferlog = @e_localstatedir@/log/@PACKAGE@/xferlog
 
+# directory to store various log files
+logdir = @e_localstatedir@/log/@PACKAGE@
+
 # max number of child threads (default: 32)
 max_threads = 32
 

@@ -527,7 +527,7 @@ int vars_group_set(const char *groupname, const char *varname, void *data, unsig
      */
   }
   /* tagline */
-  else if (strcmp(varname,"tagline")==0) {
+  else if (strcmp(varname,"tag")==0) {
     mod_type = _GROUP_TAGLINE;
     strncpy(group->tagline,data,sizeof(group->tagline));
   }

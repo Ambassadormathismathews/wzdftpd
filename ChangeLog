@@ -1,3 +1,9 @@
+2004-07-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: typo in vars, used tagline instead of tag for group
+	* cookies: %include(filename) includes and parses file contents
+	* feature: added API for mutexes
+
 2004-06-15  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: typo in siteconfig giving wrong pasv_range for 'get all'
