@@ -72,6 +72,7 @@
 
 #include "wzd_backend.h"
 #include "wzd_cache.h"
+#include "wzd_ClientThread.h"
 #include "wzd_dir.h"
 #include "wzd_crontab.h"
 #include "wzd_file.h"
@@ -80,7 +81,11 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_perm.h"
+#include "wzd_site.h"
+#include "wzd_site_group.h"
+#include "wzd_site_user.h"
 #include "wzd_string.h"
+#include "wzd_utf8.h"
 #include "wzd_vars.h"
 #include "wzd_vfs.h"
 

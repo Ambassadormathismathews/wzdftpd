@@ -123,6 +123,10 @@ SOURCE=..\src\wzd_cache.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_commands.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_cookie_lex.c
 # SUBTRACT CPP /YX /Yc /Yu
 # End Source File
@@ -260,6 +264,10 @@ SOURCE=..\src\wzd_backend.h
 # Begin Source File
 
 SOURCE=..\src\wzd_cache.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_commands.h
 # End Source File
 # Begin Source File
 

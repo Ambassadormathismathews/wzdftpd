@@ -154,8 +154,12 @@ EXPORTS
 	setMessage
 	split_filename
 	str_allocate
+	str_append
+	str_checklength
 	str_deallocate
 	str_fromchar
+	str_read_token
+	str_sprintf
 	str_tolower
 	str_tok
 	str_trim
