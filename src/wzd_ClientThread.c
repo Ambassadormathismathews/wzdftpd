@@ -133,6 +133,8 @@ int identify_token(char *token)
       case STRTOINT('a','b','o','r'): return TOK_ABOR;
       case STRTOINT('p','b','s','z'): return TOK_PBSZ;
       case STRTOINT('p','r','o','t'): return TOK_PROT;
+      case STRTOINT('c','p','s','v'): return TOK_CPSV;
+      case STRTOINT('s','s','c','n'): return TOK_SSCN;
       case STRTOINT('s','i','t','e'): return TOK_SITE;
       case STRTOINT('f','e','a','t'): return TOK_FEAT;
       case STRTOINT('a','l','l','o'): return TOK_ALLO;
@@ -580,6 +582,7 @@ int waitaccept(wzd_context_t * context)
 
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
+      FD_UNREGISTER(sock,"Client PASV socket");
       socket_close(sock);
       send_message_with_args(501,context,"PASV timeout");
       return -1;
@@ -590,6 +593,7 @@ int waitaccept(wzd_context_t * context)
   if (sock == -1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
+    FD_UNREGISTER(sock,"Client PASV socket");
     socket_close(sock);
     send_message_with_args(501,context,"PASV timeout");
     return -1;
@@ -599,7 +603,15 @@ int waitaccept(wzd_context_t * context)
   if (context->ssl.data_mode == TLS_PRIV) {
     int ret;
     ret = tls_init_datamode(sock, context);
-    /* FIXME check return */
+    if (ret) {
+      FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+      socket_close(context->pasvsock);
+      context->pasvsock = -1;
+      socket_close(sock);
+      sock = -1;
+      send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+      return -1;
+    }
   }
 #endif
 
@@ -644,6 +656,10 @@ int waitconnect(wzd_context_t * context)
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
+      if (ret) {
+        send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+        return -1;
+      }
 #endif
 
   } /* context->datafamily == WZD_INET4 */
@@ -664,6 +680,10 @@ int waitconnect(wzd_context_t * context)
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
+      if (ret) {
+        send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+        return -1;
+      }
 #endif
 
   } /* context->datafamily == WZD_INET6 */
@@ -1648,6 +1668,10 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
           mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
 #endif
+
+  if (strcasecmp("cpsv",str_tochar(name))==0)
+    context->tls_role = TLS_CLIENT_MODE;
+
   return E_OK;
 }
 
@@ -2583,6 +2607,35 @@ int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 #else
 int do_prot(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+{
+  return E_PARAM_INVALID;
+}
+#endif
+
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
+/*************** do_sscn *****************************/
+int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int ret;
+  const char *arg;
+
+  arg = str_tochar(param);
+  if (!arg || strlen(arg)==0 || strcasecmp(arg,"off")==0) {
+    context->tls_role = TLS_SERVER_MODE;
+    ret = send_message_with_args(200,context,"SSCN:SERVER METHOD");
+    return E_OK;
+  }
+  if (strcasecmp(arg,"on")==0) {
+    context->tls_role = TLS_CLIENT_MODE;
+    ret = send_message_with_args(200,context,"SSCN:CLIENT METHOD");
+    return E_OK;
+  }
+
+  ret = send_message_with_args(550,context,"SSCN","Invalid argument");
+  return E_PARAM_INVALID;
+}
+#else
+int do_sscn(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   return E_PARAM_INVALID;
 }

@@ -154,6 +154,8 @@ int commands_add_defaults(void)
   if (commands_add("quit",do_quit,NULL,TOK_QUIT)) return -1;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (commands_add("prot",do_prot,NULL,TOK_PROT)) return -1;
+  if (commands_add("cpsv",do_pasv,NULL,TOK_CPSV)) return -1;
+  if (commands_add("sscn",do_sscn,NULL,TOK_SSCN)) return -1;
 #endif
 
 

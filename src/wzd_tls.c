@@ -772,7 +772,7 @@ int tls_exit(void)
   return 0;
 }
 
-static gnutls_session initialize_tls_session()
+static gnutls_session initialize_tls_session(gnutls_connection_end con_end)
 {
   /* Allow connections to servers that have OpenPGP keys as well.
    */
@@ -780,7 +780,7 @@ static gnutls_session initialize_tls_session()
 
   gnutls_session session;
 
-  gnutls_init(&session, GNUTLS_SERVER);
+  gnutls_init(&session, con_end);
 
   /* avoid calling all the priority functions, since the defaults
    * are adequate.
@@ -790,9 +790,11 @@ static gnutls_session initialize_tls_session()
 
   gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, x509_cred);
 
-  /* request client certificate if any.
-  */
-  gnutls_certificate_server_set_request(session, GNUTLS_CERT_REQUEST);
+  if (con_end == GNUTLS_SERVER) {
+    /* request client certificate if any.
+    */
+    gnutls_certificate_server_set_request(session, GNUTLS_CERT_REQUEST);
+  }
 
   gnutls_dh_set_prime_bits(session, DH_BITS);
 
@@ -809,7 +811,7 @@ int tls_auth (const char *type, wzd_context_t * context)
   struct timeval tv;
 
 
-  session = initialize_tls_session();
+  session = initialize_tls_session(GNUTLS_SERVER);
 
   gnutls_transport_set_ptr(session, (gnutls_transport_ptr) fd);
 
@@ -895,7 +897,9 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     return 1;
   }
 
-  session = initialize_tls_session();
+  out_err(LEVEL_FLOOD,"TLS mode: %s\n",(context->tls_role == TLS_SERVER_MODE) ? "server" : "client");
+
+  session = initialize_tls_session( (context->tls_role == TLS_SERVER_MODE) ? GNUTLS_SERVER : GNUTLS_CLIENT );
 
   gnutls_transport_set_ptr(session, (gnutls_transport_ptr) sock);
 

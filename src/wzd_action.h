@@ -55,6 +55,8 @@ typedef enum {
 
   TOK_PBSZ,
   TOK_PROT,
+  TOK_CPSV,
+  TOK_SSCN,
 
   TOK_SITE,
   TOK_FEAT,

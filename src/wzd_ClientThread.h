@@ -41,7 +41,7 @@ void client_die(wzd_context_t * context);
 #endif
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-#define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"
+#define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n SSCN\n CPSV\n"
 #else
 #define TEMP_FEAT GLOBAL_FEATURES
 #endif
@@ -84,5 +84,6 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_quit(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
 #endif /* __WZD_CLIENT_THREAD__ */
