@@ -49,9 +49,12 @@
 
 #define	MAX_LINE		1024
 
+
+#define PLAINTEXT_BACKEND_VERSION 142
+
 /* IMPORTANT needed to check version */
 BACKEND_NAME(plaintext);
-BACKEND_VERSION(141);
+BACKEND_VERSION(PLAINTEXT_BACKEND_VERSION);
 
 #define	HARD_DEF_USER_MAX	640
 #define	HARD_DEF_GROUP_MAX	640
@@ -590,7 +593,7 @@ int wzd_backend_init(wzd_backend_t * backend)
   if (!backend) return -1;
 
   backend->name = wzd_strdup("plaintext");
-  backend->version = wzd_backend_version;
+  backend->version = PLAINTEXT_BACKEND_VERSION;
 
   backend->backend_init = FCN_INIT;
   backend->backend_exit = FCN_FINI;

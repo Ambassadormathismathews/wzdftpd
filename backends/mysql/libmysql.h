@@ -77,4 +77,8 @@ int wzd_mysql_check_name(const char *name);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
+gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
+int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type);
+int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type);
+
 #endif /* __LIBMYSQL__ */

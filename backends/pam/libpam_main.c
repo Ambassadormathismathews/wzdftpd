@@ -52,9 +52,11 @@
  * If you use shadow file, you need to be root !
  */
 
+#define PAM_BACKEND_VERSION     121
+
 /* IMPORTANT needed to check version */
 BACKEND_NAME(pam);
-BACKEND_VERSION(111);
+BACKEND_VERSION(PAM_BACKEND_VERSION);
 
 
 
@@ -306,3 +308,32 @@ static int _pam_adduser(const char *name, int uid, const char *homedir)
 
   return 0;
 }
+
+int wzd_backend_init(wzd_backend_t * backend)
+{
+  if (!backend) return -1;
+
+  backend->name = wzd_strdup("pam");
+  backend->version = PAM_BACKEND_VERSION;
+
+  backend->backend_init = FCN_INIT;
+  backend->backend_exit = FCN_FINI;
+
+  backend->backend_validate_login = FCN_VALIDATE_LOGIN;
+  backend->backend_validate_pass = FCN_VALIDATE_PASS;
+
+  backend->backend_get_user = FCN_GET_USER;
+  backend->backend_get_group = FCN_GET_GROUP;
+
+  backend->backend_find_user = FCN_FIND_USER;
+  backend->backend_find_group = FCN_FIND_GROUP;
+
+  backend->backend_mod_user = FCN_MOD_USER;
+  backend->backend_mod_group = FCN_MOD_GROUP;
+
+  backend->backend_chpass = NULL;
+  backend->backend_commit_changes = FCN_COMMIT_CHANGES;
+
+  return 0;
+}
+
