@@ -16,8 +16,8 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.1cvs, pollux@wzdftpd.net)
-AM_INIT_AUTOMAKE(wzdftpd,0.1cvs,no-define)
+AC_INIT(wzdftpd, 0.1, pollux@wzdftpd.net)
+AM_INIT_AUTOMAKE(wzdftpd,0.1,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 

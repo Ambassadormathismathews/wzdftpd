@@ -1,3 +1,4 @@
+#--- cvs commit TAG: rel-0-1
 # Oct, 20 2003
 - added periodic commit of backend
 - site savecfg is now almost working
