@@ -1607,6 +1607,7 @@ int cfg_read_sitecmd(void)
 {
   char *command;
   char *sitecmdname;
+  size_t len;
   unsigned int token;
 
   token = yylex();
@@ -1618,7 +1619,10 @@ int cfg_read_sitecmd(void)
     out_err(LEVEL_HIGH,"line should be 'site_cmd = <name> <command>'\n");
     return 1;
   }
-  sitecmdname = wzd_strdup(yytext);
+  len = strlen("site_")+strlen(yytext)+1;
+  sitecmdname = wzd_malloc(len);
+  strncpy(sitecmdname,"site_",len);
+  strncpy(sitecmdname+5,yytext,len-5);
   /* TODO check command unicity ? */
 
   if( !(command=read_until_eol(1024)) ) {
