@@ -36,6 +36,8 @@ and
 	# cp users.sample users
 </programlisting>
 
+Note that if you're using wzdftpd port >=0.5.0, sample config files will be copied automaticly.
+
 To deinstall wzdftpd use
 <programlisting>
 	$ cd /usr/ports/ftp/wzdftpd
