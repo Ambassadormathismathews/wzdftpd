@@ -110,7 +110,7 @@ static void _tls_push_ca_list(STACK_OF(X509_NAME) *ca_list, const char *ca_file)
   for (i=0; i<sk_X509_NAME_num(sk); i++) {
     char name_buf[256];
     X509_NAME *name;
-    
+
     name = sk_X509_NAME_value(sk, i);
     fprintf(stderr,"CA certificate: %s\n",X509_NAME_oneline(name, name_buf, sizeof(name_buf)));
 
@@ -480,7 +480,7 @@ int tls_auth_cont(wzd_context_t * context)
         out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
           ERR_error_string(SSL_get_error(context->ssl.obj,status),NULL));
         out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
-  	  ERR_error_string(ERR_get_error(),NULL));
+            ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }
       ret = select(fd+1,&fd_r,&fd_w,NULL,&tv);
@@ -509,7 +509,7 @@ int tls_auth_cont(wzd_context_t * context)
 #ifdef WZD_DBG_TLS
   out_err(LEVEL_HIGH,"TLS: Blocking accept\n");
 #endif
-  
+
   ret = SSL_accept(context->ssl.obj);
   if (ret == 1) {
   } else {
@@ -518,7 +518,7 @@ int tls_auth_cont(wzd_context_t * context)
     case SSL_ERROR_WANT_READ:
       context->ssl.ssl_fd_mode = TLS_READ;
       break;
-    case SSL_ERROR_WANT_WRITE: 
+    case SSL_ERROR_WANT_WRITE:
       context->ssl.ssl_fd_mode = TLS_WRITE;
       break;
     default:
@@ -527,15 +527,15 @@ int tls_auth_cont(wzd_context_t * context)
       out_log(LEVEL_CRITICAL,"Error accepting connection: ret %d error code %d : %s\n",ret,ERR_get_error(),
           ERR_error_string(ERR_get_error(),NULL));
       return 1;
-    }     
-  }   
-    
+    }
+  }
+
   context->ssl.data_ssl = NULL;
-  
+
   /* set read/write functions */
   context->read_fct = (read_fct_t)tls_read;
   context->write_fct = (write_fct_t)tls_write;
-  
+
   return 0;
 #endif
 }
@@ -596,7 +596,7 @@ int tls_auth_data_cont(wzd_context_t * context)
   do {
     status = SSL_accept(ssl);
     sslerr = SSL_get_error(ssl,status);
-  
+
     if (status==1) {
       out_err(LEVEL_INFO,"Data connection successfully switched to ssl mode\n");
       context->ssl.data_mode = TLS_PRIV;
@@ -608,11 +608,11 @@ int tls_auth_data_cont(wzd_context_t * context)
       tv.tv_sec = 5;
       switch (sslerr) {
         case SSL_ERROR_WANT_READ:
-  	FD_SET(fd,&fd_r);
+          FD_SET(fd,&fd_r);
 out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_READ\n");
           break;
         case SSL_ERROR_WANT_WRITE:
-  	FD_SET(fd,&fd_w);
+          FD_SET(fd,&fd_w);
 out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
           break;
         default:

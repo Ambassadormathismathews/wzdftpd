@@ -34,6 +34,8 @@ void do_site_help(const char *site_command, wzd_context_t * context);
 void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context);
 
 
+int do_site_chmod(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_free(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context);
 int do_site_invite(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);

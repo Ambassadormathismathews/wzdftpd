@@ -427,25 +427,25 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
 /********************* do_site_chmod ***********************/
 /** chmod: mode file1 [file2 ...]
  */
-int do_site_chmod(char *command_line, wzd_context_t * context)
+int do_site_chmod(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
-  char * ptr;
-  char * mode, *filename;
+  char * endptr;
+  const char * mode;
+  wzd_string_t * str_mode, *filename;
   int ret;
   unsigned long long_perms;
-/*  char str_perms[64];*/
-  char * endptr;
 
-  ptr = command_line;
-  mode = strtok_r(command_line," \t\r\n",&ptr);
-  if (!mode) {
+  str_mode = str_tok(command_line," \t\r\n");
+  if (!str_mode) {
     do_site_help("chmod",context);
     return 1;
   }
+  mode = str_tochar(str_mode);
   /* TODO check that mode is ok */
   if (strlen(mode) > 15) {
     do_site_help("chmod",context);
+    str_deallocate(str_mode);
     return 1;
   }
   long_perms = strtoul(mode,&endptr,8);
@@ -469,18 +469,21 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
 
     if (error) {
       ret = send_message_with_args(501,context,"Invalid permission");
+      str_deallocate(str_mode);
       return 0;
     }
   }
+  str_deallocate(str_mode);
 
   buffer = malloc(WZD_MAX_PATH+1);
 
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  while ( (filename = str_tok(command_line," \t\r\n")) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath_new(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    _setPerm(buffer,username,0,0,str_perms,(unsigned long)-1,context);*/
-    _setPerm(buffer,0,0,0,0,long_perms,context);
+    if (!checkpath_new(str_tochar(filename),buffer,context)) {
+      _setPerm(buffer,0,0,0,0,long_perms,context);
+    }
+    str_deallocate(filename);
   }
 
   snprintf(buffer,WZD_MAX_PATH,"mode changed to '%lo'",long_perms);
@@ -494,41 +497,42 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
 /** chown: user file1 [file2 ...]
  */
 
-int do_site_chown(char *command_line, wzd_context_t * context)
+int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
-  char * ptr;
-  char * username, *filename;
+  wzd_string_t * username, *filename;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t  *user;
 
-  ptr = command_line;
-  username = strtok_r(command_line," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help("chown",context);
     return 1;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  user = GetUserByName(str_tochar(username));
+  if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return 1;
   }
 
   buffer = malloc(WZD_MAX_PATH+1);
 
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  while ( (filename = str_tok(command_line," \t\r\n")) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath_new(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,0,username,0,0,(unsigned long)-1,context);
+    if (!checkpath_new(str_tochar(filename),buffer,context))
+    {
+      _setPerm(buffer,0,str_tochar(username),0,0,(unsigned long)-1,context);
+    }
+    str_deallocate(filename);
   }
 
-  snprintf(buffer,WZD_MAX_PATH,"owner changed to '%s'",username);
+  snprintf(buffer,WZD_MAX_PATH,"owner changed to '%s'",str_tochar(username));
   ret = send_message_with_args(200,context,buffer);
 
   free(buffer);
+  str_deallocate(username);
   return 0;
 }
 
@@ -1939,9 +1943,9 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"SITE_CHANGEGRP",&do_site_changegrp)) return 1;
   if (site_command_add(&config->site_list,"SITE_CHECKPERM",&do_site_checkperm)) return 1;
   if (site_command_add(&config->site_list,"SITE_CHGRP",&do_site_chgrp)) return 1;
+#if 0
   if (site_command_add(&config->site_list,"SITE_CHMOD",&do_site_chmod)) return 1;
   if (site_command_add(&config->site_list,"SITE_CHOWN",&do_site_chown)) return 1;
-#if 0
   if (site_command_add(&config->site_list,"SITE_CHPASS",&do_site_chpass)) return 1;
   if (site_command_add(&config->site_list,"SITE_CHRATIO",&do_site_chratio)) return 1;
   /* do_site_close ? */
@@ -2016,7 +2020,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   wzd_hook_reply_t hook_reply;
   int first_reply;
   const char *s_token;
-  
+
   if (!command || !command_line) {
     ret = send_message_with_args(501,context,"SITE command failed");
     return 1;

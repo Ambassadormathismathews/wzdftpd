@@ -157,6 +157,8 @@ int commands_add_defaults(void)
 #endif
 
 
+  if (commands_add("site_chmod",do_site_chmod,NULL,TOK_SITE_CHMOD)) return -1;
+  if (commands_add("site_chown",do_site_chown,NULL,TOK_SITE_CHOWN)) return -1;
   if (commands_add("site_chpass",do_site_chpass,NULL,TOK_SITE_CHPASS)) return -1;
   if (commands_add("site_chratio",do_site_chratio,NULL,TOK_SITE_CHRATIO)) return -1;
   if (commands_add("site_color",do_site_color,NULL,TOK_SITE_COLOR)) return -1;
