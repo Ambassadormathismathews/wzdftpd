@@ -95,9 +95,13 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     path[length]='\0';
   }
   /* TODO if backend name already contains .so, do not add .o */
-  /* if backend name begins with / (or x:/ for win, do not add path */
-  if (backend[0]!='/')
+  /* if backend name contains /, do not add path */
+  if (strchr(backend,'/')==NULL)
+#ifdef __CYGWIN__
+    length = snprintf(filename,1024,"%slibwzd%s.dll",path,backend);
+#else
     length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+#endif
   else
     length = snprintf(filename,1024,"%s",backend);
   if (length<0)
@@ -202,9 +206,13 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
     path[length]='\0';
   }
   /* TODO if backend name already contains .so, do not add .o */
-  /* if backend name begins with / (or x:/ for win, do not add path */
-  if (backend[0]!='/')
+  /* if backend name contains /, do not add path */
+  if (strchr(backend,'/')==NULL)
+#ifdef __CYGWIN__
+    length = snprintf(filename,1024,"%slibwzd%s.dll",path,backend);
+#else
     length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+#endif
   else
     length = snprintf(filename,1024,"%s",backend);
   if (length<0)
@@ -292,7 +300,7 @@ int backend_reload(const char *backend)
 int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -309,7 +317,7 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 int backend_find_group(int num, wzd_group_t * group, int * groupid)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -326,7 +334,7 @@ int backend_find_group(int num, wzd_group_t * group, int * groupid)
 int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_login) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -344,7 +352,7 @@ int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * u
 int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, unsigned int * userid)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_pass) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -363,12 +371,12 @@ int backend_commit_changes(const char *backend)
 {
   int ret;
 
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_commit_changes) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
   /* check that backend == mainConfig->backend.name */
-  if (strcmp(backend,mainConfig->backend.name)!=0) return 1;
+/*  if (strcmp(backend,mainConfig->backend.name)!=0) return 1;*/
 
   ret = (*mainConfig->backend.back_commit_changes)();
   return ret;
@@ -377,7 +385,7 @@ int backend_commit_changes(const char *backend)
 int backend_chpass(const char *username, const char *new_pass)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_chpass) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -410,7 +418,7 @@ int backend_inuse(const char *backend)
 int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_user) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
@@ -422,7 +430,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 int backend_mod_group(const char *backend, const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   int ret;
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_group) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return 1;
   }
