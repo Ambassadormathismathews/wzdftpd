@@ -70,17 +70,17 @@ static void _flags_simplify(char *flags, size_t length);
 
 void do_site_help_adduser(wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site adduser <user> <password> [<group>] [<backend>]");
+  send_message_with_args(501,context,"site adduser <user> <password> [<group>]");
 }
 
 /** site adduser: adds a new user
  *
- * adduser &lt;user&gt; &lt;password&gt; &lt;homedir&gt; [&lt;backend&gt;]
+ * adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;]
  */
 int do_site_adduser(char *command_line, wzd_context_t * context)
 {
   char *ptr;
-  char * username, *password, *groupname, *homedir;
+  char * username, *password, *groupname, *homedir, *ip=NULL;
   int ret;
   wzd_user_t user, *me;
   wzd_group_t * group=NULL;
@@ -103,23 +103,19 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
     do_site_help_adduser(context);
     return 0;
   }
-/*
-  homedir = strtok_r(NULL," \t\r\n",&ptr);
-  if (!homedir) {
-    do_site_help_adduser(context);
-    return 0;
-  }
-*/
+
   groupname = strtok_r(NULL," \t\r\n",&ptr);
-  /* TODO read backend */
+  group = GetGroupByName(groupname);
+
+  if (!group) ip = groupname; /* it is not a valid group, assume it is an ip */
 
   /* check if user already exists */
   if ( !backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User already exists");
     return 0;
   }
-  /* TODO find user group or take current user */
-  if (!groupname) {
+  /* find user group or take current user */
+  if (!group) {
     if (me && me->group_num>0) {
       group = GetGroupByID(me->groups[0]);
     } else {
@@ -127,11 +123,6 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
       return 0;
     }
   } else {
-    group = GetGroupByName(groupname);
-    if (!group) {
-      ret = send_message_with_args(501,context,"Invalid group name");
-      return 0;
-    }
     if (is_gadmin)
     {
       /* GAdmins cannot add user to different group */
@@ -195,6 +186,14 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   user.ratio = ratio;
   user.user_slots=0;
   user.leech_slots=0;
+
+  i = 0;
+  if (ip) {
+    wzd_strncpy(user.ip_allowed[i++],ip,MAX_IP_LENGTH);
+  };
+  while ( (ip = strtok_r(NULL," \t",&ptr)) ) {
+    wzd_strncpy(user.ip_allowed[i++],ip,MAX_IP_LENGTH);
+  }
 
   /* add it to backend */
   /* FIXME backend name hardcoded */
