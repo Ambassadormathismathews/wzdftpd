@@ -5,9 +5,9 @@ bin_PROGRAMS = siteuptime
 
 siteuptime_SOURCES = siteuptime.c
 
-siteuptime_LDFLAGS = @SSL_LDFLAGS@
+siteuptime_LDFLAGS = $(WZD_SSL_LIBS)
 
-AM_CPPFLAGS = @SSL_CPPFLAGS@
+AM_CPPFLAGS = $(WZD_SSL_INCLUDES)
 
 if USE_ICC
 # Workaround for compilation with icc

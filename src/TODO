@@ -4,8 +4,6 @@
 
 '********'
 - implement uid/gid
-  replace group names with gid in wzd_user_t
-  GetUserByID should search on uid or query backend
 '********'
 - threads management:
   better use thread_id instead of pid_child in diplays, etc.
@@ -16,7 +14,6 @@
 '********'
 - tcl:
   create API for locks
-  use TCL slaves
 '********'
 - create manpages !
 '********'
@@ -116,7 +113,6 @@ current objectives:
 - bandwith limitations: global / group / user
     + possibility of relatives restrictions: 75g == 75 % of the group limit (for 1 user)
 - implement permissions
-- dir perms are useless now ?!
 - finish implementation of ssl: explicit, port, data protection, buffer size
 - give choice between hard/soft chroot
 - option to enable/disable FXP to certain users

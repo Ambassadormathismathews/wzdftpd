@@ -4,7 +4,6 @@ EXPORTS
 	_checkPerm
 	_setPerm
 	ascii_lower
-	backend_chpass
 	backend_close
 	backend_commit_changes
 	backend_find_group

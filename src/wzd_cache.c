@@ -59,6 +59,11 @@
 
 typedef struct wzd_internal_cache_t wzd_internal_cache_t;
 
+/** @brief File cache: file descriptor, size, etc.
+ *
+ * \internal
+ * do not use directly
+ */
 struct wzd_internal_cache_t  {
   int fd;
 

@@ -25,6 +25,11 @@
 #ifndef __WZD_VARS__
 #define __WZD_VARS__
 
+/** @brief Shared variables between connections
+ *
+ * Theses variables are not really shared, since classic memory is
+ * implicitely shared between threads.
+ */
 struct wzd_shm_vars_t {
   char *key;
   void * data;

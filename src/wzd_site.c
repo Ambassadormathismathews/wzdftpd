@@ -79,6 +79,7 @@ extern time_t server_start;
 
 typedef int (*site_fct_t)(char *cl, wzd_context_t *context);
 
+/** @brief Site function definition: name, pointer to function */
 struct wzd_site_fct_t {
   char *name;
   site_fct_t fct;

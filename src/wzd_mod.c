@@ -322,7 +322,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
   ptr = buffer;
   real_command = read_token(buffer, &ptr);
-  if (!read_token) return 1;
+  if (!real_command) return 1;
   first_args = strtok_r(NULL, "\r\n", &ptr);
   if (first_args) {
     if (args) {

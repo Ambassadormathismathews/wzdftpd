@@ -41,11 +41,14 @@ typedef struct _wzd_acl_rule_t {
   struct _wzd_acl_rule_t * next_acl; /* linked list */
 } wzd_acl_line_t;
 
+/** @brief File: name, owner, permissions, etc. */
 struct wzd_file_t {
   char	filename[256];
-  char	owner[256]; /** \todo replace with uid */
-  char	group[256]; /** \todo replace with gid */
-  unsigned long permissions;	/* classic linux format */
+  /** \todo replace with uid */
+  char	owner[256];
+  /** \todo replace with uid */
+  char	group[256];
+  unsigned long permissions;	/**< @brief classic linux format */
   wzd_acl_line_t *acl;
   wzd_file_kind_t kind;
   void * data;

@@ -109,12 +109,12 @@ int my_str_compare(const char * src, const char *dst);
 void ascii_lower(char * s, unsigned int length);
 
 /** \brief read next token
- * \return a pointer to the next token, or NULL if not found, or if there is \
+ * \return a pointer to the next token, or NULL if not found, or if there is
  * only whitespaces, or if quotes are unbalanced
  *
  * Read next token separated by a whitespace, except if string begins
  * with a ' or ", in this case it searches the matching character.
- * Note: input string is modified as a \0 is written.
+ * Note: input string is modified as a \\0 is written.
  */
 char * read_token(char *s, char **endptr);
 

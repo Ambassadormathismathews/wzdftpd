@@ -1,3 +1,10 @@
+2004-06-11  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: site_cmd not working (yeah, again)
+	* bugfix: fixed SSL flags in backends and modules
+	* doc: updated inline doc (fox doxygen)
+	* feature: removed some unused structs to reduce memory use
+
 2004-06-08  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: transfer duration gets better precision

@@ -40,6 +40,7 @@ typedef int wzd_sem_t;
 
 
 /* You'd better NEVER touch this */
+/** @brief Shared memory zone */
 typedef struct {
 #ifdef WIN32
   void * handle;

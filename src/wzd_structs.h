@@ -180,6 +180,8 @@ typedef enum {
 } data_mode_t;
 
 /*********************** STATS ****************************/
+/** @brief User statistics: number of files downloaded, etc
+ */
 typedef struct {
   u64_t             bytes_ul_total;
   u64_t             bytes_dl_total;
@@ -189,6 +191,8 @@ typedef struct {
 
 /********************** USER, GROUP ***********************/
 
+/** @brief User definition
+ */
 typedef struct {
   unsigned int          uid;
   char                  username[HARD_USERNAME_LENGTH];
@@ -198,17 +202,17 @@ typedef struct {
   unsigned int          group_num;
   unsigned int          groups[MAX_GROUPS_PER_USER];
   time_t	        max_idle_time;
-  wzd_perm_t            userperms;
+  wzd_perm_t            userperms;      /**< @brief default permissions */
   char                  flags[MAX_FLAGS_NUM];
   unsigned long         max_ul_speed;
-  unsigned long         max_dl_speed;   /**< bytes / sec */
-  unsigned short	num_logins;	/**< number of simultaneous logins allowed */
+  unsigned long         max_dl_speed;   /**< @brief bytes / sec */
+  unsigned short	num_logins;	/**< @brief number of simultaneous logins allowed */
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   wzd_stats_t		stats;
   u64_t         	credits;
   unsigned int		ratio;
-  unsigned short	user_slots;	/**< user slots for gadmins */
-  unsigned short	leech_slots;	/**< leech slots for gadmins */
+  unsigned short	user_slots;	/**< @brief user slots for gadmins */
+  unsigned short	leech_slots;	/**< @brief leech slots for gadmins */
   time_t		last_login;
 } wzd_user_t;
 
@@ -314,8 +318,8 @@ typedef struct _wzd_module_t {
 
 /************************ SECTIONS ************************/
 
-/* opaque struct */
 typedef struct wzd_section_t wzd_section_t;
+/** @brief Section: definition, properties */
 struct wzd_section_t {
   char *        sectionname;
   char *        sectionmask;
@@ -329,13 +333,17 @@ struct wzd_section_t {
 
 /********************** SERVER STATS **********************/
 
+/** @brief Server statistics: number of connections, etc */
 typedef struct {
-  unsigned long num_connections; /**< total # of connections since server start */
-  unsigned long num_childs; /**< total # of childs process created since server start */
+  unsigned long num_connections; /**< @brief total # of connections since server start */
+  unsigned long num_childs; /**< @brief total # of childs process created since server start */
 } wzd_server_stat_t;
 
 /********************** SERVER PARAMS *********************/
 
+/** @brief Server parameters: stored in server global memory space,
+ * accessible to every thread.
+ */
 typedef struct _wzd_param_t {
   char * name;
   void * param;
@@ -364,8 +372,8 @@ typedef enum {
   WZD_INET6=2
 } net_family_t;
 
+/** @brief SSL connection objects */
 typedef struct {
-  char          certificate[256];
   SSL *         obj;
   ssl_data_t    data_mode;
   SSL *         data_ssl;

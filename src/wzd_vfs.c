@@ -571,7 +571,9 @@ int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context
 /** converts wanted_path (in ftp-style) to path (system path), checking
  * for errors and permissions
  *
+ * \param wanted_path The path in FTP-form
  * \param path MUST have a minimum size of WZD_MAX_PATH
+ * \param context The current context
  *
  * If the return is 0, then we are SURE the result exists.
  * If the real path points to a directory, then the result is / terminated
@@ -721,7 +723,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
           }
           strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
           wzd_free(ptr);
-          /** \buf this comparison is false */
+          /** \bug this comparison is false */
           if (DIRNCMP(buffer_vfs,syspath,strlen(syspath))==0)
           { /* ok, we have a candidate. Now check if user is allowed to see it */
             ptr = buffer_vfs + strlen(syspath);

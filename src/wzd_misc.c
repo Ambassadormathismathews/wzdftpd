@@ -988,7 +988,7 @@ char * read_token(char *s, char **endptr)
 
   if (!tok) {
     /* nothing, we return string */
-    endptr = NULL;
+    *endptr = NULL;
     return s;
   }
 
