@@ -47,6 +47,9 @@
   !define PROG_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROG_NAME}"
   !define PROG_UNINST_ROOT_KEY "HKLM"
   
+  
+ ;---------------------------
+ ;Help Functions
  Function GetWindowsVersion
    Push $R0
    Push $R1
@@ -121,6 +124,7 @@
 ;Variables
 Var STARTMENU_FOLDER
 Var WindowsFamily
+Var INI_VALUE
 
 ;Name and output file
   Name ${PROG_NAME}
@@ -140,6 +144,10 @@ Var WindowsFamily
 ;--------------------------------
 ;Interface Settings
   !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "wzdftpd.bmp"
+  !define MUI_WELCOMEFINISHPAGE_BITMAP "wizard.bmp"
+  !define MUI_ICON "install.ico"
+  !define MUI_UNICON "uninstall.ico"
   !define MUI_ABORTWARNING
 
 
@@ -149,6 +157,7 @@ Var WindowsFamily
   !define MUI_LANGDLL_REGISTRY_ROOT "HKCU" 
   !define MUI_LANGDLL_REGISTRY_KEY "Software\${PROG_NAME}" 
   !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
+  
 
 ;--------------------------------
 ;Pages
@@ -164,7 +173,8 @@ Var WindowsFamily
   !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
   
   !insertmacro MUI_PAGE_INSTFILES
-  
+  ;Post Install page with various options
+  Page custom PostInstallOptions
   ;Finish Page with wzdftpd website URL
   !define MUI_FINISHPAGE_LINK $(DESC_Link_Finish)
   !define MUI_FINISHPAGE_LINK_LOCATION "http://www.wzdftpd.net/"
@@ -172,7 +182,6 @@ Var WindowsFamily
   !define MUI_FINISHPAGE_NOREBOOTSUPPORT
   !insertmacro MUI_PAGE_FINISH
 
-  
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
 
@@ -201,6 +210,11 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_ENGLISH} "Developer Module"
   LangString DESC_Link_Finish ${LANG_ENGLISH} "Visit the wzdftpd site for the latest news, FAQs and support"
   LangString DESC_Detail_Print ${LANG_ENGLISH} "Installing Core Files..."
+  LangString PI_Field1_Caption ${LANG_ENGLISH} "IMPORTANT: If you have choose to Install Perl Module or TCL Module, you must install Active Perl and Active TCL from ActiveState that aren't packed or distributed by this package. To go to ActiveState website, please check the checkbox below."
+  LangString PI_Field2_Caption ${LANG_ENGLISH} "Open ActiveState website to download ActivePerl and/or Active TCL"
+  LangString PI_TEXT_TITLE ${LANG_ENGLISH} "Options page"
+  LangString PI_TEXT_SUBTITLE ${LANG_ENGLISH} " "
+
   
   ;French
   LangString DESC_MainSec ${LANG_FRENCH} "Programme principal et tous dossiers nécessaires. Inclut le plain-Text backend."
@@ -215,6 +229,10 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_FRENCH} "Module pur Développeur"
   LangString DESC_Link_Finish ${LANG_FRENCH} "Visitez l'emplacement de wzdftpd pour les derniers nouvelles, FAQ et appui."
   LangString DESC_Detail_Print ${LANG_FRENCH} "Installation des dossiers Principaux..."
+  LangString PI_Field1_Caption ${LANG_FRENCH} "IMPORTANT:  Si vous avez pour choisir d'installer le module de Perl ou le module de TCL, vous devez installer le Active Perl et le Active TCL d'ActiveState qui ne sont pas emballés ou ne sont pas distribués par ce paquet.  Pour aller au website d'ActiveState, vérifiez svp le checkbox ci-dessous."
+  LangString PI_Field2_Caption ${LANG_FRENCH} "Ouvrez le website d'ActiveState pour télécharger Active Perl et/ou Active TCL"
+  LangString PI_TEXT_TITLE ${LANG_FRENCH} "Page d'options."
+  LangString PI_TEXT_SUBTITLE ${LANG_FRENCH} " "
   
   ;Brazilian Portuguese
   LangString DESC_MainSec ${LANG_PORTUGUESEBR} "Programa principal e todos os arquivos necessários. Inclui o driver para autenticação em texto."
@@ -229,6 +247,10 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_PORTUGUESEBR} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESEBR} "Visite o site do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESEBR} "Instalação dos arquivos principais..."
+  LangString PI_Field1_Caption ${LANG_PORTUGUESEBR} "IMPORTANTE: Se você escolheu instalar os Módulos de Perl e/ou TCL, você precisa instalar o Active Perl e/ou o Active TCL da ActiveState que não são distribuídos por esta instalação. Para ir para o site da ActiveState, por favor, marque a caixa abaixo."
+  LangString PI_Field2_Caption ${LANG_PORTUGUESEBR} "Abrir o site da ActiveState para fazer o download do Active Perl e/ou Active TCL"
+  LangString PI_TEXT_TITLE ${LANG_PORTUGUESEBR} "Página de Opções."
+  LangString PI_TEXT_SUBTITLE ${LANG_PORTUGUESEBR} " "
 
   ;Portuguese
   LangString DESC_MainSec ${LANG_PORTUGUESE} "Programa principal e todos os ficheiros necessários. Inclui o driver para autenticação em texto."
@@ -243,6 +265,10 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_PORTUGUESE} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESE} "Visite o sítio do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESE} "Instalação dos ficheiros principais..."
+  LangString PI_Field1_Caption ${LANG_PORTUGUESE} "IMPORTANTE: Se você escolheu instalar os Módulos de Perl e/ou TCL, você precisa instalar o Active Perl e/ou o Active TCL da ActiveState que não são distribuídos por esta instalação. Para ir para o sítio da ActiveState, por favor, marque a caixa abaixo."
+  LangString PI_Field2_Caption ${LANG_PORTUGUESE} "Abrir o sítio da ActiveState para descarregar o Active Perl e/ou Active TCL"
+  LangString PI_TEXT_TITLE ${LANG_PORTUGUESE} "Página de Opções posteriores à Instalação."
+  LangString PI_TEXT_SUBTITLE ${LANG_PORTUGUESE} " "
   
   ;Spanish
   LangString DESC_MainSec ${LANG_SPANISH} "Programa principal y todos los archivos necesarios. Incluye el plain-Text backend."
@@ -257,6 +283,10 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_SPANISH} "Módulo Desarrollador"
   LangString DESC_Link_Finish ${LANG_SPANISH} "Visite el sitio del wzdftpd para las últimas noticias, y obtener ayuda"
   LangString DESC_Detail_Print ${LANG_SPANISH} "Instalando Archivos De Base..."
+  LangString PI_Field1_Caption ${LANG_SPANISH} "IMPORTANTE:  Si usted ha elegido instalar el módulo del Perl o el módulo del TCL, usted debe instalar el Active Perl y/o Active TCL de ActiveState que no es distribuido por este paquete.  Para ir al website de ActiveState, compruebe por favor el checkbox abajo."
+  LangString PI_Field2_Caption ${LANG_SPANISH} "Abrir el website de ActiveState para descargar ActivePerl y/o ActiveTCL"
+  LangString PI_TEXT_TITLE ${LANG_SPANISH} "Página de opciones"
+  LangString PI_TEXT_SUBTITLE ${LANG_SPANISH} " "
   
   ;German
   LangString DESC_MainSec ${LANG_GERMAN} "Hauptprogramm und alle erforderlichen Dateien. Umfaßt den Backend Klartext."
@@ -271,6 +301,10 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_GERMAN} "EntwicklerModul"
   LangString DESC_Link_Finish ${LANG_GERMAN} "Besuchen Sie den wzdftpdaufstellungsort für die neuesten Nachrichten, die FAQ und die Unterstützung"
   LangString DESC_Detail_Print ${LANG_GERMAN} "Dateien mit Speicherabzug installieren..."
+  LangString PI_Field1_Caption ${LANG_GERMAN} "WICHTIG:  Wenn Sie Perl-Modul oder TCL-Modul anzubringen gewählt haben, müssen Sie aktives Perl und aktiven TCL von ActiveState anbringen, das nicht durch dieses Paket verpackt oder verteilt werden. Um zum website ActiveState zu gehen, überprüfen Sie bitte das checkbox unten."
+  LangString PI_Field2_Caption ${LANG_GERMAN} "Öffnen Sie website ActiveState, um ActivePerl und/oder aktiven TCL zu downloaden"
+  LangString PI_TEXT_TITLE ${LANG_GERMAN} "Nacher Installieren Wahlseite"
+  LangString PI_TEXT_SUBTITLE ${LANG_GERMAN} " "
   
   ;Italian
   LangString DESC_MainSec ${LANG_ITALIAN} "Programma principale e tutte le lime necessarie. Include il plain-Text backend."
@@ -285,14 +319,18 @@ Var WindowsFamily
   LangString CAPT_DevelopSec ${LANG_ITALIAN} "Modulo Di Sviluppatore"
   LangString DESC_Link_Finish ${LANG_ITALIAN} "Visiti il luogo del wzdftpd per le ultimi notizie, FAQ e supporto"
   LangString DESC_Detail_Print ${LANG_ITALIAN} "Installando Le Lime Di Nucleo..."
-
+  LangString PI_Field1_Caption ${LANG_ITALIAN} "IMPORTANTE:  Se avete scegliere installare il modulo del Perl o il modulo di TCL, dovete installare il Active Perl  ed il Active TCL da ActiveState che non sono imballati o non distribuiti da questo pacchetto.  Per andare al website di ActiveState, controlli prego il checkbox qui sotto."
+  LangString PI_Field2_Caption ${LANG_ITALIAN} "Apra il website di ActiveState per trasferire ActivePerl e/o ActiveTCL"
+  LangString PI_TEXT_TITLE ${LANG_ITALIAN} "Pagina di opzioni"
+  LangString PI_TEXT_SUBTITLE ${LANG_ITALIAN} " "
 
 ;--------------------------------
 ;Reserve Files
 ;These files should be inserted before other files in the data block
 ;Keep these lines before any File command
 ;Only for solid compression (by default, solid compression is enabled for BZIP2 and LZMA)
-  
+  ReserveFile "PostInstallOptions.ini"
+  !insertmacro MUI_RESERVEFILE_INSTALLOPTIONS
   !insertmacro MUI_RESERVEFILE_LANGDLL
 
 ;--------------------------------
@@ -327,6 +365,7 @@ Section "!$(CAPT_MainSec)" MainSec
   File "${OPENSSL_LIB_DIR}ssleay32.dll"
   File "${OPENSSL_LIB_DIR}libeay32.dll"
   File "${ZLIB_DIR}zlib1.dll"
+  File "${SRC_DIR}wzd.pem"
 
   ;file_*.txt files
   SetOutPath "$INSTDIR\etc\"
@@ -352,9 +391,8 @@ Section "!$(CAPT_MainSec)" MainSec
   File "${ROOT_DIR}README"
   File "${ROOT_DIR}TLS.ReadmeFirst"
   File "${ROOT_DIR}wzd_tls.cnf"
-  File "${SRC_DIR}wzd.pem"
-  File "${DOT_DOT_DIR}wzd.cfg"
-  File "${DOT_DOT_DIR}users"
+  File /oname=wzd.cfg "${SRC_DIR}wzd.cfg.sample.in"
+  File /oname=users "${SRC_DIR}users.sample"
 
   ;Plain-Text backend
   SetOutPath "$INSTDIR\backends"
@@ -385,10 +423,10 @@ Section "!$(CAPT_MainSec)" MainSec
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
   StrCpy $WindowsFamily 'NT'
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Start Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-ss"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Stop Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-st"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Register Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-si"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Unregister Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-sd"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Start Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-ss" "$INSTDIR\${PROG_NAME}.exe" 2
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Stop Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-st" "$INSTDIR\${PROG_NAME}.exe" 3
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Register Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-si" "$INSTDIR\${PROG_NAME}.exe" 1
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Unregister Service ${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe" "-sd" "$INSTDIR\${PROG_NAME}.exe" 4
   Goto lbl_family1
   StrCpy $WindowsFamily '9X'
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PROG_NAME}.lnk" "$INSTDIR\${PROG_NAME}.exe"
@@ -396,49 +434,161 @@ Section "!$(CAPT_MainSec)" MainSec
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\wzdftpd on the Web.lnk" "$INSTDIR\${PROG_NAME}.url"
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
-  
+
+  ;-----------------------------------
   ;Modify the wzd.cfg and users files
+  ;-----------------------------------
+  
   ;Starts with wzd.cfg file
-  ;Replace c:\program files\wzdftpd\ by $INSTDIR
-  Push "c:\program files\wzdftpd"
-  Push $INSTDIR
+  ;Replace @e_localstatedir@/log/@PACKAGE@/ by $INSTDIR\logs
+  Push "@e_localstatedir@/log/@PACKAGE@/"
+  Push "$INSTDIR\logs\"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace @e_localstatedir@/log/@PACKAGE@/ by $INSTDIR\logs
+  Push "@e_localstatedir@/log/@PACKAGE@"
+  Push "$INSTDIR\logs"
   Push all
   Push all
   Push "$INSTDIR\wzd.cfg"
   Call AdvReplaceInFile
 
-  ;Replace the "losts" c:\wzdftpd
-  Push "c:\wzdftpd"
-  Push $INSTDIR
+  ;Replace @e_datadir@/@PACKAGE@/backends/ by $INSTDIR\backends
+  Push "@e_datadir@/@PACKAGE@/backends/"
+  Push '"$INSTDIR\backends\'
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace @e_datadir@/@PACKAGE@/modules/ by $INSTDIR\backends
+  Push "@e_datadir@/@PACKAGE@/modules/"
+  Push "$INSTDIR\modules\"
   Push all
   Push all
   Push "$INSTDIR\wzd.cfg"
   Call AdvReplaceInFile
 
-  ;Comments the two last lines :)
-  Push "-site_my_free = *"
-  Push "# -site_my_free = *"
+  ;Replace @e_datadir@/@PACKAGE@/ by $INSTDIR
+  Push "@e_datadir@/@PACKAGE@/"
+  Push "$INSTDIR\"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace @e_sysconfdir@\user by $INSTDIR
+  Push "@e_sysconfdir@/users"
+  Push "$INSTDIR\users"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace @e_sysconfdir@/wzd.pem by $INSTDIR
+  Push "@e_sysconfdir@/wzd.pem"
+  Push "$INSTDIR\wzd.pem"
   Push all
   Push all
   Push "$INSTDIR\wzd.cfg"
   Call AdvReplaceInFile
 
-  ;Comments the two last lines :)
-  Push "-site_test = =pollux"
-  Push "# -site_my_free = *"
+  ;Replace @e_sysconfdir@ by $INSTDIR
+  Push "@e_sysconfdir@/"
+  Push "$INSTDIR\etc\"
   Push all
   Push all
   Push "$INSTDIR\wzd.cfg"
   Call AdvReplaceInFile
 
+  ;Replace libwzdplaintext.so by libwzd_plaintext.dll
+  Push "libwzdplaintext.so"
+  Push 'libwzd_plaintext.dll"'
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace libwzdmysql.so by libwzd_mysql.dll
+  Push "libwzdmysql.so"
+  Push 'libwzd_mysql.dll"'
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+
+  ;Replace #pid_file by pid_file
+  Push "#pid_file"
+  Push "pid_file"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+
+  
+  ;Replace |/home/pollux/vfs|/etc| by |$INSTDIR\vfsroot\my_system|C:\|
+  Push "|/home/pollux/vfs|/etc|"
+  Push "|$INSTDIR\vfsroot\my_system|C:\|"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace |/home/pollux/K|/tmp| by |$INSTDIR\vfsroot\my_docs|D:\|
+  Push "|/home/pollux/K|/tmp|"
+  Push "|$INSTDIR\vfsroot\my_docs|D:\|"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace @e_datadir@/@PACKAGE@/modules/ by $INSTDIR\modules
+  Push "@e_datadir@/@PACKAGE@/modules/"
+  Push "$INSTDIR\modules\"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
+  ;Replace .so by .dll
+  Push ".so"
+  Push ".dll"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+
+  ;-----------------------------------
   ;Now it's time to modify the users file
-  ;Replace c:\program files\wzdftpd\ by $INSTDIR
-  Push "c:\program files\wzdftpd"
-  Push $INSTDIR
+  ;-----------------------------------
+  
+  ;Replace home=/ by home=$INSTDIR
+  Push "home=/"
+  Push "home=$INSTDIR\"
   Push all
   Push all
   Push "$INSTDIR\users"
   Call AdvReplaceInFile
+  
+  ;Replace \home by home=$INSTDIR
+  Push "\home"
+  Push "\ftproot"
+  Push all
+  Push all
+  Push "$INSTDIR\users"
+  Call AdvReplaceInFile
+
+  ;Replace /pollux/ftp-test by \ftproot
+  Push "/pollux/ftp-test"
+  Push "\ftproot"
+  Push all
+  Push all
+  Push "$INSTDIR\users"
+  Call AdvReplaceInFile
+  
 SectionEnd
 
 ;------------------
@@ -450,12 +600,11 @@ Section -Post
   WriteRegStr HKLM "Software\${PROG_NAME}" "" "$INSTDIR\wzdftpd.exe"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
-  WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\wzdftpd.exe"
+  WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\Uninstall.exe"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayVersion" "${VER_DISPLAY}"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "URLInfoAbout" "${WEBSITE_URL}"
-  ;register and start service
+  ;register service
   ExecWait '"$INSTDIR\${PROG_NAME}.exe" -si' $0
-  ;ExecWait '"$SYSDIR\net" start wzdftpd' $0
 SectionEnd
 
 ;---------------
@@ -547,11 +696,25 @@ Function .onInit
   !insertmacro MUI_LANGDLL_DISPLAY
   Call GetWindowsFamily
   Pop $WindowsFamily
+  !insertmacro MUI_INSTALLOPTIONS_EXTRACT "PostInstallOptions.ini"
+FunctionEnd
+
+Function PostInstallOptions
+  !insertmacro MUI_INSTALLOPTIONS_WRITE "PostInstallOptions.ini" "Field 1" "Text" "$(PI_Field1_Caption)"
+  !insertmacro MUI_INSTALLOPTIONS_WRITE "PostInstallOptions.ini" "Field 2" "Text" "$(PI_Field2_Caption)"
+  !insertmacro MUI_HEADER_TEXT "$(PI_TEXT_TITLE)" "$(PI_TEXT_SUBTITLE)"
+  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "PostInstallOptions.ini"
+  
+  ;Checks if user wants to go to ActiveState website
+  !insertmacro MUI_INSTALLOPTIONS_READ $INI_VALUE "PostInstallOptions.ini" "Field 2" "State"
+
+  ;Display a messagebox if check box was checked
+  StrCmp $INI_VALUE "1" "" +2
+    ExecShell "open" "http://www.activestate.com/"
 FunctionEnd
 
 ;--------------------------------
 ;Descriptions
-  
 
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${MainSec} $(DESC_MainSec)

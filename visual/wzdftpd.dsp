@@ -99,7 +99,7 @@ SOURCE=..\src\wzd_init_lex.l
 !IF  "$(CFG)" == "wzdftpd - Win32 Release"
 
 # Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\src
+InputDir=\Users\Ze\wzdftpd\wzdftpd-HEAD\src
 InputPath=..\src\wzd_init_lex.l
 InputName=wzd_init_lex
 
@@ -111,7 +111,7 @@ InputName=wzd_init_lex
 !ELSEIF  "$(CFG)" == "wzdftpd - Win32 Debug"
 
 # Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\src
+InputDir=\Users\Ze\wzdftpd\wzdftpd-HEAD\src
 InputPath=..\src\wzd_init_lex.l
 InputName=wzd_init_lex
 
@@ -159,6 +159,10 @@ SOURCE=..\src\wzd_ServerThread.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# Begin Source File
+
+SOURCE=.\wzdftpd.res
+# End Source File
 # End Group
 # Begin Source File
 
