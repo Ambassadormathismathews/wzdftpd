@@ -153,7 +153,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	  continue;
 	}
 
-        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13ld %s %s\r\n",
+        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
                 S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
                 st.st_mode & S_IRUSR ? 'r' : '-',
                 st.st_mode & S_IWUSR ? 'w' : '-',
@@ -167,7 +167,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
                 (int)st.st_nlink,
                 user->username,
                 "ftp",
-                st.st_size,
+                (unsigned long long)st.st_size,
                 datestr,
                 ptr);
                 
