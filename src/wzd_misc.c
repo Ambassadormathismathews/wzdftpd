@@ -337,9 +337,12 @@ wzd_bw_limiter * limiter_new(int maxspeed)
 
 void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
 {
-  long dif;
   struct timeval tv;
   struct timezone tz;
+  double elapsed;
+  double pause_time;
+  double rate_ratio;
+  unsigned int bw_rate;
 
   if (!l) return;
   if (l->maxspeed == 0) return;
@@ -351,26 +354,17 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
   if ( (l->bytes_transfered >= l->maxspeed) || force_check )
   {
     gettimeofday( &tv, &tz );
-    dif = (tv.tv_sec - l->current_time.tv_sec) * 1000
-      + (tv.tv_usec - l->current_time.tv_usec) / 1000;
-/*fprintf(mainConfig->logfile,"%d %ld %.1f\n",l->bytes_transfered,dif,(l->bytes_transfered)/1024.f);*/
-    l->current_speed = l->bytes_transfered;
-    dif = (((1000L * l->bytes_transfered) / l->maxspeed) - dif) * 1000L;
-
-    /* if usleep takes too long, this will compensate by
-     * putting the expecting time after usleep into l->current_time
-     * instead of reading the real time after an inacurrate
-     * usleep, allowing the transfer to catch up */
-    memcpy(&(l->current_time), &tv, sizeof(struct timeval));
-    l->current_time.tv_usec += (dif % 1000000);
-    l->current_time.tv_sec += (dif / 1000000);
-    if (dif > 0)
-      usleep(dif);
-    l->bytes_transfered = 0;
-/*    l->bytes_transfered -= l->maxspeed;
-    if (l->bytes_transfered < 0)
-      l->bytes_transfered = 0;*/
+    elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
+    elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
+    if (elapsed==(double)0) elapsed=0.01;
+    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);;
   }
+  if (bw_rate <= l->maxspeed) {
+    return;
+  }
+  rate_ratio = (double)bw_rate / (double)l->maxspeed;
+  pause_time = (rate_ratio - (double)1)*elapsed;
+  usleep ((unsigned long)(pause_time * (double)1000000));
 }
 
 void limiter_free(wzd_bw_limiter *l)
@@ -378,7 +372,6 @@ void limiter_free(wzd_bw_limiter *l)
   if (l)
     free(l);
 }
-
 
 /* cookies */
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, void * void_context)
