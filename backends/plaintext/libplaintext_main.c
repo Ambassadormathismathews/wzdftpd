@@ -863,6 +863,12 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
   return ret;
 }
 
+int FCN_FINI(void)
+{
+/*  fprintf(stderr,"Backend plaintext unloading\n");*/
+  return 0;
+}
+
 int wzd_set_user_pool(wzd_user_t * user_list)
 {
   user_pool = user_list;
@@ -946,7 +952,7 @@ fprintf(stderr,"User %s not found\n",login);
     found = strcasecmp(cipher,user_pool[count].userpass);
 /*fprintf(stderr,"%s %s == %s : %d\n",login,cipher,user_pool[count].userpass,found);*/
     if (found) {
-fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[count].username,pass);
+/*fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[count].username,pass);*/
       return -1; /* passwords do not match */
     }
   }
@@ -1143,7 +1149,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
     if (mod_type & _USER_RATIO) user_pool[count].ratio = user->ratio;
   } else { /* user not found, add it */
-    fprintf(stderr,"Add user %s\n",name);
+/*    fprintf(stderr,"Add user %s\n",name);*/
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
     if (strcasecmp(user->userpass,"%")!=0) {
       salt[0] = 'a' + (char)(rand()%26);

@@ -1061,6 +1061,7 @@ void serverMainThreadExit(int retcode)
 #endif
   /* we need to wait for child threads to be effectively dead */
   sleep(1);
+  backend_close(mainConfig->backend.name);
   wzd_cache_purge();
   server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);

@@ -1,7 +1,13 @@
+# Sep, 03 2003
+- call fini function when unloading backend
+
 # Aug, 28 2003
 - added some debug stuff
 - bugfix: do not include lex'ed C files (build fails on cygwin)
-- some woth on the debian package
+- some work on the debian package
+- configure: PTHREADS detection changed to another macro
+  This should work on all archs and close "gcc: unrecognized option'-pthread'"
+  on cygwin
 
 # Aug, 12 2003
 - bugfix: autogen.sh not working on bsd

@@ -96,6 +96,10 @@ typedef struct {
 #define	FCN_INIT		wzd_init
 #define	STR_INIT		"wzd_init"
 
+/* int FCN_FINI(void) */
+#define	FCN_FINI		wzd_fini
+#define	STR_FINI		"wzd_fini"
+
 /* int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user) */
 #define	FCN_VALIDATE_LOGIN	wzd_validate_login
 #define	STR_VALIDATE_LOGIN	"wzd_validate_login"

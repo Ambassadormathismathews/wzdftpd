@@ -263,10 +263,22 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
 
 int backend_close(const char *backend)
 {
+  int (*fini_fcn)(void);
   int ret;
 
   /* step 1: check that backend == mainConfig->backend.name */
   if (strcmp(backend,mainConfig->backend.name)!=0) return 1;
+
+  /* step 2: call end function */
+  fini_fcn = (int (*)(void))dlsym(mainConfig->backend.handle,DL_PREFIX STR_FINI);
+  if (fini_fcn) {
+    ret = (*fini_fcn)();
+    if (ret) {
+      out_log(LEVEL_CRITICAL,"Backend %s reported errors on exit (handle %lu)\n",
+	  backend,mainConfig->backend.handle);
+/*      return 1;*/
+    }
+  }
 
   /* close backend */
   ret = dlclose(mainConfig->backend.handle);
