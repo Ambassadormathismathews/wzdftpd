@@ -174,6 +174,7 @@ void WZD_MODULE_CLOSE(void)
   Tcl_DeleteInterp(interp);
   interp = NULL;
 /*  Tcl_Exit(0);*/
+  Tcl_Finalize();
   out_log(LEVEL_INFO,"TCL module unloaded\n");
 }
 
