@@ -1,6 +1,7 @@
 2004-11-22  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: problems with locale in LIST (closes: #0020)
+	* bugfix:  Can't chdir inside symbolic links  (closes: #0021)
 
 2004-11-08  Pierre Chifflier  <pollux@cpe.fr>
 

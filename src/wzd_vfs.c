@@ -765,11 +765,12 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
       sys_offset += strlen(lpart);
     } /* stat */
 
-    /* 2 possibilities:
+    /* 3 possibilities:
      *   - regular directory
+     *   - symlink (on filesystem)
      *   - file
      */
-    if (S_ISDIR(s.st_mode)) {
+    if (S_ISDIR(s.st_mode) || S_ISLNK(s.st_mode)) {
       if (syspath[sys_offset-1] != '/')
         syspath[sys_offset++] = '/';
       if (_checkFileForPerm(syspath,".",RIGHT_CWD,user)) {
