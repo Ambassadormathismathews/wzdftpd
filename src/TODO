@@ -3,8 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- site change user credits
-'********'
 - rename wzd.cfg to wzd.cfg.sample and users to users.sample
 '********'
 - provide a socket registration interface to have ~ servers
@@ -12,11 +10,6 @@
 - change 257 reply to allow customization, and force valid FTP reply
 '********'
 - override internal site commands (wipe, etc)
-'********'
-- create manpages !
-  * create manpages for site* tools (section 1)
-'********'
-- implement uid/gid // almost finished
 '********'
 - threads management:
   better use thread_id instead of pid_child in diplays, etc.

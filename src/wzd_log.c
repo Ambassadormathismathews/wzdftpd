@@ -79,7 +79,7 @@ void log_close(void)
 
 void out_log(int level,const char *fmt,...)
 {
-  int prior;
+  int prior=0;
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];

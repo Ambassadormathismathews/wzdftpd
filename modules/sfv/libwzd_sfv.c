@@ -1234,7 +1234,7 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
   char * str_num_files;
   char * stripped_dirname = NULL;
   char * ptr;
-  int num_files;
+  int num_files=0;
   int i;
   int ret;
   /* search for following pattern in .diz file (in order!):

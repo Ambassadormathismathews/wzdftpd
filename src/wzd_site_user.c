@@ -675,7 +675,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   char * username, * field, * value;
   unsigned long mod_type;
   unsigned long ul;
-  unsigned int oldratio;
+  unsigned int oldratio=0;
   int ret;
   wzd_user_t user, *me;
   int uid;
@@ -1079,7 +1079,7 @@ int do_site_flags(char *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   char *ptr;
-  char * username, * newflags;
+  char * username, * newflags = NULL;
   int ret;
   wzd_user_t user;
   int uid;

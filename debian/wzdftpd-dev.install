@@ -3,3 +3,4 @@ usr/lib/libwzd.so
 usr/include/*
 usr/bin/wzd-config
 usr/lib/aclocal/wzd.m4
+usr/share/man/man1/wzd-config.1

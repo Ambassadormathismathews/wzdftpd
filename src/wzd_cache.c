@@ -309,7 +309,7 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
   off_t position;
   int fd;
   char buffer[4096], *ptr, *dst;
-  char _c;
+  char _c=0;
   ssize_t ret;
   unsigned long size_to_read;
   wzd_internal_cache_t * cache;

@@ -1,8 +1,12 @@
 etc/*
-usr/share/doc/wzdftpd/*
 usr/sbin/wzdftpd
 usr/bin/site*
 usr/lib/libwzd.so.*
 usr/lib/wzdftpd/backends/libwzdplaintext.so
 usr/lib/wzdftpd/backends/libwzdpam.so
 usr/lib/wzdftpd/modules/libwzd_sfv.so
+usr/share/doc/wzdftpd/*
+usr/share/man/man1/siteconfig.1
+usr/share/man/man1/siteuptime.1
+usr/share/man/man1/sitewho.1
+usr/share/man/man8/wzdftpd.8

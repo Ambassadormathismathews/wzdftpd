@@ -1077,7 +1077,7 @@ int do_site_reload(char * ignored, wzd_context_t * context)
 int do_site_rusage(char * ignored, wzd_context_t * context)
 {
 #ifndef _MSC_VER
-  int ret;
+  int ret=0;
   char buffer[256];
   struct rusage ru;
   struct rlimit rlim;
@@ -1215,7 +1215,7 @@ int do_site_unlock(char *command_line, wzd_context_t * context)
   char buffer[BUFFER_LEN];
   char * ptr;
   char * filename;
-  int ret;
+  int ret=0;
 
   ptr = command_line;
   filename = strtok_r(command_line," \t\r\n",&ptr);

@@ -590,7 +590,7 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
   char * groupname;
   int ret;
   wzd_group_t * group;
-  int i,found;
+  int i,found=0;
   wzd_user_t * user, * me;
 
   me = GetUserByID(context->userid);

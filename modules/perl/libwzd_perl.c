@@ -433,7 +433,7 @@ static XS(XS_wzd_test)
 
   dXSARGS;
 
-    printf("Hello from c\n");
+    printf("Hello from c (items: %d)\n",(int)items);
 
   XSRETURN_EMPTY;
 }

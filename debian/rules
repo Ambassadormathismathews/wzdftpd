@@ -18,8 +18,11 @@ DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 
-CFLAGS = -Wall -g
+CFLAGS = -Wall
 
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
 else
@@ -98,9 +101,6 @@ install-arch:
 	# debian/tmp.
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-	install -m 755 -d debian/tmp/usr/include/wzdftpd
-	install -m 644 src/*.h debian/tmp/usr/include/wzdftpd/
-
 	# TODO since we install in standard dir, the following is becoming
 	# useless ??
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/html
@@ -113,13 +113,6 @@ install-arch:
 	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.a
 	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.la
 
-
-#	install -m 644 debian/*.1.gz debian/wzdftpd/usr/share/man/man1/
-#
-#	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdmysql* debian/wzdftpd-back-mysql/usr/lib/wzdftpd/backends
-#	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdpam* debian/wzdftpd-back-pam/usr/lib/wzdftpd/backends
-#	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_tcl* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
-#	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-sfv/usr/lib/wzdftpd/modules
 
 	dh_install -s --list-missing --sourcedir=debian/tmp
 # Must not depend on anything. This is to be called by

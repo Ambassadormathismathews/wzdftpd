@@ -147,6 +147,7 @@ time_t server_time;
 
 
 
+#ifndef WZD_MULTITHREAD
 static void cleanchild(int nr) {
 #ifndef _MSC_VER
   wzd_context_t * context;
@@ -183,6 +184,7 @@ static void cleanchild(int nr) {
   }*/
 #endif /* _MSC_VER */
 }
+#endif /* ! WZD_MULTITHREAD */
 
 static void context_init(wzd_context_t * context)
 {
@@ -638,7 +640,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
   char buffer[BUFFER_LEN];
   const char * ptr;
   int i=0;
-  wzd_context_t * context;
+  wzd_context_t * context=NULL;
   unsigned short remote_port;
   unsigned short local_port;
   int fd_ident;
