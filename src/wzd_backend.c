@@ -290,19 +290,19 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
     backend_init_function fcn;
     wzd_backend_t * b;
 
-    b = mainConfig->backend.b = wzd_malloc(sizeof(wzd_backend_t));
-    memset(b,0,sizeof(wzd_backend_t));
-    b->struct_version = STRUCT_BACKEND_VERSION;
-
-    mainConfig->backend.handle = handle;
-    if (backend != mainConfig->backend.name) /* strings must not overlap */
-    {
-      wzd_free(mainConfig->backend.name);
-      mainConfig->backend.name = wzd_strdup(backend);
-    }
-
     fcn = (backend_init_function)dlsym(handle, DL_PREFIX "wzd_backend_init");
     if (fcn) {
+
+      b = mainConfig->backend.b = wzd_malloc(sizeof(wzd_backend_t));
+      memset(b,0,sizeof(wzd_backend_t));
+      b->struct_version = STRUCT_BACKEND_VERSION;
+
+      if (backend != mainConfig->backend.name) /* strings must not overlap */
+      {
+        wzd_free(mainConfig->backend.name);
+        mainConfig->backend.name = wzd_strdup(backend);
+      }
+
       ret = (*fcn)(b);
 
       /* compatibility layer (to be removed)
@@ -401,19 +401,24 @@ int backend_close(const char *backend)
   /* close backend */
   ret = 0;
   if (mainConfig->backend.handle)
+  {
+    char * tempname = strdup(backend);
     ret = dlclose(mainConfig->backend.handle);
-  if (ret) {
+    if (ret) {
 #ifdef WIN32
-    ret = GetLastError();
-    out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
-      backend,mainConfig->backend.handle, ret,strerror(ret));
-    backend_clear_struct(&mainConfig->backend);
+      ret = GetLastError();
+      out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
+          tempname,mainConfig->backend.handle, ret,strerror(ret));
+      backend_clear_struct(&mainConfig->backend);
 #else
-    out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
-      backend,mainConfig->backend.handle);
-    out_log(LEVEL_INFO," Error '%s'\n",dlerror());
+      out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
+          tempname,mainConfig->backend.handle);
+      out_log(LEVEL_INFO," Error '%s'\n",dlerror());
 #endif
-    return 1;
+      free(tempname);
+      return 1;
+    }
+    free(tempname);
   }
 
   backend_clear_struct(&mainConfig->backend);

@@ -594,6 +594,9 @@ int wzd_backend_init(wzd_backend_t * backend)
 {
   if (!backend) return -1;
 
+  backend->name = wzd_strdup("plaintext");
+  backend->version = wzd_backend_version;
+
   backend->backend_init = _new_backend_init;
   backend->backend_exit = FCN_FINI;
 

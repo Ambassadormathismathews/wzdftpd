@@ -1,6 +1,7 @@
 LIBRARY LIBWZD_PLAINTEXT
 
 EXPORTS
+	wzd_backend_init
 	wzd_init
 	wzd_fini
 	wzd_validate_login
