@@ -2,16 +2,20 @@ include Makefile.config
 
 WZD_BUILD_NUM=$(DATE_TAG)
 
-COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
+CC=gcc
+LEX=flex
+
+COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
 COMMON_LIBS=
 
-SOURCES=wzd_main.c wzd_site.c wzd_site_user.c wzd_socket.c \
+SOURCES=wzd_main.c wzd_site.c wzd_site_user.c wzd_site_group.c wzd_socket.c \
   wzd_ClientThread.c wzd_ServerThread.c wzd_init.c \
-  ls.c wzd_data.c wzd_action.c wzd_file.c wzd_perm.c list.c stack.c
+  ls.c wzd_data.c wzd_action.c wzd_file.c wzd_perm.c list.c stack.c \
+  wzd_ratio.c wzd_section.c
 OBJS=$(SOURCES:%.c=%.o)
 DOBJS=$(SOURCES:%.c=%.do)
 POBJS=$(SOURCES:%.c=%.po)
-LIBS=-ldl $(COMMON_LIBS)
+LIBS=-ldl -lfl $(COMMON_LIBS)
 WINLIBS=$(COMMON_LIBS) -lcrypto
 CFLAGS=-O3 $(COMMON_CFLAGS)
 DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
@@ -24,6 +28,7 @@ LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
 
 ifeq ($(SSL_SUPPORT),1)
 SOURCES += wzd_tls.c
+COMMON_CFLAGS += -DSSL_SUPPORT
 COMMON_LIBS += -lssl
 endif
 
@@ -42,14 +47,12 @@ COMMON_CFLAGS += -DINTERNAL_SFV=1
 endif
 
 ifeq ($(PLATFORM),Linux)
-CC=gcc-3.2
 LIBWZD = libwzd.so
 EXEC=wzdFTPd
 COMMON_LIBS += -L. -lwzd -Wl,-rpath,.
 #COMMON_CFLAGS += -march=pentium4 -ffast-math -mmmx -msse -mfpmath=sse
-COMMON_CFLAGS += -march=pentium3
+#COMMON_CFLAGS += -march=pentium3
 else
-CC=gcc
 LIBWZD = libwzd.dll
 EXEC=wzdFTPd.exe
 COMMON_LIBS += -L. -llibwzd -Wl,-rpath,.
@@ -120,10 +123,10 @@ check_symlinks:
 	if [ -d ../modules/test ]; then ln -s ../modules/test/libwzd_test.so; fi
 
 clean:
-	rm -f *.o *.do *.po *~ core
+	rm -f *.o *.do *.po *~ core wzd_init.c
 
 distclean: clean
-	rm -f $(EXEC) $(LIBWZD)
+	rm -f $(EXEC) $(LIBWZD) wzd.log xferlog
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -134,8 +137,13 @@ distclean: clean
 .c.po:
 	$(CC) $(PCFLAGS) -c -o $@ $<
 
+wzd_init.c: wzd_init_lex.l
+	$(LEX) -o$@ $^
+
 ###### dependancies
-deps:
+dep: deps
+
+deps: wzd_init.c
 	rm -f Makefile.deps Makefile.deps2; \
 	for obj in $(SOURCES) $(LIBWZD_SOURCES); do $(CC) -MM $$obj $(COMMON_CFLAGS) >> Makefile.deps; done; \
 	sed s/\.o:/\.do:/g Makefile.deps >> Makefile.deps2; \
