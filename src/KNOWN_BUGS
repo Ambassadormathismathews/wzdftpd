@@ -31,3 +31,5 @@ drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO
 - FreeBSD: ./autogen.sh conplains it cannot find autoconf/libtool
   -> solution: go to /usr/local/bin and create symlinks autoconf -> autoconf257, libtool -> libtool15,
     libtoolize -> libtoolize15
+
+- FreeBSD: listening to an IPv6 socket does NOT listen to the same IPv4 socket !

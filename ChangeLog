@@ -1,3 +1,7 @@
+2004-02-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault in socket_connect() on FreeBSD
+
 2004-02-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* optimization: removed strcasecmp/strncpy in perm_find_create

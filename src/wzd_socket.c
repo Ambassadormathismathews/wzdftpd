@@ -431,19 +431,12 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   }
 #else /* _MSC_VER || WINSOCK_SUPPORT */
 
+  ret = connect(sock, sai, len);
+  if (ret >= 0) return sock;
     do {
       int sock_error;
       int s_len;
-      if (socket_wait_to_write(sock,timeout)==0) {
-        ret = connect(sock, sai, len);
-        if (ret < 0) {
-          if (errno == EINPROGRESS) {
-            continue;
-          }
-          socket_close(sock);
-          return -1;
-        }
-      } else {
+      if ( (ret=socket_wait_to_write(sock,timeout))!=0) {
         if (errno == EINPROGRESS) continue;
         out_log(LEVEL_NORMAL,"Error waiting for connection %s\n",strerror(errno));
         socket_close(sock);
