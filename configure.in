@@ -191,6 +191,6 @@ if test x$HOSTOS = xCygwin; then
 #  rm -f libtool2
   mv libtool2 libtool
   echo "Patching default configuration ! ..."
-  sed -e 's/lib\(.*\)\.so/cyg\1.dll/' src/wzd.cfg.in > src/wzd.cfg.in2
-  mv src/wzd.cfg.in2 src/wzd.cfg.in
+  sed -e 's/lib\(.*\)\.so/cyg\1.dll/' src/wzd.cfg > src/wzd.cfg2
+  mv src/wzd.cfg2 src/wzd.cfg
 fi
