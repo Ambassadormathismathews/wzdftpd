@@ -249,6 +249,8 @@ AC_CONFIG_FILES([Makefile
                  init.d/wzdftpd
 		 libwzd/Makefile
 		 libwzd-base/Makefile
+		 libwzd-perl/Makefile
+		 libwzd-perl/ext/Makefile.PL
 		 m4/Makefile
 		 man/Makefile
                  modules/Makefile

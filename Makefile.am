@@ -1,5 +1,10 @@
+AUTOMAKE_OPTIONS = 1.5  # Require Automake 1.5 or better.
 
-SUBDIRS = ac-helpers m4 libwzd-base libwzd src backends modules tools init.d doc man
+if HAVE_PERL
+  MAYBE_PERL = libwzd-perl
+endif
+
+SUBDIRS = ac-helpers m4 libwzd-base libwzd src backends modules $(MAYBE_PERL) tools init.d doc man
 
 bin_SCRIPTS = wzd-config
 
