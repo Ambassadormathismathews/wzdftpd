@@ -1,3 +1,10 @@
+#if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,12 +12,9 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <time.h>
 #include <malloc.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <regex.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -32,6 +36,7 @@
 #include "wzd_ServerThread.h"
 #include "wzd_ClientThread.h"
 #include "wzd_vfs.h"
+#include "wzd_perm.h"
 #include "wzd_socket.h"
 #include "wzd_mod.h"
 #include "wzd_crontab.h"
@@ -58,7 +63,7 @@ wzd_sem_t	limiter_sem;
 
 wzd_cronjob_t	* crontab;
 
-time_t server_start;
+/*time_t server_start;*/
 
 unsigned int wzd_server_uid;
 
@@ -72,11 +77,16 @@ int runMainThread(int argc, char **argv)
 }
 
 /************ PRIVATE *************/
+
+void free_config(wzd_config_t * config);
+
 void cleanchild(int nr) {
   wzd_context_t * context;
   int i;
   pid_t pid;
 
+  if (!context_list) return;
+  out_log(LEVEL_FLOOD,"cleanchild nr:%d\n",nr);
   while (1) {
     
     if ( (pid = wait3(NULL, WNOHANG, NULL)) > 0)
@@ -192,7 +202,7 @@ void server_restart(int signum)
   fprintf(stderr,"Sighup received\n");
 
   /* 1- Re-read config file, abort if error */
-  config = readConfigFile("wzd.cfg"); /* XXX */
+  config = readConfigFile(mainConfig->config_filename);
   if (!config) return;
 
   /* 2- Shutdown existing socket */
@@ -261,7 +271,8 @@ void server_restart(int signum)
     int fd;
     struct stat s;
     fclose(mainConfig->logfile);
-    mainConfig->logfile = fopen(mainConfig->logfilename,mainConfig->logfilemode);
+    fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
+    mainConfig->logfile = fdopen(fd,"a");
     if (mainConfig->logfile==NULL) {
       out_err(LEVEL_CRITICAL,"Could not reopen log file !!!\n");
     }
@@ -354,7 +365,11 @@ int check_server_dynamic_ip(void)
     {
       struct hostent* host_info;
       // try to decode dotted quad notation
+#ifdef __CYGWIN__
+      if ((sa_config.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
+#else
       if(!inet_aton(ip, &sa_config.sin_addr))
+#endif
       {
 	// failing that, look up the name
 	if( (host_info = gethostbyname(ip)) == NULL)
@@ -440,10 +455,8 @@ void login_new(int socket_accept_fd)
   /* do this iff login_pre_ip_check is enabled */
   if (mainConfig->login_pre_ip_check &&
         global_check_ip_allowed(userip)<=0) { /* IP was rejected */
-    /* FIXME we should not be in raw mode here ... */
-/*    char * reject_msg = "421-Your ip was rejected\r\n";
-    clear_write(newsock,reject_msg,strlen(reject_msg),0,HARD_XFER_TIMEOUT,NULL);*/
-    close(newsock);
+    /* close socket without warning ! */
+    socket_close(newsock);
     out_log(LEVEL_HIGH,"Failed login from %d.%d.%d.%d: global ip rejected\n",
       userip[0],userip[1],userip[2],userip[3]);
     return;
@@ -542,9 +555,9 @@ void login_new(int socket_accept_fd)
 #else /* WZD_MULTIPROCESS */
 #ifdef WZD_MULTITHREAD
     {
+      int ret;
       pthread_t thread;
       pthread_attr_t thread_attr;
-      int ret;
 
       ret = pthread_attr_init(&thread_attr);
       if (ret) {
@@ -555,9 +568,8 @@ void login_new(int socket_accept_fd)
 	out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
 	return;
       }
-      ret = pthread_create(&thread,NULL,clientThreadProc,context);
+      ret = pthread_create(&thread,&thread_attr,clientThreadProc,context);
       context->pid_child = (unsigned long)thread;
-      out_err(LEVEL_CRITICAL,"Thread created !\n");
       pthread_attr_destroy(&thread_attr); /* not needed anymore */
     }
 #else /* WZD_MULTITHREAD */
@@ -643,6 +655,10 @@ void serverMainThreadProc(void *arg)
   int i;
   unsigned int length=0;
   int backend_storage;
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+  WSADATA wsaData;
+  int nCode;
+#endif
 
   /* catch broken pipe ! */
 #ifdef __SVR4
@@ -650,7 +666,9 @@ void serverMainThreadProc(void *arg)
   sigset(SIGCHLD,cleanchild);
 #else
   signal(SIGPIPE,SIG_IGN);
+#ifndef WZD_MULTITHREAD
   signal(SIGCHLD,cleanchild);
+#endif /* WZD_MULTITHREAD */
 #endif
 
   signal(SIGINT,interrupt);
@@ -675,18 +693,38 @@ void serverMainThreadProc(void *arg)
   }
 #endif /* POSIX */
 
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+  /* Start Winsock up */
+  if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
+    out_log(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
+      __FILE__, __LINE__);
+    exit(-1);
+  }
+#endif
+
   ret = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,5);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
-    serverMainThreadExit(-1);
+    /* TODO XXX FIXME we should not exit like this, for at this point context_list
+     * and limiter_sem are not allocated ... juste clean up config, but be carefull
+     * another instance is not just runnning
+     */
+    free_config(mainConfig);
+    exit(-1);
   }
   {
     int one=1;
 
     if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
       out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
-      serverMainThreadExit(-1);
+      /* TODO XXX FIXME we should not exit like this, for at this point context_list
+       * and limiter_sem are not allocated ... juste clean up config, but be carefull
+       * another instance is not just runnning
+       */
+      close(ret);
+      free_config(mainConfig);
+      exit(-1);
     }
   }
 
@@ -717,6 +755,16 @@ void serverMainThreadProc(void *arg)
   mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
   mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
+#ifdef __CYGWIN__
+  /* cygwin sux ... shared library variables are NOT set correctly
+   * on dlopenín'
+   * remember me to slap the one who told me to make this prog portable ... oops
+   * it's me °_°
+   */
+  setlib_mainConfig(mainConfig);
+  setlib_contextList(context_list);
+#endif /* __CYGWIN__ */
+
   /* create limiter sem */
   limiter_sem = wzd_sem_create(mainConfig->shm_key+1,1,0);
 
@@ -734,7 +782,7 @@ void serverMainThreadProc(void *arg)
   }
 
   /********** set up crontab ********/
-/*  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);*/
+  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);
 
   /********** init modules **********/
   {
@@ -749,7 +797,7 @@ void serverMainThreadProc(void *arg)
   out_log(LEVEL_INFO,"Process %d ok\n",getpid());
 
   /* sets start time, for uptime */
-  time(&server_start);
+  time(&mainConfig->server_start);
 
   /* reset stats TODO load stats ! */
   reset_stats(&mainConfig->stats);
@@ -764,7 +812,11 @@ void serverMainThreadProc(void *arg)
     FD_ZERO(&r);
     FD_SET(mainConfig->mainSocket,&r);
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+    ret = select(0, &r, NULL, NULL, &tv);
+#else
     ret = select(mainConfig->mainSocket+1, &r, NULL, NULL, &tv);
+#endif
     
     switch (ret) {
     case -1: /* error */
@@ -798,7 +850,8 @@ void serverMainThreadProc(void *arg)
   ret = backend_commit_changes(mainConfig->backend.name);
   if (ret) {
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
-  }
+  } else
+    out_log(LEVEL_INFO,"Backend commited\n");
   serverMainThreadExit(0);
 }
 
@@ -836,12 +889,41 @@ void serverMainThreadExit(int retcode)
 #if SSL_SUPPORT
   tls_exit();
 #endif
+#ifdef WZD_MULTITHREAD
+  /* kill all childs threads */
+  if (context_list)
+  {
+    int i;
+    int ret;
+    for (i=0; i<HARD_USERLIMIT; i++)
+    {
+      if (context_list[i].magic == CONTEXT_MAGIC) {
+	ret = pthread_cancel(context_list[i].pid_child);
+#ifdef DEBUG
+	fprintf(stderr,"Killing child %lu - returned %d\n",context_list[i].pid_child,ret);
+#endif
+/*	client_die(&context_list[i]);*/
+
+#if SSL_SUPPORT
+/*	tls_free(&context_list[i]);*/
+#endif
+      }
+    }
+  }
+#endif
+  /* we need to wait for child threads to be effectively dead */
+  sleep(1);
   hook_free(&mainConfig->hook);
   vfs_free(&mainConfig->vfs);
+  perm_free_recursive(mainConfig->perm_list);
 /*  free(context_list);*/
   wzd_sem_destroy(limiter_sem);
   wzd_shm_free(context_shm);
+  context_list = NULL;
   /* free(mainConfig); */
   free_config(mainConfig);
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+  WSACleanup();
+#endif
   exit (retcode);
 }
