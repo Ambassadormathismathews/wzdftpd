@@ -6,14 +6,15 @@ DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)
 
-CFLAGS=-O2 -Wall -Wstrict-prototypes -I../../src
-DCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -I../../src
-PCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -I../../src
+COMMON_FLAGS=-Wall -Wstrict-prototypes -I../../src
+CFLAGS=-O2 $(COMMON_FLAGS)
+DCFLAGS=-g -DDEBUG $(COMMON_FLAGS)
+PCFLAGS=-g -DDEBUG -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs $(COMMON_FLAGS)
 LDFLAGS=-shared -lcrypt
 WINLDFLAGS=-shared -lcrypt
 
 ifeq ($(PLATFORM),Linux)
-CC=gcc-3.1
+CC=gcc-3.2
 else
 CC=gcc
 endif
@@ -21,6 +22,9 @@ endif
 .SUFFIXES: .c .o .do .po
 
 all: debug
+
+intel:
+	$(MAKE) 'CC=icc' 'COMMON_FLAGS=-w1 -I../../src'
 
 release: $(OBJS)
 ifeq ($(PLATFORM),Linux)
