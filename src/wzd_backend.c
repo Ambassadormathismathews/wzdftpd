@@ -55,6 +55,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_backend.h"
+#include "wzd_cache.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
 
@@ -363,6 +364,84 @@ wzd_user_t * backend_get_user(int userid)
   }
   return (*mainConfig->backend.back_get_user)(userid);
 }
+
+
+/** wrappers to user list */
+wzd_user_t * GetUserByID(unsigned int id)
+{
+  unsigned int i=0;
+  wzd_user_t *user, *user_return;
+
+  if (!mainConfig->user_list) return NULL;
+
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    /* try cache first */
+    if ( (user = usercache_get( predicate_uid, (void*)id )) )
+      return user;
+
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    user = (*mainConfig->backend.back_get_user)( (int)id );
+    user_return = usercache_add( user );
+    wzd_free(user);
+    return user_return;
+  }
+#endif
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (mainConfig->user_list[i].username[0] != '\0' && mainConfig->user_list[i].uid == id) {
+        return &mainConfig->user_list[i];
+    }
+    i++;
+  }
+  return NULL;
+}
+
+wzd_user_t * GetUserByName(const char *name)
+{
+  int i=0;
+  unsigned int uid;
+  wzd_user_t * user=NULL;
+
+  if (!mainConfig->user_list || !name || strlen(name)<=0) return NULL;
+out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
+
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    /* try cache first */
+    if ( (user = usercache_get( predicate_name, (void*)name )) )
+      return user;
+
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    uid = (*mainConfig->backend.back_find_user)(name,user);
+    if (uid >= 0) {
+      return GetUserByID( uid );
+    }
+    return NULL;
+  }
+#endif
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (mainConfig->user_list[i].username[0] != '\0') {
+      if (strcmp(name,mainConfig->user_list[i].username)==0)
+        return &mainConfig->user_list[i];
+    }
+    i++;
+  }
+
+  return NULL;
+}
+
+
+
 
 wzd_group_t * backend_get_group(int groupid)
 {

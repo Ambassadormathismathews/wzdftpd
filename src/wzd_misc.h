@@ -115,8 +115,6 @@ char * read_token(char *s, char **endptr);
 void win_normalize(char * s, unsigned int length, unsigned int lower);
 
 /* wrappers to user list */
-wzd_user_t * GetUserByID(unsigned int id);
-wzd_user_t * GetUserByName(const char *name);
 wzd_group_t * GetGroupByID(unsigned int id);
 wzd_group_t * GetGroupByName(const char *name);
 unsigned int GetUserIDByName(const char *name);

@@ -57,20 +57,8 @@ enum {
 };
 
 
-typedef int (*predicate_user_t)(wzd_user_t *, void * arg);
-
-
-static int predicate_uid(wzd_user_t * user, void * arg);
-static int predicate_name(wzd_user_t * user, void * arg);
-static wzd_user_t * usercache_add(wzd_user_t * user);
-static wzd_user_t * usercache_get( predicate_user_t p, void * arg );
-static void usercache_invalidate( predicate_user_t p, void * arg );
-
-
-
 
 static MYSQL mysql;
-static wzd_user_t *user_pool;
 static char *db_user, *db_passwd, *db_hostname, *db;
 
 static void wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
@@ -141,9 +129,6 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
   else
     fprintf(stderr, "Connected to database");
 #endif
-
-  /* user_pool wiil be used as a cache */
-  user_pool = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t)*HARD_USERLIMIT);
 
   return 0;
 }
@@ -370,7 +355,6 @@ int FCN_FINI()
 #endif
 
   mysql_close(&mysql);
-  wzd_free(user_pool);
 
   return 0;
 }
@@ -381,11 +365,8 @@ wzd_user_t * FCN_GET_USER(int uid)
   MYSQL_RES   *res;
   MYSQL_ROW    row, end_row;
   int num_fields;
-  wzd_user_t * user, *user_return;
+  wzd_user_t * user;
   unsigned int i,j;
-
-  user = usercache_get( predicate_uid, (void*)uid );
-  if (user) return user;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE uid='%d'", uid);
@@ -498,14 +479,8 @@ wzd_user_t * FCN_GET_USER(int uid)
   user->userperms = 0xffffffff;
 
   free(query);
-  user_return = usercache_add( user );
-  wzd_free(user);
 
-#ifdef DEBUG
-        fprintf(stderr,"user cache add %s\n",user_return->username);
-#endif
-
-  return user_return;
+  return user;
 }
 
 wzd_group_t * FCN_GET_GROUP(int gid)
@@ -631,81 +606,3 @@ static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned 
   return 1;
 }
 
-
-
-static int predicate_uid(wzd_user_t * user, void * arg)
-{
-  return (user->username[0] != '\0' && user->uid == (unsigned int)arg);
-}
-
-static int predicate_name(wzd_user_t * user, void * arg)
-{
-  return (strcmp(user->username,(char*)arg)==0);
-}
-
-
-static wzd_user_t * usercache_add(wzd_user_t * user)
-{
-  unsigned int i;
-
-  /* first pass: we check that entry is not already present */
-  for (i=0; i < HARD_USERLIMIT; i++) {
-    if (user_pool[i].username[0] != '\0') {
-      if (strcmp(user->username,user_pool[i].username)==0) {
-#ifdef DEBUG
-        if (user->uid != user_pool[i].uid) {
-          fprintf(stderr,"User with same name but different uid is already present !!\n");
-          fprintf(stderr,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
-        }
-#endif
-        /* found, we overwrite it */
-        memcpy(&user_pool[i],user,sizeof(wzd_user_t));
-        return &user_pool[i];
-      }
-    }
-  } /* for */
-
-  /* second pass: we search a free index */
-  for (i=0; i < HARD_USERLIMIT; i++) {
-    if (user_pool[i].username[0] == '\0') {
-      /* put it in cache */
-      memcpy(&user_pool[i],user,sizeof(wzd_user_t));
-      return &user_pool[i];
-    }
-  } /* for */
-
-#ifdef DEBUG
-  fprintf(stderr,"No more free space in cache\n");
-  fprintf(stderr,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
-#endif
-  return NULL;
-}
-
-static wzd_user_t * usercache_get( predicate_user_t p, void * arg )
-{
-  unsigned int i;
-  for (i=0; i < HARD_USERLIMIT; i++) {
-    if (user_pool[i].username[0] != '\0') {
-      /* test entry */
-      if ( (*p)(&user_pool[i],arg) ) {
-#ifdef DEBUG
-        fprintf(stderr,"user cache hit %s\n",user_pool[i].username);
-#endif
-        return &user_pool[i];
-      }
-    }
-  } /* for */
-  return NULL;
-}
-
-static void usercache_invalidate( predicate_user_t p, void * arg )
-{
-  unsigned int i;
-  for (i=0; i < HARD_USERLIMIT; i++) {
-    if (user_pool[i].username[0] != '\0') {
-      /* test entry */
-      if ( (*p)(&user_pool[i],arg) )
-        memset(&user_pool[i],0,sizeof(wzd_user_t));
-    }
-  } /* for */
-}

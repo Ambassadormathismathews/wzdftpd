@@ -422,3 +422,104 @@ void wzd_cache_purge(void)
     cache_current = cache_next;
   }
 }
+
+
+
+static wzd_user_t * cache_user_pool=NULL;
+
+
+int predicate_uid(wzd_user_t * user, void * arg)
+{
+  return (user->username[0] != '\0' && user->uid == (unsigned int)arg);
+}
+
+int predicate_name(wzd_user_t * user, void * arg)
+{
+  return (strcmp(user->username,(char*)arg)==0);
+}
+
+
+void usercache_init(void)
+{
+  cache_user_pool = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t)*HARD_USERLIMIT);
+  memset(cache_user_pool,0,sizeof(wzd_user_t)*HARD_USERLIMIT);
+}
+
+void usercache_fini(void)
+{
+  wzd_free(cache_user_pool);
+  cache_user_pool = NULL;
+}
+
+
+wzd_user_t * usercache_add(wzd_user_t * user)
+{
+  unsigned int i;
+
+  if (!user) return NULL;
+
+  /* first pass: we check that entry is not already present */
+  for (i=0; i < HARD_USERLIMIT; i++) {
+    if (cache_user_pool[i].username[0] != '\0') {
+      if (strcmp(user->username,cache_user_pool[i].username)==0) {
+#ifdef DEBUG
+        if (user->uid != cache_user_pool[i].uid) {
+          fprintf(stderr,"User with same name but different uid is already present !!\n");
+          fprintf(stderr,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
+        }
+#endif
+        /* found, we overwrite it */
+        memcpy(&cache_user_pool[i],user,sizeof(wzd_user_t));
+        return &cache_user_pool[i];
+      }
+    }
+  } /* for */
+
+  /* second pass: we search a free index */
+  for (i=0; i < HARD_USERLIMIT; i++) {
+    if (cache_user_pool[i].username[0] == '\0') {
+      /* put it in cache */
+#ifdef DEBUG
+      out_err(LEVEL_INFO,"user cache add %s\n",user->username);
+#endif
+      memcpy(&cache_user_pool[i],user,sizeof(wzd_user_t));
+      return &cache_user_pool[i];
+    }
+  } /* for */
+
+#ifdef DEBUG
+  out_log(LEVEL_NORMAL,"No more free space in cache\n");
+  out_log(LEVEL_NORMAL,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
+#endif
+  return NULL;
+}
+
+wzd_user_t * usercache_get( predicate_user_t p, void * arg )
+{
+  unsigned int i;
+  for (i=0; i < HARD_USERLIMIT; i++) {
+    if (cache_user_pool[i].username[0] != '\0') {
+      /* test entry */
+      if ( (*p)(&cache_user_pool[i],arg) ) {
+#ifdef DEBUG
+        out_log(LEVEL_INFO,"user cache hit %s\n",cache_user_pool[i].username);
+#endif
+        return &cache_user_pool[i];
+      }
+    }
+  } /* for */
+  return NULL;
+}
+
+void usercache_invalidate( predicate_user_t p, void * arg )
+{
+  unsigned int i;
+  for (i=0; i < HARD_USERLIMIT; i++) {
+    if (cache_user_pool[i].username[0] != '\0') {
+      /* test entry */
+      if ( (*p)(&cache_user_pool[i],arg) )
+        memset(&cache_user_pool[i],0,sizeof(wzd_user_t));
+    }
+  } /* for */
+}
+

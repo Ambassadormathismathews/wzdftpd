@@ -152,6 +152,8 @@ EXPORTS
 	time_to_str
 	user_ip_add
 	user_ip_inlist
+	usercache_init
+	usercache_fini
 	utf8_detect
 	utf8_end
 	utf8_to_local_charset

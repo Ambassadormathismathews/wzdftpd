@@ -992,50 +992,6 @@ void win_normalize(char * s, unsigned int length, unsigned int lower)
 }
 
 
-/** wrappers to user list */
-wzd_user_t * GetUserByID(unsigned int id)
-{
-  unsigned int i=0;
-
-  if (!mainConfig->user_list) return NULL;
-
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    return backend_get_user( (int)id );
-  }
-#endif
-/*  if (id >= HARD_DEF_USER_MAX) return NULL;*/ /* used when uid == index */
-
-
-/*  return &mainConfig->user_list[id];*/
-
-  while (i<HARD_DEF_USER_MAX)
-  {
-    if (mainConfig->user_list[i].username[0] != '\0' && mainConfig->user_list[i].uid == id) {
-        return &mainConfig->user_list[i];
-    }
-    i++;
-  }
-  return NULL;
-}
-
-wzd_user_t * GetUserByName(const char *name)
-{
-  int i=0;
-  if (!mainConfig->user_list || !name || strlen(name)<=0) return NULL;
-
-  while (i<HARD_DEF_USER_MAX)
-  {
-    if (mainConfig->user_list[i].username[0] != '\0') {
-      if (strcmp(name,mainConfig->user_list[i].username)==0)
-        return &mainConfig->user_list[i];
-    }
-    i++;
-  }
-
-  return NULL;
-}
-
 /** wrappers to Group list */
 wzd_group_t * GetGroupByID(unsigned int id)
 {

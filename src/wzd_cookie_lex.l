@@ -462,6 +462,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       condition[length-5]='\0';
       i=0;
       tmpbuf = malloc(16384);
+#if 0
 out_err(LEVEL_HIGH,"AAAAAAAAAAAAAAAA\n");
       {
         char c;
@@ -471,6 +472,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           /* eat EOL */
         }
       }
+#endif
 /*      printf("starting if loop (%s)\n",condition);*/
       while ((cookie=yylex()) && cookie!=COOKIE_ENDIF)
       {

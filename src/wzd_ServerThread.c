@@ -1366,6 +1366,8 @@ void serverMainThreadProc(void *arg)
     serverMainThreadExit(-1);
   }
 
+  usercache_init();
+
 
 
   /* clear ident list */
@@ -1580,6 +1582,7 @@ void serverMainThreadExit(int retcode)
   site_cleanup(mainConfig);
   command_list_cleanup(&mainConfig->command_list);
   free_messages();
+  usercache_fini();
 /*  free(context_list);*/
   /* FIXME should not be done here */
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);

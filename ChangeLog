@@ -1,3 +1,7 @@
+2004-07-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: user cache system moved to lib
+
 2004-07-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: boostrap script should *really* work on all platforms

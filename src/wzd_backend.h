@@ -189,4 +189,8 @@ int backend_inuse(const char *backend);
 #define BACKEND_VERSION(v) const char * backend_version = #v
 
 
+wzd_user_t * GetUserByID(unsigned int id);
+wzd_user_t * GetUserByName(const char *name);
+
+
 #endif /* __WZD_BACKEND__ */

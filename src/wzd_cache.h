@@ -25,6 +25,8 @@
 #ifndef __WZD_CACHE__
 #define __WZD_CACHE__
 
+#include "wzd_structs.h"
+
 struct wzd_cache_t;
 typedef struct wzd_cache_t wzd_cache_t;
 
@@ -44,6 +46,20 @@ void wzd_cache_close(wzd_cache_t * c);
 
 /* purge all files in cache */
 void wzd_cache_purge(void);
+
+
+typedef int (*predicate_user_t)(wzd_user_t *, void * arg);
+
+void usercache_init(void);
+void usercache_fini(void);
+
+
+int predicate_uid(wzd_user_t * user, void * arg);
+int predicate_name(wzd_user_t * user, void * arg);
+
+wzd_user_t * usercache_add(wzd_user_t * user);
+wzd_user_t * usercache_get( predicate_user_t p, void * arg );
+void usercache_invalidate( predicate_user_t p, void * arg );
 
 #endif /* __WZD_CACHE__ */
 
