@@ -28,7 +28,8 @@
 int site_init(wzd_config_t * config);
 void site_cleanup(wzd_config_t * config);
 
-int do_site(char *command_line, wzd_context_t * context);
+int do_site(char *command, char *command_line, wzd_context_t * context);
+void do_site_help(const char *site_command, wzd_context_t * context);
 
 void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context);
 

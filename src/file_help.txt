@@ -41,8 +41,7 @@
 | site help      | what you are reading !                       | all        |
 | site kick      | kick all connections from a user             | r          |
 | site kill      | kill a pid                                   | r          |
-| site idle      | display/set your tagline                     | r,s,n,g    |
-|                |   site tagline [new tagline]                 |            |
+| site idle      | display your idle time                       | r,s,n,g    |
 | site invite    | tell bot to invite you on irc chan           | r          |
 |                |   site invite irc_nick                       |            |
 | site msg       | (show/delete/convert/new/append)             | siteop     |
@@ -54,6 +53,8 @@
 | site savecfg   | save server config                           | r          |
 | site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
 | site shutdown  | shutdown the server remotely                 | r          |
+| site tagline   | display/set your tagline                     | r,s,n,g    |
+|                |   site tagline [new tagline]                 |            |
 | site uptime    | give you information about actual uptime of  | all        |
 |                | this server                                  |            |
 | site user      | (username) show user info                    | r,s        |

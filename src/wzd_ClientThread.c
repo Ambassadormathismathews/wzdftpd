@@ -703,13 +703,14 @@ int list_callback(unsigned int sock, wzd_context_t * context, char *line)
 
 /*************** do_list *****************************/
 
-int do_list(char *param, list_type_t listtype, wzd_context_t * context)
+int do_list(char *name, char *param, wzd_context_t * context)
 {
   char mask[1024],cmd[WZD_MAX_PATH],path[WZD_MAX_PATH];
   int ret,sock,n;
   char nullch[8];
   char * cmask;
   wzd_user_t * user;
+  list_type_t listtype;
 
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
@@ -729,6 +730,13 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
   }
+  if (strcasecmp(name,"nlst")==0)
+    listtype = LIST_TYPE_SHORT;
+  else
+    listtype = LIST_TYPE_LONG;
+
+  context->resume = 0;
+  context->state = STATE_XFER;
 
   strcpy(nullch,".");
   mask[0] = '\0';
@@ -848,13 +856,15 @@ printf("path: '%s'\n",path);
   ret = socket_close(sock);
   FD_UNREGISTER(sock,"Client LIST socket");
   context->datafd = -1;
+  context->idle_time_start = time(NULL);
+  context->state = STATE_UNKNOWN;
 
   return E_OK;
 }
 
 /*************** do_mkdir ****************************/
 
-int do_mkdir(char *param, wzd_context_t * context)
+int do_mkdir(char *name, char *param, wzd_context_t * context)
 {
   char cmd[WZD_MAX_PATH], path[WZD_MAX_PATH];
   char buffer[WZD_MAX_PATH];
@@ -868,18 +878,18 @@ int do_mkdir(char *param, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  if (!param || !param[0]) return E_PARAM_NULL;
-  if (strlen(param)>WZD_MAX_PATH-1) return E_PARAM_BIG;
-  if (strcmp(param,"/")==0) return E_OK;
+  if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_mkdir; }
+  if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_mkdir; }
+  if (strcmp(param,"/")==0) { ret = E_WRONGPATH; goto label_error_mkdir; }
 
   if (param[0] != '/') {
     strcpy(cmd,".");
-    if (checkpath(cmd,path,context)) return E_WRONGPATH;
+    if (checkpath(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
     strlcat(path,param,WZD_MAX_PATH);
   } else {
     strcpy(cmd,param);
-    if (checkpath(cmd,path,context)) return E_WRONGPATH;
+    if (checkpath(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
@@ -899,13 +909,11 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
+    ret = send_message_with_args(553,context,"forbidden !");
     return E_FILE_FORBIDDEN;
   }
 
-  if (strcmp(path,buffer) != 0) {
-    out_err(LEVEL_FLOOD,"strcmp(%s,%s) != 0\n",path,buffer);
-    return E_MKDIR_PARSE;
-  }
+  if (strcmp(path,buffer) != 0) { ret = E_MKDIR_PARSE; goto label_error_mkdir; }
 
   /* check section path-filter */
   {
@@ -932,6 +940,7 @@ int do_mkdir(char *param, wzd_context_t * context)
       if (section && !section_check_filter(section,ptr+1))
       {
         out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
+        ret = send_message_with_args(553,context,"dirname does not match pathfilter");
         return E_MKDIR_PATHFILTER;
       }
     }
@@ -945,6 +954,7 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   if (ret) {
     out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
+    ret = E_PARAM_INVALID; goto label_error_mkdir;
   } else {
     const char *groupname=NULL;
     if (user->group_num > 0) {
@@ -961,8 +971,9 @@ int do_mkdir(char *param, wzd_context_t * context)
       if (hook->external_command)
         ret = hook_call_external(hook,257);
     END_FORALL_HOOKS
+    ret = send_message_with_args(257,context,param,"created");
 
-  if (param[0] != '/') {
+    if (param[0] != '/') {
       strcpy(buffer,context->currentpath);
       strlcat(buffer,"/",WZD_MAX_PATH);
       strlcat(buffer,param,WZD_MAX_PATH);
@@ -978,22 +989,28 @@ int do_mkdir(char *param, wzd_context_t * context)
         user->tagline
         );
   }
+  context->idle_time_start = time(NULL);
 
+  return E_OK;
+
+label_error_mkdir:
+  snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s'",(param)?param:"(NULL)");
+  send_message_with_args(553,context,buffer);
   return ret;
 }
 
 /*************** do_rmdir ****************************/
 
-int do_rmdir(char * param, wzd_context_t * context)
+int do_rmdir(char *name, char * param, wzd_context_t * context)
 {
-  char path[WZD_MAX_PATH];
+  char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
   struct stat s;
   int ret;
 
-  if (!param || !param[0]) return E_PARAM_NULL;
-  if (strlen(param)>WZD_MAX_PATH-1) return E_PARAM_BIG;
+  if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_rmdir; }
+  if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_rmdir; }
 
-  if (checkpath(param,path,context)) return E_WRONGPATH;
+  if (checkpath(param,path,context)) { ret = E_WRONGPATH; goto label_error_rmdir; }
 
   /* if path is / terminated, lstat will return the dir itself in case
    * of a symlink
@@ -1003,16 +1020,23 @@ int do_rmdir(char * param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
+    ret = send_message_with_args(553,context,"forbidden !");
     return E_FILE_FORBIDDEN;
   }
 
-  if (lstat(path,&s)) return E_FILE_NOEXIST;
-  if (!S_ISDIR(s.st_mode)) return E_NOTDIR;
+  if (lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
+  if (!S_ISDIR(s.st_mode)) {
+    ret = send_message_with_args(553,context,"not a directory");
+    return E_NOTDIR;
+  }
 
   /* check permissions */
   ret = file_rmdir(path,context);
 
-  if (!ret) {
+  if (ret) {
+    out_err(LEVEL_FLOOD,"rmdir returned %d (%s)\n",errno,strerror(errno));
+    ret = E_PARAM_INVALID; goto label_error_rmdir;
+  } else {
     const char *groupname=NULL;
     wzd_user_t * user;
     char buffer[WZD_MAX_PATH], path[WZD_MAX_PATH];
@@ -1027,6 +1051,17 @@ int do_rmdir(char * param, wzd_context_t * context)
     if (user->group_num > 0) {
       groupname = GetGroupByID(user->groups[0])->groupname;
     }
+
+    /* send message header */
+    send_message_raw("258- command ok\r\n",context);
+    FORALL_HOOKS(EVENT_RMDIR)
+      typedef int (*rmdir_hook)(unsigned long, const char*);
+      if (hook->hook)
+        ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,buffer);
+      if (hook->external_command)
+        ret = hook_call_external(hook,258);
+    END_FORALL_HOOKS
+    ret = send_message_with_args(258,context,param,"removed");
 
     if (param[0] != '/') {
       strcpy(buffer,context->currentpath);
@@ -1046,11 +1081,45 @@ int do_rmdir(char * param, wzd_context_t * context)
 
   }
 
+  context->idle_time_start = time(NULL);
+
+  return E_OK;
+
+label_error_rmdir:
+  snprintf(buffer,WZD_MAX_PATH-1,"could not delete dir '%s'",(param)?param:"(NULL)");
+  send_message_with_args(553,context,buffer);
   return ret;
 }
 
+/*************** do_port *****************************/
+int do_port(char *name, char *args, wzd_context_t * context)
+{
+  unsigned int p1, p2;
+  int ret;
+
+  if (context->pasvsock) {
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+  }
+  if (!args) {
+    ret = send_message_with_args(501,context,"Invalid parameters");
+    return E_PARAM_NULL;
+  }
+  if ((sscanf(args,"%d,%d,%d,%d,%d,%d",
+          &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
+          &p1,&p2))<6) {
+    ret = send_message(502,context);
+    return E_PARAM_INVALID;
+  }
+
+  context->dataport = ((p1&0xff)<<8) | (p2&0xff);
+  context->datafamily = WZD_INET4;
+  ret = send_message_with_args(200,context,"Command okay");
+  return E_OK;
+}
+
 /*************** do_pasv *****************************/
-void do_pasv(wzd_context_t * context)
+int do_pasv(char *name, char *args, wzd_context_t * context)
 {
   int ret;
   unsigned long addr;
@@ -1075,7 +1144,7 @@ void do_pasv(wzd_context_t * context)
   if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) < 0) {
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
@@ -1137,7 +1206,7 @@ void do_pasv(wzd_context_t * context)
     socket_close(context->pasvsock);
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   if (listen(context->pasvsock,1)<0) {
@@ -1145,7 +1214,7 @@ void do_pasv(wzd_context_t * context)
     socket_close(context->pasvsock);
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   FD_REGISTER(context->pasvsock,"Client PASV socket");
@@ -1170,10 +1239,11 @@ void do_pasv(wzd_context_t * context)
           mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
 #endif
+  return E_OK;
 }
 
 /*************** do_eprt *****************************/
-void do_eprt(char *param, wzd_context_t * context)
+int do_eprt(char *name, char *param, wzd_context_t * context)
 {
 #if defined(IPV6_SUPPORT)
   int ret;
@@ -1194,21 +1264,21 @@ void do_eprt(char *param, wzd_context_t * context)
   if (!param || strlen(param) <= 7) {
     ret = send_message(502,context);
     ret = send_message_with_args(501,context,"Invalid argument");
-    return;
+    return E_PARAM_INVALID;
   }
 
   sep = *param++;
   net_prt = *param++;
   if ( (*param++) != sep || (net_prt != '1' && net_prt != '2') ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    return;
+    return E_PARAM_INVALID;
   }
 
   net_addr = param;
   while (*param && (*param) != sep ) param++;
   if ( !*param ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    return;
+    return E_PARAM_INVALID;
   }
 
   *param = '\0';
@@ -1218,7 +1288,7 @@ void do_eprt(char *param, wzd_context_t * context)
   while (*param && (*param) != sep ) param++;
   if ( !*param || *param != sep ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    return;
+    return E_PARAM_INVALID;
   }
 
   *param = '\0';
@@ -1226,7 +1296,7 @@ void do_eprt(char *param, wzd_context_t * context)
   tcp_port = strtoul(s_tcp_port,&ptr,0);
   if (*ptr) {
     ret = send_message_with_args(501,context,"Invalid port");
-    return;
+    return E_PARAM_INVALID;
   }
 
   /* resolve net_addr to context->dataip */
@@ -1235,7 +1305,7 @@ void do_eprt(char *param, wzd_context_t * context)
     if ( (ret=inet_pton(AF_INET,net_addr,&addr4)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
-      return;
+      return E_PARAM_INVALID;
     }
     memcpy(context->dataip,(const char *)addr4.s_addr,4);
     break;
@@ -1243,13 +1313,13 @@ void do_eprt(char *param, wzd_context_t * context)
     if ( (ret=inet_pton(AF_INET6,net_addr,&addr6)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
-      return;
+      return E_PARAM_INVALID;
     }
     memcpy(context->dataip,addr6.s6_addr,16);
     break;
   default:
     ret = send_message_with_args(501,context,"Invalid protocol");
-    return;
+    return E_PARAM_INVALID;
   }
   
 
@@ -1260,10 +1330,11 @@ void do_eprt(char *param, wzd_context_t * context)
 #else /* defined(IPV6_SUPPORT) */
   send_message(202,context);
 #endif
+  return E_OK;
 }
 
 /*************** do_epsv *****************************/
-void do_epsv(wzd_context_t * context)
+int do_epsv(char *name, char *arg, wzd_context_t * context)
 {
   int ret;
   unsigned long addr;
@@ -1298,7 +1369,7 @@ void do_epsv(wzd_context_t * context)
   {
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
@@ -1358,7 +1429,7 @@ void do_epsv(wzd_context_t * context)
     socket_close(context->pasvsock);
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   if (listen(context->pasvsock,1)<0) {
@@ -1366,7 +1437,7 @@ void do_epsv(wzd_context_t * context)
     socket_close(context->pasvsock);
     context->pasvsock = -1;
     ret = send_message(425,context);
-    return;
+    return E_NO_DATA_CTX;
   }
 
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
@@ -1398,10 +1469,11 @@ void do_epsv(wzd_context_t * context)
           mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
 #endif
+  return E_OK;
 }
 
 /*************** do_retr *****************************/
-int do_retr(char *param, wzd_context_t * context)
+int do_retr(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int fd;
@@ -1422,6 +1494,10 @@ int do_retr(char *param, wzd_context_t * context)
   if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
     return E_NO_DATA_CTX;
+  }
+  if (context->state == STATE_XFER) {
+    ret = send_message(491,context);
+    return E_XFER_PROGRESS;
   }
 
   if (!param || strlen(param)==0) {
@@ -1463,7 +1539,7 @@ int do_retr(char *param, wzd_context_t * context)
   FD_REGISTER(fd,"Client file (RETR)");
 
   /* get length */
-  bytestot = lseek(fd,0,SEEK_END);
+  bytestot = file_seek(fd,0,SEEK_END);
   if (bytestot == -1) /* happens with 0-length files */
     bytestot = 0;
   bytesnow = byteslast=context->resume;
@@ -1495,11 +1571,12 @@ int do_retr(char *param, wzd_context_t * context)
 
   context->datafd = sock;
 
-  lseek(fd,context->resume,SEEK_SET);
+  file_seek(fd,context->resume,SEEK_SET);
 
   out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%ld bytes)\n",
     user->username,param,bytestot);
 
+  context->state = STATE_XFER;
   context->current_action.token = TOK_RETR;
   strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = fd;
@@ -1528,11 +1605,15 @@ int do_retr(char *param, wzd_context_t * context)
    * of the download
    */
   user->stats.files_dl_total++;
+
+  context->resume=0;
+  context->idle_time_start = time(NULL);
+
   return E_OK;
 }
 
 /*************** do_stor *****************************/
-int do_stor(char *param, wzd_context_t * context)
+int do_stor(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
   int fd;
@@ -1553,6 +1634,10 @@ int do_stor(char *param, wzd_context_t * context)
   if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return E_NO_DATA_CTX;
+  }
+  if (context->state == STATE_XFER) {
+    ret = send_message(491,context);
+    return E_XFER_PROGRESS;
   }
 
   if (!param || strlen(param)==0) {
@@ -1614,7 +1699,10 @@ int do_stor(char *param, wzd_context_t * context)
     if (!fp) {
       fclose(fp);
       return 2;
-    }*/
+    }
+  }*/
+  if (strcasecmp(name,"appe")==0)
+    context->resume = (unsigned long)-1;
 
   if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
@@ -1661,9 +1749,9 @@ int do_stor(char *param, wzd_context_t * context)
 
   bytesnow = byteslast = 0;
   if (context->resume == (unsigned long)-1)
-    lseek(fd,0,SEEK_END);
+    file_seek(fd,0,SEEK_END);
   else
-    lseek(fd,context->resume,SEEK_SET);
+    file_seek(fd,context->resume,SEEK_SET);
 
   FORALL_HOOKS(EVENT_PREUPLOAD)
     typedef int (*login_hook)(unsigned long, const char*, const char *);
@@ -1674,6 +1762,7 @@ int do_stor(char *param, wzd_context_t * context)
   out_err(LEVEL_FLOOD,"Download: User %s starts uploading %s\n",
     user->username,param);
 
+  context->state = STATE_XFER;
   context->current_action.token = TOK_STOR;
   strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = fd;
@@ -1698,11 +1787,14 @@ int do_stor(char *param, wzd_context_t * context)
   else
     context->current_ul_limiter.maxspeed = 0;*/
 
+  context->resume=0;
+  context->idle_time_start = time(NULL);
+
   return E_OK;
 }
 
 /*************** do_mdtm *****************************/
-void do_mdtm(char *param, wzd_context_t * context)
+int do_mdtm(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], tm[32];
   struct stat s;
@@ -1710,7 +1802,7 @@ void do_mdtm(char *param, wzd_context_t * context)
 
   if (!param || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Incorrect argument");
-    return;
+    return E_PARAM_INVALID;
   }
 
   if (!checkpath(param,path,context)) {
@@ -1720,20 +1812,22 @@ void do_mdtm(char *param, wzd_context_t * context)
     /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
-      return;
+      return E_FILE_FORBIDDEN;
     }
 
     if (stat(path,&s)==0) {
+      context->resume = 0L;
       strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
       ret = send_message_with_args(213,context,tm);
-      return;
+      return E_OK;
     }
   }
   ret = send_message_with_args(501,context,"File inexistant or no access ?");
+  return E_FILE_NOEXIST;
 }
 
 /*************** do_size *****************************/
-void do_size(char *param, wzd_context_t * context)
+int do_size(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -1742,7 +1836,7 @@ void do_size(char *param, wzd_context_t * context)
 
   if (!param || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Incorrect argument");
-    return;
+    return E_PARAM_INVALID;
   }
   if (!checkpath(param,path,context)) {
     if (path[strlen(path)-1]=='/')
@@ -1751,21 +1845,105 @@ void do_size(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
-      return;
+      return E_FILE_FORBIDDEN;
     }
 
 
     if (stat(path,&s)==0) {
       snprintf(buffer,1024,"%ld",(long int)s.st_size);
       ret = send_message_with_args(213,context,buffer);
-      return;
+      return E_OK;
     }
   }
   ret = send_message_with_args(501,context,"File inexistant or no access ?");
+  return E_FILE_NOEXIST;
+}
+
+/*************** do_abor *****************************/
+int do_abor(char *name, char *arg, wzd_context_t * context)
+{
+  int ret;
+  wzd_user_t * user;
+
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
+/*      if (context->pid_child) kill(context->pid_child,SIGTERM);
+      context->pid_child = 0;*/
+  if (context->pasvsock) {
+    socket_close(context->pasvsock);
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+    context->pasvsock=-1;
+  }
+  if (context->current_action.current_file) {
+    out_xferlog(context, 0 /* incomplete */);
+    /** \bug FIXME XXX TODO
+     * the two following sleep(5) are MANDATORY
+     * the reason is unknown, but seems to be link to network
+     * (not lock)
+     */
+#ifndef _MSC_VER
+    sleep(5);
+#else
+    Sleep(5000);
+#endif
+    if (context->current_action.token == TOK_STOR) {
+      file_unlock(context->current_action.current_file);
+      file_close(context->current_action.current_file,context);
+      /* send events here allow sfv checker to mark file as bad if
+       * partially uploaded
+       */
+      FORALL_HOOKS(EVENT_POSTUPLOAD)
+        typedef int (*upload_hook)(unsigned long, const char*, const char *);
+      if (hook->hook)
+        ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+      END_FORALL_HOOKS
+    }
+    context->current_action.current_file = 0;
+    context->current_action.bytesnow = 0;
+    context->current_action.token = TOK_UNKNOWN;
+    context->state = STATE_COMMAND;
+    data_close(context);
+#ifndef _MSC_VER
+    sleep(5);
+#else
+    Sleep(5000);
+#endif
+  }
+  ret = send_message(226,context);
+  return E_OK;
+}
+
+/*************** do_cwd ******************************/
+int do_cwd(char *name, char *param, wzd_context_t * context)
+{
+  int ret;
+
+  context->resume = 0;
+  if (strcmp(name,"cdup")==0) param="..";
+
+  if (!param) {
+    param = "/";
+  }
+  /* avoir error if current is "/" and action is ".." */
+  if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
+    ret = send_message_with_args(250,context,context->currentpath," now current directory.");
+    return E_OK;
+  }
+  if (do_chdir(param,context)) {
+    ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?).");
+    return E_OK;
+  }
+  ret = send_message_with_args(250,context,context->currentpath," now current directory.");
+  return E_OK;
 }
 
 /*************** do_dele *****************************/
-int do_dele(char *param, wzd_context_t * context)
+int do_dele(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -1834,74 +2012,16 @@ int do_dele(char *param, wzd_context_t * context)
     }
   }
 
-  if (!ret)
+  if (!ret) {
     ret = send_message_with_args(250,context,"DELE"," command successfull");
-  else
+    context->idle_time_start = time(NULL);
+  } else
     ret = send_message_with_args(501,context,"DELE failed");
   return ret;
 }
 
-/*************** do_rnfr *****************************/
-void do_rnfr(const char *filename, wzd_context_t * context)
-{
-  char path[WZD_MAX_PATH];
-  int ret;
-
-  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath(filename,path,context)) {
-    ret = send_message_with_args(550,context,"RNFR","file does not exist");
-    return;
-  }
-
-  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
-
-  /* deny retrieve to permissions file */
-  if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
-    return;
-  }
-
-  context->current_action.token = TOK_RNFR;
-  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
-  context->current_action.current_file = 0;
-  context->current_action.bytesnow = 0;
-  context->current_action.tm_start = time(NULL);
-
-  ret = send_message_with_args(350,context,"OK, send RNTO");
-}
-
-/*************** do_rnto *****************************/
-void do_rnto(const char *filename, wzd_context_t * context)
-{
-  char path[WZD_MAX_PATH];
-  int ret;
-
-  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH) {
-    ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
-    return;
-  }
-
-  checkpath(filename,path,context);
-  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
-
-  /* deny retrieve to permissions file */
-  if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
-    return;
-  }
-  context->current_action.token = TOK_UNKNOWN;
-  context->current_action.current_file = 0;
-  context->current_action.bytesnow = 0;
-
-  ret = file_rename(context->current_action.arg,path,context);
-  if (ret) {
-    ret = send_message_with_args(550,context,"RNTO","command failed");
-  } else {
-    ret = send_message_with_args(250,context,"RNTO"," command OK");
-  }
-}
-
 /*************** do_pret *****************************/
-void do_pret(char *param, wzd_context_t * context)
+int do_pret(char *name, char *param, wzd_context_t * context)
 {
   int ret;
 
@@ -1913,10 +2033,213 @@ void do_pret(char *param, wzd_context_t * context)
   /* e.g: if RETR, open file to have it in cache ? */
 
   ret = send_message_with_args(200,context,"Command OK");
+  return E_OK;
+}
+
+/*************** do_print_message ********************/
+int do_print_message(char *name, const char *filename, wzd_context_t * context)
+{
+  int cmd;
+  int ret;
+
+  cmd = identify_token(name);
+  switch (cmd) {
+    case TOK_PWD:
+      context->resume = 0;
+      ret = send_message_with_args(257,context,context->currentpath,"is current directory");
+      break;
+    case TOK_ALLO:
+    case TOK_NOOP:
+      ret = send_message_with_args(200,context,"Command okay");
+      break;
+    case TOK_FEAT:
+      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
+      break;
+    case TOK_SYST:
+      context->resume = 0;
+      ret = send_message(215,context);
+      break;
+  }
+  return E_OK;
+}
+
+#ifdef HAVE_OPENSSL
+/*************** do_prot *****************************/
+int do_prot(char *name, char *arg, wzd_context_t * context)
+{
+  int ret;
+  /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
+  if (strcasecmp("P",arg)==0)
+    context->ssl.data_mode = TLS_PRIV;
+  else if (strcasecmp("C",arg)==0)
+    context->ssl.data_mode = TLS_CLEAR;
+  else {
+    ret = send_message_with_args(550,context,"PROT","must be C or P");
+    return E_PARAM_INVALID;
+  }
+  ret = send_message_with_args(200,context,"PROT command OK");
+  return E_OK;
+}
+#endif
+
+/*************** do_quit *****************************/
+int do_quit(char *name, const char *arg, wzd_context_t * context)
+{
+  int ret;
+
+  ret = send_message(221,context);
+  {
+    const char * groupname = NULL;
+    wzd_user_t * user;
+    const unsigned char * userip = context->hostip;
+    const char * remote_host;
+    struct hostent *h;
+    char inet_str[256];
+
+#ifdef BACKEND_STORAGE
+    if (mainConfig->backend.backend_storage==1) {
+      user = &context->userinfo;
+    } else
+#endif
+      user = GetUserByID(context->userid);
+
+    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    inet_str[0] = '\0';
+    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    if (h==NULL)
+      remote_host = inet_str;
+    else
+      remote_host = h->h_name;
+    log_message("LOGOUT","%s (%s) \"%s\" \"%s\" \"%s\"",
+        remote_host,
+        inet_str,
+        user->username,
+        (groupname)?groupname:"No Group",
+        user->tagline
+        );
+  }
+  context->exitclient=1;
+  /* check if pending xfers */
+
+  return E_OK;
+}
+
+/*************** do_rest *****************************/
+int do_rest(char *name, const char *arg, wzd_context_t * context)
+{
+  int ret;
+  unsigned long ul;
+  int i;
+
+  if (!arg) {
+    ret = send_message_with_args(501,context,"Invalid REST marker");
+    return E_PARAM_INVALID;
+  }
+  ul=0;
+  i = sscanf(arg,"%lu",&ul);
+  if (i>0) {
+    char buf[256];
+    snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",ul);
+    ret = send_message_with_args(350,context,buf);
+    context->resume = ul;
+  } else {
+    ret = send_message_with_args(501,context,"Invalid REST marker");
+    return E_PARAM_INVALID;
+  }
+  return E_OK;
+}
+
+/*************** do_rnfr *****************************/
+int do_rnfr(char *name, const char *filename, wzd_context_t * context)
+{
+  char path[WZD_MAX_PATH];
+  int ret;
+
+  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath(filename,path,context)) {
+    ret = send_message_with_args(550,context,"RNFR","file does not exist");
+    return E_FILE_NOEXIST;
+  }
+
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+  if (is_hidden_file(path)) {
+    ret = send_message_with_args(501,context,"Go away bastard");
+    return E_FILE_FORBIDDEN;
+  }
+
+  context->current_action.token = TOK_RNFR;
+  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
+  context->current_action.current_file = 0;
+  context->current_action.bytesnow = 0;
+  context->current_action.tm_start = time(NULL);
+
+  ret = send_message_with_args(350,context,"OK, send RNTO");
+  return E_OK;
+}
+
+/*************** do_rnto *****************************/
+int do_rnto(char *name, const char *filename, wzd_context_t * context)
+{
+  char path[WZD_MAX_PATH];
+  int ret;
+
+  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH) {
+    ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
+    return E_PARAM_INVALID;
+  }
+  if (context->current_action.token != TOK_RNFR) {
+    ret = send_message_with_args(553,context,"RNTO","send RNFR before !");
+    return E_PARAM_INVALID;
+  }
+
+  checkpath(filename,path,context);
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+  /* deny retrieve to permissions file */
+  if (is_hidden_file(path)) {
+    ret = send_message_with_args(501,context,"Go away bastard");
+    return E_FILE_FORBIDDEN;
+  }
+  context->current_action.token = TOK_UNKNOWN;
+  context->current_action.current_file = 0;
+  context->current_action.bytesnow = 0;
+
+  ret = file_rename(context->current_action.arg,path,context);
+  if (ret) {
+    ret = send_message_with_args(550,context,"RNTO","command failed");
+  } else {
+    ret = send_message_with_args(250,context,"RNTO"," command OK");
+    context->idle_time_start = time(NULL);
+  }
+  return E_OK;
+}
+
+/*************** do_type *****************************/
+int do_type(char *name, char *param, wzd_context_t * context)
+{
+  int ret;
+
+  context->resume = 0;
+  if (!param) {
+    ret = send_message_with_args(501,context,"Invalid TYPE marker");
+    return E_PARAM_INVALID;
+  }
+  if (strcasecmp(param,"I")==0)
+    context->current_xfer_type = BINARY;
+  else if (strcasecmp(param,"A")==0)
+    context->current_xfer_type = ASCII;
+  else {
+    ret = send_message(502,context);
+    return E_PARAM_INVALID;
+  }
+  ret = send_message_with_args(200,context,"Command okay");
+  return E_OK;
 }
 
 /*************** do_xcrc *****************************/
-void do_xcrc(char *param, wzd_context_t * context)
+int do_xcrc(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -1930,7 +2253,7 @@ void do_xcrc(char *param, wzd_context_t * context)
 
   if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Syntax error");
-    return;
+    return E_PARAM_INVALID;
   }
 
   /* get filename and args:
@@ -1943,7 +2266,7 @@ void do_xcrc(char *param, wzd_context_t * context)
     while (*ptr && *ptr != '"') ptr++;
     if (!*ptr) {
       ret = send_message_with_args(501,context,"Syntax error");
-      return;
+      return E_PARAM_INVALID;
     }
     memcpy(buffer,param+1,ptr-param-1);
     buffer[ptr-param-1] = '\0';
@@ -1956,7 +2279,7 @@ void do_xcrc(char *param, wzd_context_t * context)
       length = strtoul(ptr,&ptest,0);
       if (!ptest || ptest == ptr) {
         ret = send_message_with_args(501,context,"Syntax error");
-        return;
+        return E_PARAM_INVALID;
       } else { /* optional: read start checksum */
         ptr = ptest;
         crc = strtoul(ptr,&ptest,16);
@@ -1975,7 +2298,7 @@ void do_xcrc(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
-      return;
+      return E_FILE_FORBIDDEN;
     }
 
 
@@ -1985,14 +2308,15 @@ void do_xcrc(char *param, wzd_context_t * context)
 /*      snprintf(buffer,1024,"%d %lX\r\n",250,crc);*/
 /*      ret = send_message_raw(buffer,context);*/
       ret = send_message_with_args(250,context,buffer,"");
-      return;
+      return E_OK;
     }
   }
   ret = send_message_with_args(550,context,"XCRC","File inexistant or no access ?");
+  return E_FILE_NOEXIST;
 }
 
 /*************** do_xmd5 *****************************/
-void do_xmd5(char *param, wzd_context_t * context)
+int do_xmd5(char *name, char *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -2008,7 +2332,7 @@ void do_xmd5(char *param, wzd_context_t * context)
 
   if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH) {
     ret = send_message_with_args(501,context,"Syntax error");
-    return;
+    return E_PARAM_INVALID;
   }
 
   for (i=0; i<16; i++)
@@ -2024,7 +2348,7 @@ void do_xmd5(char *param, wzd_context_t * context)
     while (*ptr && *ptr != '"') ptr++;
     if (!*ptr) {
       ret = send_message_with_args(501,context,"Syntax error");
-      return;
+      return E_PARAM_INVALID;
     }
     memcpy(buffer,param+1,ptr-param-1);
     buffer[ptr-param-1] = '\0';
@@ -2037,7 +2361,7 @@ void do_xmd5(char *param, wzd_context_t * context)
       length = strtoul(ptr,&ptest,0);
       if (!ptest || ptest == ptr) {
         ret = send_message_with_args(501,context,"Syntax error");
-        return;
+        return E_PARAM_INVALID;
       } else { /* optional: read start checksum */
         ptr = ptest;
         strtomd5(ptr,&ptest,crc);
@@ -2056,7 +2380,7 @@ void do_xmd5(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
       ret = send_message_with_args(501,context,"Go away bastard");
-      return;
+      return E_FILE_FORBIDDEN;
     }
 
 
@@ -2065,10 +2389,11 @@ void do_xmd5(char *param, wzd_context_t * context)
       for (i=0; i<16; i++)
         snprintf(md5str+i*2,3,"%02x",crc[i]);
       ret = send_message_with_args(250,context,md5str,"");
-      return;
+      return E_OK;
     }
   }
   ret = send_message_with_args(550,context,"XMD5","File inexistant or no access ?");
+  return E_FILE_NOEXIST;
 }
 
 /*************** do_pass *****************************/
@@ -2161,11 +2486,15 @@ int do_user(const char *username, wzd_context_t * context)
     {
 #ifdef BACKEND_STORAGE
       /* strcmp user->username , ? */
-      if (context_list[i].magic == CONTEXT_MAGIC && !strcmp(context->userinfo.username,context_list[i].userinfo.username))
-#else
-      if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
+      if (mainConfig->backend.backend_storage==1) {
+        if (context_list[i].magic == CONTEXT_MAGIC && !strcmp(context->userinfo.username,context_list[i].userinfo.username))
+          count++;
+      } else
 #endif
-        count++;
+      {
+        if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
+          count++;
+      }
     } /* for (i=0; i<HARD_USERLIMIT; i... */
 
     /* we substract 1, because the current login attempt is counted */
@@ -2180,7 +2509,7 @@ int do_user(const char *username, wzd_context_t * context)
   /* foreach group of user, check num_logins */
   {
     unsigned int i,j;
-      wzd_group_t * group;
+    wzd_group_t * group;
     wzd_user_t * user;
     unsigned int num_logins[HARD_DEF_GROUP_MAX];
     memset(num_logins,0,HARD_DEF_GROUP_MAX*sizeof(int));
@@ -2485,24 +2814,25 @@ void * clientThreadProc(void *arg)
   struct timeval tv;
   fd_set fds_r,fds_w,efds;
   wzd_context_t	 * context;
-  int p1,p2;
-  unsigned long i,j;
   char *buffer = NULL;
-  char * param;
   int save_errno;
   unsigned int sockfd;
+  unsigned int length;
   int ret;
-  int exitclient;
   char *token;
   char *ptr;
-  int command;
   wzd_user_t * user;
+  wzd_command_t * command;
 #ifndef _MSC_VER
   int oldtype;
 #endif
 
   context = arg;
   sockfd = context->controlfd;
+
+#ifdef _MSC_VER
+  context->thread_id = GetCurrentThreadId();
+#endif
 
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
 #ifndef _MSC_VER
@@ -2595,11 +2925,17 @@ void * clientThreadProc(void *arg)
   buffer = malloc(WZD_BUFFER_LEN);
 
   /* main loop */
-  exitclient=0;
+  context->exitclient=0;
   context->idle_time_start = time(NULL);
 
-  while (!exitclient) {
+  while (!context->exitclient) {
 #ifdef DEBUG
+    if (GetMyContext() != context)
+    {
+      out_err(LEVEL_CRITICAL,"GetMyContext does not match context !\n");
+      out_err(LEVEL_CRITICAL,"GetMyContext %p\n",GetMyContext());
+      out_err(LEVEL_CRITICAL,"context      %p\n",context);
+    }
     if (!context->magic == CONTEXT_MAGIC || sockfd != (unsigned int)context->controlfd)
     {
       out_err(LEVEL_CRITICAL,"Omar m'a tuer !\n");
@@ -2607,7 +2943,6 @@ void * clientThreadProc(void *arg)
     }
 #endif /* DEBUG */
     save_errno = 666;
-    param=NULL;
     /* 1. read */
     FD_ZERO(&fds_r);
     FD_ZERO(&fds_w);
@@ -2617,7 +2952,7 @@ void * clientThreadProc(void *arg)
     if (sockfd<0 || !fd_is_valid(sockfd)) {
       fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
           sockfd,__FILE__,__LINE__);
-      exitclient=1;
+      context->exitclient=1;
       break;
     }
 #endif
@@ -2635,7 +2970,7 @@ void * clientThreadProc(void *arg)
      if (errno == EINTR) continue;
       else {
         out_log(LEVEL_CRITICAL,"Major error during recv: control fd %d errno %d error %s\n",sockfd,save_errno,strerror(save_errno));
-        exitclient = 1;
+        context->exitclient = 1;
       }
     }
     /* TODO XXX FIXME is this empty if() intentional ?? */
@@ -2675,7 +3010,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     /* remote host has closed session */
     if (ret==0 || ret==-1) {
       out_log(LEVEL_FLOOD,"Host disconnected improperly!\n");
-      exitclient=1;
+      context->exitclient=1;
       break;
     }
 
@@ -2698,359 +3033,24 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     /* 2. get next token */
     ptr = &buffer[0];
     token = strtok_r(buffer," \t\r\n",&ptr);
-    command = identify_token(token);
 
-    switch (command) {
-    case TOK_QUIT:
-      ret = send_message(221,context);
-      {
-        const char * groupname = NULL;
-        const unsigned char * userip = context->hostip;
-        const char * remote_host;
-        struct hostent *h;
-        char inet_str[256];
-        if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
-        inet_str[0] = '\0';
-        inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-        h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
-        if (h==NULL)
-          remote_host = inet_str;
-        else
-          remote_host = h->h_name;
-        log_message("LOGOUT","%s (%s) \"%s\" \"%s\" \"%s\"",
-            remote_host,
-            inet_str,
-            user->username,
-            (groupname)?groupname:"No Group",
-            user->tagline
-            );
-      }
-      exitclient=1;
-      /* check if pending xfers */
-      break;
-    case TOK_TYPE:
-      context->resume = 0;
-      token = strtok_r(NULL," \t\r\n",&ptr);
-      if (!token) {
-        ret = send_message_with_args(501,context,"Invalid TYPE marker");
-        break;
-      }
-      if (strcasecmp(token,"I")==0)
-        context->current_xfer_type = BINARY;
-      else if (strcasecmp(token,"A")==0)
-        context->current_xfer_type = ASCII;
-      else {
-        ret = send_message(502,context);
-        break;
-      }
-      ret = send_message_with_args(200,context,"Command okay");
-      break;
-    case TOK_PORT:
-      if (context->pasvsock) {
-        socket_close(context->pasvsock);
-        context->pasvsock = -1;
-      }
-      /* context->resume = 0; */
-      token = strtok_r(NULL,"\r\n",&ptr);
-      if (!token) {
-        ret = send_message_with_args(501,context,"Invalid parameters");
-        break;
-      }
-      if ((sscanf(token,"%d,%d,%d,%d,%d,%d",
-              &context->dataip[0],&context->dataip[1],&context->dataip[2],&context->dataip[3],
-              &p1,&p2))<6) {
-        ret = send_message(502,context);
-        break;
-      }
-
-      context->dataport = ((p1&0xff)<<8) | (p2&0xff);
-      context->datafamily = WZD_INET4;
-      ret = send_message_with_args(200,context,"Command okay");
-
-      break;
-    case TOK_PASV:
-      do_pasv(context);
-      break;
-    case TOK_EPRT:
-      param = strtok_r(NULL,"\r\n",&ptr);
-      do_eprt(param,context);
-      break;
-    case TOK_EPSV:
-      do_epsv(context);
-      break;
-    case TOK_PWD:
-      context->resume = 0;
-      ret = send_message_with_args(257,context,context->currentpath,"is current directory");
-      break;
-    case TOK_ALLO:
-    case TOK_NOOP:
-      ret = send_message_with_args(200,context,"Command okay");
-      break;
-    case TOK_SYST:
-      context->resume = 0;
-      ret = send_message(215,context);
-      break;
-    case TOK_CDUP:
-      strcpy(buffer,"..");
-      param = buffer;
-      /* break through !!! */
-    case TOK_CWD:
-      context->resume = 0;
-      if (!param) {
-        token = strtok_r(NULL,"\r\n",&ptr);
-        param = token;
-      }
-      /* avoir error if current is "/" and action is ".." */
-      if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
-        ret = send_message_with_args(250,context,context->currentpath," now current directory.");
-        break;
-      }
-      if (do_chdir(param,context)) {
-        ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?).");
-        break;
-      }
-      ret = send_message_with_args(250,context,context->currentpath," now current directory.");
-      break;
-    case TOK_LIST:
-      context->resume = 0;
-      context->state = STATE_XFER;
-/*      if (context->pid_child) {
-        ret = send_message(491,context);
-        break;
-      }*/
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_list(token,LIST_TYPE_LONG,context);
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_NLST:
-      context->resume = 0;
-      context->state = STATE_XFER;
-/*      if (context->pid_child) {
-        ret = send_message(491,context);
-        break;
-      }*/
-      token = strtok_r(NULL,"\r\n",&ptr);	    
-      do_list(token,LIST_TYPE_SHORT,context);
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_MKD:
-      {
-        char buffer2[BUFFER_LEN];
-        token = strtok_r(NULL,"\r\n",&ptr);
-        /* TODO check perms !! */
-        switch (do_mkdir(token,context)) { 
-        case E_OK: /* success */
-          ret = send_message_with_args(257,context,token,"created");
-          break;
-        case E_FILE_FORBIDDEN:
-          ret = send_message_with_args(553,context,"forbidden !");
-          break;
-        case E_MKDIR_PATHFILTER:
-          ret = send_message_with_args(553,context,"dirname does not match pathfilter");
-          break;
-        default:
-          /* could not create dir */
-          snprintf(buffer2,BUFFER_LEN-1,"could not create dir '%s'",(token)?token:"(NULL)");
-          ret = send_message_with_args(553,context,buffer2);
-          break;
-        }
-        context->idle_time_start = time(NULL);
-        break;
-      }
-    case TOK_RMD:
-      {
-        char buffer2[BUFFER_LEN];
-        token = strtok_r(NULL,"\r\n",&ptr);
-        /* TODO check perms !! */
-        switch (do_rmdir(token,context)) {
-          case E_OK: /* success */
-            snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
-            /* send message header */
-            send_message_raw("258- command ok\r\n",context);
-            FORALL_HOOKS(EVENT_RMDIR)
-              typedef int (*rmdir_hook)(unsigned long, const char*);
-            if (hook->hook)
-              ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,token);
-            if (hook->external_command)
-              ret = hook_call_external(hook,258);
-            END_FORALL_HOOKS
-            ret = send_message_with_args(258,context,buffer2,"");
-            break;
-          case E_NOTDIR:
-            ret = send_message_with_args(553,context,"not a directory");
-            break;
-          case E_FILE_FORBIDDEN:
-            ret = send_message_with_args(553,context,"forbidden !");
-            break;
-          default:
-            snprintf(buffer2,BUFFER_LEN-1,"could not delete dir '%s'",(token)?token:"(NULL)");
-            ret = send_message_with_args(553,context,buffer2);
-        }
-        context->idle_time_start = time(NULL);
-        break;
-      }
-    case TOK_RETR:
-      if (context->current_action.token != TOK_UNKNOWN) {
-        ret = send_message(491,context);
-        break;
-      }
-      context->state = STATE_XFER;
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_retr(token,context);
-      context->resume=0;
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_STOR:
-      if (context->current_action.token != TOK_UNKNOWN) {
-        ret = send_message(491,context);
-        break;
-      }
-      context->state = STATE_XFER;
-      token = strtok_r(NULL,"\r\n",&ptr);
-      ret = do_stor(token,context);
-      context->resume=0;
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_APPE:
-      if (context->current_action.token != TOK_UNKNOWN) {
-        ret = send_message(491,context);
-        break;
-      }
-      context->state = STATE_XFER;
-      token = strtok_r(NULL,"\r\n",&ptr);
-      context->resume = (unsigned long)-1;
-      ret = do_stor(token,context);
-
-      context->resume=0;
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_REST:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      if (!token) {
-        ret = send_message_with_args(501,context,"Invalid REST marker");
-        break;
-      }
-      j=0;
-      i = sscanf(token,"%lu",&j);
-      if (i>0) {
-        char buf[256];
-        snprintf(buf,256,"Restarting at %ld. Send STORE or RETRIEVE.",j);
-        ret = send_message_with_args(350,context,buf);
-        context->resume = j;
-      } else {
-        ret = send_message_with_args(501,context,"Invalid REST marker");
-      }
-      break;
-    case TOK_MDTM:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      context->resume = 0L;
-      do_mdtm(token,context);
-      break;
-    case TOK_SIZE:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      context->resume=0;
-      do_size(token,context);
-      break;
-    case TOK_DELE:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_dele(token,context);
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_ABOR:
-/*      if (context->pid_child) kill(context->pid_child,SIGTERM);
-      context->pid_child = 0;*/
-      if (context->pasvsock) {
-        socket_close(context->pasvsock);
-        FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-        context->pasvsock=-1;
-      }
-      if (context->current_action.current_file) {
-        out_xferlog(context, 0 /* incomplete */);
-        /** \bug FIXME XXX TODO
-         * the two following sleep(5) are MANDATORY
-         * the reason is unknown, but seems to be link to network
-         * (not lock)
-         */
-#ifndef _MSC_VER
-        sleep(5);
-#else
-        Sleep(5000);
-#endif
-        if (context->current_action.token == TOK_STOR) {
-          file_unlock(context->current_action.current_file);
-          file_close(context->current_action.current_file,context);
-          /* send events here allow sfv checker to mark file as bad if
-           * partially uploaded
-           */
-          FORALL_HOOKS(EVENT_POSTUPLOAD)
-            typedef int (*upload_hook)(unsigned long, const char*, const char *);
-          if (hook->hook)
-            ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-          END_FORALL_HOOKS
-        }
-        context->current_action.current_file = 0;
-        context->current_action.bytesnow = 0;
-        context->current_action.token = TOK_UNKNOWN;
-        context->state = STATE_COMMAND;
-        data_close(context);
-#ifndef _MSC_VER
-        sleep(5);
-#else
-        Sleep(5000);
-#endif
-      }
-      ret = send_message(226,context);
-      break;
-#ifdef HAVE_OPENSSL
-    case TOK_PROT:
-      /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
-      token = strtok_r(NULL,"\r\n",&ptr);
-      if (strcasecmp("P",token)==0)
-        context->ssl.data_mode = TLS_PRIV;
-      else if (strcasecmp("C",token)==0)
-        context->ssl.data_mode = TLS_CLEAR;
-      else {
-        ret = send_message_with_args(550,context,"PROT","must be C or P");
-        break;
-      }
-      ret = send_message_with_args(200,context,"PROT command OK");
-      break;
-#endif
-    case TOK_SITE:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_site(token,context); /* do_site send message ! */
-      break;
-    case TOK_FEAT:
-      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_RNFR:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_rnfr(token,context);
-      break;
-    case TOK_RNTO:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_rnto(token,context);
-      context->idle_time_start = time(NULL);
-      break;
-    case TOK_PRET:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_pret(token,context);
-      break;
-    case TOK_XCRC:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_xcrc(token,context);
-      break;
-    case TOK_XMD5:
-      token = strtok_r(NULL,"\r\n",&ptr);
-      do_xmd5(token,context);
-      break;
-    case TOK_NOTHING:
-      break;
-    default:
-      ret = send_message(202,context);
-      break;
+    if (!token || (length=strlen(token))==0)
+      command = NULL;
+    else
+    {
+      ascii_lower(token,length);
+      command = command_list_find(token);
     }
+    
+    if (command) {
+      char * command_name = token;
+      token = strtok_r(NULL,"\r\n",&ptr);
+      ret = (*(command->command))(command_name,token,context);
+      continue;
+    } else {
+      ret = send_message(202,context);
+    }
+
   } /* while (!exitclient) */
 
 /*	Sleep(2000);*/
@@ -3072,3 +3072,117 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 #endif
   return NULL;
 }
+
+
+
+
+/*************** init_command_list *******************/
+
+#define NEW_STD_COMMAND(s_name,s_function,s_help_function,s_id) \
+  command = wzd_malloc(sizeof(wzd_command_t)); \
+  command->name = wzd_strdup(#s_name); \
+  command->id = s_id; \
+  command->command = s_function; \
+  command->help_function = s_help_function; \
+  command->next_command = NULL \
+  , command
+
+int command_list_init(wzd_command_t **list)
+{
+  wzd_command_t *command, *last_command;
+
+  last_command = (*list) = NEW_STD_COMMAND(site,do_site,do_site_help,TOK_SITE);
+  last_command->next_command = NEW_STD_COMMAND(type,do_type,NULL,TOK_TYPE); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(port,do_port,NULL,TOK_PORT); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(pasv,do_pasv,NULL,TOK_PASV); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(eprt,do_eprt,NULL,TOK_EPRT); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(epsv,do_epsv,NULL,TOK_EPSV); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(abor,do_abor,NULL,TOK_ABOR); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(pwd,do_print_message,NULL,TOK_PWD); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(allo,do_print_message,NULL,TOK_ALLO); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(feat,do_print_message,NULL,TOK_FEAT); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(noop,do_print_message,NULL,TOK_NOOP); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(syst,do_print_message,NULL,TOK_SYST); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(rnfr,do_rnfr,NULL,TOK_RNFR); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(rnto,do_rnto,NULL,TOK_RNTO); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(cdup,do_cwd,NULL,TOK_CDUP); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(cwd,do_cwd,NULL,TOK_CWD); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(list,do_list,NULL,TOK_LIST); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(nlst,do_list,NULL,TOK_NLST); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(mkd,do_mkdir,NULL,TOK_MKD); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(rmd,do_rmdir,NULL,TOK_RMD); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(retr,do_retr,NULL,TOK_RETR); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(stor,do_stor,NULL,TOK_STOR); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(appe,do_stor,NULL,TOK_APPE); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(rest,do_rest,NULL,TOK_REST); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(mdtm,do_mdtm,NULL,TOK_MDTM); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(size,do_size,NULL,TOK_SIZE); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(dele,do_dele,NULL,TOK_DELE); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(pret,do_pret,NULL,TOK_PRET); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(xcrc,do_xcrc,NULL,TOK_XCRC); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(xmd5,do_xmd5,NULL,TOK_XMD5); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(quit,do_quit,NULL,TOK_QUIT); last_command = last_command->next_command;
+#ifdef HAVE_OPENSSL
+  last_command->next_command = NEW_STD_COMMAND(prot,do_prot,NULL,TOK_PROT); last_command = last_command->next_command;
+#endif
+
+  return 0;
+}
+
+int command_list_add(wzd_command_t **list, const char *name, wzd_function_command_t fct, wzd_function_command_t helper)
+{
+  wzd_command_t * new_command, *current;
+
+  new_command = wzd_malloc(sizeof(wzd_command_t));
+  if (!new_command) return 1;
+  new_command->name = strdup(name);
+  new_command->command = fct;
+  new_command->help_function = helper;
+  new_command->next_command = NULL;
+
+  current = *list;
+
+  if (!current) {
+    *list = new_command;
+    return 0;
+  }
+
+  /* tail insertion */
+  while (current->next_command)
+    current = current->next_command;
+
+  current->next_command = new_command;
+
+  return 0;
+}
+
+void command_list_cleanup(wzd_command_t **list)
+{
+  wzd_command_t * next, *current;
+
+  current = *list;
+
+  while (current)
+  {
+    next = current->next_command;
+    wzd_free(current->name);
+    wzd_free(current);
+    current = next;
+  }
+  *list = NULL;
+}
+
+wzd_command_t * command_list_find(const char *name)
+{
+  wzd_command_t * current;
+
+  current = mainConfig->command_list;
+  while(current)
+  {
+    if (strcasecmp(current->name,name)==0) return current;
+    current = current->next_command;
+  }
+
+  return NULL;
+}
+

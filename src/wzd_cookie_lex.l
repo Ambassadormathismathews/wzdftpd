@@ -100,6 +100,7 @@ typedef enum {
   COOKIE_FILEPATH,
 
   COOKIE_GROUPHOME,
+  COOKIE_GROUPID,
   COOKIE_GROUPIP_ALLOW,
   COOKIE_GROUPMAXDL,
   COOKIE_GROUPMAXIDLE,
@@ -126,6 +127,7 @@ typedef enum {
   COOKIE_USERFLAGS,
   COOKIE_USERGROUP,
   COOKIE_USERHOME,
+  COOKIE_USERID,
   COOKIE_USERIP,
   COOKIE_USERIP_ALLOW,
   COOKIE_USERLASTCMD,
@@ -285,6 +287,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_FILE}path		BEGIN(INITIAL); return COOKIE_FILEPATH;
 
 <sc_cook>{C_GROUP}home		BEGIN(INITIAL); return COOKIE_GROUPHOME;
+<sc_cook>{C_GROUP}id		BEGIN(INITIAL); return COOKIE_GROUPID;
 <sc_cook>{C_GROUP}ip_allow[0-9]+	BEGIN(INITIAL); return COOKIE_GROUPIP_ALLOW;
 <sc_cook>{C_GROUP}maxdl		BEGIN(INITIAL); return COOKIE_GROUPMAXDL;
 <sc_cook>{C_GROUP}maxidle	BEGIN(INITIAL); return COOKIE_GROUPMAXIDLE;
@@ -310,6 +313,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}flags		BEGIN(INITIAL); return COOKIE_USERFLAGS;
 <sc_cook>{C_USER}group		BEGIN(INITIAL); return COOKIE_USERGROUP;
 <sc_cook>{C_USER}home		BEGIN(INITIAL); return COOKIE_USERHOME;
+<sc_cook>{C_USER}id		BEGIN(INITIAL); return COOKIE_USERID;
 <sc_cook>{C_USER}ip_allow[0-9]+	BEGIN(INITIAL); return COOKIE_USERIP_ALLOW;
 <sc_cook>{C_USER}ip		BEGIN(INITIAL); return COOKIE_USERIP;
 <sc_cook>{C_USER}lastcmd	BEGIN(INITIAL); return COOKIE_USERLASTCMD;
@@ -374,10 +378,13 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   unsigned int send_buffer_ptr=0;
   unsigned short use_colors=0;
   char * out_buffer_ptr;
+  wzd_context_t * real_context;
 
   if (!context) return -1;
   me = GetUserByID(context->userid);
   if (!me) return -1;
+  real_context = GetMyContext();
+  if (!real_context) return -1;
 
   if (me->flags && strchr(me->flags,FLAG_COLOR)) use_colors=1;
 
@@ -464,7 +471,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         out_buffer_ptr += l;
       } else {
         send_buffer[send_buffer_ptr]='\0';
-        send_message_raw(send_buffer,context);
+        send_message_raw(send_buffer,real_context);
         send_buffer_ptr=0;
       }
       /* test if() condition */
@@ -534,7 +541,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         out_buffer_ptr += l;
       } else {
         send_buffer[send_buffer_ptr]='\0';
-        send_message_raw(send_buffer,context);
+        send_message_raw(send_buffer,real_context);
         send_buffer_ptr=0;
       }
       /* execute for loop */
@@ -555,9 +562,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
                   && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                 continue;
               if (out_buffer)
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,0);
             }
           }
         }
@@ -677,6 +684,15 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         snprintf(internalbuffer,IBUFSIZE,"%s",current_group->defaultpath);
       else
         snprintf(internalbuffer,IBUFSIZE,"grouphome");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_GROUPID:
+      get_cookie_format(yytext,&padding);
+      if (current_group)
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_group->gid);
+      else
+        snprintf(internalbuffer,IBUFSIZE,"groupid");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1036,6 +1052,15 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"userhome");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_USERID:
+      get_cookie_format(yytext,&padding);
+      if (current_user)
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_user->uid);
+      else
+        snprintf(internalbuffer,IBUFSIZE,"userid");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
@@ -1433,7 +1458,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
           out_buffer_len -= l;
         } else {
           send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,context);
+          send_message_raw(send_buffer,real_context);
         }
         send_buffer_ptr=0;
       }
@@ -1508,7 +1533,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
           out_buffer_len -= l;
         } else {
           send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,context);
+          send_message_raw(send_buffer,real_context);
         }
         send_buffer_ptr=0;
       }
@@ -1556,7 +1581,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         out_err(LEVEL_HIGH,"buffer length %d (%d)",strlen(out_buffer),out_buffer_len);
 #endif
     } else {
-      send_message_raw(send_buffer,context);
+      send_message_raw(send_buffer,real_context);
     }
     send_buffer_ptr=0;
   }

@@ -46,6 +46,8 @@ int file_remove(const char *filename, wzd_context_t * context);
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context);
 int file_rmdir(const char *dirname, wzd_context_t * context);
 
+int file_seek(int fd, unsigned long offset, int whence);
+
 wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 
 /* symlink operations */

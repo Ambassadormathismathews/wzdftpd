@@ -73,7 +73,7 @@ void init_default_messages(void)
   msg_tab[234] = strdup("AUTH command OK. Initializing %s mode"); /* SSL init */
   msg_tab[250] = strdup("%s%s");
   msg_tab[257] = strdup("\"%s\" %s");
-  msg_tab[258] = strdup("%s %s");
+  msg_tab[258] = strdup("\"%s\" %s");
 
   msg_tab[331] = strdup("User %s okay, need password.");
   msg_tab[350] = strdup("%s"); /* "Restarting at %ld. Send STORE or RETRIEVE.", or "OK, send RNTO" */

@@ -1,3 +1,5 @@
+/* vi:ai:et:ts=8 sw=2
+ */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2003  Pierre Chifflier
@@ -47,10 +49,10 @@
 #define	MAX_LINE		1024
 
 /* IMPORTANT needed to check version */
-const char * module_version="123";
-const char * module_name="plaintext";
+MODULE_NAME(plaintext);
+MODULE_VERSION(124);
 
-char USERS_FILE[256]="/etc/wzdFTPd/users";
+static char USERS_FILE[256]="/etc/wzdFTPd/users";
 
 static wzd_user_t * user_pool;
 static unsigned int user_count, user_count_max=0;
@@ -259,6 +261,7 @@ static int write_user_file(void)
       fprintf(file,"max_idle_time=%ld\n",group_pool[i].max_idle_time);
     if (group_pool[i].num_logins)
       fprintf(file,"num_logins=%d\n",group_pool[i].num_logins);
+    fprintf(file,"gid=%d\n",group_pool[i].gid);
     for (j=0; j<HARD_IP_PER_GROUP; j++)
     {
       if (group_pool[i].ip_allowed[j][0] != '\0')
@@ -593,6 +596,7 @@ static int read_section_groups(FILE * file_user, char * line)
   int err;
   long num;
   int i;
+  unsigned int gid=1; /* default gid counter */
 
 #if 0
 fprintf(stderr,"Entering section GROUPS\n");
@@ -636,6 +640,7 @@ fprintf(stderr,"Defining new private group %s\n",token);
 	continue;
       }
       strncpy(group_pool[group_count-1].groupname,token,128);
+      group_pool[group_count-1].gid = gid++;
       group_pool[group_count-1].groupperms = 0;
       group_pool[group_count-1].max_ul_speed = 0;
       group_pool[group_count-1].max_dl_speed = 0;
@@ -657,7 +662,16 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       memcpy(value,line+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
       value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
 
-      if (strcasecmp(varname,"max_idle_time")==0) {
+      if (strcmp("gid",varname)==0) {
+        if (!group_count) break;
+        num = strtol(value, &ptr, 0);
+        if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid gid %s\n",value);
+          continue;
+        }
+        group_pool[group_count-1].gid = num;
+      }
+      else if (strcasecmp(varname,"max_idle_time")==0) {
         if (!group_count) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */

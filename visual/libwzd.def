@@ -51,6 +51,7 @@ EXPORTS
 	file_remove
 	file_rename
 	file_rmdir
+	file_seek
 	file_unlock
 	file_write
 	free_messages

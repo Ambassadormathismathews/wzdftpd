@@ -289,6 +289,7 @@ int set_default_options(void)
   tempConfig.login_pre_ip_allowed = NULL;
   tempConfig.login_pre_ip_denied = NULL;
 
+  tempConfig.command_list = NULL;
   tempConfig.vfs = NULL;
 
   tempConfig.dir_message[0] = 0;

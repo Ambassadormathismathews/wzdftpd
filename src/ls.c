@@ -169,63 +169,69 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
           }
           if (!vfs_match_perm(vfs->target,user)) { vfs = vfs->next_vfs; continue; }
           if (!list_match(ptr,mask)) { vfs = vfs->next_vfs; continue; }
-          /* date */
 
-          timeval=time(NULL);
-          ntime=localtime(&timeval);
-          i=ntime->tm_year;
+          if (format & LIST_TYPE_SHORT) {
+            strcpy(line,ptr);
+            strcat(line,"\r\n");
+          } else {
+            /* date */
 
-          ntime=localtime(&st.st_mtime);
+            timeval=time(NULL);
+            ntime=localtime(&timeval);
+            i=ntime->tm_year;
 
-          if (ntime->tm_year==i)
-          strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-          else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+            ntime=localtime(&st.st_mtime);
 
-          /* permissions */
+            if (ntime->tm_year==i)
+              strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+            else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
 
-          if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
-              !S_ISREG(st.st_mode)) {
-            vfs = vfs->next_vfs;
-            continue;
-          }
+            /* permissions */
+
+            if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
+                !S_ISREG(st.st_mode)) {
+              vfs = vfs->next_vfs;
+              continue;
+            }
 
 #ifndef _MSC_VER
-          sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
-              S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-              st.st_mode & S_IRUSR ? 'r' : '-',
-              st.st_mode & S_IWUSR ? 'w' : '-',
-              st.st_mode & S_IXUSR ? 'x' : '-',
-              st.st_mode & S_IRGRP ? 'r' : '-',
-              st.st_mode & S_IWGRP ? 'w' : '-',
-              st.st_mode & S_IXGRP ? 'x' : '-',
-              st.st_mode & S_IROTH ? 'r' : '-',
-              st.st_mode & S_IWOTH ? 'w' : '-',
-              st.st_mode & S_IXOTH ? 'x' : '-',
-              (int)st.st_nlink,
-              user->username,
-              "ftp",
-              (u64_t)st.st_size,
-              datestr,
-              ptr);
+            sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+                st.st_mode & S_IRUSR ? 'r' : '-',
+                st.st_mode & S_IWUSR ? 'w' : '-',
+                st.st_mode & S_IXUSR ? 'x' : '-',
+                st.st_mode & S_IRGRP ? 'r' : '-',
+                st.st_mode & S_IWGRP ? 'w' : '-',
+                st.st_mode & S_IXGRP ? 'x' : '-',
+                st.st_mode & S_IROTH ? 'r' : '-',
+                st.st_mode & S_IWOTH ? 'w' : '-',
+                st.st_mode & S_IXOTH ? 'x' : '-',
+                (int)st.st_nlink,
+                user->username,
+                "ftp",
+                (u64_t)st.st_size,
+                datestr,
+                ptr);
 #else
-          sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-              S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-              st.st_mode & S_IRUSR ? 'r' : '-',
-              st.st_mode & S_IWUSR ? 'w' : '-',
-              st.st_mode & S_IXUSR ? 'x' : '-',
-              st.st_mode & S_IRGRP ? 'r' : '-',
-              st.st_mode & S_IWGRP ? 'w' : '-',
-              st.st_mode & S_IXGRP ? 'x' : '-',
-              st.st_mode & S_IROTH ? 'r' : '-',
-              st.st_mode & S_IWOTH ? 'w' : '-',
-              st.st_mode & S_IXOTH ? 'x' : '-',
-              (int)st.st_nlink,
-              user->username,
-              "ftp",
-              st.st_size,
-              datestr,
-              ptr);
+            sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+                st.st_mode & S_IRUSR ? 'r' : '-',
+                st.st_mode & S_IWUSR ? 'w' : '-',
+                st.st_mode & S_IXUSR ? 'x' : '-',
+                st.st_mode & S_IRGRP ? 'r' : '-',
+                st.st_mode & S_IWGRP ? 'w' : '-',
+                st.st_mode & S_IXGRP ? 'x' : '-',
+                st.st_mode & S_IROTH ? 'r' : '-',
+                st.st_mode & S_IWOTH ? 'w' : '-',
+                st.st_mode & S_IXOTH ? 'x' : '-',
+                (int)st.st_nlink,
+                user->username,
+                "ftp",
+                st.st_size,
+                datestr,
+                ptr);
 #endif
+          } /* format = LIST_TYPE_SHORT */
 
 
           /*        if (!callback(sock,context,line)) break;*/

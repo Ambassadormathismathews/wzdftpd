@@ -1,3 +1,14 @@
+2004-04-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* tcl: command vfs (mkdir/rmdir/link create/remove)
+	* bugfix: RNTO without RNFR not rejected (could have side effects with RETR/STOR)
+	* bugfix: REST not working on win32
+	* bugfix: NLST not working
+	* bugfix: GetMyContext() not working
+	* bugfix: num_logins has strange behaviour
+	* bugfix: site KILL was very unclean on win32
+	* bugfix: wrong context in loop (fixes: pid is wrong in site SWHO)
+
 2004-04-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: datafd set to 0 (could cause problems in release mode)

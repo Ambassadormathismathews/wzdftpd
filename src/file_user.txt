@@ -2,6 +2,7 @@
 |                         »   S i T e     u s E R    «                       |
 .----------------\----------------------------------------------/------------.
 |  username      : %!red%40.username%!0                  |
+|  uid           : %40.userid                  |
 |  User's group  : %40.usergroup                  |
 |  Flags         : %40.userflags                  |
 %if(+G)

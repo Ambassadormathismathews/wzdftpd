@@ -1095,6 +1095,11 @@ void file_close(int fd, wzd_context_t * context)
   close(fd);
 }
 
+int file_seek(int fd, unsigned long offset, int whence)
+{
+  return lseek(fd,offset,whence);
+}
+
 /** NOTE:
  * one of username/groupname can be NULL
  * context is usefull to check if the user can chown to other users

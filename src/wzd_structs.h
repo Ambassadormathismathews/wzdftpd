@@ -52,6 +52,7 @@ typedef enum {
   E_CONNECTTIMEOUT,	/**< timeout on connect() */
   E_PASV_FAILED,	/**< pasv connection failed */
   E_PORT_INVALIDIP,	/**< invalid address in PORT */
+  E_XFER_PROGRESS,	/**< transfer in progress */
 
   E_CREDS_INSUFF,	/**< insufficient credits */
 
@@ -188,11 +189,11 @@ typedef struct {
 /********************** USER, GROUP ***********************/
 
 typedef struct {
+  unsigned int          uid;
   char                  username[HARD_USERNAME_LENGTH];
   char			userpass[MAX_PASS_LENGTH];
   char                  rootpath[WZD_MAX_PATH];
   char                  tagline[256];
-  unsigned int          uid;
   unsigned int          group_num;
   unsigned int          groups[MAX_GROUPS_PER_USER];
   time_t	        max_idle_time;
@@ -212,6 +213,7 @@ typedef struct {
 
 /** @brief Group definition */
 typedef struct {
+  unsigned int          gid;
   char                  groupname[128];
   wzd_perm_t            groupperms;
   time_t		max_idle_time;
@@ -402,11 +404,13 @@ typedef struct {
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
+  unsigned char	exitclient;
   int  controlfd;
   int  datafd;
   data_mode_t   datamode;
   net_family_t  datafamily;
   unsigned long	pid_child;
+  unsigned long	thread_id;
   int	        portsock;
   int	        pasvsock;
   read_fct_t	read_fct;
@@ -429,6 +433,21 @@ typedef struct {
   time_t	idle_time_data_start;
   wzd_ssl_t   	ssl;
 } wzd_context_t;
+
+/********************** COMMANDS **************************/
+
+typedef int (*wzd_function_command_t)(char *name, char *param, wzd_context_t *context);
+
+typedef struct _wzd_command_t {
+	
+  char *name;
+  unsigned int id;
+
+  wzd_function_command_t command;
+  wzd_function_command_t help_function;
+
+  struct _wzd_command_t * next_command;
+} wzd_command_t;
 
 /************************ MAIN CONFIG *********************/
 
@@ -485,6 +504,7 @@ typedef struct {
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
   unsigned long	shm_key;
+  wzd_command_t		* command_list;
   wzd_command_perm_t	* perm_list;
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
@@ -506,9 +526,9 @@ extern wzd_context_t *	context_list;
 
 /************************ LIST ****************************/
 
-#define	LIST_TYPE_SHORT		0x0000
-#define	LIST_TYPE_LONG		0x0001
-#define	LIST_SHOW_HIDDEN	0x0010
+#define	LIST_TYPE_SHORT		0x0001
+#define	LIST_TYPE_LONG		0x0010
+#define	LIST_SHOW_HIDDEN	0x0100
 typedef unsigned long list_type_t;
 
 

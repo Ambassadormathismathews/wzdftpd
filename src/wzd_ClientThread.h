@@ -32,6 +32,11 @@ void * clientThreadProc(void *arg);
 
 void client_die(wzd_context_t * context);
 
+int command_list_init(wzd_command_t **list);
+int command_list_add(wzd_command_t **list, const char *name, wzd_function_command_t fct, wzd_function_command_t helper);
+void command_list_cleanup(wzd_command_t **list);
+wzd_command_t * command_list_find(const char *name);
+
 #define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
 #ifdef HAVE_OPENSSL
 #define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"

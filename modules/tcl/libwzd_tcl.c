@@ -29,6 +29,10 @@
  * it provokes a segfault at thread exit
  * This seems to be a problem between threads and shared libs.
  */
+/* XXX FIXME
+ * the following code is NOT reentrant at all
+ * I should use locks and/or use interpreter slaves
+ */
 
 /* README
  *
@@ -74,6 +78,7 @@
 #include "wzd_misc.h"
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
+#include "wzd_file.h" /* file_mkdir */
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 #include "wzd_vars.h" /* needed to access variables */
 
@@ -83,6 +88,7 @@
 static Tcl_Interp * interp=NULL;
 static wzd_context_t * current_context=NULL;
 #define TCL_ARGS        "wzd_args"
+#define TCL_CURRENT_USER "wzd_current_user"
 #define TCL_REPLY_CODE  "wzd_reply_code"
 #define TCL_HAS_REPLIED "wzd_replied"
 
@@ -100,6 +106,7 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 
 
 /***********************/
@@ -131,6 +138,7 @@ int WZD_MODULE_INIT(void)
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
   hook_add_protocol("tcl:",4,&tcl_hook_protocol);
   out_log(LEVEL_INFO,"TCL module loaded\n");
@@ -146,11 +154,6 @@ void WZD_MODULE_CLOSE(void)
 }
 
 
-/* Tcl_Eval(interp, (char*)command);
- *  ! modifies its argument
- */
-/* Tcl_EvalFile(interp, "/tmp/myscript.tcl"); */
-
 
 static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
@@ -159,11 +162,14 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
     {
       Tcl_Obj * TempObj;
       const char *s;
+      wzd_user_t * user;
       int ret;
 
       current_context = context;
+      user = GetUserByID(context->userid);
       Tcl_SetVar(interp,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
       Tcl_SetVar(interp,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
+      Tcl_SetVar(interp,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
       TempObj = Tcl_NewStringObj(args,-1);
       ret = Tcl_EvalObj(interp, TempObj);
       /* XXX FIXME should we call Tcl_DecrRefCount() ? */
@@ -185,9 +191,11 @@ static int tcl_hook_protocol(const char *file, const char *args)
   const char *s;
   int ret;
   wzd_context_t * context;
+  wzd_user_t * user;
   unsigned int reply_code;
 
   current_context = context = GetMyContext();
+  user = GetUserByID(context->userid);
   reply_code = hook_get_current_reply_code();
   {
     char buffer[5];
@@ -196,19 +204,23 @@ static int tcl_hook_protocol(const char *file, const char *args)
   }
   Tcl_SetVar(interp,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
   Tcl_SetVar(interp,TCL_ARGS,args,TCL_GLOBAL_ONLY);
+  Tcl_SetVar(interp,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
 
   ret = Tcl_EvalFile(interp, file);
 
   /* XXX FIXME should we call Tcl_DecrRefCount() ? */
   current_context = NULL;
   Tcl_UnsetVar(interp,TCL_ARGS,TCL_GLOBAL_ONLY);
+  Tcl_UnsetVar(interp,TCL_CURRENT_USER,TCL_GLOBAL_ONLY);
   s = Tcl_GetVar(interp,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
+#if 0
   if (!s || *s!='1') {
     if (ret != TCL_OK)
       send_message_with_args(501,context,"Error in TCL command");
     else
       send_message_with_args(200,context,"TCL command ok");
   }
+#endif
 
   return 0;
 }
@@ -313,3 +325,33 @@ static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const ch
   return TCL_OK;
 }
 
+static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  int ret;
+
+  if (argc <= 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  /* XXX all following commands wants an absolute path */
+  if (!strcmp(argv[1],"mkdir")) {
+    ret = file_mkdir(argv[2],0755,current_context);
+  }
+  else if (!strcmp(argv[1],"rmdir")) {
+    ret = file_rmdir(argv[2],current_context);
+  }
+  else if (!strcmp(argv[1],"link")) {
+    if (argc <= 3) return TCL_ERROR;
+    if (!strcmp(argv[2],"create")) {
+      ret = symlink_create(argv[3],argv[4]);
+    }
+    else if (!strcmp(argv[2],"remove")) {
+      ret = symlink_remove(argv[3]);
+    }
+    else
+      ret = TCL_ERROR;
+  }
+  else
+    ret = TCL_ERROR;
+  
+  return (ret)?TCL_ERROR:TCL_OK;
+}

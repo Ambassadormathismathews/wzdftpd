@@ -2,6 +2,7 @@
 |                         »   G r O u P   I n F o    «                       |
 .----------------\----------------------------------------------/------------.
 |  groupname     : %40.groupname                  |
+|  gid           : %40.groupid                  |
 |  Ratio         : %40.groupratio                  |
 |  Home dir      : %55.grouphome   |
 |  Max Idle Time : %40.groupmaxidle                  |

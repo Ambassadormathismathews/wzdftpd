@@ -196,6 +196,7 @@ static void context_init(wzd_context_t * context)
   context->pasvsock = -1;
   context->dataport=0;
   context->resume = 0;
+  context->thread_id = (unsigned long)-1;
   context->pid_child = 0;
   context->state = STATE_UNKNOWN;
   context->datamode = DATA_PORT;
@@ -1026,7 +1027,9 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   if (!found) return -1;
 
 #ifdef _MSC_VER
-  ret = TerminateThread((HANDLE)pid,0);
+  /* \todo XXX FIXME remove/fix test !! */
+  context_list[i].exitclient = 1;
+/*  ret = TerminateThread((HANDLE)pid,0);*/
 #else
   ret = pthread_cancel(pid);
 #endif
@@ -1281,6 +1284,11 @@ void serverMainThreadProc(void *arg)
   server_ident_list[1] = -1;
   server_ident_list[2] = -1;
 
+  /********* set up functions *******/
+  if (command_list_init(&(mainConfig->command_list))) {
+    out_log(LEVEL_HIGH,"Could not set up functions\n");
+  }
+
   /****** set up site functions *****/
   if (site_init(mainConfig)) {
     out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
@@ -1469,6 +1477,7 @@ void serverMainThreadExit(int retcode)
   vfs_free(&mainConfig->vfs);
   perm_free_recursive(mainConfig->perm_list);
   site_cleanup(mainConfig);
+  command_list_cleanup(&mainConfig->command_list);
   free_messages();
 /*  free(context_list);*/
   /* FIXME should not be done here */

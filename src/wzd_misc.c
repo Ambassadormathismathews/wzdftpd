@@ -1421,14 +1421,44 @@ void * GetMyContext(void)
     }
   }
 
-#else /* WZD_MULTIPROCESS */
+#elif defined(WZD_MULTITHREAD)
+  wzd_context_t * context=NULL;
+
+#ifdef _MSC_VER
+  unsigned long thread_id;
+
+  thread_id = (unsigned long)GetCurrentThreadId();
+  context = &context_list[0];
+  /* TODO search context list and cleanup context */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].thread_id == thread_id) {
+      return (&context_list[i]);
+    }
+  }
+#else /* _MSC_VER */
+  pthread_t thread_id;
+
+  thread_id = pthread_self();
+  context = &context_list[0];
+  /* TODO search context list and cleanup context */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC &&
+      pthread_equal((pthread_t)context_list[i].thread_id,thread_id)) {
+        return (&context_list[i]);
+    }
+  }
+#endif /* _MSC_VER */
+
+#else
   /* we have only one process */
   for (i=0; i<HARD_USERLIMIT; i++)
   {
     if (context_list[i].magic == CONTEXT_MAGIC)
       return (&context_list[i]);
   }
-#endif /* WZD_MULTIPROCESS */
+#endif /* WZD_MULTITHREAD */
 
   return NULL;
 }

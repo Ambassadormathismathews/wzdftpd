@@ -83,6 +83,7 @@ out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context-
   ret = socket_close(context->datafd);
   FD_UNREGISTER(context->datafd,"Client data socket");
   context->datafd = -1;
+  context->state = STATE_UNKNOWN;
 }
 
 int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)

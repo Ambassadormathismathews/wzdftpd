@@ -3,7 +3,20 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- implement uid/gid
+  replace group names with gid in wzd_user_t
+  GetUserByID should search on uid or query backend
+'********'
+- threads management:
+  better use thread_id instead of pid_child in diplays, etc.
+'********'
+- implement MLSD
+'********'
 - remove race conditions in stat/open
+'********'
+- tcl:
+  create API for locks
+  use TCL slaves
 '********'
 - create manpages !
 - move some files to doc/examples
@@ -56,8 +69,6 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
 '********'
 - implement group flags
 '********'
-- better config file name management, to allow using options like -d without giving config file first
-'********'
 - hide files should be configurable: hide = .* recycler recycled *ioftpd*
 '********'
 
@@ -70,8 +81,6 @@ current objectives:
 * quotas
 
 '********'
-
-- avoid sending multiples "250-" to be rfc-compliant (message file + answer)
 
 - display correct permissions on ls
 

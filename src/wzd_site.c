@@ -1691,7 +1691,7 @@ int site_init(wzd_config_t * config)
 
 /********************* do_site *****************************/
 
-int do_site(char *command_line, wzd_context_t * context)
+int do_site(char *command, char *command_line, wzd_context_t * context)
 {
   char buffer[4096];
   char *token, *ptr;
