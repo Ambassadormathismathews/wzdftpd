@@ -13,7 +13,7 @@
 #define	MAX_LINE		1024
 
 /* IMPORTANT needed to check version */
-const char * module_version="121";
+const char * module_version="122";
 
 wzd_user_t * user_pool;
 int user_count, user_count_max=0;
@@ -133,7 +133,7 @@ int write_user_file(void)
   char filename[256];
   char filenamenew[256];
   char filenameold[256];
-  FILE *file;
+  FILE *file, *fileold;
   int i,j;
   char buffer[4096];
   const char * const file_header[] = {
@@ -156,7 +156,31 @@ int write_user_file(void)
   strcpy (filenameold,USERS_FILE);
   strcat (filenameold,".OLD");
 
-  file = fopen(filenamenew,"w+");
+/*  file = fopen(filenamenew,"w");*/
+
+  /* FIXME i need to get a mutex here ? */
+  file = fopen(filename,"r");
+  if (!file) {
+    fprintf(stderr,"Could not open file %s !\n",filename);
+    return -1;
+  }
+  fileold = fopen(filenameold,"w+");
+  if (!fileold) {
+    fprintf(stderr,"Could not open file %s !\n",filenameold);
+    return -1;
+  }
+  
+  /* first copy file to .old */
+  {
+    while ( (i=fread(buffer,1,4096,file)) > 0 )
+    {
+      j = fwrite(buffer,1,i,fileold);
+      if (!j) { fprintf(stderr,"ERROR writing to %s\n",filenameold); return -1; }
+    }
+  }
+  fclose(fileold);
+  file = freopen(filename,"w+",file);
+  fseek(file,SEEK_SET,0);
 
   i=0;
   while (file_header[i]) {
@@ -218,7 +242,7 @@ int write_user_file(void)
       fprintf(file,"num_logins=%d\n",user_pool[i].num_logins);
     if (user_pool[i].max_idle_time)
       fprintf(file,"max_idle_time=%ld\n",user_pool[i].max_idle_time);
-    if (user_pool[i].flags)
+    if (user_pool[i].flags && strlen(user_pool[i].flags)>0)
       fprintf(file,"flags=%s\n",user_pool[i].flags);
     fprintf(file,"\n");
   }
@@ -230,11 +254,15 @@ int write_user_file(void)
 
   fclose(file);
 
+  /* FIXME need to release mutex */
+  
+#if 0
   /* and now, the (as most as possible) atomic operation for the userfile */
   {
-    rename(filename,filenameold);
-    rename(filenamenew,filename);
+    if (rename(filename,filenameold)) return -1;
+    if (rename(filenamenew,filename)) return -1;
   }
+#endif
 
   return 0;
 }
@@ -506,6 +534,17 @@ int read_files(void)
   int i;
 
   file_user = fopen(USERS_FILE,"r");
+
+  if (file_user == NULL) {
+    fprintf(stderr,"********************************************\n");
+    fprintf(stderr,"\n");
+    fprintf(stderr,"This is backend plaintext speaking:\n");
+    fprintf(stderr,"Could not open file %s\n",USERS_FILE);
+    fprintf(stderr,"die die die !\n");
+    fprintf(stderr,"\n");
+    fprintf(stderr,"********************************************\n");
+    return -1;
+  }
 
   line = malloc(MAX_LINE);
 
