@@ -1,7 +1,10 @@
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#else
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#define INVALID_SOCKET -1
+#endif
 
 #if SSL_SUPPORT
 #include <openssl/ssl.h>
@@ -42,7 +45,7 @@ void data_close(wzd_context_t * context)
 #ifdef DEBUG
 out_err(LEVEL_CRITICAL,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
 #endif
-  ret = close(context->datafd);
+  ret = socket_close(context->datafd);
   context->datafd = 0;
 }
 
@@ -93,7 +96,7 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
 
 int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 {
-  char buffer[2048];
+  char buffer[16384];
   int n;
   unsigned int action;
   int ret;
@@ -131,6 +134,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
 /*	limiter_free(context->current_limiter);
 	context->current_limiter = NULL;*/
+        context->idle_time_start = time(NULL);
 	return 1;
       }
       context->current_action.bytesnow += n;
@@ -155,6 +159,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
+      context->idle_time_start = time(NULL);
     }
     break;
   case TOK_STOR:
@@ -193,6 +198,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         typedef int (*login_hook)(unsigned long, const char*, const char *);
         ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
       END_FORALL_HOOKS
+      context->idle_time_start = time(NULL);
     }
     break;
   }
