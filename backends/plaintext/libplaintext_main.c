@@ -1263,6 +1263,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_LEECHSLOTS) loop_user->leech_slots = user->leech_slots;
     if (mod_type & _USER_RATIO) loop_user->ratio = user->ratio;
   } else { /* user not found, add it */
+    if (!user) return -1;
     if (user_count >= user_count_max) return -1;
 /*    fprintf(stderr,"Add user %s\n",name);*/
     DIRNORM(user->rootpath,strlen(user->rootpath),0);
@@ -1353,6 +1354,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
         strcpy(loop_group->ip_allowed[i],group->ip_allowed[i]);
     }
   } else { /* group not found, add it */
+    if (!group) return -1;
     if (group_count >= group_count_max) return -1;
 /*    fprintf(stderr,"Add group %s\n",name);*/
     DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
