@@ -193,7 +193,7 @@ void client_die(wzd_context_t * context)
 #if BACKEND_STORAGE
     ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,context->userinfo.username);
 #endif
-    ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,mainConfig->user_list[context->userid].username);
+    ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
 #if BACKEND_STORAGE
@@ -230,7 +230,7 @@ int check_timeout(wzd_context_t * context)
     user = &context->userinfo;
   else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   /* reset global ul/dl counters */
   mainConfig->global_ul_limiter.bytes_transfered = 0;
@@ -257,6 +257,8 @@ int check_timeout(wzd_context_t * context)
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
     }
+    /* during a xfer, connection timeouts are not checked */
+    return 0;
   }
 
   /* if user has 'idle' flag we check nothing */
@@ -272,7 +274,7 @@ int check_timeout(wzd_context_t * context)
 #ifdef WZD_MULTIPROCESS
       exit(0);
 #else /* WZD_MULTIPROCESS */
-      return 1;
+      return 0;
 #endif /* WZD_MULTIPROCESS */
     }
   }
@@ -286,7 +288,7 @@ int check_timeout(wzd_context_t * context)
       gptr = &group;
     else
 #endif
-      gptr = &mainConfig->group_list[gid];
+      gptr = GetGroupByID(gid);
     if (gptr->max_idle_time > 0) {
       if (delay > gptr->max_idle_time) {
         /* TIMEOUT ! */
@@ -317,7 +319,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (checkpath(wanted_path,path,context)) return 1;
   snprintf(allowed,2048,"%s/",user->rootpath);
@@ -538,7 +540,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (context->pasvsock <= 0 && context->dataport == 0)
   {
@@ -693,10 +695,11 @@ int do_mkdir(char *param, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (!param || !param[0]) return 1;
   if (strlen(param)>2047) return 1;
+  if (strcmp(param,"/")==0) return 0;
 
   if (param[0] != '/') {
     strcpy(cmd,".");
@@ -709,6 +712,7 @@ int do_mkdir(char *param, wzd_context_t * context)
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   ret = checkpath(param,buffer,context);
 
@@ -732,9 +736,9 @@ fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
 
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
-/*  if (!ret) {
+  if (!ret) {
     file_chown(buffer,user->username,NULL,context);
-  }*/
+  }
 
 #ifdef DEBUG
 fprintf(stderr,"mkdir returned %d (%s)\n",errno,strerror(errno));
@@ -774,10 +778,12 @@ int do_rmdir(char * param, wzd_context_t * context)
 /*************** do_pasv *****************************/
 void do_pasv(wzd_context_t * context)
 {
-  int ret,addr;
+  int ret;
+  unsigned long addr;
   unsigned int size,port;
   struct sockaddr_in sai;
   unsigned char *myip;
+  unsigned char pasv_bind_ip[4];
 
   size = sizeof(struct sockaddr_in);
   port = mainConfig->pasv_low_range; /* use pasv range min */
@@ -796,13 +802,34 @@ void do_pasv(wzd_context_t * context)
     return;
   }
 
+  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+
+  if (mainConfig->pasv_ip[0] == 0) {
+    memcpy(pasv_bind_ip,myip,4);
+  } else {
+    /* do NOT send pasv_ip if used from private network */
+    if (context->hostip[0]==10 ||
+      (context->hostip[0] == 172 && context->hostip[1] == 16) ||
+      (context->hostip[0] == 192 && context->hostip[1] == 168 && context->hostip[2] == 0) ||
+      (context->hostip[0] == 127 && context->hostip[1] == 0 && context->hostip[2] == 0 && context->hostip[3] == 1))
+      memcpy(pasv_bind_ip,myip,4);
+    else
+      memcpy(pasv_bind_ip,mainConfig->pasv_ip,4);
+  }
+/*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
+      pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
+
   while (port < mainConfig->pasv_up_range) { /* use pasv range max */
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
     sai.sin_port = htons(port);
+    /* XXX TODO FIXME bind to specific address works, but not for NAT */
+    /* XXX TODO FIXME always bind to 'myip' ?! */
     addr = INADDR_ANY;
-    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(int));
+/*    memcpy( (void*)&addr, pasv_bind_ip, sizeof(unsigned long));*/
+    
+    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
     port++; /* retry with next port */
@@ -826,6 +853,9 @@ void do_pasv(wzd_context_t * context)
 
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
+  ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
+  
+#if 0
   if (mainConfig->pasv_ip[0] == 0) {
     ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
   } else {
@@ -839,6 +869,7 @@ void do_pasv(wzd_context_t * context)
       ret = send_message_with_args(227,context,mainConfig->pasv_ip[0], mainConfig->pasv_ip[1],
 	mainConfig->pasv_ip[2], mainConfig->pasv_ip[3],(port>>8)&0xff, port&0xff);
   }
+#endif
 }
 
 /*************** do_retr *****************************/
@@ -857,7 +888,7 @@ int do_retr(char *param, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -968,7 +999,7 @@ int do_stor(char *param, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -1260,7 +1291,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-/*    user = &mainConfig->user_list[context->userid];*/
+/*    user = GetUserByID(context->userid);*/
     user = NULL;
 
   ret = backend_validate_pass(username,pass,user,&context->userid);
@@ -1302,7 +1333,7 @@ int do_user(const char *username, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-/*    user = &mainConfig->user_list[context->userid];*/
+/*    user = GetUserByID(context->userid);*/
     user = NULL;
 
   ret = backend_validate_login(username,user,&context->userid);
@@ -1313,7 +1344,7 @@ int do_user(const char *username, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+  user = GetUserByID(context->userid);
 
   /* check if user have been deleted */
   if (user->flags && strchr(user->flags,FLAG_DELETED))
@@ -1361,7 +1392,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   snprintf(ip,30,"%d.%d.%d.%d",userip[0],userip[1],userip[2],userip[3]);
   if (user_ip_inlist(user,ip)==1)
@@ -1369,7 +1400,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
   
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
-    group = &mainConfig->group_list[user->groups[i]];
+    group = GetGroupByID(user->groups[i]);
     if (group_ip_inlist(group,ip)==1)
       return 0;
   }
@@ -1553,7 +1584,7 @@ void clientThreadProc(void *arg)
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   /* user+pass ok */
   FORALL_HOOKS(EVENT_LOGIN)
@@ -1569,7 +1600,9 @@ void clientThreadProc(void *arg)
 
   while (!exitclient) {
     save_errno = 666;
-    memset(buffer,0,BUFFER_LEN);
+    /* trying to find if bzero is faster than memset */
+/*    bzero(buffer,BUFFER_LEN);*/
+/*    memset(buffer,0,BUFFER_LEN);*/
     param=NULL;
     /* 1. read */
     FD_ZERO(&fds_r);
@@ -1632,6 +1665,9 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
       exitclient=1;
       break;
     }
+
+    /* this replace the memset (bzero ?) some lines before */
+    buffer[ret] = '\0';
 
     if (buffer[0]=='\0') continue;
 
@@ -1761,8 +1797,8 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      ret = send_message_with_args(553,context,buffer2);
 	    } else {
 	      /* success */
-	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" created",token);
-	      ret = send_message_with_args(257,context,buffer2,"");
+/*	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" created",token);*/
+	      ret = send_message_with_args(257,context,token,"created");
 	    }
 	    break;
           }
@@ -1861,10 +1897,21 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      context->pasvsock=0;
 	    }
 	    if (context->current_action.current_file) {
+	      /* FIXME XXX TODO
+	       * the two following sleep(5) are MANDATORY
+	       * the reason is unknown, but seems to be link to network
+	       * (not lock)
+	       */
+      sleep(5);
+	      if (context->current_action.token == TOK_STOR) {
+		file_unlock(context->current_action.current_file);
+		file_close(context->current_action.current_file,context);
+	      }
               context->current_action.current_file = 0;
               context->current_action.bytesnow = 0;
               context->current_action.token = TOK_UNKNOWN;
               data_close(context);
+      sleep(5);
 	    }
 	    ret = send_message(226,context);
 	    break;
