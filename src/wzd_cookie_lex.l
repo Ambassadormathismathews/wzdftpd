@@ -160,6 +160,7 @@ typedef enum {
   COOKIE_USERSLOTS,
   COOKIE_USERSPEED,
   COOKIE_USERTAG,
+  COOKIE_USERTIME,
   COOKIE_USERTOTAL_DL,
   COOKIE_USERTOTAL_DL2,
   COOKIE_USERTOTAL_UL,
@@ -363,6 +364,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}slots		BEGIN(INITIAL); return COOKIE_USERSLOTS;
 <sc_cook>{C_USER}speed		BEGIN(INITIAL); return COOKIE_USERSPEED;
 <sc_cook>{C_USER}tag		BEGIN(INITIAL); return COOKIE_USERTAG;
+<sc_cook>{C_USER}time		BEGIN(INITIAL); return COOKIE_USERTIME;
 <sc_cook>{C_USER}total_dl2	BEGIN(INITIAL); return COOKIE_USERTOTAL_DL2;
 <sc_cook>{C_USER}total_dl	BEGIN(INITIAL); return COOKIE_USERTOTAL_DL;
 <sc_cook>{C_USER}total_ul2	BEGIN(INITIAL); return COOKIE_USERTOTAL_UL2;
@@ -1638,6 +1640,17 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usertag");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_USERTIME:
+      get_cookie_format(yytext,&padding);
+      if (current_user)
+      {
+        snprintf(internalbuffer,IBUFSIZE,"%s",time_to_str(time(NULL) - current_context->login_time));
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"usertime");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;

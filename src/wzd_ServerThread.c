@@ -1322,7 +1322,7 @@ void serverMainThreadProc(void *arg)
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
 #ifndef _MSC_VER
-  signal(SIGKILL,interrupt);
+/*  signal(SIGKILL,interrupt);*/ /* SIGKILL signal is uncatchable */
 
   signal(SIGHUP,server_restart);
 #endif

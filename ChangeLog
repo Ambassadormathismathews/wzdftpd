@@ -4,6 +4,7 @@
 	* bugfix: uptime display broken
 	* feature: added patch from Tobias Bengtsson to allow group members of
 	gid=0 to get siteop access using PAM backend.
+	* cookies: %usertime (time online for this session)
 
 2004-08-28  Roman Bogorodskiy <bogorodskiy@inbox.ru>
 	

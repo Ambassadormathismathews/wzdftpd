@@ -138,19 +138,19 @@ char *time_to_str(time_t time)
   secs = time % 60;
 
   if (days) {
-    snprintf(workstr,sizeof(workstr),"%dd %dh %dm %ds\n",days,hours,mins,secs);
+    snprintf(workstr,sizeof(workstr),"%dd %dh %dm %ds",days,hours,mins,secs);
   }
   else {
     if (hours) {
-      snprintf(workstr,sizeof(workstr),"%dh %dm %ds\n",hours,mins,secs);
+      snprintf(workstr,sizeof(workstr),"%dh %dm %ds",hours,mins,secs);
     }
     else {
       if (mins) {
-        snprintf(workstr,sizeof(workstr),"%dm %ds\n",mins,secs);
+        snprintf(workstr,sizeof(workstr),"%dm %ds",mins,secs);
       }
       else {
         if (secs) {
-          snprintf(workstr,sizeof(workstr),"%ds\n",secs);
+          snprintf(workstr,sizeof(workstr),"%ds",secs);
         }
         else {
           snprintf(workstr,sizeof(workstr),"0 seconds");

@@ -2837,7 +2837,7 @@ static int do_login_loop(wzd_context_t * context)
     if (buffer[0]=='\0') continue;
 
     {
-      int length = strlen(buffer);
+      size_t length = strlen(buffer);
       while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
         buffer[length-- -1] = '\0';
       strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
