@@ -128,7 +128,7 @@ units</entry></row>
 <row><entry>Cookie</entry><entry>Description</entry></row>
 
 <row><entry>%filepath</entry><entry>Full path to uploaded/downloaded file <footnote><para>
-available during an upload/download</para></footnote>
+available during an upload/download/file or directory modification</para></footnote>
 </entry></row>
 <row><entry>%filecrc</entry><entry>CRC of uploaded/downloaded file
 </entry></row>

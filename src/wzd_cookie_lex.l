@@ -914,6 +914,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
           break;
         case TOK_MKD:
+        case TOK_DELE:
           snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
           break;
         default:

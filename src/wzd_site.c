@@ -2004,7 +2004,6 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
 int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[4096];
-  wzd_string_t *token;
   int ret=0;
   wzd_hook_reply_t hook_reply;
   int first_reply;

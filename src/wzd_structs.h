@@ -321,6 +321,9 @@ typedef struct _wzd_module_t {
 #define	EVENT_PRERMDIR		0x00000400
 #define	EVENT_RMDIR		0x00000800
 
+#define	EVENT_PREDELE 		0x00004000
+#define	EVENT_DELE 		0x00008000
+
 #define	EVENT_SITE		0x00010000
 #define	EVENT_CRONTAB		0x00100000
 

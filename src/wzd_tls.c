@@ -828,6 +828,7 @@ int tls_auth (const char *type, wzd_context_t * context)
   do {
     ret = gnutls_handshake(session);
     if (ret == 0) {
+      out_log(LEVEL_FLOOD,"control connection succesfully switched to ssl (cipher: %s)\n",gnutls_cipher_get_name(gnutls_cipher_get(session)));
       break;
     }
     if (gnutls_error_is_fatal(ret)) {

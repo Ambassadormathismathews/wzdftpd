@@ -65,6 +65,7 @@ You can use cookies in the arguments, they will be replaced as usual.
  <row><entry>LOGOUT</entry><entry>User logged out, or timed out</entry></row>
  <row><entry>MKDIR</entry><entry>User created a directory</entry></row>
  <row><entry>RMDIR</entry><entry>User removed a directory</entry></row>
+ <row><entry>DELE</entry><entry>User deleted a file</entry></row>
  <row><entry>PREUPLOAD</entry><entry>User is about to upload file</entry></row>
  <row><entry>POSTUPLOAD</entry><entry>User finished an upload</entry></row>
  <row><entry>PREDOWNLOAD</entry><entry>User is about to download file</entry></row>

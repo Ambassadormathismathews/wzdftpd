@@ -86,6 +86,7 @@ struct event_entry_t event_tab[] = {
   { EVENT_POSTDOWNLOAD, "POSTDOWNLOAD" },
   { EVENT_MKDIR, "MKDIR" },
   { EVENT_RMDIR, "RMDIR" },
+  { EVENT_DELE, "DELE" },
   { EVENT_SITE, "SITE" },
   { 0, NULL },
 };

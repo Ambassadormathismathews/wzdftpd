@@ -2465,6 +2465,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     file_size = 0;
   owner = file_getowner(path,context);
 
+  context->current_action.token = TOK_DELE;
   out_err(LEVEL_FLOOD,"Removing file '%s'\n",path);
 
   ret = file_remove(path,context);
@@ -2493,10 +2494,21 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   }
 
   if (!ret) {
+    send_message_raw("250- command ok\r\n",context);
+    FORALL_HOOKS(EVENT_DELE)
+      typedef int (*dele_hook)(unsigned long, const char*);
+      if (hook->hook)
+        ret = (*(dele_hook)hook->hook)(EVENT_DELE,path);
+      if (hook->external_command)
+        ret = hook_call_external(hook,250);
+    END_FORALL_HOOKS
     ret = send_message_with_args(250,context,"DELE"," command successfull");
+
     context->idle_time_start = time(NULL);
   } else
     ret = send_message_with_args(501,context,"DELE failed");
+
+  context->current_action.token = TOK_UNKNOWN;
   return ret;
 }
 
