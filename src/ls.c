@@ -128,7 +128,10 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 #ifndef _MSC_VER
   if ((dir=opendir(directory))==NULL) return 0;
 #else
-  _snprintf(dirfilter,2048,"%s/*",directory);
+  if (directory[strlen(directory)-1]!='/')
+    _snprintf(dirfilter,2048,"%s/*",directory);
+  else
+    _snprintf(dirfilter,2048,"%s*",directory);
   if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
 #endif
   memset(buffer,0,HARD_LS_BUFFERSIZE);

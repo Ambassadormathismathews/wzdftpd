@@ -1,3 +1,8 @@
+2004-03-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: num_logins broken
+	* bugfix: LIST not working at root dir (visual)
+
 2004-03-25  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* vars: new server vars hide_dotted_files, deny_access_files_uploaded

@@ -2128,6 +2128,7 @@ int do_user(const char *username, wzd_context_t * context)
     {
 #ifdef BACKEND_STORAGE
       /* strcmp user->username , ? */
+      if (context_list[i].magic == CONTEXT_MAGIC && !strcmp(context->userinfo.username,context_list[i].userinfo.username))
 #else
       if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
 #endif
