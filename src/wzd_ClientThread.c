@@ -1,3 +1,10 @@
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+#include <winsock2.h>
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h> /* gethostbyaddr */
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,10 +12,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <malloc.h>
-#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -78,6 +83,8 @@ int identify_token(const char *token)
     return TOK_RETR;
   if (strcasecmp("STOR",token)==0)
     return TOK_STOR;
+  if (strcasecmp("APPE",token)==0)
+    return TOK_APPE;
   if (strcasecmp("REST",token)==0)
     return TOK_REST;
   if (strcasecmp("MDTM",token)==0)
@@ -136,7 +143,11 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+      ret = select(0,&fds,NULL,&efds,&tv);
+#else
       ret = select(sock+1,&fds,NULL,&efds,&tv);
+#endif
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
@@ -174,7 +185,11 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
+      ret = select(0,NULL,&fds,&efds,&tv);
+#else
       ret = select(sock+1,NULL,&fds,&efds,&tv);
+#endif
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
@@ -246,8 +261,8 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   context->magic = 0;
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
-  close(context->datafd);
-  close(context->controlfd);
+  socket_close(context->datafd);
+  socket_close(context->controlfd);
 }
 
 /*************** check_timeout ***********************/
@@ -255,8 +270,7 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
 int check_timeout(wzd_context_t * context)
 {
   time_t t, delay;
-  wzd_group_t group, *gptr;
-  int gid;
+  wzd_group_t *gptr;
   int i, ret;
   wzd_user_t * user;
 
@@ -283,6 +297,13 @@ int check_timeout(wzd_context_t * context)
     time_t data_delay;
     data_delay = t - context->idle_time_data_start;
     if (data_delay > HARD_XFER_TIMEOUT) {
+      /* send events here allow sfv checker to mark file as bad if
+       * partially uploaded
+       */
+      FORALL_HOOKS(EVENT_POSTUPLOAD)
+	typedef int (*upload_hook)(unsigned long, const char*, const char *);
+	ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+      END_FORALL_HOOKS
       close(context->current_action.current_file);
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
@@ -305,6 +326,23 @@ int check_timeout(wzd_context_t * context)
     if (delay > user->max_idle_time) {
       /* TIMEOUT ! */
       send_message_with_args(421,context,"Timeout, closing connection");
+      {
+	const char * groupname = NULL;
+	const char * userip = context->hostip;
+	const char * remote_host;
+	struct hostent *h;
+	h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+	if (h==NULL)
+	  remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+	else
+	  remote_host = h->h_name;
+	if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+	log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
+	    user->username,
+	    userip[0],userip[1],userip[2],userip[3],
+	    delay
+	    );
+      }
       client_die(context);
 #ifdef WZD_MULTIPROCESS
       exit(0);
@@ -316,21 +354,31 @@ int check_timeout(wzd_context_t * context)
 
   /* next we check for all groups */
   for (i=0; i<user->group_num; i++) {
-    ret = backend_find_group(user->groups[i],&group,&gid);
-    if (ret) continue;
-#if BACKEND_STORAGE
-    if (mainConfig->backend.backend_storage == 0)
-      gptr = &group;
-    else
-#endif
-      gptr = GetGroupByID(gid);
+    gptr = GetGroupByID(user->groups[i]);
     if (gptr->max_idle_time > 0) {
       if (delay > gptr->max_idle_time) {
         /* TIMEOUT ! */
         send_message_with_args(421,context,"Timeout, closing connection");
-        client_die(context);
+	{
+	  const char * groupname = NULL;
+	  const char * userip = context->hostip;
+	  const char * remote_host;
+	  struct hostent *h;
+	  h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+	  if (h==NULL)
+	    remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+	  else
+	    remote_host = h->h_name;
+	  if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+	  log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
+	      user->username,
+	      userip[0],userip[1],userip[2],userip[3],
+	      delay
+	      );
+	}
+	client_die(context);
 #ifdef WZD_MULTIPROCESS
-        exit(0);
+	exit(0);
 #else /* WZD_MULTIPROCESS */
         return 1;
 #endif /* WZD_MULTIPROCESS */
@@ -429,10 +477,8 @@ int waitaccept(wzd_context_t * context)
     tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
 
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
-#ifdef DEBUG
-      fprintf(stderr,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
-#endif
-      close(sock);
+      out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
+      socket_close(sock);
       send_message_with_args(501,context,"PASV timeout");
       return -1;
     }
@@ -440,7 +486,7 @@ int waitaccept(wzd_context_t * context)
 
   sock = socket_accept(context->pasvsock, &remote_host, &remote_port);
   if (sock == -1) {
-    close(sock);
+    socket_close(sock);
     send_message_with_args(501,context,"PASV timeout");
       return -1;
   }
@@ -450,7 +496,7 @@ int waitaccept(wzd_context_t * context)
     ret = tls_init_datamode(sock, context);
 #endif
 
-  close (context->pasvsock);
+  socket_close (context->pasvsock);
   context->pasvsock = sock;
 
   context->datafd = sock;
@@ -500,7 +546,7 @@ int waitconnect(wzd_context_t * context)
 #ifdef DEBUG
       fprintf(stderr,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
 #endif
-      close(sock);
+      socket_close(sock);
       send_message_with_args(501,context,"PASV timeout");
       return -1;
     }
@@ -508,7 +554,7 @@ int waitconnect(wzd_context_t * context)
 
   sock = socket_accept(context->pasvsock, &remote_host, &remote_port);
   if (sock == -1) {
-    close(sock);
+    socket_close(sock);
     send_message_with_args(501,context,"PASV timeout");
       return -1;
   }
@@ -518,7 +564,7 @@ int waitconnect(wzd_context_t * context)
     ret = tls_init_datamode(sock, context);
 #endif
 
-  close (context->pasvsock);
+  socket_close (context->pasvsock);
   context->pasvsock = sock;
 
   context->datafd = sock;
@@ -541,10 +587,8 @@ int list_callback(int sock, wzd_context_t * context, char *line)
     tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
 
     if (select(sock+1,NULL,&fds,NULL,&tv) <= 0) {
-#ifdef DEBUG
-      fprintf(stderr,"LIST timeout to client.\n");
-#endif
-      close(sock);
+      out_err(LEVEL_FLOOD,"LIST timeout to client.\n");
+      socket_close(sock);
       send_message_with_args(501,context,"LIST timeout");
       return 0;
     }
@@ -586,9 +630,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
-#ifdef DEBUG
-fprintf(stderr,"PARAM: '%s'\n",param);
-#endif
+  out_err(LEVEL_FLOOD,"PARAM: '%s'\n",param);
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
@@ -711,7 +753,7 @@ printf("path: '%s'\n",path);
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
-  ret = close(sock);
+  ret = socket_close(sock);
 
   return 0;
 }
@@ -751,9 +793,7 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   ret = checkpath(param,buffer,context);
 
-#ifdef DEBUG
-fprintf(stderr,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
-#endif
+  out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
 
   if (buffer[strlen(buffer)-1]=='/')
     buffer[strlen(buffer)-1]='\0';
@@ -765,7 +805,7 @@ fprintf(stderr,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errn
   }
 
   if (strcmp(path,buffer) != 0) {
-fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
+    out_err(LEVEL_FLOOD,"strcmp(%s,%s) != 0\n",path,buffer);
     return 1;
   }
 
@@ -777,11 +817,23 @@ fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
       groupname = GetGroupByID(user->groups[0])->groupname;
     }
     file_chown(buffer,user->username,groupname,context);
+
+    strcpy(buffer,context->currentpath);
+    strcat(buffer,"/");
+    strcat(buffer,param);
+    stripdir(buffer,path,2047);
+    
+    log_message("NEWDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
+	path, /* ftp-absolute path */
+	user->username,
+	(groupname)?groupname:"No Group",
+	user->tagline
+	);
+	
   }
 
-#ifdef DEBUG
-fprintf(stderr,"mkdir returned %d (%s)\n",errno,strerror(errno));
-#endif
+  out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
+
   return ret;
 }
 
@@ -791,6 +843,7 @@ int do_rmdir(char * param, wzd_context_t * context)
 {
   char path[2048];
   struct stat s;
+  int ret;
 
   if (!param || !param[0]) return 1;
 
@@ -811,7 +864,39 @@ int do_rmdir(char * param, wzd_context_t * context)
   if (lstat(path,&s)) return 1;
 
   /* check permissions */
-  return file_rmdir(path,context);
+  ret = file_rmdir(path,context);
+
+  if (!ret) {
+    const char *groupname=NULL;
+    wzd_user_t * user;
+    char buffer[2048], path[2048];
+
+#if BACKEND_STORAGE
+    if (mainConfig->backend.backend_storage==0) {
+      user = &context->userinfo;
+    } else
+#endif
+      user = GetUserByID(context->userid);
+
+    if (user->group_num > 0) {
+      groupname = GetGroupByID(user->groups[0])->groupname;
+    }
+
+    strcpy(buffer,context->currentpath);
+    strcat(buffer,"/");
+    strcat(buffer,param);
+    stripdir(buffer,path,2047);
+    
+    log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
+	path, /* ftp-absolute path */
+	user->username,
+	(groupname)?groupname:"No Group",
+	user->tagline
+	);
+	
+  }
+
+  return ret;
 }
 
 /*************** do_pasv *****************************/
@@ -829,7 +914,7 @@ void do_pasv(wzd_context_t * context)
 
   /* close existing pasv connections */
   if (context->pasvsock > 0) {
-    close(context->pasvsock);
+    socket_close(context->pasvsock);
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = 0;
   }
@@ -876,7 +961,7 @@ void do_pasv(wzd_context_t * context)
 
 
   if (port >= 65536) {
-    close(context->pasvsock);
+    socket_close(context->pasvsock);
     context->pasvsock = 0;
     ret = send_message(425,context);
     return;
@@ -884,7 +969,7 @@ void do_pasv(wzd_context_t * context)
 
   if (listen(context->pasvsock,1)<0) {
     out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
-    close(context->pasvsock);
+    socket_close(context->pasvsock);
     context->pasvsock = 0;
     ret = send_message(425,context);
     return;
@@ -953,7 +1038,7 @@ int do_retr(char *param, wzd_context_t * context)
 
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-/*    close(sock);*/
+/*    socket_close(sock);*/
     return 1;
   }
 
@@ -1010,14 +1095,14 @@ int do_retr(char *param, wzd_context_t * context)
   else
     context->current_limiter = NULL;*/
 
-  if (user->max_dl_speed)
-  {
+/*  if (user->max_dl_speed)
+  {*/
     context->current_dl_limiter.maxspeed = user->max_dl_speed;
     context->current_dl_limiter.bytes_transfered = 0;
     gettimeofday(&context->current_dl_limiter.current_time,NULL);
-  }
+/*  }
   else
-    context->current_dl_limiter.maxspeed = 0;
+    context->current_dl_limiter.maxspeed = 0;*/
 
   return 0;
 }
@@ -1070,9 +1155,7 @@ int do_stor(char *param, wzd_context_t * context)
   /* BUGFIX */
   if ((ret=readlink(path,path2,sizeof(path2)-1)) >= 0) {
     path2[ret] = '\0';
-#ifdef DEBUG
-fprintf(stderr,"Link is:  %s %d ... checking\n",path2,ret);
-#endif
+    out_err(LEVEL_FLOOD,"Link is:  %s %d ... checking\n",path2,ret);
     strcpy(path,path2);
     if (strrchr(path2,'/')) {
       *(param=strrchr(path2,'/'))='\0';
@@ -1081,9 +1164,7 @@ fprintf(stderr,"Link is:  %s %d ... checking\n",path2,ret);
       if (checkpath(path2,path,context)) return 1;
       if (path[strlen(path)-1] != '/') strcat(path,"/");
       strcat(path,param);
-#ifdef DEBUG
-fprintf(stderr,"Resolved: %s\n",path);
-#endif
+      out_err(LEVEL_FLOOD,"Resolved: %s\n",path);
     }
   }
   /* END OF BUGFIX */
@@ -1105,7 +1186,7 @@ fprintf(stderr,"Resolved: %s\n",path);
 
   if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-/*    close(sock);*/
+/*    socket_close(sock);*/
     return 1;
   }
 
@@ -1152,7 +1233,10 @@ fprintf(stderr,"Resolved: %s\n",path);
   }
 
   bytesnow = byteslast = 0;
-  lseek(fd,context->resume,SEEK_SET);
+  if (context->resume == (unsigned long)-1)
+    lseek(fd,0,SEEK_END);
+  else
+    lseek(fd,context->resume,SEEK_SET);
 
   FORALL_HOOKS(EVENT_PREUPLOAD)
     typedef int (*login_hook)(unsigned long, const char*, const char *);
@@ -1160,10 +1244,8 @@ fprintf(stderr,"Resolved: %s\n",path);
       ret = (*(login_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
   END_FORALL_HOOKS
 
-#ifdef DEBUG
-fprintf(stderr,"Download: User %s starts uploading %s\n",
-  user->username,param);
-#endif
+  out_err(LEVEL_FLOOD,"Download: User %s starts uploading %s\n",
+    user->username,param);
 
   context->current_action.token = TOK_STOR;
   strncpy(context->current_action.arg,path,4096);
@@ -1176,14 +1258,14 @@ fprintf(stderr,"Download: User %s starts uploading %s\n",
   else
     context->current_limiter = NULL;*/
 
-  if (user->max_ul_speed)
-  {
+/*  if (user->max_ul_speed)
+  {*/
     context->current_ul_limiter.maxspeed = user->max_ul_speed;
     context->current_ul_limiter.bytes_transfered = 0;
     gettimeofday(&context->current_ul_limiter.current_time,NULL);
-  }
+/*  }
   else
-    context->current_ul_limiter.maxspeed = 0;
+    context->current_ul_limiter.maxspeed = 0;*/
 
   return 0;
 }
@@ -1258,9 +1340,7 @@ int do_dele(char *param, wzd_context_t * context)
     return 1;
   }
 
-#ifdef DEBUG
-fprintf(stderr,"Removing file '%s'\n",path);
-#endif
+  out_err(LEVEL_FLOOD,"Removing file '%s'\n",path);
 
   return file_remove(path,context);
 }
@@ -1514,16 +1594,28 @@ int do_login_loop(wzd_context_t * context)
     ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
-fprintf(stderr,"Connection closed or timeout\n");
+      out_err(LEVEL_FLOOD,"Connection closed or timeout\n");
       return 1;
     }
     if (ret==-1) {
-fprintf(stderr,"Error reading client response\n");
+      out_err(LEVEL_FLOOD,"Error reading client response\n");
       return 1;
     }
 
+    /* this replace the memset (bzero ?) some lines before */
+    buffer[ret] = '\0';
+
+    if (buffer[0]=='\0') continue;
+
+    {
+      int length = strlen(buffer);
+      while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
+	buffer[length-- -1] = '\0';
+      strncpy(context->last_command,buffer,2048);
+    }
+
 #ifdef DEBUG
-fprintf(stderr,"RAW: '%s'\n",buffer);
+out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 #endif
 
     /* XXX strtok_r: to be reentrant ! */
@@ -1584,10 +1676,21 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 #if SSL_SUPPORT
     case TOK_AUTH:
       token = strtok_r(NULL,"\r\n",&ptr);
+      if (!token || token[0]==0) {
+        ret = send_message_with_args(421,context,"Invalid token in AUTH command\n");
+        return 1;
+      }
+      if (strcasecmp(token,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
+        context->ssl.data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
+      else
+	context->ssl.data_mode = TLS_CLEAR;
+      if (mainConfig->tls_type != TLS_IMPLICIT) {
+        ret = send_message_with_args(234, context, token);
+      }
       ret = tls_auth(token,context);
       if (ret) { /* couldn't switch to ssl */
 	/* XXX should we send a message ? - with ssl aborted we can't be sure there won't be problems */
-	ret = send_message_with_args(421,context,"Failed TLS negotiation, exiting");
+	ret = send_message_with_args(431,context,"Failed TLS negotiation");
 	return 1;
       }
       tls_ok = 1;
@@ -1610,6 +1713,12 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
         break;
       }
       ret = send_message_with_args(200,context,"PROT command OK");
+      break;
+#else /* SSL_SUPPORT */
+    case TOK_AUTH:
+    case TOK_PBSZ:
+    case TOK_PROT:
+      ret = send_message_with_args(530,context,"TLS commands disabled");
       break;
 #endif
     default:
@@ -1671,7 +1780,7 @@ void * clientThreadProc(void *arg)
   ret = do_login(context);
 
   if (ret) { /* USER not logged in */
-    close (sockfd);
+    socket_close (sockfd);
     out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
 #ifdef WZD_MULTITHREAD
     client_die(context);
@@ -1685,6 +1794,26 @@ void * clientThreadProc(void *arg)
   } else
 #endif
     user = GetUserByID(context->userid);
+
+  {
+    const char * groupname = NULL;
+    const char * userip = context->hostip;
+    const char * remote_host;
+    struct hostent *h;
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+    if (h==NULL)
+      remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+    else
+      remote_host = h->h_name;
+    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    log_message("LOGIN","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
+	remote_host,
+	userip[0],userip[1],userip[2],userip[3],
+	user->username,
+	(groupname)?groupname:"No Group",
+	user->tagline
+	);
+  }
 
   /* user+pass ok */
   FORALL_HOOKS(EVENT_LOGIN)
@@ -1780,7 +1909,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     }
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG
-fprintf(stderr,"RAW: '%s'\n",buffer);
+out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 #endif
 
     /* 2. get next token */
@@ -1793,6 +1922,25 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	  switch (command) {
 	  case TOK_QUIT:
 	    ret = send_message(221,context);
+	    {
+	      const char * groupname = NULL;
+	      const char * userip = context->hostip;
+	      const char * remote_host;
+	      struct hostent *h;
+	      h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
+	      if (h==NULL)
+		remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
+	      else
+		remote_host = h->h_name;
+	      if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+	      log_message("LOGOUT","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
+		  remote_host,
+		  userip[0],userip[1],userip[2],userip[3],
+		  user->username,
+		  (groupname)?groupname:"No Group",
+		  user->tagline
+		  );
+	    }
 	    exitclient=1;
 	    /* check if pending xfers */
 	    break;
@@ -1811,7 +1959,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    break;
 	  case TOK_PORT:
 	    if (context->pasvsock) {
-	      close(context->pasvsock);
+	      socket_close(context->pasvsock);
 	      context->pasvsock = 0;
 	    }
 	    /* context->resume = 0; */
@@ -1876,6 +2024,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    token = strtok_r(NULL,"\r\n",&ptr);
 /*	    if ((context->pid_child=fork())==0)*/
 	      do_list(token,LIST_TYPE_LONG,context);
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_NLST:
 	    context->resume = 0;
@@ -1886,6 +2035,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    token = strtok_r(NULL,"\r\n",&ptr);	    
 /*	    if ((context->pid_child=fork())==0)*/
 	      do_list(token,LIST_TYPE_SHORT,context);
+	    context->idle_time_start = time(NULL);
 	    break;
 	  case TOK_MKD:
           {
@@ -1975,6 +2125,18 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	    context->resume=0;
 	    context->idle_time_start = time(NULL);
 	    break;
+	  case TOK_APPE:
+	    if (context->current_action.token != TOK_UNKNOWN) {
+	      ret = send_message(491,context);
+	      break;
+	    }
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    context->resume = (unsigned long)-1;
+	    ret = do_stor(token,context);
+
+	    context->resume=0;
+	    context->idle_time_start = time(NULL);
+	    break;
 	  case TOK_REST:
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    j=0;
@@ -2010,7 +2172,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 /*	    if (context->pid_child) kill(context->pid_child,SIGTERM);
 	    context->pid_child = 0;*/
 	    if (context->pasvsock) {
-	      close(context->pasvsock);
+	      socket_close(context->pasvsock);
 	      context->pasvsock=0;
 	    }
 	    if (context->current_action.current_file) {
@@ -2024,6 +2186,13 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      if (context->current_action.token == TOK_STOR) {
 		file_unlock(context->current_action.current_file);
 		file_close(context->current_action.current_file,context);
+		/* send events here allow sfv checker to mark file as bad if
+		 * partially uploaded
+		 */
+		FORALL_HOOKS(EVENT_POSTUPLOAD)
+		  typedef int (*upload_hook)(unsigned long, const char*, const char *);
+		  ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+		END_FORALL_HOOKS
 	      }
               context->current_action.current_file = 0;
               context->current_action.bytesnow = 0;
