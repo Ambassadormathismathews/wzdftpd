@@ -10,21 +10,28 @@ void init_default_messages(void)
 
   msg_tab[150] = "Status OK, about to open data connection.";
 
-  msg_tab[200] = "Command okay.";
+  msg_tab[200] = "%s"; /* Command okay */
   msg_tab[202] = "Command not implemented.";
+  msg_tab[211] = "Extension supported\n%s";
+  msg_tab[213] = "%s"; /* mdtm */
   msg_tab[215] = "UNIX Type: L8";
   msg_tab[220] = "wzd server ready.";
   msg_tab[221] = "Cya !";
   msg_tab[226] = "Closing data connection.";
   msg_tab[227] = "Entering Passive Mode (%d,%d,%d,%d,%d,%d)"; /* DON'T TOUCH ! */
   msg_tab[230] = "User logged in, proceed.";
+  msg_tab[234] = "AUTH command OK. Initializing %s mode"; /* SSL init */
   msg_tab[250] = "%s %s";
   msg_tab[257] = "\"%s\" %s";
   msg_tab[258] = "%s %s";
 
   msg_tab[331] = "User %s okay, need password.";
+  msg_tab[350] = "Restarting at %ld. Send STORE or RETRIEVE.";
 
+  msg_tab[421] = "%s"; /* Service not available, closing control connection. */
   msg_tab[425] = "Can't open data connection.";
+  msg_tab[451] = "Transmission error occured.";
+  msg_tab[491] = "Data connection already active.";
 
   msg_tab[501] = "%s";
   msg_tab[502] = "Command not implemented.";

@@ -1,0 +1,43 @@
+# general considerations:
+# 
+# comment lines begin by #
+# empty lines are removed
+# 
+# directives have format: <tagname>=<value>
+# with the regexp: ^([a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)
+# 
+# directives are grouped into sections
+# section begins by [SECTIONNAME]
+
+# groups definitions
+[GROUPS]
+privgroup	admin
+privgroup	anonymous
+
+delete -admin
+
+# users definitions
+# users MUST begin by line name=<>
+[USERS]
+
+name=pollux
+home=/home/pollux
+pass=tobNnnhhJY2Fs
+uid=501
+groups=admin
+rights=0xff
+
+name=anonymous
+home=/home/pollux/tmp
+pass=%
+uid=200
+groups=anonymous
+rights=0x03
+
+# per hosts rights
+[HOSTS]
+all = *
+
+# per dir rights
+[RIGHTS]
+/ rwxrwxrwx

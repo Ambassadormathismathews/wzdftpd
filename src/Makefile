@@ -1,30 +1,68 @@
+include Makefile.config
+
+PLATFORM:=$(shell uname)
+
+ifeq ($(PLATFORM),Linux)
+CC=gcc-3.1
+else
 CC=gcc
-OBJS=wzd_backend.o wzd_messages.o wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o ls.o
+endif
+
+COMMON_CFLAGS=-Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT)
+COMMON_LIBS=
+
+OBJS=wzd_misc.o wzd_site.o wzd_socket.o wzd_backend.o wzd_messages.o \
+  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_log.o wzd_main.o \
+  ls.o
 DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)
-LIBS=-ldl
-WINLIBS=-lws2_32
-CFLAGS=-O2 -Wall -Wstrict-prototypes
-DCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes
-PCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
-EXEC=wzdFTPs.exe
+LIBS=-ldl $(COMMON_LIBS)
+WINLIBS=$(COMMON_LIBS) -lcrypto
+CFLAGS=-O2 $(COMMON_CFLAGS)
+DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
+PCFLAGS=-g -DDEBUG $(COMMON_CFLAGS) -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
+EXEC=wzdFTPd.exe
+
+ifeq ($(SSL_SUPPORT),1)
+OBJS += wzd_tls.o
+COMMON_LIBS += -lssl
+endif
+
 
 .SUFFIXES: .c .o .do .po
 
 all: debug
 
 release: $(OBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS); else $(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS); \
+	sudo chown root $(EXEC); \
+	sudo chmod u+s $(EXEC)
+else
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
+endif
 
 debug: $(DOBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS); else $(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS); \
+	sudo chown root $(EXEC); \
+	sudo chmod u+s $(EXEC)
+else
+	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS)
+endif
 
 pedantic: $(POBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS); else $(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS); \
+	sudo chown root $(EXEC); \
+	sudo chmod u+s $(EXEC)
+else
+	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS)
+endif
 
 clean:
-	rm -f $(OBJS) $(DOBJS) $(POBJS) *~
+	rm -f *.o *.do *.po *~
 
 distclean: clean
 	rm -f $(EXEC)
@@ -47,5 +85,5 @@ deps:
 	cat Makefile.deps2 >> Makefile.deps; \
 	rm -f Makefile.deps2
 
-include Makefile.deps
+-include Makefile.deps
 

@@ -1,0 +1,12 @@
+# May, 29 2002
+- implementation of ssl: explicit, explicit_strict, port, data protection, buffer size
+- site uptime, site shutdown
+
+# May, 28 2002
+- basic implementation of TLS
+- removed unneeded fork() for data connection
+- code cleanup, better uses of select()
+
+# may, 20 2002
+- implementation of RETR, STOR, REST, MDTM ,SIZE, DELE, ABOR
+- fixed bug with mkdir

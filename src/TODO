@@ -1,15 +1,33 @@
-/* PRIORITY */
+## PRIORITY ##
 
+- implement permissions
+- finish implementation of ssl: explicit, port, data protection, buffer size
 - invert args in strncmp in wzd_ClientThread.c (risk segfault if buffer = PAS\0 ?? )
 - specify PASV range
 - give choice between hard/soft chroot
 - use fork
+- pid_child is useless now (in wzd_context_t) - HOWTO DO AN ABORT NOW ?!
+- if data connection is started, we CANT receive commands - not important
+    if non blocking (check timeouts !)
 
 
-/* NORMAL */
+## NORMAL ##
 
+- add random in PASV port choose, to avoid always using the same
+    will be REALLY usefull if we use fork()
+- option : check certificate
+- option : check CA for certificate
+- option : check certificate only at login (not at port/pasv)
 - hide some variables in 'ls' ?
+- messages files
 
-/* I'LL THINK ABOUT IT */
+## I'LL THINK ABOUT IT ##
 
+- rolling range of ips, with change date:
+   e.g during one week use ip 1, then 1 week ip 2, etc.
 - add quota
+- XCRC command
+- sfv checker
+- dupe checker
+- default backend hard-coded ?
+- per-dir special permissions (glftpd like)

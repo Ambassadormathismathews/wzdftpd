@@ -20,11 +20,27 @@
 #define	TOK_NLST	15
 #define	TOK_MKD		16
 #define	TOK_RMD		17
+#define	TOK_RETR	18
+#define	TOK_STOR	19
+#define	TOK_REST	20
+#define	TOK_MDTM	21
+#define	TOK_SIZE	22
+#define	TOK_DELE	23
+#define	TOK_ABOR	24
+
+#if SSL_SUPPORT
+#define	TOK_PBSZ	25
+#define	TOK_PROT	26
+#endif
+
+#define	TOK_SITE	27
+#define	TOK_FEAT	28
 
 /*************** identify_token **********************/
 
 int identify_token(const char *token)
 {
+/* TODO order the following by probability order */
   if (strcasecmp("USER",token)==0)
     return TOK_USER;
   if (strcasecmp("PASS",token)==0)
@@ -59,7 +75,80 @@ int identify_token(const char *token)
     return TOK_MKD;
   if (strcasecmp("RMD",token)==0)
     return TOK_RMD;
+  if (strcasecmp("RETR",token)==0)
+    return TOK_RETR;
+  if (strcasecmp("STOR",token)==0)
+    return TOK_STOR;
+  if (strcasecmp("REST",token)==0)
+    return TOK_REST;
+  if (strcasecmp("MDTM",token)==0)
+    return TOK_MDTM;
+  if (strcasecmp("SIZE",token)==0)
+    return TOK_SIZE;
+  if (strcasecmp("DELE",token)==0)
+    return TOK_DELE;
+  if (strcasecmp("ABOR",token)==0)
+    return TOK_ABOR;
+#if SSL_SUPPORT
+  if (strcasecmp("PBSZ",token)==0)
+    return TOK_PBSZ;
+  if (strcasecmp("PROT",token)==0)
+    return TOK_PROT;
+#endif
+  if (strcasecmp("SITE",token)==0)
+    return TOK_SITE;
+  if (strcasecmp("FEAT",token)==0)
+    return TOK_FEAT;
   return TOK_UNKNOWN;
+}
+
+/*************** clear_read **************************/
+
+int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+{
+  int ret;
+  int save_errno;
+  fd_set fds, efds;
+  struct timeval tv;
+
+  if (timeout==0)
+    ret = recv(sock,msg,length,0);
+  else {
+    while (1) {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
+
+      ret = select(sock+1,&fds,NULL,&efds,&tv);
+      save_errno = errno;
+
+      if (FD_ISSET(sock,&efds)) {
+	if (save_errno == EINTR) continue;
+	out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
+	return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+	return 0;
+      break;
+    }
+    ret = recv(sock,msg,length,0);
+  } /* timeout */
+
+  return ret;
+}
+
+/*************** clear_write *************************/
+
+int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, wzd_context_t * context)
+{
+  int ret;
+fprintf(stderr,".");
+fflush(stderr);
+  ret = send(sock,msg,length,0);
+
+  return ret;
 }
 
 /*************** send_message ************************/
@@ -69,11 +158,11 @@ int send_message(int code, wzd_context_t * context)
   char buffer[BUFFER_LEN];
   int ret;
 
-  snprintf(buffer,BUFFER_LEN,"%d %s\r\n",code,getMessage(code));
+  format_message(code,BUFFER_LEN,buffer);
 #ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = send(context->sockfd,buffer,strlen(buffer),0);
+  ret = (mainConfig.write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -84,16 +173,14 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 {
   va_list argptr;
   char buffer[BUFFER_LEN];
-  char buffer2[BUFFER_LEN];
   int ret;
 
   va_start(argptr,context); /* note: ansi compatible version of va_start */
-  vsnprintf(buffer,BUFFER_LEN,getMessage(code),argptr);
-  snprintf(buffer2,BUFFER_LEN,"%d %s\r\n",code,buffer);
+  v_format_message(code,BUFFER_LEN,buffer,argptr);
 #ifdef DEBUG
-fprintf(stderr,"I answer: %s\n",buffer2);
+fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = send(context->sockfd,buffer2,strlen(buffer2),0);
+  ret = (mainConfig.write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return 0;
 }
@@ -106,10 +193,13 @@ unsigned char * getmyip(int sock)
   struct sockaddr_in sa;
   int size;
 
+  size = sizeof(struct sockaddr_in);
   memset(myip,0,sizeof(myip));
-  if (getsockname(sock,(struct sockaddr *)&sa,&size)==0)
+  if (getsockname(sock,(struct sockaddr *)&sa,&size)!=-1)
   {
     memcpy(myip,&sa.sin_addr,sizeof(myip));
+  } else { /* failed, using localhost */
+    exit (1);
   }
 
   return myip;
@@ -191,21 +281,46 @@ void childtimeout(int nr)
 
 int waitaccept(wzd_context_t * context)
 {
-  int socksize, sock;
-  struct sockaddr_in sai;
+  fd_set fds;
+  struct timeval tv;
+  int sock;
+  unsigned long remote_host;
+  unsigned int remote_port;
+  int ret;
 
-  signal(SIGALRM,childtimeout);
-  alarm(HARD_REACTION_TIME);
-  socksize = sizeof(struct sockaddr_in);
+  sock = context->pasvsock;
+  do {
+    FD_ZERO(&fds);
+    FD_SET(sock,&fds);
+    tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
+
+    if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
 #ifdef DEBUG
-fprintf(stderr,"Entering PASV mode for socket %d\n",context->pasvsock);
+      fprintf(stderr,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
 #endif
-  sock = accept(context->pasvsock,(struct sockaddr *)&sai,&socksize);
-#ifdef DEBUG
-if (sock>0)
-fprintf(stderr,"New socket accepted: %d\n",sock);
+      close(sock);
+      send_message_with_args(501,context,"PASV timeout");
+      return -1;
+/*      exit (0);*/
+    }
+  } while (!FD_ISSET(sock,&fds));
+
+  sock = socket_accept(context->pasvsock, &remote_host, &remote_port);
+  if (sock == -1) {
+    close(sock);
+    send_message_with_args(501,context,"PASV timeout");
+      return -1;
+/*      exit (0);*/
+  }
+
+#if SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_PRIV)
+    ret = tls_init_datamode(sock, context);
 #endif
-  signal(SIGALRM,SIG_IGN);
+
+  close (context->pasvsock);
+  context->pasvsock = sock;
+
   return sock;
 }
 
@@ -225,39 +340,48 @@ int list_callback(int sock, wzd_context_t * context, char *line)
 #ifdef DEBUG
       fprintf(stderr,"LIST timeout to client.\n");
 #endif
-      closesocket(sock);
+      close(sock);
       send_message_with_args(501,context,"LIST timeout");
       return 0;
     }
   } while (!FD_ISSET(sock,&fds));
 
-  send(sock,line,strlen(line),0);
+#if SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_CLEAR)
+    clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
+  else
+#endif
+    (mainConfig.write_fct)(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
 
   return 1;
 }
 
 /*************** do_list *****************************/
 
-void do_list(char *param, list_type_t listtype, wzd_context_t * context)
+int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 {
   char mask[1024],cmd[2048],path[2048];
-  int ret,sock;
+  int ret,sock,n;
   char nullch[8];
   char * cmask;
   unsigned long addr;
-  unsigned int socksize;
-  struct sockaddr_in sai;
 
   if (context->pasvsock <= 0 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
-    exit(0);
+    return 1;
   }
 
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
-    printf("PARAM: '%s'\n",param);
+fprintf(stderr,"PARAM: '%s'\n",param);
+    while (param[0]=='-') {
+      n=1;
+      while (param[n]!=' ' && param[n]!=0) n++;
+      if (param[n]==' ') param = param+n+1;
+      else param = param+n;
+    }
 
     strcpy(cmd,param);
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
@@ -282,7 +406,7 @@ void do_list(char *param, list_type_t listtype, wzd_context_t * context)
   if (param[0]=='/') param++;
   if (param[0]=='/') {
     ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
-    exit(0);
+    return 1;;
   }
 
   cmask = strrchr(mask,'/');
@@ -299,43 +423,40 @@ printf("path before: '%s'\n",cmd);
 
   if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
-    exit(0);
+    return 1;
   }
 
 #ifdef DEBUG
 printf("path: '%s'\n",path);
 #endif
 
+  ret = backend_chek_perm(&context->userinfo,RIGHT_LIST,path); /* CHECK PERM */
+
+  if (ret) { /* no access */
+    ret = send_message_with_args(550,context,"LIST","No access");
+    return 1;
+  }
+
   if (context->pasvsock <= 0) { /* PORT ! */
     /* IP-check needed (FXP ?!) */
     snprintf(cmd,2048,"%d.%d.%d.%d",
-	context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
     addr = inet_addr(cmd);
     if ((int)addr==-1) {
       snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
       ret = send_message_with_args(501,context,cmd);
-      exit(0);
+      return 1;
     }
 
-    if ((sock=socket(AF_INET,SOCK_STREAM,0)) <= 0) {
-      ret = send_message_with_args(501,context,"Could not create socket");
-      exit(0);
-    }
-
-    socksize = sizeof(struct sockaddr_in);
-    memset(&sai,0,socksize);
-    sai.sin_family = AF_INET;
-    sai.sin_port = htons(context->dataport);
-    memcpy(&sai.sin_addr,&addr,sizeof(addr));
-    /* FIXME - timeout ? */
-    if (connect(sock,(struct sockaddr *)&sai, socksize) < 0) {
+    sock = socket_connect(addr,context->dataport);
+    if (sock == -1) {
       ret = send_message(425,context);
-      exit(0);
+      return 1;
     }
   } else { /* PASV ! */
     if ((sock=waitaccept(context)) <= 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
-      exit(0);
+      return 1;
     }
   }
 
@@ -343,18 +464,18 @@ printf("path: '%s'\n",path);
 
   if (strlen(mask)==0) strcpy(mask,"*");
 
-#ifdef DEBUG
-printf("Finally call list: '%s', '%s'\n",path,mask);
-#endif
-
   if (list(sock,context,listtype,path,mask,list_callback))
     ret = send_message(226,context);
   else
     ret = send_message_with_args(501,context,"Error processing list");
 
+#if SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_PRIV)
+    ret = tls_close_data(context);
+#endif
   ret = close(sock);
 
-  exit(0);
+  return 0;
 }
 
 /*************** do_mkdir ****************************/
@@ -375,14 +496,29 @@ int do_mkdir(char *param, wzd_context_t * context)
   ret = checkpath(param,buffer,context);
 
 #ifdef DEBUG
-fprintf(stderr,"Making directory '%s' (%d)\n",buffer,ret);
+fprintf(stderr,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
 #endif
-  if ((!ret) || (errno != ENOENT)) return 1;
-    /* CAUTION: here we invert the result, coz realpath will exit 1 if dir does not exist,
-     * which in our case is normal !
-     */
 
-  return mkdir(buffer,0755); /* TODO umask ? - should have a variable here */
+  if (buffer[strlen(buffer)-1]=='/')
+    buffer[strlen(buffer)-1]='\0';
+
+  if (strcmp(path,buffer) != 0) {
+fprintf(stderr,"strcmp(%s,%s) != 0\n",path,buffer);
+    return 1;
+  }
+
+  ret = mkdir(buffer,0755); /* TODO umask ? - should have a variable here */
+
+#ifndef __CYGWIN__
+  if (!ret) {
+    chown(buffer,context->userinfo.uid,-1);
+  }
+#endif
+
+#ifdef DEBUG
+fprintf(stderr,"mkdir returned %d (%s)\n",errno,strerror(errno));
+#endif
+  return ret;
 }
 
 /*************** do_rmdir ****************************/
@@ -390,10 +526,21 @@ fprintf(stderr,"Making directory '%s' (%d)\n",buffer,ret);
 int do_rmdir(char * param, wzd_context_t * context)
 {
   char path[2048];
+  struct stat s;
 
   if (!param || !param[0]) return 1;
 
   if (checkpath(param,path,context)) return 1;
+
+  if (stat(path,&s)) return 1;
+
+  /* check permissions */
+#ifndef __CYGWIN__
+  if (s.st_uid != context->userinfo.uid) {
+    /* check if group or others permissions are ok */
+    return 1;
+  }
+#endif
 
 #ifdef DEBUG
 fprintf(stderr,"Removing directory '%s'\n",path);
@@ -410,9 +557,13 @@ void do_pasv(wzd_context_t * context)
   struct sockaddr_in sai;
   unsigned char *myip;
 
+  size = sizeof(struct sockaddr_in);
+  port = 1025; /* FIXME use pasv range min */
+
   /* close existing pasv connections */
   if (context->pasvsock > 0) {
-    closesocket(context->pasvsock);
+    close(context->pasvsock);
+/*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = 0;
   }
 
@@ -423,8 +574,6 @@ void do_pasv(wzd_context_t * context)
     return;
   }
 
-  size = sizeof(struct sockaddr_in);
-  port = 1025; /* FIXME use pasv range min */
   while (port < 65536) { /* FIXME use pasv range max */
     memset(&sai,0,size);
 
@@ -439,7 +588,7 @@ void do_pasv(wzd_context_t * context)
 
 
   if (port >= 65536) {
-    closesocket(context->pasvsock);
+    close(context->pasvsock);
     context->pasvsock = 0;
     ret = send_message(425,context);
     return;
@@ -447,78 +596,514 @@ void do_pasv(wzd_context_t * context)
 
   if (listen(context->pasvsock,1)<0) {
     out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
-    closesocket(context->pasvsock);
+    close(context->pasvsock);
     context->pasvsock = 0;
     ret = send_message(425,context);
     return;
   }
 
-  myip = getmyip(context->sockfd); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
 }
 
-/*************** login sequence **********************/
-int seq_login(wzd_context_t * context)
+/*************** do_retr *****************************/
+int do_retr(char *param, wzd_context_t * context)
+{
+  char path[2048],cmd[2048];
+  FILE *fp;
+  unsigned long bytestot, bytesnow, byteslast;
+  struct timeval tv;
+  time_t tm_start,tm;
+  int n;
+  unsigned long addr;
+  int sock;
+  fd_set fds;
+  int ret;
+
+/* TODO FIXME send all error or any in this function ! */
+  /* we must have a data connetion */
+  if ((context->pasvsock <= 0) && (context->dataport == 0))return 1;
+
+  if (checkpath(param,path,context)) return 1;
+  
+  if (context->pasvsock <= 0) { /* PORT ! */
+    /* IP-check needed (FXP ?!) */
+    snprintf(cmd,2048,"%d.%d.%d.%d",
+	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+    addr = inet_addr(cmd);
+    if ((int)addr==-1) {
+      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+      ret = send_message_with_args(501,context,cmd);
+      return 1;
+    }
+
+    sock = socket_connect(addr,context->dataport);
+    if (sock == -1) {
+      ret = send_message(425,context);
+      return 1;
+    }
+  } else { /* PASV ! */
+    if ((sock=waitaccept(context)) <= 0) {
+      ret = send_message_with_args(501,context,"PASV connection failed");
+      return 1;
+    }
+  }
+
+  /* trailing / ? */
+  if (path[strlen(path)-1]=='/')
+    path[strlen(path)-1] = '\0';
+
+  if ((fp=fopen(path,"r"))==NULL) { /* XXX allow access to files being uploaded ? */
+    close(sock);
+    return 1;
+  }
+
+  /* get length */
+  fseek(fp,0,SEEK_END);
+  bytestot = ftell(fp);
+  bytesnow = byteslast=context->resume;
+  /* FIXME */
+/*  sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
+    param, bytestot);*/
+  ret = send_message(150,context);
+  fseek(fp,context->resume,SEEK_SET);
+
+#ifdef DEBUG
+fprintf(stderr,"Download: User %s starts downloading %s (%ld bytes)\n",
+  context->userinfo.username,param,bytestot);
+#endif
+
+  tm_start = time(NULL);
+
+  while ((n=fread(cmd,1,sizeof(cmd),fp))>0) {
+    do {
+      FD_ZERO(&fds);
+      FD_SET(sock,&fds);
+      tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L;
+      if (select(sock+1,NULL,&fds,NULL,&tv)<=0) {
+#ifdef DEBUG
+fprintf(stderr,"Send timeout to client (user %s)\n",context->userinfo.username);
+#endif
+        fclose(fp);
+        close(sock);
+        return 1;
+      }
+    } while (!FD_ISSET(sock,&fds));
+
+  ret = (mainConfig.write_fct)(sock,cmd,n,0,HARD_XFER_TIMEOUT,context); /* FIXME test ret ! */
+  bytesnow += n;
+  /* TODO understand !!!!! */
+  if (bytesnow-byteslast > TRFMSG_INTERVAL) {
+    byteslast+=TRFMSG_INTERVAL;
+    tm=time(NULL);
+#ifdef DEBUG
+fprintf(stderr,"User %s, %ld / %ld kB (%ld %%) at %ld kB/s\n",context->userinfo.username,
+    bytesnow/1024,
+    bytestot/1024,
+    (((bytesnow>>7)*100)/(bytestot>>7)),
+    (bytesnow/(tm-tm_start))/1024
+    );
+#if 0
+fprintf(stderr,"User %s, %ld/%ldkB (%ld%%) at %ldkB/s\n",
+  context->userinfo.username,
+  bytesnow/1024,bytestot/1024,
+  (((bytesnow>>7)*100)/(bytestot>>7)),
+  (bytesnow/(tm-tm_start))/1024);
+#endif /* 0 */
+#endif
+    }
+  } /* while fread */
+
+  fclose(fp);
+#if SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_PRIV)
+    ret = tls_close_data(context);
+#endif
+  ret = close(sock);
+
+  return 0;
+}
+
+/*************** do_stor *****************************/
+int do_stor(char *param, wzd_context_t * context)
+{
+  char path[2048],path2[2048],cmd[2048];
+  FILE *fp;
+  unsigned long bytestot, bytesnow, byteslast;
+  struct timeval tv;
+  time_t tm_start,tm;
+  int n;
+  unsigned long addr;
+  int sock;
+  fd_set fds;
+  int ret;
+
+/* TODO FIXME send all error or any in this function ! */
+  /* we must have a data connetion */
+  if ((context->pasvsock <= 0) && (context->dataport == 0))return 1;
+
+  if (!param) return 1;
+
+  /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
+  if (strrchr(param,'/'))
+    param = strrchr(param,'/')+1;
+  if (strlen(param)==0) return 1;
+
+  strcpy(cmd,".");
+  if (checkpath(cmd,path,context)) return 1;
+  strcat(path,param);
+
+  /* TODO call checkpath again ? see do_mkdir */
+
+  /* TODO understand !!! */
+  /* BUGFIX */
+  if ((ret=readlink(path,path2,sizeof(path2)-1)) >= 0) {
+    path2[ret] = '\0';
+#ifdef DEBUG
+fprintf(stderr,"Link is:  %s %d ... checking\n",path2,ret);
+#endif
+    strcpy(path,path2);
+    if (strrchr(path2,'/')) {
+      *(param=strrchr(path2,'/'))='\0';
+      param++;
+
+      if (checkpath(path2,path,context)) return 1;
+      if (path[strlen(path)-1] != '/') strcat(path,"/");
+      strcat(path,param);
+#ifdef DEBUG
+fprintf(stderr,"Resolved: %s\n",path);
+#endif
+    }
+  }
+  /* END OF BUGFIX */
+
+  /* overwrite protection */
+  /* TODO make permissions per-dir + per-group + per-user ? */
+/*  if (context->userinfo.perms & PERM_OVERWRITE) {
+    fp=fopen(path,"r"),
+    if (!fp) {
+      fclose(fp);
+      return 2;
+    }*/
+  if (context->pasvsock <= 0) { /* PORT ! */
+    /* IP-check needed (FXP ?!) */
+    snprintf(cmd,2048,"%d.%d.%d.%d",
+	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+    addr = inet_addr(cmd);
+    if ((int)addr==-1) {
+      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
+      ret = send_message_with_args(501,context,cmd);
+      return 1;
+    }
+
+    sock = socket_connect(addr,context->dataport);
+    if (sock == -1) {
+      ret = send_message(425,context);
+      return 1;
+    }
+  } else { /* PASV ! */
+    if ((sock=waitaccept(context)) <= 0) {
+      ret = send_message_with_args(501,context,"PASV connection failed");
+      return 1;
+    }
+  }
+
+  if ((fp=fopen(path,"w"))==NULL) { /* XXX allow access to files being uploaded ? */
+    close(sock);
+    return 1;
+  }
+
+#ifndef __CYGWIN__
+  /* XXX - test: change owner while file is opened ?! XXX */
+  chown (path,context->userinfo.uid,-1);
+#endif
+
+  bytesnow = byteslast = 0;
+  /* FIXME */
+/*  sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
+    param);*/
+  ret = send_message(150,context);
+  fseek(fp,context->resume,SEEK_SET);
+
+#ifdef DEBUG
+fprintf(stderr,"Download: User %s starts uploading %s\n",
+  context->userinfo.username,param);
+#endif
+
+  tm_start = time(NULL);
+
+  while (1) { /* i love while (1) and goto ;) */
+    FD_ZERO(&fds);
+    FD_SET(sock,&fds);
+    tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L;
+    if (select(sock+1,&fds,NULL,NULL,&tv)<=0) {
+#ifdef DEBUG
+fprintf(stderr,"Recv timeout from client (user %s)\n",context->userinfo.username);
+#endif
+      fclose(fp);
+      close(sock);
+      return 3;
+    } /* !if select */
+    if (FD_ISSET(sock,&fds)) {
+/*      n = recv(sock,cmd,sizeof(cmd),0); */
+      n = (mainConfig.read_fct)(sock,cmd,sizeof(cmd),0,HARD_XFER_TIMEOUT,context);
+        /* FIXME test ret ! */
+      /* FIXME rewrite following test */
+      if (n<=0) break; /* user closed conn, file complete ? should be ! */
+      fwrite(cmd,1,n,fp);
+      bytesnow += n;
+      /* TODO understand !!!!! */
+      if (bytesnow-byteslast > TRFMSG_INTERVAL) {
+        byteslast+=TRFMSG_INTERVAL;
+        tm=time(NULL);
+#ifdef DEBUG
+fprintf(stdout,"User %s, %ld/%ldkB (%ld%%) at %ldkB/s\n",
+  context->userinfo.username,
+  bytesnow/1024,bytestot/1024,
+  (((bytesnow>>7)*100)/(bytestot>>7)),
+  (bytesnow/(tm-tm_start))/1024);
+#endif
+      }
+    } /* !if FD_ISSET */
+  } /* !while (1) */
+
+  fclose(fp);
+#if SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_PRIV)
+    ret = tls_close_data(context);
+#endif
+  ret = close(sock);
+
+#ifdef DEBUG
+fprintf(stderr,"Uploading %s finished\n",param);
+#endif
+
+  return 0;
+}
+
+/*************** do_mdtm *****************************/
+void do_mdtm(char *param, wzd_context_t * context)
+{
+  char path[2048], tm[32];
+  struct stat s;
+  int ret;
+
+  if (!checkpath(param,path,context)) {
+    if (path[strlen(path)-1]=='/')
+      path[strlen(path)-1]='\0';
+
+    if (stat(path,&s)==0) {
+      strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
+      ret = send_message_with_args(213,context,tm);
+      return;
+    }
+  }
+  ret = send_message_with_args(501,context,"File inexistant or no access ?");
+}
+
+/*************** do_size *****************************/
+void do_size(char *param, wzd_context_t * context)
+{
+  char path[2048];
+  char buffer[1024];
+  struct stat s;
+  int ret;
+
+  if (!checkpath(param,path,context)) {
+    if (path[strlen(path)-1]=='/')
+      path[strlen(path)-1]='\0';
+
+    if (stat(path,&s)==0) {
+      snprintf(buffer,1024,"%ld",(long int)s.st_size);
+      ret = send_message_with_args(213,context,buffer);
+      return;
+    }
+  }
+  ret = send_message_with_args(501,context,"File inexistant or no access ?");
+}
+
+/*************** do_dele *****************************/
+int do_dele(char *param, wzd_context_t * context)
+{
+  char path[2048];
+
+  if (!param || strlen(param)==0 || checkpath(param,path,context)) return 1;
+
+  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+
+#ifdef DEBUG
+fprintf(stderr,"Removing file '%s'\n",path);
+#endif
+
+  return unlink(path);
+}
+
+/*************** do_pass *****************************/
+
+int do_pass(const char *username, const char * pass, wzd_context_t * context)
+{
+  char buffer[4096];
+  int ret;
+
+  ret = (*mainConfig.backend.back_validate_pass)(username,pass,&context->userinfo);
+  if (ret) {
+    /* pass was not accepted */
+    return 1;  /* FIXME - abort thread */
+  }
+  /* normalize rootpath */
+  if (!realpath(context->userinfo.rootpath,buffer)) return 1;
+  strncpy(context->userinfo.rootpath,buffer,1024);
+  /* initial dir */
+  strcpy(context->currentpath,"/");
+  if (do_chdir(context->currentpath,context))
+  {
+    /* could not chdir to home !!!! */
+    out_log(LEVEL_CRITICAL,"Could not chdir to home '%', user '%s'\n",context->currentpath,context->userinfo.username);
+    return 1;
+  }
+
+  /* XXX - now we can wait (or not) the ACCT */
+
+  return 0;
+}
+
+/*************** do_user *****************************/
+
+int do_user(const char *username, wzd_context_t * context)
+{
+  int ret;
+
+  ret = (*mainConfig.backend.back_validate_login)(username,&context->userinfo);
+  
+  return ret;
+}
+
+/*************** do_login_loop ***********************/
+
+int do_login_loop(wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
   char * token;
   char * username;
   int ret;
+  int user_ok=0, pass_ok=0;
+#if SSL_SUPPORT
+  int tls_ok=0;
+#endif
   int command;
 
-  /** wait the USER john **/
-  ret = recv(context->sockfd,buffer,BUFFER_LEN,0);
-  /* XXX strto_r: to be reentrant ! */
-  token = strtok_r(buffer," \t\r\n",&ptr);
-  if (identify_token(token) != TOK_USER)
-  {
-    out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
-    return 0;  /* FIXME - abort thread */
-  }
-  token = strtok_r(NULL," \t\r\n",&ptr);
-  /** validation **/
-  ret = (*mainConfig.backend.back_validate_login)(token,&context->userinfo);
-  if (ret) {
-    /* user was not accepted */
-    ret = send_message(530,context);
-    return 0;  /* FIXME - abort thread */
-  }
-  /** user ok */
-  username = strdup(token);
-  ret = send_message_with_args(331,context,username);
-  /** wait the PASS - XXX or AUTH TLS sequence **/
-  ret = recv(context->sockfd,buffer,BUFFER_LEN,0);
-  token = strtok_r(buffer," \t\r\n",&ptr);
-  command = identify_token(token);
-  if (command == TOK_PASS) {
-    ret = (*mainConfig.backend.back_validate_pass)(username,token,&context->userinfo);
-    if (ret) {
-      /* pass was not accepted */
-      ret = send_message(530,context);
-      return 0;  /* FIXME - abort thread */
-    }
-    /* user+pass ok */
-    ret = send_message(230,context);
-    /* normalize rootpath */
-    if (!realpath(context->userinfo.rootpath,buffer)) return 1;
-    strncpy(context->userinfo.rootpath,buffer,1024);
-    /* initial dir */
-    strcpy(context->currentpath,"/");
-    if (do_chdir(context->currentpath,context))
-    {
-      /* could not chdir to home !!!! */
-      out_log(LEVEL_CRITICAL,"Could not chdir to home '%', user '%s'\n",context->currentpath,context->userinfo.username);
-      ret = send_message(530,context);
-    }
-    /* XXX - now we can wait (or not) the ACCT */
-  } else {
-      ret = send_message(502,context);
-      return 0;  /* FIXME - goto password */
-  }
+  while (1) {
+    /** wait response **/
+    ret = (mainConfig.read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
-  return 1;
+    if (ret == 0) {
+fprintf(stderr,"Connection closed or timeout\n");
+      return 1;
+    }
+    if (ret==-1) {
+fprintf(stderr,"Error reading client response\n");
+      return 1;
+    }
+
+#ifdef DEBUG
+fprintf(stderr,"RAW: '%s'\n",buffer);
+#endif
+
+    /* XXX strtok_r: to be reentrant ! */
+    token = strtok_r(buffer," \t\r\n",&ptr);
+    command = identify_token(token);
+
+    switch (command) {
+    case TOK_USER:
+      if (user_ok) { /* USER command issued 2 times */
+	ret = send_message(530,context);
+	return 1;
+      }
+      token = strtok_r(NULL," \t\r\n",&ptr);
+      ret = do_user(token,context);
+      if (ret) { /* user was not accepted */
+	ret = send_message(530,context);
+	return 1;
+      }
+      username = strdup(token);
+      ret = send_message_with_args(331,context,username);
+      user_ok = 1;
+      break;
+    case TOK_PASS:
+      if (!user_ok || pass_ok) {
+	ret = send_message(530,context);
+	return 1;
+      }
+      token = strtok_r(NULL," \t\r\n",&ptr);
+      ret = do_pass(username,token,context);
+      if (ret) { /* pass was not accepted */
+	ret = send_message(530,context);
+	return 1;
+      }
+      /* IF SSL, we should check HERE if the connection has been switched to tls or not */
+#if SSL_SUPPORT
+      if (mainConfig.tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
+	ret = send_message_with_args(421,context,"TLS session MUST be engaged");
+	return 1;
+      }
+#endif
+      return 0; /* user + pass ok */
+      break;
+#if SSL_SUPPORT
+    case TOK_AUTH:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      ret = tls_auth(token,context);
+      if (ret) { /* couldn't switch to ssl */
+	/* XXX should we send a message ? - with ssl aborted we can't be sure there won't be problems */
+	ret = send_message_with_args(421,context,"Failed TLS negotiation, exiting");
+	return 1;
+      }
+      tls_ok = 1;
+      break;
+    case TOK_PBSZ:
+      token = strtok_r(NULL,"\r\n",&ptr);
+      /* TODO convert token to int, set the PBSZ size */
+      ret = send_message_with_args(200,context,"Command okay");
+      break;
+    case TOK_PROT:
+      /* TODO if user is NOT in TLS mode, insult him */
+      token = strtok_r(NULL,"\r\n",&ptr);
+      if (strcasecmp("P",token)==0)
+        context->ssl.data_mode = TLS_PRIV;
+      else if (strcasecmp("C",token)==0)
+        context->ssl.data_mode = TLS_CLEAR;
+      else {
+        ret = send_message_with_args(550,context,"PROT","must be C or P");
+        break;
+      }
+      ret = send_message_with_args(200,context,"PROT command OK");
+      break;
+#endif
+    default:
+      out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
+      ret = send_message(530,context);
+      return 1;
+    } /* switch (command) */
+
+  } /* while (1) */
+
+  return ret;
+}
+
+/*************** login sequence **********************/
+int do_login(wzd_context_t * context)
+{
+  int ret;
+
+  /* welcome msg */
+  ret = send_message(220,context);
+
+  /* mini server loop, login */
+  ret = do_login_loop(context);
+
+  return ret;
 }
 
 /*****************************************************/
@@ -530,6 +1115,7 @@ void clientThreadProc(void *arg)
   fd_set fds,efds;
   wzd_context_t	 * context;
   int p1,p2;
+  unsigned long i,j;
   char buffer[BUFFER_LEN];
   char buffer2[BUFFER_LEN];
   char * param;
@@ -542,14 +1128,21 @@ void clientThreadProc(void *arg)
 	int command;
 
 	context = arg;
-	sockfd = context->sockfd;
+	sockfd = context->controlfd;
 	
 	out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
 
-	/* welcome msg */
-	ret = send_message(220,context);
+	ret = do_login(context);
 
-	ret = seq_login(context);
+	if (ret) { /* USER not logged in */
+	  close (sockfd);
+	  out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
+	  return;
+	}
+
+        /* user+pass ok */
+        ret = send_message(230,context);
+
 
 	/* main loop */
 	exitclient=0;
@@ -558,8 +1151,8 @@ void clientThreadProc(void *arg)
 	  save_errno = 666;
 	  memset(buffer,0,BUFFER_LEN);
 	  param=NULL;
-          /* 1. read */
-          FD_ZERO(&fds);
+    /* 1. read */
+    FD_ZERO(&fds);
 	  FD_ZERO(&efds);
 	  FD_SET(sockfd,&fds);
 	  FD_SET(sockfd,&efds);
@@ -571,28 +1164,33 @@ void clientThreadProc(void *arg)
 	  if (FD_ISSET(sockfd,&efds)) {
 	    if (save_errno == EINTR) continue;
 	    out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));
-	    interpret_wsa_error();
 	    exit(1);
 	  }
 	  if (!FD_ISSET(sockfd,&fds))
-	  {
+	  {	  
 	    continue;
 	  }
-	  ret = recv(sockfd,buffer,BUFFER_LEN,0);
+/*	  ret = recv(sockfd,buffer,BUFFER_LEN,0);*/
+	  ret = (mainConfig.read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
-          if (ret==0) {
+    if (ret==0) {
 	    out_log(LEVEL_INFO,"Host disconnected improperly!\n");
 	    exitclient=1;
 	    break;
 	  }
 
 	  if (buffer[0]=='\0') continue;
-printf("RAW: '%s'\n",buffer);
+#ifdef DEBUG
+fprintf(stderr,"RAW: '%s'\n",buffer);
+#endif
 
 	  /* 2. get next token */
+	  ptr = &buffer[0];
 	  token = strtok_r(buffer," \t\r\n",&ptr);
 	  command = identify_token(token);
+
+    context->state = command;
 
 	  switch (command) {
 	  case TOK_QUIT:
@@ -601,6 +1199,7 @@ printf("RAW: '%s'\n",buffer);
 	    /* check if pending xfers */
 	    break;
 	  case TOK_TYPE:
+	    context->resume = 0;
 	    token = strtok_r(NULL," \t\r\n",&ptr);
 	    if (strcasecmp(token,"I")==0)
 	      context->current_xfer_type = BINARY;
@@ -610,7 +1209,7 @@ printf("RAW: '%s'\n",buffer);
 	      ret = send_message(502,context);
 	      break;
 	    }
-	    ret = send_message(200,context);
+            ret = send_message_with_args(200,context,"Command okay");
 	    break;
 	  case TOK_PORT:
 	    if (context->pasvsock) {
@@ -627,19 +1226,21 @@ printf("RAW: '%s'\n",buffer);
 	    }
 
 	    context->dataport = ((p1&0xff)<<8) | (p2&0xff);
-	    ret = send_message(200,context);
+            ret = send_message_with_args(200,context,"Command okay");
 
 	    break;
 	  case TOK_PASV:
 	    do_pasv(context);
 	    break;
 	  case TOK_PWD:
+	    context->resume = 0;
 	    ret = send_message_with_args(257,context,context->currentpath,"is current directory");
 	    break;
 	  case TOK_NOOP:
-	    ret = send_message(200,context);
+            ret = send_message_with_args(200,context,"Command okay");
 	    break;
 	  case TOK_SYST:
+	    context->resume = 0;
 	    ret = send_message(215,context);
 	    break;
 	  case TOK_CDUP:
@@ -647,6 +1248,7 @@ printf("RAW: '%s'\n",buffer);
 	    param = buffer;
 	    /* break through !!! */
 	  case TOK_CWD:
+	    context->resume = 0;
 	    if (!param) {
               token = strtok_r(NULL,"\r\n",&ptr);
 	      param = token;
@@ -663,15 +1265,23 @@ printf("RAW: '%s'\n",buffer);
 	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	    break;
 	  case TOK_LIST:
-	    /* context->resume = 0; */
+	    context->resume = 0;
+/*	    if (context->pid_child) {
+	      ret = send_message(491,context);
+	      break;
+	    }*/
 	    token = strtok_r(NULL,"\r\n",&ptr);
-	    if ((context->pid_child=fork())==0)
+/*	    if ((context->pid_child=fork())==0)*/
 	      do_list(token,LIST_TYPE_LONG,context);
 	    break;
 	  case TOK_NLST:
-	    /* context->resume = 0; */
-	    token = strtok_r(NULL,"\r\n",&ptr);
-	    if ((context->pid_child=fork())==0)
+	    context->resume = 0;
+/*	    if (context->pid_child) {
+	      ret = send_message(491,context);
+	      break;
+	    }*/
+	    token = strtok_r(NULL,"\r\n",&ptr);	    
+/*	    if ((context->pid_child=fork())==0)*/
 	      do_list(token,LIST_TYPE_SHORT,context);
 	    break;
 	  case TOK_MKD:
@@ -698,7 +1308,112 @@ printf("RAW: '%s'\n",buffer);
 	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" deleted",token);
 	      ret = send_message_with_args(258,context,buffer2,"");
 	    }
-	    break;	      
+	    break;
+	  case TOK_RETR:
+/*	    if (context->pid_child) {
+	      ret = send_message(491,context);
+	      break;
+	    }*/
+	    token = strtok_r(NULL,"\r\n",&ptr);
+/*	    if ((context->pid_child=fork())==0) {*/
+	      if (do_retr(token,context))
+	        ret = send_message_with_args(501,context,"RETR failed");
+	      else
+	        ret = send_message(226,context);
+/*	      exit(0);
+	    }*/
+	    context->resume=0;
+	    break;
+	  case TOK_STOR:
+/*	    if (context->pid_child) {
+	      ret = send_message(491,context);
+	      break;
+	    }*/
+	    token = strtok_r(NULL,"\r\n",&ptr);
+/*	    if ((context->pid_child=fork())==0) {*/
+	      switch (do_stor(token,context)) {
+	      case 1:
+	        ret = send_message_with_args(501,context,"STOR failed");
+	        break;
+	      case 2:
+	        ret = send_message_with_args(553,context,"You can't overwrite !\n");
+	        break;
+	      case 3:
+	        ret = send_message(451,context);
+	        break;
+	      default:
+	        ret = send_message(226,context);
+	        out_log(LEVEL_INFO,"STOR: %s sent %s\n",
+	          context->userinfo.username, param);
+	        break;
+	      }
+/*	      exit(0);
+	    }*/
+	    context->resume=0;
+	    break;
+	  case TOK_REST:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    j=0;
+	    i = sscanf(token,"%ld",&j);
+	    if (i>0 && j>=0) {
+	      ret = send_message_with_args(350,context,j);
+	      context->resume = j;
+	    } else {
+	      ret = send_message_with_args(501,context,"Invalid REST marker");
+	    }
+	    break;
+	  case TOK_MDTM:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    context->resume = 0L;
+	    do_mdtm(token,context);
+	    break;
+	  case TOK_SIZE:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    context->resume=0;
+	    do_size(token,context);
+	    break;
+	  case TOK_DELE:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    if (!do_dele(token,context))
+	      ret = send_message_with_args(250,context,"DELE","command successfull");
+	    else
+	      ret = send_message_with_args(501,context,"DELE failed");
+	    break;
+	  case TOK_ABOR:
+	    if (context->pid_child) kill(context->pid_child,SIGTERM);
+	    context->pid_child = 0;
+	    if (context->pasvsock) {
+	      close(context->pasvsock);
+	      context->pasvsock=0;
+	    }
+	    ret = send_message(226,context);
+	    break;
+#if SSL_SUPPORT
+	  case TOK_PROT:
+	    /* TODO if user is NOT in TLS mode, insult him */
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    if (strcasecmp("P",token)==0)
+	      context->ssl.data_mode = TLS_PRIV;
+	    else if (strcasecmp("C",token)==0)
+	      context->ssl.data_mode = TLS_CLEAR;
+	    else {
+	      ret = send_message_with_args(550,context,"PROT","must be C or P");
+	      break;
+	    }
+	    ret = send_message_with_args(200,context,"PROT command OK");
+	    break;
+#endif
+	  case TOK_SITE:
+	    token = strtok_r(NULL,"\r\n",&ptr);
+	    do_site(token,context); /* do_site send message ! */
+	    break;
+	  case TOK_FEAT:
+#if SSL_SUPPORT
+	    ret = send_message_with_args(211,context,"AUTH TLS\n PBSZ\n PROT\n MDTM\n SIZE\n SITE\n REST");
+#else
+	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST");
+#endif
+	    break;
 	  default:
 	    ret = send_message(202,context);
 	    break;

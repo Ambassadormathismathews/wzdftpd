@@ -21,6 +21,16 @@ int set_default_options(void)
 
   mainConfig.loglevel=LEVEL_LOWEST;
 
+#if SSL_SUPPORT
+  memset(mainConfig.tls_certificate,0,sizeof(mainConfig.tls_certificate));
+  strcpy(mainConfig.tls_cipher_list,"ALL");
+
+  mainConfig.tls_type = TLS_NOTYPE;
+#endif
+
+  mainConfig.read_fct = clear_read;
+  mainConfig.write_fct = clear_write;
+
   return 0;
 }
 
@@ -144,5 +154,41 @@ int parseVariable(const char *varname, const char *value)
     }
     return i;
   }
+#if SSL_SUPPORT
+  /* CERTIFICATES
+   * absolute file name
+   */
+  if (strcasecmp("tls_certificate",varname)==0)
+  {
+    out_log(LEVEL_INFO,"TLS Certificate name: %s\n",value);
+    strcpy(mainConfig.tls_certificate,value);
+    return 0;
+  }
+  /* CIPHER LIST
+   * man ssl(3) for list & explanations
+   */
+  if (strcasecmp("tls_cipher_list",varname)==0)
+  {
+    out_log(LEVEL_INFO,"TLS Cipher list: %s\n",value);
+    strcpy(mainConfig.tls_cipher_list,value);
+    return 0;
+  }
+  /* MODE
+   * implicit / explicit
+   */
+  if (strcasecmp("tls_mode",varname)==0)
+  {
+    out_log(LEVEL_INFO,"TLS mode: %s\n",value);
+    if (strcasecmp("explicit",value)==0)
+      mainConfig.tls_type = TLS_EXPLICIT;
+    else if (strcasecmp("explicit_strict",value)==0)
+      mainConfig.tls_type = TLS_STRICT_EXPLICIT;
+    else if (strcasecmp("implicit",value)==0)
+      mainConfig.tls_type = TLS_IMPLICIT;
+    else
+      return 1;
+    return 0;
+  }
+#endif
   return 1;
 }
