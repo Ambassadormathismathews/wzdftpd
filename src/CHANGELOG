@@ -1,3 +1,9 @@
+# Jun, 13 2003
+- bugfix: site change perms modifying max_idle
+- allow modifications of group->num_logins
+- added 'site grpchange' command, to modify group fields (equivalent of site
+  change for users)
+
 # Jun, 12 2003
 - fixed segfault when PORT command has no arguments (Roman Bogorodskiy
   <bogorodskiy@inbox.ru>)
