@@ -27,14 +27,78 @@ wzdftpd offers the following features (and the list is constantly changing):
 (scripts/applications)</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
 <listitem><para>SSL/TLS support</para></listitem>
-<listitem><para>Server is designed to run as a non-privileged user to enfore
+<listitem><para>Server is designed to run as a non-privileged user to enforce
 security</para></listitem>
+<listitem><para>Server can detect ip changes (dynamic ips) and set ip and
+passive ip accordingly</para></listitem>
 <listitem><para>Cross devices operations (copy/move) (though can be slow)</para></listitem>
 <listitem><para>Logging support (compatible with the wu-ftpd standard)</para></listitem>
 <listitem><para>Designed for high performances: coded with C, multithreaded</para></listitem>
 </itemizedlist>
 
 </para>
+
+</sect1>
+
+<sect1>
+<title>Compilation</title>
+
+<para>In order to compile wzdftpd you need the following:
+<itemizedlist>
+<listitem><screen>a C compiler</screen>
+<para>compilation has been tested with gcc versions 2.95, 3.0, 3.1 and 3.2; cygwin; and icc (Intel C
+Compiler)
+</para></listitem>
+<listitem><screen>flex</screen>
+<para>Flex can be found on your all distributions, or on <ulink
+url="http://www.gnu.org/software/flex/">Flex's official page</ulink>.
+</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+The following packages are optionnal, depending on your configuration
+<itemizedlist>
+<listitem><screen>Automake, Autoconf, Libtool</screen>
+<para>Required only if you want to compile from cvs
+</para></listitem>
+<listitem><screen>OpenSSL development headers and libraries</screen>
+<para>Required only if you want to compile with SSL support enabled
+</para></listitem>
+</itemizedlist>
+</para>
+
+<para>
+Get a source tarball at <ulink url="https://sourceforge.net/projects/wzdftpd/">
+wzdftpd's sourceforge page</ulink>.
+</para>
+
+<screen>./configure</screen>
+<screen>make</screen>
+<screen>make install</screen>
+
+<para>Configure script accept the following arguments
+<itemizedlist>
+<listitem><screen>--enable-ssl</screen>
+<para>Enable SSL/TLS support (requires openssl headers & libraries)
+</para></listitem>
+<listitem><screen>--enable-winsock</screen>
+<para><emphasis>Win32 only </emphasis>Use winsock instead of classic Berkeley
+sockets (it is supposed to improve performances)
+</para></listitem>
+<listitem><screen>--enable-debug</screen>
+<para>Compile with debug info (you should use it only for testing reasons)
+</para></listitem>
+<listitem><screen>--prefix=PATH</screen>
+<para>Where to install files after compilation
+</para></listitem>
+</itemizedlist>
+</para>
+
+<para><emphasis>If you want the win32 version AND ssl support, you will need
+the tls wrapper (look on <ulink url="https://sourceforge.net/projects/wzdftpd/">
+sourceforge</ulink>).
+</emphasis></para>
 
 </sect1>
 

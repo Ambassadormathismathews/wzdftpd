@@ -2,7 +2,97 @@
 <title>Cookies Reference</title>
 
 <para>
+Cookies are special sequences in text files, replaced by values by server before sending
+replies.
 
+<table frame='all' id="cookies_colors">
+<title>Color Cookies</title>
+<tgroup cols='1' align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Normal Colors</entry></row>
+
+<row><entry>%!black</entry></row>
+<row><entry>%!red</entry></row>
+<row><entry>%!green</entry></row>
+<row><entry>%!brown</entry></row>
+<row><entry>%!blue</entry></row>
+<row><entry>%!magenta</entry></row>
+<row><entry>%!cyan</entry></row>
+<row><entry>%!white</entry></row>
+
+</tbody>
+</tgroup>
+</table>
+
+<table frame='all' id="cookies_user">
+<title>User Cookies</title>
+<tgroup cols='2' align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Cookie</entry><entry>Description</entry></row>
+
+<row><entry>%usercredits</entry><entry>Amount of credits</entry></row>
+<row><entry>%usercredits2</entry><entry>Amount of credits, converted in units
+(MB,GB,etc)</entry></row>
+<row><entry>%userfiles_dl</entry><entry>Total number of files downloaded</entry></row>
+<row><entry>%userfiles_ul</entry><entry>Total number of files uploaded</entry></row>
+<row><entry>%userflags</entry><entry>Flags</entry></row>
+<row><entry>%usergroup</entry><entry>User MAIN group</entry></row>
+<row><entry>%userhome</entry><entry>User home directory</entry></row>
+<row><entry>%userip</entry><entry>Current ip</entry></row>
+<row><entry>%userip_allow<emphasis>num</emphasis></entry><entry>Authorized ip
+num</entry></row>
+<row><entry>%userlastcmd</entry><entry>Last command received</entry></row>
+<row><entry>%userlast_login</entry><entry>Last time user logged in</entry></row>
+<row><entry>%userleechslots</entry><entry>Remaining leech slots (gadmin)</entry></row>
+<row><entry>%usermaxdl</entry><entry>Maximum download speed</entry></row>
+<row><entry>%usermaxidle</entry><entry>Idle time limit</entry></row>
+<row><entry>%usermaxul</entry><entry>Maximum upload speed</entry></row>
+<row><entry>%username</entry><entry>Login name</entry></row>
+<row><entry>%usernum_logins</entry><entry>Max simultaneous logins</entry></row>
+<row><entry>%userpid</entry><entry>User's connection PID (siteop)</entry></row>
+<row><entry>%userratio</entry><entry>User ratio, or unlimited</entry></row>
+<row><entry>%userslots</entry><entry>Remaining slots (gadmin)</entry></row>
+<row><entry>%userspeed</entry><entry>Current user speed (if transferring file)</entry></row>
+<row><entry>%usertag</entry><entry>User tagline, or **DELETED**</entry></row>
+<row><entry>%usertotal_dl</entry><entry>Total bytes downloaded</entry></row>
+<row><entry>%usertotal_dl2</entry><entry>Total bytes downloaded, converted in
+units</entry></row>
+<row><entry>%usertotal_ul</entry><entry>Total bytes uploaded</entry></row>
+<row><entry>%usertotal_ul2</entry><entry>Total bytes uploaded, converted in
+units</entry></row>
+
+</tbody>
+</tgroup>
+</table>
+
+<table frame='all' id="cookies_group">
+<title>Group Cookies</title>
+<tgroup cols='2' align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Cookie</entry><entry>Description</entry></row>
+
+<row><entry>%grouphome</entry><entry>Default home directory for new members</entry></row>
+<row><entry>%groupip_allow<emphasis>num</emphasis></entry><entry>Authorized ip
+num</entry></row>
+<row><entry>%groupmaxdl</entry><entry>Maximum (cumulated) download speed</entry></row>
+<row><entry>%groupmaxidle</entry><entry>Idle time limit</entry></row>
+<row><entry>%groupmaxul</entry><entry>Maximum (cumulated) upload speed</entry></row>
+<row><entry>%groupname</entry><entry>Group name</entry></row>
+<row><entry>%groupnum_logins</entry><entry>Max number of members connected at
+the same time</entry></row>
+<row><entry>%groupratio</entry><entry>Default ratio, or unlimited</entry></row>
+<row><entry>%grouptotal_dl</entry><entry>Total bytes downloaded</entry></row>
+<row><entry>%grouptotal_dl2</entry><entry>Total bytes downloaded, converted in
+units</entry></row>
+<row><entry>%grouptotal_ul</entry><entry>Total bytes uploaded</entry></row>
+<row><entry>%grouptotal_ul2</entry><entry>Total bytes uploaded, converted in
+units</entry></row>
+
+</tbody>
+</tgroup>
+</table>
 </para>
+
+
 
 </chapter>
