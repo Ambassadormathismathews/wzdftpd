@@ -19,6 +19,7 @@
 #include <arpa/inet.h>
 #include <regex.h>
 #include <errno.h>
+#include <fcntl.h>
 
 /* speed up compilation */
 #define SSL     void
@@ -33,7 +34,7 @@
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
 
-
+char configfile_name[256];
 int stay_foreground=0;
 
 void display_usage(void)
@@ -61,7 +62,7 @@ void cleanup_shm(void)
   int length, err;
   unsigned long shm_key=0x1331c0d3;
 
-  configfile = fopen("wzd.cfg","r");
+  configfile = fopen(configfile_name,"r");
   if (!configfile)
     return;
 
@@ -125,15 +126,22 @@ int main_parse_args(int argc, char **argv)
   /* please keep options ordered ! */
   while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {
     switch((char)opt) {
-    case 'h':
-      display_usage();
-      return 1;
     case 'b':
       stay_foreground = 0;
       break;
     case 'd':
 /*      readConfigFile("wzd.cfg");*/
       cleanup_shm();
+      return 1;
+    case 'f':
+      if (strlen(optarg)>=255) {
+	fprintf(stderr,"filename too long (>255 chars)\n");
+	return 1;
+      }
+      strncpy(configfile_name,optarg,255);
+      break;
+    case 'h':
+      display_usage();
       return 1;
     case 's':
       stay_foreground = 1;
@@ -151,6 +159,7 @@ int main_parse_args(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  int fd;
   int ret;
   int forkresult;
   wzd_config_t * config;
@@ -158,6 +167,8 @@ int main(int argc, char **argv)
 #if DEBUG
   stay_foreground = 1;
 #endif
+  /* default value */
+  strcpy(configfile_name,"wzd.cfg");
 
   if (argc > 1) {
     ret = main_parse_args(argc,argv);
@@ -184,7 +195,7 @@ int main(int argc, char **argv)
 #endif
 
   config = NULL;
-  config = readConfigFile("wzd.cfg"); /* XXX */
+  config = readConfigFile(configfile_name);
   
   if (!config) {
     out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");
@@ -193,9 +204,11 @@ int main(int argc, char **argv)
 
   mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
-    /* 2nd chance */
+    /* 2nd chance ? */
+#if 0
     wzd_shm_cleanup(config->shm_key-1);
     mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
+#endif
     if (mainConfig_shm == NULL) {
       fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
       exit(1);
@@ -205,8 +218,9 @@ int main(int argc, char **argv)
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 
-  mainConfig->logfile = fopen(mainConfig->logfilename,mainConfig->logfilemode);
-
+  fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
+  mainConfig->logfile = fdopen(fd,"a");
+  
 #if SSL_SUPPORT
   ret = tls_init();
   if (ret) {

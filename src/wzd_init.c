@@ -55,6 +55,8 @@ int set_default_options(void)
 /*  mainConfig = &tempConfig;*/
   setlib_mainConfig(mainConfig);
 
+  tempConfig.config_filename=NULL;
+
   tempConfig.backend.handle=NULL;
 
   tempConfig.ip[0] = '\0';
@@ -81,8 +83,7 @@ int set_default_options(void)
   tempConfig.logfilename = malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");
 
-  tempConfig.logfilemode = malloc(3);
-  strcpy(tempConfig.logfilemode,"a");
+  tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;
 
   tempConfig.logfile = NULL;
 
@@ -244,23 +245,8 @@ wzd_config_t * readConfigFile(const char *fileName)
 
 /*  fclose(cfg_file->fp);*/
 
-#if 0
-  mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
-  if (mainConfig_shm == NULL) {
-    /* 2nd chance */
-    wzd_shm_cleanup(tempConfig.shm_key-1);
-    mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
-    if (mainConfig_shm == NULL) {
-      fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
-      exit(1);
-    }
-  }
-  mainConfig = mainConfig_shm->datazone;
-  setlib_mainConfig(mainConfig);
-  memcpy(mainConfig,&tempConfig,sizeof(wzd_config_t));
-
-  return mainConfig;
-#endif
+  /* set the filename (for reloading) */
+  tempConfig.config_filename = strdup(fileName);
 
   return &tempConfig;
 }
@@ -364,7 +350,7 @@ int parseVariable(const char *varname, const char *value)
   {
     char * ptr;
     char *predicate=NULL, *version=NULL;
-    /* TODO if value contains spaces, check version */
+    /* if value contains spaces, check version */
     if ( (ptr=strchr(value,' ')) ) {
       char *dummy_ptr;
       *ptr++ = '\0';
@@ -560,7 +546,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("module",varname)==0)
   {
     if (module_check(value)) return 1;
-    /* XXX add module to list */
+    /* add module to list */
     if (module_add(&tempConfig.module,value)) return 1;
     return 0;
   }
