@@ -210,7 +210,7 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
   done=0;
   while (length>0) {
     if (timeout==0)
-      ret = send(sock,msg,length,0);
+      ret = send(sock,msg+done,length,0);
     else {
       while (1) {
 	FD_ZERO(&fds);
@@ -238,7 +238,7 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
 	}
 	break;
       }
-      ret = send(sock,msg,length,0);
+      ret = send(sock,msg+done,length,0);
       if (ret==-1) return ret;
     } /* timeout */
     done += ret;
