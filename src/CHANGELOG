@@ -1,3 +1,39 @@
+# Oct, 07 2002
+- bugfix: release version working in background (windows) - file descriptors
+    were not inherited after fork()
+- vfs: when adding vfs, if destination does not exist, do not add vfs
+- vfs: works with virtual files
+- cookies: flags
+
+# Oct, 03 2002
+- perms: group permissions for commands in .cfg
+- perms: negation of permissions (!=user, etc)
+- site who: params of site commands are hidden
+- cookies: maxidle, maxdl, maxul
+- rmdir: works on symlinks
+
+# Oct, 01 2002
+- Unreal Tournament 2k3 is here !
+- bugfix: cookie_replace now exits if the param is null (avoids crash)
+- bugfix: shared memory now working for windows in multi-process version
+- ip per user/group now static
+- cookie: userip_allow<n> (without <> !), show ip allowed n for user
+- site chmod: can handle octal perms: site chmod user 7 tmp == site chmod user rwx tmp
+- group ip checking
+- config: pasv_ip can accept a hostname
+
+# Sep, 25 2002
+- mkdir now sets owner of new dir
+- rmdir checks if dir is not empty (except the perms file) and removes the
+    perm file before removing the dir
+- added timeout check for data connection
+
+# Sep, 23 2002
+- complete rewrite of memory management for users / groups in main prog AND in backend
+    lists will be stored in shared memory
+- bugfix: small bug in wzd_crc32.c where .missing file was created if file was bad
+
+#--- cvs commit
 # Sep, 18 2002
 - clear_read function is now non-blocking (it timeout > 0)
 - tls_auth_cont is now non-blocking (TLS control connection)

@@ -10,12 +10,18 @@
 | site who       | show who's online                            | r,s,n,g    |
 | site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
 | site chmod     | change access rights on a file or directory  | r,s        |
+|                |   site chmod user mode file1 [file2 ...]     |            |
+|                |   site chmod user rwx dir1                   |            |
+|                |   site chmod user 7 dir1                     |            |
 | site chown     | change the owner of a file or directory      | r,s        |
+|                |   site chown user file1 [file2 ...]          |            |
+| site chpass    | change the password of a user                | r,s        |
+|                |   site chpass user new_pass                  |            |
 | site checkperm | checks access for a user on a file/dir       | r,s        |
 |                | site checkperm user file rights              | r,s        |
 | site user      | (username) show user info                    | r,s        |
 | site shutdown  | shutdown the server remotely                 | r          |
-| site backend   | (init/close/reload) backend_name             | r          |
+| site backend   | (init/close/reload/commit) backend_name      | r          |
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
 .----------------------------------------------------------------------------.

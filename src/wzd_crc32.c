@@ -106,7 +106,7 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     entry->state = SFV_OK;
   } else { /* CRC differs */
     entry->state = SFV_BAD;
-    fd = open(missing,O_WRONLY|O_CREAT,0666);
+    fd = open(bad,O_WRONLY|O_CREAT,0666);
     close(fd);
     if (!stat(missing,&s)) { unlink(missing); }
   }
@@ -147,6 +147,7 @@ void sfv_free(wzd_sfv_file *sfv)
 int sfv_read(const char *filename, wzd_sfv_file *sfv)
 {
   FILE *in;
+  struct stat st;
   char buf[BUFSIZ];
   char * ptr;
   char *err_ptr;
@@ -154,6 +155,8 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   int count_comments=0, count_entries=0;
   int length;
 
+  if (stat(filename,&st) < 0) return -1;
+  if (!S_ISREG(st.st_mode)) return -1;
   if ((in=fopen(filename,"r")) == NULL) return -1;
 
   sfv->comments = malloc(50*sizeof(char*));
@@ -324,7 +327,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       sfv_name[i]='\0';
       ret = sfv_read(sfv_name,sfv);
       out_err(LEVEL_CRITICAL,"sfv file: %s\n",entr->d_name);
-      if (sfv->sfv_list == NULL) return -1;
+      if (ret == -1 || sfv->sfv_list == NULL) return -1;
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]) {
@@ -435,7 +438,6 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
     out_err(LEVEL_CRITICAL,"No sfv found or file not present in sfv\n");
     return 1;
   default:
-    out_err(LEVEL_CRITICAL,"SFV ERROR !\n");
     /* error */
     return -1;
   }

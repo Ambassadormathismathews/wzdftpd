@@ -12,6 +12,7 @@
 # groups definitions
 [GROUPS]
 privgroup	admin
+ip_allowed=127.0.0.1
 
 privgroup	anonymous
 max_idle_time=10
@@ -27,8 +28,22 @@ uid=501
 groups=admin
 rights=0xffffffff
 tagline=v0dk4 kNigHt
+ip_allowed=+localhost
+ip_allowed=+pollux.no-ip.org
 ip_allowed=134.214.71.84
+ip_allowed=62.212.107.165
 ip_allowed=10.0.0.10
+ip_allowed=127.0.0.1
+max_idle_time=0
+flags=IstH
+
+name=wzdftpd
+home=/
+pass=Oz1iHGIgV8HIQ
+uid=0
+rights=0xffffffff
+groups=admin
+tagline=wzdftpd
 ip_allowed=127.0.0.1
 max_idle_time=0
 flags=IstH

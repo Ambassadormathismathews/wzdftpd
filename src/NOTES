@@ -4,3 +4,20 @@
 - chown work only under linux - use groups & perms under windows
 - As long as all clients will be forked, we can always use chroot for childs -
   and NOT for parent
+
+BACKEND:
+
+if backend_storage is 0, the main prog will allocate shared memory for users
+functions VALIDATE_LOGIN / VALIDATE_PASS / FIND_USER / FIND_GROUP of the
+backend are now changed: the pointer the receive in param is filled
+by the user list
+e.g
+int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+
+if backend_storage == 1
+  user is a pointer to an allocated memory zone, 
+  and the backend will copy infos in this zone
+  returns 0 if ok
+else
+  user is a pointer to the user list
+  returns -1 if failed, the index else

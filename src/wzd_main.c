@@ -2,12 +2,19 @@
 
 #include <regex.h>
 
+int stay_foreground=0;
+
 void display_usage(void)
 {
   fprintf(stderr,"Usage:\r\n");
   fprintf(stderr,"\t -h        - Display this text \r\n");
+#if DEBUG
+  fprintf(stderr,"\t -b        - Force background \r\n");
+#endif
   fprintf(stderr,"\t -d        - Delete IPC if present (Linux only) \r\n");
   fprintf(stderr,"\t -f <file> - Load alternative config file \r\n");
+  fprintf(stderr,"\t -s        - Stay in foreground \r\n");
+  fprintf(stderr,"\t -V        - Show version \r\n");
 }
 
 void cleanup_shm(void)
@@ -84,15 +91,21 @@ int main_parse_args(int argc, char **argv)
   int opt;
 
   /* please keep options ordered ! */
-  while ((opt=getopt(argc, argv, "hdf:V")) != -1) {
+  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {
     switch((char)opt) {
     case 'h':
       display_usage();
       return 1;
+    case 'b':
+      stay_foreground = 0;
+      break;
     case 'd':
 /*      readConfigFile("wzd.cfg");*/
       cleanup_shm();
       return 1;
+    case 's':
+      stay_foreground = 1;
+      break;
     case 'V':
       fprintf(stderr,"%s build %lu\n",WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM);
       return 1;
@@ -107,12 +120,26 @@ int main_parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
   int ret;
+  int forkresult;
+
+#if DEBUG
+  stay_foreground = 1;
+#endif
 
   if (argc > 1) {
     ret = main_parse_args(argc,argv);
     if (ret) {
       return 0;
     }
+  }
+
+  if (!stay_foreground) {
+    forkresult = fork();
+
+    if ((int)forkresult == -1)
+      out_err(LEVEL_CRITICAL,"Could not fork into background\n");
+    if ((int)forkresult != 0)
+      exit(0);
   }
 
   ret = readConfigFile("wzd.cfg"); /* XXX */
@@ -128,7 +155,6 @@ int main(int argc, char **argv)
 #endif
 
   ret = runMainThread(argc,argv);
-
 
   /* we should never pass here - see wzd_ServerThread.c */
 

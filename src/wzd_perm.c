@@ -137,6 +137,8 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
 wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd_command_perm_t * command_perm)
 {
   wzd_command_perm_entry_t * entry;
+  int negate;
+  const char * entry_target;
 
   entry = command_perm->entry_list;
   if (!entry) return NULL;
@@ -144,9 +146,15 @@ wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd
   /* TODO compare entries with target (regexp powaa) and if same, ok */
 
   do {
-    if (entry->target[0] == '*') return entry;
-    if (strcasecmp(entry->target,target)==0 && entry->cp == cp) {
-      return entry;
+    entry_target = entry->target;
+    negate=0;
+    if (entry_target[0] == '!') {
+      entry_target++;
+      negate = 1;
+    }
+    if (entry_target[0] == '*') return (negate) ? (void*)-1 : entry;
+    if (strcasecmp(entry_target,target)==0 && entry->cp == cp) {
+      return (negate) ? (void*)-1 : entry;
     }
     entry = entry->next_entry;
   } while (entry);
@@ -164,6 +172,7 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   wzd_command_perm_entry_t * perm_entry;
   wzd_cp_t cp;
   char c;
+  int negate;
 
   if (!permname || !permline) return 1;
   if (!strlen(permname) || !strlen(permline)) return 1;
@@ -178,8 +187,13 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   token = strtok_r(buffer," \t\r\n",&ptr);
 
   while (token) {
+    negate=0;
     /* FIXME split token to find entry type : user, group, flag */
     c = *token++;
+    if (c == '!') {
+      negate = 1;
+      c = *token++;
+    }
     switch (c) {
     case '=':
       cp = CP_USER;
@@ -201,6 +215,8 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 #endif
       continue;
     }
+    if (negate)
+      *(--token)='!';
     /* add entry */
     perm_entry = perm_find_create_entry(token,command_perm);
     perm_entry->cp = cp;
@@ -218,6 +234,16 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
 {
   wzd_command_perm_t * command_perm;
   wzd_command_perm_entry_t * perm_entry;
+  wzd_user_t * user;
+  wzd_group_t * group;
+  int i;
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
 
   if (!permname || !context) return 1;
   if (!config->perm_list) return 1;
@@ -227,8 +253,19 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
   if (!command_perm) return 1;
 
   /* try with username */
-  perm_entry = perm_find_entry(context->userinfo.username,CP_USER,command_perm);
-  if (!perm_entry) return 1;
+  perm_entry = perm_find_entry(user->username,CP_USER,command_perm);
+  if (perm_entry==(void*)-1) return 1;
+  if (perm_entry) return 0;
 
-  return 0;
+  /* try with groups */
+  for (i=0; i<user->group_num; i++) {
+    group = &mainConfig->group_list[user->groups[i]];
+    perm_entry = perm_find_entry(group->groupname,CP_GROUP,command_perm);
+    if (perm_entry == (void*)-1)
+      return 1;
+    else if (perm_entry)
+      return 0;
+  }
+
+  return 1;
 }

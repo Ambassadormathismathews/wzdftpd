@@ -1,12 +1,9 @@
 ## IN PROGRESS ##
 
-- pasv_ip: accept hostnames: pasv_ip = kakao.no-ip.org
+- BUG when deleting a dir / file on top of a vfs, .dirinfo is not deleted in the correct dir
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
-- FIND A SOLUTION FOR THIS MEMORY IN SHARED LIB !!!
-   for allowed_ip, context, etc
-- IP checking (per group)
-- per dir global permissions (to pass over rootpath): needed for vfs
+- per dir global permissions (to pass over rootpath)
 - LINUX: drop privileges after binding port
 - lock files when writing (to avoid concurrent writes)
 - VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
@@ -25,6 +22,10 @@
 
 ## PRIORITY ##
 
+- Sub-vfs work, but need to put the physical path after the first node
+  e.g:
+   vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|
+   vfs = |/cygdrive/e/sons/mp3/pouet|/cygdrive/d/adobe|
 - Load modules : .so + try to load win DLLs (using win API ...)
 - cookies
 - anti-hammering: per ip/user, ban time
@@ -47,6 +48,8 @@
 
 ## NORMAL ##
 
+- multiple binds / restricted binds: bind to only specified ip(s)
+- change / add / remove vfs with site commands
 - add detection of ip for dynamic ip
 - 'include' directive in wzd.cfg: ability to split config file
 - message system for users: site msg and/or inline messages

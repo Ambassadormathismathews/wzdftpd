@@ -1,4 +1,21 @@
-%username
-%userhome
-%usergroup
-%usertag
+.----------------------------------------------------------------------------.
+|                         »   S i T e     u s E R    «                       |
+.----------------\----------------------------------------------/------------.
+|  username      : %40.username                  |
+|  User's group  : %40.usergroup                  |
+|  Flags         : %40.userflags                  |
+|  Home dir      : %55.userhome   |
+|  Max Idle Time : %40.usermaxidle                  |
+|  Max Bandwidth : dl: %15.usermaxdl    ul: %15.usermaxul                |
+|  Tag line      : %55.usertag   |
+|  IP allow 1    : %40.userip_allow0                  |
+|  IP allow 2    : %40.userip_allow1                  |
+|  IP allow 3    : %40.userip_allow2                  |
+|  IP allow 4    : %40.userip_allow3                  |
+|  IP allow 5    : %40.userip_allow4                  |
+|  IP allow 6    : %40.userip_allow5                  |
+|  IP allow 7    : %40.userip_allow6                  |
+|  IP allow 8    : %40.userip_allow7                  |
+.----------------------------------------------------------------------------.
+| site user username give u informations on a user                           |
+.----------------------------------------------------------------------------.

@@ -2,7 +2,6 @@
 /* ls replacement
    security reasons
  */
-#include <dirent.h>
 /*
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +15,29 @@
 
 int list_match(char *,char *);
 
+int list_call_wrapper(int sock, wzd_context_t *context, char *line, char *buffer, unsigned int *buffer_len,
+    int callback(int,wzd_context_t*,char *))
+{
+  unsigned int length;
+  if (!line) { /* request to flush */
+/*out_err(LEVEL_CRITICAL,"Flushing buffer (%ld bytes)\n",*buffer_len);*/
+    if (!callback(sock,context,buffer)) return 1;
+    return 0;
+  }
+  length = strlen(line);
+  if (*buffer_len + length >= HARD_LS_BUFFERSIZE-1) { /* flush buffer */
+/*out_err(LEVEL_CRITICAL,"Flushing buffer (%ld bytes)\n",*buffer_len);*/
+    *buffer_len = 0;
+    if (!callback(sock,context,buffer)) return 1;
+    strcpy(buffer,line);
+    *buffer_len = length;
+  } else {
+/*out_err(LEVEL_INFO,"Adding %ld bytes to buffer (%ld bytes)\n",length,*buffer_len);*/
+    strcpy(buffer+*buffer_len,line);
+    *buffer_len += length;
+  }
+  return 0;
+}
 
 int list(int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
 	 int callback(int,wzd_context_t*,char *)) {
@@ -23,6 +45,8 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   DIR *dir;
   struct dirent *entr;
 
+  char buffer[HARD_LS_BUFFERSIZE];
+  unsigned int buffer_len;
   char filename[1024];
   /*  char fullpath[1024];*/
   char line[1024+80];
@@ -31,6 +55,14 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   time_t timeval;
   struct stat st;
   struct tm *ntime;
+  wzd_user_t * user;
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
 
   if (directory==NULL) return 0;
 
@@ -39,6 +71,8 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   dirlen=strlen(filename);
 
   if ((dir=opendir(directory))==NULL) return 0;
+  memset(buffer,0,HARD_LS_BUFFERSIZE);
+  buffer_len=0;
 
 /*#ifdef DEBUG
   fprintf(stderr,"list(): %s\n",directory);
@@ -88,13 +122,14 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
                 st.st_mode & S_IWOTH ? 'w' : '-',
                 st.st_mode & S_IXOTH ? 'x' : '-',
                 (int)st.st_nlink,
-                context->userinfo.username,
+                user->username,
                 "ftp",
                 st.st_size,
                 datestr,
                 ptr);
                 
-        if (!callback(sock,context,line)) break;
+/*        if (!callback(sock,context,line)) break;*/
+	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
 	}
       }
       vfs = vfs->next_vfs;
@@ -118,7 +153,8 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
       if (format & LIST_TYPE_SHORT) {
 	strcpy(line,entr->d_name);
 	strcat(line,"\r\n");
-	if (!callback(sock,context,line)) break;
+/*        if (!callback(sock,context,line)) break;*/
+	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
       } else {
 
 	/* stat */
@@ -156,17 +192,20 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		st.st_mode & S_IWOTH ? 'w' : '-',
 		st.st_mode & S_IXOTH ? 'x' : '-',
 		(int)st.st_nlink,
-		context->userinfo.username,
+		user->username,
 		"ftp",
 		st.st_size,
 		datestr,
 		entr->d_name);
 
-	if (!callback(sock,context,line)) break;
+/*        if (!callback(sock,context,line)) break;*/
+	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
       }
     }
   }
 
+  /* flush buffer ! */
+  list_call_wrapper(sock, context, NULL, buffer, &buffer_len, callback);
   closedir(dir);
 
 #ifdef DEBUG

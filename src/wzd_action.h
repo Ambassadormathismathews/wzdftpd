@@ -38,11 +38,14 @@
 #define	TOK_RNFR	30
 #define	TOK_RNTO	31
 
+#define	TOK_NOTHING	64
+
 typedef struct {
   unsigned int	token;
   char		arg[4096];
 
-  FILE *	current_file;
+/*  FILE *	current_file;*/
+  int		current_file;
   unsigned int	bytesnow;
 
   time_t	tm_start;

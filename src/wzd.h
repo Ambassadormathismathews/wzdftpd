@@ -1,7 +1,7 @@
 #ifndef __WZD__
 #define __WZD__
 
-/*#define WZD_MULTIPROCESS*/
+#define WZD_MULTIPROCESS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 #include <dlfcn.h>
+#include <dirent.h>
 
 #define	KEY_BELL	"\007"
 
@@ -107,12 +108,14 @@ typedef struct {
   int	        dataip[4];
   unsigned long	resume;
   char          currentpath[2048];
-  wzd_user_t    userinfo;
+/*  wzd_user_t    userinfo;*/
+  unsigned int	userid;
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
   char		last_command[2048];
   wzd_bw_limiter * current_limiter;
   time_t	idle_time_start;
+  time_t	idle_time_data_start;
 #if SSL_SUPPORT
   wzd_ssl_t   	ssl;
 #endif
@@ -147,9 +150,13 @@ typedef struct {
 #endif
   unsigned long	shm_key;
   wzd_command_perm_t	* perm_list;
-  wzd_bw_limiter	* limiter_ul;
-  wzd_bw_limiter	* limiter_dl;
+/*  wzd_bw_limiter	* limiter_ul;
+  wzd_bw_limiter	* limiter_dl;*/
+  wzd_bw_limiter	global_ul_limiter;
+  wzd_bw_limiter	global_dl_limiter;
   wzd_site_config_t	site_config;
+  wzd_user_t	*user_list;
+  wzd_group_t	*group_list;
 } wzd_config_t;
 
 extern wzd_config_t *	mainConfig;

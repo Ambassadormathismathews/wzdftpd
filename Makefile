@@ -6,6 +6,9 @@ debug:
 all:
 	make recursive 'RECURSIVE_TARGET=all'
 
+release:
+	make recursive 'RECURSIVE_TARGET=release'
+
 clean:
 	make recursive 'RECURSIVE_TARGET=clean'
 

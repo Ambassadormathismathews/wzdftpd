@@ -88,10 +88,12 @@ typedef struct {
   unsigned int          groups[256];
   time_t	        max_idle_time;
   wzd_perm_t            userperms;
-  char *                flags;
+  char                  flags[MAX_FLAGS_NUM];
   unsigned long         max_ul_speed;
   unsigned long         max_dl_speed;   /* bytes / sec */
-  wzd_ip_t		*ip_allowed;
+  char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
+  unsigned long		bytes_ul_total;
+  unsigned long		bytes_dl_total;
 } wzd_user_t;
 
 typedef struct {
@@ -100,7 +102,7 @@ typedef struct {
   time_t		max_idle_time;
   unsigned long         max_ul_speed;
   unsigned long         max_dl_speed;
-  wzd_ip_t		*ip_allowed;
+  char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
 } wzd_group_t;
 
 /************************ FLAGS ***************************/

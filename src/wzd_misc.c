@@ -34,6 +34,21 @@ void chop(char *s)
     *r = '\0';
 }
 
+/* returns 1 if file is perm file */
+int is_perm_file(const char *filename)
+{
+  const char *endfile;
+
+  if (filename) {
+    endfile = filename + (strlen(filename) - strlen(HARD_PERMFILE));
+    if (strlen(filename)>strlen(HARD_PERMFILE)) {
+      if (strcasecmp(HARD_PERMFILE,endfile)==0)
+        return 1;
+    }
+  }
+  return 0;
+}
+
 #define WORK_BUF_LEN	8192
 
 void v_format_message(int code, unsigned int length, char *buffer, va_list argptr)
@@ -177,8 +192,11 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
   unsigned int bytes_written=0;
   char * cookie;
   unsigned int cookielength;
+  unsigned int l;
   char c;
   wzd_context_t * param_context=NULL;
+  wzd_user_t * user = NULL;
+  wzd_user_t * context_user = NULL;
 
   if (buffersize > 4095) {
 #ifdef DEBUG
@@ -229,16 +247,49 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
     if (strncmp(srcptr,"user",4)==0)
     { param_context=void_param; srcptr += 4; }
 
+    if (param_context == NULL) {
+      /* happens when using %username and void_param is not correctly set */
+      return 1;
+    }
+
+    if (mainConfig->backend.backend_storage == 0) {
+      user = &mainConfig->user_list[param_context->userid];
+      context_user = &mainConfig->user_list[context->userid];
+#if BACKEND_STORAGE
+    } else {
+      user = &param_context->user;
+      context_user = &context->user;
+#endif
+    }
+
     if (param_context) {
       /* name */
       if (strncmp(srcptr,"name",4)==0) {
-        cookie = param_context->userinfo.username;
+        cookie = user->username;
         cookielength = strlen(cookie);
         srcptr += 4; /* strlen("name"); */
       }
+      /* ip_allow */
+      if (strncmp(srcptr,"ip_allow",8)==0) {
+	char *endptr;
+        srcptr += 8; /* strlen("ip_allow"); */
+	l = strtoul(srcptr,&endptr,10);
+	if (endptr-srcptr > 0) {
+	  if (l < HARD_IP_PER_USER) {
+            strncpy(tmp_buffer,user->ip_allowed[l],4095);
+	  } else {
+	    snprintf(tmp_buffer,4096,"Invalid ip index %u",l);
+	  }
+	  srcptr = endptr;
+	} else {
+	  snprintf(tmp_buffer,4096,"Invalid ip index");
+	}
+	cookie = tmp_buffer;
+	cookielength = strlen(cookie);
+      }
       /* ip */
       if (strncmp(srcptr,"ip",2)==0) {
-        if (context->userinfo.flags && strchr(context->userinfo.flags,FLAG_SEE_IP)) {
+        if (context_user->flags && strchr(context_user->flags,FLAG_SEE_IP)) {
         snprintf(tmp_buffer,4096,"%d.%d.%d.%d",param_context->hostip[0],
   	  param_context->hostip[1],param_context->hostip[2],
           param_context->hostip[3]);
@@ -249,21 +300,29 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookielength = strlen(cookie);
         srcptr += 2; /* strlen("ip"); */
       }
-      /* home */
-      if (strncmp(srcptr,"home",4)==0) {
-        if (context->userinfo.flags && strchr(context->userinfo.flags,FLAG_SEE_IP)) {
-          cookie = param_context->userinfo.rootpath;
-        } else { /* user not allowed to see */
-          strcpy(tmp_buffer,"- some where -");
-          cookie = tmp_buffer;
-        }
-        cookielength = strlen(cookie);
-        srcptr += 4; /* strlen("home"); */
+      /* flags */
+      if (strncmp(srcptr,"flags",5)==0) {
+	if (user->flags && strlen(user->flags)>0) {
+	  strncpy(tmp_buffer,user->flags,MAX_FLAGS_NUM);
+	} else {
+	  strcpy(tmp_buffer,"no flags");
+	}
+	cookie = tmp_buffer;
+	cookielength = strlen(cookie);
+	srcptr += 5; /* strlen("flags"); */
       }
       /* group */
       if (strncmp(srcptr,"group",5)==0) {
-        wzd_group_t group;
-        if ( (param_context->userinfo.group_num > 0) && (backend_find_group(param_context->userinfo.groups[0],&group)==0) ) {
+        wzd_group_t group, *gptr;
+	int gid;
+	int ret;
+        if ( (user->group_num > 0)) {
+          ret = backend_find_group(user->groups[0],&group,&gid);
+	  if (mainConfig->backend.backend_storage==0) {
+	    gptr = &mainConfig->group_list[ret];
+	  } else {
+	    gptr = &group;
+	  }
           snprintf(tmp_buffer,4096,"%s",group.groupname);
         } else {
           strcpy(tmp_buffer,"nogroup");
@@ -272,22 +331,63 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookielength = strlen(cookie);
         srcptr += 5; /* strlen("group"); */
       }
+      /* home */
+      if (strncmp(srcptr,"home",4)==0) {
+        if (user->flags && strchr(user->flags,FLAG_SEE_IP)) {
+          cookie = user->rootpath;
+        } else { /* user not allowed to see */
+          strcpy(tmp_buffer,"- some where -");
+          cookie = tmp_buffer;
+        }
+        cookielength = strlen(cookie);
+        srcptr += 4; /* strlen("home"); */
+      }
+      /* lastcmd */
+      if (strncmp(srcptr,"lastcmd",7)==0) {
+	strncpy(tmp_buffer,param_context->last_command,4095);
+	/* modify special commands, to not appear explicit */
+	if (strncasecmp(tmp_buffer,"site",4)==0) {
+	  char * ptr;
+	  ptr = strpbrk(tmp_buffer+5," \t");
+	  if (ptr) {
+	    memset(ptr+1,'x',strlen(tmp_buffer)-(ptr-tmp_buffer+1));
+	  }
+	}
+        cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 7; /* strlen("lastcmd"); */
+      }
+      /* maxdl */
+      if (strncmp(srcptr,"maxdl",5)==0) {
+	snprintf(tmp_buffer,4096,"%ld",user->max_dl_speed);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("maxdl"); */
+      }
+      /* maxidle */
+      if (strncmp(srcptr,"maxidle",7)==0) {
+	snprintf(tmp_buffer,4096,"%ld",user->max_idle_time);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 7; /* strlen("maxidle"); */
+      }
+      /* maxul */
+      if (strncmp(srcptr,"maxul",5)==0) {
+	snprintf(tmp_buffer,4096,"%ld",user->max_ul_speed);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("maxul"); */
+      }
       /* tag */
       if (strncmp(srcptr,"tag",3)==0) {
-        if (strlen(param_context->userinfo.tagline) > 0) {
-          cookie = param_context->userinfo.tagline;
+        if (strlen(user->tagline) > 0) {
+          cookie = user->tagline;
         } else {
           strcpy(tmp_buffer,"no tagline set");
           cookie = tmp_buffer;
         }
         cookielength = strlen(cookie);
         srcptr += 3; /* strlen("tag"); */
-      }
-      /* lastcmd */
-      if (strncmp(srcptr,"lastcmd",7)==0) {
-        cookie = param_context->last_command;
-        cookielength = strlen(cookie);
-        srcptr += 7; /* strlen("lastcmd"); */
       }
     } /* if param_context */
     /* end of cookies */
@@ -378,7 +478,7 @@ int ip_add(wzd_ip_t **list, const char *newip)
   if (list == NULL) return -1;
 
   if (strlen(newip) < 1) return -1;
-  if (strlen(newip) > 256) return -1; /* upper limit for an hostname */
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
   new_ip_t = malloc(sizeof(wzd_ip_t));
   new_ip_t->regexp = malloc(strlen(newip)+1);
@@ -464,7 +564,9 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
       host_ip = (unsigned char*)(host->h_addr);
       snprintf(buffer,29,"%d.%d.%d.%d",
         host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
+#if DEBUG
 out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+#endif
       if (my_str_compare(buffer,ip)==1)
         return 1;
     } else
@@ -491,12 +593,16 @@ out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
       }
 
       /* XXX do not forget the alias list ! */
+#if DEBUG
 out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
+#endif
       if (my_str_compare(host->h_name,ptr_test)==1)
         return 1;
     } else
     { /* ip does not begin with + or - */
+#if DEBUG
 out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
+#endif
       if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
     } /* ip does not begin with + or - */
   
@@ -522,3 +628,196 @@ void ip_free(wzd_ip_t *list)
     current = next;
   }
 }
+
+int user_ip_add(wzd_user_t * user, const char *newip)
+{
+  int i;
+
+  /* of course this should never happen :) */
+  if (user == NULL || newip==NULL);
+
+  if (strlen(newip) < 1) return -1;
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
+
+  /* tail insertion, be aware that order is important */
+  for (i=0; i<HARD_IP_PER_USER; i++) {
+    if (user->ip_allowed[i][0] == '\0') {
+      strncpy(user->ip_allowed[i],newip,MAX_IP_LENGTH-1);
+      return 0;
+    }
+  }
+  return 1; /* full */
+}
+
+int user_ip_inlist(wzd_user_t * user, const char *ip)
+{
+  int i;
+  const char * ptr_ip;
+  char * ptr_test;
+  struct hostent *host;
+
+  i = 0;
+  while (user->ip_allowed[i][0] != '\0') {
+    ptr_ip = ip;
+    ptr_test = user->ip_allowed[i];
+    if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+    
+    if (*ptr_test == '+') {
+      char buffer[30];
+      unsigned char * host_ip;
+      
+      ptr_test++;
+      host = gethostbyname(ptr_test);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+	i++;
+        continue;
+      }
+      
+      host_ip = (unsigned char*)(host->h_addr);
+      snprintf(buffer,29,"%d.%d.%d.%d",
+        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
+#if DEBUG
+out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+#endif
+      if (my_str_compare(buffer,ip)==1)
+        return 1;
+    } else
+    if (*ptr_test == '-') {
+      unsigned char host_ip[5];
+      int i1, i2, i3, i4;
+
+      ptr_test++;
+      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
+        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
+          ptr_ip);
+        return 0;
+      }
+      host_ip[0] = i1;
+      host_ip[1] = i2;
+      host_ip[2] = i3;
+      host_ip[3] = i4;
+
+      host = gethostbyaddr(host_ip,4,AF_INET);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+	i++;
+        continue;
+      }
+
+      /* XXX do not forget the alias list ! */
+#if DEBUG
+out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
+#endif
+      if (my_str_compare(host->h_name,ptr_test)==1)
+        return 1;
+    } else
+    { /* ip does not begin with + or - */
+#if DEBUG
+out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
+#endif
+      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
+    } /* ip does not begin with + or - */
+
+    i++;
+  } /* while current_ip */
+
+  return 0;
+}
+
+int group_ip_add(wzd_group_t * group, const char *newip)
+{
+  int i;
+
+  /* of course this should never happen :) */
+  if (group == NULL || newip==NULL);
+
+  if (strlen(newip) < 1) return -1;
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
+
+  /* tail insertion, be aware that order is important */
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    if (group->ip_allowed[i][0] == '\0') {
+      strncpy(group->ip_allowed[i],newip,MAX_IP_LENGTH-1);
+      return 0;
+    }
+  }
+  return 1; /* full */
+}
+
+int group_ip_inlist(wzd_group_t * group, const char *ip)
+{
+  int i;
+  const char * ptr_ip;
+  char * ptr_test;
+  struct hostent *host;
+
+  i = 0;
+  while (group->ip_allowed[i][0] != '\0') {
+    ptr_ip = ip;
+    ptr_test = group->ip_allowed[i];
+    if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
+    
+    if (*ptr_test == '+') {
+      char buffer[30];
+      unsigned char * host_ip;
+      
+      ptr_test++;
+      host = gethostbyname(ptr_test);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+	i++;
+        continue;
+      }
+      
+      host_ip = (unsigned char*)(host->h_addr);
+      snprintf(buffer,29,"%d.%d.%d.%d",
+        host_ip[0],host_ip[1],host_ip[2],host_ip[3]);
+#if DEBUG
+out_err(LEVEL_CRITICAL,"HOST IP %s\n",buffer);
+#endif
+      if (my_str_compare(buffer,ip)==1)
+        return 1;
+    } else
+    if (*ptr_test == '-') {
+      unsigned char host_ip[5];
+      int i1, i2, i3, i4;
+
+      ptr_test++;
+      if (sscanf(ptr_ip,"%d.%d.%d.%d",&i1,&i2,&i3,&i4)!=4) {
+        out_log(LEVEL_HIGH,"INVALID IP (%s:%d) %s\n",__FILE__,__LINE__,
+          ptr_ip);
+        return 0;
+      }
+      host_ip[0] = i1;
+      host_ip[1] = i2;
+      host_ip[2] = i3;
+      host_ip[3] = i4;
+
+      host = gethostbyaddr(host_ip,4,AF_INET);
+      if (!host) {
+        /* XXX could not resolve hostname - warning in log ? */
+	i++;
+        continue;
+      }
+
+      /* XXX do not forget the alias list ! */
+#if DEBUG
+out_err(LEVEL_CRITICAL,"HOST NAME %s\n",ptr_test);
+#endif
+      if (my_str_compare(host->h_name,ptr_test)==1)
+        return 1;
+    } else
+    { /* ip does not begin with + or - */
+#if DEBUG
+out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
+#endif
+      if (my_str_compare(ptr_ip,ptr_test)==1) return 1;
+    } /* ip does not begin with + or - */
+
+    i++;
+  } /* while current_ip */
+
+  return 0;
+}
+

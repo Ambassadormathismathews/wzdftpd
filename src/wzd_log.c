@@ -11,7 +11,8 @@ void out_log(int level,const char *fmt,...)
 
   if (level >= mainConfig->loglevel) {
     char new_format[1024];
-    
+
+#if DEBUG
     switch (level) {
     case LEVEL_CRITICAL:
       strcpy(msg_begin,CLR_BOLD);
@@ -37,10 +38,12 @@ void out_log(int level,const char *fmt,...)
     default:
       break;
     }
+#endif
 
     snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
     
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+#if DEBUG
     if (mainConfig->logfile) {
       vfprintf(stdout,new_format,argptr);
 /*      vfprintf(mainConfig->logfile,fmt,argptr);
@@ -48,6 +51,12 @@ void out_log(int level,const char *fmt,...)
     } else { /* security - will be used iff log is not opened at this time */
       vfprintf(stderr,new_format,argptr);
     }
+#else
+    if (mainConfig->logfile) {
+      vfprintf(mainConfig->logfile,fmt,argptr);
+      fflush(mainConfig->logfile);
+    }
+#endif
   }
 }
 

@@ -17,8 +17,10 @@ int set_default_options(void)
   tempConfig.port = 21;
   tempConfig.max_threads=32;
 
-  tempConfig.limiter_ul = NULL;
-  tempConfig.limiter_dl = NULL;
+  tempConfig.global_ul_limiter.maxspeed = 0;
+  tempConfig.global_ul_limiter.bytes_transfered = 0;
+  tempConfig.global_dl_limiter.maxspeed = 0;
+  tempConfig.global_dl_limiter.bytes_transfered = 0;
 
   tempConfig.pasv_low_range = 1025;
   tempConfig.pasv_up_range = 65536;
@@ -44,6 +46,7 @@ int set_default_options(void)
   /* site config */
   tempConfig.site_config.file_help[0] = '\0';
   tempConfig.site_config.file_rules[0] = '\0';
+  tempConfig.site_config.file_user[0] = '\0';
   tempConfig.site_config.file_who[0] = '\0';
 
 #if SSL_SUPPORT
@@ -144,7 +147,6 @@ int readConfigFile(const char *fileName)
 
   fclose(configfile);
 
-//  mainConfig = malloc(sizeof(wzd_config_t));
   mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
   if (mainConfig_shm == NULL) {
     /* 2nd chance */
@@ -211,7 +213,7 @@ int parseVariable(const char *varname, const char *value)
     i = backend_validate(value);
     if (!i) {
       if (tempConfig.backend.handle == NULL) {
-        i = backend_init(value);
+/*        i = backend_init(value);*/
       } else { /* multiple backends ?? */
 	i=0;
       }
@@ -226,12 +228,12 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    if (tempConfig.limiter_ul) {
+    if (tempConfig.global_ul_limiter.maxspeed > 0) {
       out_log(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
     out_log(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
-    tempConfig.limiter_ul = limiter_new(l);
+    tempConfig.global_ul_limiter.maxspeed = l;
     return 0;
   }
   /* MAX_DL_SPEED (unsigned long)
@@ -242,12 +244,12 @@ int parseVariable(const char *varname, const char *value)
     l = strtoul(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    if (tempConfig.limiter_dl) {
+    if (tempConfig.global_dl_limiter.maxspeed > 0) {
       out_log(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
     out_log(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
-    tempConfig.limiter_dl = limiter_new(l);
+    tempConfig.global_dl_limiter.maxspeed = l;
     return 0;
   }
   /* PASV_LOW_RANGE (unsigned long)
@@ -280,9 +282,25 @@ int parseVariable(const char *varname, const char *value)
   {
     unsigned int new_ip[4];
     int r;
-    r = sscanf(value,"%u.%u.%u.%u",&new_ip[0],&new_ip[1],&new_ip[2],&new_ip[3]);
-    if (r!=4 || new_ip[0] >= 255 || new_ip[1] >= 255 || new_ip[2] >= 255 || new_ip[3] >= 255)
+    if (value[0]=='+') {
+      struct hostent *host;
+      unsigned char *host_ip;
+      value++;
+      host = gethostbyname(value);
+      if (!host) {
+	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",value);
+	return 1;
+      }
+      host_ip = (unsigned char*)(host->h_addr);
+      new_ip[0] = host_ip[0];
+      new_ip[1] = host_ip[1];
+      new_ip[2] = host_ip[2];
+      new_ip[3] = host_ip[3];
+    } else {
+      r = sscanf(value,"%u.%u.%u.%u",&new_ip[0],&new_ip[1],&new_ip[2],&new_ip[3]);
+      if (r!=4 || new_ip[0] >= 255 || new_ip[1] >= 255 || new_ip[2] >= 255 || new_ip[3] >= 255)
       return 1;
+    }
     tempConfig.pasv_ip[0] = (unsigned char)new_ip[0];
     tempConfig.pasv_ip[1] = (unsigned char)new_ip[1];
     tempConfig.pasv_ip[2] = (unsigned char)new_ip[2];
@@ -406,7 +424,11 @@ int parseVariable(const char *varname, const char *value)
     if (!*ptr || *ptr != delimiter) return 1;
     *dstptr = '\0';
 
-    vfs_add(&mainConfig->vfs,virtual_path,physical_path);
+    if (vfs_add(&mainConfig->vfs,virtual_path,physical_path)) {
+      out_log(LEVEL_HIGH,"There was a problem adding vfs %s => %s\n",virtual_path,physical_path);
+      out_log(LEVEL_HIGH,"Please check destination exists and you have correct permissions\n");
+      return 1;
+    }
 
     return 0;
   } /* vfs */

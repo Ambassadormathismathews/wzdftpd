@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
+#include "wzd_hardlimits.h"
 #include "wzd_structs.h"
 
 /* IMPORTANT:
@@ -19,6 +20,7 @@
 typedef struct {
   char name[1024];
   void * handle;
+  int backend_storage;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
   int (*back_find_user) (const char *, wzd_user_t *);
@@ -29,7 +31,7 @@ typedef struct {
   int (*back_commit_changes) (void);
 } wzd_backend_t;
 
-/* int FCN_INIT(void) */
+/* int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max) */
 #define	FCN_INIT		wzd_init
 #define	STR_INIT		"wzd_init"
 
@@ -68,19 +70,19 @@ typedef struct {
 
 int backend_validate(const char *backend);
 
-int backend_init(const char *backend);
+int backend_init(const char *backend, int * backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max);
 
 int backend_close(const char *backend);
 
 int backend_reload(const char *backend);
 
-int backend_find_user(const char *name, wzd_user_t * user);
+int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
-int backend_find_group(int num, wzd_group_t * group);
+int backend_find_group(int num, wzd_group_t * group, int * groupid);
 
-int backend_validate_login(const char *name, wzd_user_t * user);
+int backend_validate_login(const char *name, wzd_user_t * user, int * userid);
 
-int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user);
+int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, int * userid);
 
 int backend_chpass(const char *username, const char *new_pass);
 

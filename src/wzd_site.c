@@ -72,7 +72,8 @@ void do_site_backend(char *command_line, wzd_context_t * context)
     return;
   } /* close */
   if (strcasecmp(command,"init")==0) {
-    ret = backend_init(name);
+    int backend_storage;
+    ret = backend_init(name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,mainConfig->group_list,HARD_DEF_GROUP_MAX);
     if (ret) {
       ret = send_message_with_args(501,context,"Could not init backend");
     } else {
@@ -112,6 +113,7 @@ void do_site_chown(char *command_line, wzd_context_t * context)
   char * username, *filename;
   int ret;
   wzd_user_t user;
+  int uid;
 
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
@@ -120,7 +122,7 @@ void do_site_chown(char *command_line, wzd_context_t * context)
     return;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user) ) {
+  if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }
@@ -148,6 +150,10 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
   char * mode, *username, *filename;
   int ret;
   wzd_user_t user;
+  int uid;
+  unsigned long long_perms;
+  char str_perms[64];
+  char * endptr;
 
   ptr = command_line;
   username = strtok_r(NULL," \t\r\n",&ptr);
@@ -156,23 +162,36 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
     return;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user) ) {
+  if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }
-  mode = strtok_r(command_line," \t\r\n",&ptr);
+  mode = strtok_r(NULL," \t\r\n",&ptr);
   if (!mode) {
     do_site_help("chmod",context);
     return;
   }
   /* TODO check that mode is ok */
+  if (strlen(mode) > 15) {
+    do_site_help("chmod",context);
+    return;
+  }
+  long_perms = strtoul(mode,&endptr,8);
+  if (endptr != mode) {
+    snprintf(str_perms,63,"%c%c%c",
+	(long_perms & 01) ? 'r' : '-',
+	(long_perms & 02) ? 'w' : '-',
+	(long_perms & 04) ? 'x' : '-'
+	);
+  } else
+    strncpy(str_perms,mode,63);
 
   while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
     buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
-    _setPerm(buffer,username,0,0,mode,context);
+    _setPerm(buffer,username,0,0,str_perms,context);
   }
 
   snprintf(buffer,BUFFER_LEN,"CHMOD: '%s'",command_line);
@@ -189,6 +208,7 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
   char * username, *new_pass;
   int ret;
   wzd_user_t user;
+  int uid;
 
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
@@ -197,7 +217,7 @@ void do_site_chpass(char *command_line, wzd_context_t * context)
     return;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user) ) {
+  if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }
@@ -223,7 +243,8 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
   char buffer[BUFFER_LEN];
   char *username, *filename, *perms;
   char *ptr;
-  wzd_user_t userstruct;
+  wzd_user_t userstruct, *userptr;
+  int uid;
 
   strncpy(buffer,commandline,BUFFER_LEN-1);
   ptr = &buffer[0];
@@ -237,10 +258,12 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
 
   word = right_text2word(perms);
 
-  if (backend_find_user(username,&userstruct)) {
+  if (backend_find_user(username,&userstruct,&uid)) {
     send_message_with_args(501,context,"User does not exist");
     return;
   }
+  if (uid == -1) userptr = &userstruct;
+  else userptr = &mainConfig->user_list[uid];
 
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(filename,buffer,context)) {
@@ -250,7 +273,7 @@ void do_site_checkperm(const char * commandline, wzd_context_t * context)
  
   buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
 
-  if (_checkPerm(buffer,word,&userstruct)==0) {
+  if (_checkPerm(buffer,word,userptr)==0) {
     strcpy(buffer,"right ok");
   } else {
     strcpy(buffer,"refused");
@@ -306,9 +329,16 @@ void do_site_print_file(const char * filename, void * param, wzd_context_t * con
       i=0;
       while (i<HARD_USERLIMIT) {
 	if (tab_context[i].magic == CONTEXT_MAGIC) {
+#if 0
+#if BACKEND_STORAGE
           if (tab_context[i].userinfo.flags &&
               strchr(tab_context[i].userinfo.flags,FLAG_HIDDEN) &&
               strcmp(tab_context[i].userinfo.username,context->userinfo.username)!=0 /* do not hide to self ! */
+#endif
+#endif
+          if (mainConfig->user_list[tab_context[i].userid].flags &&
+            strchr(mainConfig->user_list[tab_context[i].userid].flags,FLAG_HIDDEN) &&
+            tab_context[i].userid != context->userid /* do not hide to self ! */
               )
           { i++; continue; }
 	  j=0;
@@ -401,6 +431,7 @@ void do_site_user(char *command_line, wzd_context_t * context)
   char * username;
   int ret;
   wzd_user_t user;
+  int uid;
   wzd_context_t user_context;
 
   ptr = command_line;
@@ -410,15 +441,19 @@ void do_site_user(char *command_line, wzd_context_t * context)
     return;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user) ) {
+  if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }
   /* needed, because do_site_print_file writes directly to context->controlfd */
 /*  user_context.controlfd = context->controlfd;*/
-  memcpy(&user_context.userinfo,&user,sizeof(wzd_user_t));
+/*  memcpy(&user_context.userinfo,&user,sizeof(wzd_user_t));*/
+  user_context.userid = uid;
 
+/*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_user,&user_context,context);
+/*#endif
+  do_site_print_file(mainConfig->site_config.file_user,&mainConfig->user_list[uid],context);*/
 }
 
 /********************* do_site_version *********************/

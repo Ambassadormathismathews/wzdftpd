@@ -13,10 +13,10 @@
 #define	MAX_LINE		1024
 
 wzd_user_t * user_pool;
-int user_count;
+int user_count, user_count_max=0;
 
 wzd_group_t * group_pool;
-int group_count;
+int group_count, group_count_max=0;
 
 regex_t reg_line;
 regmatch_t regmatch[3];
@@ -84,34 +84,45 @@ int my_str_compare(const char * src, const char *dst)
 #endif
 
 /* IP allowing */
-int ip_add(wzd_ip_t **list, const char *newip)
+int user_ip_add(wzd_user_t * user, const char *newip)
 {
-  wzd_ip_t * new_ip_t, *insert_point;
-  
+  int i;
+
   /* of course this should never happen :) */
-  if (list == NULL) return -1;
-  
+  if (user == NULL || newip==NULL);
+
   if (strlen(newip) < 1) return -1;
-  if (strlen(newip) > 256) return -1; /* upper limit for an hostname */
-  
-  new_ip_t = malloc(sizeof(wzd_ip_t));
-  new_ip_t->regexp = malloc(strlen(newip)+1);
-  strcpy(new_ip_t->regexp,newip);
-  new_ip_t->next_ip = NULL;
-  
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
+
   /* tail insertion, be aware that order is important */
-  insert_point = *list;
-  if (insert_point == NULL) {
-    *list = new_ip_t; 
-  } else {
-    while (insert_point->next_ip != NULL)
-      insert_point = insert_point->next_ip;
-      
-    insert_point->next_ip = new_ip_t;
-  } 
-  
-  return 0;
-} 
+  for (i=0; i<HARD_IP_PER_USER; i++) {
+    if (user->ip_allowed[i][0] == '\0') {
+      strncpy(user->ip_allowed[i],newip,MAX_IP_LENGTH-1);
+      return 0;
+    }
+  }
+  return 1; /* full */
+}
+
+int group_ip_add(wzd_group_t * group, const char *newip)
+{
+  int i;
+
+  /* of course this should never happen :) */
+  if (group == NULL || newip==NULL);
+
+  if (strlen(newip) < 1) return -1;
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
+
+  /* tail insertion, be aware that order is important */
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    if (group->ip_allowed[i][0] == '\0') {
+      strncpy(group->ip_allowed[i],newip,MAX_IP_LENGTH-1);
+      return 0;
+    }
+  }
+  return 1; /* full */
+}
 
 
 int write_user_file(void)
@@ -119,7 +130,6 @@ int write_user_file(void)
   char filename[256];
   FILE *file;
   int i,j;
-  wzd_ip_t *ip;
   char buffer[4096];
   const char * const file_header[] = {
     "# general considerations:",
@@ -155,6 +165,11 @@ int write_user_file(void)
     fprintf(file,"privgroup\t%s\n",group_pool[i].groupname);
     if (group_pool[i].max_idle_time)
       fprintf(file,"max_idle_time=%ld\n",group_pool[i].max_idle_time);
+    for (j=0; j<HARD_IP_PER_GROUP; j++)
+    {
+      if (group_pool[i].ip_allowed[j][0] != '\0')
+        fprintf(file,"ip_allowed=%s\n",group_pool[i].ip_allowed[j]);
+    }
     fprintf(file,"\n");
   }
 
@@ -181,9 +196,10 @@ int write_user_file(void)
     fprintf(file,"rights=0x%lx\n",user_pool[i].userperms);
     if (strlen(user_pool[i].tagline)>0)
       fprintf(file,"tagline=%s\n",user_pool[i].tagline);
-    for (ip=user_pool[i].ip_allowed; ip!=NULL; ip=ip->next_ip)
+    for (j=0; j<HARD_IP_PER_USER; j++)
     {
-      fprintf(file,"ip_allowed=%s\n",ip->regexp);
+      if (user_pool[i].ip_allowed[j][0] != '\0')
+        fprintf(file,"ip_allowed=%s\n",user_pool[i].ip_allowed[j]);
     }
     if (user_pool[i].max_ul_speed)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
@@ -214,7 +230,9 @@ int read_section_users(FILE * file_user, char * line)
   char *ptr;
   unsigned long i;
 
+#if DEBUG
 fprintf(stderr,"Entering section USERS\n");
+#endif
   while ( (c = getc(file_user)) != EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
@@ -241,10 +259,14 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
 
     if (strcmp("name",varname)==0) {
       /* begin a new user */
+/*
         if ( (++user_count % 256)==0 ) {
-          /* realloc of size user_count + 256 */
           user_pool = realloc(user_pool,(user_count+256)*sizeof(wzd_user_t));
-        }
+        }*/
+      if (++user_count >= user_count_max) {
+	fprintf(stderr,"Too many users defined %d\n",user_count);
+        continue;
+      }
       strncpy(user_pool[user_count-1].username,value,255);
       user_pool[user_count-1].userperms = 0;
       user_pool[user_count-1].uid = -1;
@@ -254,8 +276,9 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       user_pool[user_count-1].max_ul_speed = 0;
       user_pool[user_count-1].max_dl_speed = 0;
       user_pool[user_count-1].max_idle_time = 0;
-      user_pool[user_count-1].ip_allowed = NULL;
-      user_pool[user_count-1].flags = NULL;
+      for (i=0; i<HARD_IP_PER_USER; i++)
+        user_pool[user_count-1].ip_allowed[i][0] = '\0';
+      user_pool[user_count-1].flags[0] = '\0';
     }
     else if (strcmp("home",varname)==0) {
       if (!user_count) break;
@@ -271,11 +294,10 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
     else if (strcmp("flags",varname)==0) {
       if (!user_count) break;
       num = strlen(value);
-      if (num < 0 || num > 256) { /* suspicious length ! */
+      if (num <= 0 || num >= MAX_FLAGS_NUM) { /* suspicious length ! */
         continue;
       }
-      user_pool[user_count-1].flags = malloc(num);
-      strcpy(user_pool[user_count-1].flags,value);
+      strncpy(user_pool[user_count-1].flags,value,MAX_FLAGS_NUM);
     } /* flags */
     else if (strcmp("uid",varname)==0) {
       if (!user_count) break;
@@ -336,7 +358,7 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
       user_pool[user_count-1].max_idle_time = num;
     } /* max_idle_time */
     else if (strcmp("ip_allowed",varname)==0) {
-      ip_add(&user_pool[user_count-1].ip_allowed,value);
+      user_ip_add(&user_pool[user_count-1],value);
     } /* ip_allowed */
   }
   return 0;
@@ -350,8 +372,11 @@ int read_section_groups(FILE * file_user, char * line)
   unsigned int directive;
   int err;
   long num;
+  int i;
 
+#if DEBUG
 fprintf(stderr,"Entering section GROUPS\n");
+#endif
   while ( (c = getc(file_user)) != EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
@@ -370,16 +395,24 @@ fprintf(stderr,"Entering section GROUPS\n");
     switch (directive) {
     case D_PRIVGROUP:
       token = strtok(NULL,"\n");
+#if DEBUG
 fprintf(stderr,"Defining new private group %s\n",token);
+#endif
+/*
       if ((++group_count % 256)==0) {
 	group_pool = realloc(group_pool,group_count+256);
+      }*/
+      if (++group_count >= group_count_max) {
+	fprintf(stderr,"Too many groups: %d\n",group_count);
+	continue;
       }
       strncpy(group_pool[group_count-1].groupname,token,128);
       group_pool[group_count-1].groupperms = 0;
       group_pool[group_count-1].max_ul_speed = 0;
       group_pool[group_count-1].max_dl_speed = 0;
       group_pool[group_count-1].max_idle_time = 0;
-      group_pool[group_count-1].ip_allowed = NULL;
+      for (i=0; i<HARD_IP_PER_GROUP; i++)
+        group_pool[group_count-1].ip_allowed[i][0] = '\0';
       break;
     case D_NONE:
       err = regexec(&reg_line,line,3,regmatch,0);
@@ -401,6 +434,9 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
         }
         group_pool[group_count-1].max_idle_time = num;
       } /* max_idle_time */
+      else if (strcmp("ip_allowed",varname)==0) {
+        group_ip_add(&group_pool[group_count-1],value);
+      } /* ip_allowed */
       break;
     default:
 fprintf(stderr,"Houston, we have a problem\n");
@@ -415,7 +451,9 @@ int read_section_hosts(FILE * file_user, char * line)
 {
   char c;
 
+#if DEBUG
 fprintf(stderr,"Entering section HOSTS\n");
+#endif
   while ( (c = getc(file_user)) != EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
@@ -438,6 +476,7 @@ int read_files(void)
   FILE *file_user;
   char * line, * token, *ptr;
   int ret;
+  int i;
 
   file_user = fopen(USERS_FILE,"r");
 
@@ -450,9 +489,9 @@ int read_files(void)
 
   /* initial size of user_pool */
   user_count=0;
-  user_pool = malloc(256*sizeof(wzd_user_t));
+/*  user_pool = malloc(256*sizeof(wzd_user_t));*/
   group_count=0;
-  group_pool = malloc(256*sizeof(wzd_group_t));
+/*  group_pool = malloc(256*sizeof(wzd_group_t));*/
 
   /* XXX We always add a user nobody and a group nogroup */
   strcpy(user_pool[0].username,"nobody");
@@ -466,7 +505,7 @@ int read_files(void)
   user_pool[0].max_ul_speed = 1; /* at this rate, even if you can download it will be ... slow ! */
   user_pool[0].max_dl_speed = 1;
   user_pool[0].max_idle_time = 0;
-  user_pool[0].flags = NULL;
+  user_pool[0].flags[0] = '\0';
   user_count++;
 
   strcpy(group_pool[0].groupname,"nogroup");
@@ -474,7 +513,8 @@ int read_files(void)
   group_pool[0].max_ul_speed = 0;
   group_pool[0].max_dl_speed = 0;
   group_pool[0].max_idle_time = 0;
-  group_pool[0].ip_allowed = NULL;
+  for (i=0; i<HARD_IP_PER_USER; i++)
+    group_pool[0].ip_allowed[i][0] = '\0';
   group_count++;
 
   while (1) {
@@ -512,9 +552,18 @@ fprintf(stderr,"directive without section in line '%s'\n",line);
 }
 
 
-int FCN_INIT(void)
+int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max, wzd_group_t * group_list, unsigned int group_max)
 {
   int ret;
+
+  /* storage is done in the main prog's memory */
+  *backend_storage = 0;
+
+  user_count_max = user_max;
+  group_count_max = group_max;
+
+  user_pool = user_list;
+  group_pool = group_list;
 
   ret = read_files();
 
@@ -523,9 +572,20 @@ int FCN_INIT(void)
   return ret;
 }
 
+int wzd_set_user_pool(wzd_user_t * user_list)
+{
+  user_pool = user_list;
+  return 0;
+}
+
+int wzd_set_group_pool(wzd_group_t * group_list)
+{
+  group_pool = group_list;
+  return 0;
+}
+
 int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
-/*  fprintf(stderr,"Plaintext validate login: %s\n",login);*/
   int count;
   int found;
 /*  int i;*/
@@ -538,6 +598,10 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     count++;
   }
 
+  if (!found) return -1;
+  return count;
+
+#if 0
   if (!found) {
 fprintf(stderr,"User %s not found\n",login);
     return 1;
@@ -549,6 +613,7 @@ fprintf(stderr,"User %s not found\n",login);
   /* FIXME duplicate ip_allow list ? */
   
   return 0;
+#endif
 }
 
 int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
@@ -567,7 +632,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
   if (!found) {
 fprintf(stderr,"User %s not found\n",login);
-    return 1;
+    return -1;
   }
 /*fprintf(stderr,"found user at index: %d\n",count);*/
 
@@ -584,10 +649,13 @@ fprintf(stderr,"User %s not found\n",login);
 /*fprintf(stderr,"%s %s == %s : %d\n",login,cipher,user_pool[count].userpass,found);*/
     if (found) {
 fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[count].username,pass);
-      return 1; /* passwords do not match */
+      return -1; /* passwords do not match */
     }
   }
 
+  return count;
+
+#if 0
 /*
   strncpy(user->username,user_pool[count].username,255);
   strncpy(user->rootpath,user_pool[count].rootpath,1023);
@@ -610,6 +678,7 @@ fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[co
   /* FIXME duplicate ip_allow list ? */
 
   return 0;
+#endif
 }
 
 int FCN_FIND_USER(const char *name, wzd_user_t * user)
@@ -626,6 +695,10 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
     count++;
   }
 
+  if (!found) return -1;
+  else return count;
+
+#if 0
   if (!found) {
 fprintf(stderr,"User %s not found\n",name);
     return 1;
@@ -652,11 +725,14 @@ fprintf(stderr,"User %s not found\n",name);
   memset(user->userpass,0,256);
 
   return 0;
+#endif
 }
 
 int FCN_FIND_GROUP(int num, wzd_group_t * group)
 {
-  if (num < 0 || num >= group_count) return 1;
+  if (num < 0 || num >= group_count) return -1;
+
+  return num;
 /*
   strncpy(group->groupname,group_pool[num].groupname,256);
   group->groupperms = group_pool[num].groupperms;

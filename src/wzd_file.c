@@ -150,7 +150,7 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
 
   /* new acl for this file */
   acl_new->next_acl = file->acl;
-  file->acl = acl_new->next_acl;
+  file->acl = acl_new;
 }
 
 /* should be <<atomic>> */
@@ -368,6 +368,13 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
 	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
       vfs = vfs->next_vfs;
     }
+    /* if dir is not a vfs, we can have a vfile */
+    vfs = mainConfig->vfs;
+    while(vfs) {
+      if (strcmp(filename,vfs->physical_dir)==0)
+	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
+      vfs = vfs->next_vfs;
+    }
     return 1;
   }
 
@@ -417,7 +424,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
 
-fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
+/*fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);*/
 fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
 
 
@@ -592,26 +599,36 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
 
 /************ PUBLIC FUNCTIONS ***************/
 
-FILE * file_open(const char *filename, const char *mode, unsigned long wanted_right, wzd_context_t * context)
+int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context)
 {
-  FILE *fp;
+  int fd;
   int ret;
+  wzd_user_t * user;
 
-  if (*mode == 'r')
-    ret = _checkPerm(filename,RIGHT_RETR,&context->userinfo);
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
+
+  if (mode & O_RDONLY)
+    ret = _checkPerm(filename,RIGHT_RETR,user);
   else
-    ret = _checkPerm(filename,RIGHT_STOR,&context->userinfo);
+    ret = _checkPerm(filename,RIGHT_STOR,user);
   if (ret)
-    return NULL;
+    return 0;
   
-  fp = fopen(filename,mode);
+  fd = open(filename,mode,0666);
 
-  return fp;
+  return fd;
 }
 
-void file_close(FILE *fp, wzd_context_t * context)
+/*void file_close(FILE *fp, wzd_context_t * context)*/
+void file_close(int fd, wzd_context_t * context)
 {
-  fclose(fp);
+/*  fclose(fp);*/
+  close(fd);
 }
 
 /* NOTE:
@@ -620,7 +637,7 @@ void file_close(FILE *fp, wzd_context_t * context)
  */
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context)
 {
-  return 0;
+  return _setPerm(filename,0,username,groupname,0,context);
 }
 
 /* RENAME
@@ -631,13 +648,21 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   char path[2048];
   char * ptr;
   int ret;
+  wzd_user_t * user;
+
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==0) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = &mainConfig->user_list[context->userid];
 
   strncpy(path,new_filename,2048);
   ptr = strrchr(path,'/');
   if (!ptr) return 1;
   *ptr = '\0';
-  ret = _checkPerm(old_filename,RIGHT_RNFR,&context->userinfo);
-  ret = ret || _checkPerm(path,RIGHT_STOR,&context->userinfo);
+  ret = _checkPerm(old_filename,RIGHT_RNFR,user);
+  ret = ret || _checkPerm(path,RIGHT_STOR,user);
   if (ret)
     return 1;
 

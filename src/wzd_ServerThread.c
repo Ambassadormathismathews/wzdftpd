@@ -181,6 +181,24 @@ void login_new(int socket_accept_fd)
       exit(1);
     }
     context_list = context_shm->datazone;
+    mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+    mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+
+    {
+      /* XXX FIXME only available for plaintext backend ? */
+      typedef int (*set_user_fct)(wzd_user_t *);
+      typedef int (*set_group_fct)(wzd_group_t *);
+      set_user_fct uf;
+      set_group_fct gf;
+      uf = (set_user_fct)dlsym(mainConfig->backend.handle,"wzd_set_user_pool");
+      gf = (set_group_fct)dlsym(mainConfig->backend.handle,"wzd_set_group_pool");
+      if (uf && gf) {
+        (uf)(mainConfig->user_list);
+        (gf)(mainConfig->group_list);
+      } else {
+        exit(1);
+      }
+    }
 #endif /* __CYGWIN__ */
 
     /* close unused fd */
@@ -229,10 +247,12 @@ void login_new(int socket_accept_fd)
 void interrupt(int signum)
 {
   /* closing properly ?! */
+#if DEBUG
 #ifndef __CYGWIN__
 fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
 #else
 fprintf(stderr,"Received signal %d\n",signum);
+#endif
 #endif
   serverMainThreadExit(0);
 }
@@ -245,9 +265,14 @@ void serverMainThreadProc(void *arg)
   fd_set r;
   struct timeval tv;
   int i;
+  unsigned int length=0;
+  int backend_storage;
 
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  context_shm = wzd_shm_create(mainConfig->shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
+  length += HARD_USERLIMIT*sizeof(wzd_context_t);
+  length += HARD_DEF_USER_MAX*sizeof(wzd_user_t);
+  length += HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
+  context_shm = wzd_shm_create(mainConfig->shm_key,length,0);
   if (context_shm == NULL) {
     out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
     exit(1);
@@ -256,9 +281,13 @@ void serverMainThreadProc(void *arg)
   for (i=0; i<HARD_USERLIMIT; i++) {
     context_init(context_list+i);
   }
+  mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
+  ret = backend_init(mainConfig->backend.name,&backend_storage,mainConfig->user_list,HARD_DEF_USER_MAX,
+      mainConfig->group_list,HARD_DEF_GROUP_MAX);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (mainConfig->backend.handle == NULL) {
+  if (ret || mainConfig->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     exit (1);
   }
@@ -299,6 +328,14 @@ void serverMainThreadProc(void *arg)
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
     serverMainThreadExit(-1);
+  }
+  {
+    int one=1;
+
+    if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+      out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+      exit(1);
+    }
   }
 
   /* sets start time, for uptime */
@@ -341,8 +378,8 @@ void free_config(wzd_config_t * config)
 {
   wzd_ip_t * current_ip, * next_ip;
 
-  limiter_free(mainConfig->limiter_ul);
-  limiter_free(mainConfig->limiter_dl);
+/*  limiter_free(mainConfig->limiter_ul);
+  limiter_free(mainConfig->limiter_dl);*/
 
   current_ip = mainConfig->login_pre_ip_allowed;
   while (current_ip) {

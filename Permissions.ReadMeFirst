@@ -21,6 +21,10 @@ Permissions can be divided into several groups:
     site commands are threated like other commands, replace spaces by _
     -site_uptime =admin
 
+    ORDER IS IMPORTANT !!!
+    if someone complains about something like -command = !* =user
+       -> kickban !
+
 * fxp (aka site-to-site transfer)
     if user_ip != data_ip : 
       + if data_ip is allowed for this user, ok
