@@ -1,0 +1,324 @@
+<chapter>
+<title>Commands Reference</title>
+
+<simplesect>
+<title>site adduser &lt;user&gt; &lt;password&gt; &lt;homedir&gt; [&lt;backend&gt;]</title>
+<para>
+Add a user, with no group and no allowed ip.
+</para>
+<para>
+You MUST add an ip after.
+<screen>ex: site adduser toto mypassword /home/toto</screen>
+</para>
+</simplesect>
+
+<simplesect>
+<title>site addip &lt;user&gt; &lt;ip&gt;</title>
+<para>Add IP to  user.
+<screen>site addip toto 127.*</screen>
+This will allow user <quote>toto</quote> to connect from all ip
+beggining by <quote>127.</quote>
+</para>
+<para><emphasis>NOTE: ident is currently NOT supported, but is planned for next
+release</emphasis></para>
+</simplesect>
+
+<simplesect>
+<title>site backend &lt;command&gt; &lt;backend_name&gt;</title>
+<para>Operations on backend. 'command' can be one of :
+<itemizedlist>
+<listitem><para>close: unload 'backend'.
+<emphasis>If you have no backend, or if backend is in use, the server will be in an unstable state !
+</emphasis></para></listitem>
+<listitem><para>commit: commits change to backend in a synchronous way. After the command,
+you can shutdown or reload the server in a safe way</para></listitem>
+<listitem><para>init: loads a new backend.
+<emphasis>NO verifications are made - be sure of what you are doing !</emphasis></para></listitem>
+<listitem><para>reload: close and init a backend, <emphasis>without commiting it</emphasis>.
+This command allows you to modify backend and reload modifications.
+<emphasis>Modifications should be made carefully, especially if users are loggued !
+</emphasis></para></listitem>
+</itemizedlist>
+Backend name is the short name of the backend, not the name of the file (e.g:
+<quote>plaintext</quote>, <quote>mysql</quote>).
+<screen>site backend commit plaintext</screen>
+<emphasis>This is a DANGEROUS command</emphasis></para>
+</simplesect>
+
+<simplesect>
+<title>site change &lt;user&gt; &lt;field&gt; &lt;value&gt;</title>
+<para>Change a field for a user.
+<informaltable id="table_changes">
+<tgroup cols="2">
+<tbody>
+<row><entry>Field</entry><entry>Description</entry></row>
+
+<row><entry>name</entry><entry>This will change the user's login name.
+<emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
+<row><entry>pass</entry><entry>This will change the user's password.
+This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
+<row><entry>homedir</entry><entry>This will change the user's homedir.</entry></row>
+<row><entry>tagline</entry><entry>User's tagline.
+This is similar to the <link linkend='site_tagline'>site tagline</link> command</entry></row>
+<row><entry>group</entry><entry>Add / remove user from group.
+<link linkend='site_chgrp'>site chgrp</link> command is better, as it can
+handle several group changes in one command</entry></row>
+<row><entry>max_idle</entry><entry>Set the maximum idle time for this user.
+See the <link linkend='site_idle'>site idle</link> command</entry></row>
+<row><entry>perms</entry><entry>Set user's default perms (All: 0xffffffff, retrieve only:
+0x03).
+<emphasis>This command will change</emphasis></entry></row>
+<row><entry>flags</entry><entry>Set user's flags.
+This is similar to the <link linkend='site_flags'>site flags</link> command
+For flags info see <link linkend='table_flags'>Flags Table</link>.</entry></row>
+<row><entry>max_ul</entry><entry>Upstream bandwidth control in bytes/sec
+(0 = Unlimited).</entry></row>
+<row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
+<row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+</para>
+</simplesect>
+
+<simplesect>
+<title>site checkperm &lt;user&gt; &lt;file&gt; &lt;rights&gt;</title>
+<para>Check permission for a specific user.
+</para>
+<screen>site checkperm toto my_file RIGHT_RETR</screen>
+<informaltable id="table_perms">
+<tgroup cols="2">
+<tbody>
+<row><entry>Permission</entry><entry>Description</entry></row>
+
+<row><entry>RIGHT_LIST</entry><entry>User can list files (directory)</entry></row>
+<row><entry>RIGHT_RETR</entry><entry>User can retrieve file</entry></row>
+<row><entry>RIGHT_STOR</entry><entry>User can upload file (directory) or can overwrite (file)</entry></row>
+<row><entry>RIGHT_CWD</entry><entry>User can go into this directory</entry></row>
+<row><entry>RIGHT_RNFR</entry><entry>User can rename file</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+</simplesect>
+
+<simplesect id='site_chgrp'>
+<title>site chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]</title>
+<para>For each group in list, add user to group or removes it if he/she already
+belongs to group.</para>
+<screen>site chgrp toto guest admin </screen>
+<para>This will add user <quote>toto</quote> to group <quote>admin</quote> and remove
+<quote>toto</quote> from group <quote>guest</quote>, if user had group
+<quote>guest</quote> before.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site chmod &lt;user&gt; &lt;mode&gt; &lt;file1&gt; [&lt;file2&gt; ...]</title>
+<para>Change permissions for <quote>user</quote> on files. Permissions are unix-like,
+but you give <emphasis>only the part concerning user</emphasis> since permissions
+are acl-like.
+<screen>site chmod toto rwx dir1</screen>
+is equivalent to
+<screen>site chmod toto 7 dir1</screen>
+</para>
+</simplesect>
+
+<simplesect>
+<title>site chown &lt;user&gt; &lt;file1&gt; [&lt;file2&gt; ...]</title>
+<para>Change file owner
+<screen>site chown toto dir1</screen>
+This will give dir1 to user <quote>toto</quote>,
+<emphasis>but not its content !</emphasis>
+</para>
+</simplesect>
+
+<simplesect id='site_chpass'>
+<title>site chpass &lt;user&gt; &lt;password&gt;</title>
+<para>Change user password.</para>
+<screen>ex: site chpass toto newpassword</screen>
+<para>This will change the password to 'newpassword' for the user 'toto'.</para>
+<para>% denotes any password</para>
+</simplesect>
+
+<simplesect>
+<title>site chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]</title>
+<para>
+Add a user.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site delip &lt;user&gt; &lt;ip/slot&gt;</title>
+<para>Delete ip from user. You can also use the ip number (given by
+<quote>site who</quote>).
+<screen>site delip toto 127.0.0.1</screen>
+This will remove the ip <quote>127.0.0.1</quote> from user
+<quote>toto</quote>.
+<screen>site delip toto 1</screen>
+This will remove ip #1 in ip list from user <quote>toto</quote>
+</para>
+<para><quote>ip</quote> can contain wildcards, but they are
+<emphasis>not</emphasis> interpreted.
+<screen>site delip toto 127.*</screen>
+This will remove the exact ip <quote>127.*</quote>, and not all ip
+beginning by <quote>127.</quote>
+</para>
+<para>If an user has no authorized ip, he cannot login</para>
+</simplesect>
+
+<simplesect>
+<title>site deluser &lt;user&gt;</title>
+<para>
+Delete a user, may be readded with site READD
+</para>
+<screen>site deluser toto</screen>
+<para>
+This will set the flag DELETED (D) for the user 'toto'.
+In order to fully delete this user you will need to do a 'site purge'
+</para>
+</simplesect>
+
+<simplesect id='site_flags'>
+<title>site flags [&lt;user&gt;]</title>
+<para>Display a user's flags.</para>
+<screen>site flags</screen>
+<para>This will show your own flags</para>
+<screen>site flags toto</screen>
+<para>This will show flags of user toto</para>
+<informaltable id="table_flags">
+<tgroup cols="3">
+<tbody>
+<row><entry>Flagname</entry><entry>Flag</entry><entry>Description</entry></row>
+
+<row><entry>SITEOP</entry><entry>O</entry><entry>User is siteop</entry></row>
+<row><entry>GADMIN</entry><entry>G</entry><entry>User is groupadmin of his/her
+first public group<superscript>*</superscript></entry></row>
+<row><entry>DELETED</entry><entry>D</entry><entry>User is deleted</entry></row>
+<row><entry>IDLER</entry><entry>I</entry><entry>User is allowed to idle forever</entry></row>
+<row><entry>SEE_IP</entry><entry>s</entry><entry>User is allowed to see other's ip</entry></row>
+<row><entry>SEE_HOME</entry><entry>t</entry><entry>User is allowed to see other's home</entry></row>
+<row><entry>HIDDEN</entry><entry>H</entry><entry>User will not appear in site who</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+<para>*NOTE* If you have flag O then you do NOT want flag G</para>
+</simplesect>
+
+<simplesect>
+<title>site help</title>
+<para>
+Display helpscreen.
+</para>
+</simplesect>
+
+<simplesect id='site_idle'>
+<title>site idle [&lt;idletime&gt;]</title>
+<para>
+This sets your idle-time (the amount of time you can be online without
+doing something) for this session only (unless commited to backend).
+Max idle-time is 7200 sec.</para>
+<screen>site idle</screen>
+<para>This will show your current idle-time settings</para>
+<screen>site idle 3600</screen>
+<para>This will set your idle-timeout to 3600 sec.</para>
+<para><quote>site idle 0</quote> for users that have the idle flag (I)
+will allow them to idle forever.</para>
+</simplesect>
+
+<simplesect>
+<title>site kick &lt;user&gt;</title>
+<para>Kick a user off the site.</para>
+<screen>site kick toto</screen>
+<para>This will kill all connections for the user 'toto'</para>
+</simplesect>
+
+<simplesect>
+<title>site kill &lt;pid&gt;</title>
+<para>Kill a PID</para>
+<screen>site kill 345</screen>
+<para>This will kill pid #345 (if it belongs to a glftpd user)</para>
+</simplesect>
+
+<simplesect>
+<title>site purge &lt;user&gt;</title>
+<para>Remove deleted users, site READD will not work for purged users.</para>
+<screen>site purge toto</screen>
+<para>This will erase definitively user 'toto' (only if it has been deleted).</para>
+<para>If you are a gadmin, you can only purge users from your group (that is,
+if you are giving access to this command in your config file).</para>
+</simplesect>
+
+<simplesect>
+<title>site readd &lt;user&gt;</title>
+<para>Re-add a user.</para>
+<screen>site readd toto</screen>
+<para>This will remove the DELETED flag for user 'toto'</para>
+</simplesect>
+
+<simplesect>
+<title>site reload</title>
+<para>Reload config file.</para>
+<screen>site reload</screen>
+<para>This will reload config file (wzd.cfg by default)</para>
+<para><emphasis>This is a DANGEROUS command</emphasis></para>
+</simplesect>
+
+<simplesect>
+<title>site rules</title>
+<para>Display local site rules.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site swho</title>
+<para>
+Shows detailed information about users online.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site shutdown</title>
+<para>
+Shutdown the server. Users that are currently loggued are not kicked, and your
+connection is not closed. You will need to start the server on the machine.
+</para>
+</simplesect>
+
+<simplesect id='site_tagline'>
+<title>site tagline [&lt;tagline&gt;]</title>
+<para>Shows/Sets your tagline</para>
+<screen>site tagline</screen>
+<para>This will show your current tagline</para>
+<screen>site tagline my new tagline</screen>
+<para>This will set your tagline to 'my new tagline'</para>
+</simplesect>
+
+<simplesect>
+<title>site user &lt;user&gt;</title>
+<para>Show detailed informations for a user.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site users</title>
+<para>List users and shows their group and detailed informations
+</para>
+</simplesect>
+
+<!-- site utime is not documented -->
+
+<simplesect>
+<title>site version</title>
+<para>
+Display server version.
+</para>
+</simplesect>
+
+<simplesect>
+<title>site who</title>
+<para>
+Show users online.
+</para>
+</simplesect>
+
+</chapter>

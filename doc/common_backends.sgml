@@ -1,0 +1,20 @@
+<chapter>
+<title>Common backends</title>
+
+<sect1>
+<title>Plaintext</title>
+
+<para>
+Users/Groups definitions are stored in a plaintext file (though passwords
+are encoded using unix <varname>crypt</varname> function).
+</para>
+
+<para>
+You can edit the file <quote>users</quote>, either being offline or
+reloading backend (without commiting it !) after. You should pay attention
+to the fact that this file should be edited <emphasis>carefully</emphasis>,
+and will be overwritten next time backend is commited.
+</para>
+</sect1>
+
+</chapter>

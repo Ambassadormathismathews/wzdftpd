@@ -1,0 +1,14 @@
+<chapter>
+<title>Common modules</title>
+
+<sect1>
+<title>SFV module</title>
+
+<para>
+This modules comes with some utilities functions to handle sfv files. When a SFV
+file is uploaded, server will create <computeroutput>.missing</computeroutput>
+files.
+</para>
+</sect1>
+
+</chapter>

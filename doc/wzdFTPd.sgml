@@ -1,0 +1,30 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "docbook/dtd/xml/4.1.2/docbookx.dtd" [
+<!ENTITY installation SYSTEM "installation.sgml">
+<!ENTITY commands_reference SYSTEM "commands_reference.sgml">
+<!ENTITY cookies_reference SYSTEM "cookies_reference.sgml">
+<!ENTITY common_modules SYSTEM "common_modules.sgml">
+<!ENTITY common_backends SYSTEM "common_backends.sgml">
+]>
+<book>
+  <title>wzdFTPd Documentation</title>
+
+&installation;
+&commands_reference;
+&cookies_reference;
+&common_modules;
+&common_backends;
+
+<glossary>
+<glossentry><glossterm>foo</glossterm>
+<indexterm><primary>foo</primary></indexterm>
+<glossdef>
+<para>
+Some appropriate definition goes here.
+</para>
+</glossdef>
+</glossentry>
+</glossary>
+
+</book>
