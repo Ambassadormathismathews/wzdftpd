@@ -420,7 +420,7 @@ int check_timeout(wzd_context_t * context)
       send_message_with_args(421,context,"Timeout, closing connection");
       {
 	const char * groupname = NULL;
-	const char * userip = context->hostip;
+	const unsigned char * userip = context->hostip;
 	const char * remote_host;
 	struct hostent *h;
 	h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
@@ -456,7 +456,7 @@ int check_timeout(wzd_context_t * context)
         send_message_with_args(421,context,"Timeout, closing connection");
 	{
 	  const char * groupname = NULL;
-	  const char * userip = context->hostip;
+	  const unsigned char * userip = context->hostip;
 	  const char * remote_host;
 	  struct hostent *h;
 	  h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
@@ -2235,7 +2235,7 @@ void * clientThreadProc(void *arg)
 
   {
     const char * groupname = NULL;
-    const char * userip = context->hostip;
+    const unsigned char * userip = context->hostip;
     const char * remote_host;
     struct hostent *h;
     h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
@@ -2384,7 +2384,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    ret = send_message(221,context);
 	    {
 	      const char * groupname = NULL;
-	      const char * userip = context->hostip;
+	      const unsigned char * userip = context->hostip;
 	      const char * remote_host;
 	      struct hostent *h;
 	      h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);

@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -48,6 +49,9 @@
 
 #include "wzd_structs.h"
 #include "wzd_misc.h"
+
+#include "wzd_file.h"
+#include "wzd_vfs.h"
 
 int list_match(char *,char *);
 

@@ -519,7 +519,7 @@ int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_pa
     if (strcmp(name,param->name)==0) {
       if (maxlen < param->length) return 2;
       memcpy(buffer,param->param,param->length);
-      memset(buffer+param->length,0,maxlen-param->length);
+      memset((char*)buffer+param->length,0,maxlen-param->length);
       return 0;
     }
     param = param->next_param;

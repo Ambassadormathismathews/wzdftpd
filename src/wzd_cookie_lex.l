@@ -60,6 +60,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 /* speed up compilation */
 #define SSL void
@@ -68,6 +69,8 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+
+#include "wzd_messages.h"
 
 typedef enum {
   COOKIE=257,
@@ -551,7 +554,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	numstart = yytext+strlen(yytext)-1;
 	while ( isdigit(*(numstart-1)) ) numstart--;
 	index = strtoul(numstart,&ptr,10);
-	if (index>=0 && index<HARD_IP_PER_GROUP)
+	if (index<HARD_IP_PER_GROUP)
 	{
 	  if (current_group)
 	    snprintf(internalbuffer,IBUFSIZE,"%s",current_group->ip_allowed[index]);
@@ -818,7 +821,7 @@ int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * gro
 	numstart = yytext+strlen(yytext)-1;
 	while ( isdigit(*(numstart-1)) ) numstart--;
 	index = strtoul(numstart,&ptr,10);
-	if (index>=0 && index<HARD_IP_PER_USER)
+	if (index<HARD_IP_PER_USER)
 	{
 	  if (current_user)
 	    snprintf(internalbuffer,IBUFSIZE,"%s",current_user->ip_allowed[index]);

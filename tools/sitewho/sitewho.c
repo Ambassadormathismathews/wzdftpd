@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
   context_list = (wzd_context_t*)datazone;
   i = HARD_USERLIMIT;
   i = HARD_USERLIMIT*sizeof (wzd_context_t);
-  user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t)); 
+  user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t)); 
 
   /* find non-empty contexts */
   for (i=0; i<HARD_USERLIMIT; i++) {

@@ -30,4 +30,6 @@ void site_cleanup(wzd_config_t * config);
 
 int do_site(char *command_line, wzd_context_t * context);
 
+void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context);
+
 #endif /* __WZD_SITE__ */

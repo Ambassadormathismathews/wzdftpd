@@ -26,6 +26,6 @@
 #define __WZD_SAVECFG_H__
 
 /* free cfg file */
-int vfs_savecfg(void);
+int wzd_savecfg(void);
 
 #endif /* __WZD_SAVECFG_H__ */

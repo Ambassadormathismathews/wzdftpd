@@ -252,7 +252,7 @@ char * event2str(const unsigned long mask)
 
   while (event_tab[i].mask != 0)
   {
-    if (event_tab[i].mask == mask) return event_tab[i].name;
+    if (event_tab[i].mask == mask) return (char*)event_tab[i].name;
     i++;
   }
   return 0;

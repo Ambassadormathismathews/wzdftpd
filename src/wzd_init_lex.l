@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>	/* ULONG_MAX */
+#include <signal.h>     /* kill() */
 
 #ifndef __CYGWIN__
 #include <pwd.h>	/* getpwnam() */
@@ -60,6 +61,7 @@
 #include "wzd_mod.h"
 #include "wzd_perm.h"
 #include "wzd_crontab.h"
+#include "wzd_section.h"
 #include "wzd_ServerThread.h"
 #include "wzd_vfs.h"
 
@@ -268,8 +270,8 @@ int set_default_options(void)
 
   tempConfig.site_closed=0;
 
-  strcpy (tempConfig.ip, "*");
-  strcpy (tempConfig.dynamic_ip, "0");
+  strcpy ((char*)tempConfig.ip, "*");
+  strcpy ((char*)tempConfig.dynamic_ip, "0");
   tempConfig.port = 21;
   tempConfig.max_threads=32;
 

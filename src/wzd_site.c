@@ -888,7 +888,10 @@ int do_site_utime(char *command_line, wzd_context_t * context)
 
 int do_site_version(char * ignored, wzd_context_t * context)
 {
-  send_message_with_args(200,context,WZD_VERSION_STR);
+  char str[256];
+  snprintf(str,256,"%s build %lu (%s)\n",
+      WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+  send_message_with_args(200,context,str);
   return 0;
 }
 

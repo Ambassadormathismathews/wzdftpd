@@ -53,6 +53,7 @@
 #include <signal.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <syslog.h>
 
 #ifdef __CYGWIN__
 /* cygwin does not support ipv6 */
@@ -80,6 +81,7 @@
 #include "wzd_cache.h"
 #include "wzd_crontab.h"
 #include "wzd_messages.h"
+#include "wzd_section.h"
 #include "wzd_site.h"
 
 #include "wzd_debug.h"
@@ -294,7 +296,7 @@ void server_restart(int signum)
 
   /* create socket iff different ports ! */
   if (rebind) {
-    sock = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
+    sock = mainConfig->mainSocket = socket_make((const char *)mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
     if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
 	  __FILE__, __LINE__);
@@ -346,7 +348,7 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port)
   sock = mainConfig->mainSocket;
   close(sock);
 
-  sock = mainConfig->mainSocket = socket_make(ip,&new_port,mainConfig->max_threads);
+  sock = mainConfig->mainSocket = socket_make((const char *)ip,&new_port,mainConfig->max_threads);
   if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
 	  __FILE__, __LINE__);
@@ -374,9 +376,9 @@ int check_server_dynamic_ip(void)
   const unsigned char * str_ip_pasv;
 
 /*out_err(LEVEL_CRITICAL,"check_server_dynamic_ip\n");*/
-  if (!mainConfig->dynamic_ip || strlen(mainConfig->dynamic_ip)<=0) return 0;
+  if (!mainConfig->dynamic_ip || strlen((const char *)mainConfig->dynamic_ip)<=0) return 0;
 
-  if (strcmp(mainConfig->dynamic_ip,"0")==0) return 0;
+  if (strcmp((const char *)mainConfig->dynamic_ip,"0")==0) return 0;
 
   /* 1- get my ip */
   size = sizeof(struct sockaddr_in);
@@ -389,7 +391,7 @@ int check_server_dynamic_ip(void)
   }*/
  
   /* get ip by system */
-  if (strcmp(mainConfig->dynamic_ip,"1")==0)
+  if (strcmp((const char *)mainConfig->dynamic_ip,"1")==0)
   {
     struct in_addr addr_current;
     int ret;
@@ -405,7 +407,7 @@ int check_server_dynamic_ip(void)
 
   if (mainConfig->dynamic_ip[0]=='+')
   {
-    const char *ip = mainConfig->dynamic_ip;
+    const char *ip = (const char *)mainConfig->dynamic_ip;
     ip++;
 
    /* 2- resolve config ip */
@@ -446,7 +448,7 @@ int check_server_dynamic_ip(void)
       out_log(LEVEL_HIGH,"Rebinding main server ! (from %d.%d.%d.%d to %d.%d.%d.%d)\n",
 	  str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
 	  str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
-      server_rebind(inet_ntoa(sa_config.sin_addr),mainConfig->port);
+      server_rebind((const unsigned char *)inet_ntoa(sa_config.sin_addr),mainConfig->port);
     }
   }
 
@@ -810,7 +812,7 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
-  ret = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
+  ret = mainConfig->mainSocket = socket_make((const char *)mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -878,8 +880,8 @@ void serverMainThreadProc(void *arg)
   for (i=0; i<HARD_USERLIMIT; i++) {
     context_init(context_list+i);
   }
-  mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
+  mainConfig->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  mainConfig->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
 
 #ifdef __CYGWIN__
   /* cygwin sux ... shared library variables are NOT set correctly

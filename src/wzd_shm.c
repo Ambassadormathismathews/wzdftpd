@@ -196,9 +196,9 @@ void wzd_shm_cleanup(unsigned long key)
 
 #else /* __CYGWIN__ */
 
-#ifndef WZD_MULTITHREAD
-
 #include <sys/sem.h>
+
+#ifndef WZD_MULTITHREAD
 
 typedef union semun {
   int val;                  /* value for SETVAL */
@@ -402,7 +402,7 @@ fprintf(stderr,"CRITICAL: could not set sem value,  %ld - errno is %d (%s)\n",(u
   }
 
   /* read data */
-  memcpy(data,shm->datazone+offset,size);
+  memcpy(data,(char*)shm->datazone+offset,size);
 
 #if 0
   /* restore sem : V() */
@@ -443,7 +443,7 @@ fprintf(stderr,"CRITICAL: could not set sem value, sem %ld - errno is %d (%s)\n"
   }
 
   /* write data */
-  memcpy(shm->datazone+offset,data,size);
+  memcpy((char*)shm->datazone+offset,data,size);
 
 #if 0
   /* restore sem : V() */

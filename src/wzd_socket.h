@@ -25,7 +25,7 @@
 #ifndef __WZD_SOCKET__
 #define __WZD_SOCKET__
 
-int socket_make(const char *ip, int *port, int nListen);
+int socket_make(const char *ip, unsigned int *port, int nListen);
 int socket_close(int sock);
 
 int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_port);

@@ -59,7 +59,10 @@
 #include "wzd_file.h"
 #include "wzd_mod.h"
 #include "wzd_data.h"
+#include "wzd_socket.h"
 #include "wzd_ServerThread.h"
+
+#include "wzd_debug.h"
 
 void data_close(wzd_context_t * context)
 {

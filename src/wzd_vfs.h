@@ -46,4 +46,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
 /** register a new vfs entry, with a condition */
 int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *path, const char *target);
 
+/** \return 1 if user match corresponding line */
+int vfs_match_perm(const char *perms,wzd_user_t *user);
+
 #endif /* __WZD_VFS_H__ */

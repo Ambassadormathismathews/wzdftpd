@@ -51,7 +51,7 @@ char * section_getname(wzd_section_t * section)
   return NULL;
 }
 
-int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char *mask, const char *filter)
+int section_add(wzd_section_t **section_list, char *name, char *mask, const char *filter)
 {
   wzd_section_t * section_new, * section;
   int err;
@@ -74,8 +74,8 @@ int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char
   }
   else
     section_new->pathfilter = NULL;
-  section_new->sectionname = strdup(name);
-  section_new->sectionmask = strdup(mask);
+  section_new->sectionname = strdup((const char *)name);
+  section_new->sectionmask = strdup((const char *)mask);
   section_new->next_section = NULL;
 
   section = *section_list;
@@ -88,7 +88,7 @@ int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char
 
   do {
     /* do not insert if a section with same name exists */
-    if (strcmp(name,section->sectionname)==0) return 1;
+    if (strcmp((const char *)name,section->sectionname)==0) return 1;
     /* FIXME if a section with same or bigger mask exist, warn user ? */
     if (!section->next_section) break;
     section = section->next_section;

@@ -44,6 +44,7 @@
 #include "wzd_structs.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
+#include "wzd_section.h"
 #include "wzd_vfs.h"
 
 

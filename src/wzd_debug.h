@@ -31,17 +31,21 @@
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd);
 
+#ifdef DEBUG
+
 /* debug file cache */
-#define WZD_DBG_CACHE
+/*#define WZD_DBG_CACHE*/
 
 /* debug crontab */
 /*#define WZD_DBG_CRONTAB 1*/
 
 /* debug permissions */
-#define WZD_DBG_PERMS
+/*#define WZD_DBG_PERMS*/
 
 #ifdef HAVE_MPATROL
 #include <mpatrol.h>
 #endif
+
+#endif /* DEBUG */
 
 #endif /* __WZD_DEBUG__ */

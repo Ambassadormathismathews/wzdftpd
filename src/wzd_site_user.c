@@ -48,6 +48,7 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
+#include "wzd_ServerThread.h"
 #include "wzd_site_user.h"
 
 

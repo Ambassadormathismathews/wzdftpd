@@ -106,3 +106,17 @@ CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
 
 EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO wzd_cookie_lex.l wzd_init_lex.l
 
+if USE_ICC
+# Workaround for compilation with icc
+wzd_shm.o: wzd_shm.c
+@AMDEP_TRUE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(COMPILE) -c -I/usr/include `test -f '$<' || echo '$(srcdir)/'`$<
+
+wzd_shm.lo: wzd_shm.c
+@AMDEP_TRUE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+	$(LTCOMPILE) -c -I/usr/include -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
+endif

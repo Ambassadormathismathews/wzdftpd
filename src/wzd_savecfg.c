@@ -496,7 +496,7 @@ static void save_sections (FILE *file)
     current = current->next_section;
   }
 #else
-  fprintf( file, "section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$\n");
+  fprintf( file, "section = ALL /* ^([]\\[A-Za-z0-9_.'() \t+-])*$\n");
 #endif
 
   fprintf( file, "\n");

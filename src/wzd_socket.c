@@ -62,7 +62,7 @@ char * ul2a(unsigned long q)
 /** bind socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-int socket_make(const char *ip, int *port, int nListen)
+int socket_make(const char *ip, unsigned int *port, int nListen)
 {
   struct sockaddr_in sai;
 #if defined(IPV6_SUPPORT)
