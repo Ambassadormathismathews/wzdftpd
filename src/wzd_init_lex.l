@@ -75,7 +75,7 @@ typedef enum {
   CFG_EQUAL,
   CFG_LOWER_EQ,
   CFG_GREATER_EQ,
-  
+
   CFG_BACKEND,
   CFG_BACKEND_PARAM,
   CFG_CRONJOB,
@@ -118,7 +118,7 @@ typedef enum {
   CFG_USE_SYSLOG,
   CFG_VFS,
   CFG_XFERLOG,
-  
+
   CFG_UNKNOWN
 } wzd_config_token_t;
 
@@ -2101,10 +2101,13 @@ wzd_config_t * readConfigFile(const char *fileName)
         char permission_name[256];
         char * permission_line;
         token = yylex();
-        if (token != CFG_SITE) {
+        /* XXX the following is now disabled because we allow to set permissions on
+         * some commands, not just only site commands
+         */
+/*        if (token != CFG_SITE) {
           out_err(LEVEL_HIGH,"Invalid config line near token %s (%u)\n",yytext,token);
           continue;
-        }
+        }*/
 /*        printf("PERM: %s\n",yytext);*/
         if (strlen(yytext)>=256) {
           printf("token too long: '%s'\n",yytext);
