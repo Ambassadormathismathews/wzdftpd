@@ -2018,7 +2018,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   /* check general site permission */
 #ifdef DEBUG
   if (strlen(str_tochar(command))>255) {
-    fprintf(stderr,"*** WARNING *** permissions name too long > 255 - truncated : '%s'\n",str_tochar(token));
+    fprintf(stderr,"*** WARNING *** permissions name too long > 255 - truncated : '%s'\n",str_tochar(command));
   }
 #endif
 
@@ -2140,12 +2140,12 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   switch (hook_reply) {
   case EVENT_ERROR:
     /* we do not know how to reply .. trying 200 */
-    out_log(LEVEL_INFO, "Someone reported errors for site command %s\n", token);
+    out_log(LEVEL_INFO, "Someone reported errors for site command %s\n", s_token);
     ret = send_message_with_args(200,context,"SITE command failed");
     break;
   case EVENT_NEXT:
     /* we do not know how to reply .. trying 200 */
-    out_log(LEVEL_INFO, "Received only EVENT_NEXT for site command %s\n", token);
+    out_log(LEVEL_INFO, "Received only EVENT_NEXT for site command %s\n", s_token);
     out_log(LEVEL_INFO, "The last handler should send EVENT_CATCHED\n");
     ret = send_message_with_args(200,context,"SITE command executed (with warnings)");
     break;

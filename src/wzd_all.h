@@ -52,8 +52,8 @@
 #include <winsock2.h>
 #endif /* WIN32 */
 
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 
@@ -88,6 +88,7 @@
 #include "wzd_site.h"
 #include "wzd_site_group.h"
 #include "wzd_site_user.h"
+#include "wzd_socket.h"
 #include "wzd_string.h"
 #include "wzd_utf8.h"
 #include "wzd_vars.h"

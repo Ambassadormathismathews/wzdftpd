@@ -451,6 +451,9 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       save_errno = WSAGetLastError();
       socket_close(sock);
       errno = save_errno;
+#ifdef WIN32
+      WSASetLastError(save_errno);
+#endif
       return -1;
     }
   }
@@ -482,6 +485,9 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
     out_log(LEVEL_FLOOD,"Connect failed %d %s:%d\n", errno, __FILE__, __LINE__);
     socket_close (sock);
     errno = ret;
+#ifdef WIN32
+    WSASetLastError(ret);
+#endif
     return -1;
   }
 

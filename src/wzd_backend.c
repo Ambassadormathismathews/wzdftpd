@@ -123,7 +123,7 @@ static void backend_clear_struct(wzd_backend_t *backend)
 
 int backend_validate(const char *backend, const char *pred, const char *version)
 {
-  struct stat statbuf;
+  struct statbuf st;
   int ret;
   void * handle;
   char filename[1024];
@@ -155,7 +155,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
     return 1;
   }
-  ret = lstat(filename,&statbuf);
+  ret = fs_lstat(filename,&st);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
@@ -164,9 +164,9 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   /* basic type check */
 #if 0
 #ifdef DEBUG
-  if (S_ISLNK(statbuf.st_mode))
+  if (S_ISLNK(st.st_mode))
     out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
-  if (S_ISREG(statbuf.st_mode))
+  if (S_ISREG(st.st_mode))
       out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
 #endif
 #endif

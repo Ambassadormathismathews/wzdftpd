@@ -119,7 +119,8 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   struct statbuf s;
   unsigned long hash;
   unsigned long ret;
-  u64_t length;
+  unsigned int length;
+  u64_t l64;
   int fd;
 
   if (!file) return NULL;
@@ -175,12 +176,13 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
-  length = s.st_size;
-  if (length > MAX_CACHE_FILE_LEN) {
+  l64 = s.st_size;
+  if (l64 > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;
     c->datasize = 0;
   } else {
+	length = (unsigned int)l64;
     c->data = malloc(length+1);
     if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",ret,length);
@@ -229,7 +231,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
     c->data = NULL;
     c->datasize = 0;
   } else {
-    c->data = malloc(length);
+    c->data = malloc((unsigned int)length);
     if ( (ret=read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes\n",ret);
     }

@@ -494,7 +494,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
       return 0;
     }
 #ifdef WIN32
-    if (errno == WSAEWOULDBLOCK) {
+    if (WSAGetLastError() == WSAEWOULDBLOCK) {
       server_login_accept(context);
       return 0;
     }
