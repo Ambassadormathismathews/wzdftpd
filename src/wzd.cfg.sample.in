@@ -94,13 +94,6 @@ deny_access_files_uploaded = 1
 # hide files beggining by a '.'
 #hide_dotted_files = 1
 
-# shm_key: use for share memory (default: 0x1331c0d3)
-#shm_key = 0x2442c0d3
-
-# force_shm_cleanup: server will always try to delete shm if existing (default: 0)
-# WARNING: if you enable this and a server really exists, ...
-#force_shm_cleanup = 1
-
 # Log level (default: normal)
 # Verbosity of log (only messages >= level will be displayed)
 # can be one of (in order):
