@@ -538,6 +538,7 @@ int waitaccept(wzd_context_t * context)
   sock = socket_accept(context->pasvsock, remote_host, &remote_port);
   if (sock == -1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
+    out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
     socket_close(sock);
 /*    send_message_with_args(501,context,"PASV timeout");*/
       return -1;
