@@ -1309,6 +1309,7 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
   unsigned char *myip;
   unsigned char pasv_bind_ip[16];
   int offset=0;
+  int count=0;
 
   size = sizeof(struct sockaddr_in);
   port = mainConfig->pasv_low_range; /* use pasv range min */
@@ -1366,7 +1367,10 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
 
-  while (port < mainConfig->pasv_high_range) { /* use pasv range max */
+  port = mainConfig->pasv_low_range; /* use pasv range min */
+  count = mainConfig->pasv_high_range - mainConfig->pasv_low_range;
+  port = port + (random()) % count; /* we try to change starting port for random */
+  while (count > 0) { /* use pasv range max */
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
@@ -1380,6 +1384,8 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
     port++; /* retry with next port */
+    if (port >= mainConfig->pasv_high_range)
+      port = mainConfig->pasv_low_range;
   }
 
 

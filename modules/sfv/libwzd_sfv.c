@@ -66,6 +66,10 @@
 
 #define BUFFER_LEN      4096
 
+/***********************/
+MODULE_NAME(sfv);
+MODULE_VERSION(109);
+
 static char progressmeter[256];
 static char del_progressmeter[256];
 static char incomplete_indicator[256];
@@ -533,11 +537,11 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]) {
-#ifdef __CYGWIN__
+#ifdef WIN32
 	if (strcasecmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
-#else /* __CYGWIN__ */
+#else /* WIN32 */
 	if (strcmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
-#endif /* __CYGWIN__ */
+#endif /* WIN32 */
 	  *entry = sfv->sfv_list[i];
 	  closedir(dir);
 	  return 0;

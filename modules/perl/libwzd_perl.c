@@ -126,6 +126,9 @@ struct _slave_t {
 #define MAX_SLAVES 256
 static struct _slave_t _slaves[MAX_SLAVES];
 
+/***********************/
+MODULE_NAME(perl);
+MODULE_VERSION(101);
 
 /***********************/
 /* WZD_MODULE_INIT     */

@@ -36,6 +36,8 @@ libwzd_la_SOURCES =  \
 	wzd_misc.h      \
 	wzd_mod.c       \
 	wzd_mod.h       \
+	wzd_perm.c      \
+	wzd_perm.h      \
 	wzd_section.c   \
 	wzd_section.h   \
 	wzd_shm.c       \
@@ -75,8 +77,6 @@ wzdftpd_SOURCES =    \
 	wzd_init.h         \
 	wzd_main.c         \
 	wzd_opts.h         \
-	wzd_perm.c         \
-	wzd_perm.h         \
 	wzd_ratio.c        \
 	wzd_ratio.h        \
 	wzd_ServerThread.c \

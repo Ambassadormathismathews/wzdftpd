@@ -261,7 +261,7 @@ struct wzd_file_t * add_new_file(const char *name, const char *owner, const char
   memset(new_file->group,0,256);
   if (group) strncpy(new_file->group,group,256);
   new_file->acl = NULL;
-  new_file->permissions = 0755; /* TODO XXX FIXME hardcoded */
+  new_file->permissions = mainConfig->umask; /* TODO XXX FIXME hardcoded */
   new_file->kind = FILE_NOTSET;
   new_file->data = NULL;
   new_file->next_file = NULL;
@@ -384,7 +384,7 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
         if (ptr==token5) continue;
         ptr_file->permissions = ul;
       } else { /* default user/group permission */
-        ptr_file->permissions = 0755; /** \todo FIXME hardcoded */
+        ptr_file->permissions = mainConfig->umask; /** \todo FIXME hardcoded */
       }
     }
     else if (strcmp(token1,"perm")==0) {
@@ -406,7 +406,7 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
         if (ptr==token6) continue;
         ptr_file->permissions = ul;
       } else { /* default user/group permission */
-        ptr_file->permissions = 0755; /** \todo FIXME hardcoded */
+        ptr_file->permissions = mainConfig->umask; /** \todo FIXME hardcoded */
       }
     }
   }
@@ -1515,7 +1515,25 @@ int file_remove(const char *filename, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  ret = _checkPerm(filename,RIGHT_STOR ,user);
+/*  ret = _checkPerm(filename,RIGHT_STOR ,user);*/
+  /* to delete, defaults permissions are: owner and siteop can delete file */
+  if (user->flags && strchr(user->flags,FLAG_SITEOP))
+    ret = 0; /* siteop -> ok */
+  else
+  {
+    ret = 1;
+    file_cur = file_stat(filename, context);
+    if (file_cur) {
+      if (strcmp(user->username, file_cur->owner)==0) ret = 0; /* owner */
+
+      /* check in special permissions from config file */
+      if (perm_check("delete", context, mainConfig) == 0) ret = 0; /* specified in config file */
+
+      free_file_recursive(file_cur);
+      file_cur = NULL;
+    }
+  }
+  
   if (ret)
     return 1;
 

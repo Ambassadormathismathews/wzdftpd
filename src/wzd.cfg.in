@@ -81,6 +81,11 @@ max_dl_speed = 0
 # the file is being uploaded will be denied
 deny_access_files_uploaded = 1
 
+# default permissions for created dirs (default: 775)
+# these permissions are in standard chmod() format (octal)
+# default: 775 (user and group can upload in directory)
+#umask = 775
+
 # hide_dotted_files (default: 0)
 # hide files beggining by a '.'
 #hide_dotted_files = 1

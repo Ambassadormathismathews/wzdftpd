@@ -62,6 +62,36 @@ don't give any ident as an implicit authorization for all idents).
 
 </simplesect>
 
+<simplesect id='symlinks'>
+<title>Symbolic links (symlinks)</title>
+
+<para>Symbolic links are often used on linux and unix systems, so users of these
+systems should have no difficulty to use this.
+A symbolic link (symlink, in short) is a link between a non-existant directory (so-called
+<emphasis>virtual</emphasis> directory) and an existing directory (so-called
+<emphasis>physical</emphasis> directory). This allow, for example, to create a directory
+whose contents is on another physical drive. This is similar to windows shortcuts.
+</para>
+<para>Symlinks are created online, using the <link linkend='site_link'>site
+link</link> commands.
+</para>
+<screen>site link create /music link</screen>
+<para>This will create a symbolic link 'link' in the current directory, which
+points to '/music' (at the homedir of the user).</para>
+
+<para>On windows, symlinks are not in any way visible on the filesystem (so do
+not search directories in explorer), they are completely handled by server.
+</para>
+<para>You can set permissions on links just as for any other directory, with the
+same commands (chmod, etc).</para>
+
+<para><emphasis>Note on performance (windows only):</emphasis> please note that
+symlinks are emulated, and as so you will suffer a small penalty on speed, compared
+to real directories.  However, this generally does not slow down the server
+enough to be be important, and symlinks are lighter than VFS.</para>
+
+</simplesect>
+
 <simplesect id='vfs'>
 <title>Virtual File system (VFS)</title>
 
@@ -70,6 +100,9 @@ A VFS is a kind of link between a non-existant directory (so-called
 <emphasis>virtual</emphasis> directory) and an existing directory (so-called
 <emphasis>physical</emphasis> directory). This allow, for example, to create a directory
 whose contents is on another physical drive.
+</para>
+<para>Unlike symlinks (which are create online), VFS are stored in the config
+file.
 </para>
 <screen>vfs = |/home/pollux/vfs|/etc|</screen>
 <para>This will create a virtual directory 'vfs' in '/home/pollux', which will be
@@ -94,6 +127,10 @@ member of admin group, equivalent to /etc.</para>
 <para><emphasis>Note on performance:</emphasis> please note that VFS are emulated, and as so
 you will suffer a small penalty on speed, compared to real directories.
 This penalty will be increased if you use cookies.</para>
+
+<para>If you don't know what to choose between symlinks and VFS, read this
+<link linkend='faq_links_vfs'>FAQ entry</link>.
+</para>
 
 </simplesect>
 
@@ -444,6 +481,26 @@ what you are doing. </para>
 <para>Use implicit, explicit or explicit_strict mode
 (see <link linkend='gloss_tls_mode'>tls modes for details</link>)
 <screen>tls_mode = explicit</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_umask'><term>umask (default: 775)</term>
+<listitem>
+<para>This is the permissions that are set when a new directory is created.
+Permissions are written in octal with the default format (permissions for owner,
+group, others).
+<screen>umask = 755</screen>
+</para>
+<para>
+The default permissions (775) allow every users from the same group to write
+files in the directory.
+</para>
+<para>
+Remember that DELETE permission is managed in a different way - unlike unix, 
+it's not because you have the write permission that you can delete files in it.
+In fact, unless you specify an explicit permission on config file, only the
+owner of a file (and siteop) can delete a file.
 </para>
 </listitem>
 </varlistentry>

@@ -111,6 +111,10 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context);
 
 
 /***********************/
+MODULE_NAME(tcl);
+MODULE_VERSION(105);
+
+/***********************/
 /* WZD_MODULE_INIT     */
 
 int WZD_MODULE_INIT(void)

@@ -57,6 +57,25 @@ or NAT).
 </para></answer>
 </qandaentry>
 
+<qandaentry id='faq_links_vfs'>
+<question><para>I want to give access to a directory on another disk, should I
+choose symlinks or VFS ?
+</para></question>
+<answer><para>
+In the general case, symlinks ! Symlinks are faster than VFS, can easily be
+manipulated online and are clearly more flexible than VFS.
+</para>
+<para>
+VFS should only be used when you have several users with different home
+directories and want to easily give access to a special directory for all (e.g
+show a INSTALL directory in each user's homedir).
+</para>
+<para>
+Symlinks can also be manipulated with scripts.
+</para></answer>
+</qandaentry>
+
+
 </qandadiv>
 
 <qandadiv><title>Linux</title>

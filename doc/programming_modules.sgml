@@ -14,6 +14,16 @@
 #include &lt;wzd_mod.h&gt;</programlisting>
 </para>
 
+<para>To easily identify your module, and provide a versioning system, you
+should add the following just after the includes (in the global section):
+<programlisting>
+MODULE_NAME(your_module_name);
+MODULE_VERSION(version)
+</programlisting>
+Please note that the module name is NOT quoted (e.g: my_module), and that
+the version is a simple integer (e.g: 103).
+</para>
+
 <para>The module must provide a function with the following prototype:
 <programlisting>int WZD_MODULE_INIT(void);</programlisting>
 This function will be called when module is loaded, so you can initialize
@@ -76,11 +86,119 @@ without any license restriction.</para>
 
 </sect1>
 
+
+
 <sect1 id='modules_external'>
 <title>External modules</title>
 
 <para>This sections describes how to develop an external module, which must be an
 executable program.</para>
+
+</sect1>
+
+
+
+
+<sect1 id='variables'>
+<title>Variables</title>
+
+<para>wzdftpd gives a unified API to access server variables, user variables or
+group variables.</para>
+
+<para>The following functions are provided as exported functions in the wzdftpd
+shared library, but all important modules (<link linkend="module_tcl">tcl</link>
+,<link linkend="module_perl">perl</link>, etc.) will wrap them into the
+corresponding langages.
+.
+</para>
+
+<simplesect id='vars'>
+<title>Config variables</title>
+
+<para>These variables are configured in the config file.
+The following variable names are available for vars get/set:</para>
+
+<table frame='all' id="table_vars">
+<title>Config variables</title>
+<tgroup cols="2" align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Variable</entry><entry>Description</entry></row>
+
+<row><entry>bw</entry><entry>The current cumulated bandwith of the server
+(downloads + uploads) (read-only)</entry></row>
+<row><entry>login_pre_ip_check</entry><entry>1 if server checks ip before login
+message, else 0</entry></row>
+<row><entry>loglevel</entry><entry>the current log level (as a string)</entry></row>
+<row><entry>max_dl</entry><entry>The download limit</entry></row>
+<row><entry>max_ul</entry><entry>The upload limit</entry></row>
+<row><entry>max_threads</entry><entry>The maximum number of connected clients
+(read-only)</entry></row>
+<row><entry>pasv_low</entry><entry>Passive range lower bound</entry></row>
+<row><entry>pasv_high</entry><entry>Passive range upper bound</entry></row>
+<row><entry>port</entry><entry>The port the server is currently binded to</entry></row>
+<row><entry>uptime</entry><entry>time elapsed since server start (read-only)</entry></row>
+</tbody>
+</tgroup>
+</table>
+
+</simplesect>
+
+
+<simplesect id='vars_user'>
+<title>User variables</title>
+
+<para>These variables are configured in the backend.
+The following variable names are available for vars_user get/set:</para>
+
+<table frame='all' id="table_vars_user">
+<title>User variables</title>
+<tgroup cols="2" align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Variable</entry><entry>Description</entry></row>
+
+<row><entry>group</entry><entry>The main group of the user</entry></row>
+<row><entry>home</entry><entry>User's home directory</entry></row>
+<row><entry>max_dl</entry><entry>User's download limit</entry></row>
+<row><entry>max_ul</entry><entry>User's upload limit</entry></row>
+<row><entry>name</entry><entry>User's login name</entry></row>
+<row><entry>tag</entry><entry>User's tagline (or description)</entry></row>
+</tbody>
+</tgroup>
+</table>
+
+<para><emphasis>addip, delip, flags, leech_slots, max_idle, num_logins, pass,
+perms, ratio, user_slots ?</emphasis></para>
+<para><emphasis>vars_user get use TAG, and var_user set use TAGLINE ?!</emphasis></para>
+
+</simplesect>
+
+
+<simplesect id='vars_group'>
+<title>Group variables</title>
+
+<para>These variables are configured in the backend.
+The following variable names are available for vars_group get/set:</para>
+
+<table frame='all' id="table_vars_group">
+<title>Group variables</title>
+<tgroup cols="2" align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Variable</entry><entry>Description</entry></row>
+
+<row><entry>home</entry><entry>Group's default home directory</entry></row>
+<row><entry>max_dl</entry><entry>User's download limit</entry></row>
+<row><entry>max_ul</entry><entry>User's upload limit</entry></row>
+<row><entry>name</entry><entry>User's login name</entry></row>
+<row><entry>tag</entry><entry>User's tagline (or description)</entry></row>
+</tbody>
+</tgroup>
+</table>
+
+<para><emphasis>addip, delip, max_idle, num_logins, perms, ratio ?</emphasis></para>
+<para><emphasis>vars_group get use TAG, and var_group set use TAGLINE ?!</emphasis></para>
+
+</simplesect>
+
 
 </sect1>
 

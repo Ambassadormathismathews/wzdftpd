@@ -19,7 +19,7 @@ wzdftpd offers the following features (and the list is constantly changing):
 
 <itemizedlist>
 <listitem><para>Free - wzdftpd is distributed under the <link linkend='license'>GPL</link></para></listitem>
-<listitem><para>RFC compliant !</para></listitem>
+<listitem><para><link linkend='a_ref'>RFC</link> compliant !</para></listitem>
 <listitem><para>
 Server runs in user mode, thus does not need root privileges - on the other
 way, it is not designed to use system users permissions, it uses its own
@@ -32,6 +32,8 @@ user database and permissions.
 <listitem><para><link linkend='gloss_backend'>Backends</link> to store users/groups in different structures</para></listitem>
 <listitem><para>Modules: internal, using shared librairies, or external
 (scripts/applications), and <link linkend='gloss_proto'>protocols</link></para></listitem>
+<listitem><para>Extensions scripts can be written in <link linkend='module_tcl'>TCL</link> or
+<link linkend='module_perl'>Perl</link></para></listitem>
 <listitem><para>Powerfull event system</para></listitem>
 <listitem><para>Jobs scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
@@ -81,6 +83,9 @@ configure package for you:
 </para></listitem>
 <listitem><para>libz development headers and libraries</para>
 <para>Required only if you want to enable zip processing in SFV module.
+</para></listitem>
+<listitem><para>Perl development headers and libraries</para>
+<para>Required only if you want to compile Perl module.
 </para></listitem>
 <listitem><para>TCL development headers and libraries</para>
 <para>Required only if you want to compile TCL module.

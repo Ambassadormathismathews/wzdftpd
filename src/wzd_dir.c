@@ -194,7 +194,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
         strncpy(entry->filename,dir_filename,sizeof(entry->filename));
         entry->owner[0] = '\0';
         entry->group[0] = '\0';
-        entry->permissions = 0755; /** \todo FIXME default permission */
+        entry->permissions = mainConfig->umask; /** \todo FIXME default permission */
         entry->acl = NULL;
         entry->kind = FILE_NOTSET; /* can be reg file or symlink */
         entry->data = NULL;
@@ -241,7 +241,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
           /** \todo FIXME read vfs permissions */
           entry->owner[0] = '\0';
           entry->group[0] = '\0';
-          entry->permissions = 0755;
+          entry->permissions = mainConfig->umask;
           entry->acl = NULL;
           entry->kind = FILE_VFS;
           entry->data = wzd_strdup(vfs->physical_dir);

@@ -111,6 +111,7 @@ typedef enum {
   CFG_TLS_CERT,
   CFG_TLS_CIPHER_LIST,
   CFG_TLS_MODE,
+  CFG_UMASK,
   CFG_USE_SYSLOG,
   CFG_VFS,
   CFG_XFERLOG,
@@ -239,6 +240,7 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"tls_certificate")) return CFG_TLS_CERT;
   if (!strcmp(word,"tls_cipher_list")) return CFG_TLS_CIPHER_LIST;
   if (!strcmp(word,"tls_mode")) return CFG_TLS_MODE;
+  if (!strcmp(word,"umask")) return CFG_UMASK;
   if (!strcmp(word,"use_syslog")) return CFG_USE_SYSLOG;
   if (!strcmp(word,"vfs")) return CFG_VFS;
   if (!strcmp(word,"xferlog")) return CFG_XFERLOG;
@@ -276,6 +278,8 @@ int set_default_options(void)
   strcpy ((char*)tempConfig.dynamic_ip, "0");
   tempConfig.port = 21;
   tempConfig.max_threads=32;
+
+  tempConfig.umask = 0775;
 
   tempConfig.global_ul_limiter.maxspeed = 0;
   tempConfig.global_ul_limiter.bytes_transfered = 0;
@@ -1647,6 +1651,40 @@ int cfg_read_tls_mode(void)
   return 0;
 }
 
+
+/* UMASK (integer)
+*/
+int cfg_read_umask(void)
+{
+  unsigned int token;
+  unsigned long l;
+  char *ptr;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'umask = <octal number>'\n");
+    return 1;
+  }
+
+  if( (token=yylex()) != CFG_NUM ) {
+    out_err(LEVEL_HIGH,"line should be 'umask = <octal number>'\n");
+    return 1;
+  }
+
+  errno = 0;
+  l = strtoul(yytext,&ptr, 8);
+  if (errno==ERANGE)
+    return 1;
+
+  if (*ptr == '\0')
+    tempConfig.umask = (unsigned int)l;
+  else
+    out_err(LEVEL_HIGH,"line should be 'umask = <octal number>'\n");
+
+  return 0;
+}
+
+
 /* USE_SYSLOG (integer)
 */
 int cfg_read_use_syslog(void)
@@ -1956,6 +1994,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_TLS_MODE:
       ret = cfg_read_tls_mode();
+      break;
+    case CFG_UMASK:
+      ret = cfg_read_umask();
       break;
     case CFG_USE_SYSLOG:
       ret = cfg_read_use_syslog();

@@ -19,15 +19,21 @@ dnl   AC_PROG_PERL_VERSION(5.6.1)
 dnl   is not working with perl 5.8.4
 dnl
   AC_CHECK_PROG(PERL,perl,perl)
-
   if test "x$PERL" != "x"; then
-    AC_DEFINE(HAVE_PERL, 1, [Define if using perl])
     WZD_PERL_INCLUDES="`perl -MExtUtils::Embed -e ccopts`"
     WZD_PERL_LIBS="`perl -MExtUtils::Embed -e ldopts`"
-    wzd_have_perl=yes
+  fi
+
+  AC_MSG_CHECKING([perl usability])
+
+  WZD_LIB_PERL_TRY
+
+  if test "x$wzd_have_perl" = "xyes"; then
+    AC_MSG_RESULT(ok)
+    AC_DEFINE(HAVE_PERL, 1, [Define if using perl])
     m4_ifval([$2])
   else
-    wzd_have_perl=no
+    AC_MSG_RESULT(could not compile the C test program)
   fi
 
   AC_SUBST(WZD_PERL_INCLUDES)
@@ -61,5 +67,31 @@ AC_DEFUN([AC_PROG_PERL_VERSION],
     else
       AC_MSG_WARN(could not find perl)
     fi
+  ]
+)
+
+dnl    WZD_LIB_PERL_TRY()
+dnl
+dnl    A subroutine of WZD_LIB_PERL.
+dnl
+dnl    Check that a new-enough version of PERL is installed.
+dnl
+dnl    Set the shell variable 'wzd_have_perl' to 'yes' if we found
+dnl    an appropriate version installed, or 'no' otherwise.
+
+AC_DEFUN([WZD_LIB_PERL_TRY],
+  [
+    wzd_lib_perl_try_save_libs="$LIBS"
+    wzd_lib_perl_try_save_cflags="$CFLAGS"
+
+    CFLAGS="$CFLAGS $WZD_PERL_INCLUDES"
+    LIBS="$LIBS $WZD_PERL_LIBS"
+
+    dnl not trying to run, there's no point
+    AC_TRY_LINK([#include <EXTERN.h>
+    #include <perl.h>],[PerlInterpreter * interp; interp=perl_alloc();],[wzd_have_perl=yes],[wzd_have_perl=no])
+
+    LIBS="$wzd_lib_perl_try_save_libs"
+    CFLAGS="$wzd_lib_perl_try_save_cflags"
   ]
 )

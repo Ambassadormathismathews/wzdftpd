@@ -80,6 +80,11 @@ int module_unload(wzd_module_t **module_list, const char *name);
 /* free module list */
 void module_free(wzd_module_t ** module_list);
 
+
+#define MODULE_NAME(n)    const char * module_name = #n
+#define MODULE_VERSION(v) const char * module_version = #v
+
+
 /********************************/
 /* modules functions prototypes */
 

@@ -178,8 +178,8 @@ int backend_commit_changes(const char *backend);
 int backend_inuse(const char *backend);
 
 
-#define MODULE_NAME(n)    const char * module_name = #n
-#define MODULE_VERSION(v) const char * module_version = #v
+#define BACKEND_NAME(n)    const char * backend_name = #n
+#define BACKEND_VERSION(v) const char * backend_version = #v
 
 
 #endif /* __WZD_BACKEND__ */

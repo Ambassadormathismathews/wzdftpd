@@ -49,8 +49,8 @@
 #define	MAX_LINE		1024
 
 /* IMPORTANT needed to check version */
-MODULE_NAME(plaintext);
-MODULE_VERSION(124);
+BACKEND_NAME(plaintext);
+BACKEND_VERSION(125);
 
 static char USERS_FILE[256]="/etc/wzdFTPd/users";
 

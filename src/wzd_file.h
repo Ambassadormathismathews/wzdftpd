@@ -120,6 +120,8 @@ void free_file_recursive(struct wzd_file_t * file);
  *
  * If filename is a symbolic link, the destination is stat-ed, not the link itself.
  *
+ * Caller MUST free memory using \ref free_file_recursive
+ *
  * \return struct, or NULL if nothing known, -1 if error or non-existant
  */
 struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context);

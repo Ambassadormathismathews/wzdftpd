@@ -489,6 +489,7 @@ typedef struct {
   char *	xferlog_name;
   int		xferlog_fd;
   int		loglevel;
+  unsigned int  umask;
   char		dir_message[256]; /** useless */
   unsigned int	mainSocket;
   unsigned char	ip[MAX_IP_LENGTH];
