@@ -87,7 +87,7 @@ int server_try_socket(void)
 
   /* connected */
   _config->sock = _config->connector.connect(_config->host,_config->port,_config->user,_config->pass);
-  if (!_config->sock) return -1;
+  if (!_config->sock) goto server_try_socket_abort;
 
   buffer = malloc(1024);
 
@@ -149,6 +149,9 @@ server_try_socket_abort:
 #endif
   free(buffer);
   _config->connector.disconnect();
+  _config->connector.disconnect = NULL;
+  _config->connector.read = NULL;
+  _config->connector.write = NULL;
   return -1;
 }
 

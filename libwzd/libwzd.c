@@ -199,7 +199,7 @@ int wzd_init(void)
   _config->options = _options;
 
   /* 1- connect to server */
-  if (_connect_server()<0) { free(_config); return -1; }
+  if (_connect_server()<0) { free(_config); _config=NULL; return -1; }
 
   /* 2- fill static struct ? */
 

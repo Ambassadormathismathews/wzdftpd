@@ -70,5 +70,17 @@ wzd_reply_t * wzd_send_message(const char *buffer, int length);
  * shortcuts to send_command: site_who, kick, kill, stop_server, etc.
  */
 
+
+
+#ifndef WIN32
+
+# include <unistd.h>
+
+#else /* WIN32 */
+
+# define strncasecmp strnicmp
+
+#endif /* WIN32 */
+
 #endif /* __LIBWZD__ */
 
