@@ -19,14 +19,15 @@ use wzdftpd;
 CREATE TABLE groups (
   ref INT(5) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   groupname TINYTEXT NOT NULL,
-  gid int(10) unsigned NOT NULL default '0'
+  gid int(10) unsigned NOT NULL default '0',
+  defaultpath TINYTEXT NOT NULL
 ) TYPE=MyISAM;
 
 --
 -- Dumping data for table `groups`
 --
 
-INSERT INTO groups VALUES ('','admin',1);
+INSERT INTO groups VALUES ('','admin',1,'/');
 
 
 --
@@ -47,6 +48,8 @@ CREATE TABLE users (
   ratio int(10) unsigned default NULL,
   user_slots int(10) unsigned default NULL,
   leech_slots int(10) unsigned default NULL,
+  perms int(10) unsigned default NULL,
+  credits bigint unsigned default NULL,
   last_login time default NULL
 ) TYPE=MyISAM;
 
@@ -54,10 +57,10 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','wzdftpd',NULL,'/',1,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
 
-INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',2,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
+INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
 
 --
 -- Table structure for table `UGR` (User-Group Relations)
@@ -83,6 +86,22 @@ INSERT INTO UserIP VALUES(1,"127.0.0.1");
 
 INSERT INTO UserIP VALUES(2,"foobar@localhost");
 INSERT INTO UserIP VALUES(2,"127.0.0.1");
+
+--
+-- Table structure for table `Stats`
+--
+
+CREATE TABLE Stats (
+  ref int(10) unsigned NOT NULL,
+  bytes_ul_total bigint unsigned default NULL,
+  bytes_dl_total bigint unsigned default NULL,
+  files_ul_total int(10) unsigned default NULL,
+  files_dl_total int(10) unsigned default NULL,
+  PRIMARY KEY(ref)
+) TYPE=MyISAM;
+
+INSERT INTO Stats (ref) VALUES (1);
+INSERT INTO Stats (ref) VALUES (2);
 
 --
 -- hmm - moo, moo; I'm trying to insert references into UGR

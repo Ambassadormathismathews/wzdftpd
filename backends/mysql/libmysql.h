@@ -41,6 +41,8 @@ enum {
   UCOL_RATIO,
   UCOL_USER_SLOTS,
   UCOL_LEECH_SLOTS,
+  UCOL_PERMS,
+  UCOL_CREDITS,
   UCOL_LAST_LOGIN,
 };
 
@@ -48,6 +50,7 @@ enum {
   GCOL_REF=0,
   GCOL_GROUPNAME,
   GCOL_GID,
+  GCOL_DEFAULTPATH,
 };
 
 enum {
@@ -58,6 +61,8 @@ enum {
 extern MYSQL mysql;
 
 void _wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
+
+int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...);
 
 /* basic syntax checking to avoid injections */
 int wzd_mysql_check_name(const char *name);

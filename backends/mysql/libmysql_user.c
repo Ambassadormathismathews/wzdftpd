@@ -39,6 +39,8 @@
 
 #include "libmysql.h"
 
+unsigned int user_get_ref(const char * name, unsigned int ref);
+
 static char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
 {
   if (strlen(query) + strlen(mod) +2 >= *query_length) {
@@ -63,179 +65,236 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   char *query, *mod;
   MYSQL_RES   *res;
-  MYSQL_ROW    row;
-  int * uid_list;
-  unsigned int index, i;
   int modified = 0;
   unsigned int query_length = 512;
+  unsigned int ref = 0;
+  unsigned int i;
 
-  /* XXX FIXME search if user exists, if not, create it */
-
-  query = malloc(query_length);
-  mod = malloc(512);
-  snprintf(query, query_length, "UPDATE users SET ");
-
-  if (mod_type & _USER_USERNAME) {
-    if (!wzd_mysql_check_name(user->username)) goto error_mod_user_free;
-    APPEND_STRING_TO_QUERY("username='%s' ", user->username, query, query_length, mod, modified);
-  }
-
-  if (mod_type & _USER_USERPASS) {
-    if (!wzd_mysql_check_name(user->userpass)) goto error_mod_user_free;
-    APPEND_STRING_TO_QUERY("userpass=MD5('%s') ", user->userpass, query, query_length, mod, modified);
-  }
-
-  if (mod_type & _USER_ROOTPATH) {
-    DIRNORM(user->rootpath,strlen(user->rootpath),0);
-    if (!wzd_mysql_check_name(user->rootpath)) goto error_mod_user_free;
-    APPEND_STRING_TO_QUERY("rootpath='%s' ", user->rootpath, query, query_length, mod, modified);
-  }
-
-  if (mod_type & _USER_TAGLINE) {
-    if (!wzd_mysql_check_name(user->tagline)) goto error_mod_user_free;
-    APPEND_STRING_TO_QUERY("tagline='%s' ", user->tagline, query, query_length, mod, modified);
-  }
-  if (mod_type & _USER_UID)
-    APPEND_STRING_TO_QUERY("uid='%u' ", user->uid, query, query_length, mod, modified);
-  if (mod_type & _USER_IDLE)
-    APPEND_STRING_TO_QUERY("max_idle_time='%u' ", user->max_idle_time, query, query_length, mod, modified);
-
-  if (modified)
-  {
-    snprintf(mod, 512, " WHERE username='%s'", name);
-    query = _append_safely_mod(query, &query_length, mod, 0);
-
-    if (mysql_query(&mysql, query) != 0) {
-      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      goto error_mod_user_free;
+  if (!user) { /* delete user permanently */
+    query = malloc(2048);
+    /* we don't care about the results of the queries */
+    ref = user_get_ref(name, 0);
+    if (ref) {
+      _wzd_run_update_query(query, 2048, "DELETE FROM Stats WHERE ref=%d", ref);
+      _wzd_run_update_query(query, 2048, "DELETE FROM UserIP WHERE ref=%d", ref);
+      _wzd_run_update_query(query, 2048, "DELETE FROM UGR WHERE uref=%d", ref);
     }
+    _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", name);
+    free(query);
 
-    res = mysql_store_result(&mysql);
-
-#if 0
-
-  uid_list = (int*)wzd_malloc((HARD_DEF_USER_MAX+1)*sizeof(int));
-
-  index = 0;
-  while ( (row = mysql_fetch_row(res)) ) {
-    wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
-    uid_list[index++] = (int)i;
-  }
-  uid_list[index] = -1;
-  uid_list[HARD_DEF_USER_MAX] = -1;
-
-#endif
-    if (res) mysql_free_result(res);
-    free(mod); free(query);
     return 0;
-  } /* if (modified) */
-
-  free(mod); free(query);
-  return -1;
-
-
-#if 0
-  unsigned int count;
-  int found;
-  char * cipher;
-  char salt[3];
-
-  count=0;
-  found = 0;
-  while (count<user_count_max) {
-    if (strcmp(name,user_pool[count].username)==0)
-      { found = 1; break; }
-    count++;
   }
 
-  if (found) { /* user exist */
-/*    fprintf(stderr,"User %s exist\n",name);*/
-    if (!user) { /* delete user permanently */
-      /* FIXME
-       * 1- it is not very stable
-       * 2- we do not decrement user_count ...
-       * 3- we can't shift all users, because contexts have id, and
-       *   in middle of functions it will cause unstability
-       */
-      memset(&user_pool[count],0,sizeof(wzd_user_t));
-      return 0;
+  /* search if user exists, if not, create it */
+  ref = user_get_ref(name,0);
+  
+  if (ref) { /* user exists, just modify fields */
+    query = malloc(query_length);
+    mod = malloc(512);
+    snprintf(query, query_length, "UPDATE users SET ");
+
+    if (mod_type & _USER_USERNAME) {
+      if (!wzd_mysql_check_name(user->username)) goto error_mod_user_free;
+      APPEND_STRING_TO_QUERY("username='%s' ", user->username, query, query_length, mod, modified);
     }
-    /* basic verification: trying to commit on self ? then ok */
-    if (&user_pool[count] == user) {
-      return 0;
-    }
-    if (mod_type & _USER_USERNAME) strcpy(user_pool[count].username,user->username);
+
     if (mod_type & _USER_USERPASS) {
-      if (strcasecmp(user->userpass,"%")==0) {
-        /* special case: if user_pool[count].userpass == "%" then any pass
-         *  is accepted */
-        strcpy(user_pool[count].userpass,user->userpass);
-      } else {
-        /* TODO choose encryption func ? */
-        salt[0] = 'a' + (char)(rand()%26);
-        salt[1] = 'a' + (char)((rand()*72+3)%26);
-        /* FIXME - crypt is NOT reentrant */
-        /* XXX - md5 hash in crypt function does NOT work with cygwin */
-        cipher = crypt(user->userpass, salt);
-        strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
-      }
+      if (!wzd_mysql_check_name(user->userpass)) goto error_mod_user_free;
+      APPEND_STRING_TO_QUERY("userpass=MD5('%s') ", user->userpass, query, query_length, mod, modified);
     }
+
     if (mod_type & _USER_ROOTPATH) {
       DIRNORM(user->rootpath,strlen(user->rootpath),0);
-      strcpy(user_pool[count].rootpath,user->rootpath);
+      if (!wzd_mysql_check_name(user->rootpath)) goto error_mod_user_free;
+      APPEND_STRING_TO_QUERY("rootpath='%s' ", user->rootpath, query, query_length, mod, modified);
     }
-    if (mod_type & _USER_TAGLINE) strcpy(user_pool[count].tagline,user->tagline);
-    if (mod_type & _USER_UID) user_pool[count].uid = user->uid;
-    if (mod_type & _USER_GROUPNUM) user_pool[count].group_num = user->group_num;
-    if (mod_type & _USER_IDLE) user_pool[count].max_idle_time = user->max_idle_time;
-    if (mod_type & _USER_GROUP) memcpy(user_pool[count].groups,user->groups,MAX_GROUPS_PER_USER);
-    if (mod_type & _USER_PERMS) user_pool[count].userperms = user->userperms;
-    if (mod_type & _USER_FLAGS) memcpy(user_pool[count].flags,user->flags,MAX_FLAGS_NUM);
-    if (mod_type & _USER_MAX_ULS) user_pool[count].max_ul_speed = user->max_ul_speed;
-    if (mod_type & _USER_MAX_DLS) user_pool[count].max_dl_speed = user->max_dl_speed;
-    if (mod_type & _USER_NUMLOGINS) user_pool[count].num_logins = user->num_logins;
-    if (mod_type & _USER_IP) {
-      int i;
-      for ( i=0; i<HARD_IP_PER_USER; i++ )
-        strcpy(user_pool[count].ip_allowed[i],user->ip_allowed[i]);
-    }
-    if (mod_type & _USER_BYTESUL) user_pool[count].stats.bytes_ul_total = user->stats.bytes_ul_total;
-    if (mod_type & _USER_BYTESDL) user_pool[count].stats.bytes_dl_total = user->stats.bytes_dl_total;
-    if (mod_type & _USER_CREDITS) user_pool[count].credits = user->credits;
-    if (mod_type & _USER_USERSLOTS) user_pool[count].user_slots = user->user_slots;
-    if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
-    if (mod_type & _USER_RATIO) user_pool[count].ratio = user->ratio;
-  } else { /* user not found, add it */
-    if (user_count >= user_count_max) return -1;
-/*    fprintf(stderr,"Add user %s\n",name);*/
-    DIRNORM(user->rootpath,strlen(user->rootpath),0);
-    memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
-    if (strcasecmp(user->userpass,"%")==0) {
-      /* special case: if user_pool[count].userpass == "%" then any pass
-       *  is accepted */
-      strcpy(user_pool[user_count].userpass,user->userpass);
-    } else {
-      /* TODO choose encryption func ? */
-      salt[0] = 'a' + (char)(rand()%26);
-      salt[1] = 'a' + (char)((rand()*72+3)%26);
-      /* FIXME - crypt is NOT reentrant */
-      /* XXX - md5 hash in crypt function does NOT work with cygwin */
-      cipher = crypt(user->userpass, salt);
-      strncpy(user_pool[user_count].userpass,cipher,MAX_PASS_LENGTH-1);
-    }
-    /* find a free uid */
-    user_pool[user_count].uid = find_free_uid(1);
 
-    user_count++;
-  } /* if (found) */
+    if (mod_type & _USER_TAGLINE) {
+      if (!wzd_mysql_check_name(user->tagline)) goto error_mod_user_free;
+      APPEND_STRING_TO_QUERY("tagline='%s' ", user->tagline, query, query_length, mod, modified);
+    }
+    if (mod_type & _USER_UID)
+      APPEND_STRING_TO_QUERY("uid='%u' ", user->uid, query, query_length, mod, modified);
+    if (mod_type & _USER_IDLE)
+      APPEND_STRING_TO_QUERY("max_idle_time='%u' ", (unsigned int)user->max_idle_time, query, query_length, mod, modified);
 
-  write_user_file();
+    /* XXX FIXME GROUP and GROUPNUM must be treated separately .. */
+
+    if (mod_type & _USER_PERMS)
+      APPEND_STRING_TO_QUERY("perms='%lx' ", user->userperms, query, query_length, mod, modified);
+    if (mod_type & _USER_FLAGS) {
+      if (!wzd_mysql_check_name(user->flags)) goto error_mod_user_free;
+      APPEND_STRING_TO_QUERY("flags='%s' ", user->flags, query, query_length, mod, modified);
+    }
+    if (mod_type & _USER_MAX_ULS)
+      APPEND_STRING_TO_QUERY("max_ul_speed='%lu' ", user->max_ul_speed, query, query_length, mod, modified);
+    if (mod_type & _USER_MAX_DLS)
+      APPEND_STRING_TO_QUERY("max_dl_speed='%lu' ", user->max_dl_speed, query, query_length, mod, modified);
+    if (mod_type & _USER_NUMLOGINS)
+      APPEND_STRING_TO_QUERY("num_logins='%u' ", user->num_logins, query, query_length, mod, modified);
+
+    /* XXX FIXME stats require a different query: _USER_BYTESUL _USER_BYTESDL */
+
+    /* XXX FIXME IP requires some work ... */
+
+    if (mod_type & _USER_CREDITS)
+#ifndef WIN32
+      APPEND_STRING_TO_QUERY("credits='%llu' ", user->credits, query, query_length, mod, modified);
+#else
+      APPEND_STRING_TO_QUERY("credits='%I64u' ", user->credits, query, query_length, mod, modified);
 #endif
+    if (mod_type & _USER_USERSLOTS)
+      APPEND_STRING_TO_QUERY("user_slots='%u' ", user->user_slots, query, query_length, mod, modified);
+    if (mod_type & _USER_LEECHSLOTS)
+      APPEND_STRING_TO_QUERY("leech_slots='%u' ", user->leech_slots, query, query_length, mod, modified);
+    if (mod_type & _USER_RATIO)
+      APPEND_STRING_TO_QUERY("ratio='%u' ", user->ratio, query, query_length, mod, modified);
+
+
+    if (modified)
+    {
+      snprintf(mod, 512, " WHERE username='%s'", name);
+      query = _append_safely_mod(query, &query_length, mod, 0);
+
+      if (mysql_query(&mysql, query) != 0) {
+        _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+        goto error_mod_user_free;
+      }
+
+      res = mysql_store_result(&mysql);
+
+
+      if (res) mysql_free_result(res);
+      free(mod); free(query);
+      return 0;
+    } /* if (modified) */
+
+    free(mod); free(query);
+    return -1;
+
+  }
+
+  /* create new user */
+
+  /* Part 1, User */
+  query = malloc(2048);
+  mod = NULL;
+
+  /* XXX FIXME find a free uid !! */
+  user->uid = 154;
+
+#ifndef WIN32
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%llu)",
+      user->username, user->userpass,
+      user->rootpath,
+      user->uid,
+      user->flags,
+      (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
+      user->num_logins, user->ratio, user->user_slots, user->leech_slots,
+      user->userperms, user->credits
+      ))
+    goto error_user_add;
+#else
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%I64u)",
+      user->username, user->userpass,
+      user->rootpath,
+      user->uid,
+      user->flags,
+      (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
+      user->num_logins, user->ratio, user->user_slots, user->leech_slots,
+      user->userperms, user->credits
+      ))
+    goto error_user_add;
+#endif
+
+  ref = user_get_ref(user->username,0);
+  if (!ref) goto error_user_add;
+
+  /* Part 2, UGR */
+  /* INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=154 AND groups.gid=1; */
+  for ( i=0; i<user->group_num; i++ )
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.ref=%u AND groups.gid=%u",
+          ref, user->groups[i]))
+      goto error_user_add;
+
+  /* Part 3, IP */
+  for ( i=0; i<HARD_IP_PER_USER; i++ )
+    if (user->ip_allowed[i][0] != '\0') {
+      if (_wzd_run_update_query(query, 2048, "INSERT INTO UserIP (ref,ip) VALUES (%u,'%s')",
+            ref, user->ip_allowed[i]))
+        goto error_user_add;
+    }
+
+  /* Part 4, stats */
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO Stats (ref) VALUES (%u)",
+        ref))
+    goto error_user_add;
+
+  free(query);
+
+  return 0;
+
+error_user_add:
+  /* we don't care about the results of the queries */
+  ref = user_get_ref(user->username,0);
+  if (ref) {
+    _wzd_run_update_query(query, 2048, "DELETE FROM Stats WHERE ref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM UserIP WHERE ref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM UGR WHERE uref=%d", ref);
+  }
+  _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", user->username);
+  free(query);
+
+  return -1;
 
 error_mod_user_free:
   free(mod);
   free(query);
 
-  return 1;
+  return -1;
+}
+
+unsigned int user_get_ref(const char * name, unsigned int ref)
+{
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  unsigned int uid=0;
+  unsigned long ul;
+  char *ptr;
+
+  if (!wzd_mysql_check_name(name)) return 0;
+
+  if (ref) return ref;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT users.ref FROM users WHERE username='%s'", name);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (!row || row[0]==NULL) return 1;
+
+    ul = strtoul(row[0], &ptr, 0);
+    if (ptr && *ptr == '\0') {
+      uid = (unsigned int)ul;
+    }
+
+  }
+
+  mysql_free_result(res);
+  free(query);
+
+  return uid;
 }
 

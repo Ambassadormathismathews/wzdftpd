@@ -57,6 +57,7 @@ static inline int wzd_row_get_string(char *dst, unsigned int dst_len, MYSQL_ROW 
 static inline int wzd_row_get_long(long *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index);
+static inline int wzd_row_get_ullong(unsigned long long *dst, MYSQL_ROW row, unsigned int index);
 
 static int * wzd_mysql_get_user_list(void);
 static int * wzd_mysql_get_group_list(void);
@@ -235,7 +236,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     if (strlen(stored_pass) == 0)
     {
       fprintf(stderr,"WARNING: empty password field whould not be allowed !\n");
-      fprintf(stderr,"WARNING: you should run: UPDATE users SET userpass='%%s' WHERE userpass=NULL\n");
+      fprintf(stderr,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
       return uid; /* passworldless login */
     }
 
@@ -395,6 +396,9 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_row_get_uint(&user->ratio, row, UCOL_RATIO);
   if (wzd_row_get_uint(&i, row, UCOL_USER_SLOTS)==0) user->user_slots = i;
   if (wzd_row_get_uint(&i, row, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
+  wzd_row_get_ulong(&user->userperms, row, UCOL_PERMS);
+  wzd_row_get_ullong(&user->credits, row, UCOL_CREDITS);
+  /* XXX FIXME last login */
 
   mysql_free_result(res);
 
@@ -429,7 +433,7 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   /* Now get Groups */
 
-  snprintf(query, 512, "select groups.gid from groups,users where users.uid='%d' AND users.ref=groups.ref", uid);
+  snprintf(query, 512, "select groups.gid from groups,users,UGR where users.uid='%d' AND users.ref=UGR.uref AND groups.ref=UGR.gref", uid);
 
   if (mysql_query(&mysql, query) != 0) { 
     free(query);
@@ -455,10 +459,6 @@ wzd_user_t * FCN_GET_USER(int uid)
 
 
   mysql_free_result(res);
-
-  /* FIXME */
-/*  strncpy(user->ip_allowed[0],"*",MAX_IP_LENGTH);*/
-  user->userperms = 0xffffffff;
 
   free(query);
 
@@ -510,6 +510,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     return NULL;
   }
   wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, row, GCOL_GROUPNAME);
+  wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, row, GCOL_DEFAULTPATH);
 
   mysql_free_result(res);
 
@@ -582,6 +583,22 @@ static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned 
   if (!dst || !row || row[index]==NULL) return 1;
 
   i = strtoul(row[index], &ptr, 0);
+  if (ptr && *ptr == '\0') {
+    *dst = i;
+    return 0;
+  }
+
+  return 1;
+}
+
+static inline int wzd_row_get_ullong(unsigned long long *dst, MYSQL_ROW row, unsigned int index)
+{
+  char *ptr;
+  unsigned long long i;
+
+  if (!dst || !row || row[index]==NULL) return 1;
+
+  i = strtoull(row[index], &ptr, 0);
   if (ptr && *ptr == '\0') {
     *dst = i;
     return 0;
@@ -668,5 +685,28 @@ static int * wzd_mysql_get_group_list(void)
   free(query);
 
   return gid_list;
+}
+
+int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...)
+{
+  MYSQL_RES   *res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  res = mysql_store_result(&mysql);
+
+  if (res) mysql_free_result(res);
+
+
+  return 0;
 }
 
