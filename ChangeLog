@@ -1,5 +1,7 @@
 2004-08-25  Pierre Chifflier  <pollux@cpe.fr>
 
+	* --- cvs commit TAG: rel-0-4-0
+
 	* bugfix: changed EPSV reply code to 229 (to be RFC-compliant)
 	* bugfix: avoid segfault on freebsd when kernel has no shm support
 
