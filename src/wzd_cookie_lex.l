@@ -980,7 +980,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_group)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%ld",current_group->max_idle_time);
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_group->max_idle_time);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"groupmaxidle");

@@ -87,7 +87,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 
   /* search if user exists, if not, create it */
   ref = user_get_ref(name,0);
-  
+
   if (ref) { /* user exists, just modify fields */
     query = malloc(query_length);
     mod = malloc(512);
@@ -116,7 +116,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_UID)
       APPEND_STRING_TO_QUERY("uid='%u' ", user->uid, query, query_length, mod, modified);
     if (mod_type & _USER_IDLE)
-      APPEND_STRING_TO_QUERY("max_idle_time='%u' ", (unsigned int)user->max_idle_time, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_idle_time='%u' ", user->max_idle_time, query, query_length, mod, modified);
 
     /* XXX FIXME GROUP and GROUPNUM must be treated separately .. */
 

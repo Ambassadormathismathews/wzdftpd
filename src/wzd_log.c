@@ -322,7 +322,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
       "%s %lu %s %I64u %s %c %c %c %c %s ftp 1 * %c\n",
 #endif
       datestr,
-      time(NULL)-context->current_action.tm_start, /* transfer time */
+      (unsigned long)(time(NULL)-context->current_action.tm_start), /* transfer time */
       remote_host?remote_host:"(null)", /* remote-host */
       context->current_action.bytesnow, /* file-size */
       context->current_action.arg, /* filename */

@@ -332,7 +332,7 @@ static int write_user_file(void)
     if (strcmp(group_pool[i].groupname,"nogroup")==0) continue;
     fprintf(file,"privgroup\t%s\n",group_pool[i].groupname);
     if (group_pool[i].max_idle_time)
-      fprintf(file,"max_idle_time=%ld\n",group_pool[i].max_idle_time);
+      fprintf(file,"max_idle_time=%u\n",group_pool[i].max_idle_time);
     if (group_pool[i].num_logins)
       fprintf(file,"num_logins=%d\n",group_pool[i].num_logins);
     if (strlen(group_pool[i].tagline)>0)

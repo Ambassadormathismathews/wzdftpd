@@ -148,7 +148,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_GID)
       APPEND_STRING_TO_QUERY("gid='%u' ", group->gid, query, query_length, mod, modified);
     if (mod_type & _GROUP_IDLE)
-      APPEND_STRING_TO_QUERY("max_idle_time='%u' ", (unsigned int)group->max_idle_time, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_idle_time='%u' ", group->max_idle_time, query, query_length, mod, modified);
 
     if (mod_type & _GROUP_GROUPPERMS)
       APPEND_STRING_TO_QUERY("groupperms='%lx' ", group->groupperms, query, query_length, mod, modified);
