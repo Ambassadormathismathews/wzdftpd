@@ -1057,12 +1057,12 @@ int sfv_hook_preupload(unsigned long event_id, const char * username, const char
   switch (ret) {
   case 0:
 #ifdef DEBUG
-    out_err(LEVEL_CRITICAL,"sfv_hook_preupload user %s file %s, ret %d crc %08lX\n",username,filename,ret,entry->crc);
+    out_err(LEVEL_FLOOD,"sfv_hook_preupload user %s file %s, ret %d crc %08lX\n",username,filename,ret,entry->crc);
 #endif
     break;
   case 1:
 #ifdef DEBUG
-    out_err(LEVEL_CRITICAL,"No sfv found or file not present in sfv\n");
+    out_err(LEVEL_FLOOD,"No sfv found or file not present in sfv\n");
 #endif
     break;
   default:
@@ -1095,12 +1095,12 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   switch (ret) {
   case 0:
 #ifdef DEBUG
-    out_err(LEVEL_CRITICAL,"sfv_hook_postupload user %s file %s, crc %08lX OK\n",username,filename,entry->crc);
+    out_err(LEVEL_NORMAL,"sfv_hook_postupload user %s file %s, crc %08lX OK\n",username,filename,entry->crc);
 #endif
     break;
   case 1:
 #ifdef DEBUG
-    out_err(LEVEL_CRITICAL,"No sfv found or file not present in sfv\n");
+    out_err(LEVEL_NORMAL,"No sfv found or file not present in sfv\n");
 #endif
     return 1;
   default:
