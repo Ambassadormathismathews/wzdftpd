@@ -1,3 +1,8 @@
+2005-02-01  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: new commands SSCN and CPSV, used for secure FXP
+	* feature: errors in TCL module are catched and displayed to stderr
+
 2005-01-28  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: disable file cache code, it is broken (not thread-safe)

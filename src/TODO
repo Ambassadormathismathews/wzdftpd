@@ -14,9 +14,6 @@
 - finish MLST
 - implement MLSD
 '********'
-- CPSV command (same as PASV, uses SSL_connect)
-- SSCN
-'********'
 - check if 'dh_shlibdeps -L wzdftpd' would be better than ugly sed in
   debian/rules
 '********'

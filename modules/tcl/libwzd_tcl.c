@@ -87,9 +87,40 @@ static wzd_context_t * current_context=NULL;
 #define TCL_REPLY_CODE  "wzd_reply_code"
 #define TCL_HAS_REPLIED "wzd_replied"
 
+#define WZDOUT  ((ClientData)1)
+#define WZDERR  ((ClientData)2)
+
 /***** Private fcts ****/
 static void do_tcl_help(wzd_context_t * context);
 static int tcl_diagnose(void);
+
+
+static int channel_close(ClientData instance, Tcl_Interp *interp);
+static int channel_input(ClientData instance, char *buf, int bufsiz, int *errptr);
+static int channel_output(ClientData instance, const char *buf, int bufsiz, int *errptr);
+static void channel_watch(ClientData instance, int mask);
+static int channel_gethandle(ClientData instance, int direction, ClientData *handleptr);
+
+/***** Private structs ****/
+
+static Tcl_ChannelType channel_type =
+{
+  "wzdmessage",
+  TCL_CHANNEL_VERSION_2,
+  channel_close,
+  channel_input,
+  channel_output,
+  NULL,   /* seek */
+  NULL,   /* set option */
+  NULL,   /* get option */
+  channel_watch,
+  channel_gethandle,
+  NULL,   /* close2 */
+  NULL,   /* block */
+  NULL,   /* flush */
+  NULL,   /* handler */
+  NULL,   /* wideseek */
+};
 
 /***** EVENT HOOKS *****/
 static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
@@ -124,6 +155,7 @@ MODULE_VERSION(105);
 
 int WZD_MODULE_INIT(void)
 {
+  static Tcl_Channel ch1, ch2;
 #ifdef _MSC_VER
   {
     char buffer[MAX_PATH+1];
@@ -151,6 +183,25 @@ int WZD_MODULE_INIT(void)
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
     return -1;
   }
+
+  /* replace stdout and stderr */
+  ch1 = Tcl_CreateChannel(&channel_type, "wzdout", WZDOUT, TCL_WRITABLE);
+  ch2 = Tcl_CreateChannel(&channel_type, "wzderr", WZDERR, TCL_WRITABLE);
+  Tcl_SetStdChannel(ch1, TCL_STDOUT);
+  Tcl_SetStdChannel(ch2, TCL_STDERR);
+
+  Tcl_SetChannelOption(interp, ch1, "-buffering", "line");
+  Tcl_SetChannelOption(interp, ch2, "-buffering", "line");
+
+  Tcl_RegisterChannel(interp, ch1);
+  Tcl_RegisterChannel(interp, ch2);
+
+  /** It's a bit stupid to modify things here, because modifications (like changing
+   * standard channels) are NOT inherited by slaves.
+   */
+
+
+
   Tcl_CreateCommand(interp,"ftp2sys",tcl_ftp2sys,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"killpath",tcl_killpath,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"putlog",tcl_putlog,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
@@ -371,6 +422,20 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
 
   if ( (slave = Tcl_CreateSlave(interp, buffer, 0)) ) {
     int ret;
+
+    static Tcl_Channel ch1, ch2; /** \bug why static ?! */
+    /* replace stdout and stderr */
+    ch1 = Tcl_CreateChannel(&channel_type, "wzdout", WZDOUT, TCL_WRITABLE);
+    ch2 = Tcl_CreateChannel(&channel_type, "wzderr", WZDERR, TCL_WRITABLE);
+    Tcl_SetStdChannel(ch1, TCL_STDOUT);
+    Tcl_SetStdChannel(ch2, TCL_STDERR);
+
+    Tcl_SetChannelOption(slave, ch1, "-buffering", "line");
+    Tcl_SetChannelOption(slave, ch2, "-buffering", "line");
+
+    Tcl_RegisterChannel(slave, ch1);
+    Tcl_RegisterChannel(slave, ch2);
+
     ret = Tcl_CreateAlias(slave, "ftp2sys", interp, "ftp2sys", 0, NULL);
     ret = Tcl_CreateAlias(slave, "killpath", interp, "killpath", 0, NULL);
     ret = Tcl_CreateAlias(slave, "putlog", interp, "putlog", 0, NULL);
@@ -769,6 +834,73 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
   }
   else
     ret = TCL_ERROR;
-  
+
   return (ret)?TCL_ERROR:TCL_OK;
 }
+
+/******* I/O Channel ********/
+
+static int channel_close(ClientData instance, Tcl_Interp *interp)
+{
+  int err=0;
+
+  /* currently does nothing */
+  if (instance != WZDOUT && instance != WZDERR)
+  {
+    Tcl_SetErrno(EBADF);
+    err = EBADF;
+  }
+  return err;
+}
+
+static int channel_input(ClientData instance, char *buf, int bufsiz, int *errptr)
+{
+  /* input is currently not supported */
+
+  Tcl_SetErrno(EINVAL);
+  if (errptr)
+    *errptr = EINVAL;
+  return -1;
+}
+
+static int channel_output(ClientData instance, const char *buf, int bufsiz, int *errptr)
+{
+  char * str;
+  int result;
+
+  /* buf is not guaranteed to be 0-terminated */
+  str = malloc (bufsiz+1);
+  if (!str) {
+    Tcl_SetErrno(ENOMEM);
+    if (errptr) *errptr = ENOMEM;
+    return -1;
+  }
+  strncpy(str, buf, bufsiz);
+  str[bufsiz] = '\0';
+
+  result = bufsiz;
+  if (instance == WZDOUT)
+    out_err(LEVEL_INFO,"tcl OUT: [%s]\n", str);
+  else if (instance == WZDERR)
+    out_err(LEVEL_HIGH,"tcl ERR: [%s]\n", str);
+  else {
+    Tcl_SetErrno(EBADF);
+    if (errptr) *errptr = EBADF;
+    result = -1;
+  }
+
+  free(str);
+  return result;
+}
+
+static void channel_watch(ClientData instance, int mask)
+{
+  Tcl_SetErrno(EINVAL);
+}
+
+static int channel_gethandle(ClientData instance, int direction, ClientData *handleptr)
+{
+  Tcl_SetErrno(EINVAL);
+  return EINVAL;
+}
+
