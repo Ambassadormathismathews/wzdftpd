@@ -25,6 +25,7 @@
 #if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
+#include <sys/types.h>
 #include <sys/socket.h>
 #endif
 
