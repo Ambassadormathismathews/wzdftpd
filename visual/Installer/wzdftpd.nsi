@@ -5,6 +5,7 @@
 ; NSIS Script written by javsmo@users.sourceforge.net (Jose Antonio Oliveira)
 ; Project Developer (pollux@cpe.fr)
 ; Creation date: Nov-07-2004
+; Last Modified: Mar-19-2005
 
 
 ;--------------------------------
@@ -22,7 +23,9 @@
   
   ;Paths to the source files (Don't forget the final "\")
   !define RELEASE_DIR "..\release\"
-  !define LIBWZD_RELEASE_DIR "..\release\"
+  !define LIBWZD_RELEASE_DIR "..\libwzd\release\"
+  !define LIBWZD-AUTH_RELEASE_DIR "..\libwzd-auth\release\"
+  !define LIBWZD-BASE_RELEASE_DIR "..\libwzd-base\release\"
   !define GNU_REGEX_DIST_DIR "..\gnu_regex_dist\"
   !define ICONV_BIN_DIR "..\iconv\bin\"
   !define OPENSSL_LIB_DIR "..\openssl\lib\"
@@ -31,14 +34,16 @@
   !define ROOT_DIR "..\..\"
   !define DOT_DOT_DIR "..\"
   !define BACKEND_MYSQL_RELEASE_DIR "..\backends\mysql\release\"
-  !define BACKEND_PLAINTEXT_RELEAS_DIR "..\backends\plaintext\release\"
+  !define BACKEND_PLAINTEXT_RELEASE_DIR "..\backends\plaintext\release\"
   !define TOOLS_SITECONFIG_RELEASE_DIR "..\tools\siteconfig\release\"
   !define TOOLS_SITEUPTIME_RELEASE_DIR "..\tools\siteuptime\release\"
   !define TOOLS_SITEWHO_RELEASE_DIR "..\tools\sitewho\release\"
   !define MODULES_TCL_RELEASE_DIR "..\modules\tcl\release\"
   !define MODULES_PERL_RELEASE_DIR "..\modules\perl\release\"
   !define MODULES_SFV_RELEASE_DIR "..\modules\sfv\release\"
-  
+  !define MODULES_DEVELOP_DIR "..\src\"
+  !define MODULES_DEVELOP_LIB_DIR "..\src\"
+
   !define PROG_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROG_NAME}"
   !define PROG_UNINST_ROOT_KEY "HKLM"
   
@@ -116,9 +121,8 @@
 ;Variables
 Var STARTMENU_FOLDER
 Var WindowsFamily
-;--------------------------------
-;General & Initialization
-  ;Name and output file
+
+;Name and output file
   Name ${PROG_NAME}
   OutFile "${PROG_NAME}-${VER_DISPLAY}.exe" 
   SetCompressor lzma
@@ -182,84 +186,112 @@ Var WindowsFamily
   !insertmacro MUI_LANGUAGE "Portuguese" ;Portugues
   !insertmacro MUI_LANGUAGE "PortugueseBR" ;Portugues (Brasil)
   
-;--------------------------------
-; Languages String Table
+  ;--------------------------------
+  ; Languages String Table
   ;English
-  LangString DESC_MainSec ${LANG_ENGLISH} "Main program and all needed files."
+  LangString DESC_MainSec ${LANG_ENGLISH} "Main program and all needed files. Includes Plain-Text backend."
   LangString DESC_TCLSec ${LANG_ENGLISH} "Optional TCL Modules."
   LangString DESC_PerlSec ${LANG_ENGLISH} "Optional Perl Modules."
-  LangString CAPT_MainSec ${LANG_ENGLISH} "Main Program"  
+  LangString DESC_MySQLSec ${LANG_ENGLISH} "Optional MySQL Backend."
+  LangString DESC_DevelopSec ${LANG_ENGLISH} "Installs all headers and libraries needed by developers."
+  LangString CAPT_MainSec ${LANG_ENGLISH} "Main Program"
   LangString CAPT_TCLSec  ${LANG_ENGLISH} "TCL Modules"
   LangString CAPT_PerlSec ${LANG_ENGLISH} "Perl Modules"  
+  LangString CAPT_MySQLSec ${LANG_ENGLISH} "MySQL Backend"
+  LangString CAPT_DevelopSec ${LANG_ENGLISH} "Developer Module"
   LangString DESC_Link_Finish ${LANG_ENGLISH} "Visit the wzdftpd site for the latest news, FAQs and support"
   LangString DESC_Detail_Print ${LANG_ENGLISH} "Installing Core Files..."
   
   ;French
-  LangString DESC_MainSec ${LANG_FRENCH} "Programme principal et tous dossiers nécessaires."
+  LangString DESC_MainSec ${LANG_FRENCH} "Programme principal et tous dossiers nécessaires. Inclut le plain-Text backend."
   LangString DESC_TCLSec ${LANG_FRENCH} "Modules TCL facultatifs."
   LangString DESC_PerlSec ${LANG_FRENCH} "Modules Perl facultatifs."
-  LangString CAPT_MainSec ${LANG_FRENCH} "Programme Principal"  
+  LangString DESC_MySQLSec ${LANG_FRENCH} "Backend MySQL facultatif."
+  LangString DESC_DevelopSec ${LANG_FRENCH} "Installe tous les en-têtes et bibliothèques requis par des développeurs."
+  LangString CAPT_MainSec ${LANG_FRENCH} "Programme Principal"
   LangString CAPT_TCLSec  ${LANG_FRENCH} "Modules TCL"
   LangString CAPT_PerlSec ${LANG_FRENCH} "Modules Perl"  
+  LangString CAPT_MySQLSec ${LANG_FRENCH} "Module MySQL"
+  LangString CAPT_DevelopSec ${LANG_FRENCH} "Module pur Développeur"
   LangString DESC_Link_Finish ${LANG_FRENCH} "Visitez l'emplacement de wzdftpd pour les derniers nouvelles, FAQ et appui."
   LangString DESC_Detail_Print ${LANG_FRENCH} "Installation des dossiers Principaux..."
   
   ;Brazilian Portuguese
-  LangString DESC_MainSec ${LANG_PORTUGUESEBR} "Programa principal e todos os arquivos necessários."
+  LangString DESC_MainSec ${LANG_PORTUGUESEBR} "Programa principal e todos os arquivos necessários. Inclui o driver para autenticação em texto."
   LangString DESC_TCLSec ${LANG_PORTUGUESEBR} "Módulos TCL opcionais."
   LangString DESC_PerlSec ${LANG_PORTUGUESEBR} "Módulos Perl opcionais."
-  LangString CAPT_MainSec ${LANG_PORTUGUESEBR} "Programa Principal"  
+  LangString DESC_MySQLSec ${LANG_PORTUGUESEBR} "Módulo de autenticação por MySQL."
+  LangString DESC_DevelopSec ${LANG_PORTUGUESEBR} "Instala os cabeçalhos e bibliotecas necessárias ao desenvolvedor."
+  LangString CAPT_MainSec ${LANG_PORTUGUESEBR} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_PORTUGUESEBR} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_PORTUGUESEBR} "Módulos Perl"  
+  LangString CAPT_MySQLSec ${LANG_PORTUGUESEBR} "Módulo MySQL"
+  LangString CAPT_DevelopSec ${LANG_PORTUGUESEBR} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESEBR} "Visite o site do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESEBR} "Instalação dos arquivos principais..."
 
   ;Portuguese
-  LangString DESC_MainSec ${LANG_PORTUGUESE} "Programa principal e todos os ficheiros necessários."
+  LangString DESC_MainSec ${LANG_PORTUGUESE} "Programa principal e todos os ficheiros necessários. Inclui o driver para autenticação em texto."
   LangString DESC_TCLSec ${LANG_PORTUGUESE} "Módulos TCL opcionais."
   LangString DESC_PerlSec ${LANG_PORTUGUESE} "Módulos Perl opcionais."
-  LangString CAPT_MainSec ${LANG_PORTUGUESE} "Programa Principal"  
+  LangString DESC_MySQLSec ${LANG_PORTUGUESE} "Módulo de autenticação por MySQL."
+  LangString DESC_DevelopSec ${LANG_PORTUGUESE} "Instala os cabeçalhos e bibliotecas necessárias ao desenvolvedor."
+  LangString CAPT_MainSec ${LANG_PORTUGUESE} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_PORTUGUESE} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_PORTUGUESE} "Módulos Perl"  
+  LangString CAPT_MySQLSec ${LANG_PORTUGUESE} "Módulo MySQL"
+  LangString CAPT_DevelopSec ${LANG_PORTUGUESE} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESE} "Visite o sítio do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESE} "Instalação dos ficheiros principais..."
   
   ;Spanish
-  LangString DESC_MainSec ${LANG_SPANISH} "Programa principal y todos los archivos necesarios."
+  LangString DESC_MainSec ${LANG_SPANISH} "Programa principal y todos los archivos necesarios. Incluye el plain-Text backend."
   LangString DESC_TCLSec ${LANG_SPANISH} "Módulos Opcionales del TCL"
   LangString DESC_PerlSec ${LANG_SPANISH} "Módulos Opcionales de Perl."
+  LangString DESC_MySQLSec ${LANG_SPANISH} "Módulo de autenticación por MySQL."
+  LangString DESC_DevelopSec ${LANG_SPANISH} "Instala todos los títulos y bibliotecas necesitados por los desarrolladores."
   LangString CAPT_MainSec ${LANG_SPANISH} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_SPANISH} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_SPANISH} "Módulos Perl"
+  LangString CAPT_MySQLSec ${LANG_SPANISH} "Módulo MySQL"
+  LangString CAPT_DevelopSec ${LANG_SPANISH} "Módulo Desarrollador"
   LangString DESC_Link_Finish ${LANG_SPANISH} "Visite el sitio del wzdftpd para las últimas noticias, y obtener ayuda"
   LangString DESC_Detail_Print ${LANG_SPANISH} "Instalando Archivos De Base..."
   
   ;German
-  LangString DESC_MainSec ${LANG_GERMAN} "Hauptprogramm und alle erforderlichen Akten."
+  LangString DESC_MainSec ${LANG_GERMAN} "Hauptprogramm und alle erforderlichen Dateien. Umfaßt den Backend Klartext."
   LangString DESC_TCLSec ${LANG_GERMAN} "Wahlweise freigestellte TCL-Module."
   LangString DESC_PerlSec ${LANG_GERMAN} "Wahlweise freigestellte Perl-Module."
+  LangString DESC_MySQLSec ${LANG_GERMAN} "Wahlweise MySQL Backend."
+  LangString DESC_DevelopSec ${LANG_GERMAN} "Installiert alle Überschriften und Bibliotheken , die von Entwicklern benötigt werden."
   LangString CAPT_MainSec ${LANG_GERMAN} "HauptProgramm"
   LangString CAPT_TCLSec  ${LANG_GERMAN} "TCL-Module"
   LangString CAPT_PerlSec ${LANG_GERMAN} "TCL-Module"
+  LangString CAPT_MySQLSec ${LANG_GERMAN} "MySQL Backend"
+  LangString CAPT_DevelopSec ${LANG_GERMAN} "EntwicklerModul"
   LangString DESC_Link_Finish ${LANG_GERMAN} "Besuchen Sie den wzdftpdaufstellungsort für die neuesten Nachrichten, die FAQ und die Unterstützung"
-  LangString DESC_Detail_Print ${LANG_GERMAN} "Dateien mit Speicherabzug Anbringen..."
+  LangString DESC_Detail_Print ${LANG_GERMAN} "Dateien mit Speicherabzug installieren..."
   
   ;Italian
-  LangString DESC_MainSec ${LANG_ITALIAN} "Programma principale e tutte le lime necessarie."
+  LangString DESC_MainSec ${LANG_ITALIAN} "Programma principale e tutte le lime necessarie. Include il plain-Text backend."
   LangString DESC_TCLSec ${LANG_ITALIAN} "Moduli Facoltativi di TCL."
   LangString DESC_PerlSec ${LANG_ITALIAN} "Moduli Facoltativi Del Perl."
+  LangString DESC_MySQLSec ${LANG_ITALIAN} "Moduli Facoltativi Del MySQL Backend."
+  LangString DESC_DevelopSec ${LANG_ITALIAN} "Installa tutte le intestazioni e biblioteche necessarie dagli sviluppatori."
   LangString CAPT_MainSec ${LANG_ITALIAN} "Programma Principale"
   LangString CAPT_TCLSec  ${LANG_ITALIAN} "Moduli del TCL."
   LangString CAPT_PerlSec ${LANG_ITALIAN} "Moduli del Perl"
+  LangString CAPT_MySQLSec ${LANG_ITALIAN} "Moduli MySQL"
+  LangString CAPT_DevelopSec ${LANG_ITALIAN} "Modulo Di Sviluppatore"
   LangString DESC_Link_Finish ${LANG_ITALIAN} "Visiti il luogo del wzdftpd per le ultimi notizie, FAQ e supporto"
   LangString DESC_Detail_Print ${LANG_ITALIAN} "Installando Le Lime Di Nucleo..."
 
 
 ;--------------------------------
 ;Reserve Files
-  ;These files should be inserted before other files in the data block
-  ;Keep these lines before any File command
-  ;Only for solid compression (by default, solid compression is enabled for BZIP2 and LZMA)
+;These files should be inserted before other files in the data block
+;Keep these lines before any File command
+;Only for solid compression (by default, solid compression is enabled for BZIP2 and LZMA)
   
   !insertmacro MUI_RESERVEFILE_LANGDLL
 
@@ -267,12 +299,14 @@ Var WindowsFamily
 ;Installer Sections
 
 Section "!$(CAPT_MainSec)" MainSec
+;--------------------------------
+;General & Initialization
   Call GetWindowsFamily
   Pop $WindowsFamily
 
   SetOutPath "$INSTDIR"
   DetailPrint $(DESC_DETAIL_PRINT)
-  
+
   SetOverwrite off
   
   CreateDirectory "$INSTDIR\backends\"
@@ -286,8 +320,8 @@ Section "!$(CAPT_MainSec)" MainSec
   ;Files
   SetOutPath "$INSTDIR"
   File "${RELEASE_DIR}wzdftpd.exe"
-  File "${RELEASE_DIR}libwzd_core.dll" ;This file exists only on 0.5.0 and above
-  ;File "${LIBWZD_RELEASE_DIR}libwzd.dll"
+  File "${RELEASE_DIR}libwzd_core.dll"
+  File "${LIBWZD_RELEASE_DIR}libwzd.dll"
   File "${GNU_REGEX_DIST_DIR}gnu_regex.dll"
   File "${ICONV_BIN_DIR}libiconv-2.dll"
   File "${OPENSSL_LIB_DIR}ssleay32.dll"
@@ -322,11 +356,10 @@ Section "!$(CAPT_MainSec)" MainSec
   File "${DOT_DOT_DIR}wzd.cfg"
   File "${DOT_DOT_DIR}users"
 
-  ;backends
+  ;Plain-Text backend
   SetOutPath "$INSTDIR\backends"
-  File "${BACKEND_PLAINTEXT_RELEAS_DIR}libwzd_plaintext.dll"
-  File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
-  
+  File "${BACKEND_PLAINTEXT_RELEASE_DIR}libwzd_plaintext.dll"
+
   ;Tools
   SetOutPath "$INSTDIR\tools"
   File "${TOOLS_SITECONFIG_RELEASE_DIR}siteconfig.exe"
@@ -408,6 +441,10 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
 SectionEnd
 
+;------------------
+;SECTION -POST
+;------------------
+
 Section -Post
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   WriteRegStr HKLM "Software\${PROG_NAME}" "" "$INSTDIR\wzdftpd.exe"
@@ -416,7 +453,14 @@ Section -Post
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayIcon" "$INSTDIR\wzdftpd.exe"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "DisplayVersion" "${VER_DISPLAY}"
   WriteRegStr ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}" "URLInfoAbout" "${WEBSITE_URL}"
+  ;register and start service
+  ExecWait '"$INSTDIR\${PROG_NAME}.exe" -si' $0
+  ;ExecWait '"$SYSDIR\net" start wzdftpd' $0
 SectionEnd
+
+;---------------
+;TCL Section
+;---------------
 
 Section /o $(CAPT_TCLSec) TCLSec
   SetOutPath "$INSTDIR\modules"
@@ -426,6 +470,74 @@ SectionEnd
 Section /o $(CAPT_PerlSec) PerlSec
   SetOutPath "$INSTDIR\modules"
   File "${MODULES_PERL_RELEASE_DIR}libwzd_perl.dll"
+SectionEnd
+
+Section /o $(CAPT_MySQLSec) MySQLSec
+  SetOutPath "$INSTDIR\backends"
+  File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
+SectionEnd
+
+Section /o $(CAPT_DevelopSec) DevelopSec
+  ;Create the destination folders
+  CreateDirectory "$INSTDIR\include\"
+  CreateDirectory "$INSTDIR\lib\"
+
+  ;Copy Files to destination
+  SetOutPath "$INSTDIR\include"
+  File "${SRC_DIR}ls.h"
+  File "${SRC_DIR}wzd_action.h"
+  File "${SRC_DIR}wzd_all.h"
+  File "${SRC_DIR}wzd_backend.h"
+  File "${SRC_DIR}wzd_cache.h"
+  File "${SRC_DIR}wzd_ClientThread.h"
+  File "${SRC_DIR}wzd_commands.h"
+  File "${SRC_DIR}wzd_crc32.h"
+  File "${SRC_DIR}wzd_crontab.h"
+  File "${SRC_DIR}wzd_data.h"
+  File "${SRC_DIR}wzd_debug.h"
+  File "${SRC_DIR}wzd_dir.h"
+  File "${SRC_DIR}wzd_file.h"
+  File "${SRC_DIR}wzd_hardlimits.h"
+  File "${SRC_DIR}wzd_init.h"
+  File "${SRC_DIR}wzd_ip.h"
+  File "${SRC_DIR}wzd_libmain.h"
+  File "${SRC_DIR}wzd_log.h"
+  File "${SRC_DIR}wzd_messages.h"
+  File "${SRC_DIR}wzd_misc.h"
+  File "${SRC_DIR}wzd_mod.h"
+  File "${SRC_DIR}wzd_mutex.h"
+  File "${SRC_DIR}wzd_opts.h"
+  File "${SRC_DIR}wzd_perm.h"
+  File "${SRC_DIR}wzd_ratio.h"
+  File "${SRC_DIR}wzd_savecfg.h"
+  File "${SRC_DIR}wzd_section.h"
+  File "${SRC_DIR}wzd_ServerThread.h"
+  File "${SRC_DIR}wzd_shm.h"
+  File "${SRC_DIR}wzd_site.h"
+  File "${SRC_DIR}wzd_site_group.h"
+  File "${SRC_DIR}wzd_site_user.h"
+  File "${SRC_DIR}wzd_socket.h"
+  File "${SRC_DIR}wzd_string.h"
+  File "${SRC_DIR}wzd_strptime.h"
+  File "${SRC_DIR}wzd_strtoull.h"
+  File "${SRC_DIR}wzd_structs.h"
+  File "${SRC_DIR}wzd_tls.h"
+  File "${SRC_DIR}wzd_types.h"
+  File "${SRC_DIR}wzd_utf8.h"
+  File "${SRC_DIR}wzd_vars.h"
+  File "${SRC_DIR}wzd_vfs.h"
+  
+  SetOutPath "$INSTDIR\lib"
+  File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.lib"
+  File "${BACKEND_PLAINTEXT_RELEASE_DIR}libwzd_plaintext.lib"
+  File "${LIBWZD_RELEASE_DIR}libwzd.lib"
+  File "${LIBWZD-AUTH_RELEASE_DIR}libwzd_auth.lib"
+  File "${LIBWZD-BASE_RELEASE_DIR}libwzd_base.lib"
+  File "${LIBWZD_RELEASE_DIR}libwzd.lib"
+  File "${MODULES_PERL_RELEASE_DIR}libwzd_perl.lib"
+  File "${MODULES_SFV_RELEASE_DIR}libwzd_sfv.lib"
+  File "${MODULES_TCL_RELEASE_DIR}libwzd_tcl.lib"
+  File "${RELEASE_DIR}libwzd_core.lib"
 SectionEnd
 
 ;--------------------------------
@@ -445,6 +557,8 @@ FunctionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${MainSec} $(DESC_MainSec)
   !insertmacro MUI_DESCRIPTION_TEXT ${TCLSec} $(DESC_TCLSec)
   !insertmacro MUI_DESCRIPTION_TEXT ${PerlSec} $(DESC_PerlSec)
+  !insertmacro MUI_DESCRIPTION_TEXT ${MySQLSec} $(DESC_MySQLSec)
+  !insertmacro MUI_DESCRIPTION_TEXT ${DevelopSec} $(DESC_DevelopSec)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
  
@@ -452,8 +566,20 @@ FunctionEnd
 ;Uninstaller Section
 
 Section "Uninstall"
+  ;Stops and unregister the service
+  ExecWait '"$SYSDIR\net" stop wzdftpd' $0
+  ExecWait '"$INSTDIR\wzdftpd.exe" -sd' $0
+
+  RMDir /r "$SMPROGRAMS\wzdftpd\"
+  RMDir /r "$INSTDIR\backends\"
+  RMDir /r "$INSTDIR\tools\"
+  RMDir /r "$INSTDIR\modules"
+  RMDir /r "$INSTDIR\include"
+  RMDir /r "$INSTDIR\lib"
+
+  Delete "$INSTDIR\wzdftpd.pid"
   Delete "$INSTDIR\wzdftpd.exe"
-  ;Delete "$INSTDIR\libwzd_core.dll" ;I don't have this file. Remove the /nonfatal when including this file
+  Delete "$INSTDIR\libwzd_core.dll"
   Delete "$INSTDIR\libwzd.dll"
   Delete "$INSTDIR\gnu_regex.dll"
   Delete "$INSTDIR\libiconv-2.dll"
@@ -470,24 +596,9 @@ Section "Uninstall"
   Delete "$INSTDIR\TLS.ReadmeFirst"
   Delete "$INSTDIR\wzd_tls.cnf"
   Delete "$INSTDIR\wzd.pem"
-  Delete "$INSTDIR\backends\libwzd_plaintext.dll"
-  Delete "$INSTDIR\tools\siteconfig.exe"
-  Delete "$INSTDIR\tools\siteuptime.exe"
-  Delete "$INSTDIR\tools\sitewho.exe"
-  Delete "$INSTDIR\modules\libwzd_sfv.dll"
-  Delete "$INSTDIR\modules\libwzd_tcl.dll"
-  Delete "$INSTDIR\modules\libwzd_perl.dll"
   Delete "$INSTDIR\Uninstall.exe"
   Delete "$INSTDIR\${PROG_NAME}.url"
-  Delete "$SMPROGRAMS\$STARTMENU_FOLDER\${PROG_NAME}.lnk"
-  Delete "$SMPROGRAMS\$STARTMENU_FOLDER\website.lnk"
-  Delete "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk"
 
-  RMDir "$INSTDIR\modules"
-  RMDir "$INSTDIR\tools"
-  RMDir "$INSTDIR\backends"
-
-  RMDir "$SMPROGRAMS\$STARTMENU_FOLDER"
   DeleteRegKey /ifempty HKCU "Software\${PROG_NAME}"
   DeleteRegKey /ifempty ${PROG_UNINST_ROOT_KEY} "${PROG_UNINST_KEY}"
   SetAutoClose true
