@@ -7,7 +7,6 @@ General remarks:
 * This is not a program for beginners
 * This is a buggy program
 * You won't have any support
-* You won't get sources too
 
 Notes:
 * If you want the internal sfv checker to work, archive files and sfv file
@@ -45,7 +44,8 @@ Troubleshooting:
 
 * SHM (linux)
   If (this should never happend ;-) the daemon crashes and the shared memory is not freed, you'll have
-  to delete share memory by hand, 2 solutions
+  to delete share memory by hand, 3 solutions
+    + run 'wzdftpd -d'
     + become the samer user as the daemon runs, and run: ipcrm shm `ipcs -m | grep 0x1331c0d3 |  awk '{print $2}'`
       ->> replace 0x1331c0d3 with your key if you changed in wzd.cfg <<-
     + become root and do the same thing
