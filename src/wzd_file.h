@@ -27,6 +27,31 @@
 
 /* WARNING !!! filename MUST be ABSOLUTE path !!! */
 
+typedef enum {
+  FILE_NOTSET,
+  FILE_REG,
+  FILE_DIR,
+  FILE_LNK,
+  FILE_VFS,
+} wzd_file_kind_t;
+
+typedef struct _wzd_acl_rule_t {
+  char user[256];
+  char perms[3]; /* rwx */
+  struct _wzd_acl_rule_t * next_acl; /* linked list */
+} wzd_acl_line_t;
+
+struct wzd_file_t {
+  char	filename[256];
+  char	owner[256]; /** \todo replace with uid */
+  char	group[256]; /** \todo replace with gid */
+  unsigned long permissions;	/* classic linux format */
+  wzd_acl_line_t *acl;
+  wzd_file_kind_t kind;
+  void * data;
+  struct wzd_file_t	*next_file;
+};
+
 
 /*FILE * file_open(const char *filename, const char *mode, unsigned long wanted_right, wzd_context_t * context);*/
 int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context);

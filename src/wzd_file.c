@@ -126,29 +126,14 @@ typedef struct
 
 /************ PRIVATE FUNCTIONS **************/
 
-typedef struct _wzd_acl_rule_t {
-  char user[256];
-  char perms[3]; /* rwx */
-  struct _wzd_acl_rule_t * next_acl; /* linked list */
-} wzd_acl_line_t;
-
-typedef struct _wzd_file_t {
-  char	filename[256];
-  char	owner[256];
-  char	group[256];
-  unsigned long permissions;	/* classic linux format */
-  wzd_acl_line_t *acl;
-  struct _wzd_file_t	*next_file;
-} wzd_file_t;
-
 static int _default_perm(unsigned long wanted_right, wzd_user_t * user)
 {
   return (( wanted_right & user->userperms ) == 0);
 }
 
-void free_file_recursive(wzd_file_t * file)
+void free_file_recursive(struct wzd_file_t * file)
 {
-  wzd_file_t * next_file;
+  struct wzd_file_t * next_file;
   wzd_acl_line_t *acl_current,*acl_next;
 
   if (!file) return;
@@ -167,9 +152,9 @@ void free_file_recursive(wzd_file_t * file)
   } while (file);
 }
 
-wzd_file_t * find_file(const char *name, wzd_file_t *first)
+struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
 {
-  wzd_file_t *current=first;
+  struct wzd_file_t *current=first;
 
   while (current) {
     if (strcmp(name,current->filename)==0)
@@ -179,9 +164,9 @@ wzd_file_t * find_file(const char *name, wzd_file_t *first)
   return NULL;
 }
 
-wzd_file_t * remove_file(const char *name, wzd_file_t **first)
+struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **first)
 {
-  wzd_file_t *current=*first,*prev,*removed;
+  struct wzd_file_t *current=*first,*prev,*removed;
 
   if (!current) return NULL;
   
@@ -209,7 +194,7 @@ wzd_file_t * remove_file(const char *name, wzd_file_t **first)
   return NULL;
 }
 
-wzd_acl_line_t * find_acl(const char * username, wzd_file_t * file)
+wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
 {
   wzd_acl_line_t *current = file->acl;
 
@@ -222,11 +207,11 @@ wzd_acl_line_t * find_acl(const char * username, wzd_file_t * file)
 }
 
 /** creation and tail insertion */
-wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, wzd_file_t **first)
+struct wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, struct wzd_file_t **first)
 {
-  wzd_file_t *current, *new_file;
+  struct wzd_file_t *current, *new_file;
 
-  new_file = wzd_malloc(sizeof(wzd_file_t));
+  new_file = wzd_malloc(sizeof(struct wzd_file_t));
   strncpy(new_file->filename,name,256);
   memset(new_file->owner,0,256);
   if (owner) strncpy(new_file->owner,owner,256);
@@ -234,6 +219,8 @@ wzd_file_t * add_new_file(const char *name, const char *owner, const char *group
   if (group) strncpy(new_file->group,group,256);
   new_file->acl = NULL;
   new_file->permissions = 0755; /* TODO XXX FIXME hardcoded */
+  new_file->kind = FILE_NOTSET;
+  new_file->data = NULL;
   new_file->next_file = NULL;
   if (*first == NULL) {
     *first = new_file;
@@ -247,7 +234,7 @@ wzd_file_t * add_new_file(const char *name, const char *owner, const char *group
 }
 
 /** replace or add acl rule */
-void addAcl(const char *filename, const char *user, const char *rights, wzd_file_t * file)
+void addAcl(const char *filename, const char *user, const char *rights, struct wzd_file_t * file)
 {
   wzd_acl_line_t * acl_current, * acl_new;
 
@@ -277,22 +264,22 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
 }
 
 /** \todo should be "atomic" */
-int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
+int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 {
 /*  FILE *fp;*/
   wzd_cache_t * fp;
   char line_buffer[BUFFER_LEN];
-  wzd_file_t *current_file, *ptr_file;
+  struct wzd_file_t *current_file, *ptr_file;
   char * token1, *token2, *token3, *token4, *token5;
   char *ptr;
 
-  if ( !pTabFiles ) return 0;
+  if ( !pTabFiles ) return E_PARAM_NULL;
 
   current_file = *pTabFiles;
 
 /*  fp = fopen(permfile,"r");*/
   fp = wzd_cache_open(permfile,O_RDONLY,0644);
-  if (!fp) { wzd_cache_close(fp); return 1; }
+  if (!fp) { wzd_cache_close(fp); return E_FILE_NOEXIST; }
 
   ptr = (char*)current_file;
   current_file = NULL;
@@ -333,15 +320,15 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
 
 /*  fclose(fp);*/
   wzd_cache_close(fp);
-  return 0;
+  return E_OK;
 }
 
 /** \todo should be "atomic" */
-int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
+int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 {
   char buffer[BUFFER_LEN];
   FILE *fp;
-  wzd_file_t * file_cur;
+  struct wzd_file_t * file_cur;
   wzd_acl_line_t * acl_cur;
 
   file_cur = *pTabFiles;
@@ -386,7 +373,7 @@ int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_
 {
   char perm_filename[BUFFER_LEN];
   unsigned int length, neededlength;
-  wzd_file_t * file_list=NULL, * file_cur;
+  struct wzd_file_t * file_list=NULL, * file_cur;
   wzd_acl_line_t * acl_cur;
   int ret;
   int is_dir;
@@ -632,7 +619,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   char *ptr;
   struct stat s;
   unsigned int length, neededlength;
-  wzd_file_t * file_list=NULL, * file_cur;
+  struct wzd_file_t * file_list=NULL, * file_cur;
   int ret;
 
   if (!filename || filename[0] == '\0')
@@ -719,7 +706,7 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
   char *ptr;
   struct stat s,s2;
   unsigned int length, neededlength;
-  wzd_file_t * src_file_list=NULL, *dst_file_list=NULL,* file_cur, *file_dst;
+  struct wzd_file_t * src_file_list=NULL, *dst_file_list=NULL,* file_cur, *file_dst;
   wzd_acl_line_t * acl;
   int ret;
 
@@ -1258,7 +1245,7 @@ int file_remove(const char *filename, wzd_context_t * context)
   char * ptr;
   int ret;
   wzd_user_t * user;
-  wzd_file_t * file_list=NULL, * file_cur;
+  struct wzd_file_t * file_list=NULL, * file_cur;
   int neededlength, length;
 
   /* find the dir containing the perms file */
@@ -1312,7 +1299,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   char stripped_filename[BUFFER_LEN];
   char * ptr;
   int ret;
-  wzd_file_t * file_list=NULL, * file_cur;
+  struct wzd_file_t * file_list=NULL, * file_cur;
   int neededlength, length;
   struct stat s;
 

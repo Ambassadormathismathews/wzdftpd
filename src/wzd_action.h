@@ -41,32 +41,33 @@
 #define TOK_CDUP        13
 #define TOK_LIST        14
 #define TOK_NLST        15
-#define TOK_MKD         16
-#define TOK_RMD         17
-#define TOK_RETR        18
-#define TOK_STOR        19
-#define TOK_REST        20
-#define TOK_MDTM        21
-#define TOK_SIZE        22
-#define TOK_DELE        23
-#define TOK_ABOR        24
+#define TOK_STAT        16
+#define TOK_MKD         17
+#define TOK_RMD         18
+#define TOK_RETR        19
+#define TOK_STOR        20
+#define TOK_REST        21
+#define TOK_MDTM        22
+#define TOK_SIZE        23
+#define TOK_DELE        24
+#define TOK_ABOR        25
 
-#define TOK_PBSZ        25
-#define TOK_PROT        26
+#define TOK_PBSZ        26
+#define TOK_PROT        27
 
-#define TOK_SITE        27
-#define TOK_FEAT        28
-#define	TOK_ALLO	29
-#define	TOK_RNFR	30
-#define	TOK_RNTO	31
-#define	TOK_APPE	32
+#define TOK_SITE        28
+#define TOK_FEAT        29
+#define	TOK_ALLO	30
+#define	TOK_RNFR	31
+#define	TOK_RNTO	32
+#define	TOK_APPE	33
 
-#define	TOK_EPSV	33
-#define	TOK_EPRT	34
-#define TOK_PRET        35
+#define	TOK_EPSV	34
+#define	TOK_EPRT	35
+#define TOK_PRET        36
 
-#define TOK_XCRC        36
-#define TOK_XMD5        37
+#define TOK_XCRC        37
+#define TOK_XMD5        38
 
 #define	TOK_NOTHING	64
 

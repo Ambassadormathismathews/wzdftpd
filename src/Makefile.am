@@ -22,6 +22,8 @@ libwzd_la_SOURCES =  \
 	wzd_debug.h     \
 	wzd_dir.c	\
 	wzd_dir.h	\
+	wzd_file.c      \
+	wzd_file.h      \
 	wzd_libmain.c   \
 	wzd_libmain.h   \
 	wzd_log.c       \
@@ -67,8 +69,6 @@ wzdftpd_SOURCES =    \
 	wzd_ClientThread.h \
 	wzd_data.c         \
 	wzd_data.h         \
-	wzd_file.c         \
-	wzd_file.h         \
 	wzd_hardlimits.h   \
 	wzd_init.h         \
 	wzd_main.c         \

@@ -62,7 +62,7 @@ void init_default_messages(void)
 
   msg_tab[200] = strdup("%s"); /* Command okay */
   msg_tab[202] = strdup("Command not implemented.");
-  msg_tab[211] = strdup("Extension supported\n%s");
+  msg_tab[211] = strdup("%s");
   msg_tab[213] = strdup("%s"); /* mdtm */
   msg_tab[215] = strdup("UNIX Type: L8");
   msg_tab[220] = strdup("wzd server ready.");

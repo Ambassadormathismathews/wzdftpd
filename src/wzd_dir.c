@@ -54,18 +54,209 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_file.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_dir.h"
+#include "wzd_vfs.h"
 
 #include "wzd_debug.h"
+
+
+struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
+{
+  struct wzd_dir_t * _dir=NULL;
+  struct wzd_file_t * entry, * it, *itp, ** insertion_point;
+  struct wzd_file_t * perm_list = NULL;
+  wzd_vfs_t * vfs = mainConfig->vfs;
+  short vfs_pad=0; /* is 1 if name has a trailing '/' */
+  char * perm_file_name;
+  size_t length;
+  char * ptr, * dir_filename;
+  int ret;
+  struct stat st;
+
+#ifndef _MSC_VER
+  DIR * dir;
+  struct dirent * entr;
+#else
+  HANDLE dir;
+  WIN32_FIND_DATA fileData;
+  int finished;
+  char dirfilter[MAX_PATH+1];
+#endif
+
+#ifndef _MSC_VER
+  dir = opendir(name);
+  if (!dir) return NULL;
+#else
+  snprintf(dirfilter,sizeof(dirfilter),"%s/*",name);
+  if ((dir = FindFirstFile(dirfilter,&fileData)) == INVALID_HANDLE_VALUE) return NULL;
+#endif
+  
+  if (name[strlen(name)-1] != '/') vfs_pad = 1;
+
+  _dir = malloc(sizeof(struct wzd_dir_t));
+  _dir->dirname = path_getbasename(name,NULL); /** \bug XXX FIXME if name has a trailing /, this will return "" */
+  _dir->first_entry = NULL;
+
+  length = strlen(name);
+  perm_file_name = malloc(length+strlen(HARD_PERMFILE)+2);
+  memcpy(perm_file_name,name,length);
+  ptr = perm_file_name + length - 1;
+  if ( *ptr != '/' ) { *++ptr = '/'; }
+  ptr++;
+  memcpy(ptr,HARD_PERMFILE,strlen(HARD_PERMFILE));
+  *(ptr + strlen(HARD_PERMFILE)) = '\0';
+
+  /* try to read permission file */
+  if ( (ret=readPermFile(perm_file_name,&perm_list)) && ret != E_FILE_NOEXIST)
+    { free(perm_file_name); free(_dir->dirname); free(_dir); return NULL; }
+  free(perm_file_name);
+
+  insertion_point = &_dir->first_entry;
+
+  /* loop on all directory entries and create child structs */
+#ifndef _MSC_VER
+  while ( (entr = readdir(dir)) ) {
+    dir_filename = entr->d_name;
+#else
+  finished = 0;
+  while (!finished) {
+    dir_filename = fileData.cFileName;
+#endif
+
+  /* XXX remove hidden files and special entries '.' '..' */
+
+    if (strcmp(dir_filename,".")==0 ||
+        strcmp(dir_filename,"..")==0 ||
+        is_hidden_file(dir_filename) )
+    {
+      DIR_CONTINUE
+    }
+
+    /* search element in list */
+    it = perm_list;
+    itp = NULL;
+    entry = NULL;
+    while (it)
+    {
+      if ( ! DIRCMP(dir_filename,it->filename) )
+      {
+        /* remove from perm_list and insert at (*insertion_point) */
+        if (!itp) { /* first element */
+          entry = perm_list;
+          perm_list = perm_list->next_file;
+          entry->next_file = NULL;
+        } else {
+          entry = it;
+          itp->next_file = it->next_file;
+          it->next_file = NULL;
+        }
+        break;
+      }
+      itp = it;
+      it = it->next_file;
+    }
+
+
+    if (!entry) { /* not listed in permission file */
+      entry = wzd_malloc(sizeof(struct wzd_file_t));
+      strncpy(entry->filename,dir_filename,sizeof(entry->filename));
+      entry->owner[0] = '\0';
+      entry->group[0] = '\0';
+      entry->permissions = 0755; /** \todo FIXME default permission */
+      entry->acl = NULL;
+      entry->kind = FILE_NOTSET; /* can be reg file or symlink */
+      entry->data = NULL;
+      entry->next_file = NULL;
+    }
+
+    /** \todo sorted insertion */
+    (*insertion_point) = entry;
+    insertion_point = &entry->next_file;
+
+    DIR_CONTINUE
+  } /* for all directory entries */
+  closedir(dir);
+
+  /* XXX add vfs entries */
+  {
+    char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
+    while (vfs)
+    {
+      entry = NULL;
+      ptr = vfs_replace_cookies(vfs->virtual_dir,context);
+      if (!ptr) {
+        out_log(LEVEL_CRITICAL,"vfs_replace_cookies returned NULL for %s\n",vfs->virtual_dir);
+        vfs = vfs->next_vfs;
+        continue;
+      }
+      strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
+      if (DIRNCMP(buffer_vfs,name,strlen(name))==0)
+      { /* ok, we have a candidate. Now check if user is allowed to see it */
+        ptr = buffer_vfs + strlen(name) + vfs_pad;
+        if (strchr(ptr,'/')==NULL) {
+          entry = wzd_malloc(sizeof(struct wzd_file_t));
+          strncpy(entry->filename,ptr,sizeof(entry->filename));
+          /** \todo FIXME read vfs permissions */
+          entry->owner[0] = '\0';
+          entry->group[0] = '\0';
+          entry->permissions = 0755;
+          entry->acl = NULL;
+          entry->kind = FILE_VFS;
+          entry->data = vfs->physical_dir;
+          entry->next_file = NULL;
+        }
+      }
+
+      if (entry) {
+        /** \todo sorted insertion */
+        (*insertion_point) = entry;
+        insertion_point = &entry->next_file;
+      }
+
+      vfs = vfs->next_vfs;
+    } /* while (vfs) */
+  } /* add vfs entries */
+
+  _dir->current_entry = _dir->first_entry;
+
+  return _dir;
+}
+
+
+void dir_close(struct wzd_dir_t * dir)
+{
+  struct wzd_file_t * it, itp;
+
+  if (!dir) return;
+
+  if (dir->dirname) free(dir->dirname);
+  if (dir->first_entry) free_file_recursive(dir->first_entry);
+}
+
+
+
+struct wzd_file_t * dir_read(struct wzd_dir_t * dir, wzd_context_t * context)
+{
+  struct wzd_file_t * entry;
+  
+  if (!dir || !dir->current_entry) return NULL;
+  entry = dir->current_entry;
+  dir->current_entry = entry->next_file;
+  return entry;
+}
+
+
+
 
 /* strip non-directory suffix from file name
  * returns file without its trailing /component removed, if name contains
  * no /'s, returns "." (meaning the current directory).
  * caller MUST free memory !
  */
-char * dir_getdirname(const char *file)
+char * path_getdirname(const char *file)
 {
   char * dirname;
   const char * ptr;
@@ -98,7 +289,7 @@ char * dir_getdirname(const char *file)
  * also remove a trailing suffix.
  * Caller MUST free memory !
  */
-char * dir_getbasename(const char *file, const char *suffix)
+char * path_getbasename(const char *file, const char *suffix)
 {
   char * basename;
   const char * ptr;
@@ -131,7 +322,7 @@ char * dir_getbasename(const char *file, const char *suffix)
  * it has n components.
  * Caller MUST free memory !
  */
-char * dir_gettrailingname(const char *file, unsigned int n)
+char * path_gettrailingname(const char *file, unsigned int n)
 {
   char * name;
   const char * ptr;

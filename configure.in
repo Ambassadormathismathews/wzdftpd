@@ -104,8 +104,6 @@ WZD_LIB_PAM
 WZD_LIB_MYSQL
 WZD_LIB_PGSQL
 WZD_LIB_TCL
-AM_ICONV
-WZD_LIB_UNICODE
 
 # check for zlib (optional, used in module sfv)
 AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
@@ -169,6 +167,23 @@ AC_ARG_ENABLE(ipv6, [  --enable-ipv6           enable ipv6 support (EXPERIMENTAL
     AC_MSG_RESULT(no)
 )
 
+AC_MSG_CHECKING(whether to build utf8 support)
+
+AC_ARG_ENABLE(utf8, [  --enable-utf8           enable utf8 support (EXPERIMENTAL)],
+    if eval "test x$enable_utf8 = xyes"; then
+      AC_MSG_RESULT(yes)
+      WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}utf8"
+    else
+      AC_MSG_RESULT(no)
+    fi,
+    AC_MSG_RESULT(no)
+)
+
+if eval "test x$enable_utf8 = xyes"; then
+  AM_ICONV
+  WZD_LIB_UNICODE
+  AC_DEFINE(HAVE_UTF8, 1, [Define if using utf8])
+fi
 
 AM_CONDITIONAL(USE_ICC, test x$CC = xicc)
 if eval "test x$CC = xicc"; then

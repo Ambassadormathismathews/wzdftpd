@@ -1,3 +1,9 @@
+2004-04-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: moved some structs into their proper headers
+	* feature: new api to list directory entries, much easier and cleaner
+	* feature: new command STAT to provide a fast way to list dir
+
 2004-04-20  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: segfault when exiting on error unable to bind

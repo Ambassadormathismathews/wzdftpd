@@ -103,6 +103,7 @@ EXPORTS
 	out_log
 	out_xferlog
 	print_file
+	readPermFile
 	right_text2word	
 	safe_rename
 	section_add

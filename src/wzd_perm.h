@@ -25,6 +25,28 @@
 #ifndef __WZD_PERM__
 #define __WZD_PERM__
 
+/**************** COMMANDS PERMISSIONS ********************/
+typedef enum {
+  CPERM_USER,
+  CPERM_GROUP,
+  CPERM_FLAG
+} wzd_cp_t;
+
+typedef struct wzd_command_perm_entry_t wzd_command_perm_entry_t;
+typedef struct wzd_command_perm_t wzd_command_perm_t;
+struct wzd_command_perm_entry_t {
+  wzd_cp_t cp; 
+  char target[256];
+  struct wzd_command_perm_entry_t * next_entry;
+};
+
+struct wzd_command_perm_t {
+  char  command_name[256];
+  wzd_command_perm_entry_t * entry_list;
+  struct wzd_command_perm_t * next_perm;
+};
+
+
 int perm_is_valid_perm(const char *permname);
 
 wzd_command_perm_t * perm_find(const char *commandname, wzd_config_t * config);

@@ -64,6 +64,7 @@
 #include "wzd_site_user.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
+#include "wzd_dir.h"
 #include "wzd_perm.h"
 #include "wzd_mod.h"
 #include "wzd_cache.h"
@@ -114,7 +115,21 @@ int do_site_test(char *command, wzd_context_t * context)
   out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
 
-  fd_dump();
+/*  fd_dump();*/
+
+  {
+    struct wzd_dir_t * dir;
+    struct wzd_file_t * file;
+    dir = dir_open(command,context);
+    if (dir) {
+      out_err(LEVEL_INFO,"    + %s\n",dir->dirname);
+      while ( (file = dir_read(dir,context)) )
+      {
+        out_err(LEVEL_INFO,"    | %s\n",file->filename);
+      }
+      dir_close(dir);
+    }
+  }
 
 /*  ret = module_unload(&mainConfig->module,command);*/
 

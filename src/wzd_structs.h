@@ -112,7 +112,7 @@ typedef struct limiter
   int bytes_transfered;
   float current_speed;
 } wzd_bw_limiter;
-
+#if 0
 /**************** COMMANDS PERMISSIONS ********************/
 typedef enum {
   CPERM_USER,
@@ -134,6 +134,7 @@ struct wzd_command_perm_t {
   wzd_command_perm_entry_t * entry_list;
   struct wzd_command_perm_t * next_perm;
 };
+#endif
 
 
 /*********************** SITE *****************************/
@@ -505,7 +506,7 @@ typedef struct {
   tls_type_t	tls_type;
   unsigned long	shm_key;
   wzd_command_t		* command_list;
-  wzd_command_perm_t	* perm_list;
+  struct wzd_command_perm_t	* perm_list;
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
   wzd_param_t		* param_list;

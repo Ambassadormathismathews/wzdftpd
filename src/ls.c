@@ -53,6 +53,7 @@
 #include "wzd_log.h"
 
 #include "wzd_file.h"
+#include "wzd_dir.h"
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
@@ -83,7 +84,146 @@ int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, cha
   return 0;
 }
 
+
+
 int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
+	 int callback(unsigned int,wzd_context_t*,char *))
+{
+  struct wzd_dir_t * dir;
+  struct wzd_file_t * file;
+  char * dirname;
+  char buffer[WZD_MAX_PATH+1], * ptr_to_buffer;
+  char line[WZD_MAX_PATH+80+1]; /* 80 is the long format max */
+  char buffer_name[256];
+  char send_buffer[HARD_LS_BUFFERSIZE];
+  unsigned int send_buffer_len;
+  char datestr[128];
+  char * ptr, * buffer_ptr;
+  size_t length;
+  struct stat st;
+  time_t timeval;
+  struct tm *ntime;
+  int i;
+
+  if (!directory || strlen(directory)<=1) return 0;
+
+  memset(send_buffer,0,HARD_LS_BUFFERSIZE);
+  send_buffer_len = 0;
+
+  length = strlen(directory);
+  dirname = wzd_strdup(directory);
+  if (length>1 && dirname[length-1]=='/')
+    dirname[length-1]='\0';
+
+  strncpy(buffer,directory,WZD_MAX_PATH);
+  if (buffer[length-1] != '/') {
+    buffer[length++] = '/';
+    buffer[length] = '\0';
+  }
+  buffer_ptr = buffer+length; /* just after last '/' */
+
+  dir = dir_open(dirname,context);
+  wzd_free(dirname);
+  if (!dir) return 0;
+
+  while ( (file = dir_read(dir,context)) )
+  {
+    if (file->filename[0] == '.' && !(format & LIST_SHOW_HIDDEN)) continue;
+    if (mask && !list_match(file->filename,mask)) continue;
+
+    if (format & LIST_TYPE_SHORT) {
+      strncpy(line,file->filename,WZD_MAX_PATH);
+      strncat(line,"\r\n",WZD_MAX_PATH);
+      if (list_call_wrapper(sock,context,line,send_buffer,&send_buffer_len,callback)) break;
+      continue;
+    }
+
+    /* format is long */
+
+    switch (file->kind) {
+      case FILE_VFS:
+        ptr_to_buffer = (char*)file->data;
+        break;
+      default:
+        strncpy(buffer_ptr,file->filename,WZD_MAX_PATH-(buffer_ptr-buffer));
+        ptr_to_buffer = buffer;
+        break;
+    }
+
+    if (lstat(ptr_to_buffer,&st)) continue;
+
+    /* date */
+    timeval = time(NULL);
+    ntime = localtime(&timeval);
+    i = ntime->tm_year;
+
+    ntime = localtime(&st.st_mtime);
+
+    if (ntime->tm_year==i)
+      strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+    else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+
+    /* permissions */
+
+    if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) && 
+        !S_ISREG(st.st_mode))
+      continue;
+    
+    if (S_ISLNK(st.st_mode)) {
+      char linkbuf[256];
+      int linksize;
+      linksize = readlink(file->filename,linkbuf,sizeof(linkbuf)-1);
+      if (linksize > 0) {
+        linkbuf[linksize]='\0';
+        snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> %s",file->filename,linkbuf);
+      }
+      else
+        snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> (INEXISTANT FILE)",file->filename);
+    } else {
+      strncpy(buffer_name,file->filename,sizeof(buffer_name)-1);
+      if (strlen(file->filename)<sizeof(buffer_name)) buffer_name[strlen(file->filename)]='\0';
+      else buffer_name[sizeof(buffer_name)-1] = '\0';
+    }
+
+#ifndef _MSC_VER
+    sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+#else
+    sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+#endif
+        S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+        file->permissions & S_IRUSR ? 'r' : '-',
+        file->permissions & S_IWUSR ? 'w' : '-',
+        file->permissions & S_IXUSR ? 'x' : '-',
+        file->permissions & S_IRGRP ? 'r' : '-',
+        file->permissions & S_IWGRP ? 'w' : '-',
+        file->permissions & S_IXGRP ? 'x' : '-',
+        file->permissions & S_IROTH ? 'r' : '-',
+        file->permissions & S_IWOTH ? 'w' : '-',
+        file->permissions & S_IXOTH ? 'x' : '-',
+        (int)st.st_nlink,
+        (file->owner[0] != '\0')?file->owner:"unknown",
+        (file->group[0] != '\0')?file->group:"unknown",
+        (u64_t)st.st_size,
+        datestr,
+        buffer_name);
+
+    if (list_call_wrapper(sock, context, line, send_buffer, &send_buffer_len, callback)) break;
+  }
+
+  /* flush buffer ! */
+  list_call_wrapper(sock, context, NULL, send_buffer, &send_buffer_len, callback);
+  dir_close(dir);
+
+  return 1;
+}
+
+
+
+
+/** build list in LIST format and send the result to callback
+ * \deprecated use \ref list
+ */
+int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
 	 int callback(unsigned int,wzd_context_t*,char *)) {
 
 #ifndef _MSC_VER

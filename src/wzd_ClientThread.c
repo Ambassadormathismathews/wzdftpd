@@ -866,6 +866,141 @@ printf("path: '%s'\n",path);
   return E_OK;
 }
 
+/*************** do_stat *****************************/
+
+int do_stat(char *name, char *param, wzd_context_t * context)
+{
+  char mask[1024],cmd[WZD_MAX_PATH],path[WZD_MAX_PATH];
+  int ret,sock,n;
+  char nullch[8];
+  char * cmask;
+  wzd_user_t * user;
+  list_type_t listtype;
+  ssl_data_t old_data_mode;
+
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
+  if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
+  {
+    ret = send_message_with_args(501,context,"Argument or parameter too big.");
+    return E_PARAM_BIG;
+  }
+
+  listtype = LIST_TYPE_LONG;
+
+  context->resume = 0;
+  context->state = STATE_COMMAND;
+
+  strcpy(nullch,".");
+  mask[0] = '\0';
+  if (param) {
+
+    while (param[0]=='-') {
+      n=1;
+      while (param[n]!=' ' && param[n]!=0) {
+        switch (param[n]) {
+          case 'a':
+            listtype |= LIST_SHOW_HIDDEN;
+        }
+        n++;
+      }
+      if (param[n]==' ') param = param+n+1;
+      else param = param+n;
+    }
+
+    strncpy(cmd,param,sizeof(cmd));
+    if (cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
+
+    if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
+    {
+      char *ptr;
+      if (strrchr(cmd,'/')) { /* probably not in current path - need to readjust path */
+        if (strrchr(cmd,'/') > strrchr(cmd,'*')) {
+          /* char / is AFTER *, dir style: toto / * / .., we refuse */
+          ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
+          return 1;
+        }
+        ptr = strrchr(cmd,'/');
+        strncpy(cmd,ptr+1,WZD_MAX_PATH);
+        *ptr = '\0';
+//	strncpy(cmd,strrchr(cmd,'/')+1,2048);
+//	*strrchr(cmd,'/') = '\0';
+      } else { /* simple wildcard */
+        strncpy(mask,cmd,sizeof(mask));
+        cmd[0] = '\0';
+      }
+    }
+    if (strrchr(cmd,'*') || strrchr(cmd,'?')) { /* wildcards in path ? ough */
+      ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
+      return E_PARAM_INVALID;
+    }
+  } else { /* no param, assume list of current dir */
+    cmd[0] = '\0';
+    param = nullch;
+  }
+
+  if (param[0]=='/') param++;
+  if (param[0]=='/') {
+    ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
+    return E_PARAM_INVALID;
+  }
+
+  cmask = strrchr(mask,'/');
+  if (cmask) {	/* search file in path (with /), but without wildcards */
+    *cmask='\0';
+    strlcat(cmd,"/",WZD_MAX_PATH);
+    strlcat(cmd,mask,WZD_MAX_PATH);
+    strncpy(mask,cmask,sizeof(mask));
+  }
+
+/*#ifdef DEBUG
+printf("path before: '%s'\n",cmd);
+#endif*/
+
+  if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
+    ret = send_message_with_args(501,context,"invalid filter/path");
+    return E_PARAM_INVALID;
+  }
+
+/*#ifdef DEBUG
+printf("path: '%s'\n",path);
+#endif*/
+
+  /* CHECK PERM */
+  ret = _checkPerm(path,RIGHT_LIST,user);
+
+  if (ret) { /* no access */
+    ret = send_message_with_args(550,context,"STAT","No access");
+    return E_NOPERM;
+  }
+
+  sock = context->controlfd;
+
+  if (strlen(mask)==0) strcpy(mask,"*");
+
+  /* \todo XXX FIXME horrible workaround to avoid sending clear data inside ssl stream */
+  old_data_mode = context->ssl.data_mode;
+  context->ssl.data_mode = (context->connection_flags & CONNECTION_TLS) ? TLS_PRIV : TLS_CLEAR;
+
+  send_message_raw("213-Status of .:\r\n",context);
+  send_message_raw("total 0\r\n",context);
+  if (list(sock,context,listtype,path,mask,list_callback))
+    ret = send_message_raw("213 End of Status\r\n",context);
+  else
+    ret = send_message_raw("213 Error processing list\r\n",context);
+
+  context->idle_time_start = time(NULL);
+  context->state = STATE_UNKNOWN;
+  context->ssl.data_mode = old_data_mode;
+
+  return E_OK;
+}
+
 /*************** do_mkdir ****************************/
 
 int do_mkdir(char *name, char *param, wzd_context_t * context)
@@ -2045,6 +2180,7 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
 {
   int cmd;
   int ret;
+  char buffer[WZD_BUFFER_LEN];
 
   cmd = identify_token(name);
   switch (cmd) {
@@ -2057,7 +2193,8 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
       ret = send_message_with_args(200,context,"Command okay");
       break;
     case TOK_FEAT:
-      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
+      snprintf(buffer,sizeof(buffer),"Extensions supported:\n%s",SUPPORTED_FEATURES);
+      ret = send_message_with_args(211,context,buffer);
       break;
     case TOK_SYST:
       context->resume = 0;
@@ -2783,7 +2920,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       break;
 #endif
     case TOK_FEAT:
-      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
+      ret = do_print_message("feat",NULL,context);
       break;
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
@@ -3115,6 +3252,7 @@ int command_list_init(wzd_command_t **list)
   last_command->next_command = NEW_STD_COMMAND(cwd,do_cwd,NULL,TOK_CWD); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(list,do_list,NULL,TOK_LIST); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(nlst,do_list,NULL,TOK_NLST); last_command = last_command->next_command;
+  last_command->next_command = NEW_STD_COMMAND(stat,do_stat,NULL,TOK_STAT); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(mkd,do_mkdir,NULL,TOK_MKD); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(rmd,do_rmdir,NULL,TOK_RMD); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(retr,do_retr,NULL,TOK_RETR); last_command = last_command->next_command;
