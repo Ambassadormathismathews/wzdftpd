@@ -49,6 +49,8 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
+AC_CYGWIN
+
 dnl not building static libraries makes compilation fail on *bsd !
 dnl AC_DISABLE_STATIC
 if eval "test x$CYGWIN != xyes"; then
@@ -58,8 +60,6 @@ if eval "test x$CYGWIN != xyes"; then
 fi
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
-
-AC_CYGWIN
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
