@@ -19,13 +19,34 @@ and will be overwritten next time backend is commited.
 
 
 
+<sect1>
+<title>PAM</title>
+
+<para>
+This is a very simple module, which uses PAM (Pluggable Authentication Modules)
+to authenticate users.
+</para>
+<para>
+User's rootpath is set to the real user's homedir, and all ips are automatically
+allowed for all users. The root user is automatically promoted to siteop.
+</para>
+<para>
+<emphasis>Work in progress !</emphasis>
+</para>
+</sect1>
+
+
 
 <sect1>
 <title>Mysql</title>
 
 <para>
 Users/Groups definitions are stored in a mysql database.
+</para>
+<para>
 <emphasis>Work in progress !</emphasis>
 </para>
 </sect1>
+
+
 </chapter>

@@ -340,7 +340,7 @@ printf("Clearing option syslog\n");
   tempConfig.site_config.file_who[0] = '\0';
   tempConfig.site_config.file_vfs[0] = '\0';
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
   strcpy(tempConfig.tls_cipher_list,"ALL");
 
@@ -1618,7 +1618,7 @@ int cfg_read_tls_certificate(void)
     return 1;
   }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
 #if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
 #else /* ! BSD */
@@ -1630,7 +1630,7 @@ int cfg_read_tls_certificate(void)
   strcpy(tempConfig.tls_certificate,filename);
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
-#endif /* SSL_SUPPORT */
+#endif /* HAVE_OPENSSL */
 
   wzd_free(filename);
   return 0;
@@ -1655,11 +1655,11 @@ int cfg_read_tls_cipher_list(void)
     return 1;
   }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   strcpy(tempConfig.tls_cipher_list,buffer);
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
-#endif /* SSL_SUPPORT */
+#endif /* HAVE_OPENSSL */
 
   wzd_free(buffer);
   return 0;
@@ -1684,7 +1684,7 @@ int cfg_read_tls_mode(void)
     return 1;
   }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     if (strcasecmp("explicit",buffer)==0)
       tempConfig.tls_type = TLS_EXPLICIT;
     else if (strcasecmp("explicit_strict",buffer)==0)
@@ -1699,7 +1699,7 @@ int cfg_read_tls_mode(void)
     }
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
-#endif /* SSL_SUPPORT */
+#endif /* HAVE_OPENSSL */
 
   wzd_free(buffer);
   return 0;

@@ -351,7 +351,7 @@ int main(int argc, char **argv)
     }
   }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   ret = tls_init();
   if (ret) {
     out_log(LEVEL_CRITICAL,"TLS subsystem could not be initialized.\n");

@@ -91,9 +91,9 @@ wzdftpd_SOURCES =    \
 
 nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
-wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd @SSL_LDFLAGS@ @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
-AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
+AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
 dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \

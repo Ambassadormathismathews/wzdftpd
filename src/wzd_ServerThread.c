@@ -208,7 +208,7 @@ static void context_init(wzd_context_t * context)
   context->current_ul_limiter.bytes_transfered = 0;
   context->current_dl_limiter.maxspeed = 0;
   context->current_dl_limiter.bytes_transfered = 0;
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   context->ssl.obj = NULL;
   context->ssl.data_ssl = NULL;
 #endif
@@ -306,7 +306,7 @@ void server_restart(int signum)
     mainConfig->vfs = config->vfs;
     /* do not touch hooks */
     /* do not touch modules */
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     /* what can we do with ssl ? */
     /* reload certificate ? */
 #endif
@@ -571,7 +571,7 @@ static int server_add_ident_candidate(int socket_accept_fd)
 
   /* switch to tls mode ? */
   /* TODO XXX FIXME to be done AFTER ident check */
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (mainConfig->tls_type == TLS_IMPLICIT) {
     if (tls_auth("SSL",context)) {
       close(newsock);
@@ -859,7 +859,7 @@ static void server_login_accept(wzd_context_t * context)
     
 
     /* switch to tls mode ? */
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
 	close(context->controlfd);
@@ -991,7 +991,7 @@ void child_interrupt(int signum)
 #endif
       client_die(&context_list[i]);
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
       tls_free(&context_list[i]);
 #endif
       break;
@@ -1413,7 +1413,7 @@ void serverMainThreadExit(int retcode)
 #endif
 /*	client_die(&context_list[i]);*/
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
 /*	tls_free(&context_list[i]);*/
 #endif
       }
@@ -1427,7 +1427,7 @@ void serverMainThreadExit(int retcode)
 #else
   Sleep(1000);
 #endif
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   tls_exit();
 #endif
   wzd_cache_purge();

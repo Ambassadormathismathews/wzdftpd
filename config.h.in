@@ -92,9 +92,6 @@
 /* Define to 1 if you have the `iswxdigit' function. */
 #undef HAVE_ISWXDIGIT
 
-/* Define to 1 if you have the `ssl' library (-lssl). */
-#undef HAVE_LIBSSL
-
 /* Define to 1 if `lstat' has the bug that it succeeds when given the
    zero-length file name argument. */
 #undef HAVE_LSTAT_EMPTY_STRING_BUG
@@ -124,8 +121,8 @@
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
-/* Define to 1 if you have the <openssl/ssl.h> header file. */
-#undef HAVE_OPENSSL_SSL_H
+/* Define if using openssl */
+#undef HAVE_OPENSSL
 
 /* Define if using pam */
 #undef HAVE_PAM

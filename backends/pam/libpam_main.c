@@ -53,9 +53,7 @@ static int users_count;
 
 static const char * pam_service_name = "ftp";
 
-int
-su_conv(int num_msg, const struct pam_message **msg,
-    struct pam_response **resp, void *appdata)
+int su_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata)
 {
   const struct pam_message *m = *msg;
   struct pam_response *r;
@@ -98,12 +96,6 @@ su_conv(int num_msg, const struct pam_message **msg,
 }
 
 
-/*
-static struct pam_conv PAM_conversation = {
-  su_conv,
-  "prout 32"
-};*/
-
 
 
 
@@ -130,9 +122,6 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
   ret = pam_start( pam_service_name, login, &PAM_conversation, &pamh );
 
   if (ret == PAM_SUCCESS) {
-#if 0
-    ret = pam_authenticate(pamh, 0); /* is user really user ? */
-#endif
     ret = pam_acct_mgmt(pamh, 0);
     if (ret != PAM_SUCCESS)
     {

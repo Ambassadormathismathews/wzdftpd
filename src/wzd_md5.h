@@ -25,7 +25,7 @@ char *Brokencrypt_md5(const char *pw, const char *salt);
 * This is needed to make RSAREF happy on some MS-DOS compilers.
 */
 
-typedef struct MD5Context MD5_CTX;
+/*typedef struct MD5Context MD5_CTX;*/ /* conflicts with openssl declaration */
 
 /* FIXME VISUAL */
 #define MD5Name(x) (Good ## x)

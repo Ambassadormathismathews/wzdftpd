@@ -33,7 +33,7 @@ void * clientThreadProc(void *arg);
 void client_die(wzd_context_t * context);
 
 #define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
 #define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"
 #else
 #define TEMP_FEAT GLOBAL_FEATURES

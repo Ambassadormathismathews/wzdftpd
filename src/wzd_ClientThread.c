@@ -146,7 +146,7 @@ int identify_token(char *token)
     return TOK_DELE;
   if (strcmp("abor",token)==0)
     return TOK_ABOR;
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (strcmp("pbsz",token)==0)
     return TOK_PBSZ;
   if (strcmp("prot",token)==0)
@@ -597,7 +597,7 @@ int waitaccept(wzd_context_t * context)
       return -1;
   }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_init_datamode(sock, context);
 #endif
@@ -635,7 +635,7 @@ int waitconnect(wzd_context_t * context)
       return -1;
     }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
 #endif
@@ -655,7 +655,7 @@ int waitconnect(wzd_context_t * context)
       return -1;
     }
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
 #endif
@@ -692,7 +692,7 @@ int list_callback(int sock, wzd_context_t * context, char *line)
     }
   } while (!FD_ISSET(sock,&fds));
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (context->ssl.data_mode == TLS_CLEAR)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
@@ -840,7 +840,7 @@ printf("path: '%s'\n",path);
   else
     ret = send_message_with_args(501,context,"Error processing list");
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
@@ -2259,7 +2259,7 @@ static int do_login_loop(wzd_context_t * context)
   char username[HARD_USERNAME_LENGTH];
   int ret;
   int user_ok=0, pass_ok=0;
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   int tls_ok=0;
 #endif
   int command;
@@ -2357,7 +2357,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	return E_USER_NO_HOME;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
       if (mainConfig->tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
 	ret = send_message_with_args(421,context,"TLS session MUST be engaged");
 	return 1;
@@ -2370,7 +2370,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       return 0; /* user + pass ok */
       break;
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     case TOK_AUTH:
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token || token[0]==0) {
@@ -2411,7 +2411,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       ret = send_message_with_args(200,context,"PROT command OK");
       break;
-#else /* SSL_SUPPORT */
+#else /* HAVE_OPENSSL */
     case TOK_AUTH:
     case TOK_PBSZ:
     case TOK_PROT:
@@ -2970,7 +2970,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       ret = send_message(226,context);
       break;
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
     case TOK_PROT:
       /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
       token = strtok_r(NULL,"\r\n",&ptr);
@@ -3036,7 +3036,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
   client_die(context);
 #endif /* WZD_MULTITHREAD */
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   tls_free(context);
 #endif
   return NULL;

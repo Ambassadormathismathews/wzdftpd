@@ -22,7 +22,11 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#endif
+
+#ifdef HAVE_OPENSSL
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
@@ -743,4 +747,4 @@ int tls_free(wzd_context_t * context)
 
 #endif /* defined __CYGWIN__ && defined WINSOCK_SUPPORT */
 
-#endif /* SSL_SUPPORT */
+#endif /* HAVE_OPENSSL */

@@ -339,9 +339,11 @@ typedef struct _wzd_param_t {
 
 /*************************** TLS **************************/
 
-#ifndef SSL_SUPPORT
-#define SSL     void
-#define SSL_CTX void
+#ifndef HAVE_OPENSSL
+# define SSL     void
+# define SSL_CTX void
+#else
+# include <openssl/ssl.h>
 #endif
 
 typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */

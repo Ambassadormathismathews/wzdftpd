@@ -22,6 +22,7 @@ AM_CONFIG_HEADER([config.h])
 dnl helper macros
 sinclude(ac-helpers/berkeley-db.m4)
 sinclude(ac-helpers/mysql.m4)
+sinclude(ac-helpers/openssl.m4)
 sinclude(ac-helpers/pam.m4)
 sinclude(ac-helpers/pgsql.m4)
 sinclude(ac-helpers/tcl.m4)
@@ -97,6 +98,7 @@ AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
 
 WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
+WZD_LIB_OPENSSL(0,9,6,2)
 WZD_LIB_PAM
 WZD_LIB_MYSQL
 WZD_LIB_PGSQL
@@ -169,26 +171,10 @@ AC_ARG_ENABLE(winsock, [  --enable-winsock        enable winsock support (win32 
 fi
 
 
-AC_MSG_CHECKING(whether to build ssl support)
+if eval "test x$wzd_lib_openssl = xyes"; then
+  WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}ssl"
+fi
 
-AC_ARG_ENABLE(ssl, [  --enable-ssl            enable ssl support],
-  if eval "test x$enable_winsock = xyes"; then
-    SSL_CPPFLAGS="-DSSL_SUPPORT"
-    AC_MSG_RESULT(yes, with wrapper)
-  else
-    if eval "test x$enable_ssl = xyes"; then
-      AC_MSG_RESULT(yes)
-      [AC_CHECK_HEADERS([openssl/ssl.h],,AC_MSG_ERROR(missing openssl headers))]
-      [AC_CHECK_LIB(ssl, SSL_library_init,,AC_MSG_ERROR(missing openssl libraries),"-lcrypto")]
-      SSL_CPPFLAGS="-DSSL_SUPPORT"
-      SSL_LDFLAGS="-lssl -lcrypto"
-      WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}ssl"
-    else
-      AC_MSG_RESULT(no)
-    fi
-  fi,
-  AC_MSG_RESULT(no)
-)
 
 AC_MSG_CHECKING(whether to build ipv6 support)
 

@@ -38,14 +38,14 @@
 #include <stdio.h>
 #include <errno.h>
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #else
 #define	SSL	void
 #define	SSL_CTX	void
-#endif /* SSL_SUPPORT */
+#endif /* HAVE_OPENSSL */
 
 #define Sleep(x)        usleep((x)*1000)
 
@@ -71,7 +71,7 @@ void data_close(wzd_context_t * context)
 {
   int ret;
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
@@ -158,7 +158,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   case TOK_RETR:
     n = file_read(context->current_action.current_file,buffer,sizeof(buffer));
     if (n>0) {
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
 	ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       else
@@ -208,7 +208,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
     }
     break;
   case TOK_STOR:
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
 	n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
       else

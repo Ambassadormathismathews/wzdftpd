@@ -25,7 +25,7 @@
 #ifndef __WZD_TLS__
 #define __WZD_TLS__
 
-#ifdef SSL_SUPPORT
+#ifdef HAVE_OPENSSL
 
 int tls_init(void);
 int tls_exit(void);
