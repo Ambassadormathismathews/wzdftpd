@@ -1234,6 +1234,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
     if (mod_type & _USER_RATIO) user_pool[count].ratio = user->ratio;
   } else { /* user not found, add it */
+    if (user_count >= user_count_max) return -1;
 /*    fprintf(stderr,"Add user %s\n",name);*/
     DIRNORM(user->rootpath,strlen(user->rootpath),0);
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
@@ -1308,7 +1309,8 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
         strcpy(group_pool[count].ip_allowed[i],group->ip_allowed[i]);
     }
   } else { /* group not found, add it */
-    fprintf(stderr,"Add group %s\n",name);
+    if (group_count >= group_count_max) return -1;
+/*    fprintf(stderr,"Add group %s\n",name);*/
     DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
     memcpy(&group_pool[group_count],group,sizeof(wzd_group_t));
     group_pool[group_count].gid = find_free_gid(1);
@@ -1331,7 +1333,7 @@ wzd_user_t * FCN_GET_USER(int uid)
     int * uid_list = NULL;
     unsigned int i, index;
 
-    uid_list = (int*)wzd_malloc(HARD_DEF_USER_MAX*sizeof(int));
+    uid_list = (int*)wzd_malloc((HARD_DEF_USER_MAX+1)*sizeof(int));
     i = index = 0;
     while (i < user_count_max) {
       if (user_pool[i].username[0]!='\0' && user_pool[i].uid!=-1)
@@ -1339,6 +1341,7 @@ wzd_user_t * FCN_GET_USER(int uid)
       i++;
     }
     uid_list[index] = -1;
+    uid_list[HARD_DEF_USER_MAX] = -1;
 
     return (wzd_user_t*)uid_list;
   }
@@ -1354,7 +1357,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     int * gid_list = NULL;
     unsigned int i, index;
 
-    gid_list = (int*)wzd_malloc(HARD_DEF_GROUP_MAX*sizeof(int));
+    gid_list = (int*)wzd_malloc((HARD_DEF_GROUP_MAX+1)*sizeof(int));
     i = index = 0;
     while (i < group_count_max) {
       if (group_pool[i].groupname[0]!='\0' && group_pool[i].gid!=-1)
@@ -1362,6 +1365,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
       i++;
     }
     gid_list[index] = -1;
+    gid_list[HARD_DEF_GROUP_MAX] = -1;
 
     return (wzd_group_t*)gid_list;
   }
