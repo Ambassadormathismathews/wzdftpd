@@ -54,9 +54,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#ifndef S_SPLINT_S
-# include <arpa/inet.h>
-#endif
+#include <arpa/inet.h>
 
 #include <regex.h>
 

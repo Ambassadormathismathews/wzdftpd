@@ -402,8 +402,8 @@ typedef enum {
 #define	CONNECTION_TLS	0x00000040
 #define	CONNECTION_UTF8	0x00000100
 
-typedef int (*read_fct_t)(int,char*,unsigned int,int,int,void *);
-typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
+typedef int (*read_fct_t)(int,char*,size_t,int,unsigned int,void *);
+typedef int (*write_fct_t)(int,const char*,size_t,int,unsigned int,void *);
 
 #include "wzd_action.h"
 

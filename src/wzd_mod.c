@@ -50,9 +50,6 @@
 #define DL_ARG  RTLD_NOW
 #endif
 
-/* speed up compilation */
-#define	FILE	void
-
 #include "wzd_structs.h"
 
 #include "wzd_cache.h"
@@ -315,7 +312,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   char buffer[1024];
   char buffer_args[1024];
   FILE *command_output;
-  unsigned int l_command;
+  size_t l_command;
   protocol_handler_t * proto;
   char *real_command, *ptr, *first_args;
 
@@ -328,14 +325,14 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   }
 
   /* do we have args specified in command ? */
-  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
+  (void)wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
   ptr = buffer;
   real_command = read_token(buffer, &ptr);
   if (!real_command) return 1;
   first_args = strtok_r(NULL, "\r\n", &ptr);
   if (first_args) {
     if (args) {
-      int l;
+      size_t l;
       /* add command line args to permanent args */
       if (strlen(args) + strlen(hook->external_command) >= sizeof(buffer)+1) return 1;
       /* insert space if not present */
@@ -344,7 +341,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
         first_args[l++] = ' ';
         first_args[l++] = '\0';
       }
-      strlcat(first_args, args, sizeof(buffer));
+      (void)strlcat(first_args, args, sizeof(buffer));
     }
     args = first_args;
   }
@@ -373,7 +370,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   else
   {
     *(buffer+l_command++) = ' ';
-    wzd_strncpy(buffer + l_command, buffer_args, sizeof(buffer) - l_command - 1);
+    (void)wzd_strncpy(buffer + l_command, buffer_args, sizeof(buffer) - l_command - 1);
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -394,7 +391,7 @@ int hook_call_external(wzd_hook_t *hook, unsigned int code)
   char buffer[1024];
   char *buffer_args;
   FILE *command_output;
-  unsigned int l_command;
+  size_t l_command;
   protocol_handler_t * proto;
 
   if (!hook || !hook->external_command) return 1;
@@ -754,7 +751,7 @@ static int _hook_print_file(const char *filename, wzd_context_t *context)
   }
   filesize = wzd_cache_getsize(fp);
   file_buffer = malloc(filesize+1);
-  if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize )
+  if ( (size=(unsigned int)wzd_cache_read(fp,file_buffer,filesize))!=filesize )
   {
     out_log(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
     free(file_buffer);

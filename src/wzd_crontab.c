@@ -171,7 +171,7 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
   strncpy(new->day_of_month,day_of_month,32);
   strncpy(new->month,month,32);
   strncpy(new->day_of_week,day_of_week,32);
-  time(&now);
+  (void)time(&now);
   new->next_run = cronjob_find_next_exec_date(now,minutes,hours,day_of_month,
       month,day_of_week);
   new->next_cronjob = NULL;
@@ -198,7 +198,7 @@ int cronjob_run(wzd_cronjob_t ** crontab)
   time_t now;
   int ret;
 
-  time(&now);
+  (void)time(&now);
   while (job) {
     if ( now >= job->next_run )
     {

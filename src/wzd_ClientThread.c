@@ -190,7 +190,7 @@ int identify_token(char *token)
 
 /*************** clear_read **************************/
 
-int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int clear_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -234,7 +234,7 @@ int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int
 
 /*************** clear_write *************************/
 
-int clear_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int clear_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;

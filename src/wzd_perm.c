@@ -334,7 +334,7 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   wzd_cp_t cp;
   char c;
   int negate;
-  unsigned int length;
+  size_t length;
 
   if (!permname || !permline) return 1;
   if (!strlen(permname) || !strlen(permline)) return 1;

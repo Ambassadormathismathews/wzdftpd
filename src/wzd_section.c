@@ -69,7 +69,7 @@ int section_add(wzd_section_t **section_list, char *name, char *mask, const char
     err = regcomp(section_new->pathfilter,filter,REG_EXTENDED | REG_NOSUB);
     if (err) {
       char buf[512];
-      regerror(err,section_new->pathfilter,buf,512);
+      (void)regerror(err,section_new->pathfilter,buf,512);
       out_err(LEVEL_HIGH,"Error compiling regexp: %s\n",buf);
       free(section_new->pathfilter);
       free(section_new);

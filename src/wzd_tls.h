@@ -37,8 +37,8 @@ int tls_free(wzd_context_t * context);
 
 int tls_auth_data_cont(wzd_context_t * context);
 
-int tls_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
-int tls_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+int tls_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
 #endif
 

@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
 #endif
 
 #include <sys/stat.h>
@@ -52,7 +52,7 @@
 
 
 
-static struct wzd_shm_vars_t * _shm_vars[32] = { 0 };
+static struct wzd_shm_vars_t * _shm_vars[32] = { NULL };
 static wzd_mutex_t * _shm_mutex = NULL;
 
 
@@ -74,7 +74,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcasecmp(varname,"max_dl")==0) {
-    snprintf(data,datalength,"%d",config->global_dl_limiter.maxspeed);
+    snprintf(data,datalength,"%u",config->global_dl_limiter.maxspeed);
     return 0;
   }
   if (strcasecmp(varname,"max_threads")==0) {
@@ -82,7 +82,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcasecmp(varname,"max_ul")==0) {
-    snprintf(data,datalength,"%d",config->global_ul_limiter.maxspeed);
+    snprintf(data,datalength,"%u",config->global_ul_limiter.maxspeed);
     return 0;
   }
   if (strcasecmp(varname,"pasv_low")==0) {
@@ -94,15 +94,15 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcasecmp(varname,"port")==0) {
-    snprintf(data,datalength,"%d",config->port);
+    snprintf(data,datalength,"%u",config->port);
     return 0;
   }
   if (strcmp(varname,"uptime")==0) {
     time_t t;
 
-    time(&t);
+    (void)time(&t);
     t = t - config->server_start;
-    snprintf(data,datalength,"%ld",t);
+    snprintf(data,datalength,"%lu",(unsigned long)t);
     return 0;
   }
 
@@ -162,11 +162,11 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     return 0;
   }
   if (strcasecmp(varname,"maxdl")==0) {
-    snprintf(data,datalength,"%ld",user->max_dl_speed);
+    snprintf(data,datalength,"%lu",user->max_dl_speed);
     return 0;
   }
   if (strcasecmp(varname,"maxul")==0) {
-    snprintf(data,datalength,"%ld",user->max_ul_speed);
+    snprintf(data,datalength,"%lu",user->max_ul_speed);
     return 0;
   }
   if (strcasecmp(varname,"name")==0) {
@@ -482,11 +482,11 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
     return 0;
   }
   if (strcasecmp(varname,"maxdl")==0) {
-    snprintf(data,datalength,"%ld",group->max_dl_speed);
+    snprintf(data,datalength,"%lu",group->max_dl_speed);
     return 0;
   }
   if (strcasecmp(varname,"maxul")==0) {
-    snprintf(data,datalength,"%ld",group->max_ul_speed);
+    snprintf(data,datalength,"%lu",group->max_ul_speed);
     return 0;
   }
   if (strcasecmp(varname,"name")==0) {

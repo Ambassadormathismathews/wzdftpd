@@ -63,8 +63,8 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
 void file_close(int fd, wzd_context_t * context);
 
 /* wrappers just to keep things in same memory zones */
-int file_read(int fd,void *data,unsigned int length);
-int file_write(int fd,const void *data,unsigned int length);
+int file_read(int fd,void *data,size_t length);
+int file_write(int fd,const void *data,size_t length);
 
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context);
 

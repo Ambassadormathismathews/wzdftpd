@@ -169,10 +169,10 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     if (n>0) {
 #ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
-        ret = clear_write(context->datafd,context->data_buffer,n,0,HARD_XFER_TIMEOUT,context);
+        ret = clear_write(context->datafd,context->data_buffer,(size_t)n,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
-        ret = (context->write_fct)(context->datafd,context->data_buffer,n,0,HARD_XFER_TIMEOUT,context);
+        ret = (context->write_fct)(context->datafd,context->data_buffer,(unsigned int)n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
         file_close(context->current_action.current_file, context);
@@ -239,7 +239,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
       n = (context->read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
-      if (file_write(context->current_action.current_file,context->data_buffer,n) != n) {
+      if (file_write(context->current_action.current_file,context->data_buffer,(size_t)n) != n) {
         out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
       }
       context->current_action.bytesnow += n;
@@ -273,9 +273,9 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       /* send message header */
       send_message_raw("226- command ok\r\n",context);
       FORALL_HOOKS(EVENT_POSTUPLOAD)
-        typedef int (*login_hook)(unsigned long, const char*, const char *);
+        typedef int (*pul_hook)(unsigned long, const char*, const char *);
         if (hook->hook)
-          ret = (*(login_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+          ret = (*(pul_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
         else
           ret = hook_call_external(hook,226);
       END_FORALL_HOOKS

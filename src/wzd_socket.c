@@ -56,7 +56,7 @@ char * ul2a(unsigned long q)
 {
   static char host[64];
 
-  sprintf(host, "%u.%u.%u.%u",
+  snprintf(host, 64, "%u.%u.%u.%u",
     ((unsigned char *)&q)[0], /* assume network order */
     ((unsigned char *)&q)[1],
     ((unsigned char *)&q)[2],
@@ -76,7 +76,8 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 sai6;
 #endif
-  unsigned int c;
+/*  unsigned int c;*/
+  size_t c;
 #if defined(_MSC_VER)
   SOCKET sock;
 #else
@@ -233,10 +234,10 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
   int new_sock;
 #if !defined(IPV6_SUPPORT)
   struct sockaddr_in from;
-  unsigned int len = sizeof(struct sockaddr_in);
+  size_t len = sizeof(struct sockaddr_in);
 #else
   struct sockaddr_in6 from;
-  unsigned int len = sizeof(struct sockaddr_in6);
+  size_t len = sizeof(struct sockaddr_in6);
 #endif
   int i;
 
@@ -294,7 +295,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 sai6;
 #endif
-  unsigned int len = sizeof(struct sockaddr_in);
+  size_t len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
 
@@ -522,7 +523,7 @@ int socket_get_local_port(int sock)
   return get_sock_port(sock, 1);
 }
 
-int socket_wait_to_read(unsigned int sock, int timeout)
+int socket_wait_to_read(int sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
@@ -561,7 +562,7 @@ int socket_wait_to_read(unsigned int sock, int timeout)
   return -1;
 }
 
-int socket_wait_to_write(unsigned int sock, int timeout)
+int socket_wait_to_write(int sock, unsigned int timeout)
 {
   int ret;
   int save_errno;

@@ -47,7 +47,7 @@
 /*#define WZD_DBG_FD*/
 
 
-#define FD_SIG 0xbf07a4fb
+#define FD_SIG 0xbf07a4fbUL
 #define WZD_MAX_FD 1024
 
 #ifdef DEBUG

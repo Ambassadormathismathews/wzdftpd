@@ -1788,12 +1788,12 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
 }
 
 /* wrappers just to keep things in same memory zones */
-int file_read(int fd,void *data,unsigned int length)
+int file_read(int fd,void *data,size_t length)
 {
   return read(fd,data,length);
 }
 
-int file_write(int fd,const void *data,unsigned int length)
+int file_write(int fd,const void *data,size_t length)
 {
   return write(fd,data,length);
 }

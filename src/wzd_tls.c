@@ -146,7 +146,7 @@ int tls_exit(void)
 
 /*************** tls_read ****************************/
 
-int tls_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int tls_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
@@ -205,7 +205,7 @@ int tls_read(unsigned int sock, char *msg, unsigned int length, int flags, int t
 
 /*************** tls_write ***************************/
 
-int tls_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
