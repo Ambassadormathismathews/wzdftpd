@@ -1,3 +1,26 @@
+wzdftpd (0.3-4) unstable; urgency=low
+
+  * put log files in proper place
+  * moved 'test' module to be an example only
+
+ -- pollux <pollux@wzdftpd.net>  Sat, 17 Apr 2004 00:04:59 +0200
+
+wzdftpd (0.3-3) unstable; urgency=low
+
+  * missing build dependancy on flex, docbook-utils
+  * uncompressed man pages
+  * new package wzdftpd-dev
+  * use dh_install instead of manual installation
+
+ -- pollux <pollux@wzdftpd.net>  Fri, 16 Apr 2004 21:26:52 +0200
+
+wzdftpd (0.3-2) unstable; urgency=low
+
+  * missing build dependancy on libmysqlclient-dev
+  * paths corrected in config file
+
+ -- pollux <pollux@wzdftpd.net>  Fri, 16 Apr 2004 17:53:03 +0200
+
 wzdftpd (0.3-1) unstable; urgency=low
 
   * New upstream release

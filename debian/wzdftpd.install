@@ -1,0 +1,6 @@
+etc/*
+usr/share/doc/wzdftpd/*
+usr/sbin/wzdftpd
+usr/bin/*
+usr/lib/libwzd.so
+usr/lib/wzdftpd/backends/libwzdplaintext.*

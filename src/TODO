@@ -19,8 +19,6 @@
   use TCL slaves
 '********'
 - create manpages !
-- move some files to doc/examples
-- package wzdftpd-dev
 '********'
 - modules: activate/desactivate module, remove from list
 '********'

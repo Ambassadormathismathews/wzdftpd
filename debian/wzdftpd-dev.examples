@@ -1,0 +1,2 @@
+modules/test/libwzd_test.c
+modules/test/Makefile.test

@@ -2,7 +2,7 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
-Build-Depends: debhelper (>= 4.0.0), libssl-dev, zlib1g-dev, tcl8.4-dev, libpam0g-dev
+Build-Depends: debhelper (>= 4.0.0), libssl-dev, zlib1g-dev, tcl8.4-dev, libpam0g-dev, libmysqlclient-dev, flex, docbook-utils
 Standards-Version: 3.6.0
 
 Package: wzdftpd
@@ -92,6 +92,24 @@ Description: A portable, modular, efficient and not user-friendly ftp server (TC
  a powerful event-driven system to extend server.
  .
  This package provides the TCL module.
+
+Package: wzdftpd-dev
+Architecture: any
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Section: libdevel
+Description: A portable, modular, efficient and not user-friendly ftp server (devel files)
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
+ .
+ Features are: flexible user management, acls, virtual users/groups, security,
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
+ .
+ It includes several authentication backends, is easily scriptable and provides
+ a powerful event-driven system to extend server.
+ .
+ This package provides all needed files to develop extensions.
 
 Package: wzdftpd-doc
 Architecture: all

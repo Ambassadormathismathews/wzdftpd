@@ -48,13 +48,13 @@ dir_message = .message
 # use ONE of the following:
 
 # log file for server activity
-logfile = @e_datadir@/@PACKAGE@/logs/wzd.log
+logfile = @e_localstatedir@/log/@PACKAGE@/wzd.log
 
 # set to 0 if you do not want syslog (default: 1)
 #use_syslog = 0
 
 # log file for transfered files (default: do not log)
-xferlog = @e_datadir@/@PACKAGE@/logs/xferlog
+xferlog = @e_localstatedir@/log/@PACKAGE@/xferlog
 
 # max number of child threads (default: 32)
 max_threads = 32
@@ -66,7 +66,7 @@ max_threads = 32
 # backend name SHOULD NEVER contains spaces !
 #backend = plaintext > 122
 backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 122
-backend_param_plaintext = @e_datadir@/@PACKAGE@/users
+backend_param_plaintext = @e_sysconfdir@/@PACKAGE@/users
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
 
@@ -192,16 +192,16 @@ section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 #site_cmd = my_free ./free.sh
 
 ##### SITE FILES
-sitefile_ginfo	= @e_datadir@/@PACKAGE@/file_ginfo.txt
-sitefile_group	= @e_datadir@/@PACKAGE@/file_group.txt
-sitefile_groups	= @e_datadir@/@PACKAGE@/file_groups.txt
-sitefile_help	= @e_datadir@/@PACKAGE@/file_help.txt
-sitefile_rules	= @e_datadir@/@PACKAGE@/file_rules.txt
-sitefile_swho	= @e_datadir@/@PACKAGE@/file_swho.txt
-sitefile_user	= @e_datadir@/@PACKAGE@/file_user.txt
-sitefile_users	= @e_datadir@/@PACKAGE@/file_users.txt
-sitefile_who	= @e_datadir@/@PACKAGE@/file_who.txt
-sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
+sitefile_ginfo	= @e_sysconfdir@/@PACKAGE@/file_ginfo.txt
+sitefile_group	= @e_sysconfdir@/@PACKAGE@/file_group.txt
+sitefile_groups	= @e_sysconfdir@/@PACKAGE@/file_groups.txt
+sitefile_help	= @e_sysconfdir@/@PACKAGE@/file_help.txt
+sitefile_rules	= @e_sysconfdir@/@PACKAGE@/file_rules.txt
+sitefile_swho	= @e_sysconfdir@/@PACKAGE@/file_swho.txt
+sitefile_user	= @e_sysconfdir@/@PACKAGE@/file_user.txt
+sitefile_users	= @e_sysconfdir@/@PACKAGE@/file_users.txt
+sitefile_who	= @e_sysconfdir@/@PACKAGE@/file_who.txt
+sitefile_vfs	= @e_sysconfdir@/@PACKAGE@/file_vfs.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically

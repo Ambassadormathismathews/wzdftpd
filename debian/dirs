@@ -3,3 +3,4 @@ usr/lib
 usr/sbin
 etc
 usr/share/man/man1
+var/log/wzdftpd

@@ -32,7 +32,7 @@ endif
 config.status: configure
 	dh_testdir
 	# Add here commands to configure the package.
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --sysconfdir=/etc/wzdftpd --with-pam
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam
 
 
 #Architecture 
@@ -96,15 +96,19 @@ install-arch:
 
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/wzdftpd
-	install -m 644 debian/*.1.gz debian/wzdftpd/usr/share/man/man1/
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 
-	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdmysql* debian/wzdftpd-back-mysql/usr/lib/wzdftpd/backends
-	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdpam* debian/wzdftpd-back-pam/usr/lib/wzdftpd/backends
-	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_tcl* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
-	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-sfv/usr/lib/wzdftpd/modules
+	install -m 755 -d debian/tmp/usr/include/wzdftpd
+	install -m 644 src/*.h debian/tmp/usr/include/wzdftpd/
 
-	dh_install -s
+#	install -m 644 debian/*.1.gz debian/wzdftpd/usr/share/man/man1/
+#
+#	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdmysql* debian/wzdftpd-back-mysql/usr/lib/wzdftpd/backends
+#	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdpam* debian/wzdftpd-back-pam/usr/lib/wzdftpd/backends
+#	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_tcl* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
+#	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-sfv/usr/lib/wzdftpd/modules
+
+	dh_install -s --list-missing --sourcedir=debian/tmp
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
 # in another 'make' thread.
