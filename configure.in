@@ -82,6 +82,8 @@ AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
+AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_FUNCS([backtrace])
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
 AC_CHECK_FUNCS([crypt strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton statvfs])
 AC_CHECK_FUNCS(getaddrinfo getnameinfo)

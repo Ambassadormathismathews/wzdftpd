@@ -49,6 +49,10 @@
 
 #endif /* WZD_USE_PCH */
 
+#ifdef HAVE_EXECINFO_H
+# include <execinfo.h>
+#endif
+
 /* uncomment to trace ALL fd registration operations */
 /*#define WZD_DBG_FD*/
 
@@ -251,5 +255,23 @@ void fd_dump(void)
         _wzd_fd_table[i].function);
   }
   out_err(LEVEL_HIGH,"end of fd list dump:\n");
+#endif
+}
+
+void dump_backtrace(void)
+{
+#ifdef HAVE_BACKTRACE
+  void *bt[25];
+  char **ptr;
+  int i, size;
+
+  if ((size=backtrace(bt,25))>0) {
+    if ((ptr=backtrace_symbols(bt,25))) {
+      for (i=0; i<size; i++) {
+        if (ptr[i])
+          fprintf(stderr,"frame %d: %s\n",i,ptr[i]);
+      }
+    }
+  }
 #endif
 }

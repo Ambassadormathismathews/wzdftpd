@@ -76,6 +76,8 @@ void fd_dump(void);
 # define FD_UNREGISTER(fd,desc)
 #endif
 
+/** try to print the backtrace */
+void dump_backtrace(void);
 
 #ifdef DEBUG
 
