@@ -183,6 +183,10 @@ int identify_token(char *token)
     return TOK_NOTHING;
   if (strcmp("\xff\xf4\xff\xf2",token)==0)
     return TOK_NOTHING;
+  if (strcmp("\xff\xf4",token)==0) /* telnet IP */
+    return TOK_NOTHING;
+  if (strcmp("\xff",token)==0) /* telnet SYNCH */
+	  return TOK_NOTHING;
   return TOK_UNKNOWN;
 }
 
