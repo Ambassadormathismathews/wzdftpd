@@ -9,9 +9,6 @@
 '********'
 - remove limit on msg
 '********'
-- XCRC/XMD5 command
- -> implement calc_md5 with pre-computed MD5
-'********'
 - announce:
 Tue Sep 10 12:28:49 2002 SFV: "/path/to/rlz/" "Got SFV for rlz_name. Expecting 50."
 Tue Sep 10 12:31:48 2002 UPDATE: "/path/to/rlz/" "kakao was the first to upload file in rlz_name. Expecting 715.3 mB."
@@ -59,6 +56,8 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
 '********'
 - implement group flags
 '********'
+- better config file name management, to allow using options like -d without giving config file first
+'********'
 - hide files should be configurable: hide = .* recycler recycled *ioftpd*
 '********'
 
@@ -76,6 +75,7 @@ current objectives:
 
 - display correct permissions on ls
 
+- recursive directory listing (LIST -R)
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
 - SFV: site rescan
@@ -113,6 +113,8 @@ current objectives:
 - finish implementation of ssl: explicit, port, data protection, buffer size
 - give choice between hard/soft chroot
 - option to enable/disable FXP to certain users
+- XCRC/XMD5 command
+ -> implement calc_md5 with pre-computed MD5
 
 
 ## NORMAL ##

@@ -437,6 +437,12 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       int sock_error;
       int s_len;
       if ( (ret=socket_wait_to_write(sock,timeout))!=0) {
+        if (ret == 1) { /* timeout */
+          out_log(LEVEL_FLOOD,"Connect failed (timeout) %s:%d\n", __FILE__, __LINE__);
+          socket_close(sock);
+          errno = ETIMEDOUT;
+          return -1;
+        }
         if (errno == EINPROGRESS) continue;
         out_log(LEVEL_NORMAL,"Error waiting for connection %s\n",strerror(errno));
         socket_close(sock);

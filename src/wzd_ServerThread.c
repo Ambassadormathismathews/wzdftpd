@@ -597,11 +597,12 @@ static int server_add_ident_candidate(int socket_accept_fd)
 #ifdef _MSC_VER
 	  errno = h_errno;
 #endif
-    if (errno == ENOTCONN || errno == ECONNREFUSED) {
+    if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
       server_login_accept(context);
       return 0;
     }
     out_log(LEVEL_INFO,"Could not get ident (error: %s)\n",strerror(errno));
+    close(newsock);
     return 1;
   }
 

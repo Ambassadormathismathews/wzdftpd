@@ -22,6 +22,7 @@ happen in two cases: last execution crashed, or another server is running.
 </para>
 <para>
 To remove a zone resulting from a crash (this should never happen :) just run
+(with options <emphasis>in the same order</emphasis>)
 </para>
 <screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg -d</screen>
 <para>
@@ -38,7 +39,11 @@ automatically try to delete shm - this open is DANGEROUS !
 <simplesect id='fas_shm2'>
 <title>[Linux] The precedent command (-d) does not work !</title>
 <para>
-OK, let's play: get the id using
+First of all, check that you have set option <filename>-f /path/to/configfile</filename>
+ <emphasis>before</emphasis> option <filename>-d</filename>.
+</para>
+<para>
+Else, let's play: get the id using
 <screen>ipcs</screen> 
 and remove memory zones using
 <screen>ipcrm shm id</screen>

@@ -160,7 +160,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   /* create new user */
   strncpy(user.username,username,255);
   strncpy(user.userpass,password,255);
-  strncpy(user.rootpath,homedir,1023);
+  strncpy(user.rootpath,homedir,WZD_MAX_PATH);
   user.tagline[0]='\0';
   user.uid=0;
   user.group_num=0;
@@ -736,7 +736,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
       }
     }
     mod_type = _USER_ROOTPATH;
-    strncpy(user.rootpath,value,1023);
+    strncpy(user.rootpath,value,WZD_MAX_PATH);
   }
   /* tagline */
   else if (strcmp(field,"tagline")==0) {

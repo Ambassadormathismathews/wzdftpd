@@ -122,7 +122,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
 
   /* create new group */
   strncpy(newgroup.groupname,groupname,128);
-  strncpy(newgroup.defaultpath,homedir,1023);
+  strncpy(newgroup.defaultpath,homedir,WZD_MAX_PATH);
   newgroup.groupperms = 0;
   newgroup.max_idle_time = 0;
   newgroup.max_dl_speed = 0;
@@ -745,7 +745,7 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
       }
     }
     mod_type = _GROUP_DEFAULTPATH;
-    strncpy(group.defaultpath,value,1023);
+    strncpy(group.defaultpath,value,WZD_MAX_PATH);
   }
   /* max_idle */
   else if (strcmp(field,"max_idle")==0) {

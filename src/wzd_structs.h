@@ -190,7 +190,7 @@ typedef struct {
 typedef struct {
   char                  username[HARD_USERNAME_LENGTH];
   char			userpass[MAX_PASS_LENGTH];
-  char                  rootpath[1024];
+  char                  rootpath[WZD_MAX_PATH];
   char                  tagline[256];
   unsigned int          uid;
   unsigned int          group_num;
@@ -219,7 +219,7 @@ typedef struct {
   unsigned long         max_dl_speed;
   unsigned int		ratio;
   char			ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
-  char			defaultpath[1024];
+  char			defaultpath[WZD_MAX_PATH];
 } wzd_group_t;
 
 /*********************** BACKEND **************************/

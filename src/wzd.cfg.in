@@ -98,9 +98,6 @@ deny_access_files_uploaded = 1
 
 # TLS Options
 
-# cygwin, version winsock only: you must specify where the tls wrapper dll is
-#param_tls_wrapper = @e_datadir@/@PACKAGE@/wzd_tlswrap.dll
-
 # Certificate (only used in ssl mode, otherwise ignored)
 tls_certificate = @e_sysconfdir@/wzd.pem
 
