@@ -1,6 +1,18 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
+
+LIBTOOLIZE=libtoolize
+LIBTOOL=libtool
+AUTOHEADER=autoheader
+ACLOCAL=aclocal
+AUTOMAKE=automake
+AUTOCONF=autoconf
+
+EXTRA_ACLOCAL_ARGS=
+
+
+
 abort () {
     echo "$1 not found or command failed. Aborting!"
     exit 1
@@ -11,7 +23,7 @@ PKG_NAME="the package."
 
 DIE=0
 
-(autoconf --version) < /dev/null > /dev/null 2>&1 || {
+($AUTOCONF --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: You must have \`autoconf' installed to."
   echo "Download the appropriate package for your distribution,"
@@ -20,7 +32,7 @@ DIE=0
 }
 
 (grep "^AM_PROG_LIBTOOL" $srcdir/configure.in >/dev/null) && {
-  (libtool --version) < /dev/null > /dev/null 2>&1 || {
+  ($LIBTOOL --version) < /dev/null > /dev/null 2>&1 || {
     echo
     echo "**Error**: You must have \`libtool' installed."
     echo "Get ftp://ftp.gnu.org/pub/gnu/libtool-1.2d.tar.gz"
@@ -29,7 +41,7 @@ DIE=0
   }
 }
 
-(automake --version) < /dev/null > /dev/null 2>&1 || {
+($AUTOMAKE --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: You must have \`automake' installed."
   echo "Get ftp://ftp.gnu.org/pub/gnu/automake-1.5.tar.gz"
@@ -40,7 +52,7 @@ DIE=0
 
 
 # if no automake, don't bother testing for aclocal
-test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
+test -n "$NO_AUTOMAKE" || ($ACLOCAL --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: Missing \`aclocal'.  The version of \`automake'"
   echo "installed doesn't appear recent enough."
@@ -84,18 +96,18 @@ do
       done
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
 	echo "Running libtoolize..."
-	libtoolize --force --copy --automake || abort "libtoolize"
+	$LIBTOOLIZE --force --copy --automake || abort "libtoolize"
       fi
       echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude || abort "aclocal"
+      $ACLOCAL $aclocalinclude || abort "aclocal"
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
 	echo "Running autoheader..."
-	autoheader || abort "autoheader"
+	$AUTOHEADER || abort "autoheader"
       fi
       echo "Running automake --gnu $am_opt ..."
-      automake --add-missing --copy --gnu $am_opt || abort "automake"
+      $AUTOMAKE --add-missing --copy --gnu $am_opt || abort "automake"
       echo "Running autoconf ..."
-      autoconf || abort "autoconf"
+      $AUTOCONF || abort "autoconf"
  
 #      conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
 
