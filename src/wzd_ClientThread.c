@@ -509,6 +509,8 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
   user = GetUserByID(context->userid);
 
+  if ( !(user->userperms & RIGHT_CWD) ) return E_NOPERM;
+
   if (!wanted_path) return E_WRONGPATH;
   ret = checkpath_new(wanted_path,path,context);
   if (ret) return ret;
@@ -735,6 +737,8 @@ int do_list(char *name, char *param, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+
   if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
   {
     ret = send_message_with_args(501,context,"Argument or parameter too big.");
@@ -942,6 +946,9 @@ int do_stat(char *name, char *param, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  /* stat has the same behaviour as LIST */
+  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+
   if (param && (strlen(param) >= (WZD_MAX_PATH-10)))
   {
     ret = send_message_with_args(501,context,"Argument or parameter too big.");
@@ -1074,6 +1081,8 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  if ( !(user->userperms & RIGHT_MKDIR) ) { ret = E_NOPERM; goto label_error_mkdir; }
+
   if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_mkdir; }
   if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_mkdir; }
   if (strcmp(param,"/")==0) { ret = E_WRONGPATH; goto label_error_mkdir; }
@@ -1204,6 +1213,11 @@ int do_rmdir(char *name, char * param, wzd_context_t * context)
   char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
   struct stat s;
   int ret;
+  wzd_user_t * user;
+
+  user = GetUserByID(context->userid);
+
+  if ( !(user->userperms & RIGHT_RMDIR) ) { ret = E_NOPERM;; goto label_error_rmdir; }
 
   if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_rmdir; }
   if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_rmdir; }
@@ -1699,6 +1713,8 @@ int do_retr(char *name, char *param, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  if ( !(user->userperms & RIGHT_RETR) ) return E_NOPERM;
+
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
   if ((context->pasvsock < 0) && (context->dataport == 0)) {
@@ -1848,6 +1864,8 @@ int do_stor(char *name, char *param, wzd_context_t * context)
   wzd_user_t * user;
 
   user = GetUserByID(context->userid);
+
+  if ( !(user->userperms & RIGHT_STOR) ) return E_NOPERM;
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -2212,6 +2230,11 @@ int do_dele(char *name, char *param, wzd_context_t * context)
     return E_USER_IDONTEXIST;
   }
 
+  if ( !(user->userperms & RIGHT_DELE) ) {
+    ret = send_message_with_args(501,context,"Permission denied");
+    return E_NOPERM;
+  }
+
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
@@ -2404,6 +2427,15 @@ int do_rnfr(char *name, char *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
+  wzd_user_t * user;
+
+  user = GetUserByID(context->userid);
+
+  if (!user || !(user->userperms & RIGHT_RNFR)) {
+    ret = send_message_with_args(550,context,"RNFR","permission denied");
+    return E_FILE_NOEXIST;
+  }
+
 
   if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath_new(filename,path,context)) {
     ret = send_message_with_args(550,context,"RNFR","file does not exist");
@@ -2433,6 +2465,15 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
+  wzd_user_t * user;
+
+  user = GetUserByID(context->userid);
+
+  if (!user || !(user->userperms & RIGHT_RNFR)) {
+    ret = send_message_with_args(550,context,"RNTO","permission denied");
+    return E_FILE_NOEXIST;
+  }
+
 
   if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH) {
     ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
