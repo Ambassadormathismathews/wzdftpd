@@ -2056,11 +2056,14 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
     wzd_command_t * command_real;
 
     command_real = commands_find(mainConfig->commands_list,command);
+    /* disabled because this breaks custom site commands */
+#if 0
     if (!command_real) {
-      ret = send_message_with_args(501,context,"Permission Denied");
+      ret = send_message_with_args(501,context,"Permission not found for site command");
       return 1;
     }
-    if (commands_check_permission(command_real,context)) {
+#endif
+    if (command_real && commands_check_permission(command_real,context)) {
       ret = send_message_with_args(501,context,"Permission Denied");
       return 1;
     }

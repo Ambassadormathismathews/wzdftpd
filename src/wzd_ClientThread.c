@@ -3739,7 +3739,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         command_real = commands_find(mainConfig->commands_list,token);
         if (command_real) command = command_real;
 
-        if (commands_check_permission(command_real,context)) {
+        /** For SITE commands, the default permission (if not specified)
+         * is to ALLOW users to use command, unless restricted !
+         */
+        if (command_real && commands_check_permission(command_real,context)) {
           ret = send_message_with_args(501,context,"Permission Denied");
           str_deallocate(token);
           str_deallocate(command_buffer);

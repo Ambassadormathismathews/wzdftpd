@@ -1,7 +1,8 @@
-2005-03-15  Pierre Chifflier  <pollux@wzdftpd.net>
+2005-03-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: unresolved symbols when compiling without TLS
 	* bugfix: unable to change directory when name ends with .
+	* bugfix: custom site commands not authorized
 
 2005-03-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
