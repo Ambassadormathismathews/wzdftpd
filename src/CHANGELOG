@@ -1,3 +1,8 @@
+# Aug, 28 2003
+- added some debug stuff
+- bugfix: do not include lex'ed C files (build fails on cygwin)
+- some woth on the debian package
+
 # Aug, 12 2003
 - bugfix: autogen.sh not working on bsd
 - bugfix: O_SYNC not declared on freebsd 4.8

@@ -1,4 +1,3 @@
 - winsock version: ctrl+c is not handled instantaneously, but only after an
   interruptible function is called in main loop (printf,login, etc)
  consequence: ctrl+c is only handled next time a client tries to log in
-
