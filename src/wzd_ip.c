@@ -40,7 +40,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>  /* struct in_addr (wzd_misc.h) */
 
-#include <netdb.h>  /* gethostbyname */
+#include <netdb.h>
 #endif
 
 #include <stdio.h>
@@ -53,6 +53,7 @@
 #include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_socket.h"
 
 #endif /* WZD_USE_PCH */
 
@@ -82,14 +83,9 @@ int ip_compare(const char * ip, const char * pattern)
 
 #ifndef IPV6_SUPPORT
   if (!has_wildcards1 && !has_wildcards2) { /* no wildcards */
-    /** \todo FIXME replace gethostbyname with getaddrinfo, but it is NOT supported on win32 ... */
-    host = gethostbyname(ip);
-    if (!host) return 0;
-    memcpy(buffer1, host->h_addr, sizeof(buffer1));
+    if (socket_getipbyname(ip, buffer1, sizeof(buffer1))) return 0;
 
-    host = gethostbyname(pattern);
-    if (!host) return 0;
-    memcpy(buffer2, host->h_addr, sizeof(buffer2));
+    if (socket_getipbyname(pattern, buffer2, sizeof(buffer2))) return 0;
 
     if (memcmp(buffer1,buffer2,4)==0) /** and for IPv6 ?! */
       return 1;
@@ -110,9 +106,7 @@ int ip_compare(const char * ip, const char * pattern)
   }
 
   /* here, only ip2 contains wildcards */
-  host = gethostbyname(ip);
-  if (!host) return 0;
-  memcpy(buffer1, host->h_addr, sizeof(buffer1));
+  if (socket_getipbyname(ip, buffer1, sizeof(buffer1))) return 0;
 
   /* try direct match: 127.0.0.1 vs 127.0.0.* */
   if (my_str_compare(ip,pattern)==1)

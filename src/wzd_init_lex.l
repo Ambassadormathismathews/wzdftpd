@@ -36,7 +36,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>	/* gethostbyname() */
+#include <netdb.h>
 #endif
 
 #include <stdio.h>
@@ -61,6 +61,7 @@
 #include "wzd_perm.h"
 #include "wzd_crontab.h"
 #include "wzd_section.h"
+#include "wzd_socket.h"
 #include "wzd_ServerThread.h"
 #include "wzd_vfs.h"
 
@@ -735,9 +736,8 @@ int cfg_read_dynamic_ip(void)
   case CFG_IP_STR:
     out_err(LEVEL_INFO,"Dynamic ip: %s\n",yytext);
     {
-      struct hostent *host;
-      host = gethostbyname(yytext+1);
-      if (!host) {
+      char buffer[64];
+      if (socket_getipbyname(yytext+1, buffer, sizeof(buffer))) {
         out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
         return 1;
       }
@@ -872,9 +872,8 @@ int cfg_read_ip(void)
   case CFG_IP_STR:
     out_err(LEVEL_INFO,"Dynamic ip: %s\n",yytext);
     {
-      struct hostent *host;
-      host = gethostbyname(yytext+1);
-      if (!host) {
+      char buffer[64];
+      if (socket_getipbyname(yytext+1, buffer, sizeof(buffer))) {
         out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
         return 1;
       }
@@ -1272,18 +1271,13 @@ int cfg_read_pasv_ip(void)
     break;
   case CFG_IP_STR:
     {
-      struct hostent *host;
-      unsigned char *host_ip;
-      host = gethostbyname(yytext+1);
-      if (!host) {
+      unsigned char host_ip[64];
+      if (socket_getipbyname(yytext+1, host_ip, sizeof(host_ip))) {
         out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",yytext);
         return 1;
       }
-      host_ip = (unsigned char*)(host->h_addr);
-      new_ip[0] = host_ip[0];
-      new_ip[1] = host_ip[1];
-      new_ip[2] = host_ip[2];
-      new_ip[3] = host_ip[3];
+      /** \bug IPv6 ?? */
+      memcpy(new_ip, host_ip, 4);
     }
     break;
   default:

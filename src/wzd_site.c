@@ -1920,14 +1920,17 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
       if (strlen(buffer)+strlen(dir_filename)>=1024) { closedir(dir); return 1; }
       strncpy(ptr,dir_filename,256);
 
-      if (fs_stat(buffer,&s)) { closedir(dir); return -1; }
-      if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
-        ret = file_remove(buffer,context);
-        if (ret) { closedir(dir); return 1; }
-      }
-      if (S_ISDIR(s.st_mode)) {
-        ret = do_internal_wipe(buffer,context);
-        if (ret) { closedir(dir); return 1; }
+/*      if (fs_stat(buffer,&s)) { closedir(dir); return -1; }*/
+      if (fs_stat(buffer,&s)==0) {
+        if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+/*          ret = file_remove(buffer,context);*/
+          ret = unlink(buffer);
+          if (ret) { closedir(dir); return 1; }
+        }
+        if (S_ISDIR(s.st_mode)) {
+          ret = do_internal_wipe(buffer,context);
+          if (ret) { closedir(dir); return 1; }
+        }
       }
 #ifdef _MSC_VER
       if (!FindNextFile(dir,&fileData))

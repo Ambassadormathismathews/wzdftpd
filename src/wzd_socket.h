@@ -42,4 +42,8 @@ int socket_get_local_port(int sock);
 int socket_wait_to_read(int sock, unsigned int timeout);
 int socket_wait_to_write(int sock, unsigned int timeout);
 
+
+
+int socket_getipbyname(const char *name, char *buffer, size_t length);
+
 #endif /* __WZD_SOCKET__ */

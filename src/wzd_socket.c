@@ -50,6 +50,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_socket.h"
 
@@ -70,6 +71,24 @@ char * ul2a(unsigned long q)
     ((unsigned char *)&q)[3]);
 
   return host;
+}
+
+/*************** socket_make ****************************/
+
+int socket_getipbyname(const char *name, char *buffer, size_t length)
+{
+  struct hostent * host;
+  int ret=-1;
+
+  wzd_mutex_lock(server_mutex);
+  host = gethostbyname(name);
+  if (host) {
+    memcpy(buffer, host->h_addr, length);
+    ret = 0;
+  }
+  wzd_mutex_unlock(server_mutex);
+
+  return ret;
 }
 
 /*************** socket_make ****************************/
