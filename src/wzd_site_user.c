@@ -825,6 +825,10 @@ int do_site_change(char *command_line, wzd_context_t * context)
     if (!*ptr) { mod_type = _USER_LEECHSLOTS; user.leech_slots = (unsigned short)ul; }
   }
   /* bytes_ul and bytes_dl should never be changed ... */
+  else {
+    ret = send_message_with_args(501,context,"field does not exist");
+    return 0;
+  }
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
