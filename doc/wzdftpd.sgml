@@ -8,6 +8,7 @@
 <!ENTITY common_modules SYSTEM "common_modules.sgml">
 <!ENTITY common_backends SYSTEM "common_backends.sgml">
 <!ENTITY custom-commands SYSTEM "custom_commands.sgml">
+<!ENTITY authentication SYSTEM "authentication.sgml">
 <!ENTITY sitebot SYSTEM "sitebot.sgml">
 <!ENTITY programming_modules SYSTEM "programming_modules.sgml">
 <!ENTITY freebsd_notes SYSTEM "freebsd_notes.sgml">
@@ -27,6 +28,7 @@
 &cookies_reference;
 &common_modules;
 &common_backends;
+&authentication;
 &custom-commands;
 &sitebot;
 &programming_modules;

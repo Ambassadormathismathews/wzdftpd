@@ -1,0 +1,79 @@
+<chapter id='authentication'>
+<title>Authentication</title>
+
+<para>
+wzdftpd supports several authentication methods, and all of them are common to all backends.
+</para>
+
+<para>
+This section explains which methods wzdftpd can use. For the moment, you cannot easily
+change auth method from SITE commands, but this will be implemented soon.
+</para>
+
+<sect1 id='auth_crypt'>
+<title>Crypt</title>
+
+<para>
+The default method is to store password in crypt() format, which is a variation of the
+Data Encryption Standard algorithm (DES) with variations.
+</para>
+
+<para>
+To use the crypt format, the password is stored in backend encrypted. The first two chars
+constitute the salt (it is use to perturb the algorithm).
+</para>
+
+<para>
+Passwords stored in crypt format are limited to 8 characters.
+</para>
+
+</sect1>
+
+<sect1 id='auth_md5'>
+<title>MD5</title>
+
+<para>
+Due to the limitations of the crypt format, and because it is a very common format on
+linux systems, wzdftpd also supports the MD5 format.
+</para>
+
+<para>
+To use the MD5 format, the password is stored with the special prefix "$1$".
+The next characters (until "$") constitute the salt, and the remaining is
+the encrypted password itself.
+</para>
+
+<para>
+The MD5 format is used in the "shadow" file, for exemple. So you can just copy and paste
+the encrypted password and it will work.
+</para>
+
+</sect1>
+
+<sect1 id='auth_pam'>
+<title>PAM (Pluggable Authentication Modules)</title>
+
+<para>
+If pam was detected on your system during compilation, wzdftpd can try to authenticate
+to the PAM subsystem by sending the login and password.
+</para>
+
+<para>
+To use the PAM method, set the password to "{pam}"
+</para>
+
+</sect1>
+
+<sect1 id='auth_cert'>
+<title>SSL Certificates</title>
+
+<para>
+If the client is configurated to send a client certificate, the server can verify it
+(you have to add the certificate authority in the config file, or the certificates
+will be declared invalid).
+</para>
+
+</sect1>
+
+</chapter>
+
