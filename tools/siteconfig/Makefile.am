@@ -5,7 +5,7 @@ bin_PROGRAMS = siteconfig
 
 siteconfig_SOURCES = siteconfig.c
 
-siteconfig_LDADD = $(top_srcdir)/libwzd/libwzd.la
+siteconfig_LDADD = ../../libwzd/libwzd.la
 siteconfig_LDFLAGS = -no-undefined $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES)

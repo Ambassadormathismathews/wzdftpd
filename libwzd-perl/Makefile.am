@@ -1,6 +1,8 @@
 
 EXTRA_DIST = ext/Makefile.PL.in ext/ppport.h ext/wzdftpd.pm ext/wzdftpd.xs
 
+PERL_MAKE_OPTIONS = PREFIX=${e_prefix} SITEPREFIX=${e_prefix}
+
 ext: ext/Makefile ext/wzdftpd.pm ../libwzd/libwzd.la
 	cd ext && $(MAKE)
 
@@ -12,8 +14,13 @@ all-local: ext
 
 install-data-local: all-local
 	echo "Installing wzdftpd.pm"; \
-	cd ext && $(MAKE) install PREFIX=${e_prefix} SITEPREFIX=${e_prefix}
+	cd ext && $(MAKE) install
 
 clean-local:
 	cd ext && test -f Makefile && $(MAKE) clean || true \
 	cd ext && rm -f Makefile.old
+
+## Evil Hack (TM)
+#uninstall-local:
+#	cd ext && \
+#	  `$(MAKE) uninstall | grep unlink | sed -e 's#/usr#${prefix}#' -e 's#unlink#rm -f#'`
