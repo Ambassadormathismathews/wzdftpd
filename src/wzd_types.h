@@ -40,6 +40,7 @@
 #define u64_t unsigned __int64
 #include <sys/timeb.h>
 
+#define EINPROGRESS WSAEINPROGRESS
 
 #define F_RDLCK 0 /* Read lock. */
 #define F_WRLCK 1 /* Write lock. */

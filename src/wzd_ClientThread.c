@@ -2175,7 +2175,7 @@ void do_user_ident(wzd_context_t * context)
   memset(context->ident,0,MAX_IDENT_LENGTH);
 
   /* 1- try to open ident connection */
-  fd_ident = socket_connect(*(unsigned long*)&context->hostip,ident_port,ident_port,context->controlfd,HARD_IDENT_TIMEOUT);
+  fd_ident = socket_connect(*(unsigned long*)&context->hostip,ident_port,0,context->controlfd,HARD_IDENT_TIMEOUT);
 
   if (fd_ident == -1) {
     out_log(LEVEL_NORMAL,"Could not get ident (error: %s)\n",strerror(errno));
@@ -2193,7 +2193,14 @@ void do_user_ident(wzd_context_t * context)
   /* 3- try to write */
   do {
     if (socket_wait_to_write(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
-      send(fd_ident,buffer,strlen(buffer),0);
+      ret = send(fd_ident,buffer,strlen(buffer),0);
+	  if (ret < 0) {
+#ifdef _MSC_VER
+		  errno = WSAGetLastError();
+		  socket_close(fd_ident);
+		  return;
+#endif
+	  }
     } else {
       if (errno == EINPROGRESS) continue;
       out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
@@ -2206,6 +2213,13 @@ void do_user_ident(wzd_context_t * context)
   do {
     if (socket_wait_to_read(fd_ident,HARD_IDENT_TIMEOUT) == 0) {
       ret = recv(fd_ident,buffer,sizeof(buffer),0);
+	  if (ret < 0) {
+#ifdef _MSC_VER
+		  errno = WSAGetLastError();
+		  socket_close(fd_ident);
+		  return;
+#endif
+	  }
       buffer[ret] = '\0';
     } else {
       if (errno == EINPROGRESS) continue;
@@ -2220,7 +2234,9 @@ void do_user_ident(wzd_context_t * context)
   /* 5- decode response */
   ptr = strrchr(buffer,':');
   if (!ptr) return;
-  strncpy(context->ident,ptr+1,MAX_IDENT_LENGTH);
+  ptr++; /* skip ':' */
+  while (*ptr && isspace(*ptr)) ptr++;
+  strncpy(context->ident,ptr,MAX_IDENT_LENGTH);
   chop(context->ident);
 
 #ifdef WZD_DBG_IDENT

@@ -27,6 +27,7 @@
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #else
 #include <unistd.h>
 #include <sys/socket.h>
@@ -40,7 +41,11 @@
 #include <fcntl.h>
 #include <errno.h>
 
-typedef void wzd_context_t;
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include <wzd_structs.h>
 
 #include "wzd_log.h"
 #include "wzd_socket.h"
@@ -286,11 +291,13 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
   sai.sin_port = htons((unsigned short)localport);
 
 #ifndef WINSOCK_SUPPORT
-  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
+  ret = setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
 #endif
 
   /* attempt to bind the socket - if it doesn't work, it is not a problem */
-  bind(sock,(struct sockaddr *)&sai,sizeof(sai));
+  if (localport) {
+    bind(sock,(struct sockaddr *)&sai,sizeof(sai));
+  }
 
   /* makes the connection */
   sai.sin_port = htons((unsigned short)remote_port);
@@ -306,6 +313,21 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #endif
 #endif
 
+#ifdef _MSC_VER
+    ret = connect(sock,(struct sockaddr *)&sai, len);
+	if (ret < 0) {
+	  errno = WSAGetLastError();
+	  if (errno != WSAEWOULDBLOCK)
+	  {
+        out_log(LEVEL_NORMAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
+		out_log(LEVEL_NORMAL," errno: %d\n",errno);
+        socket_close (sock);
+        return -1;
+	  }
+	} else
+		return sock;
+#endif
+
   if (timeout != 0)
   {
 
@@ -317,6 +339,7 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #else
     fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
+
     while (1)
     {
       FD_ZERO(&fds);
@@ -328,6 +351,9 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
       ret = select(0,NULL,&fds,&efds,&tv);
 #else
       ret = select(sock+1,NULL,&fds,&efds,&tv);
+#endif
+#ifndef _MSC_VER
+      errno = WSAGetLastError();
 #endif
       save_errno = errno;
 
@@ -351,6 +377,9 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
    */
   do {
     ret = connect(sock,(struct sockaddr *)&sai, len);
+#ifndef _MSC_VER
+	errno = WSAGetLastError();
+#endif
   } while ( (ret==-1) && (errno==EINPROGRESS));
   if (ret < 0) {
     out_log(LEVEL_NORMAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
@@ -364,9 +393,13 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 /* Returns the local/remote port for the socket. */
 int get_sock_port(int sock, int local)
 {
+#ifndef _MSC_VER
   struct sockaddr_storage from;
-  socklen_t fromlen;
   char strport[NI_MAXSERV];
+#else
+  struct sockaddr_in from;
+#endif
+  socklen_t fromlen;
 
   /* Get IP address of client. */
   fromlen = sizeof(from);
@@ -383,6 +416,7 @@ int get_sock_port(int sock, int local)
     }
   }
 
+#ifndef _MSC_VER
   /* Work around Linux IPv6 weirdness */
   if (from.ss_family == AF_INET6)
     fromlen = sizeof(struct sockaddr_in6);
@@ -392,6 +426,9 @@ int get_sock_port(int sock, int local)
         strport, sizeof(strport), NI_NUMERICSERV) != 0)
     out_log(LEVEL_CRITICAL,"get_sock_port: getnameinfo NI_NUMERICSERV failed");
   return atoi(strport);
+#else
+  return ntohs(from.sin_port);
+#endif
 }
 
 /* Returns remote/local port number for the current connection. */
