@@ -1,4 +1,4 @@
-<chapter>
+<appendix>
   <title>License</title>
 
 <para>
@@ -35,4 +35,4 @@ with OpenSSL, and distribute the resulting executable, without including
 the source code for OpenSSL in the source distribution.
 </para>
 
-</chapter>
+</appendix>

@@ -325,6 +325,15 @@ site give &lt;user&gt; &lt;kbytes&gt;
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_groups'><term>
+site groups
+</term>
+<listitem>
+<para>List groups and shows detailed informations
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_grpadd'><term>
 site grpadd &lt;group&gt; [&lt;backend&gt;]
 </term>

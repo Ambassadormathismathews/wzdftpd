@@ -10,6 +10,7 @@
 <!ENTITY sitebot SYSTEM "sitebot.sgml">
 <!ENTITY license SYSTEM "license.sgml">
 <!ENTITY faq SYSTEM "faq.sgml">
+<!ENTITY a_bugs SYSTEM "appendix_bugs.sgml">
 ]>
 <book>
   <title>wzdftpd Documentation</title>
@@ -22,6 +23,7 @@
 &common_backends;
 &sitebot;
 &faq;
+&a_bugs;
 &license;
 
 <glossary>

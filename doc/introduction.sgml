@@ -19,6 +19,11 @@ wzdftpd offers the following features (and the list is constantly changing):
 
 <itemizedlist>
 <listitem><para>
+Server runs in user mode, thus does not need root privileges - on the other
+way, it is not designed to use system users permissions, it uses its own
+user database and permissions.
+</para></listitem>
+<listitem><para>
 <emphasis>Simple</emphasis> configuration file, supporting inclusions
 </para></listitem>
 <listitem><para>Online administration, using SITE commands</para></listitem>
