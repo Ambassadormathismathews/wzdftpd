@@ -1,6 +1,19 @@
-#include "wzd.h"
-
 #if SSL_SUPPORT
+
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+
+#include <string.h>
+#include <sys/time.h>
+#include <fcntl.h>
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
+
+#include "wzd_tls.h"
+
+#include "wzd_messages.h"
 
 /*************** tls_auth_setfd_set *********************/
 

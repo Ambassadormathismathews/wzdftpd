@@ -1,6 +1,31 @@
-#include "wzd.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <malloc.h>
 #include <regex.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <errno.h>
+#include <fcntl.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_init.h"
+#include "wzd_misc.h"
+#include "wzd_libmain.h"
+#include "wzd_perm.h"
+#include "wzd_messages.h"
+#include "wzd_mod.h"
+#include "wzd_vfs.h"
+
 
 #define BUFSIZE	1024
 
@@ -543,7 +568,7 @@ int parseVariable(const char *varname, const char *value)
       return 1;
     return 0;
   }
-#endif
+#endif /* SSL_SUPPORT */
   /* VFS : Virtual FileSystem
    */
   if (strcasecmp("vfs",varname)==0)

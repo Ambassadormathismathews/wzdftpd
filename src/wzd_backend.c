@@ -1,4 +1,24 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <dlfcn.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+
+#include "wzd_backend.h"
+#include "wzd_misc.h"
+#include "wzd_log.h"
+
 
 void backend_clear_struct(wzd_backend_t *backend)
 {

@@ -1,4 +1,30 @@
-#include "wzd.h"
+#include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#define INVALID_SOCKET -1
+
+#if SSL_SUPPORT
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#endif /* SSL_SUPPORT */
+
+#define Sleep(x)        usleep((x)*1000)
+
+#include <time.h>
+#include <sys/time.h>
+
+
+#include "wzd_hardlimits.h"
+#include "wzd_structs.h"
+#include "wzd_log.h"
+#include "wzd_tls.h"
+#include "wzd_misc.h"
+#include "wzd_ClientThread.h"
+#include "wzd_messages.h"
+#include "wzd_file.h"
+#include "wzd_mod.h"
+#include "wzd_data.h"
 
 void data_close(wzd_context_t * context)
 {
@@ -112,7 +138,7 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
     } else { /* end */
       close(context->current_action.current_file);
 
-      out_xferlog(context);
+      out_xferlog(context,1 /* complete */);
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;
@@ -146,7 +172,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       file_unlock(context->current_action.current_file);
       close(context->current_action.current_file);
 
-      out_xferlog(context);
+      out_xferlog(context,1 /* complete */);
 
       context->current_action.current_file = 0;
       context->current_action.bytesnow = 0;

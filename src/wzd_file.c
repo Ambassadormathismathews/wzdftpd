@@ -1,4 +1,32 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <dirent.h>
+#include <fcntl.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_file.h"
+
+
+
+#define _HAS_MMAP
+
+#ifdef _HAS_MMAP
+#include <sys/mman.h>
+#endif
 
 
 #define BUFFER_LEN	4096

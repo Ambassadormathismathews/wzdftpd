@@ -1,4 +1,37 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <time.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <regex.h>
+#include <errno.h>
+#include <fcntl.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_misc.h"
+#include "wzd_log.h"
+#include "wzd_tls.h"
+#include "wzd_init.h"
+#include "wzd_libmain.h"
+#include "wzd_ServerThread.h"
+#include "wzd_ClientThread.h"
+#include "wzd_vfs.h"
+#include "wzd_socket.h"
+#include "wzd_mod.h"
+
 
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);

@@ -1,4 +1,20 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+
+#include "wzd_perm.h"
+#include "wzd_misc.h"
+
 
 #define BUFFER_LEN	4096
 

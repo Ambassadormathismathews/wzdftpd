@@ -1,6 +1,28 @@
-#include "wzd.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <time.h>
+#include <malloc.h>
+#include <arpa/inet.h>
 #include <regex.h>
+#include <errno.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_misc.h"
+#include "wzd_log.h"
+#include "wzd_tls.h"
+#include "wzd_init.h"
+#include "wzd_libmain.h"
+#include "wzd_ServerThread.h"
+
 
 int stay_foreground=0;
 

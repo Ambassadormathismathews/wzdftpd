@@ -2,16 +2,24 @@
 /* ls replacement
    security reasons
  */
-/*
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
 #include <sys/time.h>
-*/
-#include "wzd.h"
+#include <time.h>
+#include <dirent.h>
+#include <arpa/inet.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+#include "wzd_misc.h"
 
 int list_match(char *,char *);
 

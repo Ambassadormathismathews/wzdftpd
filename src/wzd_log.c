@@ -1,4 +1,20 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
 
 void out_log(int level,const char *fmt,...)
 {
@@ -105,7 +121,7 @@ void out_err(int level, const char *fmt,...)
 /*  }*/
 }
 
-void out_xferlog(wzd_context_t * context)
+void out_xferlog(wzd_context_t * context, int is_complete)
 {
   char buffer[2048];
   char datestr[128];
@@ -139,7 +155,7 @@ void out_xferlog(wzd_context_t * context)
         /* direction: o (outgoing) i (incoming) */
       'r', /* access-mode: a (anonymous) g (guest) r (real-user) */
       username,
-      'c' /* c (complete) i (incomplete) */
+      is_complete?'c':'i' /* c (complete) i (incomplete) */
       );
   write(mainConfig->xferlog_fd,buffer,strlen(buffer));
 }

@@ -2,7 +2,20 @@
 #include <w32api/windows.h>
 #endif /* __CYGWIN__ */
 
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <malloc.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/types.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
 
 #ifdef __CYGWIN__
 

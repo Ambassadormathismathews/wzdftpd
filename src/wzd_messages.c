@@ -1,4 +1,16 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <arpa/inet.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+#include "wzd_misc.h"
+
 
 #define DEFAULT_MSG	"No message for this code"
 

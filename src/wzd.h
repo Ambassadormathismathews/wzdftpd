@@ -40,6 +40,7 @@
 
 #define	KEY_BELL	"\007"
 
+#if 0
 /* colors */
 
 #define CLR_BOLD	"[1m"
@@ -50,6 +51,7 @@
 #define	CLR_RED		"[31m"
 
 #define	CLR_NOCOLOR	"[0m"
+#endif
 
 /* must be first */
 #include "wzd_hardlimits.h"
@@ -60,7 +62,9 @@
 
 #include "wzd_action.h"
 #include "wzd_misc.h"
+#include "wzd_cache.h"
 
+#if 0
 #if !SSL_SUPPORT
 #define	SSL	void
 #define	SSL_CTX	void
@@ -84,12 +88,16 @@ typedef enum {
   ASCII=0,
   BINARY
 } xfer_t;
+#endif
 
+#if 0
 #define	LIST_TYPE_SHORT		0x0000
 #define	LIST_TYPE_LONG		0x0001
 #define	LIST_SHOW_HIDDEN	0x0010
 typedef unsigned long list_type_t;
+#endif
 
+#if 0
 /* important - must not be fffff or d0d0d0, etc.
  * to make distinction with unallocated zone
  */
@@ -126,10 +134,12 @@ typedef struct {
   time_t	idle_time_data_start;
   wzd_ssl_t   	ssl;
 } wzd_context_t;
+#endif
 
 
 void set_action(wzd_context_t * context, unsigned int token, const char *arg);
 
+#if 0
 /* macros used with options */
 #define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
 
@@ -178,19 +188,12 @@ typedef struct {
   wzd_group_t	*group_list;
 } wzd_config_t;
 
+
 extern wzd_config_t *	mainConfig;
 extern wzd_shm_t * 	mainConfig_shm;
 extern wzd_context_t *	context_list;
 
-
-/* DEBUG & LOG */
-#define LEVEL_LOWEST	1
-#define	LEVEL_FLOOD	1
-#define	LEVEL_INFO	3
-#define	LEVEL_NORMAL	5
-#define	LEVEL_HIGH	7
-#define	LEVEL_CRITICAL	9
-
+#endif
 
 #include "wzd_tls.h"
 #include "wzd_socket.h"
@@ -211,6 +214,7 @@ extern wzd_context_t *	context_list;
 #include "wzd_site.h"
 #include "ls.h"
 
+#if 0
 /* Version */
 /*#define	WZD_VERSION_NUM	"0.1rc2"*/
 
@@ -225,6 +229,7 @@ extern wzd_context_t *	context_list;
 #else /* __CYGWIN__ */
 #define	WZD_VERSION_STR	"wzdFTPd linux" WZD_MP WZD_VERSION_NUM
 #endif /* __CYGWIN__ */
+#endif
 
 #include "wzd_libmain.h"
 

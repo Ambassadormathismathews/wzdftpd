@@ -1,4 +1,18 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <fcntl.h>
+
+extern int errno;
+
+typedef void wzd_context_t;
+
+#include "wzd_log.h"
+#include "wzd_socket.h"
 
 /*************** ul2a ***********************************/
 

@@ -2,7 +2,31 @@
 #include <w32api/windows.h>
 #endif /* __CYGWIN__ */
 
-#include "wzd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <errno.h>
+#include <dirent.h>
+#include <fcntl.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_messages.h"
 
 #ifdef __CYGWIN__
 #define LONGBITS  0x20

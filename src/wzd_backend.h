@@ -7,6 +7,7 @@
 #include "wzd_hardlimits.h"
 #include "wzd_structs.h"
 
+#if 0
 /* IMPORTANT:
  *
  * all validation functions have the following return code:
@@ -30,6 +31,7 @@ typedef struct {
   int (*back_mod_group) (int, wzd_group_t *);
   int (*back_commit_changes) (void);
 } wzd_backend_t;
+#endif
 
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING	0

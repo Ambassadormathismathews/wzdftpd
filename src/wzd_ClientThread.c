@@ -1,4 +1,36 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_mod.h"
+#include "wzd_data.h"
+#include "wzd_messages.h"
+#include "wzd_vfs.h"
+#include "wzd_file.h"
+#include "wzd_site.h"
+#include "wzd_socket.h"
+#include "wzd_tls.h"
+#include "ls.h"
+#include "wzd_ClientThread.h"
+
 
 #define BUFFER_LEN	4096
 
@@ -1897,6 +1929,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      context->pasvsock=0;
 	    }
 	    if (context->current_action.current_file) {
+	      out_xferlog(context, 0 /* incomplete */);
 	      /* FIXME XXX TODO
 	       * the two following sleep(5) are MANDATORY
 	       * the reason is unknown, but seems to be link to network

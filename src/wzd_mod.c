@@ -1,4 +1,23 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <string.h>
+#include <malloc.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <arpa/inet.h>
+#include <dlfcn.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+
+#include "wzd_mod.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
 
 /* free hook list */
 int hook_free(wzd_hook_t **hook_list)

@@ -1,4 +1,14 @@
-#include "wzd.h"
+#include <sys/time.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+#define	FILE	void
+
+#include "wzd_structs.h"
+
+#include "wzd_libmain.h"
+#include "wzd_log.h"
 
 wzd_config_t *  mainConfig;
 wzd_context_t * context_list;

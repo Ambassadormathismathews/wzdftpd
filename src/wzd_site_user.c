@@ -1,4 +1,24 @@
-#include "wzd.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <malloc.h>
+#include <arpa/inet.h>
+#include <errno.h>
+
+/* speed up compilation */
+#define SSL     void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_messages.h"
+#include "wzd_site_user.h"
+
 
 void do_site_help_adduser(wzd_context_t * context)
 {
