@@ -48,6 +48,8 @@
 #include <netdb.h>
 
 #include <dirent.h>
+
+#include <pthread.h>
 #endif
 
 #include <fcntl.h>
