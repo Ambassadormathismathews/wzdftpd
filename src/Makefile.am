@@ -45,8 +45,6 @@ wzdftpd_SOURCES =    \
 	wzd_action.h       \
 	wzd_ClientThread.c \
 	wzd_ClientThread.h \
-	wzd_crc32.c        \
-	wzd_crc32.h        \
 	wzd_data.c         \
 	wzd_data.h         \
 	wzd_file.c         \
