@@ -68,7 +68,7 @@ void init_default_messages(void)
   msg_tab[220] = strdup("wzd server ready.");
   msg_tab[221] = strdup("Cya !");
   msg_tab[226] = strdup("Closing data connection.\r\n%msg\r\n- [Section: %sectionname] - [Free: %spacefree] - [Dl: %usertotal_dl2] - [Ul: %usertotal_ul2] -");
-  msg_tab[227] = strdup("Entering Passive Mode (%d,%d,%d,%d,%d,%d)"); /* DON'T TOUCH ! */
+  msg_tab[227] = strdup("Entering Passive Mode (%hhu,%hhu,%hhu,%hhu,%hu,%hu)"); /* DON'T TOUCH ! */
   msg_tab[230] = strdup("User logged in, proceed.");
   msg_tab[234] = strdup("AUTH command OK. Initializing %s mode"); /* SSL init */
   msg_tab[250] = strdup("%s%s");
