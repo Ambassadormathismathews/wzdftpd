@@ -29,6 +29,8 @@
 extern unsigned int wzd_server_uid;
 #endif
 
+uid_t get_server_uid(void);
+
 extern wzd_sem_t limiter_sem;
 
 int runMainThread(int argc, char **argv);

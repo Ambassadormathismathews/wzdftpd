@@ -95,6 +95,7 @@ void child_interrupt(int signum);
 void reset_stats(wzd_server_stat_t * stats);
 
 int check_server_dynamic_ip(void);
+int commit_backend(void);
 void server_rebind(const unsigned char *new_ip, unsigned int new_port);
 
 /************ VARS *****************/
@@ -471,6 +472,16 @@ int check_server_dynamic_ip(void)
 }
 
 
+int commit_backend(void)
+{
+  /* TODO XXX FIXME flush backend IFF modified ! */
+  if (!mainConfig) return 1;
+  backend_commit_changes(mainConfig->backend.name);
+  return 0;
+}
+
+
+
 /*
  * checks if login sequence can start, creates new context, etc
  */
@@ -732,6 +743,11 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   return 0;
 }
 
+uid_t get_server_uid(void)
+{
+  return getuid(); 
+}
+
 void server_crashed(int signum)
 {
   printf("Server has crashed of signal %d\n",signum);
@@ -916,7 +932,9 @@ void serverMainThreadProc(void *arg)
 
   /********** set up crontab ********/
 /*  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL);*/
-  cronjob_add(&crontab,check_server_dynamic_ip,NULL,HARD_DYNAMIC_IP_INTVL,
+  cronjob_add(&crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
+      "*","*","*","*");
+  cronjob_add(&crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,
       "*","*","*","*");
 
   /********** init modules **********/

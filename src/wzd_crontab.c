@@ -155,7 +155,7 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
   time_t now;
 
   if (!fn && !command) return 1;
-  if (fn && command) return 1;
+/*  if (fn && command) return 1;*/ /* why ?! This forbis to provide a description of functions */
 
 #ifdef WZD_DBG_CRONTAB
   out_err(LEVEL_HIGH,"adding job %s\n",command);

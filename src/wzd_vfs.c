@@ -46,6 +46,8 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
+#include "wzd_debug.h"
+
 /** remove a vfs from list */
 int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
 {
@@ -218,35 +220,141 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
 /** if needed, replace the vfs in the path */
 int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_context_t * context)
 {
+  char buffer_vfs[4096];
+  char * ptr_in, * ptr_out;
+  unsigned int length, needed;
+  wzd_user_t *user;
+
+  user=GetUserByID(context->userid);
+  if (!user) return -1;
+
   /* FIXME test length of strings */
   while (vfs_list)
   {
-    if (strncmp(vfs_list->virtual_dir,buffer,strlen(vfs_list->virtual_dir))==0
+/*    strcpy(buffer_vfs,vfs_list->virtual_dir);*/
+    ptr_out = vfs_replace_cookies(vfs_list->virtual_dir,context);
+    if (!ptr_out) {
+      out_log(LEVEL_CRITICAL,"vfs_replace_cookies returned NULL for %s\n",vfs_list->virtual_dir);
+      vfs_list = vfs_list->next_vfs;
+      continue;
+    }
+    strncpy(buffer_vfs,ptr_out,4096);
+    free(ptr_out);
+
+    if (strncmp(buffer_vfs,buffer,strlen(buffer_vfs))==0
 	&&
-	(buffer[strlen(vfs_list->virtual_dir)] == '/' || /* without this test, vfs will always match before vfs1 */
-	strcmp(vfs_list->virtual_dir,buffer)==0) ) /* without this test, 'cd vfs' will not match */
+	(buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
+	strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
       char buf[4096];
       /* test perm */
       if (vfs_list->target) {
-	wzd_user_t *user;
-	user=GetUserByID(context->userid);
-	if (!user) break;
 	if (!vfs_match_perm(vfs_list->target,user)) { vfs_list = vfs_list->next_vfs; continue; }
       }
-#ifdef DEBUG
-out_err(LEVEL_FLOOD,"VPATH : %s / %s\n",buffer,vfs_list->virtual_dir);
+#ifdef WZD_DBG_VFS
+out_err(LEVEL_HIGH,"VPATH match : %s / %s\n",buffer,vfs_list->virtual_dir);
 #endif
       strcpy(buf,vfs_list->physical_dir);
-      strcpy(buf+strlen(vfs_list->physical_dir),buffer+strlen(vfs_list->virtual_dir));
-#ifdef DEBUG
-out_err(LEVEL_FLOOD,"converted to %s\n",buf);
+      strcpy(buf+strlen(vfs_list->physical_dir),buffer+strlen(buffer_vfs));
+#ifdef WZD_DBG_VFS
+out_err(LEVEL_HIGH,"converted to %s\n",buf);
 #endif
       strcpy(buffer,buf);
     }
     vfs_list = vfs_list->next_vfs;
   }
   return 0;
+}
+
+/** parse vfs entry and replace cookies by their value
+ * \return a newly allocated string with the interpreted path
+ * \todo TODO it would REALLY be nice to use the function defined in
+ *  wzd_cookie_lex.l ... problem: it automatically prints the result !
+ */
+char * vfs_replace_cookies(const char * path, wzd_context_t * context)
+{
+  char buffer[4096];
+  unsigned int length, needed;
+  char * out=NULL;
+  const char * ptr_in;
+  char * ptr_out;
+  wzd_user_t * user;
+  wzd_group_t * group;
+
+  user=GetUserByID(context->userid);
+  if (!user) return NULL;
+
+  if (user->group_num > 0) {
+    group = GetGroupByID(user->groups[0]);
+  } else
+    group = NULL;
+
+  length = 0;
+  ptr_in = path; ptr_out = buffer;
+  while ( (*ptr_in) ){
+    if (length >= 4096) {
+      out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
+      return NULL;
+    }
+    if (*ptr_in == '%') {
+      if (strncmp(ptr_in,"%username",9)==0) { /* 9 == strlen(%username) */
+        needed = strlen(user->username);
+        length += needed;
+        if (length >= 4096) {
+          out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
+          return NULL;
+        }
+        memcpy(ptr_out,user->username,needed);
+        ptr_in += 9; /* 9 == strlen(%username) */
+        ptr_out += needed;
+      } else if (strncmp(ptr_in,"%usergroup",10)==0) { /* 10 == strlen(%usergroup) */
+        if (group) {
+          needed = strlen(group->groupname);
+          length += needed;
+          if (length >= 4096) {
+            out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
+            return NULL;
+          }
+          memcpy(ptr_out,group->groupname,needed);
+          ptr_in += 10; /* 10 == strlen(%usergroup) */
+          ptr_out += needed;
+        } else { /* ! group */
+          return NULL; /* we want user's main group and he has no one ... */
+        }
+      } else if (strncmp(ptr_in,"%userhome",9)==0) { /* 9 == strlen(%userhome) */
+/* TODO XXX FIXME only print iff homedir exists !! */
+#if 0
+        if (home) { 
+#endif /* 0 */
+          needed = strlen(user->rootpath);
+          length += needed;
+          if (length >= 4096) {
+            out_log(LEVEL_CRITICAL,"buffer size exceeded in vfs_replace_cookies for virtual_dir %s\n",path);
+            return NULL;
+          }
+          memcpy(ptr_out,user->rootpath,needed);
+          ptr_in += 9; /* 9 == strlen(%userhome) */
+          ptr_out += needed;
+        } else { /* ! home */
+          return NULL; /* we want user's main home and he has no one ... */
+        }
+#if 0
+      } else {
+        *ptr_out++ = *ptr_in++;
+        length++;
+      }
+#endif /* 0 */
+    } else {
+      *ptr_out++ = *ptr_in++;
+      length++;
+    }
+  }
+  *ptr_out = '\0';
+
+  out = malloc(length+1);
+  strncpy(out,buffer,length+1);
+
+  return out;
 }
 
 /*************** checkpath ***************************/

@@ -304,6 +304,7 @@ typedef struct wzd_section_t wzd_section_t;
 struct wzd_section_t {
   char *        sectionname;
   char *        sectionmask;
+  char *        sectionre;
 
 /*  regex_t *	pathfilter;*/
   void *	pathfilter;

@@ -37,10 +37,16 @@ int fd_is_valid(int fd);
 /*#define WZD_DBG_CACHE*/
 
 /* debug crontab */
-/*#define WZD_DBG_CRONTAB 1*/
+/*#define WZD_DBG_CRONTAB*/
 
 /* debug permissions */
 /*#define WZD_DBG_PERMS*/
+
+/* debug tls */
+/*#define WZD_DBG_TLS*/
+
+/* debug vfs */
+/*#define WZD_DBG_VFS*/
 
 #ifdef HAVE_MPATROL
 #include <mpatrol.h>

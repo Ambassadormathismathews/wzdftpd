@@ -49,4 +49,9 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
 /** \return 1 if user match corresponding line */
 int vfs_match_perm(const char *perms,wzd_user_t *user);
 
+/** parse vfs entry and replace cookies by their value
+ * \return a newly allocated string with the interpreted path
+ */
+char * vfs_replace_cookies(const char * path, wzd_context_t * context);
+
 #endif /* __WZD_VFS_H__ */

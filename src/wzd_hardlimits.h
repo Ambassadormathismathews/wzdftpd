@@ -59,6 +59,8 @@
 /* interval of time to check dynamic ip (default: 1 mns) */
 #define	HARD_DYNAMIC_IP_INTVL	"*"
 
+/* interval of time to commit backend */
+#define	HARD_COMMIT_BACKEND_INTVL	"*"
 
 #define	HARD_LS_BUFFERSIZE	4096
 

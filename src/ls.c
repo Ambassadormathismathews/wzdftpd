@@ -49,9 +49,12 @@
 
 #include "wzd_structs.h"
 #include "wzd_misc.h"
+#include "wzd_log.h"
 
 #include "wzd_file.h"
 #include "wzd_vfs.h"
+
+#include "wzd_debug.h"
 
 int list_match(char *,char *);
 
@@ -126,10 +129,21 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 /* XXX show vfs if in current dir */
   {
     wzd_vfs_t * vfs = mainConfig->vfs;
+    char * ptr_out;
+    char buffer_vfs[4096];
 
     while (vfs) {
-      if (strncmp(vfs->virtual_dir,directory,strlen(directory))==0) {
-	char * ptr = vfs->virtual_dir + strlen(directory) + vfs_pad;
+      ptr_out = vfs_replace_cookies(vfs->virtual_dir,context);
+      if (!ptr_out) {
+        out_log(LEVEL_CRITICAL,"vfs_replace_cookies returned NULL for %s\n",vfs->virtual_dir);
+        vfs = vfs->next_vfs;
+        continue;
+      }
+      strncpy(buffer_vfs,ptr_out,4096);
+      free(ptr_out);
+
+      if (strncmp(buffer_vfs,directory,strlen(directory))==0) {
+	char * ptr = buffer_vfs + strlen(directory) + vfs_pad;
 	if (strchr(ptr,'/')==NULL) {
 	  if (stat(vfs->physical_dir,&st)<0) {
 	    vfs = vfs->next_vfs;

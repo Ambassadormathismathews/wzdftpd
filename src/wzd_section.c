@@ -76,6 +76,7 @@ int section_add(wzd_section_t **section_list, char *name, char *mask, const char
     section_new->pathfilter = NULL;
   section_new->sectionname = strdup((const char *)name);
   section_new->sectionmask = strdup((const char *)mask);
+  section_new->sectionre = strdup(filter);
   section_new->next_section = NULL;
 
   section = *section_list;

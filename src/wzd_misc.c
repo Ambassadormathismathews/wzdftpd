@@ -530,7 +530,7 @@ int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_pa
 
 int server_set_param(const char *name, void *data, unsigned int length, wzd_param_t **plist)
 {
-  wzd_param_t * param;
+  wzd_param_t * param, * insert_point;
 
   if (!plist) return -1;
   if (!name || !data || length==0) return -1;
@@ -541,10 +541,16 @@ int server_set_param(const char *name, void *data, unsigned int length, wzd_para
   param->param = malloc(length);
   memcpy(param->param,data,length);
   param->length = length;
+  param->next_param = NULL;
 
-  /* head insertion */
-  param->next_param = *plist;
-  *plist = param;
+  /* tail insertion */
+  if (*plist) {
+    insert_point = *plist;
+    while (insert_point->next_param) insert_point = insert_point->next_param;
+    insert_point->next_param = param;
+  } else {
+    *plist = param;
+  }
 
   return 0;
 }

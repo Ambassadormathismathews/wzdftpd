@@ -1,3 +1,12 @@
+# Oct, 20 2003
+- added periodic commit of backend
+- site savecfg is now almost working
+- IMPORTANT CHANGE: negation on permissions can now be written =!user
+  instead of !=user
+- custom messages can now be stored in files
+- added optional PostgreSQL detection in configure
+- cookies in vfs VIRTUAL dir: %username, %usergroup, %userhome
+
 # Oct, 15 2003
 - bugfix: waiting PASV sockets not closed when client dies
 - some work on ipv6

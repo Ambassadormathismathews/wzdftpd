@@ -121,7 +121,7 @@ int perm_is_valid_perm(const char *permname)
 
 wzd_command_perm_t * perm_find_create(const char *commandname, wzd_config_t * config)
 {
-  wzd_command_perm_t * perm;
+  wzd_command_perm_t * perm, * insert_point;
 
   if ( ! config->perm_list ) {
     perm = config->perm_list = perm_create_empty_perm();
@@ -137,11 +137,16 @@ wzd_command_perm_t * perm_find_create(const char *commandname, wzd_config_t * co
     perm = perm->next_perm;
   } while (perm);
 
-  /* not found, insert a new perm (head insertion) */
+  /* not found, insert a new perm (tail insertion) */
   perm = perm_create_empty_perm();
   strncpy(perm->command_name,commandname,256);
-  perm->next_perm = config->perm_list;
-  config->perm_list = perm;
+  insert_point = config->perm_list;
+  if (insert_point) {
+    while (insert_point->next_perm) insert_point = insert_point->next_perm;
+    insert_point->next_perm = perm;
+  } else {
+    config->perm_list = perm;
+  }
 
   return perm;
 }

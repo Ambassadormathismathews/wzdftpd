@@ -586,9 +586,10 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   }
   filesize = wzd_cache_getsize(fp);
   file_buffer = malloc(filesize+1);
-  if ( (size=wzd_cache_read(fp,file_buffer,filesize)!=filesize) )
+  if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize )
   {
     fprintf(stderr,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
+    free(file_buffer);
     wzd_cache_close(fp);
     return;
   }

@@ -3,6 +3,13 @@
 - use 'rats','splint' for security audit
 
 '********'
+- BUG get_message has a memory leak when returning a file
+'********'
+- v_format_message (wzd_misc.c): replace 220-first line ... 220 last line with
+  220- ... 220 command ok (easier !)
+'********'
+- commit backend iff it was modified
+'********'
 - replace 'extern unsigned int wzd_server_uid' (wzd_init_lex.l) with
   functions get_serveruid() (to be implemented)
 '********'
@@ -10,7 +17,7 @@
   -- pem name _must_ be written in win-form when using winsock+tls
 '********'
 - getmyip does not seems to work with ipv6 ...
-- ipv6: RFC 2428 ?
+- ipv6: RFC 2428
 '********'
 - configure: --enable-internal-sfv || remove wzd_crc32.c file from sources (disable internal
   sfv)
@@ -19,11 +26,6 @@
   and gadmins on their group files
 '********'
 - finish cache implementation
-'********'
-- write a proper way to modify banner(220) / welcome_msg(230) / goodbye_msg
- ++ add possibility to use multi-line directives in .cfg and/or
-    use files for messages (message_230 = +my_file.txt)
-  (221)!
 '********'
 - To Be Documented :
   -- if root run server, must use server_uid + chown users, user.OLD to
@@ -64,7 +66,6 @@ current objectives:
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
 - SFV: site rescan
 - per dir global permissions (to pass over rootpath)
-- VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
 - use options in ls
 - modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
   exist but path was converted

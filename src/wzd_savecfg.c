@@ -440,6 +440,7 @@ static void save_vfs (FILE *file)
 
 static void save_modules (FILE *file)
 {
+  char buffer[256];
   wzd_module_t * current_module;
   wzd_param_t * current_param;
 
@@ -462,7 +463,11 @@ static void save_modules (FILE *file)
   while (current_param) {
     /* TODO param_tls_wrapper is so specific ? */
     if (strcmp("tls_wrapper", current_param->name)!=0)
-      fprintf( file, "param = param_%s\n", current_param->name);
+      if (current_param->length<256) {
+        memcpy(buffer,current_param->param,current_param->length);
+        buffer[current_param->length] = '\0';
+        fprintf( file, "param_%s = %s\n", current_param->name,buffer);
+      }
     current_param = current_param->next_param;
   }
 
@@ -485,19 +490,13 @@ static void save_sections (FILE *file)
   fprintf( file, "#section = ALL /* ^([]\\[A-Za-z0-9_.'() \\t+-])*$\n");
 
   
-  /* FIXME why wzd_section_t is opaque ? */
-  /* FIXME in the same time, change \t to \\t ? */
-  /* TODO XXX FIXME it is no more opaque ! */
-
-#if 0
   current = mainConfig->section_list;
   while (current) {
-  fprintf( file, "#section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$\n");
+    fprintf( file, "section = %s %s %s\n",current->sectionname,
+        current->sectionmask,
+        current->sectionre);
     current = current->next_section;
   }
-#else
-  fprintf( file, "section = ALL /* ^([]\\[A-Za-z0-9_.'() \t+-])*$\n");
-#endif
 
   fprintf( file, "\n");
 }
@@ -528,7 +527,7 @@ static void save_sitecmd (FILE *file)
   wzd_hook_t * current;
   
   if (file==NULL) return;
-  fprintf( file, "##### CUSTOM SITe COMMANDS\n");
+  fprintf( file, "##### CUSTOM SITE COMMANDS\n");
   fprintf( file, "# Here you can define external site commands.\n");
   fprintf( file, "#site_cmd = my_free ./free.sh\n");
 
@@ -576,15 +575,20 @@ static void save_cronjobs (FILE *file)
   fprintf( file, "# the following command will be run the 2 of each month, at 05:00 am\n");
   fprintf( file, "#cronjob = 5 * 2 * * /bin/cleanup.sh\n");
   
-  /* TODO/FIXME/XXX new opaque structure */ 
-  /* TODO XXX FIXME no more opaque ! */
-
-#if 0
   current = crontab;
   while (current) {
+    if ( ! current->fn ) {
+      fprintf( file, "cronjob = %s %s %s %s %s %s\n",
+          current->minutes,
+          current->hours,
+          current->day_of_month,
+          current->month,
+          current->day_of_week,
+          current->command
+          );
+    }
     current = current->next_cronjob;
   }
-#endif
 
   fprintf( file, "\n");
 }
@@ -602,6 +606,9 @@ static void save_custommessages (FILE *file)
   fprintf( file, "#  220 (banner), 230 (welcome message), 221 (logout)\n");
   fprintf( file, "#message_220 = pollux ftp server ready\n");
 
+  /* TODO XXX FIXME BUG !
+   * some custom messages contains CR ... (e.g: 211)
+   */
   /* XXX which are custom messages ?? */
   for( i = 0 ; i < HARD_MSG_LIMIT ; i++ )
     if (msg_tab[i])
@@ -625,7 +632,11 @@ static void save_inclusions (FILE *file)
 
 static void save_permissions (FILE *file)
 {
+  char buffer[256];
+  char * ptr;
+  unsigned int length;
   wzd_command_perm_t * current;
+  wzd_command_perm_entry_t * entry;
   
   if (file==NULL) return;
   fprintf( file, "##### PERMISSIONS\n");
@@ -636,8 +647,35 @@ static void save_permissions (FILE *file)
   fprintf( file, "# ex: -site_who = =admin -group1 +F =toto\n");
   fprintf( file, "#-delete = -admin\n");
 
-  /* XXX opaque struct !!!! */
-  /* TODO XXX FIXME no more opaque ! */
+  /* TODO XXX FIXME perm list will be printed in the reverse order ! */
+  current = mainConfig->perm_list;
+  while (current) {
+    /* parse current->entry_list */
+    ptr = buffer;
+    length=0;
+    entry = current->entry_list;
+    while (entry) {
+      *ptr++ = ' ';
+      length ++;
+      if (strcmp(entry->target,"*")!=0) {
+        switch(entry->cp) {
+          case CPERM_USER: *ptr++ = '='; break;
+          case CPERM_GROUP: *ptr++ = '-'; break;
+          case CPERM_FLAG: *ptr++ = '+'; break;
+        }
+        length ++;
+      }
+      strncpy(ptr,entry->target,256-length);
+      length += strlen(ptr);
+      ptr = buffer+length;
+      entry = entry->next_entry;
+    }
+    buffer[length]='\0';
+    fprintf( file, "-%s =%s\n",
+        current->command_name,
+        buffer);
+    current = current->next_perm;
+  }
 
   fprintf( file, "  \n");
 }

@@ -8,3 +8,13 @@
   -> run 'touch src/wzd_init_lex.{c,h}'
   -> run 'touch src/wzd_init_lex.l'
   -> run 'make' again
+
+- LIST / does not work when inside a directory:
+
+lftp pollux@127.0.0.1:/vfs2> quote PWD
+257 "/vfs2" is current directory
+lftp pollux@127.0.0.1:/vfs2> ls /
+lftp pollux@127.0.0.1:/vfs2> ls ..
+drwxr-xr-x   2 pollux ftp          4096 Oct 19 16:50 vfs2
+drwxr-xr-x   3 pollux ftp          4096 Oct 12 13:58 TEST-SFV
+drwxr-xr-x   2 nobody ftp          4096 Oct 19 16:50 iSO

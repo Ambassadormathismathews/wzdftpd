@@ -740,9 +740,11 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
+#if 0
 #if DEBUG
   out_err(LEVEL_FLOOD,"PARAM: '%s'\n",param);
 #endif
+#endif /* 0 */
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
@@ -2713,9 +2715,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 	    break;
 	  case TOK_FEAT:
 #ifdef SSL_SUPPORT
-	    ret = send_message_with_args(211,context,"AUTH TLS\n PBSZ\n PROT\n MDTM\n SIZE\n SITE\n REST");
+	    ret = send_message_with_args(211,context,"AUTH TLS\n PBSZ\n PROT\n MDTM\n SIZE\n SITE\n REST\n NON-FREE FTPD SUCKS");
 #else
-	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST");
+	    ret = send_message_with_args(211,context,"MDTM\n SIZE\n SITE\n REST\n NON-FREE FTPD SUCKS");
 #endif
 	    context->idle_time_start = time(NULL);
 	    break;

@@ -478,7 +478,9 @@ int cfg_read_backend_param(const char *backendname)
 */
 int cfg_read_cronjob(void)
 {
-  char command[1024];
+  char buffer[1024];
+  char * command;
+  char * line;
   char c;
   char *end;
   unsigned int token;
@@ -491,43 +493,54 @@ int cfg_read_cronjob(void)
     out_err(LEVEL_HIGH,"line should be 'cronjob = ...'\n");
     return 1;
   }
-  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
-    return 1;
-  }
-  min = yytext;
-  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
-    return 1;
-  }
-  hour = yytext;
-  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
-    return 1;
-  }
-  day = yytext;
-  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
-    return 1;
-  }
-  month = yytext;
-  if ( (token=yylex()) != CFG_NUM && strcmp(yytext,"*")!=0 ) {
-    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
-    return 1;
-  }
-  day_of_week = yytext;
 
-  length = 0;
-  end=command;
-  while ( (c = input()) && c!=EOF && c!='\r' && c!='\n')
-  {
-    *end++ = c;
-    if (++length >= 1024) {
-      out_err(LEVEL_HIGH,"command is too long (max 1024 chars)\n");
-      return 1;
-    }
+  if ( !(line=read_until_eol(1024)) ) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
   }
-  *end='\0';
+
+  /* XXX FIXME is this buffer copy really usefull ?
+   * remark: perhaps because strtok_r modifies the buffer ...
+   */
+  strncpy(buffer,line,1024);
+  free(line);
+  line = buffer;
+
+  min = strtok_r(buffer," \t",&line);
+  if (!min) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = -> <min> <- <hour> <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+
+  hour = strtok_r(NULL," \t",&line);
+  if (!hour) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> -> <hour> <- <day> <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+
+  day = strtok_r(NULL," \t",&line);
+  if (!day) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> -> <day> <- <month> <day_of_week> <command>'\n");
+    return 1;
+  }
+
+  month = strtok_r(NULL," \t",&line);
+  if (!month) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> -> <month> <- <day_of_week> <command>'\n");
+    return 1;
+  }
+
+  day_of_week = strtok_r(NULL," \t",&line);
+  if (!day_of_week) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> -> <day_of_week> <- <command>'\n");
+    return 1;
+  }
+
+  command = strtok_r(NULL,"\n\r",&line);
+  if (!command) {
+    out_err(LEVEL_HIGH,"line should be 'cronjob = <min> <hour> <day> <month> <day_of_week> -> <command> <-'\n");
+    return 1;
+  }
 
   /* skip leading spaces */
   end = command;

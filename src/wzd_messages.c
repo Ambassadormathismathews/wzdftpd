@@ -36,6 +36,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
+#include <fcntl.h> /* O_RDONLY */
 
 /* speed up compilation */
 #define SSL     void
@@ -44,6 +45,8 @@
 #include "wzd_structs.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
+
+#include "wzd_cache.h"
 #include "wzd_section.h"
 #include "wzd_vfs.h"
 
@@ -108,13 +111,31 @@ void free_messages(void)
 
 const char * getMessage(int code)
 {
-	const char * ptr;
-	if (code < 0 || code > HARD_MSG_LIMIT)
-		return DEFAULT_MSG;
-	ptr = msg_tab[code];
-	if (ptr)
-		return ptr;
-	return DEFAULT_MSG;
+  const char * ptr;
+  char * file_buffer;
+  unsigned long filesize, size;
+
+  if (code < 0 || code > HARD_MSG_LIMIT)
+    return DEFAULT_MSG;
+  ptr = msg_tab[code];
+  if (!ptr || strlen(ptr)==0) return DEFAULT_MSG;
+  if (ptr[0]=='+') { /* returns file content */
+    wzd_cache_t * fp;
+    fp = wzd_cache_open(ptr+1,O_RDONLY,0644);
+    if (!fp) return DEFAULT_MSG;
+    filesize = wzd_cache_getsize(fp);
+    file_buffer = malloc(filesize+1);
+    if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize ) {
+      free(file_buffer);
+      wzd_cache_close(fp);
+      return DEFAULT_MSG;
+    }
+    file_buffer[filesize]='\0';
+    wzd_cache_close(fp);
+    /* XXX FIXME memory will never be freed ! */
+    return file_buffer;
+  }
+  return ptr;
 }
 
 void setMessage(const char *newMessage, int code)

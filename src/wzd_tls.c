@@ -505,6 +505,10 @@ int tls_auth (const char *type, wzd_context_t * context)
     return 1;
   }
 
+#ifdef WZD_DBG_TLS
+  out_err(LEVEL_HIGH,"tls_auth ok\n");
+#endif
+
   return tls_auth_cont(context);
 }
 
@@ -519,6 +523,10 @@ int tls_auth_cont(wzd_context_t * context)
   fd_set fd_r, fd_w;
   struct timeval tv;
 
+#ifdef WZD_DBG_TLS
+  out_err(LEVEL_HIGH,"TLS: Non-blocking accept\n");
+#endif
+  
   SSL_set_accept_state(ssl);
   fd = SSL_get_fd(ssl);
   /* ensure socket is non-blocking */
@@ -581,6 +589,10 @@ int tls_auth_cont(wzd_context_t * context)
   return 0;
 #else
   int ret;
+
+#ifdef WZD_DBG_TLS
+  out_err(LEVEL_HIGH,"TLS: Blocking accept\n");
+#endif
   
   ret = SSL_accept(context->ssl.obj);
   if (ret == 1) {
