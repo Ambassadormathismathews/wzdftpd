@@ -1,7 +1,7 @@
 ALL_SGML_FILES=commands_reference.sgml common_backends.sgml common_modules.sgml \
 	cookies_reference.sgml introduction.sgml sitebot.sgml license.sgml \
 	faq.sgml wzdftpd.sgml config.sgml appendix_bugs.sgml \
-	programming_modules.sgml freebsd_notes.sgml
+	programming_modules.sgml freebsd_notes.sgml custom_commands.sgml
 HTML_DEPS=html_head.html html_tail.html
 MAIN_SGML_FILE=wzdftpd.sgml
 

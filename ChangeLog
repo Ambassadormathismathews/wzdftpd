@@ -1,3 +1,8 @@
+2004-03-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: custom site commands and hooks (cscripts) now use cookies as arguments
+	* doc: new section on custom commands
+
 2004-03-04  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* debian: debian packages restarted from scratch

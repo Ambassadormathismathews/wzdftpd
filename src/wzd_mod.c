@@ -301,6 +301,7 @@ int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
   return 1; /* not found */
 }
 
+/** hook_call_custom: custom site commands */
 int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args)
 {
   char buffer[1024];
@@ -311,7 +312,17 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
   if (l_command+strlen(args)>=1022) return 1;
-  strcpy(buffer,hook->external_command);
+  /* replace cookies in args */
+  {
+    wzd_context_t * context = GetMyContext();
+    wzd_user_t * user = GetUserByID(context->userid);
+    wzd_group_t * group = GetGroupByID(user->groups[0]);
+
+    cookie_parse_buffer(hook->external_command,user,group,context,buffer,sizeof(buffer));
+  }
+  l_command = strlen(buffer);
+  while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
+    buffer[--l_command] = '\0';
   /* we can use protocol hooks here */
   proto = hook_check_protocol(buffer);
   if (proto)
@@ -336,6 +347,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args
   return 0;
 }
 
+/** hook_call_external: events */
 int hook_call_external(wzd_hook_t *hook, const char *args)
 {
   char buffer[1024];
@@ -346,7 +358,17 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
   if (l_command+strlen(args)>=1022) return 1;
-  strcpy(buffer,hook->external_command);
+  /* replace cookies in args */
+  {
+    wzd_context_t * context = GetMyContext();
+    wzd_user_t * user = GetUserByID(context->userid);
+    wzd_group_t * group = GetGroupByID(user->groups[0]);
+
+    cookie_parse_buffer(hook->external_command,user,group,context,buffer,sizeof(buffer));
+  }
+  l_command = strlen(buffer);
+  while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
+    buffer[--l_command] = '\0';
   /* we can use protocol hooks here */
   proto = hook_check_protocol(buffer);
   if (proto)

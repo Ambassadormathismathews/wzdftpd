@@ -1,0 +1,56 @@
+<chapter>
+<title>Custom Commands</title>
+
+<sect1>
+<title>Adding SITE commands</title>
+
+<para>
+You can add SITE commands to the server, by defining a new command, calling
+an external program when used.
+They will be used exactly as other SITE commands.
+</para>
+
+<para>
+If the command needs arguments you just have to specify them after the command.
+You can use cookies in the arguments, they will be replaced as usual.
+<screen>site_cmd = rescan /path/to/rescan.sh %username</screen>
+
+<emphasis>NOTE: </emphasis>remember that SITE commands are not allowed by
+default, so you must add a permission line in your config file, or your command
+will not be accessible.
+</para>
+</sect1>
+
+
+
+<sect1>
+<title>Connecting events to commands</title>
+
+<para>
+When some events occurs (dir creation, upload, etc), the server sends an event
+which can be connected to a command.
+</para>
+<para>
+If the command needs arguments you just have to specify them after the command.
+You can use cookies in the arguments, they will be replaced as usual.
+<screen>cscript = POSTUPLOAD /path/to/my/zipscript.sh %username</screen>
+<table frame='all' id="table_events">
+<title>Events</title>
+<tgroup cols="2" align='left' colsep='0' rowsep='0'>
+<tbody>
+<row><entry>Event</entry><entry>Description</entry></row>
+
+<row><entry>LOGIN</entry><entry>User logged in</entry></row>
+<row><entry>LOGOUT</entry><entry>User logged out, or timed out</entry></row>
+<row><entry>MKDIR</entry><entry>User created a directory</entry></row>
+<row><entry>RMDIR</entry><entry>User removed a directory</entry></row>
+<row><entry>PREUPLOAD</entry><entry>User is about to upload file</entry></row>
+<row><entry>POSTUPLOAD</entry><entry>User finished an upload</entry></row>
+<row><entry>POSTDOWNLOAD</entry><entry>User finished a download</entry></row>
+</tbody>
+</tgroup>
+</table>
+</para>
+</sect1>
+
+</chapter>
