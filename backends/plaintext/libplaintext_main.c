@@ -280,7 +280,7 @@ static int write_user_file(void)
     fprintf(stderr,"Could not open file %s !\n",filenameold);
     return -1;
   }
-  
+
   /* first copy file to .old */
   {
     while ( (i=fread(buffer,1,4096,file)) > 0 )
@@ -301,7 +301,7 @@ static int write_user_file(void)
     fprintf(stderr,"Unable to block SIGINT with sigprocmask\n");
   }
 #endif
-  
+
   file = freopen(filename,"w+",file);
   if (!file) {
     fprintf(stderr,"ERROR: unable to reopen users file (%s:%d)\n",__FILE__,__LINE__);
@@ -432,7 +432,7 @@ static int write_user_file(void)
 #endif
 
   /* FIXME need to release mutex */
-  
+
 #if 0
   /* and now, the (as most as possible) atomic operation for the userfile */
   {
@@ -488,7 +488,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
           user_pool = realloc(user_pool,(user_count+256)*sizeof(wzd_user_t));
         }*/
       if (++user_count >= user_count_max) {
-	fprintf(stderr,"Too many users defined %d\n",user_count);
+        fprintf(stderr,"Too many users defined %d\n",user_count);
         continue;
       }
       user_init_struct(&user_pool[user_count-1]);
@@ -501,8 +501,8 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       if (!user_count) break;
       /* remove trailing / */
       if (value[strlen(value)-1] == '/' && strcmp(value,"/")!=0)
-	value[strlen(value)-1] = '\0';
-	  DIRNORM(value,strlen(value),0);
+        value[strlen(value)-1] = '\0';
+      DIRNORM(value,strlen(value),0);
       strncpy(user_pool[user_count-1].rootpath,value,WZD_MAX_PATH);
     }
     else if (strcmp("pass",varname)==0) {
@@ -522,7 +522,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
 fprintf(stderr,"Invalid uid %s\n",value);
-	continue;
+        continue;
       }
       user_pool[user_count-1].uid = num;
     }
@@ -538,11 +538,11 @@ fprintf(stderr,"Invalid uid %s\n",value);
       if (!ptr) continue;
       i = 0;
       while (i < group_count) {
-	if (strcmp(value,group_pool[i].groupname)==0) {
-	  user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = group_pool[i].gid; /* ouch */
-	  break;
-	}
-	i++;
+        if (strcmp(value,group_pool[i].groupname)==0) {
+          user_pool[user_count-1].groups[user_pool[user_count-1].group_num++] = group_pool[i].gid; /* ouch */
+          break;
+        }
+        i++;
       }
     } /* "groups" */
     else if (strcmp("tagline",varname)==0) {
@@ -644,7 +644,7 @@ fprintf(stderr,"Invalid ratio %s\n",value);
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
 fprintf(stderr,"Invalid user_slots %s\n",value);
-	continue;
+        continue;
       }
       user_pool[user_count-1].user_slots = (unsigned short)u_num;
     } /* else if (strcmp("user_slots",... */
@@ -653,7 +653,7 @@ fprintf(stderr,"Invalid user_slots %s\n",value);
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
 fprintf(stderr,"Invalid leech_slots %s\n",value);
-	continue;
+        continue;
       }
       user_pool[user_count-1].leech_slots = (unsigned short)u_num;
     } /* else if (strcmp("user_slots",... */
@@ -711,8 +711,8 @@ fprintf(stderr,"Entering section GROUPS\n");
       if (!token) continue;
       token = strtok(NULL,"\n");
       if (!token) {
-	fprintf(stderr,"privgroup should be followed by the group name !\n");
-	continue;
+        fprintf(stderr,"privgroup should be followed by the group name !\n");
+        continue;
       }
 #if 0
 fprintf(stderr,"Defining new private group %s\n",token);
@@ -722,8 +722,8 @@ fprintf(stderr,"Defining new private group %s\n",token);
 	group_pool = realloc(group_pool,group_count+256);
       }*/
       if (++group_count >= group_count_max) {
-	fprintf(stderr,"Too many groups: %d\n",group_count);
-	continue;
+        fprintf(stderr,"Too many groups: %d\n",group_count);
+        continue;
       }
       strncpy(group_pool[group_count-1].groupname,token,128);
       group_pool[group_count-1].gid = gid++;
@@ -768,29 +768,29 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
         group_pool[group_count-1].max_idle_time = num;
       } /* max_idle_time */
       else if (strcmp("num_logins",varname)==0) {
-	if (!group_count) break;
-	num = strtol(value, &ptr, 0);
-	if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+        if (!group_count) break;
+        num = strtol(value, &ptr, 0);
+        if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
 fprintf(stderr,"Invalid num_logins %s\n",value);
-	  continue;
-	}
-	group_pool[group_count-1].num_logins = (unsigned short)num;
+          continue;
+        }
+        group_pool[group_count-1].num_logins = (unsigned short)num;
       } /* else if (strcmp("num_logins",... */
 
       else if (strcmp("ip_allowed",varname)==0) {
         group_ip_add(&group_pool[group_count-1],value);
       } /* ip_allowed */
       else if (strcmp("default_home",varname)==0) {
-	strncpy(group_pool[group_count-1].defaultpath,value,WZD_MAX_PATH);
+        strncpy(group_pool[group_count-1].defaultpath,value,WZD_MAX_PATH);
       } /* default_home */
       else if (strcmp("ratio",varname)==0) {
-	if (!group_count) break;
-	num = strtol(value, &ptr, 0);
-	if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-	  fprintf(stderr,"Invalid ratio %s\n",value);
-	  continue;
-	}
-	group_pool[group_count-1].ratio = num;
+        if (!group_count) break;
+        num = strtol(value, &ptr, 0);
+        if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+          fprintf(stderr,"Invalid ratio %s\n",value);
+          continue;
+        }
+        group_pool[group_count-1].ratio = num;
       } /* else if (strcmp("ratio",... */
       else if (strcmp("tagline",varname)==0) {
         strncpy(group_pool[group_count-1].tagline,value,MAX_TAGLINE_LENGTH);
@@ -1141,7 +1141,7 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
   }
 
   return (found) ? group_pool[count].gid : -1;
-} 
+}
 
 
 /* if user does not exist, add it */
@@ -1151,7 +1151,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
   int found;
   char * cipher;
   char salt[3];
-  
+
   count=0;
   found = 0;
   while (count<user_count_max) {
@@ -1181,15 +1181,15 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       if (strcasecmp(user->userpass,"%")==0) {
         /* special case: if user_pool[count].userpass == "%" then any pass
          *  is accepted */
-	strcpy(user_pool[count].userpass,user->userpass);
+        strcpy(user_pool[count].userpass,user->userpass);
       } else {
         /* TODO choose encryption func ? */
-	salt[0] = 'a' + (char)(rand()%26);
-	salt[1] = 'a' + (char)((rand()*72+3)%26);
+        salt[0] = 'a' + (char)(rand()%26);
+        salt[1] = 'a' + (char)((rand()*72+3)%26);
         /* FIXME - crypt is NOT reentrant */
         /* XXX - md5 hash in crypt function does NOT work with cygwin */
-	cipher = crypt(user->userpass, salt);
-	strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
+        cipher = crypt(user->userpass, salt);
+        strncpy(user_pool[count].userpass,cipher,MAX_PASS_LENGTH-1);
       }
     }
     if (mod_type & _USER_ROOTPATH) strcpy(user_pool[count].rootpath,user->rootpath);
@@ -1206,7 +1206,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_IP) {
       int i;
       for ( i=0; i<HARD_IP_PER_USER; i++ )
-	strcpy(user_pool[count].ip_allowed[i],user->ip_allowed[i]);
+        strcpy(user_pool[count].ip_allowed[i],user->ip_allowed[i]);
     }
     if (mod_type & _USER_BYTESUL) user_pool[count].stats.bytes_ul_total = user->stats.bytes_ul_total;
     if (mod_type & _USER_BYTESDL) user_pool[count].stats.bytes_dl_total = user->stats.bytes_dl_total;
@@ -1232,7 +1232,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
     /* find a free uid */
     user_pool[user_count].uid = find_free_uid(1);
-    
+
     user_count++;
   } /* if (found) */
 
@@ -1245,7 +1245,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   unsigned int count;
   int found;
-  
+
   count=0;
   found = 0;
   while (count<group_count_max) {
@@ -1282,7 +1282,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_IP) {
       int i;
       for ( i=0; i<HARD_IP_PER_GROUP; i++ )
-	strcpy(group_pool[count].ip_allowed[i],group->ip_allowed[i]);
+        strcpy(group_pool[count].ip_allowed[i],group->ip_allowed[i]);
     }
   } else { /* group not found, add it */
     fprintf(stderr,"Add group %s\n",name);
