@@ -86,93 +86,63 @@
 
 /*************** identify_token **********************/
 
+#define STRTOINT(a,b,c,d) (((a)<<24) + ((b)<<16) + ((c)<<8) + (d))
+
 int identify_token(char *token)
 {
   unsigned int length;
   if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
   ascii_lower(token,length);
-/* TODO order the following by probability order */
-  if (strcmp("user",token)==0)
-    return TOK_USER;
-  if (strcmp("pass",token)==0)
-    return TOK_PASS;
-  if (strcmp("auth",token)==0)
-    return TOK_AUTH;
-  if (strcmp("quit",token)==0)
-    return TOK_QUIT;
-  if (strcmp("type",token)==0)
-    return TOK_TYPE;
-  if (strcmp("mode",token)==0)
-    return TOK_MODE;
-  if (strcmp("port",token)==0)
-    return TOK_PORT;
-  if (strcmp("pasv",token)==0)
-    return TOK_PASV;
-  if (strcmp("pwd",token)==0)
-    return TOK_PWD;
-  if (strcmp("noop",token)==0)
-    return TOK_NOOP;
-  if (strcmp("syst",token)==0)
-    return TOK_SYST;
-  if (strcmp("cwd",token)==0)
-    return TOK_CWD;
-  if (strcmp("cdup",token)==0)
-    return TOK_CDUP;
-  if (strcmp("list",token)==0)
-    return TOK_LIST;
-  if (strcmp("nlst",token)==0)
-    return TOK_NLST;
-  if (strcmp("mkd",token)==0)
-    return TOK_MKD;
-  if (strcmp("rmd",token)==0)
-    return TOK_RMD;
-  if (strcmp("retr",token)==0)
-    return TOK_RETR;
-  if (strcmp("stor",token)==0)
-    return TOK_STOR;
-  if (strcmp("appe",token)==0)
-    return TOK_APPE;
-  if (strcmp("rest",token)==0)
-    return TOK_REST;
-  if (strcmp("mdtm",token)==0)
-    return TOK_MDTM;
-  if (strcmp("size",token)==0)
-    return TOK_SIZE;
-  if (strcmp("dele",token)==0)
-    return TOK_DELE;
-  if (strcmp("abor",token)==0)
-    return TOK_ABOR;
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (strcmp("pbsz",token)==0)
-    return TOK_PBSZ;
-  if (strcmp("prot",token)==0)
-    return TOK_PROT;
-#endif
-  if (strcmp("site",token)==0)
-    return TOK_SITE;
-  if (strcmp("feat",token)==0)
-    return TOK_FEAT;
-  if (strcmp("allo",token)==0)
-    return TOK_ALLO;
-  if (strcmp("rnfr",token)==0)
-    return TOK_RNFR;
-  if (strcmp("rnto",token)==0)
-    return TOK_RNTO;
-  if (strcmp("abor",token)==0)
-    return TOK_ABOR;
-  if (strcmp("epsv",token)==0)
-    return TOK_EPSV;
-  if (strcmp("eprt",token)==0)
-    return TOK_EPRT;
-  if (strcmp("pret",token)==0)
-    return TOK_PRET;
-  if (strcmp("xcrc",token)==0)
-    return TOK_XCRC;
-  if (strcmp("xmd5",token)==0)
-    return TOK_XMD5;
-  if (strcmp("opts",token)==0)
-    return TOK_OPTS;
+
+  /* TODO order the following by probability order */
+  if (length <= 4) {
+    switch ( STRTOINT(token[0],token[1],token[2],token[3]) ) {
+      case STRTOINT('u','s','e','r'): return TOK_USER;
+      case STRTOINT('p','a','s','s'): return TOK_PASS;
+      case STRTOINT('a','u','t','h'): return TOK_AUTH;
+      case STRTOINT('q','u','i','t'): return TOK_QUIT;
+      case STRTOINT('t','y','p','e'): return TOK_TYPE;
+      case STRTOINT('m','o','d','e'): return TOK_MODE;
+      case STRTOINT('p','o','r','t'): return TOK_PORT;
+      case STRTOINT('p','a','s','v'): return TOK_PASV;
+      case STRTOINT('p','w','d','\0'): return TOK_PWD;
+      case STRTOINT('n','o','o','p'): return TOK_NOOP;
+      case STRTOINT('s','y','s','t'): return TOK_SYST;
+      case STRTOINT('c','w','d','\0'): return TOK_CWD;
+      case STRTOINT('c','d','u','p'): return TOK_CDUP;
+      case STRTOINT('l','i','s','t'): return TOK_LIST;
+      case STRTOINT('n','l','s','t'): return TOK_NLST;
+      case STRTOINT('m','k','d','\0'): return TOK_MKD;
+      case STRTOINT('r','m','d','\0'): return TOK_RMD;
+      case STRTOINT('r','e','t','r'): return TOK_RETR;
+      case STRTOINT('s','t','o','r'): return TOK_STOR;
+      case STRTOINT('a','p','p','e'): return TOK_APPE;
+      case STRTOINT('r','e','s','t'): return TOK_REST;
+      case STRTOINT('m','d','t','m'): return TOK_MDTM;
+      case STRTOINT('s','i','z','e'): return TOK_SIZE;
+      case STRTOINT('d','e','l','e'): return TOK_DELE;
+      case STRTOINT('a','b','o','r'): return TOK_ABOR;
+      case STRTOINT('p','b','s','z'): return TOK_PBSZ;
+      case STRTOINT('p','r','o','t'): return TOK_PROT;
+      case STRTOINT('s','i','t','e'): return TOK_SITE;
+      case STRTOINT('f','e','a','t'): return TOK_FEAT;
+      case STRTOINT('a','l','l','o'): return TOK_ALLO;
+      case STRTOINT('r','n','f','r'): return TOK_RNFR;
+      case STRTOINT('r','n','t','o'): return TOK_RNTO;
+      /* IPv6 */
+      case STRTOINT('e','p','s','v'): return TOK_EPSV;
+      case STRTOINT('e','p','r','t'): return TOK_EPRT;
+      /* extensions */
+      case STRTOINT('p','r','e','t'): return TOK_PRET;
+      case STRTOINT('x','c','r','c'): return TOK_XCRC;
+      case STRTOINT('x','m','d','5'): return TOK_XMD5;
+      case STRTOINT('o','p','t','s'): return TOK_OPTS;
+/*      default:
+        return TOK_UNKNOWN;*/
+    }
+  }
+
   /* XXX FIXME TODO the following sequence can be divided into parts, and MUST be followwed by either
    * STAT or ABOR or QUIT
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
