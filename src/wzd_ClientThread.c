@@ -202,43 +202,50 @@ int clear_write(int sock, const char *msg, unsigned int length, int flags, int t
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
+  int done;
   int save_errno;
   fd_set fds, efds;
   struct timeval tv;
 
-  if (timeout==0)
-    ret = send(sock,msg,length,0);
-  else {
-    while (1) {
-      FD_ZERO(&fds);
-      FD_ZERO(&efds);
-      FD_SET(sock,&fds);
-      FD_SET(sock,&efds);
-      tv.tv_sec = timeout; tv.tv_usec = 0;
+  done=0;
+  while (length>0) {
+    if (timeout==0)
+      ret = send(sock,msg,length,0);
+    else {
+      while (1) {
+	FD_ZERO(&fds);
+	FD_ZERO(&efds);
+	FD_SET(sock,&fds);
+	FD_SET(sock,&efds);
+	tv.tv_sec = timeout; tv.tv_usec = 0;
 
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
-      ret = select(0,NULL,&fds,&efds,&tv);
+	ret = select(0,NULL,&fds,&efds,&tv);
 #else
-      ret = select(sock+1,NULL,&fds,&efds,&tv);
+	ret = select(sock+1,NULL,&fds,&efds,&tv);
 #endif
-      save_errno = errno;
+	save_errno = errno;
 
-      if (FD_ISSET(sock,&efds)) {
-        if (save_errno == EINTR) continue;
-        out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
-        return -1;
+	if (FD_ISSET(sock,&efds)) {
+	  if (save_errno == EINTR) continue;
+	  out_log(LEVEL_CRITICAL,"Error during send: %s\n",strerror(save_errno));
+	  return -1;
+	}
+	if (!FD_ISSET(sock,&fds)) /* timeout */
+	{
+	  out_log(LEVEL_CRITICAL,"Timeout during send\n");
+	  return 0;
+	}
+	break;
       }
-      if (!FD_ISSET(sock,&fds)) /* timeout */
-      {
-        out_log(LEVEL_CRITICAL,"Timeout during send\n");
-        return 0;
-      }
-      break;
-    }
-    ret = send(sock,msg,length,0);
-  } /* timeout */
+      ret = send(sock,msg,length,0);
+      if (ret==-1) return ret;
+    } /* timeout */
+    done += ret;
+    length -= ret;
+  }
 
-  return ret;
+  return done;
 }
 
 /*************** getmyip *****************************/
