@@ -88,16 +88,17 @@
 #define	CFG_PASV_LOW		320
 #define	CFG_PASV_HIGH		321
 #define	CFG_PORT		322
-#define	CFG_SERVER_UID		323
-#define	CFG_SHM_KEY		324
-#define	CFG_SITE		325
-#define	CFG_SITECMD		326
-#define	CFG_SITEFILE		327
-#define	CFG_TLS_CERT		328
-#define	CFG_TLS_CIPHER_LIST	329
-#define	CFG_TLS_MODE		330
-#define	CFG_VFS			331
-#define	CFG_XFERLOG		332
+#define	CFG_SECTION		323
+#define	CFG_SERVER_UID		324
+#define	CFG_SHM_KEY		325
+#define	CFG_SITE		326
+#define	CFG_SITECMD		327
+#define	CFG_SITEFILE		328
+#define	CFG_TLS_CERT		329
+#define	CFG_TLS_CIPHER_LIST	330
+#define	CFG_TLS_MODE		331
+#define	CFG_VFS			332
+#define	CFG_XFERLOG		333
 
 #define	CFG_UNKNOWN	511
 
@@ -208,6 +209,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"pasv_low_range")) return CFG_PASV_LOW;
   if (!strcasecmp(word,"pasv_high_range")) return CFG_PASV_HIGH;
   if (!strcasecmp(word,"port")) return CFG_PORT;
+  if (!strcasecmp(word,"section")) return CFG_SECTION;
   if (!strcasecmp(word,"server_uid")) return CFG_SERVER_UID;
   if (!strcasecmp(word,"shm_key")) return CFG_SHM_KEY;
   if (!strcasecmp(word,"site_cmd")) return CFG_SITECMD;
@@ -281,6 +283,7 @@ int set_default_options(void)
 
   tempConfig.perm_list = NULL;
   tempConfig.site_list = NULL;
+  tempConfig.section_list = NULL;
 
   /* site config */
   tempConfig.site_config.file_help[0] = '\0';
@@ -1195,6 +1198,42 @@ int cfg_read_port(void)
   return 0;
 }
 
+/* SECTION (string)
+*/
+int cfg_read_section(void)
+{
+  char *sectionmask;
+  char *sectionname;
+  unsigned int token;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'section = ...'\n");
+    return 1;
+  }
+  if ( (token=yylex()) != CFG_ID ) {
+    out_err(LEVEL_HIGH,"line should be 'section = <name> <mask>'\n");
+    return 1;
+  }
+  sectionname = strdup(yytext);
+  /* TODO check section unicity ? */
+
+  if( !(sectionmask=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid mask\n");
+    return 1;
+  }
+
+  if (section_add(&tempConfig.section_list,sectionname,sectionmask))
+  {
+    free(sectionname);
+    free(sectionmask);
+    return 1;
+  }
+  free(sectionname);
+  free(sectionmask);
+  return 0;
+}
+
 /* SERVER_UID (unsigned int/string)
 */
 int cfg_read_server_uid(void)
@@ -1672,6 +1711,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_PORT:
       ret = cfg_read_port();
+      break;
+    case CFG_SECTION:
+      ret = cfg_read_section();
       break;
     case CFG_SERVER_UID:
       ret = cfg_read_server_uid();

@@ -1,3 +1,15 @@
+# Apr, 09 2003
+- big patch to compile and run on OpenBSD
+
+# Apr, 07 2003
+- build method changed to automake/autoconf
+- backend and module directives in config file can handle absolute filenames
+- new directive 'logfile' to change log file location
+- new member 'credits' in user struct
+- stats on number of files uploaded/downloaded
+- new cookies: credits & credits2, last_login, files_dl, files_ul
+- site give/take
+
 #--- cvs commit
 # Apr, 03 2003
 - vfs: added a permission field, which allow per user/group/flag vfs

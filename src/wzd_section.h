@@ -32,4 +32,7 @@ int section_free(wzd_section_t **section_list);
 /* returns 1 if in section, else 0 */
 int section_check(wzd_section_t * section, const char *path);
 
+/** \return a pointer to the first matching section or NULL */
+wzd_section_t * section_find(wzd_section_t *section_list, const char *path);
+
 #endif /* __WZD_SECTION_H__ */

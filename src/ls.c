@@ -35,6 +35,10 @@
 #include <sys/time.h>
 #include <time.h>
 #include <dirent.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 
 /* speed up compilation */

@@ -23,14 +23,25 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <dlfcn.h>
+
+#ifdef BSD
+#define DL_ARG  DL_LAZY
+#else
+#define DL_ARG  RTLD_NOW
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -43,6 +54,13 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
+
+/* BSD exports symbols in .so files prefixed with a _ !! */
+#ifdef BSD
+#define DL_PREFIX "_"
+#else
+#define DL_PREFIX
+#endif
 
 struct event_entry_t {
   unsigned long mask;
@@ -281,7 +299,7 @@ int module_check(const char *filename)
 #endif
 
   /* test dlopen */
-  handle = dlopen(path,RTLD_NOW);
+  handle = dlopen(path,DL_ARG);
   if (!handle) {
     out_err(LEVEL_HIGH,"Could not dlopen module '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
@@ -290,7 +308,7 @@ int module_check(const char *filename)
   }
 
   /* check basic functions */
-  ptr = dlsym(handle,STR_MODULE_INIT);
+  ptr = dlsym(handle,DL_PREFIX STR_MODULE_INIT);
   if ((error = dlerror()) != NULL) {
     out_err(LEVEL_HIGH,"Unable to find function WZD_MODULE_INIT in module %s\n%s\n",filename,error);
     dlclose(handle);
@@ -298,7 +316,7 @@ int module_check(const char *filename)
   }
 
 /*
-  ptr = dlsym(handle,"hook_table");
+  ptr = dlsym(handle,DL_PREFIX "hook_table");
   if ((error = dlerror()) != NULL) {
     out_log(LEVEL_HIGH,"Unable to find structure 'hook_table' in module %s\n%s\n",filename,error);
     dlclose(handle);
@@ -308,7 +326,7 @@ int module_check(const char *filename)
   {
     typedef void (*myfct)(void);
     myfct f;
-    f = (myfct)dlsym(handle,"moduletest");
+    f = (myfct)dlsym(handle,DL_PREFIX "moduletest");
     fprintf(stderr,"main prog mainConfig: %lx\n",(unsigned long)getlib_mainConfig()->logfile);
     if (f)
       f();
@@ -372,10 +390,10 @@ int module_load(wzd_module_t *module)
     strcpy(path+2,filename);
   }
 
-  handle = dlopen(path,RTLD_NOW);
+  handle = dlopen(path,DL_ARG);
   if (!handle) return -1;
 
-  f_init = (fcn_module_init)dlsym(handle,STR_MODULE_INIT);
+  f_init = (fcn_module_init)dlsym(handle,DL_PREFIX STR_MODULE_INIT);
 #ifdef DEBUG
   if ((error = dlerror()) != NULL) {
     out_log(LEVEL_CRITICAL,"Unable to find function WZD_MODULE_INIT in module %s\n%s\n",filename,error);

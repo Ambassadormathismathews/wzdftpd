@@ -25,8 +25,11 @@
 #if defined  __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <netdb.h>
 #endif
 #include <stdio.h>
@@ -38,7 +41,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <time.h>
-#include <malloc.h>
 #include <regex.h>
 #include <errno.h>
 #include <fcntl.h>

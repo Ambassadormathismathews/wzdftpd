@@ -23,6 +23,9 @@
  */
 
 #include <sys/time.h>	/* time_t (wzd_structs.h) */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
 
 #include <sys/stat.h>

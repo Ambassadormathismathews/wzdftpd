@@ -34,8 +34,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <malloc.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <net/if.h>
 #include <netdb.h>
 #include <errno.h>
@@ -46,7 +50,14 @@
 #ifdef __INTEL_COMPILER
 # define __SWORD_TYPE   int
 #endif /* __INTEL_COMPILER */
+
+#ifdef BSD
+/* statfs */
+#include <sys/param.h>
+#include <sys/mount.h>
+#else
 #include <sys/vfs.h> /* statfs */
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -59,7 +70,7 @@
 #include "wzd_messages.h"
 #include "wzd_ServerThread.h"
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(BSD)
 #define LONGBITS  0x20
 #else
 /* needed  for LONGBITS */
@@ -145,6 +156,9 @@ void chop(char *s)
 /** returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina)
 {
+#if BSD
+  return -1;
+#else
 /*  struct in_addr *ina = void_in;*/
   struct ifreq ifr;
   int s;
@@ -168,6 +182,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 
   close(s);
   return 0;
+#endif /* BSD */
 }
 
 /** returns info on device containing dir/file */
@@ -177,7 +192,9 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
 
   if (statfs(file,&fs)==0) {
     if (f_bsize) *f_bsize = fs.f_bsize;
+#ifndef BSD
     if (f_type) *f_type = fs.f_type;
+#endif /* BSD */
     if (f_blocks) *f_blocks = fs.f_blocks;
     if (f_free) *f_free = fs.f_bfree;
     return 0;

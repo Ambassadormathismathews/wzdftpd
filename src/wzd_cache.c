@@ -23,12 +23,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <malloc.h>
 
 #include "wzd_cache.h"
 
@@ -41,6 +41,9 @@
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
 

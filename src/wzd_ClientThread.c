@@ -25,8 +25,11 @@
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <netdb.h> /* gethostbyaddr */
 #endif
 #include <stdio.h>
@@ -37,7 +40,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <malloc.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -56,6 +58,7 @@
 #include "wzd_vfs.h"
 #include "wzd_file.h"
 #include "wzd_ratio.h"
+#include "wzd_section.h"
 #include "wzd_site.h"
 #include "wzd_socket.h"
 #include "wzd_tls.h"
@@ -835,6 +838,22 @@ int do_mkdir(char *param, wzd_context_t * context)
   if (strcmp(path,buffer) != 0) {
     out_err(LEVEL_FLOOD,"strcmp(%s,%s) != 0\n",path,buffer);
     return 1;
+  }
+
+  /* TODO XXX FIXME check section path-filter */
+  {
+    char *ptr;
+    wzd_section_t * section;
+    strcpy(path,buffer);
+    ptr = strrchr(path,'/');
+    if (ptr) {
+      *ptr='\0';
+      out_err(LEVEL_HIGH,"searching path %s\n",path);
+      section = section_find(mainConfig->section_list,path);
+      if (section) {
+	out_err(LEVEL_HIGH,"Found matching section\n");
+      }
+    }
   }
 
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */

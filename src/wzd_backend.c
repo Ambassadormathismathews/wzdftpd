@@ -23,14 +23,25 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
-#include <malloc.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <errno.h>
 #include <dlfcn.h>
+
+#ifdef BSD
+#define	DL_ARG	DL_LAZY
+#else
+#define	DL_ARG	RTLD_NOW
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -42,6 +53,13 @@
 #include "wzd_backend.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
+
+/* BSD exports symbols in .so files prefixed with a _ !! */
+#ifdef BSD
+#define	DL_PREFIX "_"
+#else
+#define	DL_PREFIX
+#endif
 
 
 void backend_clear_struct(wzd_backend_t *backend)
@@ -104,7 +122,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 #endif
 
   /* test dlopen */
-  handle = dlopen(filename,RTLD_NOW);
+  handle = dlopen(filename,DL_ARG);
   if (!handle) {
     out_err(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
@@ -114,24 +132,24 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 
   /* check functions */
   ret = 1;
-  ptr = dlsym(handle,STR_VALIDATE_LOGIN);
+  ptr = dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_VALIDATE_PASS);
+  ptr = dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_FIND_USER);
+  ptr = dlsym(handle,DL_PREFIX STR_FIND_USER);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_FIND_GROUP);
+  ptr = dlsym(handle,DL_PREFIX STR_FIND_GROUP);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_MOD_USER);
+  ptr = dlsym(handle,DL_PREFIX STR_MOD_USER);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_CHPASS);
+  ptr = dlsym(handle,DL_PREFIX STR_CHPASS);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_MOD_GROUP);
+  ptr = dlsym(handle,DL_PREFIX STR_MOD_GROUP);
   ret = ret & (ptr!=NULL);
-  ptr = dlsym(handle,STR_COMMIT_CHANGES);
+  ptr = dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
   ret = ret & (ptr!=NULL);
   if (!ret) {
-    out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
+    out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n",backend);
     dlclose(handle);
     return 1;
   }
@@ -145,7 +163,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 	dlclose(handle);
 	return 1;
       }
-      version_found = dlsym(handle,"module_version");
+      version_found = dlsym(handle,DL_PREFIX "module_version");
       if ( (dlerror()) != NULL ) {
 	out_err(LEVEL_CRITICAL,"Backend does not contain any \"module_version\" information\n");
 	dlclose(handle);
@@ -196,7 +214,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   } 
 
   /* test dlopen */
-  handle = dlopen(filename,RTLD_NOW);
+  handle = dlopen(filename,DL_ARG);
   if (!handle) {
     out_log(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
     out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
@@ -205,15 +223,15 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   }
 
   mainConfig->backend.handle = handle;
-  ptr = init_fcn = (int (*)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int, void *))dlsym(handle,STR_INIT);
-  mainConfig->backend.back_validate_login = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_LOGIN);
-  mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_PASS);
-  mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_FIND_USER);
-  mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_FIND_GROUP);
-  mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,STR_CHPASS);
-  mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,STR_MOD_USER);
-  mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,STR_MOD_GROUP);
-  mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,STR_COMMIT_CHANGES);
+  ptr = init_fcn = (int (*)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int, void *))dlsym(handle,DL_PREFIX STR_INIT);
+  mainConfig->backend.back_validate_login = (int (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
+  mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
+  mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_FIND_USER);
+  mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,DL_PREFIX STR_FIND_GROUP);
+  mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,DL_PREFIX STR_CHPASS);
+  mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_USER);
+  mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_GROUP);
+  mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,DL_PREFIX STR_COMMIT_CHANGES);
   strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);
 
   if (ptr) {

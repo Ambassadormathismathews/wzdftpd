@@ -24,6 +24,12 @@
 
 #include <dirent.h>
 #include <regex.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <wzd.h>
 
 #define	incomplete_indicator	"../(incomplete)-%0"

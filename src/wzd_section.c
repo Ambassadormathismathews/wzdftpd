@@ -23,10 +23,12 @@
  */
 
 #include <sys/time.h>	/* time_t (wzd_structs.h) */
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
 
 #include <sys/stat.h>
-#include <malloc.h>	/* malloc/free */
 #include <string.h>	/* strdup */
 
 /* speed up compilation */
@@ -56,7 +58,7 @@ int section_add(wzd_section_t **section_list, unsigned char *name, unsigned char
   section_new = malloc(sizeof(wzd_section_t));
   section_new->sectionname = strdup(name);
   section_new->sectionmask = strdup(mask);
-  section_new = NULL;
+  section_new->next_section = NULL;
 
   section = *section_list;
 
@@ -105,4 +107,20 @@ int section_check(wzd_section_t * section, const char *path)
   /* TODO we can restrict sections to users/groups, etc */
   if (my_str_compare(path, section->sectionmask)) return 1;
   return 0;
+}
+
+/** \return a pointer to the first matching section or NULL */
+wzd_section_t * section_find(wzd_section_t *section_list, const char *path)
+{
+  wzd_section_t * section;
+
+  if (!section_list) return NULL;
+  section=section_list;
+
+  while (section)
+  {
+    if (my_str_compare(path,section->sectionmask)) return section;
+    section = section->next_section;
+  }
+  return NULL;
 }

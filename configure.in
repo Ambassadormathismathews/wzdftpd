@@ -43,7 +43,7 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES(unsigned long long,,exit 1)
 AC_CHECK_DECLS([sys_siglist])
-AC_CHECK_HEADERS([sys/vfs.h pthread.h],,exit 1)
+AC_CHECK_HEADERS([pthread.h],,exit 1)
 
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
@@ -62,8 +62,10 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime],,exit 1)
+AC_CHECK_FUNCS([statfs],,exit 1)
 
-AC_CHECK_LIB(dl, dlopen,,exit 1)
+AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
+AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 AC_CHECK_LIB(pthread, pthread_create,,exit 1)
 
 AC_MSG_CHECKING(whether to build in debug mode)
@@ -73,10 +75,10 @@ AC_ARG_ENABLE(debug, [  --enable-debug          enable debug mode],
       AC_MSG_RESULT(yes)
       CPPFLAGS="$CPPFLAGS -g -O0 -DDEBUG"
     else
-      CPPFLAGS="$CPPFLAGS -O3 -pipe"
+      CPPFLAGS="$CPPFLAGS -O3 -pipe -fomit-frame-pointer -ffast-math"
       AC_MSG_RESULT(no)
     fi,
-    CPPFLAGS="$CPPFLAGS -O3 -pipe"
+    CPPFLAGS="$CPPFLAGS -O3 -pipe -fomit-frame-pointer -ffast-math"
     AC_MSG_RESULT(no)
 )
 
@@ -89,7 +91,7 @@ AC_ARG_ENABLE(ssl, [  --enable-ssl            enable ssl support],
       [AC_CHECK_HEADERS([openssl/ssl.h],,AC_MSG_ERROR(missing openssl headers))]
       [AC_CHECK_LIB(ssl, SSL_library_init,,AC_MSG_ERROR(missing openssl libraries))]
       SSL_CPPFLAGS="-DSSL_SUPPORT"
-      SSL_LDFLAGS="-lssl"
+      SSL_LDFLAGS="-lssl -lcrypto"
     else
       AC_MSG_RESULT(no)
     fi,
@@ -116,6 +118,8 @@ fi
 BUILDNUM="`date +\"%Y%m%d\"`"
 
 AC_SUBST(BUILDNUM)
+AC_SUBST(CRYPT_FLAGS)
+AC_SUBST(DL_FLAGS)
 AC_SUBST(SSL_CPPFLAGS)
 AC_SUBST(SSL_LDFLAGS)
 AC_SUBST(VERSION)
@@ -123,7 +127,6 @@ AC_SUBST(VERSION)
 AC_CONFIG_FILES([Makefile
                  backends/Makefile
                  backends/plaintext/Makefile
-                 doc/Makefile
                  modules/Makefile
                  modules/sfv/Makefile
                  modules/test/Makefile

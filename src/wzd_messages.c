@@ -25,14 +25,17 @@
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
-#include <malloc.h>
 
 /* speed up compilation */
 #define SSL     void

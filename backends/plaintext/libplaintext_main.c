@@ -24,9 +24,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
-#include <malloc.h>
+#include <sys/param.h>
+#ifndef BSD
 #include <crypt.h>
+#endif /* BSD */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <regex.h>
@@ -177,10 +180,13 @@ void user_init_struct(wzd_user_t * user)
     user->ip_allowed[i][0] = '\0';
   user->bytes_ul_total = 0;
   user->bytes_dl_total = 0;
+  user->files_ul_total = 0;
+  user->files_dl_total = 0;
   user->credits = 0;
   user->ratio = 0;
   user->user_slots = 0;
   user->leech_slots = 0;
+  user->last_login = 0;
 }
 
 
@@ -321,6 +327,10 @@ int write_user_file(void)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
     fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].bytes_ul_total);
     fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].bytes_dl_total);
+    if (user_pool[i].files_ul_total)
+      fprintf(file,"files_ul_total=%llu\n",user_pool[i].files_ul_total);
+    if (user_pool[i].files_dl_total)
+      fprintf(file,"files_dl_total=%llu\n",user_pool[i].files_dl_total);
     fprintf(file,"credits=%llu\n",user_pool[i].credits);
     if (user_pool[i].ratio)
       fprintf(file,"ratio=%d\n",user_pool[i].ratio);
@@ -334,6 +344,8 @@ int write_user_file(void)
       fprintf(file,"user_slots=%hd\n",(unsigned short)user_pool[i].user_slots);
     if (user_pool[i].leech_slots)
       fprintf(file,"leech_slots=%hd\n",(unsigned short)user_pool[i].leech_slots);
+    if (user_pool[i].last_login)
+      fprintf(file,"last_login=%ld\n",(unsigned long)user_pool[i].last_login);
     fprintf(file,"\n");
   }
 
@@ -474,6 +486,15 @@ fprintf(stderr,"Invalid max_ul_speed %s\n",value);
       }
       user_pool[user_count-1].max_ul_speed = num;
     } /* max_ul_speed */
+    else if (strcmp("last_login",varname)==0) {
+      if (!user_count) break;
+      num = strtol(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid last_login %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].last_login = num;
+    } /* last_login */
     else if (strcmp("max_dl_speed",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
@@ -482,7 +503,7 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
         continue;
       }
       user_pool[user_count-1].max_dl_speed = num;
-    } /* max_ul_speed */
+    } /* max_dl_speed */
     else if (strcmp("bytes_ul_total",varname)==0) {
       if (!user_count) break;
       ul_num = strtoull(value, &ptr, 0);
@@ -501,7 +522,25 @@ fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
       }
       user_pool[user_count-1].bytes_dl_total = ul_num;
     } /* bytes_dl_total */
-    else if (strcmp("credits",varname)==0) {
+    else if (strcmp("files_dl_total",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid files_dl_total %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].files_dl_total = u_num;
+    } /* files_dl_total */
+    else if (strcmp("files_ul_total",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid files_ul_total %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].files_ul_total = u_num;
+    } /* files_ul_total */
+   else if (strcmp("credits",varname)==0) {
       if (!user_count) break;
       ul_num = strtoull(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */

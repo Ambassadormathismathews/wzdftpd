@@ -2,6 +2,10 @@
 
 
 '********'
+- define a mask for dir creation to force directory names styles
+  (and avoid directory locking ;) path-filter
+ -- implement regexp in wzd_section.c (and wzd_init_lex.l)
+'********'
 - finish cache implementation
 '********'
 - convert strings analysis in do_site_print_file to a lex file
@@ -37,12 +41,9 @@
 - implement group flags
 '********'
 - stats on ul/dl
-  -- number of files uploaded/downloaded
-'********'
-- vfs: add regexp 'restriction' in wzd_vfs_t to implement per user/group vfs ?
-  -- use same permissions type as for SITE commands
-'********'
-- plaintext: when writing users file, block signals ...
+  -- number of files uploaded/downloaded / OK
+  -- decrement credits when deleting files
+  -- site wipe
 '********'
 - sfv checker:
   verify zip integrity
@@ -83,8 +84,6 @@ current objectives:
 
 ## PRIORITY ##
 
-- define a mask for dir creation to force directory names styles
-  (and avoid directory locking ;) path-filter
 - Sub-vfs work, but need to put the physical path after the first node
   e.g:
    vfs = |/home/pollux/mp3|/cygdrive/e/sons/mp3|

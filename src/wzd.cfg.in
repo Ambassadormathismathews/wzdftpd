@@ -144,6 +144,11 @@ login_pre_ip_allowed = -*.cpe.fr
 #module = @prefix@/share/@PACKAGE@/modules/libwzd_test.so
 module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
 
+##### SECTIONS
+# sections are used to define local server properties
+# order *IS* important (first matching section is taken)
+section = ALL /*
+
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands
 # order *IS* important
