@@ -218,7 +218,7 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
         else
           ret = hook_call_external(hook,226);
       END_FORALL_HOOKS
-      
+
       ret = send_message(226,context);
 #ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);

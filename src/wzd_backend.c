@@ -73,6 +73,8 @@
 
 static int _backend_check_function(void * handle, const char *name, const char *backend_name);
 
+static int _trigger_user_max_dl(wzd_user_t * user);
+static int _trigger_user_max_ul(wzd_user_t * user);
 
 
 char *backend_get_version(wzd_backend_t *backend)
@@ -689,6 +691,11 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 
   usercache_invalidate( predicate_name, (void *)name );
 
+  if (ret == 0) {
+    if (mod_type & _USER_MAX_ULS) _trigger_user_max_ul(user);
+    if (mod_type & _USER_MAX_DLS) _trigger_user_max_dl(user);
+  }
+
   return ret;
 }
 
@@ -717,3 +724,38 @@ static int _backend_check_function(void * handle, const char *name, const char *
     out_err(LEVEL_HIGH,"Could not find function %s in backend %s\n",name,backend_name);
   return (ptr) ? 1 : 0;
 }
+
+
+
+static int _trigger_user_max_dl(wzd_user_t * user)
+{
+  int i;
+
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC &&
+        context_list[i].userid == user->uid)
+    {
+      context_list[i].current_dl_limiter.maxspeed = user->max_dl_speed;
+    }
+  }
+
+  return 0;
+}
+
+static int _trigger_user_max_ul(wzd_user_t * user)
+{
+  int i;
+
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC &&
+        context_list[i].userid == user->uid)
+    {
+      context_list[i].current_ul_limiter.maxspeed = user->max_ul_speed;
+    }
+  }
+
+  return 0;
+}
+

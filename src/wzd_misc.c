@@ -257,7 +257,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
     out_log(LEVEL_CRITICAL,"Can't create new socket (%s:%d)\n",__FILE__,__LINE__);
     ina->s_addr = 0;
     return -1;
-  } 
+  }
   memset(&ifr,0,sizeof(ifr));
   strncpy(ifr.ifr_name,itface,sizeof(ifr.ifr_name));
 
@@ -440,7 +440,7 @@ int safe_rename(const char *src, const char *dst)
     fprintf(stderr,"Cross device move\n");
     ret = _int_rename(src,dst);
   }
-  
+
   return ret;
 }
 
@@ -637,7 +637,7 @@ void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list a
 
   /* first, replace cookies */
   ret = cookie_parse_buffer(msg, user, group, context, cookies_buf, WORK_BUF_LEN);
-  
+
   /* then format message */
   vsnprintf(work_buf,WORK_BUF_LEN,cookies_buf,argptr);
 
@@ -663,7 +663,7 @@ void v_format_message(int code, unsigned int *plength, char **pbuffer, va_list a
        length--;
     }
   }
-  
+
   if (!strpbrk(work_buf,"\r\n")) { /* simple case, msg on one line */
     if (is_terminated)
       snprintf(buffer,length,"%d %s\r\n",code,work_buf);
@@ -866,7 +866,7 @@ int print_file(const char *filename, int code, void * void_context)
     out_log(LEVEL_HIGH,"Problem opening file %s (code %d)\n",filename,code);
     return 1;
   }
-  
+
   snprintf(complete_buffer,5,"%3d-",code);
   if ( (fgets(buffer,1018,fp))==NULL ) {
     out_log(LEVEL_HIGH,"File %s is empty (code %d)\n",filename,code);

@@ -286,7 +286,7 @@ int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  return backend_mod_user("plaintext", username, user, _USER_IP);
+  return backend_mod_user(config->backend.name, username, user, _USER_IP);
 }
 
 int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
@@ -342,7 +342,7 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  return backend_mod_user("plaintext", username, user, _USER_IP);
+  return backend_mod_user(config->backend.name, username, user, _USER_IP);
 }
 
 int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
@@ -466,7 +466,7 @@ int vars_user_set(const char *username, const char *varname, void *data, unsigne
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext", username, user, mod_type);
+  return backend_mod_user(config->backend.name, username, user, mod_type);
 
   return ret;
 }
@@ -530,7 +530,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
 
   /* add it to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",username,&user,_USER_ALL);
+  ret = backend_mod_user(config->backend.name,username,&user,_USER_ALL);
 
   return ret;
 }
@@ -648,7 +648,7 @@ int vars_group_set(const char *groupname, const char *varname, void *data, unsig
 
   /* commit to backend */
   /* FIXME backend name hardcoded */
-  ret = backend_mod_group("plaintext", groupname, group, mod_type);
+  ret = backend_mod_group(config->backend.name, groupname, group, mod_type);
 
   return ret;
 }

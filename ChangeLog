@@ -1,7 +1,9 @@
 2004-11-29  Pierre Chifflier  <pollux@cpe.fr>
+
 	* feature: MySQL backend now almost working !
 	* feature: max_ul and max_dl vars can be changed during runtime, with
 	immediate effects
+	* feature: changing speed limits for users is also applied on logged users
 
 2004-11-25  Pierre Chifflier  <pollux@cpe.fr>
 
