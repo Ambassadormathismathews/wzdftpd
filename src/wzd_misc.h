@@ -121,17 +121,6 @@ char * read_token(char *s, char **endptr);
 /* replace all \ with / and lower string */
 void win_normalize(char * s, unsigned int length, unsigned int lower);
 
-/* IP allowing */
-int ip_add(wzd_ip_t **list, const char *newip);
-int ip_inlist(wzd_ip_t *list, const char *ip);
-void ip_free(wzd_ip_t *list);
-
-int user_ip_add(wzd_user_t * user, const char *newip);
-int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);
-
-int group_ip_add(wzd_group_t * group, const char *newip);
-int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
-
 /* wrappers to user list */
 wzd_user_t * GetUserByID(unsigned int id);
 wzd_user_t * GetUserByName(const char *name);

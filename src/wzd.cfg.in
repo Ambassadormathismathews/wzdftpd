@@ -8,7 +8,7 @@
 # If you specify an ip, the server will bind to this ip and
 # will refuse connections on other interfaces
 # ip should be 128 chars max
-# if you specify an ip beginning by +, the server will use DNS lookups
+# if you specify a canonical name, the server will use DNS lookups
 ip = *
 #ip = 127.0.0.1
 
@@ -16,8 +16,8 @@ ip = *
 # if you specify 1 here, the server will try to use your system to detect
 # ip changes
 # 0 desactivates checks
-# if you specify an ip beginning by +, the server will use DNS lookups
-#dynamic_ip = +xxx.myftp.org
+# if you specify a canonical name, the server will use DNS lookups
+#dynamic_ip = xxx.myftp.org
 #dynamic_ip = 1
 
 # Listen port (default: 21)
@@ -139,18 +139,12 @@ login_pre_ip_check = 0
 # one per line
 # wildcards are accepted (*,?) - NOTE * stops after the first match of the next
 #   char
-# you can write hostname, two possibilities:
-#  +hostname: we will compare gethostbyname(hostname) to user_ip
-#  -hostname: we will compare hostname to gethostbyaddr(user_ip)
-# this is usefull combined with wildcards (-*.abo.wanadoo.fr)
-# YOU CAN ONLY USE WILDCARDS ON LINES BEGINNING BY -
 #
 # WARNING: to match all ip ending by 0.1 you MUST write *.*.0.1, NOT *.0.1
-#login_pre_ip_allowed = +xxx.xxx.org
-#login_pre_ip_allowed = -xxx
-login_pre_ip_allowed = +localhost
-#login_pre_ip_allowed = +xxx
-login_pre_ip_allowed = -*.xxx.fr
+#login_pre_ip_allowed = xxx.xxx.org
+#login_pre_ip_allowed = xxx
+login_pre_ip_allowed = localhost
+login_pre_ip_allowed = *.xxx.fr
 #login_pre_ip_denied = *
 
 ##### VFS

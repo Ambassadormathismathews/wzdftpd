@@ -24,6 +24,8 @@ libwzd_la_SOURCES =  \
 	wzd_dir.h	\
 	wzd_file.c      \
 	wzd_file.h      \
+	wzd_ip.c        \
+	wzd_ip.h        \
 	wzd_libmain.c   \
 	wzd_libmain.h   \
 	wzd_log.c       \

@@ -154,7 +154,7 @@ void free_file_recursive(struct wzd_file_t * file)
   } while (file);
 }
 
-struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
+static struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
 {
   struct wzd_file_t *current=first;
 
@@ -166,7 +166,7 @@ struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
   return NULL;
 }
 
-struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **first)
+static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **first)
 {
   struct wzd_file_t *current=*first,*prev,*removed;
 
@@ -251,7 +251,7 @@ wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
 }
 
 /** creation and tail insertion */
-struct wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, struct wzd_file_t **first)
+static struct wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, struct wzd_file_t **first)
 {
   struct wzd_file_t *current, *new_file;
 

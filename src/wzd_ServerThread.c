@@ -240,11 +240,15 @@ void reset_stats(wzd_server_stat_t * stats)
 }
 
 /** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
-int global_check_ip_allowed(unsigned char userip[4])
+static int global_check_ip_allowed(unsigned char *userip)
 {
-  char ip[30];
+  char ip[INET6_ADDRSTRLEN];
 
-  snprintf(ip,30,"%hhu.%hhu.%hhu.%hhu",userip[0],userip[1],userip[2],userip[3]);
+#if !defined(IPV6_SUPPORT)
+  inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
+#else
+  inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
+#endif
   switch (mainConfig->login_pre_ip_check) {
   case 1: /* order allow, deny */
     if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
@@ -423,7 +427,7 @@ int check_server_dynamic_ip(void)
     sa_config.sin_addr.s_addr = addr_current.s_addr;
   }
 
-  if (mainConfig->dynamic_ip[0]=='+')
+/*  if (mainConfig->dynamic_ip[0]=='+')*/ /** \todo remove me if it works */
   {
     const char *ip = (const char *)mainConfig->dynamic_ip;
     ip++;
@@ -463,7 +467,7 @@ int check_server_dynamic_ip(void)
   /* if different, rebind */ /* XXX FIXME what to do with old connections ? */
   {
     if (sa_current.sin_addr.s_addr != 0 && (sa_current.sin_addr.s_addr != sa_config.sin_addr.s_addr) ) {
-      out_log(LEVEL_HIGH,"Rebinding main server ! (from %d.%d.%d.%d to %d.%d.%d.%d)\n",
+      out_log(LEVEL_HIGH,"Rebinding main server ! (from %hhu.%hhu.%hhu.%hhu to %hhu.%hhu.%hhu.%hhu)\n",
           str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
           str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
       server_rebind((const unsigned char *)inet_ntoa(sa_config.sin_addr),mainConfig->port);

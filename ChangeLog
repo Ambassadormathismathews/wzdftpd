@@ -1,3 +1,11 @@
+2004-07-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: split ip addresses related functions to specific file
+	* feature: new routine ip_compare
+	* bugfix: login_pre_ip_allowed not working (missing \0) in ip_add
+
+	* IMPORTANT: no more '+' or '-' in ip addresses
+
 2004-07-11  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: print text file in custom site command
@@ -6,7 +14,7 @@
 	* feature: PREDOWNLOAD and PREUPLOAD scripts can deny upload
 	* feature: site rusage can now read opened fd on linux 2.6
 	* bugfix: vars_shm set not working in perl
-	
+
 	* IMPORTANT: from now, uid is NOT user's index in list
 
 2004-07-05  Pierre Chifflier  <pollux@wzdftpd.net>

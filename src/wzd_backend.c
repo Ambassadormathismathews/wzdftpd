@@ -96,7 +96,7 @@ char *backend_get_name(wzd_backend_t *backend)
   return strdup(*backend_name);
 }
 
-void backend_clear_struct(wzd_backend_t *backend)
+static void backend_clear_struct(wzd_backend_t *backend)
 {
   if (backend->param) {
     wzd_free(backend->param);
