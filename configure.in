@@ -4,25 +4,16 @@
 
 AC_PREREQ(2.53)
 AC_INIT(wzdftpd, 0.4.0, pollux@wzdftpd.net)
-AM_INIT_AUTOMAKE
 
 #AC_CANONICAL_HOST
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE
 
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 
-# helper macros
-sinclude(ac-helpers/berkeley-db.m4)
-sinclude(ac-helpers/mysql.m4)
-sinclude(ac-helpers/openssl.m4)
-sinclude(ac-helpers/pam.m4)
-sinclude(ac-helpers/perl.m4)
-sinclude(ac-helpers/pgsql.m4)
-sinclude(ac-helpers/tcl.m4)
-sinclude(ac-helpers/unicode.m4)
 
 AM_MAINTAINER_MODE
 

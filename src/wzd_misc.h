@@ -25,8 +25,6 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
-#include "../config.h"
-
 unsigned long compute_hashval (const void *key, size_t keylen);
 
 char * time_to_str(time_t time);
@@ -55,13 +53,6 @@ time_t lget_file_ctime(int fd);
 
 /* renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst);
-
-#ifndef HAVE_INET_NTOP
-const char * inet_ntop(int af, const void *src, char *dst, int size);
-#endif
-#ifndef HAVE_INET_PTON
-int inet_pton(int af, const char *src, void *dst);
-#endif
 
 int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_param_t *param_list);
 int server_set_param(const char *name, void *data, unsigned int length, wzd_param_t **plist);

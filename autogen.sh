@@ -95,18 +95,18 @@ do
         fi
       done
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
-	echo "Running libtoolize..."
+	echo "Running $LIBTOOLIZE..."
 	$LIBTOOLIZE --force --copy --automake || abort "libtoolize"
       fi
-      echo "Running aclocal $aclocalinclude ..."
-      $ACLOCAL $aclocalinclude || abort "aclocal"
+      echo "Running $ACLOCAL $EXTRA_ACLOCAL_ARGS $aclocalinclude ..."
+      $ACLOCAL $EXTRA_ACLOCAL_ARGS $aclocalinclude || abort "aclocal"
       if grep "^AM_CONFIG_HEADER" configure.in >/dev/null; then
-	echo "Running autoheader..."
+	echo "Running $AUTOHEADER..."
 	$AUTOHEADER || abort "autoheader"
       fi
-      echo "Running automake --gnu $am_opt ..."
+      echo "Running $AUTOMAKE --gnu $am_opt ..."
       $AUTOMAKE --add-missing --copy --gnu $am_opt || abort "automake"
-      echo "Running autoconf ..."
+      echo "Running $AUTOCONF ..."
       $AUTOCONF || abort "autoconf"
  
 #      conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c

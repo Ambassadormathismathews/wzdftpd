@@ -21,6 +21,7 @@ All paths are relative to rep wzdftpd (root)
 
 1) Generate configure script (if compiling from CVS):
 ./autogen.sh [args for configure]
+** You should prefer the 'boostrap' script: ./boostrap
 If you're FreeBSD user, read notes below.
 
 2) Configure
@@ -50,3 +51,12 @@ may be other versions). The solution is to run aclocal with
 "-I /usr/local/share/aclocal/" arg. If you have troubles with the mpatrol 
 you can freely remove it from the configure.in, it's needed for the 
 debugging purposes only. 
+
+Use the boostrap script, it works on FreeBSD without a warning.
+You just have to edit it and set up the correct names for executables, e.g:
+
+ACLOCAL=aclocal18
+AUTOCONF=autoconf259
+AUTOHEADER=autoheader259
+AUTOMAKE=automake18
+LIBTOOLIZE=libtoolize14

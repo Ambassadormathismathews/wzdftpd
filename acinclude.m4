@@ -235,7 +235,7 @@ dnl $Id$
 # If `DEFAULT' is `threads' then the threadsafe version of the mpatrol
 # library will be used.
 
-AC_DEFUN(AM_WITH_MPATROL, [
+AC_DEFUN([AM_WITH_MPATROL], [
   # Firstly, determine if the mpatrol library should be used.
 
   AC_MSG_CHECKING(if mpatrol should be used)

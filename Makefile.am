@@ -1,5 +1,5 @@
 
-SUBDIRS = ac-helpers src backends modules tools init.d doc man
+SUBDIRS = ac-helpers m4 src backends modules tools init.d doc man
 
 bin_SCRIPTS = wzd-config
 
