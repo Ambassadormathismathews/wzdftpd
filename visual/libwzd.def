@@ -30,9 +30,9 @@ EXPORTS
 	cronjob_free
 	cronjob_run
 	crypt
-	dir_getbasename
-	dir_getdirname
-	dir_gettrailingname
+	dir_close
+	dir_open
+	dir_read
 	encrypt
 	event2str
 	fd_dump
@@ -102,6 +102,9 @@ EXPORTS
 	out_err
 	out_log
 	out_xferlog
+	path_getbasename
+	path_getdirname
+	path_gettrailingname
 	print_file
 	readPermFile
 	right_text2word	
