@@ -11,6 +11,7 @@
 	* bugfix: segfault when deleting file with no owner
 	* bugfix: some static buffers converted to dynamic
 	* bugfix: ignore SIGINT when exiting
+	* bugfix: segfault when using REST, TYPE or CWD with no argument
 
 2004-02-16  Pierre Chifflier  <pollux@wzdftpd.net>
 

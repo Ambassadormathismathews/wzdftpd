@@ -498,6 +498,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     user = GetUserByID(context->userid);
 
 
+  if (!wanted_path) return E_WRONGPATH;
   if (checkpath(wanted_path,path,context)) return E_WRONGPATH;
   snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
 
@@ -2674,6 +2675,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
     case TOK_TYPE:
       context->resume = 0;
       token = strtok_r(NULL," \t\r\n",&ptr);
+      if (!token) {
+        ret = send_message_with_args(501,context,"Invalid TYPE marker");
+	break;
+      }
       if (strcasecmp(token,"I")==0)
         context->current_xfer_type = BINARY;
       else if (strcasecmp(token,"A")==0)
@@ -2745,7 +2750,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         break;
       }
       if (do_chdir(param,context)) {
-        ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
+        ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?).");
         break;
       }
       ret = send_message_with_args(250,context,context->currentpath," now current directory.");
@@ -2895,6 +2900,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       break;
     case TOK_REST:
       token = strtok_r(NULL,"\r\n",&ptr);
+      if (!token) {
+        ret = send_message_with_args(501,context,"Invalid REST marker");
+	break;
+      }
       j=0;
       i = sscanf(token,"%lu",&j);
       if (i>0) {
