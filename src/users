@@ -17,6 +17,7 @@ default_home=/home/pollux
 
 privgroup	users
 default_home=/home/pollux/TODEL/wzdftpd-root
+ratio=3
 
 privgroup	anonymous
 max_idle_time=10
@@ -37,7 +38,7 @@ ip_allowed=+pollux.no-ip.org
 ip_allowed=*
 ip_allowed=134.214.71.84
 ip_allowed=10.0.0.10
-bytes_ul_total=78512705
+bytes_ul_total=79383089
 bytes_dl_total=1058767184
 flags=OIstH
 
@@ -49,8 +50,8 @@ groups=admin
 rights=0xffffffff
 tagline=wzdftpd
 ip_allowed=127.0.0.1
-bytes_ul_total=0
-bytes_dl_total=0
+bytes_ul_total=10
+bytes_dl_total=10
 num_logins=1
 flags=OIstH
 
@@ -75,8 +76,10 @@ rights=0xffffffff
 ip_allowed=127.0.0.1
 bytes_ul_total=0
 bytes_dl_total=0
+ratio=3
 flags=G
 user_slots=3
+leech_slots=1
 
 # per hosts rights
 [HOSTS]
