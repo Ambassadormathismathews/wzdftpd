@@ -113,9 +113,10 @@ int wzd_send_message(const char *message, int msg_length, char * reply, int repl
 
   buffer_length = (reply_length > 4096) ? reply_length : 4096;
   buffer = malloc(buffer_length+1);
+  buffer[0] = '\0';
   ret = _config->connector.read(buffer,buffer_length);
 
-  if (reply) memcpy(reply,buffer,reply_length);
+  if (reply) { memcpy(reply,buffer,reply_length); reply[reply_length]='\0'; }
 
   return 0;
 }

@@ -96,7 +96,6 @@ int server_try_socket(void)
   if (ret <= 0) goto server_try_socket_abort;
   if (ret > 0) {
     buffer[ret] = '\0';
-    printf("read: [%s]\n",buffer);
   }
   if (buffer[0] != '2' || buffer[1] != '2')
     goto server_try_socket_abort;
@@ -118,7 +117,6 @@ int server_try_socket(void)
   if (ret <= 0) goto server_try_socket_abort;
   if (ret > 0) {
     buffer[ret] = '\0';
-    printf("read: [%s]\n",buffer);
   }
   if (buffer[0] != '3' || buffer[1] != '3' || buffer[2] != '1')
     goto server_try_socket_abort;
@@ -134,7 +132,6 @@ int server_try_socket(void)
   if (ret <= 0) goto server_try_socket_abort;
   if (ret > 0) {
     buffer[ret] = '\0';
-    printf("read: [%s]\n",buffer);
   }
   if (buffer[0] != '2' || buffer[1] != '3' || buffer[2] != '0')
     goto server_try_socket_abort;
@@ -214,19 +211,75 @@ int socket_disconnect(void)
   return 0;
 }
 
+/* XXX FIXME
+ * this function should decode the FTP protocol, that means:
+ * read the 3 first bytes, find reply code,
+ * find if multi-line reply (4th byte is '-', if yes find sequence
+ * code[space] at beginning of line OR inside reply (\r\ncode[space])
+ *
+ * the end_seq should be constructed only at first loop (we should separate
+ * the first loop from multi-line case ?)
+ */
 int socket_read(char *buffer, int length)
 {
+  unsigned int offset=0;
+  int ret=0;
+  char end_seq[5];
+
   if (!_config) return -1;
   if (_config->sock < 0) return -1;
   
-  return read(_config->sock, buffer, length);
+  do {
+    offset += ret;
+
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
+    if (_config->options & OPTION_TLS) {
+      ret = tls_read( buffer+offset, length-offset );
+    } else
+#endif
+    ret = read( _config->sock, buffer+offset, length-offset );
+
+    if (ret < 0) return -1;
+
+    /* end ? */
+    if (ret < 4) continue;
+
+    /* check validity ? */
+    if ( buffer[offset] < '0' || buffer[offset] > '9'
+        || buffer[offset+1] < '0' || buffer[offset+1] > '9'
+        || buffer[offset+2] < '0' || buffer[offset+2] > '9')
+      continue;
+
+    if (buffer[offset+3] == ' ') break;
+
+    memcpy(end_seq,buffer,3);
+    end_seq[3] = ' ';
+    end_seq[4] = '\0';
+    if (strstr(buffer,end_seq)) break;
+
+/*    break;*/
+
+  } while (1);
+
+  offset += ret;
+
+  return offset;
 }
 
+/* XXX FIXME
+ * This function should ensure command is really RFC-compliant
+ * (one ligne only, ended with \r\n)
+ */
 int socket_write(const char *buffer, int length)
 {
   if (!_config) return -1;
   if (_config->sock < 0) return -1;
 
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
+  if (_config->options & OPTION_TLS) {
+    return tls_write(buffer, length);
+  }
+#endif
   return write(_config->sock, buffer, length);
 }
 
@@ -258,7 +311,6 @@ int socket_tls_switch(void)
   if (ret <= 0) goto socket_tls_switch_abort;
   if (ret > 0) {
     buffer[ret] = '\0';
-    printf("read: [%s]\n",buffer);
   }
   if (buffer[0] != '2' || buffer[1] != '3' || buffer[2] != '4')
     goto socket_tls_switch_abort;
@@ -266,8 +318,6 @@ int socket_tls_switch(void)
   tls_handshake(_config->sock);
   if (ret < 0) goto socket_tls_switch_abort; /* ... */
 
-  _config->connector.read = &tls_read;
-  _config->connector.write = &tls_write;
   _config->options |= OPTION_TLS;
 
   return 0;

@@ -58,7 +58,7 @@ static SSL * tls_obj = NULL;
 int tls_init(void)
 {
   int status;
-  
+
   ERR_load_ERR_strings();
   SSL_load_error_strings();
   SSL_library_init();
