@@ -29,13 +29,10 @@
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 #ifdef _MSC_VER
 #include <io.h>
-#endif
-
-#ifdef __CYGWIN__
-#include <w32api/ws2tcpip.h>
 #endif
 
 #else
@@ -1320,7 +1317,8 @@ void do_epsv(wzd_context_t * context)
     sai6.sin6_family = AF_INET6;
     sai6.sin6_port = htons(port);
     sai6.sin6_flowinfo = 0;
-    sai6.sin6_addr = in6addr_any;
+/*     sai6.sin6_addr = in6addr_any;*/ /* FIXME VISUAL */
+	memset(&sai6.sin6_addr,0,16);
     /* XXX TODO FIXME bind to specific address works, but not for NAT */
     /* XXX TODO FIXME always bind to 'myip' ?! */
 /*    addr = INADDR_ANY;*/
@@ -2997,7 +2995,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER
   pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
-#endif
+#else
+  client_die(context);
+#endif /* _MSC_VER */
 #else /* WZD_MULTITHREAD */
   client_die(context);
 #endif /* WZD_MULTITHREAD */

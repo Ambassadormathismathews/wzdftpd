@@ -84,7 +84,11 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
 #endif
 
   if (ip==NULL || strcmp(ip,"*")==0)
+#if defined(IPV6_SUPPORT)
+    memset(&sai6.sin6_addr,0,16);
+#else
     sai.sin_addr.s_addr = htonl(INADDR_ANY);
+#endif
   else
   {
     struct hostent* host_info;
@@ -109,9 +113,9 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   }
 
 #if !defined(IPV6_SUPPORT)
-  if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == -1) {
 #else
-  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) < 0) {
+  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == -1) {
 #endif
     out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
     return -1;
@@ -139,9 +143,10 @@ int socket_make(const char *ip, unsigned int *port, int nListen)
   }
 #else /* IPV6_SUPPORT */
   sai6.sin6_family = PF_INET6;
-  sai6.sin6_port = htons(*port); /* any port */
+  sai6.sin6_port = htons((unsigned short)*port); /* any port */
   sai6.sin6_flowinfo = 0;
-  sai6.sin6_addr = in6addr_any;
+/*  sai6.sin6_addr = IN6ADDR_ANY_INIT; */ /* FIXME VISUAL */
+  memset(&sai6.sin6_addr,0,16);
   if (bind(sock,(struct sockaddr *)&sai6, sizeof(sai6))==-1) {
 #ifdef __CYGWIN__
     out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
@@ -256,12 +261,17 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 #else
   /* FIXME VISUAL memory zones must NOT overlap ! */
   memcpy((char*)remote_host, (const char*)&from.sin_addr.s_addr, sizeof(unsigned long));
-#endif
+#endif  /* _MSC_VER */
   *remote_port = ntohs(from.sin_port);
 #else
+#ifndef _MSC_VER
   bcopy((const char*)&from.sin6_addr.s6_addr, (char*)remote_host, 16);
   *remote_port = ntohs(from.sin6_port);
-#endif
+#else
+  /* FIXME VISUAL memory zones must NOT overlap ! */
+  memcpy((char*)remote_host, (const char*)&from.sin6_addr.s6_addr, 16);
+#endif /* _MSC_VER */
+#endif /* IPV6_SUPPORT */
 
   return new_sock;
 }
@@ -281,7 +291,6 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
   int on=1;
   fd_set fds, efds;
   struct timeval tv;
-  int save_errno;
 
   if (family == WZD_INET4)
   {
@@ -337,7 +346,9 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
     /* If we can't, just let the computer choose a port for us */
     sai6.sin6_family = AF_INET6;
     sai6.sin6_flowinfo = 0;
+#ifndef _MSC_VER /* FIXME VISUAL */
     sai6.sin6_scope_id = 0;
+#endif
     getsockname(fd,(struct sockaddr *)&sai6,&len);
     sai6.sin6_port = htons((unsigned short)localport);
 
@@ -354,7 +365,9 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
     sai6.sin6_port = htons((unsigned short)remote_port);
     sai6.sin6_family = AF_INET6;
     sai6.sin6_flowinfo = 0;
+#ifndef _MSC_VER /* FIXME VISUAL */
     sai6.sin6_scope_id = 0;
+#endif
     memcpy(&sai6.sin6_addr,remote_host,16);
 
     sai = (struct sockaddr *)&sai6;
@@ -374,13 +387,13 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
 #endif
 
 #ifdef _MSC_VER
-    ret = connect(sock,(struct sockaddr *)&sai, len);
+    ret = connect(sock, sai, len);
 	if (ret < 0) {
 	  errno = WSAGetLastError();
 	  if (errno != WSAEWOULDBLOCK)
 	  {
-        out_log(LEVEL_NORMAL,"Connect failed %s:%d\n", __FILE__, __LINE__);
-		out_log(LEVEL_NORMAL," errno: %d\n",errno);
+        out_log(LEVEL_INFO,"Connect failed %s:%d\n", __FILE__, __LINE__);
+		out_log(LEVEL_INFO," errno: %d\n",errno);
         socket_close (sock);
         return -1;
 	  }
@@ -401,11 +414,10 @@ int socket_connect(void * remote_host, int family, int remote_port, int localpor
 #endif
 
     do {
-      int save_errno;
       int sock_error;
       int s_len;
       if (socket_wait_to_write(sock,timeout)==0) {
-        ret = connect(sock, sai, len); save_errno = errno;
+        ret = connect(sock, sai, len);
         if (ret < 0) {
           if (errno == EINPROGRESS) {
             continue;

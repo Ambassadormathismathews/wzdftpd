@@ -58,6 +58,8 @@
 #include "wzd_misc.h"
 #include "wzd_log.h"
 
+#include "wzd_debug.h"
+
 /* BSD exports symbols in .so files prefixed with a _ !! */
 #ifdef BSD
 #define	DL_PREFIX "_"

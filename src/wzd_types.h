@@ -44,7 +44,19 @@
 #define u64_t unsigned __int64
 #include <sys/timeb.h>
 
-#define EINPROGRESS WSAEINPROGRESS
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#define ECONNREFUSED WSAECONNREFUSED
+#define EINPROGRESS  WSAEINPROGRESS
+#define ENOTCONN     WSAENOTCONN
+
+#ifndef IN6_IS_ADDR_V4MAPPED
+#define IN6_IS_ADDR_V4MAPPED(a) \
+	((((const ULONG *)(a))[0] == 0) \
+	&& (((const ULONG *)(a))[1] == 0) \
+	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
+#endif
+
+#define in6_addr in_addr6 /* funny ! */
 
 #define F_RDLCK 0 /* Read lock. */
 #define F_WRLCK 1 /* Write lock. */
@@ -131,8 +143,8 @@
 /*********************** VERSION **************************/
 
 /* Version */
-#define       WZD_VERSION_NUM "0.2cvs visual"
-#define  WZD_BUILD_NUM 20040110
+#define  WZD_VERSION_NUM "0.2cvs visual"
+#define  WZD_BUILD_NUM "20040110"
 #define  WZD_BUILD_OPTS  "visual"
 
 #ifdef WZD_MULTIPROCESS
@@ -145,7 +157,7 @@
 #endif /* WZD_MULTITHREAD */
 #endif /* WZD_MULTIPROCESS */
 
-#define WZD_VERSION_STR "wzdftpd " WZD_MP WZD_VERSION_NUM
+#define WZD_VERSION_STR "wzdftpd i386-pc-windows-visual " WZD_MP WZD_VERSION_NUM
 
 #define WZD_DEFAULT_CONF "wzd-win32.cfg"
 

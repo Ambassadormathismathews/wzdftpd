@@ -559,7 +559,7 @@ static int server_add_ident_candidate(int socket_accept_fd)
     close(newsock);
     return 1;
   }
-  context_index = ( (unsigned long)(context-context_list) ) / sizeof(wzd_context_t);
+  context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
   /* don't forget init is done before */
   context->magic = CONTEXT_MAGIC;
@@ -594,11 +594,14 @@ static int server_add_ident_candidate(int socket_accept_fd)
 #endif
 
   if (fd_ident == -1) {
-    if (errno == ECONNREFUSED) {
+#ifdef _MSC_VER
+	  errno = h_errno;
+#endif
+    if (errno == ENOTCONN || errno == ECONNREFUSED) {
       server_login_accept(context);
       return 0;
     }
-    out_log(LEVEL_NORMAL,"Could not get ident (error: %s)\n",strerror(errno));
+    out_log(LEVEL_INFO,"Could not get ident (error: %s)\n",strerror(errno));
     return 1;
   }
 

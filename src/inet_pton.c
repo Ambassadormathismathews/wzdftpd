@@ -15,12 +15,15 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "../config.h"
+#endif
 
 #ifndef HAVE_INET_PTON
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include "wzd_types.h"
 #else
 #include <unistd.h>
 #include <sys/types.h>

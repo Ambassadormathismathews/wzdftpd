@@ -15,12 +15,15 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_CONFIG_H
 #include "../config.h"
+#endif
 
 #ifndef HAVE_INET_NTOP
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include "wzd_types.h"
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -30,6 +33,8 @@
 #endif
 
 #include <errno.h>
+
+#include <stdio.h> /* sprintf */
 
 #define NS_INT16SZ	 2
 #define NS_IN6ADDRSZ	16

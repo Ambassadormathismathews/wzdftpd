@@ -65,6 +65,7 @@ EXPORTS
 	hook_call_external
 	hook_free
 	inet_ntop
+	inet_pton
 	init_default_messages
 	ip_add
 	ip_free
@@ -114,6 +115,7 @@ EXPORTS
 	stripdir
 	strptime
 	strtok_r
+	strtomd5
 	strtoull
 	time_to_str
 	user_ip_add
