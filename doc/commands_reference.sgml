@@ -8,8 +8,8 @@
 <listitem>
 <para>Add IP to  user.
 <screen>site addip toto 127.*</screen>
-This will allow user <quote>toto</quote> to connect from all ip
-beggining by <quote>127.</quote>
+This will allow user <quote>toto</quote> to connect from any ip
+beginning by <quote>127.</quote>
 </para>
 <para>To check ident when user is connecting, just add 'ident@' before the ip.
 </para>
@@ -22,7 +22,7 @@ beggining by <quote>127.</quote>
 [&lt;group&gt;] [&lt;backend&gt;]</term>
 <listitem>
 <para>
-Add a user, with and no allowed ip. If group is specified, user will be added to the group
+Add a user, without any allowed ip. If group is specified, user will be added to the group
 (Note: only siteops can add users to a different group than their own group), otherwise
 the main group of the current user will be used.
 </para>
@@ -41,7 +41,7 @@ You MUST add an ip after.
 <varlistentry id='site_backend'><term>site backend &lt;command&gt;
 &lt;backend_name&gt;</term>
 <listitem>
-<para>Operations on backend. 'command' can be one of :
+<para>Operations on backend. 'command' can be one of the following :
 <itemizedlist>
 <listitem><para>close: unload 'backend'.
 <emphasis>If you have no backend, or if backend is in use, the server will be in an unstable state !
@@ -52,7 +52,7 @@ you can shutdown or reload the server in a safe way</para></listitem>
 <emphasis>NO verifications are made - be sure of what you are doing !</emphasis></para></listitem>
 <listitem><para>reload: close and init a backend, <emphasis>without commiting it</emphasis>.
 This command allows you to modify backend and reload modifications.
-<emphasis>Modifications should be made carefully, especially if users are loggued !
+<emphasis>Modifications should be made carefully, especially if users are logged !
 </emphasis></para></listitem>
 </itemizedlist>
 Backend name is the short name of the backend, not the name of the file (e.g:
@@ -570,7 +570,7 @@ site link create &lt;dir&gt; &lt;linkname&gt;
 <para>Both paths are given relative to the current user homedir.</para>
 <para>NOTE: if the underlying filesystem supports symbolic
 links, they will be used, otherwise an abstraction layer is provided to have
-similar behaviour. Most unix filesystem supports symbolic links.
+similar behaviour. Most unix filesystems support symbolic links.
 </para>
 </listitem>
 </varlistentry>

@@ -22,7 +22,7 @@ wzdftpd offers the following features (and the list is constantly changing):
 <listitem><para><link linkend='a_ref'>RFC</link> compliant !</para></listitem>
 <listitem><para>
 Server runs in user mode, thus does not need root privileges - on the other
-way, it is not designed to use system users permissions, it uses its own
+hand, it is not designed to use system users permissions, it uses its own
 user database and permissions.
 </para></listitem>
 <listitem><para>
@@ -35,7 +35,7 @@ user database and permissions.
 <listitem><para>Extensions scripts can be written in <link linkend='module_tcl'>TCL</link> or
 <link linkend='module_perl'>Perl</link></para></listitem>
 <listitem><para>Powerfull event system</para></listitem>
-<listitem><para>Jobs scheduler, also known as crontab</para></listitem>
+<listitem><para>Job scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
 <listitem><para>SSL/TLS support</para></listitem>
 <listitem><para>IPv6 support (experimental)</para></listitem>
@@ -75,7 +75,7 @@ The following packages are optional, depending on your configuration
 <listitem><para>Automake, Autoconf, Libtool</para>
 <para>Required only if you want to compile from cvs. CVS build assumes you have
 basic knowledge of autotools. The following should run all autotools and
-configure package for you:
+configure packages for you:
 <programlisting>./bootstrap</programlisting>
 </para></listitem>
 <listitem><para>OpenSSL development headers and libraries</para>
@@ -85,16 +85,16 @@ configure package for you:
 <para>Required only if you want to enable zip processing in SFV module.
 </para></listitem>
 <listitem><para>Perl development headers and libraries</para>
-<para>Required only if you want to compile Perl module.
+<para>Required only if you want to compile the Perl module.
 </para></listitem>
 <listitem><para>TCL development headers and libraries</para>
-<para>Required only if you want to compile TCL module.
+<para>Required only if you want to compile the TCL module.
 </para></listitem>
 <listitem><para>PAM development headers and libraries</para>
-<para>Required only if you want to compile PAM backend.
+<para>Required only if you want to compile the PAM backend.
 </para></listitem>
 <listitem><para>MySQL development headers and libraries</para>
-<para>Required only if you want to compile MySQL backend.
+<para>Required only if you want to compile the MySQL backend.
 </para></listitem>
 </itemizedlist>
 </para>
@@ -108,7 +108,7 @@ wzdftpd's sourceforge page</ulink>.
 <screen>make</screen>
 <screen>make install</screen>
 
-<para>Configure script accept the following arguments
+<para>Configure script accepts the following arguments
 <itemizedlist>
 <listitem><screen>--enable-debug</screen>
 <para>Compile with debug info (you should use it only for testing reasons)
@@ -129,7 +129,7 @@ or the windows installer. The following only apply if you want to install from
 the sources.</para>
 
 <para>
-The best way is to follow to classical installation method:
+The best way is to follow the classical installation method:
 <screen>make install</screen>
 </para>
 
@@ -150,7 +150,7 @@ After that, you have to:
 <listitem><para>run the exe (you will surely need to specify the config file).
 <screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg</screen>
 </para></listitem>
-<listitem><para>login for the first time FROM LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
+<listitem><para>login for the first time from LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
 and create users and groups using SITE commande (<link linkend='site_adduser'>
 site adduser</link> and <link linkend='site_grpadd'>site grpadd</link>).
 See <link linkend='ex_add_user'>exemple of user creation</link>.

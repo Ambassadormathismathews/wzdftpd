@@ -7,7 +7,7 @@
 <simplesect id='mod_sfv_desc'>
 <title>Description</title>
 <para>
-This module comes with some utilities functions to handle sfv files, and associated files (diz,
+This module comes with some usefull functions to handle sfv files, and associated files (diz,
 zip, etc).
 </para>
 <para>
@@ -17,8 +17,8 @@ When a SFV file is uploaded, server will create <computeroutput>.missing</comput
 If the file is corrupted, a <computeroutput>.bad</computeroutput> file will be
 created.</para>
 <para>
-HINT: when uploading dirs, be sure to upload SFV file first. The server will
-automatically check files as they are uploaded, and update a progress bar
+HINT: when uploading dirs, be sure to upload the SFV file first. The server
+will automatically check files as they are uploaded, and update a progress bar
 to quickly see how many percent are done.</para>
 <para>
 NOTE to w_nd0ws users: although a (stupid) os can give you bad habits,
@@ -29,7 +29,7 @@ files <emphasis>ARE CASE SENSITIVE !</emphasis></para>
 <title>What is a SFV file ?</title>
 <para>
 A SFV file is a small verification file added to dirs, that stores records
-about a file or group of files integrity. When you compare a SFV file against
+about a file or group of files integrity. When you compare a SFV file to
 a group of rar files it will check those rar files and tell you if they are
 complete or if they are "broken".</para>
 <para>

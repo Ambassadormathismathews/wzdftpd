@@ -41,8 +41,8 @@ don't give any ident as an implicit authorization for all idents).
 systems should have no difficulty to use this.
 A symbolic link (symlink, in short) is a link between a non-existant directory (so-called
 <emphasis>virtual</emphasis> directory) and an existing directory (so-called
-<emphasis>physical</emphasis> directory). This allow, for example, to create a directory
-whose contents is on another physical drive. This is similar to windows shortcuts.
+<emphasis>physical</emphasis> directory). This allows, for example, to create a directory
+whose contents are on another physical drive. This is similar to windows shortcuts.
 </para>
 <para>Symlinks are created online, using the <link linkend='site_link'>site
 link</link> commands.
@@ -51,14 +51,14 @@ link</link> commands.
 <para>This will create a symbolic link 'link' in the current directory, which
 points to '/music' (at the homedir of the user).</para>
 
-<para>On windows, symlinks are not in any way visible on the filesystem (so do
-not search directories in explorer), they are completely handled by server.
+<para>On windows, symlinks can't be seen on the filesystem (so do
+not search directories in explorer), they are fully handled by server.
 </para>
 <para>You can set permissions on links just as for any other directory, with the
 same commands (chmod, etc).</para>
 
 <para><emphasis>Note on performance (windows only):</emphasis> please note that
-symlinks are emulated, and as so you will suffer a small penalty on speed, compared
+symlinks are emulated, and you will therefore suffer a small penalty on speed, compared
 to real directories.  However, this generally does not slow down the server
 enough to be be important, and symlinks are lighter than VFS.</para>
 
@@ -70,8 +70,8 @@ enough to be be important, and symlinks are lighter than VFS.</para>
 <para>wzdftpd offers the possibility to use virtual directories, also known as VFS.
 A VFS is a kind of link between a non-existant directory (so-called
 <emphasis>virtual</emphasis> directory) and an existing directory (so-called
-<emphasis>physical</emphasis> directory). This allow, for example, to create a directory
-whose contents is on another physical drive.
+<emphasis>physical</emphasis> directory). This allows, for example, to create a directory
+whose contents are on another physical drive.
 </para>
 <para>Unlike symlinks (which are create online), VFS are stored in the config
 file.
@@ -88,17 +88,17 @@ directories or files contained in VFS.</para>
 and members of the group 'admin' (=admin).</para>
 
 <para>It would be fastidious to define VFS for all users and groups, for example.
-To help you in this task, wzdftpd allows to use a small subset of cookies, to have
-a kind of wildcards for users, groups, etc.</para>
+To help you in this task, wzdftpd allows you to use a small subset of cookies, to have
+a set of wildcards for users, groups, etc.</para>
 <screen>vfs = |%userhome/etc|/etc| +O =admin</screen>
 <para>This will create a virtual dir called 'etc' in the homedir of every siteop and
 member of admin group, equivalent to /etc.</para>
 <para>For the moment, supported cookies are <emphasis>username</emphasis>,
 <emphasis>usergroup</emphasis>, and <emphasis>userhome</emphasis>.</para>
 
-<para><emphasis>Note on performance:</emphasis> please note that VFS are emulated, and as so
-you will suffer a small penalty on speed, compared to real directories.
-This penalty will be increased if you use cookies.</para>
+<para><emphasis>Note on performance:</emphasis> please note that VFS are
+emulated, and you will therefore suffer a small penalty on speed, compared to
+real directories.  This penalty will be increased if you use cookies.</para>
 
 <para>If you don't know what to choose between symlinks and VFS, read this
 <link linkend='faq_links_vfs'>FAQ entry</link>.
@@ -113,7 +113,7 @@ This penalty will be increased if you use cookies.</para>
 is to create groups with specific properties, and make users belong
 to several groups. It simplifies configuration, because instead of configuring
 each user, you just have to configure groups. However, please remember that the first
-group of a user is special (it is its main group).
+group of a user is special (it is his main group).
 </para>
 <para>For example, setting the defaultpath in a group is specially important, because
 it will be used as a default value each time you create a user. The default ratio
@@ -123,9 +123,9 @@ If you authorize an ip for the group, it will be allowed for all users.</para>
 <para>For users without specific idle time limit, the value of the group will be
 checked. So, user value is needed only if different from group.</para>
 
-<para>To add a user, here is the standard procedure:
+<para>Here is the standard procedure to add a user:
 Use <programlisting>site adduser foo pass users</programlisting>
-to create user 'foo' with password 'pass', and with main group 'users'. Note that at
+to create user 'foo' with password 'pass', and belonging to the main group 'users'. Note that at
 this point, foo will not be able to log in, mainly because it has no allowed ip
 (except under some conditions that we'll see later).</para>
 <para>Now add an authorized ip with
@@ -154,15 +154,15 @@ you must always be RFC-compliant if you want your server to work).
 This requires some little knowledge of FTP, but there are some
 well-known messages you can easily modify:</para>
 <para>Message 220 is known as 'FTP Banner', it is what the client
-sees at the moment it is connecting. The default is:
+sees when he connects. The default is:
 <programlisting>message_220 = wzd server ready.</programlisting></para>
 <para>Message 230 is known as 'Welcome Message', it is what the
-server sends when the client has been accepted, and the login/password
-validated. It is generally used to show statistics about server, etc.
-The default message is:
+server sends to the client when the connection request has been accepted, and
+the login/password validated. It is generally used to show statistics about
+server, etc. The default message is:
 <programlisting>message_230 = User logged in, proceed.</programlisting>
 </para>
-<para>Message 221 is sent when client is quitting. The default
+<para>Message 221 is sent when client disconnects. The default
 message is
 <programlisting>message_221 = Cya !</programlisting>
 </para>
@@ -176,13 +176,13 @@ otherwise):
 </para>
 
 <para>Remember you can use cookies in your messages, but keep in mind
-that cookies are NOT always available (sometimes it just don't make
+that cookies are NOT always available (sometimes it just doesn't make
 sense). For exemple:
 <programlisting>message_230 = hello, %username.</programlisting>
 will actually work, whereas
 <programlisting>message_220 = wzd server for %username</programlisting>
 will NOT, because at the moment the message 220 is sent the server
-does not know the user name (it has never logged in).</para>
+does not know the user name (he isn't authenticated yet).</para>
 <para>If the server can't translate a cookie into its value, the
 cookie name will be written as is: '%username' will return 'username'
 </para>
@@ -265,7 +265,7 @@ if present will append it to the end of the ftp reply.
 
 <varlistentry id='cfg_dynamicip'><term>dynamic_ip (default: 0)</term>
  <listitem>
- <para>If you specify 1 ou an ip, the server will try to detect ip changes (e.g
+ <para>If you specify 1 or an ip, the server will try to detect ip changes (e.g
  ADSL disconnections).
  <screen>dynamic_ip = 1</screen>
  <screen>dynamic_ip = xxx.myftp.org</screen>
@@ -282,7 +282,7 @@ if present will append it to the end of the ftp reply.
 <screen>force_shm_cleanup = 1</screen>
 </para>
 <para><emphasis>IMPORTANT: This option is dangerous !</emphasis>. If you start server when
-another instance is running, you'll certainly go into problems.</para>
+another instance is running, you'll certainly encounter problems.</para>
 </listitem>
 </varlistentry>
 
@@ -481,7 +481,7 @@ group, others).
 <screen>umask = 755</screen>
 </para>
 <para>
-The default permissions (775) allow every users from the same group to write
+The default permissions (775) allow every user from the same group to write
 files in the directory.
 </para>
 <para>
