@@ -3563,6 +3563,8 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         command_real = commands_find(token);
         if (command_real) command = command_real;
 
+        /* TODO XXX FIXME this will not allow custom site commands ... */
+
         if (perm_check(str_tochar(token),context,mainConfig) == 1) {
           ret = send_message_with_args(501,context,"Permission Denied");
           str_deallocate(token);

@@ -17,6 +17,7 @@ libwzd_core_la_HEADERS = \
 	wzd_commands.h   \
 	wzd_crc32.h  	 \
 	wzd_crontab.h	 \
+	wzd_data.h       \
 	wzd_debug.h      \
 	wzd_dir.h	 \
 	wzd_file.h       \
@@ -31,6 +32,10 @@ libwzd_core_la_HEADERS = \
 	wzd_perm.h       \
 	wzd_section.h    \
 	wzd_shm.h        \
+	wzd_site.h         \
+	wzd_site_group.h   \
+	wzd_site_user.h    \
+	wzd_socket.h       \
 	wzd_string.h     \
 	wzd_structs.h    \
 	wzd_types.h      \
@@ -49,6 +54,7 @@ libwzd_core_la_SOURCES = \
 	wzd_commands.c   \
 	wzd_crc32.c      \
 	wzd_crontab.c    \
+	wzd_data.c       \
 	wzd_debug.c      \
 	wzd_dir.c	 \
 	wzd_file.c       \
@@ -62,6 +68,10 @@ libwzd_core_la_SOURCES = \
 	wzd_perm.c       \
 	wzd_section.c    \
 	wzd_shm.c        \
+	wzd_site.c         \
+	wzd_site_group.c   \
+	wzd_site_user.c    \
+	wzd_socket.c       \
 	wzd_string.c     \
 	wzd_utf8.c       \
 	wzd_vars.c       \
@@ -80,8 +90,6 @@ wzdftpd_SOURCES =    \
 	ls.h               \
 	wzd_ClientThread.c \
 	wzd_ClientThread.h \
-	wzd_data.c         \
-	wzd_data.h         \
 	wzd_init.h         \
 	wzd_main.c         \
 	wzd_opts.h         \
@@ -91,14 +99,6 @@ wzdftpd_SOURCES =    \
 	wzd_ServerThread.h \
 	wzd_savecfg.c      \
 	wzd_savecfg.h      \
-	wzd_site.c         \
-	wzd_site.h         \
-	wzd_site_group.c   \
-	wzd_site_group.h   \
-	wzd_site_user.c    \
-	wzd_site_user.h    \
-	wzd_socket.c       \
-	wzd_socket.h       \
 	wzd_tls.c          \
 	wzd_tls.h
 

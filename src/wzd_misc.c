@@ -107,7 +107,7 @@
 /** Compute the hash value for the given string.  The algorithm
  * is taken from [Aho,Sethi,Ullman], modified to reduce the number of
  * collisions for short strings with very varied bit patterns.
- * See http://www.clisp.org/haible/hashfunc.html.
+ * See http://www.clisp.org/haible/hashfunc.html
  */
 unsigned long compute_hashval (const void *key, size_t keylen)
 {
