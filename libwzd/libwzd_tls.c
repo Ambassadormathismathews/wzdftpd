@@ -45,6 +45,8 @@
 # include <unistd.h>
 #endif
 
+#define NO_CERTIFICATE
+
 #ifdef HAVE_OPENSSL
 
 #include <openssl/ssl.h>
@@ -157,7 +159,9 @@ int tls_write(const char *buffer, int length)
 
 static gnutls_session session;
 static gnutls_certificate_credentials x509_cred;
+#ifndef NO_CERTIFICATE
 static char * certificate = "/home/pollux/DEL/etc/wzdftpd/wzd.pem";
+#endif
 #if 0
 static gnutls_dh_params dh_params;
 
@@ -176,7 +180,9 @@ int tls_init(void)
   gnutls_global_init();
 
   gnutls_certificate_allocate_credentials(&x509_cred);
+#ifndef NO_CERTIFICATE
   gnutls_certificate_set_x509_trust_file(x509_cred, certificate, GNUTLS_X509_FMT_PEM);
+#endif
 
 #if 0
   gnutls_certificate_set_x509_key_file(x509_cred,
