@@ -114,12 +114,6 @@ char * read_token(char *s, char **endptr);
 /* replace all \ with / and lower string */
 void win_normalize(char * s, unsigned int length, unsigned int lower);
 
-/* wrappers to user list */
-wzd_group_t * GetGroupByID(unsigned int id);
-wzd_group_t * GetGroupByName(const char *name);
-unsigned int GetUserIDByName(const char *name);
-unsigned int GetGroupIDByName(const char *name);
-
 short is_user_in_group(wzd_user_t * user, unsigned int gid);
 int group_remove_user(wzd_user_t * user, unsigned int gid);
 

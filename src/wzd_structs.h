@@ -256,7 +256,7 @@ typedef struct {
   wzd_user_t * (*back_get_user)(int uid);
   wzd_group_t * (*back_get_group)(int gid);
   int (*back_find_user) (const char *, wzd_user_t *);
-  int (*back_find_group) (int, wzd_group_t *);
+  int (*back_find_group) (const char *, wzd_group_t *);
   int (*back_chpass) (const char *, const char *);
   int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
   int (*back_mod_group) (const char *, wzd_group_t *, unsigned long);

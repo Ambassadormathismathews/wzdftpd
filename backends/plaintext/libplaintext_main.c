@@ -1058,22 +1058,22 @@ fprintf(stderr,"User %s not found\n",name);
 #endif
 }
 
-int FCN_FIND_GROUP(int num, wzd_group_t * group)
+int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
-  if (num < 0 || (unsigned int)num >= group_count) return -1;
+  unsigned int count;
+  int found;
 
-/*  return num;*/ /* used when gid == index */
-  return group_pool[num].gid;
-/*
-  strncpy(group->groupname,group_pool[num].groupname,256);
-  group->groupperms = group_pool[num].groupperms;
-  group->max_ul_speed = group_pool[num].max_ul_speed;
-  group->max_dl_speed = group_pool[num].max_dl_speed;
-  group->max_idle_time = group_pool[num].max_idle_time;
-*/
-  memcpy(group,&group_pool[num],sizeof(wzd_group_t));
+  if (!name || strlen(name)<=0) return -1;
 
-  return 0;
+  count=0;
+  found = 0;
+  while (count<group_count_max) {
+    if (strcmp(name,group_pool[count].groupname)==0)
+      { found = 1; break; }
+    count++;
+  }
+
+  return (found) ? group_pool[count].gid : -1;
 } 
 
 

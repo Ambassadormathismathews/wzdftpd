@@ -50,7 +50,7 @@ typedef struct {
   wzd_user_t * (*back_get_user)(int uid);
   wzd_group_t * (*back_get_group)(int gid);
   int (*back_find_user) (const char *, wzd_user_t *);
-  int (*back_find_group) (int, wzd_group_t *);
+  int (*back_find_group) (const char *, wzd_group_t *);
   int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
   int (*back_mod_group) (const char *, wzd_group_t *, unsigned long);
   int (*back_commit_changes) (void);
@@ -122,7 +122,7 @@ typedef struct {
 #define	FCN_FIND_USER		wzd_find_user
 #define	STR_FIND_USER	 	"wzd_find_user"
 
-/* int FCN_FIND_GROUP(int num, wzd_group_t * group) */
+/* int FCN_FIND_GROUP(const char *name, wzd_group_t * group) */
 #define	FCN_FIND_GROUP		wzd_find_group
 #define	STR_FIND_GROUP	 	"wzd_find_group"
 
@@ -164,7 +164,7 @@ wzd_group_t * backend_get_group(int groupid);
 
 int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
-int backend_find_group(int num, wzd_group_t * group, int * groupid);
+int backend_find_group(const char *name, wzd_group_t * group, int * groupid);
 
 int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid);
 
@@ -189,8 +189,14 @@ int backend_inuse(const char *backend);
 #define BACKEND_VERSION(v) const char * backend_version = #v
 
 
+/* wrappers to user list */
+
 wzd_user_t * GetUserByID(unsigned int id);
 wzd_user_t * GetUserByName(const char *name);
+wzd_group_t * GetGroupByID(unsigned int id);
+wzd_group_t * GetGroupByName(const char *name);
+unsigned int GetUserIDByName(const char *name);
+unsigned int GetGroupIDByName(const char *name);
 
 
 #endif /* __WZD_BACKEND__ */

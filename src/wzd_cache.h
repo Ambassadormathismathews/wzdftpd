@@ -49,6 +49,7 @@ void wzd_cache_purge(void);
 
 
 typedef int (*predicate_user_t)(wzd_user_t *, void * arg);
+typedef int (*predicate_group_t)(wzd_group_t *, void * arg);
 
 void usercache_init(void);
 void usercache_fini(void);
@@ -56,10 +57,16 @@ void usercache_fini(void);
 
 int predicate_uid(wzd_user_t * user, void * arg);
 int predicate_name(wzd_user_t * user, void * arg);
+int predicate_gid(wzd_group_t * group, void * arg);
+int predicate_groupname(wzd_group_t * group, void * arg);
 
 wzd_user_t * usercache_add(wzd_user_t * user);
 wzd_user_t * usercache_get( predicate_user_t p, void * arg );
 void usercache_invalidate( predicate_user_t p, void * arg );
+
+wzd_group_t * groupcache_add(wzd_group_t * group);
+wzd_group_t * groupcache_get( predicate_group_t p, void * arg );
+void groupcache_invalidate( predicate_group_t p, void * arg );
 
 #endif /* __WZD_CACHE__ */
 

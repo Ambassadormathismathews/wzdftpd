@@ -426,6 +426,7 @@ void wzd_cache_purge(void)
 
 
 static wzd_user_t * cache_user_pool=NULL;
+static wzd_group_t * cache_group_pool=NULL;
 
 
 int predicate_uid(wzd_user_t * user, void * arg)
@@ -438,17 +439,31 @@ int predicate_name(wzd_user_t * user, void * arg)
   return (strcmp(user->username,(char*)arg)==0);
 }
 
+int predicate_gid(wzd_group_t * group, void * arg)
+{
+  return (group->groupname[0] != '\0' && group->gid == (unsigned int)arg);
+}
+
+int predicate_groupname(wzd_group_t * group, void * arg)
+{
+  return (strcmp(group->groupname,(char*)arg)==0);
+}
+
 
 void usercache_init(void)
 {
-  cache_user_pool = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t)*HARD_USERLIMIT);
-  memset(cache_user_pool,0,sizeof(wzd_user_t)*HARD_USERLIMIT);
+  cache_user_pool = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t)*HARD_DEF_USER_MAX);
+  memset(cache_user_pool,0,sizeof(wzd_user_t)*HARD_DEF_USER_MAX);
+  cache_group_pool = (wzd_group_t*)wzd_malloc(sizeof(wzd_group_t)*HARD_DEF_GROUP_MAX);
+  memset(cache_group_pool,0,sizeof(wzd_group_t)*HARD_DEF_GROUP_MAX);
 }
 
 void usercache_fini(void)
 {
   wzd_free(cache_user_pool);
   cache_user_pool = NULL;
+  wzd_free(cache_group_pool);
+  cache_group_pool = NULL;
 }
 
 
@@ -459,13 +474,13 @@ wzd_user_t * usercache_add(wzd_user_t * user)
   if (!user) return NULL;
 
   /* first pass: we check that entry is not already present */
-  for (i=0; i < HARD_USERLIMIT; i++) {
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] != '\0') {
       if (strcmp(user->username,cache_user_pool[i].username)==0) {
 #ifdef DEBUG
         if (user->uid != cache_user_pool[i].uid) {
-          fprintf(stderr,"User with same name but different uid is already present !!\n");
-          fprintf(stderr,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
+          out_log(LEVEL_NORMAL,"User with same name but different uid is already present !!\n");
+          out_log(LEVEL_NORMAL,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
         }
 #endif
         /* found, we overwrite it */
@@ -476,7 +491,7 @@ wzd_user_t * usercache_add(wzd_user_t * user)
   } /* for */
 
   /* second pass: we search a free index */
-  for (i=0; i < HARD_USERLIMIT; i++) {
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] == '\0') {
       /* put it in cache */
 #ifdef DEBUG
@@ -497,7 +512,7 @@ wzd_user_t * usercache_add(wzd_user_t * user)
 wzd_user_t * usercache_get( predicate_user_t p, void * arg )
 {
   unsigned int i;
-  for (i=0; i < HARD_USERLIMIT; i++) {
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] != '\0') {
       /* test entry */
       if ( (*p)(&cache_user_pool[i],arg) ) {
@@ -514,11 +529,90 @@ wzd_user_t * usercache_get( predicate_user_t p, void * arg )
 void usercache_invalidate( predicate_user_t p, void * arg )
 {
   unsigned int i;
-  for (i=0; i < HARD_USERLIMIT; i++) {
+
+  if (!arg) return;
+  
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
     if (cache_user_pool[i].username[0] != '\0') {
       /* test entry */
       if ( (*p)(&cache_user_pool[i],arg) )
         memset(&cache_user_pool[i],0,sizeof(wzd_user_t));
+    }
+  } /* for */
+}
+
+
+
+wzd_group_t * groupcache_add(wzd_group_t * group)
+{
+  unsigned int i;
+
+  if (!group) return NULL;
+
+  /* first pass: we check that entry is not already present */
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
+    if (cache_group_pool[i].groupname[0] != '\0') {
+      if (strcmp(group->groupname,cache_group_pool[i].groupname)==0) {
+#ifdef DEBUG
+        if (group->gid != cache_group_pool[i].gid) {
+          out_log(LEVEL_NORMAL,"Group with same name but different gid is already present !!\n");
+          out_log(LEVEL_NORMAL,"%s:%d     group: %s\n",__FILE__,__LINE__,group->groupname);
+        }
+#endif
+        /* found, we overwrite it */
+        memcpy(&cache_group_pool[i],group,sizeof(wzd_group_t));
+        return &cache_group_pool[i];
+      }
+    }
+  } /* for */
+
+  /* second pass: we search a free index */
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
+    if (cache_group_pool[i].groupname[0] == '\0') {
+      /* put it in cache */
+#ifdef DEBUG
+      out_err(LEVEL_INFO,"group cache add %s\n",group->groupname);
+#endif
+      memcpy(&cache_group_pool[i],group,sizeof(wzd_group_t));
+      return &cache_group_pool[i];
+    }
+  } /* for */
+
+#ifdef DEBUG
+  out_log(LEVEL_NORMAL,"No more free space in cache\n");
+  out_log(LEVEL_NORMAL,"%s:%d     group: %s\n",__FILE__,__LINE__,group->groupname);
+#endif
+  return NULL;
+}
+
+wzd_group_t * groupcache_get( predicate_group_t p, void * arg )
+{
+  unsigned int i;
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
+    if (cache_group_pool[i].groupname[0] != '\0') {
+      /* test entry */
+      if ( (*p)(&cache_group_pool[i],arg) ) {
+#ifdef DEBUG
+        out_log(LEVEL_INFO,"group cache hit %s\n",cache_group_pool[i].groupname);
+#endif
+        return &cache_group_pool[i];
+      }
+    }
+  } /* for */
+  return NULL;
+}
+
+void groupcache_invalidate( predicate_group_t p, void * arg )
+{
+  unsigned int i;
+
+  if (!arg) return;
+  
+  for (i=0; i < HARD_DEF_USER_MAX; i++) {
+    if (cache_group_pool[i].groupname[0] != '\0') {
+      /* test entry */
+      if ( (*p)(&cache_group_pool[i],arg) )
+        memset(&cache_group_pool[i],0,sizeof(wzd_group_t));
     }
   } /* for */
 }

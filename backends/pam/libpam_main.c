@@ -213,7 +213,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
   return -1;
 }
 
-int FCN_FIND_GROUP(int num, wzd_group_t * group)
+int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
   return -1;
 }

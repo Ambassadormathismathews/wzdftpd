@@ -620,7 +620,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allusers")==0)
       {
         wzd_user_t * loop_user;
-        for (i=0; i<=65535; i++) /** \todo XXX this is horrible ! */
+        for (i=0; i<=32767; i++) /** \todo XXX this is horrible ! */
         {
           loop_user = GetUserByID(i);
           current_user = loop_user;
@@ -636,7 +636,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allgroups")==0)
       {
         wzd_group_t * loop_group;
-        for (i=0; i<=65535; i++) /** \todo XXX this is horrible ! */
+        for (i=0; i<=32767; i++) /** \todo XXX this is horrible ! */
         {
           loop_group = GetGroupByID(i);
           current_group = loop_group;
@@ -655,7 +655,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         int gid;
         if (current_group) {
           gid = GetGroupIDByName(current_group->groupname);
-          for (i=0; i<65536; i++) /** \todo XXX þhis is horrible ! */
+          for (i=0; i<32767; i++) /** \todo XXX þhis is horrible ! */
           {
             loop_user = GetUserByID(i);
             current_user = loop_user;
