@@ -8,9 +8,6 @@
 
 #include <wzd_backend.h>
 
-#define PASSWD_FILE_NAME	"passwd"
-#define	GROUP_FILE_NAME		"group"
-
 #define	USERS_FILE		"users"
 
 #define	MAX_LINE		1024
@@ -24,6 +21,8 @@ typedef struct {
   wzd_perm_t		userperms;
   unsigned int		group_num;
   unsigned int		groups[256];
+  unsigned long		max_ul_speed;
+  unsigned long		max_dl_speed;
 } user_t;
 
 user_t * user_pool;
@@ -32,6 +31,8 @@ int user_count;
 typedef struct {
   char			groupname[256];
   wzd_perm_t		groupperms;
+  unsigned long		max_ul_speed;
+  unsigned long		max_dl_speed;
 } group_t;
 
 group_t * group_pool;
@@ -70,7 +71,7 @@ int read_section_users(FILE * file_user, char * line)
   int err;
   long num;
   char *ptr;
-  unsigned int i;
+  unsigned long i;
 
 fprintf(stderr,"Entering section USERS\n");
   while ( (c = getc(file_user)) != EOF ) {
@@ -106,9 +107,14 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       memset(user_pool[user_count-1].groups,0,256*sizeof(unsigned int));
       user_pool[user_count-1].group_num = 0;
       memset(user_pool[user_count-1].tagline,0,256);
+      user_pool[user_count-1].max_ul_speed = 0;
+      user_pool[user_count-1].max_dl_speed = 0;
     }
     else if (strcmp("home",varname)==0) {
       if (!user_count) break;
+      /* remove trailing / */
+      if (value[strlen(value)-1] == '/')
+	value[strlen(value)-1] = '\0';
       strncpy(user_pool[user_count-1].homedir,value,1024);
     }
     else if (strcmp("pass",varname)==0) {
@@ -127,7 +133,8 @@ fprintf(stderr,"Invalid uid %s\n",value);
     else if (strcmp("rights",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
-      user_pool[user_count-1].userperms = num;
+      /* FIXME by default all users have CWD right FIXME */
+      user_pool[user_count-1].userperms = num | RIGHT_CWD;
     }
     else if (strcmp("groups",varname)==0) {
       /* first group */
@@ -145,6 +152,24 @@ fprintf(stderr,"Invalid uid %s\n",value);
     else if (strcmp("tagline",varname)==0) {
       strncpy(user_pool[user_count-1].tagline,value,256);
     } /* tagline */
+    else if (strcmp("max_ul_speed",varname)==0) {
+      if (!user_count) break;
+      num = strtol(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid max_ul_speed %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].max_ul_speed = num;
+    } /* max_ul_speed */
+    else if (strcmp("max_dl_speed",varname)==0) {
+      if (!user_count) break;
+      num = strtol(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].max_dl_speed = num;
+    } /* max_ul_speed */
   }
   return 0;
 }
@@ -182,6 +207,8 @@ fprintf(stderr,"Defining new private group %s\n",token);
       }
       strncpy(group_pool[group_count-1].groupname,token,256);
       group_pool[group_count-1].groupperms = 0;
+      group_pool[group_count-1].max_ul_speed = 0;
+      group_pool[group_count-1].max_dl_speed = 0;
       break;
     case D_NONE:
 fprintf(stderr,"Unkown directive %s\n",token);
@@ -200,27 +227,6 @@ int read_section_hosts(FILE * file_user, char * line)
   char c;
 
 fprintf(stderr,"Entering section HOSTS\n");
-  while ( (c = getc(file_user)) != EOF ) {
-    if (c=='\n') continue;
-    if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
-    if (c == '[') { /* another section */
-      ungetc(c,file_user);
-      return 0;
-    }
-    line[0] = c; /* we avoid a stupid ungetc */
-    fgets(line+1,MAX_LINE-2,file_user);
-    line[strlen(line)-1] = '\0'; /* clear trailing \n */
-fprintf(stderr,"i read '%s'\n",line);
-  }
-  return 0;
-}
-
-
-int read_section_rights(FILE * file_user, char * line)
-{
-  char c;
-
-fprintf(stderr,"Entering section RIGHTS\n");
   while ( (c = getc(file_user)) != EOF ) {
     if (c=='\n') continue;
     if (c=='#') { fgets(line+1,MAX_LINE-2,file_user); continue; } /* comment */
@@ -258,6 +264,25 @@ int read_files(void)
   group_count=0;
   group_pool = malloc(256*sizeof(group_t));
 
+  /* XXX We always add a user nobody and a group nogroup */
+  strcpy(user_pool[0].username,"nobody");
+  strcpy(user_pool[0].userpass,"------");
+  strcpy(user_pool[0].homedir,"/no/home");
+  strcpy(user_pool[0].tagline,"nobody");
+  user_pool[0].uid = 65535;
+  user_pool[0].userperms = RIGHT_CWD; /* should be enough ! */
+  user_pool[0].group_num = 1;
+  user_pool[0].groups[0] = 0; /* 0 == nogroup ! */
+  user_pool[0].max_ul_speed = 1; /* at this rate, even if you can download it will be ... slow ! */
+  user_pool[0].max_dl_speed = 1;
+  user_count++;
+
+  strcpy(group_pool[0].groupname,"nogroup");
+  group_pool[0].groupperms = 0; /* should be enough ! */
+  group_pool[0].max_ul_speed = 0;
+  group_pool[0].max_dl_speed = 0;
+  group_count++;
+
   while (1) {
     ptr = fgets(line,MAX_LINE-1,file_user);
     if (!ptr) { fclose(file_user); free(line); return 0; }
@@ -272,7 +297,6 @@ int read_files(void)
       if (strcasecmp("USERS",token)==0) ret = read_section_users(file_user,line);
       else if (strcasecmp("GROUPS",token)==0) ret = read_section_groups(file_user,line);
       else if (strcasecmp("HOSTS",token)==0) ret = read_section_hosts(file_user,line);
-      else if (strcasecmp("RIGHTS",token)==0) ret = read_section_rights(file_user,line);
       else {
 fprintf(stderr,"Unkown section %s\n",token);
         return 1;
@@ -351,29 +375,37 @@ fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[co
   strncpy(user->rootpath,user_pool[count].homedir,1023);
   user->uid = user_pool[count].uid;
   memcpy(&user->perms,&user_pool[count].userperms,sizeof(wzd_perm_t));
+  user->max_ul_speed = user_pool[count].max_ul_speed;
+  user->max_dl_speed = user_pool[count].max_dl_speed;
 
   return 0;
 }
 
-int FCN_VALIDATE_RIGHT(wzd_user_t * user, wzd_perm_t wanted_perm, void * param)
+int FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
-  group_t * group;
-  unsigned int i;
-  int user_right_ok=0, group_right_ok=0;
+  int count;
+  int found;
 
-  /* ORDER is important ! */
-  /* user right */
-  user_right_ok = ( (user->perms & wanted_perm) != 0);
-
-  /* group right */
-
-  switch (wanted_perm) {
-  case RIGHT_LIST:
-  case RIGHT_RETR:
-  case RIGHT_STOR:
-    if (user_right_ok)
-      return 0;
-    break;
+  count=0;
+  found = 0;
+  while (count<user_count) {
+    if (strcmp(name,user_pool[count].username)==0)
+      { found = 1; break; }
+    count++;
   }
-  return 1;
+
+  if (!found) {
+fprintf(stderr,"User %s not found\n",name);
+    return 1;
+  }
+fprintf(stderr,"found user at index: %d\n",count);
+
+  strncpy(user->username,user_pool[count].username,255);
+  strncpy(user->rootpath,user_pool[count].homedir,1023);
+  user->uid = user_pool[count].uid;
+  memcpy(&user->perms,&user_pool[count].userperms,sizeof(wzd_perm_t));
+  user->max_ul_speed = user_pool[count].max_ul_speed;
+  user->max_dl_speed = user_pool[count].max_dl_speed;
+
+  return 0;
 }
