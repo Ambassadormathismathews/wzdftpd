@@ -57,8 +57,8 @@
 
 int list_match(char *,char *);
 
-int list_call_wrapper(int sock, wzd_context_t *context, char *line, char *buffer, unsigned int *buffer_len,
-    int callback(int,wzd_context_t*,char *))
+int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, char *buffer, unsigned int *buffer_len,
+    int callback(unsigned int,wzd_context_t*,char *))
 {
   unsigned int length;
   if (!line) { /* request to flush */
@@ -81,8 +81,8 @@ int list_call_wrapper(int sock, wzd_context_t *context, char *line, char *buffer
   return 0;
 }
 
-int list(int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
-	 int callback(int,wzd_context_t*,char *)) {
+int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
+	 int callback(unsigned int,wzd_context_t*,char *)) {
 
 #ifndef _MSC_VER
   DIR *dir;
@@ -184,6 +184,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	  continue;
 	}
 
+#ifndef _MSC_VER
         sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
                 S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
                 st.st_mode & S_IRUSR ? 'r' : '-',
@@ -201,6 +202,26 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
                 (u64_t)st.st_size,
                 datestr,
                 ptr);
+#else
+        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+                st.st_mode & S_IRUSR ? 'r' : '-',
+                st.st_mode & S_IWUSR ? 'w' : '-',
+                st.st_mode & S_IXUSR ? 'x' : '-',
+                st.st_mode & S_IRGRP ? 'r' : '-',
+                st.st_mode & S_IWGRP ? 'w' : '-',
+                st.st_mode & S_IXGRP ? 'x' : '-',
+                st.st_mode & S_IROTH ? 'r' : '-',
+                st.st_mode & S_IWOTH ? 'w' : '-',
+                st.st_mode & S_IXOTH ? 'x' : '-',
+                (int)st.st_nlink,
+                user->username,
+                "ftp",
+                (u64_t)st.st_size,
+                datestr,
+                ptr);
+#endif
+
                 
 /*        if (!callback(sock,context,line)) break;*/
 	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;
@@ -326,6 +347,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
 	owner = (wzd_user_t*)file_getowner( filename, context);
 
+#ifndef _MSC_VER
 	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
 		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
 		st.st_mode & S_IRUSR ? 'r' : '-',
@@ -343,6 +365,25 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 		(u64_t)st.st_size,
 		datestr,
 		buffer_name);
+#else
+	sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+		S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
+		st.st_mode & S_IRUSR ? 'r' : '-',
+		st.st_mode & S_IWUSR ? 'w' : '-',
+		st.st_mode & S_IXUSR ? 'x' : '-',
+		st.st_mode & S_IRGRP ? 'r' : '-',
+		st.st_mode & S_IWGRP ? 'w' : '-',
+		st.st_mode & S_IXGRP ? 'x' : '-',
+		st.st_mode & S_IROTH ? 'r' : '-',
+		st.st_mode & S_IWOTH ? 'w' : '-',
+		st.st_mode & S_IXOTH ? 'x' : '-',
+		(int)st.st_nlink,
+		(owner)?owner->username:"unknown",
+		"ftp",
+		(u64_t)st.st_size,
+		datestr,
+		buffer_name);
+#endif
 
 /*        if (!callback(sock,context,line)) break;*/
 	if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;

@@ -134,9 +134,9 @@ int runMainThread(int argc, char **argv)
 
 static void free_config(wzd_config_t * config);
 
-static int server_ident_list[3*HARD_USERLIMIT];
-static int server_add_ident_candidate(int socket_accept_fd);
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, int * maxfd);
+static unsigned int server_ident_list[3*HARD_USERLIMIT];
+static int server_add_ident_candidate(unsigned int socket_accept_fd);
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd);
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(int index);
 static void server_ident_timeout_check(void);
@@ -506,7 +506,7 @@ int commit_backend(void)
 /*
  * add a connection to the list of idents to be checked
  */
-static int server_add_ident_candidate(int socket_accept_fd)
+static int server_add_ident_candidate(unsigned int socket_accept_fd)
 {
   unsigned char remote_host[16];
   unsigned int remote_port;
@@ -618,7 +618,7 @@ static int server_add_ident_candidate(int socket_accept_fd)
 /*
  * add idents to the correct fd_set
  */
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, int * maxfd)
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, unsigned int * maxfd)
 {
   int i=0;
 

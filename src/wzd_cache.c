@@ -116,7 +116,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c = wzd_cache_find(hash);
   if (c) {
     /* detect if file has changed */
-    if (s.st_size != c->datasize || s.st_mtime > c->mtime) {
+    if ((unsigned long)s.st_size != c->datasize || s.st_mtime > c->mtime) {
       /* REFRESH */
       /* need refresh */
 /*      out_err(LEVEL_FLOOD,"cache entry need refresh\n");*/

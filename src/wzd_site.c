@@ -711,7 +711,7 @@ int do_site_link(char *command_line, wzd_context_t * context)
  */
 int do_site_msg(char *command_line, wzd_context_t * context)
 {
-  int ret;
+/*  int ret;*/
   char * command, * ptr, * filename;
   char msg_file[2048];
   char other_file[2048];
@@ -899,7 +899,9 @@ int do_site_reload(char * ignored, wzd_context_t * context)
 {
   int ret;
   pid_t pid;
+#ifndef WIN32
   char buffer[256];
+#endif
 
 #ifdef WZD_MULTIPROCESS
   pid = getppid();
@@ -1201,7 +1203,8 @@ int do_site_vfsls(char * ignored, wzd_context_t * context)
 int do_site_vfsadd(char * command_line, wzd_context_t * context)
 {
   char *vpath, *ppath, *target;
-  int i, ret;
+/*  int i;*/
+  int ret;
   char sep;
   const char *ptr;
   char * dstptr;
@@ -1398,9 +1401,9 @@ int do_site_wipe(char *command_line, wzd_context_t * context)
   char * firstarg, *filename;
   int is_recursive;
   int ret;
-  wzd_user_t user;
-  int uid;
-  struct stat s;
+/*  wzd_user_t user;*/
+/*  int uid;*/
+/*  struct stat s;*/
 
   ptr = command_line;
   firstarg = strtok_r(command_line," \t\r\n",&ptr);

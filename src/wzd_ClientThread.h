@@ -25,8 +25,8 @@
 #ifndef __WZD_CLIENT_THREAD__
 #define __WZD_CLIENT_THREAD__
 
-int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
-int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
+int clear_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
 
 void * clientThreadProc(void *arg);
 

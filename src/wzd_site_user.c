@@ -665,7 +665,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user, *me;
   int uid;
-  int i;
+  unsigned int i;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -744,7 +744,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   else if (strcmp(field,"group")==0) {
     wzd_group_t group;
     int groupid;
-    int newgroupid=-1;
+    unsigned int newgroupid=(unsigned int)-1;
     /* GAdmin ? */
     if (is_gadmin) {
        ret = send_message_with_args(501,context,"You can't change that field");
@@ -805,7 +805,7 @@ int do_site_change(char *command_line, wzd_context_t * context)
   /* num_logins */
   else if (strcmp(field,"num_logins")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _USER_NUMLOGINS; user.num_logins = ul; }
+    if (!*ptr) { mod_type = _USER_NUMLOGINS; user.num_logins = (unsigned short)ul; }
   }
   /* ratio */
   else if (strcmp(field,"ratio")==0) {
@@ -897,7 +897,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user;
   int uid;
-  int i;
+  unsigned int i;
 
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
@@ -924,7 +924,7 @@ int do_site_changegrp(char *command_line, wzd_context_t * context)
   while (group_name) {
     wzd_group_t group;
     int groupid;
-    int newgroupid=-1;
+    unsigned int newgroupid=(unsigned int)-1;
     /* find corresponding id */
     for (i=0; i<HARD_DEF_GROUP_MAX; i++) {
       if (backend_find_group(i,&group,&groupid)!=-1) {

@@ -270,8 +270,8 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   while (token) {
     negate=0;
     /* FIXME split token to find entry type : user, group, flag */
-    WZD_ASSERT (token < dyn_buffer)
-    WZD_ASSERT (token > (dyn_buffer+length))
+    WZD_ASSERT ( !(token < dyn_buffer) )
+    WZD_ASSERT (!(token > (dyn_buffer+length)) )
     c = *token++;
     if (c == '!') {
       negate = 1;
@@ -319,9 +319,9 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
 {
   wzd_command_perm_t * command_perm;
   wzd_command_perm_entry_t * entry;
-  wzd_user_t * user;
+  const wzd_user_t * user;
   wzd_group_t * group;
-  int i;
+  unsigned int i;
   int negate;
   const char * entry_target;
 

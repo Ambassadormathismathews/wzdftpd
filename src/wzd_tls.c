@@ -277,7 +277,7 @@ int tls_write(int sock, const char *msg, unsigned int length, int flags, int tim
 
 void tls_auth_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
-  int socket;
+  unsigned int socket;
 
   socket = SSL_get_fd(context->ssl.obj);
 
@@ -291,7 +291,7 @@ void tls_auth_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 
 void tls_auth_data_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
-  int socket;
+  unsigned int socket;
 
   socket = SSL_get_fd(context->ssl.data_ssl);
 
@@ -364,7 +364,7 @@ int tls_exit(void)
 
 /*************** tls_read ****************************/
 
-int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int tls_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
   wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
@@ -423,7 +423,7 @@ int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, v
 
 /*************** tls_write ***************************/
 
-int tls_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int tls_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
   wzd_context_t * context = (wzd_context_t*)vcontext;
   SSL * ssl;
@@ -523,7 +523,8 @@ int tls_auth_cont(wzd_context_t * context)
 /* non blocking test */
 #if 1
   SSL * ssl = context->ssl.obj;
-  int fd, ret, status, sslerr;
+  unsigned int fd;
+  int ret, status, sslerr;
   fd_set fd_r, fd_w;
   struct timeval tv;
 
@@ -670,7 +671,7 @@ int tls_auth_data_cont(wzd_context_t * context)
   int status, sslerr;
   fd_set fd_r, fd_w;
   struct timeval tv;
-  int fd,r;
+  unsigned int fd,r;
 
   SSL_set_accept_state(ssl);
   fd = SSL_get_fd(ssl);

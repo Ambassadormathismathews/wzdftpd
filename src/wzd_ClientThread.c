@@ -188,7 +188,7 @@ int identify_token(char *token)
 
 /*************** clear_read **************************/
 
-int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int clear_read(unsigned int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -230,7 +230,7 @@ int clear_read(int sock, char *msg, unsigned int length, int flags, int timeout,
 
 /*************** clear_write *************************/
 
-int clear_write(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
+int clear_write(unsigned int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -369,7 +369,8 @@ int check_timeout(wzd_context_t * context)
 {
   time_t t, delay;
   wzd_group_t *gptr;
-  int i, ret;
+  unsigned int i;
+  int ret;
   wzd_user_t * user;
 
 #ifdef BACKEND_STORAGE
@@ -565,7 +566,7 @@ int waitaccept(wzd_context_t * context)
 {
   fd_set fds;
   struct timeval tv;
-  int sock;
+  unsigned int sock;
   unsigned char remote_host[16];
   unsigned int remote_port;
   int ret;
@@ -670,7 +671,7 @@ int waitconnect(wzd_context_t * context)
 
 /*************** list_callback ***********************/
 
-int list_callback(int sock, wzd_context_t * context, char *line)
+int list_callback(unsigned int sock, wzd_context_t * context, char *line)
 {
   fd_set fds;
   struct timeval tv;
@@ -2144,7 +2145,7 @@ int do_user(const char *username, wzd_context_t * context)
 
   /* foreach group of user, check num_logins */
   {
-    int i,j;
+    unsigned int i,j;
       wzd_group_t * group;
     wzd_user_t * user;
     unsigned int num_logins[HARD_DEF_GROUP_MAX];
@@ -2180,7 +2181,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
   const unsigned char *userip = context->hostip;
   wzd_user_t * user;
   wzd_group_t *group;
-  int i;
+  unsigned int i;
 
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
@@ -2452,7 +2453,7 @@ void * clientThreadProc(void *arg)
   char *buffer = NULL;
   char * param;
   int save_errno;
-  int sockfd;
+  unsigned int sockfd;
   int ret;
   int exitclient;
   char *token;
@@ -2561,7 +2562,7 @@ void * clientThreadProc(void *arg)
     FD_SET(sockfd,&efds);
     /* set data fd */
     ret = data_set_fd(context,&fds_r,&fds_w,&efds);
-    if (sockfd > ret) ret = sockfd;
+    if ((signed)sockfd > ret) ret = sockfd;
 
     tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
     ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);

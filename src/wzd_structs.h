@@ -402,8 +402,8 @@ typedef struct {
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
-  int           controlfd;
-  int           datafd;
+  unsigned int  controlfd;
+  unsigned int  datafd;
   data_mode_t   datamode;
   net_family_t  datafamily;
   unsigned long	pid_child;
@@ -465,7 +465,7 @@ typedef struct {
   int		xferlog_fd;
   int		loglevel;
   char		dir_message[256]; /** useless */
-  int		mainSocket;
+  unsigned int	mainSocket;
   unsigned char	ip[MAX_IP_LENGTH];
   unsigned char	dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;

@@ -157,10 +157,11 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t *me, *user;
   short is_gadmin;
-  int gid,i;
-  int users_maingroup_changed[HARD_DEF_USER_MAX];
+  unsigned int gid;
+  int i;
+/*  int users_maingroup_changed[HARD_DEF_USER_MAX];*/
   int num_users_maingroup_changed=0;
-  int users_without_group[HARD_DEF_USER_MAX];
+/*  int users_without_group[HARD_DEF_USER_MAX];*/
   int num_users_without_group=0;
   char buffer[256];
 
@@ -236,7 +237,7 @@ int do_site_grpren(char *command_line, wzd_context_t * context)
   wzd_user_t *me;
   wzd_group_t group;
   int gid;
-  unsigned int ratio;
+/*  unsigned int ratio;*/
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -623,7 +624,7 @@ int do_site_grpkill(char *command_line, wzd_context_t * context)
   int i,found;
   wzd_user_t * user, * me;
   int gid;
-  wzd_context_t user_context;
+/*  wzd_context_t user_context;*/
 
   me = GetUserByID(context->userid);
   ptr = command_line;
@@ -766,7 +767,7 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
   /* num_logins */
   else if (strcmp(field,"num_logins")==0) {
     ul=strtoul(value,&ptr,0);
-    if (!*ptr) { mod_type = _GROUP_NUMLOGINS; group.num_logins = ul; }
+    if (!*ptr) { mod_type = _GROUP_NUMLOGINS; group.num_logins = (unsigned short)ul; }
   }
   /* ratio */
   else if (strcmp(field,"ratio")==0) {
