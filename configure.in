@@ -1,0 +1,79 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+
+PACKAGE=wzdFTPd
+VERSION=0.1rc4
+
+# Set to 0 if you don't want SSL
+#SSL_SUPPORT=1
+
+# windows only: set to 1 if you want winsock sockets instead of BSD
+# this should be faster, but is highly experimental
+#WINSOCK_SUPPORT=1
+
+# Choose one and only one of the following
+#WZD_MULTIPROCESS=1
+#WZD_MULTITHREAD=1
+
+# Uncomment if you prefer sfv checker compiled in the exe
+# + reduces the number of files
+# - cannot be reloaded dynamically
+#
+# NOTE : as an evidence, it would be _stupid_ to enable internal sfv and
+#   sfv module at the same time, so check your .cfg ...
+#INTERNAL_SFV=1
+
+
+AC_PREREQ(2.57)
+AC_INIT(PACKAGE, VERSION, chifflier@cpe.fr)
+AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
+AM_INIT_AUTOMAKE(wzdFTPd,0.1rc4,no-define)
+#AM_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+AM_PROG_LEX
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
+AC_PROG_LIBTOOL
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_CHECK_DECLS([sys_siglist])
+
+# Checks for library functions.
+#AC_FUNC_CLOSEDIR_VOID
+#AC_FUNC_FORK
+#AC_PROG_GCC_TRADITIONAL
+#AC_FUNC_LSTAT
+#AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+#AC_FUNC_MALLOC
+#AC_FUNC_MKTIME
+#AC_FUNC_REALLOC
+#AC_FUNC_SELECT_ARGTYPES
+#AC_TYPE_SIGNAL
+#AC_FUNC_STAT
+#AC_FUNC_STRFTIME
+#AC_FUNC_UTIME_NULL
+#AC_FUNC_VPRINTF
+#AC_FUNC_WAIT3
+#AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir regcomp rmdir select socket strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul strtoull utime])
+
+AC_CONFIG_FILES([Makefile
+                 backends/Makefile
+                 backends/plaintext/Makefile
+                 doc/Makefile
+                 modules/Makefile
+                 modules/sfv/Makefile
+                 modules/test/Makefile
+                 src/Makefile
+                 tools/Makefile
+                 tools/siteuptime/Makefile
+                 tools/sitewho/Makefile])
+AC_OUTPUT

@@ -1,0 +1,9 @@
+
+libexecdir = /usr/modules
+
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
+
+libexec_LTLIBRARIES = libwzd_sfv.la
+
+libwzd_sfv_la_SOURCES = libwzd_sfv.c
+libwzd_sfv_la_LDFLAGS = -avoid-version -module -L../../src/ -lwzd 
