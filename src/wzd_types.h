@@ -209,6 +209,7 @@ typedef size_t ssize_t;
 #define pid_t		unsigned int
 #define socklen_t	unsigned int
 #define uid_t		unsigned int
+#define gid_t		unsigned int
 
 
 /*********************** VERSION **************************/

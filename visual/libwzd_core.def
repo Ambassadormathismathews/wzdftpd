@@ -75,6 +75,7 @@ EXPORTS
 	get_system_ip
 	getlib_contextList
 	getlib_mainConfig
+	getlib_server_gid
 	getlib_server_uid
 	getMessage
 	group_ip_add
@@ -161,6 +162,7 @@ EXPORTS
 	setkey
 	setlib_contextList
 	setlib_mainConfig
+	setlib_server_gid
 	setlib_server_uid
 	setMessage
 	split_filename
