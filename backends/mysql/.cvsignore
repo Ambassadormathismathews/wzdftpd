@@ -1,5 +1,5 @@
-libmysql_main.lo 
-libmysql_main.o  
+*.lo 
+*.o  
 libwzdmysql.la
 Makefile
 Makefile.in
