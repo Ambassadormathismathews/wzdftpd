@@ -1,6 +1,10 @@
 #include <dirent.h>
 #include <wzd.h>
 
+#define	incomplete_indicator	"../(incomplete)-%0"
+
+
+
 #define BUFFER_LEN      4096
 
 /* CRC lookup table */
@@ -41,6 +45,9 @@ static unsigned long crcs[256]={ 0x00000000,0x77073096,0xEE0E612C,0x990951BA,
 0x37D83BF0,0xA9BCAE53,0xDEBB9EC5,0x47B2CF7F,0x30B5FFE9,0xBDBDF21C,0xCABAC28A,
 0x53B39330,0x24B4A3A6,0xBAD03605,0xCDD70693,0x54DE5729,0x23D967BF,0xB3667A2E,
 0xC4614AB8,0x5D681B02,0x2A6F2B94,0xB40BBE37,0xC30C8EA1,0x5A05DF1B,0x2D02EF8D};
+
+/* Converts cookies in incomplete indicators */
+char *c_incomplete(char *instr, char *path);
 
 /* Calculates the 32-bit checksum of fname, and stores the result
  * in crc. Returns 0 on success, nonzero on error.
@@ -98,6 +105,7 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     entry->state = SFV_MISSING;
     return 0;
   }
+  entry->size = s.st_size;
   ret = calc_crc32(filename,&real_crc);
   if (ret) return -1;
 
@@ -201,12 +209,112 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
       sfv->sfv_list[count_entries]->filename = malloc(strlen(buf)+1);
       strcpy(sfv->sfv_list[count_entries]->filename,buf);
       sfv->sfv_list[count_entries]->state = SFV_UNKNOWN;
+      sfv->sfv_list[count_entries]->size = 0;
       count_entries++;
     }
   }
   sfv->comments[count_comments] = NULL;
   sfv->sfv_list[count_entries] = NULL;
 
+  return 0;
+}
+
+/* creates sfv file
+ * returns 0 if all ok
+ * -1 for other errors
+ * !! sfv_file path must be an ABSOLUTE path !!
+ */
+int sfv_create(const char * sfv_file)
+{
+  int ret=0, thisret;
+  char * ptr;
+  char directory[1024];
+  char filename[2048];
+  wzd_sfv_file sfv;
+  int i;
+  unsigned long crc;
+  struct stat s;
+  DIR *dir;
+  struct dirent *entr;
+  int count_comments=0, count_entries=0;
+
+  sfv_init(&sfv);
+
+  sfv.comments = malloc(50*sizeof(char*));
+  sfv.sfv_list = malloc(50*sizeof(wzd_sfv_entry*));
+
+  if (strlen(sfv_file) >= 1024) return -1;
+  strncpy(directory,sfv_file,1023);
+  ptr = strrchr(directory,'/');
+  if (!ptr) return -1;
+  *(++ptr) = '\0';
+
+  strcpy(filename,directory);
+  if ((dir=opendir(directory))==NULL) return -1;
+
+  while ((entr=readdir(dir))!=NULL) {
+    if (entr->d_name[0]=='.') continue;
+    /* TODO check that file matches mask */
+
+    if (strlen(entr->d_name)>4) {
+      char extension[5];
+      strcpy(extension,entr->d_name+strlen(entr->d_name)-4);
+      /* files that should not be in a sfv */
+      if (strcasecmp(extension,".nfo")==0 ||
+	  strcasecmp(extension,".diz")==0 ||
+	  strcasecmp(extension,".sfv")==0 ||
+	  strcasecmp(extension,".txt")==0)
+	continue;
+    }
+    /* add to sfv file */
+    strcpy(filename,directory);
+    ptr = filename + strlen(directory);
+/*    strcpy(ptr,sfv.sfv_list[i]->filename);*/
+    strcpy(ptr,entr->d_name);
+    if (stat(filename,&s) || S_ISDIR(s.st_mode)) { continue; }
+    thisret = calc_crc32(filename,&crc);
+    /* count_entries + 2 : +1 for the new line to add, +1 to terminate
+       array by NULL */
+    if ((count_entries + 2 )% 50 == 0)
+      sfv.sfv_list = realloc(sfv.sfv_list,(count_entries+50)*sizeof(wzd_sfv_entry*));
+    sfv.sfv_list[count_entries] = malloc(sizeof(wzd_sfv_entry));
+    sfv.sfv_list[count_entries]->crc = crc;
+    sfv.sfv_list[count_entries]->filename = strdup(entr->d_name);
+    sfv.sfv_list[count_entries]->state = SFV_OK;
+    sfv.sfv_list[count_entries]->state = s.st_size;
+    count_entries++;
+  } /* while ((entr=readdir(dir))!=NULL) */
+  sfv.comments[count_comments] = NULL;
+  sfv.sfv_list[count_entries] = NULL;
+
+  /* writes file */
+  {
+    char buffer[2048];
+    int fd_sfv;
+    fd_sfv = open(sfv_file,O_CREAT | O_WRONLY | O_TRUNC,0644);
+
+    i=0;
+    while (sfv.comments[i]) {
+      write(fd_sfv,sfv.comments[i],strlen(sfv.comments[i]));
+      write(fd_sfv,"\n",1);
+      i++;
+    }
+    i=0;
+    while (sfv.sfv_list[i]) {
+      if (snprintf(buffer,2047,"%s %lx\n",sfv.sfv_list[i]->filename,
+	    sfv.sfv_list[i]->crc) <= 0) return -1;
+      ret = strlen(buffer);
+      if ( write(fd_sfv,buffer,ret) != ret ) {
+	out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
+       	return -1;
+      }
+      i++;
+    }
+
+    close(fd_sfv);
+  }
+
+  sfv_free(&sfv);
   return 0;
 }
 
@@ -351,7 +459,12 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
   return 1;
 }
 
-int sfv_process_new(const char *sfv_file)
+/* called after a sfv file is uploaded
+ * sfv_file must be an ABSOLUTE path to a file
+ * retuns -1 if error
+ * 0 else
+ */
+int sfv_process_new(const char *sfv_file, wzd_context_t *context)
 {
   wzd_sfv_file sfv;
   char dir[1024];
@@ -383,8 +496,48 @@ int sfv_process_new(const char *sfv_file)
     i++;
   }
 
+  /* create a dir/symlink to mark incomplete */
+  if (strlen(dir)>2)
+  {
+    const char * incomplete;
+    char dirname[256];
+    if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
+    ptr = strrchr(dir,'/');
+    if (ptr) {
+      strncpy(dirname,ptr+1,255);
+      incomplete = c_incomplete(incomplete_indicator,dirname);
+      /* create empty file|dir / symlink ? */
+      if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
+      strcat(dir,incomplete);
+      if (!checkabspath(dir,filename,context))
+	close(creat(filename,0400));
+    }
+  }
+
   sfv_free(&sfv);
   return 0;
+}
+
+/* Converts cookies in incomplete indicators */
+char i_buf[ 256 ];
+char * c_incomplete(char *instr, char *path)
+{
+  char *buf_p;
+
+  buf_p = i_buf;
+  for ( ; *instr ; instr++ ) if ( *instr == '%' ) {
+    instr++;
+    switch ( *instr ) {
+/*      case '0': buf_p += sprintf( buf_p, "%s", path[0] ); break;
+      case '1': buf_p += sprintf( buf_p, "%s", path[1] ); break;*/
+       case '0': buf_p += sprintf( buf_p, "%s", path ); break;
+      case '%': *buf_p++ = '%' ; break;
+    }
+  } else {
+    *buf_p++ = *instr;
+  }
+  *buf_p = 0;
+  return i_buf;
 }
 
 void do_site_help_sfv(wzd_context_t * context)
@@ -429,7 +582,7 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
     do_site_help_sfv(context);
     return;
   }
-  buffer[strlen(buffer)-1] = '\0'; /* remove '/', appended by checkpath */
+/*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   sfv_init(&sfv);
 
   if (strcasecmp(command,"add")==0) {
@@ -449,7 +602,12 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
     }
   }
   if (strcasecmp(command,"create")==0) {
-    ret = send_message_with_args(200,context,"Site SFV create successfull");
+    ret = sfv_create(buffer);
+    if (ret == 0) {
+      ret = send_message_with_args(200,context,"All files ok");
+    } else {
+       ret = send_message_with_args(501,context,"Critical error occured");
+    }
   }
   
   sfv_free(&sfv);
@@ -497,12 +655,15 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   unsigned long crc, real_crc;
   int ret;
   int length;
+  wzd_context_t * context;
+
+  context = GetMyContext();
 
   /* check file type */
   length = strlen(filename);
   if (length >= 4) {
     if (strcasecmp(filename+length-4,".sfv")==0) /* Process a new sfv file */
-      return sfv_process_new(filename);
+      return sfv_process_new(filename,context);
   }
   crc = 0;
   ret = sfv_find_sfv(filename,&sfv,&entry);
