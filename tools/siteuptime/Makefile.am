@@ -1,10 +1,11 @@
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/libwzd
 
 bin_PROGRAMS = siteuptime
 
 siteuptime_SOURCES = siteuptime.c
 
+siteuptime_LDADD = $(top_srcdir)/libwzd/libwzd.la
 siteuptime_LDFLAGS = $(WZD_SSL_LIBS)
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES)
