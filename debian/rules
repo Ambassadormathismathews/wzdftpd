@@ -102,7 +102,7 @@ install-arch:
 	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdmysql* debian/wzdftpd-back-mysql/usr/lib/wzdftpd/backends
 	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdpam* debian/wzdftpd-back-pam/usr/lib/wzdftpd/backends
 	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_tcl* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
-	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
+	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-sfv/usr/lib/wzdftpd/modules
 
 	dh_install -s
 # Must not depend on anything. This is to be called by
