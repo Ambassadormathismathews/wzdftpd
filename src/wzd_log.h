@@ -53,5 +53,6 @@ void out_xferlog(wzd_context_t * context, int is_complete);
 void log_message(const char *event, const char *fmt, ...);
 
 int str2loglevel(const char *s);
+const char * loglevel2str(int l);
 
 #endif /* __WZD_LOG__ */

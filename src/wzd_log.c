@@ -301,3 +301,16 @@ int str2loglevel(const char *s)
   return -1;
 }
 
+const char * loglevel2str(int l)
+{
+  switch (l) {
+  case LEVEL_LOWEST: return "lowest";
+  case LEVEL_FLOOD: return "flood";
+  case LEVEL_INFO: return "info";
+  case LEVEL_NORMAL: return "normal";
+  case LEVEL_HIGH: return "high";
+  case LEVEL_CRITICAL: return "critical";
+  }
+  return "";
+}
+
