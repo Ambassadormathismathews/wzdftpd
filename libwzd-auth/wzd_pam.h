@@ -22,37 +22,17 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_AUTH__
-#define __WZD_AUTH__
+#ifndef __WZD_PAM__
+#define __WZD_PAM__
 
 /*! \addtogroup libwzd_auth
- *  Authentication functions for wzdftpd
  *  @{
  */
 
 /* return 1 if password matches */
-
-int checkpass_crypt(const char *pass, const char *encrypted);
-
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int checkpass(const char*user, const char *pass, const char *challenge);
-
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int check_auth(const char *user, const char *data, const char *challenge);
-
-
-
-
-/* return 0, or -1 if error */
-
-int changepass_crypt(const char *pass, char *buffer, size_t len);
-
-
-#define AUTH_SIG_MD5  "$1$"
-#define AUTH_SIG_PAM  "{pam}"
-#define AUTH_SIG_CERT "{cert}"
+int checkpass_pam(const char *user, const char *pass);
 
 /*! @} */
 
-#endif /* __WZD_AUTH__ */
+#endif /* __WZD_PAM__ */
 

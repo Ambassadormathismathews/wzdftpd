@@ -42,6 +42,9 @@
 #endif
 
 #include "wzd_auth.h"
+#include "wzd_md5crypt.h"
+#include "wzd_pam.h"
+#include "wzd_tls.h"
 
 /* return 1 if password matches */
 
@@ -54,6 +57,19 @@ int checkpass_crypt(const char *pass, const char *encrypted)
   /* FIXME - crypt is NOT reentrant */
   cipher = crypt(pass,encrypted);
   return strcmp(cipher,encrypted)==0;
+}
+
+/* return 1 if password matches */
+
+int checkpass_md5(const char *pass, const char *encrypted)
+{
+  char * cipher;
+
+  if (!pass || !encrypted) return 0;
+
+  /* FIXME - md5_crypt is NOT reentrant */
+  cipher = md5_crypt(pass,encrypted);
+  return strcmp(cipher+3 /* skip $1$ */,encrypted)==0;
 }
 
 int changepass_crypt(const char *pass, char *buffer, size_t len)
@@ -72,4 +88,38 @@ int changepass_crypt(const char *pass, char *buffer, size_t len)
 
   return 0;
 }
+
+/* first chars of challenge indicate the password form (crypt, md5, etc.) */
+int checkpass(const char *user, const char *pass, const char *challenge)
+{
+  if (!user || !pass) return 0;
+
+  if (challenge) {
+    if (strcmp(challenge,"pam")==0)
+      return checkpass_pam(user,pass);
+  }
+
+  return 0;
+}
+
+
+/* first chars of challenge indicate the password form (crypt, md5, etc.) */
+int check_auth(const char *user, const char *data, const char *challenge)
+{
+  if (!user || !challenge) return 0;
+
+  if (strncmp(challenge,AUTH_SIG_MD5,strlen(AUTH_SIG_MD5))==0)
+    return checkpass_md5(data,challenge+strlen(AUTH_SIG_MD5));
+
+  if (strncmp(challenge,AUTH_SIG_PAM,strlen(AUTH_SIG_PAM))==0)
+    return checkpass_pam(user,challenge+strlen(AUTH_SIG_PAM));
+  if (strncmp(challenge,AUTH_SIG_CERT,strlen(AUTH_SIG_CERT))==0)
+    return check_certificate(user,challenge+strlen(AUTH_SIG_CERT));
+
+  /* in doubt, check for crypt() */
+  return checkpass_crypt(data,challenge);
+
+  return 0;
+}
+
 
