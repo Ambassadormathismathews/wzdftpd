@@ -103,6 +103,8 @@ units</entry></row>
 <row><entry>%filepath</entry><entry>Full path to uploaded/downloaded file <footnote><para>
 available during an upload/download</para></footnote>
 </entry></row>
+<row><entry>%filecrc</entry><entry>CRC of uploaded/downloaded file</footnote>
+</entry></row>
 
 </tbody>
 </tgroup>

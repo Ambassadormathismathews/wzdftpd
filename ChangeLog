@@ -1,3 +1,7 @@
+2004-03-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* cookies: filecrc (uploaded\downloaded file crc)
+
 2004-03-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* cookies: userpwd (user path, relative to home dir)

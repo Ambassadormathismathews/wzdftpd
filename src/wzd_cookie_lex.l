@@ -93,6 +93,7 @@ typedef enum {
   COOKIE_CYAN,
   COOKIE_WHITE,
 
+  COOKIE_FILECRC,
   COOKIE_FILEPATH,
 
   COOKIE_GROUPHOME,
@@ -273,6 +274,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>!cyan	BEGIN(INITIAL); return COOKIE_CYAN;
 <sc_cook>!white	BEGIN(INITIAL); return COOKIE_WHITE;
 
+<sc_cook>{C_FILE}crc		BEGIN(INITIAL); return COOKIE_FILECRC;
 <sc_cook>{C_FILE}path		BEGIN(INITIAL); return COOKIE_FILEPATH;
 
 <sc_cook>{C_GROUP}home		BEGIN(INITIAL); return COOKIE_GROUPHOME;
@@ -620,16 +622,34 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     }
     break;
 /*** FILE cookies ***/
+    case COOKIE_FILECRC:
+      get_cookie_format(yytext,&padding);
+      if (context) {
+        unsigned long crc=0;
+        if ((context->current_action.token == TOK_RETR ||
+        context->current_action.token == TOK_STOR) &&
+        (!calc_crc32(context->current_action.arg,&crc,0,(unsigned long)-1)))
+        {
+          snprintf(internalbuffer,IBUFSIZE,"%lX",crc);
+        }
+        else
+          snprintf(internalbuffer,IBUFSIZE,"0");
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"filecrc");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_FILEPATH:
       get_cookie_format(yytext,&padding);
       if (context) {
         if (context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR)
-	  snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
+          snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
         else
-	  snprintf(internalbuffer,IBUFSIZE,"(null)");
+          snprintf(internalbuffer,IBUFSIZE,"(null)");
       }
       else
-	snprintf(internalbuffer,IBUFSIZE,"filepath");
+        snprintf(internalbuffer,IBUFSIZE,"filepath");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
