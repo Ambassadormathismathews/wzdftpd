@@ -1987,7 +1987,7 @@ int site_init(wzd_config_t * config)
 int do_site(char *command, char *command_line, wzd_context_t * context)
 {
   char buffer[4096];
-  char *token, *ptr;
+  char *token, *tok_command, *ptr;
   int ret=0;
   site_fct_t fct;
   wzd_hook_reply_t hook_reply;
@@ -2022,7 +2022,10 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
   fct = site_find(token);
 
   if (fct)
-    return (*fct)(command_line+strlen(token)+1,context);
+  {
+    tok_command = strtok_r(NULL,"\r\n",&ptr);
+    return (*fct)(tok_command,context);
+  }
 
 /******************** CLOSE *********************/
   if (strcasecmp(token,"CLOSE")==0) {
