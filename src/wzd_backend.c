@@ -78,7 +78,10 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   }
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name begins with / (or x:/ for win, do not add path */
-  length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  if (backend[0]!='/')
+    length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  else
+    length = snprintf(filename,1024,"%s",backend);
   if (length<0)
   {
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
@@ -182,7 +185,10 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   }
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name begins with / (or x:/ for win, do not add path */
-  length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  if (backend[0]!='/')
+    length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  else
+    length = snprintf(filename,1024,"%s",backend);
   if (length<0)
   {
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);

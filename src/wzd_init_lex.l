@@ -355,7 +355,9 @@ int do_permission_line(const char *permname, const char *permline)
  */
 int cfg_read_backend(void)
 {
-  char name[HARD_BACKEND_NAME_LENGTH];
+/*  char name[HARD_BACKEND_NAME_LENGTH];*/
+  char *line;
+  char *name, *ptr;
   char * predicate = NULL, *version=NULL;
   unsigned int token;
   int i;
@@ -365,6 +367,27 @@ int cfg_read_backend(void)
     out_err(LEVEL_HIGH,"line should be 'backend = ...'\n");
     return 1;
   }
+
+  if( !(line=read_until_eol(HARD_BACKEND_NAME_LENGTH)) ) {
+    out_err(LEVEL_HIGH,"invalid argument\n");
+    return 1;
+  }
+
+  ptr = line;
+  name = strtok_r(line," \t\r\n",&ptr);
+  if (!name) {
+    out_err(LEVEL_HIGH,"missing backend name\n");
+    return 1;
+  }
+  predicate = strtok_r(NULL," \t\r\n",&ptr);
+  if (predicate)
+    version = strtok_r(NULL," \t\r\n",&ptr);
+  if (predicate && !version) {
+    out_err(LEVEL_HIGH,"missing backend version\n");
+    return 1;
+  }
+
+#if 0
   if ( (token=yylex()) != CFG_ID ) {
     out_err(LEVEL_HIGH,"line should be 'backend = name [> version]'\n");
     return 1;
@@ -384,6 +407,7 @@ int cfg_read_backend(void)
     }
     version=strdup(yytext);
   }
+#endif /* 0 */
 #ifdef DEBUG
   out_err(LEVEL_INFO,"trying backend; '%s'\n",name);
 #endif
@@ -971,6 +995,7 @@ int cfg_read_message(unsigned long l)
 int cfg_read_module(void)
 {
   unsigned int token;
+  char * name;
 
   token = yylex();
   if (token!='=') {
@@ -978,15 +1003,16 @@ int cfg_read_module(void)
     return 1;
   }
 
-  if( (token=yylex()) != CFG_ID ) {
+  if( !(name=read_until_eol(512)) ) {
     out_err(LEVEL_HIGH,"invalid module name\n");
     return 1;
   }
 
-  if (module_check(yytext)) return 1;
+  if (module_check(name)) { free(name); return 1; }
   /* add module to list */
-  if (module_add(&tempConfig.module,yytext)) return 1;
+  if (module_add(&tempConfig.module,name)) { free(name); return 1; }
 
+  free(name);
   return 0;
 }
 
