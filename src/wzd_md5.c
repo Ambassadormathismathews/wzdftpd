@@ -294,8 +294,7 @@ int calc_md5( const char *fname, unsigned char md5_crc[16], unsigned long startp
 {
   FILE *in;           /* input file */
   unsigned char *buf; /* pointer to the input buffer */
-  size_t i, j, len;   /* buffer positions*/
-  int k;              /* generic integer */
+  size_t i, len;      /* buffer positions*/
   struct MD5Context crc;
 
   /* open file */

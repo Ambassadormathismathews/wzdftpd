@@ -85,7 +85,9 @@ void usage(const char *progname)
 
 int parse_args(int argc, char **argv)
 {
+#ifndef _MSC_VER /* FIXME VISUAL */
   int opt;
+#endif
   unsigned long l;
   char *ptr;
 
@@ -132,7 +134,6 @@ int parse_args(int argc, char **argv)
 
 void print_config(wzd_config_t * config)
 {
-  time_t t;
   char buffer[1024];
 
   if (config->site_closed) {
@@ -170,7 +171,6 @@ void help_request_get(void)
 
 int request_get(const char *arg)
 {
-  time_t t;
   char buffer[1024];
 
   if (!arg || strlen(arg)<=0) return -1;
@@ -198,8 +198,6 @@ void help_request_set(void)
 
 int request_set(const char *arg, const char *value)
 {
-  int i;
-
   if (!arg || strlen(arg)<=0) return -1;
 
   if (strcasecmp(arg,"serverstop")==0) {

@@ -74,7 +74,9 @@ void usage(const char *progname)
 
 int parse_args(int argc, char **argv)
 {
+#ifndef _MSC_VER /* FIXME VISUAL */
   int opt;
+#endif
   unsigned long l;
   char *ptr;
 

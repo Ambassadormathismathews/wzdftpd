@@ -53,10 +53,10 @@ const char * module_name="plaintext";
 char USERS_FILE[256]="/etc/wzdFTPd/users";
 
 static wzd_user_t * user_pool;
-static int user_count, user_count_max=0;
+static unsigned int user_count, user_count_max=0;
 
 static wzd_group_t * group_pool;
-static int group_count, group_count_max=0;
+static unsigned int group_count, group_count_max=0;
 
 static regex_t reg_line;
 static regmatch_t regmatch[3];
@@ -168,7 +168,7 @@ static int write_user_file(void)
   char filenamenew[256];
   char filenameold[256];
   FILE *file, *fileold;
-  int i,j;
+  unsigned int i,j;
   char buffer[4096];
   const char * const file_header[] = {
     "# general considerations:",
@@ -859,7 +859,7 @@ int wzd_set_group_pool(wzd_group_t * group_list)
 
 int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
-  int count;
+  unsigned int count;
   int found;
 /*  int i;*/
 
@@ -898,7 +898,7 @@ fprintf(stderr,"User %s not found\n",login);
 
 int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
-  int count;
+  unsigned int count;
   int found;
   char * cipher;
 
@@ -963,7 +963,7 @@ fprintf(stderr,"User %s not found\n",login);
 
 int FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
-  int count;
+  unsigned int count;
   int found;
 /*  int i;*/
 
@@ -1010,7 +1010,7 @@ fprintf(stderr,"User %s not found\n",name);
 
 int FCN_FIND_GROUP(int num, wzd_group_t * group)
 {
-  if (num < 0 || num >= group_count) return -1;
+  if (num < 0 || (unsigned int)num >= group_count) return -1;
 
   return num;
 /*
@@ -1027,7 +1027,7 @@ int FCN_FIND_GROUP(int num, wzd_group_t * group)
 
 int FCN_CHPASS(const char *username, const char *new_pass)
 {
-  int count;
+  unsigned int count;
   int found;
   char * cipher;
 
@@ -1062,7 +1062,7 @@ fprintf(stderr,"User %s not found\n",username);
 /* if user does not exist, add it */
 int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
-  int count;
+  unsigned int count;
   int found;
   char * cipher;
   char salt[3];
@@ -1141,7 +1141,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 
 int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
-  int count;
+  unsigned int count;
   int found;
   
   count=0;

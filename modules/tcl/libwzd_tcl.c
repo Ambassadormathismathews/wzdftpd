@@ -180,7 +180,6 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
 
 static int tcl_hook_protocol(const char *file, const char *args)
 {
-  Tcl_Obj * TempObj;
   const char *s;
   int ret;
   wzd_context_t * context;
@@ -218,7 +217,6 @@ static void do_tcl_help(wzd_context_t * context)
 /******* TCL functions ********/
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-  char *s;
   int ret;
 
   if (argc != 2) return TCL_ERROR;
@@ -256,7 +254,6 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
 
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-  char *s;
   int ret;
   char *buffer;
 

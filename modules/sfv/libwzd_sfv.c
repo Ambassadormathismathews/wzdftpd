@@ -890,7 +890,6 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_t * context)
 {
   char dir[512];
-  int ret;
   char *ptr;
   size_t len;
   regex_t preg;

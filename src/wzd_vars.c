@@ -87,15 +87,15 @@ int vars_set(const char *varname, void *data, unsigned int datalength, wzd_confi
   if (!data || !config) return 1;
 
   if (strcasecmp(varname,"deny_access_files_uploaded")==0) {
-    i = strtoul(data,NULL,0);
-    if (i==1) { CFG_SET_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
-    if (i==0) { CFG_CLEAR_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
+    ul = strtoul(data,NULL,0);
+    if (ul==1) { CFG_SET_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
+    if (ul==0) { CFG_CLEAR_OPTION(config,CFG_OPT_DENY_ACCESS_FILES_UPLOADED); return 0; }
     return 1;
   }
   if (strcasecmp(varname,"hide_dotted_files")==0) {
-    i = strtoul(data,NULL,0);
-    if (i==1) { CFG_SET_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
-    if (i==0) { CFG_CLEAR_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
+    ul = strtoul(data,NULL,0);
+    if (ul==1) { CFG_SET_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
+    if (ul==0) { CFG_CLEAR_OPTION(config,CFG_OPT_HIDE_DOTTED_FILES); return 0; }
     return 1;
   }
   if (strcasecmp(varname,"loglevel")==0) {

@@ -181,7 +181,9 @@ void out_log(int level,const char *fmt,...)
 
 void out_err(int level, const char *fmt,...)
 {
+#ifndef _MSC_VER
   int prior;
+#endif
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];

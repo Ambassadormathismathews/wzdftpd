@@ -667,7 +667,6 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...)
 
 unsigned long get_bandwidth(void)
 {
-  char buffer[256];
   unsigned long bandwidth=0;
   unsigned int i;
   unsigned int id;
