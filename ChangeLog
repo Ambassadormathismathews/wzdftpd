@@ -1,0 +1,762 @@
+2003-11-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* removed 'unsigned long long' type, replaced with 'u_int64_t'
+	* added md5 code to main lib
+	* implemented 'XMD5' command
+
+2003-11-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* started implementation of 'PRET' command (see lftp, GridFTPD, DrFTPD)
+	* sfv module: diz/sfv files are processed to guess number of files to be uploaded
+	* definitly removed internal sfv checker, but integrated crc32 code in
+	  main lib (to be used by other functions)
+	* implemented 'XCRC' command
+
+2003-11-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* cookies can be used inside messages and ftp replies
+	* bugfix: more checks on size for messages > 1024 bytes
+	* function cookie_parse_buffer modified to parse buffer without sending data
+
+2003-11-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* sfv module: zip files are checked after upload, using the zlib for decompression
+	  (note: multipart zip files are not supported)
+
+2003-11-07  Cyprien Laplace  <cyprien33@laposte.net>
+
+	* added a "site group" command to administrate groups
+
+2003-11-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault when adding section failed
+
+2003-10-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* Try to search config file in path given in ./configure
+	* bugfix: erasing server options after setting default values ...
+	* option to force shm cleanup if existing when starting
+	* bugfix: syslog was not used even if enabling it
+
+2003-10-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1
+
+	* added periodic commit of backend
+	* site savecfg is now almost working
+	* IMPORTANT CHANGE: negation on permissions can now be written =!user
+	  instead of !=user
+	* custom messages can now be stored in files
+	* added optional PostgreSQL detection in configure
+	* cookies in vfs VIRTUAL dir: %username, %usergroup, %userhome
+
+2003-10-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: waiting PASV sockets not closed when client dies
+	* some work on ipv6
+	* win32: --enable-winsock is now yes by default
+	* some structures are no more opaque, so we'll save the config file in a near future !
+	* mpatrol support to debug/find leaks/profile application
+	* some more facilities to debug cache/crontab/perms
+
+2003-10-11  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: opened files/dirs not closed on sfv checker (closes: Too Many Opened Files
+	  after several uploads, all platforms)
+
+2003-10-01  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: spaces at end of USER and PASS lines were removed
+	* ssl: use SSL_CTX_use_certificate_chain_file instead of SSL_CTX_use_certificate_file
+
+2003-09-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: wrong display of ip addresses in log file
+	* bugfix: error `wzd_server_uid' undeclared (first use in this
+	  function) during compilation on cygwin
+
+2003-09-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: group.num_logins not initialized when adding a new group
+
+2003-09-16  Cyprien Laplace  <cyprien33@laposte.net>
+
+	* added a "module_name" in module symbols
+	* added backend_get_version() and backend_get_name() in wzd_backend.c
+	* added new files wzd_savecfg.c wzd_savecfg.h with wzd_savecfg() function
+	* added a new site command 'site savecfg' to call wzd_savecfg()
+	* modified the default way that ip and dynamic_ip are set (was buggy if not in wzd.cfg!)
+
+2003-09-11  Cyprien Laplace  <cyprien33@laposte.net>
+
+	* added 'vfs_remove' function, to remove a vfs entry
+	* added special cookie forallvfs
+	* added cookies vfsvirtual, vfsphysical, vfstarget
+	* added 'file_vfs.txt'
+	* added 'site vfsls', 'site vfsadd', 'site vfsdel' commands, to list
+	  active virtual filesystems, add a vfs, and remove a vfs
+
+
+2003-09-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: incorrect section match (closes: unable to create dirs in sections)
+	* bugfix: incorrect config file parsing (closes: unable to have
+	  section names beginning with anything but a letter)
+
+2003-09-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* Display real owner in LIST (this implementation is particularly bad - we rely on the cache)
+	* Display section on end of LIST ANSWER when in section
+
+2003-09-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault when two or more sections
+	* display section on end of LIST command
+
+2003-09-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1rc5
+
+	* call fini function when unloading backend
+	* fix build on cygwin
+
+2003-08-28  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* added some debug stuff
+	* bugfix: do not include lex'ed C files (build fails on cygwin)
+	* some work on the debian package
+	* configure: PTHREADS detection changed to another macro
+	* This should work on all archs and close "gcc: unrecognized option'-pthread'"
+	  on cygwin
+
+2003-08-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: autogen.sh not working on bsd
+	* bugfix: O_SYNC not declared on freebsd 4.8
+	* bugfix: undefined reference to getopt_long on freebsd 4.8
+	* bugfix: undefined reference to errno on Mandrake 9.1
+	* added auto-generated .c files to 'make distclean' target
+
+2003-08-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* renamed CP_USER to CPERM_USER (conflicts with system definition in bsd)
+
+2003-06-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault when using SSL+protected data mode+PORT
+
+2003-06-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: added missing include for BSD
+	* bugfix: user credits taken even with a ratio of 0 (leech)
+
+2003-06-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: site change perms modifying max_idle
+	* allow modifications of group->num_logins
+	* added 'site grpchange' command, to modify group fields (equivalent of site
+	  change for users)
+	* bugfix: configure called with no --prefix= replace ${prefix} by NONE
+
+2003-06-12  Roman Bogorodskiy  <bogorodskiy@inbox.ru>
+
+	* fixed segfault when PORT command has no arguments
+
+2003-06-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* sfv module: announce when release is complete
+	* site addip and delip can take several ip on one line
+
+2003-05-31  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed potential bug with syslog()
+	* index slot number from 1 in site delip and grpdelip
+	* better error message for tls wrapper init (cygwin)
+	* bugfix: stor with an absolute path name does not work
+	* try default/arg conf, then /etc/wzd.cfg and /etc/wzdftpd/wzd.cfg for config file
+	* added special cookie forallgroups
+
+2003-05-28  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* added 'site groups' command to list groups
+	* fixed bug with do_site_print_file when file was not present
+	* do not check file descriptors using winsock, cygwin fstat fails
+	* fixed vfs add always reporting as failure
+	* fixed: chdir not checking if file was hidden
+	* updated configure to use a more standard installation
+	* updated docs: How to report bugs
+	* warn user when setting both flags SITEOP and GADMIN
+
+2003-05-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: permission file not correctly updated if several modifications
+	  happens in the same second (mtime field in filesystem is not updated)
+	* many enhancements in error messages
+	* symlinks to nonexistant files are now displayed
+	* symlinks are now displayed as 'name -> target' in LIST
+	* sfv: progressmeter is shown after uploading the sfv file
+	* doc updated (installation, config, sfv module)
+	* sfv parameters (progressmeter, etc) are server parameters (thus defined in
+	  config file)
+
+2003-05-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed stupid bug were fields were not correctly initialized when creating
+	  new user
+	* fixed segfault on rename dir
+	* bugfix: permission sometime disappear when renaming file
+
+2003-05-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* added some functions to debug: test if a file descriptor is valid, etc.
+	* fixed some small memory leaks
+
+2003-05-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* syslog integration
+	* fixed several bugs
+	* support parameters in config
+	* some cygwin-related bugfixes
+	* long options support
+
+2003-04-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed bug: segfault if unable to bind to specified port
+	* fixed bug: segfault if unable to write users file at server exit
+	* changed file locking code to allow locking files without opening them
+	  in read-write mode. This also removes a race condition
+	* changed reply code to 550 if file not found (RETR)
+
+2003-04-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed bug: server segfault if homedir does not exist
+	* patch to run on FreeBSD
+
+2003-04-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1rc4
+
+	* do not send multiple 501 answers when STOR or RETR fails
+
+2003-04-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* specific error message when server can't go to user homedir at login
+	* possibility to hide files beginning by '.' ('hide_dotted_files')
+	* try to erase shm zone when server exits on error (only if created !)
+	* delete pid file if it exists
+
+2003-04-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site grpkill: kill all connected members from a group
+	* number of members connected at the same time can be limited for each group
+	* work on IPv6 compatibility
+	* crontab changed to accept classical crontab definition
+	* (min hour day month day_of_week)
+	* site grpren: rename group
+	* site grpdel removes all references to group, and send warnings if deletion
+	  creates users with no groups or changes user main group
+	* site wipe: delete file/dir recursively, without affecting user stats
+	* location pointer in file was shared by all clients connected to cache !
+	* fixed CRITICAL bug: context->datafd was closed without testing it, with a
+	* default value of 0 which IS a valid socket value !
+	* again, fixed problem when creating dir at the physical root of the server ...
+
+2003-04-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* string analysis in cookie parser rewritten using a flex parser
+	  this has many benefits, allowing to use nested if/for statements, colors, etc.
+	* new flag FLAG_COLOR to enable colors in ftp answers (default: disabled)
+
+2003-04-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* user lose credits and stats when deleting files
+	* put permission files in cache (should speed up server a lot !)
+	* site kill/kick changed to use same code in all modes (mt/mp)
+
+2003-04-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* big patch to compile and run on OpenBSD
+	* sections, using path-filters to enforce dir names when created
+
+2003-04-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* build method changed to automake/autoconf
+	* backend and module directives in config file can handle absolute filenames
+	* new directive 'logfile' to change log file location
+	* new member 'credits' in user struct
+	* stats on number of files uploaded/downloaded
+	* new cookies: credits & credits2, last_login, files_dl, files_ul
+	* site give/take
+
+2003-04-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* vfs: added a permission field, which allow per user/group/flag vfs
+	  (using same syntax as for site commands)
+	* backend plaintext: block signals when writing users file, to avoid being interrupted
+	  while writing (double-ctrl+c malediction)
+
+2003-03-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* complete rewrite of config file analyser to use flex
+	* site commands handling rewritten
+	* write footer informations (space left on device, stats on upload/download) after LIST
+	* v_format_message modified to avoid sending message end mark if code
+	  is negative
+	* added custom site commands
+	* added message customization support in config file
+	* enhanced cache implementation, with maximum size to cache and
+	  hit/miss/refresh mechanism
+	* site grpadd (adds a new group), grpdel, grpaddip, grpdelip, gsinfo, grpratio, ginfo
+	* new cookies: forallgroupmembers, groupname, groupratio, grouptotal_ul/dl,
+	  grouphome, groupmaxidle, groupmaxdl/ul, groupip_allow[0-7]
+	* new cookies: usertotal_ul2/dl2 convert number to units (T/G/M/k/b) before dislay
+	* when user is deleted his tagline is replaced by '**DELETED**' in cookies
+	* updated doc !
+	* new directive 'backend_param_plaintext' to give users file to backend
+	* rename message_file to dir_message
+	* fixed CRITICAL bug, server crash when login with (null) username or pass
+	* fixed IMPORTANT bug in cookies_replace function, testing cookie value
+	  after modifying it (not in the switch/case way)
+	* fixed IMPORTANT bug in plaintext backend: crash with input 'privgroup '
+
+2003-03-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* changed default compiler to gcc (was gcc-3.2) for linux
+	* more checks on string length
+	* reduction of buffer size for some variables (lighter in memory !)
+	* fixed MANY potentials small problems (leaks/corruptions) using the
+	  valgrind debugger to detect
+	* renamed pasv_up_range to pasv_high_range
+	* first implementation of external hooks (aka cscript)
+	* site close/reopen: temporarily close the server except for siteops (e.g for
+	  maintenance)
+
+2003-03-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* changed stats ul/dl type from unsigned long to unsigned long long
+	* cookie: ratio
+	* users file directive: ratio (users/groups)
+	* site chratio (change user ratio)
+
+2003-03-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1rc3
+
+	* new command: APPE (append with create)
+	* site adduser: syntax changed, homedir is replaced by primary group
+	* new directive default_home for groups, used when creating users to determine
+	  home dir
+	* site purge: without arguments, iterate users to purge all deleted users.
+	* fields user_slots, leech_slots added to wzd_user_t struct
+	* GAdmins: site adduser/deluser/purge/chpass/readd/addip/delip/change
+	  commands can be run by GAdmins, only for users from their main group
+	* sitebot: commands modified to be contained in namespace, to avoid conflicts
+	  with other scripts
+	* sitewho: hide arguments from SITE commands
+	* server can use another config file using the '-f filename' option
+	* cookie: slots, leechslots: show gadmin slots (if gadmin !)
+	* cookie: conditionnal cookie, using %if
+	* site change: siteop can modify user_slots and leech_slots
+
+2003-02-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* huge change: winsock2 support, with tls (using a wrapper compiled with VC++,
+	  due to incompatibilities between BSD and winsock sockets)
+	* bugfix: idle time counter not reset at the end of dl/ul/list
+	* bugfix: bytes_ul_total (dl) written as long int instead of unsigned long int
+	* site invite (tells the sitebot to invite you)
+
+2003-02-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* tools now accept '-k key' argument, to work if server uses another key
+	* sitebot configuration modified to use specific key
+
+2003-02-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* update speed in limiter_add function
+	* fixed kindof memory leak (forgot to free permissions list at exit, not
+	  really usefull as we are exiting, but it is better, isn't it ? :)
+	* event POSTUPLOAD is send after an ABOR command, or a data connection timeout
+	  this allow sfv script to mark file as bad
+	* reduced verbosity level (even in debug mode), controlled with 'loglevel'
+	  directive in config file
+	* new target in Makefile: installdebug (same as install with debug version)
+	* tools sitewho,siteuptime ported to cygwin (sem key still hardcoded)
+	* sitebot development starts !
+	* sitebot: new commands WHO, BNC, UPTIME, HELP, FREE
+	* sitebot: reads log file and announce new lines (without formatting)
+	* log format defined, to be compatible with glftpd
+	* bugfix: again, cygwin does not set correctly variables after dlopen ... I'm
+	  soon going to be bored by this damn os
+	* big documentation effort (inline, and in documentation files)
+
+2003-02-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* timeout counter is reset only with a few commands
+	* bugfix: checkpath denies access when homedir is /
+	* files/dirs created are now given to main group of user
+	* file entry is removed from perm file when deleted
+	* new flag FLAG_TLS to enforce tls/ssl connections for specific users
+	* new flag FLAG_ANONYMOUS to deny user from any modification (stor,mkdir,etc)
+	* events: mkdir/rmdir send events
+	* function perm_check rewritten to handle flags, and to optimize lookups
+
+2003-02-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* MAJOR CHANGE: code converted to multithread (prepare to die !)
+	* new directive 'include file' to split config file
+	* maximum inclusion level is 16 - find me one good reason to increase this level ?
+	* crontab support in main server
+	* new directive 'cronjob' to run commands periodically
+	* bugfix: in tls implicit mode, if tls negotiation failed, login sequence continues
+
+2003-02-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: backend plaintext did not read correctly when homedir is /
+	* new directive 'cscript', to execute custom scripts befaore/after some commands
+	* backend is commited when server exits
+	* access to limiters now restricted by semaphores
+	* user stats (dl/ul) are updated and saved in backend
+	* cookie: total_ul, total_dl: show user stats
+
+2003-02-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* new directive 'server_uid' in config file, to control which uid the server
+	  will drop to after doing privileged operations
+
+2003-01-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* module sfv: progress bar when uploading (based on file NUMBER)
+	  incomplete indicator is removed when release is complete
+
+2003-01-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* all '#include' directives in sources files have been changed to include
+	  only necessary headers, resulting in a huge compilation speedup
+
+2003-01-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: problem in vfs listing (missing first character)
+	* bugfix: mkdir was broken
+	* bugfix: incorrect answer for MKD (extra "")
+	* reopen log files when receiving SIGHUP
+	* added 'install', 'uninstall' targets to Makefile
+	* module sfv: create incomplete link when uploading sfv (basic)
+
+2003-01-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* begin to change all direct addressing to user/group list by calls to GetUserByID
+	* first coverage \ profiling analysis (with kcachegrind)
+	* suppressed memset (bzero) call in ClientThreadProc (about 50% of time
+	  spent in function !) by appending a \0
+	* huge speedup for fct 'readConfigFile' by moving regexp compilation
+	  outside the loop - mainly for server init
+	* locks on files when uploading - to be tested !
+	* bugfix: many site commands remove trailing character (thinking it is /)
+	  due to the <old> function checkpath
+	* bugfix: many corrections to compile with cygwin
+	* bugfix: backend plaintext checks more for errors when reading/writing
+	  users file. Do not rotate them, but deep copy and complete write
+	  (need mutex), to avoid problems with permissions
+	* bugfix: server do not free shm when aborting due to lack of backend
+	* server now creates a transfer log (xferlog format)
+
+2002-12-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: timeout was checked on connections during transfers, causing disconnections
+	* module sfv: 'site sfv create file.sfv' takes files in sfv dir and creates a new
+	  sfv file (except for diz/nfo/sfv/txt files)
+
+2002-12-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* server can periodically perform a DNS lookup to detect dynamic ip changes,
+	  and rebind if so.
+	* when waiting for PASV connection, bind only to specific address
+	* choice of log level in config file
+
+2002-12-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1rc2
+
+	* site users: list users online
+	* server now tries to bind data PORT connection to control-1 on
+	  server-side to be RFC-compliant
+	  This should help firewalls (rfc959 section 3.2 982:988)
+	* bugfix: invalid permission in 'site checkperm' cause infinite loop
+
+2002-12-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* cookie: pid (need to have flag SITEOP)
+	* site chgrp: add/remove user from group(s)
+	  site chgrp user group1 [group2 ...]
+	* site flags: display a user's flags (without args, show your own flags)
+	* site swho: display detailed information about users online
+	* site kick: kill all connections from user
+	* site kill: kill a pid (if owned by a child)
+	* site idle: display / set your idle time
+	* site tagline: display / set your tagline
+	* if RENAME commands is cross-device, uses internal fct to move dirs
+	  works only for dirs, files and (partially) symlinks
+	* childs trap SIGTERM to exit cleanly
+	* backend version can be tested adding '> nnn' after 'backend = name'
+	  backend must define "module_version" version, as a const char *
+	* bugfix: server will no more start without backend
+	* bugfix: permissions were inserted in wrong order, thus reversing it
+
+2002-12-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site addip: add ip to user
+	  ip is checked to avoid shadowing other ip, or inserting useless ones
+	* site delip: delete ip from user
+	* site deluser: delete user (mark it as deleted)
+	* site readd: unmark user as deleted
+	* site change: change user field
+	  allow to change name, pass, homedir, tagline, group, max_idle,
+	  perms, flags, max_ul, max_dl, num_logins
+	* site purge: purge deleted user
+	* num_logins directive (backend plaintext): number of simultaneous logins allowed
+	* cookie: num_logins
+	* bugfix: cookie 'home' uses flag of user instead of context to check permission
+	* bugfix: when checking pass, backend plaintext was comparing only length chars
+	  of the login
+	* bugfix: error in function do_chdir when homedir was / and dir /
+
+2002-12-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site adduser: what do you think it can be for ?
+
+2002-11-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* server start debug messages prints on stderr (we cannot use out_log neither
+	  in init nor in modules/backend loading, because mainConfig is NOT filled
+	* this allow to read another config file with the same function
+	* server reloads .cfg when receiving SIGHUP, allowing to change all parameters
+	  inline, except backends (separate command), hooks and modules (to be done ...)
+	* site reload: sends SIGHUP to parent (multiprocess) or self, to reload config
+
+2002-11-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site utime: change access/modification time of a file
+	* separation of code in an exe and a dynamic lib
+	* SFV checker is now a separated module
+
+2002-10-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* cookie: speed (show speed of UL/DL, or nothing if not xfering)
+	* bugfix: failed binding to port (e.g missing permissions) cause segfault (linux)
+
+2002-10-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: could not remove dir at root of a vfs path (missing / in permfile path)
+
+2002-10-11  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: CRITICAL fixed problem with file globbing attack
+	  e.g "ls */../*/../*/../*/../*/../*/../*/../*/../*/../*/../*/../*/../*"
+	* bugfix: when using wildcards in LIST, pattern was not matched to vfs names
+	* linux: If run by root or setuid, drops privileges after binding port
+
+2002-10-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* --- cvs commit TAG: rel-0-1rc1
+
+	* bugfix: CRITICAL functions mkdir/rmdir do not check permissions and creates/removes path
+	  with no condition
+	* bugfix: CRITICAL list/nlst with parameter of form /../*/.. make the server crash
+
+2002-10-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: release version working in background (windows) - file descriptors
+	  were not inherited after fork()
+	* vfs: when adding vfs, if destination does not exist, do not add vfs
+	* vfs: works with virtual files
+	* cookies: flags
+
+2002-10-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* perms: group permissions for commands in .cfg
+	* perms: negation of permissions (!=user, etc)
+	* site who: params of site commands are hidden
+	* cookies: maxidle, maxdl, maxul
+	* rmdir: works on symlinks
+
+2002-10-01  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* Unreal Tournament 2k3 is here !
+	* bugfix: cookie_replace now exits if the param is null (avoids crash)
+	* bugfix: shared memory now working for windows in multi-process version
+	* ip per user/group now static
+	* cookie: userip_allow<n> (without <> !), show ip allowed n for user
+	* site chmod: can handle octal perms: site chmod user 7 tmp == site chmod user rwx tmp
+	* group ip checking
+	* config: pasv_ip can accept a hostname
+
+2002-09-25  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* mkdir now sets owner of new dir
+	* rmdir checks if dir is not empty (except the perms file) and removes the
+	  perm file before removing the dir
+	* added timeout check for data connection
+
+2002-09-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* complete rewrite of memory management for users / groups in main prog AND in backend
+	  lists will be stored in shared memory
+	* bugfix: small bug in wzd_crc32.c where .missing file was created if file was bad
+
+2002-09-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* clear_read function is now non-blocking (if timeout > 0)
+	* tls_auth_cont is now non-blocking (TLS control connection)
+	* tls_read and tls_write have been changed to handle correctly
+	  non-blocking I/O - all tls fct are now subject to timeouts
+	* bugfix: fixed critical bug in mkdir, not allowing absolute paths
+	* bugfix: small bug in do_site_backend fixed
+	* moved user ip checking from backend to main prog
+
+2002-09-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* some changes to have compatibility with intel c compiler (tested with v6.0.139)
+	  changes were mainly little corrections of warnings concerning signed / unsigned variables :)
+	* bugfix: fixed critical bug in wzd_data.c where if SSL was enabled data were sent crypted
+	  even if data connection was in clear (PROT C)
+	* added -V option (display version & build number)
+
+2002-09-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: fixed stupid critical bug where read & write functions were stored in mainConfig,
+	  so all clients shared these functions - even ssl ones.
+	* bugfix: forgot to add a \0 at end of file name in sfv_find_sfv
+
+2002-09-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: fixed critical bug in data connection, message 150 was sent AFTER waiting
+	  the connection to be opened by client, must be BEFORE.
+	  Curiously the bug was only visible in ssl-data transfers.
+	* tls: tls_auth_data_cont changed to loop around SSL_accept
+	* SFV: no more trying to check sfv if sfv file not found or file not in sfv
+	* VFS: fixed bug when 2 vfs have same prefix, comparison stopped after first match
+	  (e.g: vfs and vfs2 were same dirs)
+
+2002-09-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* hooks: EVENT_PREUPLOAD, EVENT_POSTUPLOAD
+	* internal SFV checker, checks file after upload
+
+2002-08-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* Bugfix: changed strtol to strtoul where needed
+	* added SFV checking code (wzd_crc32.c), test ok
+
+2002-08-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* VFS: vpath is now visible in ls
+	* VFS: fixed permission problem if vpath not in user's rootpath
+	* site CHPASS user new_pass
+
+2002-08-19  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* first VFS implementation (Virtual FileSytem): path translation is ok,
+	 but if vfs destination is not in user's root, no access; vpath is not
+	 shown in 'ls' but is accessible by 'cd'
+
+2002-08-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* tag were renamed and seperated: myname/username, myip/userip, ...
+	* added flags support
+	* IP & homedir now hidden, except for FLAG_SEE_IP and FLAG_SEE_HOME
+	* flag FLAG_HIDE to hide in who (except for self)
+	* first HOOKS implementation (not very clean, some problems with parameters
+	  (forced to cast functions :(
+	* hooks: EVENT_LOGIN, EVENT_LOGOUT
+	* fixed bug in dynamic memory (wzd_ip_t structs)
+
+2002-08-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site BACKEND close / init /reload back_name: low lovel function to
+	  manipulate the backend - mainly usefull for development (ability to
+	  compile / change backend without stopping server)
+	* many changes in plaintext backend: normalization of structs used,
+	  ability to write users file, new fields (tagline,ip_allowed,max_idle_time),
+	  bugfixes
+	* idle time checking (per user)
+
+2002-08-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* IP checking added in backend, to do after-login check (only allowed
+	  ip, default: reject)
+
+2002-08-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* Pre-login ip checking, 3 options: disabled, allow/deny, deny/allow
+
+2002-07-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* specify PASV ip range
+	* site checkperm user file perms: ensure user has a specific perm on a dir/file
+
+2002-07-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed problems with these damn '\r' under windows (config files)
+
+2002-07-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site shutdown now kills the server IMMEDIATLY
+	* cookie: usergroup
+	* cookie: new option to format length of cookie: %num.cookie
+	  (e.g %15.username will make username EXACTLY 15 chars)
+
+2002-07-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* LIST now hide files beginning by . except if -a is passed
+	* cookie: possibility of loop using %forallusersconnected / %endfor
+	* cookie: lastcommand
+
+2002-07-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* RNFR/RNTO now handles correctly permission file
+	* cookie: userip
+
+2002-06-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* site commands that print files content: rules, help
+	* first cookie ! (username)
+
+2002-06-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* new commands: allo (=noop), rnfr/rnto
+	* shared memory implemented for windows
+
+2002-06-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* fixed bug allowing nonexistant file to be downloaded with a 0 size
+	* permissions on command like site *, delete
+	* trap signals interrupt, kill, etc. to end server properly
+	* now using shared memory to store contexts
+	* acls bugfixes
+
+2002-06-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bandwidth upload / download limitation
+
+2002-06-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* permissions using .dirinfo files
+	* hide .dirinfo on commands SIZE, MDTM, RETR, STOR
+
+2002-05-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* implementation of ssl: explicit, explicit_strict, port, data protection, buffer size
+	* site uptime, site shutdown
+
+2002-05-28  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* basic implementation of TLS
+	* removed unneeded fork() for data connection
+	* code cleanup, better uses of select()
+
+2002-05-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* implementation of RETR, STOR, REST, MDTM ,SIZE, DELE, ABOR
+	* fixed bug with mkdir
+

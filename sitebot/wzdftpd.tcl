@@ -560,12 +560,18 @@ proc wzd:show_free { nick uhost hand chan arg } {
 proc wzd:news { nick host hand chan arg } {
   global wzd
   set file $wzd(srcdir)
-  set fd [open "$file/src/CHANGELOG" r];
-  for {set counter 0} {$counter<25} {incr counter} {
-    set tmp [gets $fd]
-#    say $chan $tmp
-    wzd:sndall ALL  $tmp
-    if {[string length $tmp] == 0} {break}
+  set channel [open "$file/ChangeLog" r]
+  set data [split [read $channel] "\n"]
+  close $channel
+  set lineid 0
+  foreach line $data {
+    if {$line == ""} {continue}
+    incr lineid
+    if {$lineid != 1} {
+      if {[string is digit [string range $line 0 0]]} {break}
+    }
+#    wzd:sndall ALL  $line
+    say $chan $line
   }
 }
 

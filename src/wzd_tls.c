@@ -405,7 +405,7 @@ int tls_read(int sock, char *msg, unsigned int length, int flags, int timeout, v
       if (sslerr == SSL_ERROR_ZERO_RETURN) { /* remote host has closed connection */
 	return -1;
       }
-      out_err(LEVEL_CRITICAL,"SSL_read failed %d\n",sslerr);
+      out_err(LEVEL_INFO,"SSL_read failed %d\n",sslerr);
       return -1;
     }
 
@@ -460,7 +460,7 @@ int tls_write(int sock, const char *msg, unsigned int length, int flags, int tim
       FD_SET(sock,&fd_w);
       break;
     default:
-      out_err(LEVEL_CRITICAL,"SSL_write failed\n");
+      out_err(LEVEL_INFO,"SSL_write failed\n");
       return -1;
     }
 

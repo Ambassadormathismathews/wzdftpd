@@ -108,7 +108,7 @@ uninstall-hook:
 # them while "make clean", use CLEANFILES
 CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
 
-EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO wzd_cookie_lex.l wzd_init_lex.l
+EXTRA_DIST = DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO wzd_cookie_lex.l wzd_init_lex.l
 
 if USE_ICC
 # Workaround for compilation with icc
