@@ -243,7 +243,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
       n = (context->read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
-      if (file_write(context->current_action.current_file,context->data_buffer,(size_t)n) != n) {
+      if (file_write(context->current_action.current_file,context->data_buffer,(size_t)n) != (ssize_t)n) {
         out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
       }
       context->current_action.bytesnow += n;

@@ -2073,7 +2073,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   context->datafd = sock;
 
-  file_seek(fd,context->resume,SEEK_SET);
+  file_seek(fd,(fs_off_t)context->resume,SEEK_SET);
 
 #ifndef WIN32
   out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%llu bytes)\n", user->username,param,bytestot);
@@ -2274,7 +2274,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   if (context->resume == (unsigned long)-1)
     file_seek(fd,0,SEEK_END);
   else
-    file_seek(fd,context->resume,SEEK_SET);
+    file_seek(fd,(fs_off_t)context->resume,SEEK_SET);
 
   out_err(LEVEL_FLOOD,"Download: User %s starts uploading %s\n",
     user->username,param);

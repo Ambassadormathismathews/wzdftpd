@@ -144,8 +144,8 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   new_vfs = wzd_malloc(sizeof(wzd_vfs_t));
   if (!new_vfs) return 1;
 
-  DIRNORM(vpath,strlen(vpath),0);
-  DIRNORM(path,strlen(path),0);
+  DIRNORM((char*)vpath,strlen(vpath),0);
+  DIRNORM((char*)path,strlen(path),0);
   new_vfs->virtual_dir = strdup(vpath);
   new_vfs->physical_dir = strdup(path);
   if (target)

@@ -141,7 +141,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     path[length]='\0';
   }
 
-  DIRNORM(backend,strlen(backend),0);
+  DIRNORM((char*)backend,strlen(backend),0);
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
@@ -255,7 +255,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
     path[length]='\0';
   }
 
-  DIRNORM(backend,strlen(backend),0);
+  DIRNORM((char*)backend,strlen(backend),0);
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
@@ -344,7 +344,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   mainConfig->backend.back_validate_login = (uid_t (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
   mainConfig->backend.back_validate_pass  = (uid_t (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
   mainConfig->backend.back_get_user  = (wzd_user_t * (*)(uid_t))dlsym(handle,DL_PREFIX STR_GET_USER);
-  mainConfig->backend.back_get_group  = (wzd_group_t * (*)(int))dlsym(handle,DL_PREFIX STR_GET_GROUP);
+  mainConfig->backend.back_get_group  = (wzd_group_t * (*)(gid_t))dlsym(handle,DL_PREFIX STR_GET_GROUP);
   mainConfig->backend.back_find_user  = (uid_t (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_FIND_USER);
   mainConfig->backend.back_find_group  = (gid_t (*)(const char *, wzd_group_t *))dlsym(handle,DL_PREFIX STR_FIND_GROUP);
   mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,DL_PREFIX STR_MOD_USER);

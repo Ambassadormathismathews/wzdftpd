@@ -287,12 +287,14 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
 
+#if 0
 #ifndef LINUX
 #ifndef WINSOCK_SUPPORT
 /* see lundftpd : socket.c for explanation */
-  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, &i, sizeof(i));
+  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, &i, sizeof(i)); /** \fixme set correct value for SND_LOWAT ? */
 #endif
 #endif
+#endif /* 0 */
 
 #if !defined(IPV6_SUPPORT)
 #ifndef _MSC_VER

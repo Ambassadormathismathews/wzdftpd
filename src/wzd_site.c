@@ -1484,7 +1484,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   }
   /* TODO check that timezone is UTC */
   memset(&tm_atime,0,sizeof(struct tm));
-  ptr=strptime(str_tochar(new_atime),"%Y%m%d%H%M%S",&tm_atime);
+  ptr=strptime((char*)str_tochar(new_atime),"%Y%m%d%H%M%S",&tm_atime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
     str_deallocate(filename); str_deallocate(new_atime); str_deallocate(new_mtime);
@@ -1493,7 +1493,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   }
   str_deallocate(new_atime);
   memset(&tm_mtime,0,sizeof(struct tm));
-  ptr=strptime(str_tochar(new_mtime),"%Y%m%d%H%M%S",&tm_mtime);
+  ptr=strptime((char*)str_tochar(new_mtime),"%Y%m%d%H%M%S",&tm_mtime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
     str_deallocate(filename); str_deallocate(new_mtime);
@@ -1503,7 +1503,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   str_deallocate(new_mtime);
   /* TODO ctime is useless in *nix systems ... */
   memset(&tm_ctime,0,sizeof(struct tm));
-  ptr=strptime(str_tochar(new_ctime),"%Y%m%d%H%M%S",&tm_ctime);
+  ptr=strptime((char*)str_tochar(new_ctime),"%Y%m%d%H%M%S",&tm_ctime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
     str_deallocate(filename); str_deallocate(new_ctime); str_deallocate(timezone);

@@ -233,7 +233,7 @@ typedef struct {
   uid_t (*back_validate_login)(const char *, wzd_user_t *);
   uid_t (*back_validate_pass) (const char *, const char *, wzd_user_t *);
   wzd_user_t * (*back_get_user)(uid_t uid);
-  wzd_group_t * (*back_get_group)(int gid);
+  wzd_group_t * (*back_get_group)(gid_t gid);
   uid_t (*back_find_user) (const char *, wzd_user_t *);
   gid_t (*back_find_group) (const char *, wzd_group_t *);
   int (*back_chpass) (const char *, const char *);

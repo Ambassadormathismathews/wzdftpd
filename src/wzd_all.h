@@ -50,6 +50,7 @@
 #include <direct.h>
 #include <io.h>
 #include <winsock2.h>
+#include <process.h> /* _getpid() */
 #endif /* WIN32 */
 
 #include <sys/types.h>
