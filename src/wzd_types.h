@@ -38,8 +38,6 @@
 
 #if defined(_MSC_VER)
 
-#define HARD_USERLIMIT	128
-
 /* unsigned int, 64 bits: u64_t */
 #define u64_t unsigned __int64
 

@@ -1102,22 +1102,6 @@ int group_remove_user(wzd_user_t * user, unsigned int gid)
 /** wrappers to context list */
 void * GetMyContext(void)
 {
-#ifdef WZD_MULTIPROCESS
-  wzd_context_t * context=NULL;
-  pid_t pid;
-
-  pid = getpid();
-
-  context = &context_list[0];
-  /* TODO search context list and cleanup context */
-  for (i=0; i<HARD_USERLIMIT; i++)
-  {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
-      return (&context_list[i]);
-    }
-  }
-
-#elif defined(WZD_MULTITHREAD)
   ListElmt * elmnt;
   wzd_context_t * context=NULL;
 
@@ -1126,7 +1110,7 @@ void * GetMyContext(void)
 
   thread_id = (unsigned long)GetCurrentThreadId();
   /* TODO search context list and cleanup context */
-  for (i=0; i<HARD_USERLIMIT; i++)
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
     context = list_data(elmnt);
     if (context && context->magic == CONTEXT_MAGIC && context->thread_id == thread_id) {
@@ -1147,15 +1131,6 @@ void * GetMyContext(void)
     }
   }
 #endif /* _MSC_VER */
-
-#else
-  /* we have only one process */
-  for (i=0; i<HARD_USERLIMIT; i++)
-  {
-    if (context_list[i].magic == CONTEXT_MAGIC)
-      return (&context_list[i]);
-  }
-#endif /* WZD_MULTITHREAD */
 
   return NULL;
 }

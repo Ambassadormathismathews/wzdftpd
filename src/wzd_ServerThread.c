@@ -158,45 +158,6 @@ time_t server_time;
 
 
 
-#ifndef WZD_MULTITHREAD
-static void cleanchild(int nr) {
-#ifndef _MSC_VER
-  wzd_context_t * context;
-  int i;
-  pid_t pid;
-
-  if (!context_list) return;
-  out_log(LEVEL_FLOOD,"cleanchild nr:%d\n",nr);
-  while (1) {
-
-    if ( (pid = wait3(NULL, WNOHANG, NULL)) > 0)
-    {
-      context = &context_list[0];
-      out_log(LEVEL_FLOOD,"Child %u exiting\n",pid);
-      /* TODO search context list and cleanup context */
-      for (i=0; i<HARD_USERLIMIT; i++)
-      {
-        if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
-#ifdef DEBUG
-          fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
-#endif
-          client_die(&context_list[i]);
-          break;
-        }
-      }
-      if (i == HARD_USERLIMIT) break; /* context not found ?! */
-    } else { /* no more childs */
-      break;
-    } /* if */
-  } /* while */
-
-/*  if (nr == context->pid_child) {
-    context->pid_child = 0;
-  }*/
-#endif /* _MSC_VER */
-}
-#endif /* ! WZD_MULTITHREAD */
-
 static void context_init(wzd_context_t * context)
 {
   context->magic = 0;
@@ -249,28 +210,7 @@ static wzd_context_t * context_find_free(List * context_list)
     context->magic = CONTEXT_MAGIC; /* set magic number inside lock ! */
   }
   wzd_mutex_unlock(server_mutex);
-#if 0
-  int i=0;
 
-  wzd_mutex_lock(server_mutex);
-  while (i<HARD_USERLIMIT) {
-    if (context_list[i].magic == 0) {
-      /* cleanup context */
-      context_init(context_list+i);
-      context_list[i].magic = CONTEXT_MAGIC; /* set magic number inside lock ! */
-      wzd_mutex_unlock(server_mutex);
-      return (context_list+i);
-    }
-#ifdef DEBUG
-    if (context_list[i].magic != CONTEXT_MAGIC) {
-fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",i);
-    }
-#endif /* DEBUG */
-    i++;
-  }
-  wzd_mutex_unlock(server_mutex);
-
-#endif /* 0 */
   return context;
 }
 
@@ -891,55 +831,6 @@ static void server_login_accept(wzd_context_t * context)
 #endif
 
   /* start child process */
-#ifdef WZD_MULTIPROCESS
-  if (fork()==0) { /* child */
-    /* 0. get shared memory zones */
-#ifdef __CYGWIN__
-/*    mainConfig_shm = wzd_shm_create(shm_key-1,sizeof(wzd_config_t),0);*/
-    mainConfig_shm = wzd_shm_get(shm_key-1,0);
-    if (mainConfig_shm == NULL) {
-      /* NOTE we do not have any out_log here, since we have no config !*/
-      out_err(LEVEL_CRITICAL,"I can't open main config shm ! (child)\n");
-      exit(1);
-    }
-    mainConfig = mainConfig_shm->datazone;
-    setlib_mainConfig(mainConfig);
-/*    context_shm = wzd_shm_create(shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);*/
-    context_shm = wzd_shm_get(shm_key,0);
-    if (context_shm == NULL) {
-      out_err(LEVEL_CRITICAL,"I can't open context shm ! (child)\n");
-      exit(1);
-    }
-    context_list = context_shm->datazone;
-    setlib_contextList(context_list);
-    mainConfig->user_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-    mainConfig->group_list = ((void*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
-
-    {
-      /* XXX FIXME only available for plaintext backend ? */
-      typedef int (*set_user_fct)(wzd_user_t *);
-      typedef int (*set_group_fct)(wzd_group_t *);
-      set_user_fct uf;
-      set_group_fct gf;
-      uf = (set_user_fct)dlsym(mainConfig->backend.handle,"wzd_set_user_pool");
-      gf = (set_group_fct)dlsym(mainConfig->backend.handle,"wzd_set_group_pool");
-      if (uf && gf) {
-        (uf)(mainConfig->user_list);
-        (gf)(mainConfig->group_list);
-      } else {
-        exit(1);
-      }
-    }
-#endif /* __CYGWIN__ */
-
-    /* close unused fd */
-    close (mainConfig->mainSocket);
-    out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
-
-    /* redefines SIGTERM handler */
-    signal(SIGTERM,child_interrupt);
-#endif /* WZD_MULTIPROCESS */
-
 
     /* switch to tls mode ? */
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
@@ -1051,42 +942,6 @@ fprintf(stderr,"Received signal %d\n",signum);
   serverMainThreadExit(0);
 }
 
-#ifdef WZD_MULTIPROCESS
-/** STOP REQUEST - child part */
-void child_interrupt(int signum)
-{
-  wzd_context_t * context;
-  int i;
-  pid_t pid;
-
-  pid = getpid();
-#ifndef __CYGWIN__
-  out_err(LEVEL_HIGH,"Child %d received signal %s\n",pid,sys_siglist[signum]);
-#else
-  out_err(LEVEL_HIGH,"Child %d received signal %d\n",pid,signum);
-#endif
-
-  context = &context_list[0];
-  out_log(LEVEL_FLOOD,"Child %u exiting\n",pid);
-  /* TODO search context list and cleanup context */
-  for (i=0; i<HARD_USERLIMIT; i++)
-  {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
-#ifdef DEBUG
-      fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
-#endif
-      client_die(&context_list[i]);
-
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-      tls_free(&context_list[i]);
-#endif
-      break;
-    }
-  }
-
-  exit(0);
-}
-#endif /* WZD_MULTIPROCESS */
 
 /* \return 0 if ok, -1 if error, 1 if trying to kill myself */
 int kill_child(unsigned long pid, wzd_context_t * context)
@@ -1097,21 +952,6 @@ int kill_child(unsigned long pid, wzd_context_t * context)
 #ifndef WIN32
   int ret;
 #endif
-
-#if defined(WZD_MULTIPROCESS)
-  /* preliminary check: i can't kill myself */
-  if (pid==getpid()) return 1;
-
-  /* checks that pid is really one of the users */
-  for (i=0; i<HARD_USERLIMIT; i++)
-  {
-    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
-  }
-  if (!found) return -1;
-
-  ret = kill(pid,SIGTERM);
-
-#elif defined(WZD_MULTITHREAD)
 
   /* preliminary check: i can't kill myself */
   if (pid==context->pid_child) return 1;
@@ -1132,8 +972,6 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   ret = pthread_cancel(pid);
 #endif
 
-#elif
-#endif
   return 0;
 }
 
@@ -1165,7 +1003,7 @@ int server_switch_to_config(wzd_config_t *config)
 {
   int fd;
   int backend_storage;
-  unsigned int length=0, size_context, size_user, size_group;
+  unsigned int size_user, size_group;
   int ret;
 
   ret = config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads);
@@ -1235,43 +1073,15 @@ int server_switch_to_config(wzd_config_t *config)
 #endif
 
 
-/*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  size_context = HARD_USERLIMIT*sizeof(wzd_context_t);
   size_user = HARD_DEF_USER_MAX*sizeof(wzd_user_t);
   size_group = HARD_DEF_GROUP_MAX*sizeof(wzd_group_t);
-  length = size_context + size_user + size_group;
 
-  /** \todo we are replacing shm with conventional memory */
-#if 0
-  context_shm = wzd_shm_create(config->shm_key,length,0);
-  if (context_shm == NULL) {
-    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",config->shm_key);
-    exit(1);
-  }
-  context_list = context_shm->datazone;
-#endif
-
-/*  context_list = wzd_malloc(size_context);*/
   context_list = wzd_malloc(sizeof(List));
   config->user_list = wzd_malloc(size_user);
   config->group_list = wzd_malloc(size_group);
 
-#if 0
-  context_list = wzd_malloc(length);
-
-#ifndef _MSC_VER
-  config->user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
-  config->group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t));
-#else
-  config->user_list = (wzd_user_t*)((char*)context_list + size_context);
-  config->group_list = (wzd_group_t*)((char*)context_list + size_context + size_user);
-#endif
-#endif /* 0 */
 
   list_init(context_list, wzd_free);
-/*  for (i=0; i<HARD_USERLIMIT; i++) {
-    context_init(context_list+i);
-  }*/
 
 #ifdef WIN32
   /* cygwin sux ... shared library variables are NOT set correctly

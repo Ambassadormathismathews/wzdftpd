@@ -3,14 +3,8 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
-/* Defines the maximum number of users simultaneously connected. */
-#undef HARD_USERLIMIT
-
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
-
-/* Define if using berkeley db */
-#undef HAVE_DB
 
 /* Define to 1 if you have the declaration of `sys_siglist', and to 0 if you
    don't. */
@@ -144,9 +138,6 @@
 
 /* Define if using perl */
 #undef HAVE_PERL
-
-/* Define if using pgsql */
-#undef HAVE_PGSQL
 
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD

@@ -132,7 +132,7 @@ message, else 0</entry></row>
 <row><entry>max_dl</entry><entry>The download limit</entry></row>
 <row><entry>max_ul</entry><entry>The upload limit</entry></row>
 <row><entry>max_threads</entry><entry>The maximum number of connected clients
-(read-only)</entry></row>
+</entry></row>
 <row><entry>pasv_low</entry><entry>Passive range lower bound</entry></row>
 <row><entry>pasv_high</entry><entry>Passive range upper bound</entry></row>
 <row><entry>port</entry><entry>The port the server is currently binded to

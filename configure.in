@@ -170,16 +170,6 @@ if eval "test x$CC = xicc"; then
 #  CPPFLAGS="$CPPFLAGS -I/usr/include"
 fi
 
-AC_ARG_VAR(HARD_USERLIMIT,[max number of simultaneous logins allowed])
-if eval "test x$HARD_USERLIMIT = x"; then
-  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,128)
-  HARD_USERLIMIT=128
-else
-  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,$HARD_USERLIMIT)
-fi
-AH_TEMPLATE([HARD_USERLIMIT],
-            [Defines the maximum number of users
-             simultaneously connected.])
 
 AC_DEFINE_UNQUOTED(WZD_BUILD_OPTS,"$WZD_BUILD_OPTS")
 

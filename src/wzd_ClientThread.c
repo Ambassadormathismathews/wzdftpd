@@ -2736,7 +2736,7 @@ int do_user(const char *username, wzd_context_t * context)
       loop_context = list_data(elmnt);
       if (loop_context && loop_context->magic == CONTEXT_MAGIC && context->userid == loop_context->userid)
         count++;
-    } /* for (i=0; i<HARD_USERLIMIT; i... */
+    } /* for all contexts */
 
     /* we substract 1, because the current login attempt is counted */
     count--;
