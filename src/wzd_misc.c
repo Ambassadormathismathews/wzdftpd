@@ -1039,6 +1039,8 @@ wzd_user_t * GetUserByName(const char *name)
 /** wrappers to Group list */
 wzd_group_t * GetGroupByID(unsigned int id)
 {
+  unsigned int i=0;
+
   if (!mainConfig->group_list) return NULL;
 
 #ifdef BACKEND_STORAGE
@@ -1046,8 +1048,18 @@ wzd_group_t * GetGroupByID(unsigned int id)
     return backend_get_group( (int)id );
   }
 #endif
-  if (id >= HARD_DEF_GROUP_MAX ) return NULL;
-  return &mainConfig->group_list[id];
+/*  if (id >= HARD_DEF_GROUP_MAX ) return NULL;*/ /* used when gid == index */
+/*  return &mainConfig->group_list[id];*/
+
+
+  while (i<HARD_DEF_GROUP_MAX)
+  {
+    if (mainConfig->group_list[i].groupname[0] != '\0' && mainConfig->group_list[i].gid == id) {
+        return &mainConfig->group_list[i];
+    }
+    i++;
+  }
+  return NULL;
 }
 
 wzd_group_t * GetGroupByName(const char *name)

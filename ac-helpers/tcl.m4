@@ -57,7 +57,7 @@ AC_DEFUN([WZD_LIB_TCL],
     WZD_TCL_LIBS=$(eval echo $TCL_LIB_SPEC)
     WZD_TCL_INCLUDES=$(eval echo $TCL_INCLUDE_SPEC)
 
-    AC_MSG_CHECKING([if tclConfig.sh is useable])
+    AC_MSG_CHECKING([for tclConfig.sh usability])
 
     # We generate a separate cache variable for each prefix
     # we search under. That way, we avoid caching information that

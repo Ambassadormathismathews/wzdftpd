@@ -462,6 +462,15 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       condition[length-5]='\0';
       i=0;
       tmpbuf = malloc(16384);
+out_err(LEVEL_HIGH,"AAAAAAAAAAAAAAAA\n");
+      {
+        char c;
+        while ( (c= input()) && c != EOF && (c == '\r' || c == '\n'))
+        {
+out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
+          /* eat EOL */
+        }
+      }
 /*      printf("starting if loop (%s)\n",condition);*/
       while ((cookie=yylex()) && cookie!=COOKIE_ENDIF)
       {
@@ -625,11 +634,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       else if (strcmp(condition,"allgroups")==0)
       {
         wzd_group_t * loop_group;
-        for (i=0; i<HARD_DEF_GROUP_MAX; i++)
+        for (i=0; i<=65535; i++) /** \todo XXX this is horrible ! */
         {
           loop_group = GetGroupByID(i);
           current_group = loop_group;
-          if (loop_group->groupname[0] != '\0') {
+          if (loop_group && loop_group->groupname[0] != '\0') {
             if (out_buffer)
               cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
             else

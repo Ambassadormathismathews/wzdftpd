@@ -33,3 +33,5 @@ $AUTOMAKE --add-missing --copy --gnu || abort "automake"
 
 echo "+ $AUTOCONF"
 $AUTOCONF || abort "autoconf"
+
+exit 0

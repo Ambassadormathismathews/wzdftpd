@@ -1,3 +1,9 @@
+2004-07-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: boostrap script should *really* work on all platforms
+	* feature: mysql backend restarted (almost) from scratch, tables redesign
+	* bugfix: some typos
+
 2004-07-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: split ip addresses related functions to specific file

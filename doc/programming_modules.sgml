@@ -74,7 +74,7 @@ That <emphasis>clearly</emphasis> means that you <emphasis>MUST</emphasis> distr
 your module under GPL, if you intend to distribute it (license covers distribution, and
 it means you must give source to people, or give them access, when you distribute them
 your module).</para>
-<para>This is an intentional behaviour, keep in mind that using wzdfptd you can benefit
+<para>This is an intentional behaviour, keep in mind that using wzdftpd you can benefit
 from a big amount of functions, and that it has taken much time to do it. The only
 contribution that is asked in exchange is to make your work accessible, so others
 can benefit it.</para>

@@ -220,7 +220,7 @@ typedef struct {
 /** @brief Group definition */
 typedef struct {
   unsigned int          gid;
-  char                  groupname[128];
+  char                  groupname[HARD_GROUPNAME_LENGTH];
   char                  tagline[256];
   wzd_perm_t            groupperms;
   time_t		max_idle_time;

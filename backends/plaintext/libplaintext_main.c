@@ -1062,7 +1062,8 @@ int FCN_FIND_GROUP(int num, wzd_group_t * group)
 {
   if (num < 0 || (unsigned int)num >= group_count) return -1;
 
-  return num;
+/*  return num;*/ /* used when gid == index */
+  return group_pool[num].gid;
 /*
   strncpy(group->groupname,group_pool[num].groupname,256);
   group->groupperms = group_pool[num].groupperms;

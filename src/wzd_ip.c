@@ -121,6 +121,9 @@ int ip_compare(const char * ip, const char * pattern)
     struct addrinfo * aiList = NULL, * aiListPattern = NULL;
     int retval;
 
+    if (strncmp(ip,"::ffff:",strlen("::ffff:"))==0)
+      ip += strlen("::ffff:");
+
     memset(&aiHint,0,sizeof(struct addrinfo));
     aiHint.ai_family = PF_UNSPEC;
     aiHint.ai_socktype = SOCK_STREAM;

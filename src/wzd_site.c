@@ -1261,7 +1261,6 @@ void do_site_user(char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user;
   int uid;
-  wzd_context_t user_context;
 
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
@@ -1274,17 +1273,11 @@ void do_site_user(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }
-  /* needed, because do_site_print_file writes directly to context->controlfd */
-/*  user_context.controlfd = context->controlfd;*/
-/*  memcpy(&user_context.userinfo,&user,sizeof(wzd_user_t));*/
-  user_context.userid = uid;
-  user_context.magic = CONTEXT_MAGIC;
 
 /*#if BACKEND_STORAGE*/
   do_site_print_file(mainConfig->site_config.file_user,&user,NULL,context);
 /*#endif
   do_site_print_file(mainConfig->site_config.file_user,GetUserByID(uid),NULL,context);*/
-  user_context.magic = 0;
 }
 
 /********************* do_site_utime ***********************/
