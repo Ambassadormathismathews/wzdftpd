@@ -217,7 +217,7 @@ Var INI_VALUE
 
   
   ;French
-  LangString DESC_MainSec ${LANG_FRENCH} "Programme principal et tous dossiers nécessaires. Inclut le plain-Text backend."
+  LangString DESC_MainSec ${LANG_FRENCH} "Programme principal et tous les dossiers nécessaires. Inclut le plain-Text backend."
   LangString DESC_TCLSec ${LANG_FRENCH} "Modules TCL facultatifs."
   LangString DESC_PerlSec ${LANG_FRENCH} "Modules Perl facultatifs."
   LangString DESC_MySQLSec ${LANG_FRENCH} "Backend MySQL facultatif."
@@ -226,11 +226,11 @@ Var INI_VALUE
   LangString CAPT_TCLSec  ${LANG_FRENCH} "Modules TCL"
   LangString CAPT_PerlSec ${LANG_FRENCH} "Modules Perl"  
   LangString CAPT_MySQLSec ${LANG_FRENCH} "Module MySQL"
-  LangString CAPT_DevelopSec ${LANG_FRENCH} "Module pur Développeur"
-  LangString DESC_Link_Finish ${LANG_FRENCH} "Visitez l'emplacement de wzdftpd pour les derniers nouvelles, FAQ et appui."
+  LangString CAPT_DevelopSec ${LANG_FRENCH} "Module pour Développeur"
+  LangString DESC_Link_Finish ${LANG_FRENCH} "Visitez le site de wzdftpd pour les derniers nouvelles, FAQ et aide."
   LangString DESC_Detail_Print ${LANG_FRENCH} "Installation des dossiers Principaux..."
-  LangString PI_Field1_Caption ${LANG_FRENCH} "IMPORTANT:  Si vous avez pour choisir d'installer le module de Perl ou le module de TCL, vous devez installer le Active Perl et le Active TCL d'ActiveState qui ne sont pas emballés ou ne sont pas distribués par ce paquet.  Pour aller au website d'ActiveState, vérifiez svp le checkbox ci-dessous."
-  LangString PI_Field2_Caption ${LANG_FRENCH} "Ouvrez le website d'ActiveState pour télécharger Active Perl et/ou Active TCL"
+  LangString PI_Field1_Caption ${LANG_FRENCH} "IMPORTANT:  Si vous avez choisi d'installer le module Perl ou le module TCL, vous devez installer Active Perl et Active TCL d'ActiveState qui ne sont pas distribués avec ce paquet.  Pour aller sur le site d'ActiveState, cochez la case ci-dessous."
+  LangString PI_Field2_Caption ${LANG_FRENCH} "Ouvrez le site d'ActiveState pour télécharger Active Perl et/ou Active TCL"
   LangString PI_TEXT_TITLE ${LANG_FRENCH} "Page d'options."
   LangString PI_TEXT_SUBTITLE ${LANG_FRENCH} " "
   
