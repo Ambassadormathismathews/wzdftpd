@@ -2,7 +2,7 @@ This is a small set of directives for building wzdftpd
 
 Prerequisites:
 
-All:
+All (only if compiling from CVS):
 automake (>= 1.5)
 autoconf
 libtool
@@ -19,14 +19,12 @@ Windows:
 
 All paths are relative to rep wzdftpd (root)
 
-1) Generate configure script:
-aclocal
-automake (if automake complains about some files, run automake -a)
-autoconf
+1) Generate configure script (if compiling from CVS):
+./autogen.sh [args for configure]
 
 2) Configure
 ./configure [args]
-(./configure --help to know args, common args are: --enable-ssl, --enable-debug and
+(./configure --help to know args, common args are: --with-pam, --enable-debug and
 and --prefix
 
 3) Build executable and backends / modules
@@ -35,7 +33,7 @@ make
 4) Install
 make install
 
-6) Executable can be found in src
+5) Executable can be found in src (if you want to customize install)
 The _MINIMUM_ installation is composed of:
 - the exe (wzdftpd for linux, wzdftpd.exe for win32)
 - the lib (libwzd.so for linux, libwzd.dll for win32)

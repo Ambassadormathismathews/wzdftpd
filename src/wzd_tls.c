@@ -40,6 +40,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
+#include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 

@@ -33,6 +33,7 @@
 #include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
 #endif
 
+#include <stdio.h>
 #include <sys/stat.h>
 
 #include "wzd_structs.h"
