@@ -938,6 +938,13 @@ int server_switch_to_config(wzd_config_t *config)
   {
     /* effective uid if 0 if run as root or setuid */
     if (geteuid() == 0) {
+      /* do we change gid ? */
+      if (getlib_server_gid() != getegid())
+      {
+        out_log(LEVEL_INFO,"Giving up root rights for group %ld (current gid %ld)\n",getlib_server_gid(),getgid());
+        setgid(getlib_server_gid());
+      }
+
       out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",getlib_server_uid(),getuid());
       setuid(getlib_server_uid());
     }

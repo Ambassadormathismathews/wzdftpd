@@ -47,6 +47,7 @@
 #include <signal.h>     /* kill() */
 
 #ifndef WIN32
+#include <grp.h>	/* getgrnam() */
 #include <pwd.h>	/* getpwnam() */
 #endif
 
@@ -107,6 +108,7 @@ typedef enum {
   CFG_PID_FILE,
   CFG_PORT,
   CFG_SECTION,
+  CFG_SERVER_GID,
   CFG_SERVER_UID,
   CFG_SHM_KEY,
   CFG_SITE,
@@ -237,6 +239,7 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"pid_file")) return CFG_PID_FILE;
   if (!strcmp(word,"port")) return CFG_PORT;
   if (!strcmp(word,"section")) return CFG_SECTION;
+  if (!strcmp(word,"server_gid")) return CFG_SERVER_GID;
   if (!strcmp(word,"server_uid")) return CFG_SERVER_UID;
   if (!strcmp(word,"shm_key")) return CFG_SHM_KEY;
   if (!strcmp(word,"site_cmd")) return CFG_SITECMD;
@@ -1428,6 +1431,51 @@ int cfg_read_section(void)
   return 0;
 }
 
+/* SERVER_GID (unsigned int/string)
+*/
+int cfg_read_server_gid(void)
+{
+  unsigned int token;
+  unsigned long l;
+  char *ptr;
+  int wzd_server_gid;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'server_gid = ...'\n");
+    return 1;
+  }
+
+  switch( (token=yylex()) ) {
+  case CFG_NUM:
+    errno = 0;
+    l = strtoul(yytext,(char**)&ptr, 0);
+    wzd_server_gid = (unsigned int)l;
+    setlib_server_gid(wzd_server_gid);
+    return 0;
+#ifndef WIN32
+  case CFG_ID:
+    { /* not a number, try a login */
+      struct group * g;
+      g = getgrnam(yytext);
+      if (!g) {
+        out_err(LEVEL_HIGH,"server_gid: could not find gid for group %s\n",yytext);
+        return 1;
+      }
+      wzd_server_gid = g->gr_gid;
+      setlib_server_gid(wzd_server_gid);
+      return 0;
+    }
+#endif
+  default:
+    out_err(LEVEL_INFO,"server_gid: read token %d (%c) yytext:\n",token,token,yytext);
+    return 1;
+  }
+
+  return 1;
+}
+
+
 /* SERVER_UID (unsigned int/string)
 */
 int cfg_read_server_uid(void)
@@ -1971,6 +2019,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_SECTION:
       ret = cfg_read_section();
+      break;
+    case CFG_SERVER_GID:
+      ret = cfg_read_server_gid();
       break;
     case CFG_SERVER_UID:
       ret = cfg_read_server_uid();

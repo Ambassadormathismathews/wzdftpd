@@ -39,7 +39,8 @@
 
 wzd_config_t *  mainConfig;
 List * context_list;
-static int _wzd_server_uid;
+static uid_t _wzd_server_uid;
+static gid_t _wzd_server_gid;
 
 wzd_mutex_t	* limiter_mutex;
 wzd_mutex_t	* server_mutex = NULL;
@@ -70,6 +71,12 @@ List * getlib_contextList(void)
 
 void setlib_contextList(List *c)
 { context_list = c; }
+
+int getlib_server_gid(void)
+{ return _wzd_server_gid; }
+
+void setlib_server_gid(int gid)
+{ _wzd_server_gid = gid; }
 
 int getlib_server_uid(void)
 { return _wzd_server_uid; }
