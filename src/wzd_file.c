@@ -1219,12 +1219,14 @@ int softlink_remove(const char *linkname)
   int ret;
 
   /* get permission file */
+  if (!linkname) return -1;
 
   strncpy(perm_filename,linkname,WZD_MAX_PATH);
   length = strlen(perm_filename);
   if (length > 1 && perm_filename[length-1] == '/') perm_filename[--length] = '\0';
 
   ptr = strrchr(perm_filename,'/');
+  if (!ptr) return -1;
   ptr++; /* position is just after last / */
   strncpy(stripped_filename, ptr, WZD_MAX_PATH);
   strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));

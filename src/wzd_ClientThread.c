@@ -3217,7 +3217,7 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
           continue;
         }
         /* we have data ready */
-        ret = data_execute(context,&fds_r,&fds_w);
+        ret = data_execute(context,user,&fds_r,&fds_w);
         continue;
       }
       /* nothing to read */

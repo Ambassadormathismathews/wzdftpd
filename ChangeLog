@@ -8,6 +8,7 @@
 	* bugfix: free space is taken from drive c: (closes: #0001, #0009)
 	* bugfix: could not get free space when using backslashes (closes: #0010)
 	* bugfix: user ip check fails if ip1 was deleted (closes: #0012)
+	* bugfix: crash using link remove -r with bad arguments (closes: #0013)
 	* feature: site chmod now accepts string version of permissions
 
 2004-09-13  Pierre Chifflier  <pollux@cpe.fr>

@@ -435,6 +435,10 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
         errno = ETIMEDOUT;
         return -1;
       }
+      if (errno == WSAEWOULDBLOCK) {
+        out_log(LEVEL_INFO,"WSAEWOULDBLOCK (removed me: %s:%d)",__FILE__,__LINE__);
+        continue;
+      }
       /* error */
       out_log(LEVEL_INFO,"Error during connection %d: %s\n",errno,strerror(errno));
       save_errno = WSAGetLastError();

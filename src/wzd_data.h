@@ -34,6 +34,6 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde);
 int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde);
 
 /* send or retr data */
-int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw);
+int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set *fdw);
 
 #endif /* __WZD_DATA__ */

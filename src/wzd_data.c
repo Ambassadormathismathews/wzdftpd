@@ -148,16 +148,13 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
   return 0;
 }
 
-int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
+int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set *fdw)
 {
   int n;
   unsigned int action;
   int ret;
-  wzd_user_t * user;
 
-  user = GetUserByID(context->userid);
-
-  if (!context) return -1;
+  if (!context || !user) return -1;
 
   WZD_ASSERT( context->data_buffer != NULL );
 
