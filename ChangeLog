@@ -1,3 +1,7 @@
+004-12-18  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: cannot remove directories with message (closes: #0023)
+
 004-12-15  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: new config directive 'tls_certificate_key'
