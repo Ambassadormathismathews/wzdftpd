@@ -20,8 +20,6 @@ int main(int argc, char **argv)
 
   reply = wzd_send_message(msg,strlen(msg));
   if (reply) {
-    printf("code: %d\n",reply->code);
-
     if (reply->code != 200 || reply->data==NULL) {
       wzd_free_reply(reply);
       wzd_fini();

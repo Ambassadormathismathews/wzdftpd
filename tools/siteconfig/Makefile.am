@@ -1,11 +1,12 @@
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
+INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/libwzd
 
 bin_PROGRAMS = siteconfig
 
 siteconfig_SOURCES = siteconfig.c
 
-siteconfig_LDFLAGS = -no-undefined -L../../src -L../../src/.libs -lwzd_core $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+siteconfig_LDADD = $(top_srcdir)/libwzd/libwzd.la
+siteconfig_LDFLAGS = -no-undefined $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES)
 

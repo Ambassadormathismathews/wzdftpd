@@ -63,14 +63,78 @@ static unsigned long _options = 0;
 /* wzd_parse_args
  *
  * parse command line arguments to detect libwzd-specific switches
+ *
+ * TODO we should find a way for user application to add arguments,
+ * using hooks
  */
 int wzd_parse_args(int argc, char **argv)
 {
+  int optindex;
   int opt;
   int val;
+  int i;
+  int found;
+  int option_is_long;
 
-  while ((opt=getopt(argc, argv, "u:w:h:p:st")) != -1)
+  struct option_t {
+    char * long_option;
+    short has_argument;
+    char * reserved;
+    char short_option;
+  };
+
+  static struct option_t long_options[] =
   {
+    { "user", 1, NULL, 'u' },
+    { "pass", 1, NULL, 'w' },
+    { "host", 1, NULL, 'h' },
+    { "port", 1, NULL, 'p' },
+    { "secure", 0, NULL, 's' },
+    { "insecure", 0, NULL, 't' },
+    { NULL, 0, NULL, 0 } /* sentinel */
+  };
+
+  for (optindex=1; optindex<argc; optindex++)
+  {
+    found = 0;
+    opt = 0;
+    if (argv[optindex][0]=='-') {
+      /* argument */
+
+      if (argv[optindex][1] == '-')
+        option_is_long = 1;
+      else
+        option_is_long = 0;
+
+      for (i=0; long_options[i].long_option!=NULL; i++)
+      {
+        if (( (option_is_long && strcmp(long_options[i].long_option,argv[optindex]+2)==0) )
+            || (!option_is_long && long_options[i].short_option==argv[optindex][1]))
+        { /* found */
+          /* do we need an argument ? */
+          if (long_options[i].has_argument>0) {
+            optindex++;
+            if (optindex>=argc) { /* missing argument */
+              fprintf(stderr,"libwzd: missing argument for %s\n",argv[optindex-1]);
+              return -1;
+            }
+            optarg = argv[optindex];
+          }
+          opt = long_options[i].short_option;
+          found = 1;
+        }
+      }
+    }
+    else { /* not an option */
+      continue;
+    }
+
+    if (!found) {
+/*        fprintf(stderr,"libwzd; unknown option %s\n", argv[optindex]);*/
+/*        return -1;*/
+        continue;
+    }
+
     switch ((char)opt) {
       case 'u':
         if (strlen(optarg)>0) {
