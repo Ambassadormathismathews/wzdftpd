@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
@@ -17,6 +41,19 @@
 
 
 #define BUFFER_LEN	2048
+
+struct wzd_command_perm_entry_t {
+  wzd_cp_t cp; 
+  char target[256];
+  struct wzd_command_perm_entry_t * next_entry;
+};
+
+struct wzd_command_perm_t {
+  char  command_name[256];
+  wzd_command_perm_entry_t * entry_list;
+  struct wzd_command_perm_t * next_perm;
+};
+
 
 const char * perm_tab[] = {
   "site",
@@ -272,7 +309,7 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 
 /***/
 
-/* returns 0 if ok, 1 otherwise */
+/** \return 0 if ok, 1 otherwise */
 int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config)
 {
   wzd_command_perm_t * command_perm;
