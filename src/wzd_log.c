@@ -42,7 +42,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#ifndef S_SPLINT_S
+# include <arpa/inet.h>
+#endif
 
 #include <netdb.h>
 
@@ -51,9 +53,6 @@
 
 #include <fcntl.h> /* O_WRONLY */
 
-/* speed up compilation */
-#define	FILE	void
-
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -61,7 +60,7 @@
 /* NOTE we are forced to open log in lib, because of win32
  * memory management
  */
-int log_open(const char *filename, unsigned int filemode)
+int log_open(const char *filename, int filemode)
 {
   int fd;
 
@@ -129,7 +128,7 @@ void out_log(int level,const char *fmt,...)
       switch (level) {
         case LEVEL_CRITICAL:
           strcpy(msg_begin,CLR_BOLD);
-          strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
+          (void)strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
           strcpy(msg_end,CLR_NOCOLOR);
           prior = LOG_ALERT;
           break;
@@ -231,7 +230,7 @@ void out_err(int level, const char *fmt,...)
       switch (level) {
         case LEVEL_CRITICAL:
           strcpy(msg_begin,CLR_BOLD);
-          strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
+          (void)strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
           strcpy(msg_end,CLR_NOCOLOR);
           break;
         case LEVEL_HIGH:
@@ -302,7 +301,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
   username = GetUserByID(context->userid)->username;
   timeval = time(NULL);
   ntime = localtime( &timeval );
-  strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
+  (void)strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
   snprintf(buffer,2047,
 #ifndef WIN32
       "%s %lu %s %llu %s %c %c %c %c %s ftp 1 * %c\n",
@@ -323,7 +322,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
       username,
       is_complete?'c':'i' /* c (complete) i (incomplete) */
       );
-  write(mainConfig->xferlog_fd,buffer,strlen(buffer));
+  (void)write(mainConfig->xferlog_fd,buffer,strlen(buffer));
 }
 
 void log_message(const char *event, const char *fmt, ...)
@@ -341,7 +340,7 @@ void log_message(const char *event, const char *fmt, ...)
 
   timeval = time(NULL);
   ntime = localtime( &timeval );
-  strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
+  (void)strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
   fprintf(mainConfig->logfile,"%s %s: %s\n",
       datestr,
       event,

@@ -54,7 +54,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#ifndef S_SPLINT_S
+# include <arpa/inet.h>
+#endif
 
 #include <regex.h>
 
@@ -167,7 +169,8 @@ void cleanup_shm(void)
   regex_t reg_line;
   regmatch_t regmatch[3];
   FILE *configfile;
-  int length, err;
+  size_t length;
+  int err;
   unsigned long shm_key=0x1331c0d3;
 
   configfile = fopen(configfile_name,"r");
@@ -192,7 +195,7 @@ void cleanup_shm(void)
       *(ptr+length-1) = '\0';
       length--;
     }
-    if (length <= 0) continue;
+    if (length == 0) continue;
 
     reg_line.re_nsub = 2;
     err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
@@ -220,7 +223,7 @@ void cleanup_shm(void)
       }
     }
   }
-  fclose(configfile);
+  (void)fclose(configfile);
 
   wzd_shm_cleanup(shm_key-1);
   wzd_shm_cleanup(shm_key);
@@ -349,7 +352,7 @@ int main_parse_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
   int ret, i;
-  int forkresult;
+  pid_t forkresult;
   wzd_config_t * config;
 
   wzd_debug_init();
@@ -406,7 +409,7 @@ int main(int argc, char **argv)
   }
 
   /* initialize random seed */
-  srand((int)(time(NULL)+0x13313043));
+  srand((unsigned int)(time(NULL)+0x13313043));
 
   /* not really usefull, but will also initialize var if not used :) */
 #ifndef WIN32

@@ -67,7 +67,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n);
 
 
 /* creates an shm zone */
-wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags);
+wzd_shm_t * wzd_shm_create(unsigned long key, unsigned int size, int flags);
 
 /* returns an EXISTING shm zone */
 wzd_shm_t * wzd_shm_get(unsigned long key, int flags);

@@ -141,7 +141,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 #endif /* WZD_MULTITHREAD */
 
 /** creates an shm zone */
-wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
+wzd_shm_t * wzd_shm_create(unsigned long key, unsigned int size, int flags)
 {
   wzd_shm_t *shm;
   char name[256];
@@ -282,7 +282,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 #endif /* WZD_MULTITHREAD */
 
 /** creates an shm zone */
-wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
+wzd_shm_t * wzd_shm_create(unsigned long key, unsigned int size, int flags)
 {
   wzd_shm_t *shm;
 /*  semun_t u_semun;

@@ -56,7 +56,7 @@
 #define	LEVEL_HIGH	7
 #define	LEVEL_CRITICAL	9
 
-int log_open(const char *filename, unsigned int filemode);
+int log_open(const char *filename, int filemode);
 void log_close(void);
 
 /* Opens file of type xferlog and returns file descriptor if ok */

@@ -45,7 +45,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#ifndef S_SPLINT_S
+# include <arpa/inet.h>
+#endif
 #endif
 
 #include "wzd_structs.h"
@@ -61,10 +63,10 @@
 
 int list_match(char *,char *);
 
-int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, char *buffer, unsigned int *buffer_len,
+int list_call_wrapper(unsigned int sock, wzd_context_t *context, char *line, char *buffer, size_t *buffer_len,
     int callback(unsigned int,wzd_context_t*,char *))
 {
-  unsigned int length;
+  size_t length;
   if (!line) { /* request to flush */
 /*out_err(LEVEL_CRITICAL,"Flushing buffer (%ld bytes)\n",*buffer_len);*/
     if (!callback(sock,context,buffer)) return 1;
@@ -177,8 +179,8 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
     ntime = localtime(&st.st_mtime);
 
     if (ntime->tm_year==i)
-      strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-    else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+      (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+    else (void)strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
 
     /* permissions */
 
@@ -226,9 +228,9 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 #endif
 
 #ifndef _MSC_VER
-    sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+    snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
 #else
-    sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+    snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
 #endif
         (S_ISLNK(st.st_mode) || (file->kind==FILE_LNK))? 'l' : S_ISDIR(st.st_mode) ? 'd' : '-',
         file->permissions & S_IRUSR ? 'r' : '-',
@@ -284,7 +286,8 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
   char line[1024+80];
   char datestr[128];
   char buffer_name[256];
-  int dirlen,i;
+  size_t dirlen;
+  int i;
   time_t timeval;
   struct stat st;
   struct tm *ntime;
@@ -358,8 +361,8 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
             ntime=localtime(&st.st_mtime);
 
             if (ntime->tm_year==i)
-              strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-            else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+              (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+            else (void)strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
 
             /* permissions */
 
@@ -370,7 +373,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
             }
 
 #ifndef _MSC_VER
-            sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+            snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
                 S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
                 st.st_mode & S_IRUSR ? 'r' : '-',
                 st.st_mode & S_IWUSR ? 'w' : '-',
@@ -497,8 +500,8 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
         ntime=localtime(&st.st_mtime);
 
         if (ntime->tm_year==i)
-          strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
-        else strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
+          (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M",ntime);
+        else (void)strftime(datestr,sizeof(datestr),"%b %d  %Y",ntime);
 
         /* permissions */
 
@@ -534,7 +537,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
         owner = (wzd_user_t*)file_getowner( filename, context);
 
 #ifndef _MSC_VER
-        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+        snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
             S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
             st.st_mode & S_IRUSR ? 'r' : '-',
             st.st_mode & S_IWUSR ? 'w' : '-',
@@ -552,7 +555,7 @@ int old_list(unsigned int sock,wzd_context_t * context,list_type_t format,char *
             datestr,
             buffer_name);
 #else
-        sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
+        snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
             S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
             st.st_mode & S_IRUSR ? 'r' : '-',
             st.st_mode & S_IWUSR ? 'w' : '-',
