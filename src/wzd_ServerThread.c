@@ -1420,7 +1420,6 @@ void serverMainThreadExit(int retcode)
   cronjob_free(&crontab);
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
-  perm_free_recursive(mainConfig->perm_list);
   free_messages();
   usercache_fini();
 /*  free(context_list);*/

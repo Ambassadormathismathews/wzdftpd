@@ -1583,8 +1583,18 @@ int file_remove(const char *filename, wzd_context_t * context)
       file_cur = NULL;
     }
 
-    /* check in special permissions from config file */
-    if (perm_check("delete", context, mainConfig) == 0) ret = 0; /* specified in config file */
+    /* The delete permission is special: by default, all users can run the DELE
+     * command, but only owner of the file or siteops can delete files.
+     * If the "delete" permission is set, it will allow non-owners to delete the file.
+     */
+    {
+      wzd_command_t * command;
+      wzd_string_t * str = STR("delete");
+
+      command = commands_find(mainConfig->commands_list, str);
+      str_deallocate(str);
+      if (commands_check_permission(command, context) == 0) ret = 0;
+    }
 
   }
 

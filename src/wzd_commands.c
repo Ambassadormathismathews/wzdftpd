@@ -149,6 +149,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"mdtm",do_mdtm,NULL,TOK_MDTM)) return -1;
   if (commands_add(_ctable,"size",do_size,NULL,TOK_SIZE)) return -1;
   if (commands_add(_ctable,"dele",do_dele,NULL,TOK_DELE)) return -1;
+  if (commands_add(_ctable,"delete",do_dele,NULL,TOK_DELE)) return -1;
   if (commands_add(_ctable,"pret",do_pret,NULL,TOK_PRET)) return -1;
   if (commands_add(_ctable,"xcrc",do_xcrc,NULL,TOK_XCRC)) return -1;
   if (commands_add(_ctable,"xmd5",do_xmd5,NULL,TOK_XMD5)) return -1;

@@ -90,14 +90,14 @@ wzd_command_perm_entry_t * perm_create_empty_entry(void)
 
 /***/
 
-int perm_remove(const char *commandname, wzd_config_t * config)
+int perm_remove(const char *commandname, wzd_command_perm_t ** perm_list)
 {
   wzd_command_perm_t * perm, * previous;
   wzd_command_perm_entry_t * entry_current, * entry_next;
   
-  if ( ! config->perm_list ) return -1;
+  if ( (!perm_list) || (!*perm_list) ) return -1;
 
-  perm = config->perm_list;
+  perm = *perm_list;
   if (strcasecmp(perm->command_name,commandname)==0) {
     /* first element */
     entry_current = perm->entry_list;
@@ -106,7 +106,7 @@ int perm_remove(const char *commandname, wzd_config_t * config)
       free(entry_current);
       entry_current = entry_next;
     }
-    config->perm_list = perm->next_perm;
+    *perm_list = perm->next_perm;
     free(perm);
     return 0;
   }
@@ -244,13 +244,13 @@ wzd_command_perm_t * perm_find_create(const char *commandname, wzd_command_perm_
 
 /***/
 
-wzd_command_perm_t * perm_find(const char *commandname, wzd_config_t * config)
+wzd_command_perm_t * perm_find(const char *commandname, wzd_command_perm_t * perm_list)
 {
   wzd_command_perm_t * perm;
   
-  if ( ! config->perm_list ) return NULL;
+  if ( ! perm_list ) return NULL;
 
-  perm = config->perm_list;
+  perm = perm_list;
   do {
     if (strcasecmp(perm->command_name,commandname)==0) {
       return perm;
@@ -405,15 +405,15 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 /***/
 
 /** \return 0 if ok, 1 if denied, -1 otherwise */
-int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config)
+int perm_check(const char *permname, const wzd_context_t * context, wzd_command_perm_t * perm_list)
 {
   wzd_command_perm_t * command_perm;
 
   if (!permname || !context) return -1;
-  if (!config->perm_list) return -1;
+  if (!perm_list) return -1;
   if (!strlen(permname)) return -1;
 
-  command_perm = perm_find(permname,config);
+  command_perm = perm_find(permname,perm_list);
 
   return perm_check_perm(command_perm,context);
 }

@@ -648,11 +648,13 @@ static void save_inclusions (FILE *file)
 
 static void save_permissions (FILE *file)
 {
+#if 0
   char buffer[256];
   char * ptr;
   unsigned int length;
   wzd_command_perm_t * current;
   wzd_command_perm_entry_t * entry;
+#endif /* 0 */
   
   if (file==NULL) return;
   fprintf( file, "##### PERMISSIONS\n");
@@ -663,6 +665,10 @@ static void save_permissions (FILE *file)
   fprintf( file, "# ex: -site_who = =admin -group1 +F =toto\n");
   fprintf( file, "#-delete = -admin\n");
 
+  /** \bug this code is f*cked ! it must now use wzd_command_t, and
+   * perm2str() !
+   */
+#if 0
   /* TODO XXX FIXME perm list will be printed in the reverse order ! */
   current = mainConfig->perm_list;
   while (current) {
@@ -692,6 +698,7 @@ static void save_permissions (FILE *file)
         buffer);
     current = current->next_perm;
   }
+#endif /* 0 */
 
   fprintf( file, "  \n");
 }

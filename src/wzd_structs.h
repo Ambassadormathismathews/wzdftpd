@@ -535,12 +535,11 @@ typedef struct {
   tls_type_t	tls_type;
   unsigned long	shm_key;
   CHTBL          * commands_list;
-  struct wzd_command_perm_t	* perm_list;
+/*  struct wzd_command_perm_t	* perm_list;*/
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
   wzd_param_t		* param_list;
-/*  wzd_bw_limiter	* limiter_ul;
-  wzd_bw_limiter	* limiter_dl;*/
+
   wzd_bw_limiter	global_ul_limiter;
   wzd_bw_limiter	global_dl_limiter;
   wzd_site_config_t	site_config;

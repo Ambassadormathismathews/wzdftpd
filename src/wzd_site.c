@@ -997,7 +997,6 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   wzd_string_t * command_name, * perm_name, * ptr;
   char perm_buffer[256];
   char buffer[2048];
-  wzd_command_perm_t * current;
   wzd_command_t * command;
   int ret;
 
@@ -1012,7 +1011,6 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   {
     str_deallocate(command_name);
     send_message_raw("200-\r\n",context);
-    current = mainConfig->perm_list;
     if ( !perm_name ) {
       /* no argument: print all perms */
       List * list;

@@ -49,13 +49,13 @@ struct wzd_command_perm_t {
 
 int perm_is_valid_perm(const char *permname);
 
-wzd_command_perm_t * perm_find(const char *commandname, wzd_config_t * config);
+wzd_command_perm_t * perm_find(const char *commandname, wzd_command_perm_t * perm_list);
 wzd_command_perm_t * perm_find_create(const char *permname, wzd_command_perm_t ** perm_list);
 wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd_command_perm_t * command_perm);
 wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_command_perm_t * command_perm);
 
 int perm_add_perm(const char *permname, const char *permline, wzd_command_perm_t ** perm_list);
-int perm_remove(const char *commandname, wzd_config_t * config);
+int perm_remove(const char *commandname, wzd_command_perm_t ** perm_list);
 
 void perm_free_recursive(wzd_command_perm_t * perm);
 
@@ -66,7 +66,7 @@ void perm_free_recursive(wzd_command_perm_t * perm);
 int perm_check_perm(const wzd_command_perm_t *perm, const wzd_context_t * context);
 
 /* returns 0 if ok, 1 otherwise */
-int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config);
+int perm_check(const char *permname, const wzd_context_t * context, wzd_command_perm_t * perm_list);
 
 /** Format command permission to a printable string
  * note: result string will start with a space

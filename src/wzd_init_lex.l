@@ -349,7 +349,6 @@ int set_default_options(void)
   tempConfig.commands_list = NULL;
   commands_init(&tempConfig.commands_list);
   commands_add_defaults(tempConfig.commands_list);
-  tempConfig.perm_list = NULL;
   tempConfig.site_list = NULL;
   tempConfig.section_list = NULL;
   tempConfig.param_list = NULL;
