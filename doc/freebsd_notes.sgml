@@ -13,6 +13,7 @@ To install wzdftpd use the following commands:
     $ cd /usr/ports/ftp/wzdftpd
     # make
     # make install
+    # make clean
 </programlisting>
 
 To compile wzdftpd with SSL support, use <filename>WITH_SSL</filename> knob.
