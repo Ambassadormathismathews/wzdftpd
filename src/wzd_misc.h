@@ -63,6 +63,8 @@ wzd_user_t * GetUserByID(unsigned int id);
 wzd_user_t * GetUserByName(const char *name);
 wzd_group_t * GetGroupByID(unsigned int id);
 wzd_group_t * GetGroupByName(const char *name);
+unsigned int GetUserIDByName(const char *name);
+unsigned int GetGroupIDByName(const char *name);
 
 /* wrappers to context list */
 void * GetMyContext(void);

@@ -362,7 +362,7 @@ void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int for
   unsigned int bw_rate;
 
   if (!l) return;
-  if (l->maxspeed == 0) return;
+/*  if (l->maxspeed == 0) return;*/
 
 wzd_sem_lock(sem,1);
   l->bytes_transfered += byte_count;
@@ -376,9 +376,11 @@ wzd_sem_unlock(sem,1);
     elapsed = (double) (tv.tv_sec - l->current_time.tv_sec);
     elapsed += (double) (tv.tv_usec - l->current_time.tv_usec) / (double)1000000;
     if (elapsed==(double)0) elapsed=0.01;
-    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);;
+/*    bw_rate = (unsigned int)((double)l->bytes_transfered / elapsed);*/
+    l->current_speed = (float)((double)l->bytes_transfered / elapsed);
+    bw_rate = (unsigned int)l->current_speed;
 /*  }*/
-  if (bw_rate <= l->maxspeed) {
+  if (l->maxspeed == 0 || bw_rate <= l->maxspeed) {
     return;
   }
   rate_ratio = (double)bw_rate / (double)l->maxspeed;
@@ -585,6 +587,13 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         cookielength = strlen(cookie);
         srcptr += 7; /* strlen("lastcmd"); */
       }
+      /* leechslots */
+      if (strncmp(srcptr,"leechslots",10)==0) {
+	snprintf(tmp_buffer,4096,"%hu",user->leech_slots);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 10; /* strlen("leechslots"); */
+      }
       /* maxdl */
       if (strncmp(srcptr,"maxdl",5)==0) {
 	snprintf(tmp_buffer,4096,"%ld",user->max_dl_speed);
@@ -635,6 +644,13 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
 	}
       }
 #endif /* WZD_MULTIPROCESS */
+      /* slots */
+      if (strncmp(srcptr,"slots",5)==0) {
+	snprintf(tmp_buffer,4096,"%hu",user->user_slots);
+	cookie = tmp_buffer;
+        cookielength = strlen(cookie);
+        srcptr += 5; /* strlen("slots"); */
+      }
       /* speed */
       if (strncmp(srcptr,"speed",5)==0) {
         if (strncasecmp(param_context->last_command,"retr",4)==0) {
@@ -1204,6 +1220,42 @@ wzd_group_t * GetGroupByName(const char *name)
 
   return NULL;
 }
+
+unsigned int GetUserIDByName(const char *name)
+{
+  int i=0;
+  if (!mainConfig->user_list || !name || strlen(name)<=0) return 0;
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (mainConfig->user_list[i].username[0] != '\0') {
+      if (strcmp(name,mainConfig->user_list[i].username)==0)
+	return i;
+    }
+    i++;
+  }
+
+  return 0;
+}
+
+
+unsigned int GetGroupIDByName(const char *name)
+{
+  unsigned int i=0;
+  if (!mainConfig->group_list || !name || strlen(name)<=0) return 0;
+
+  while (i<HARD_DEF_GROUP_MAX)
+  {
+    if (mainConfig->group_list[i].groupname[0] != '\0') {
+      if (strcmp(name,mainConfig->group_list[i].groupname)==0)
+	return i;
+    }
+    i++;
+  }
+
+  return 0;
+}
+
 
 /* wrappers to context list */
 void * GetMyContext(void)
