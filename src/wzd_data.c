@@ -60,6 +60,7 @@
 #include "wzd_ClientThread.h"
 #include "wzd_messages.h"
 #include "wzd_file.h"
+#include "wzd_libmain.h"
 #include "wzd_mod.h"
 #include "wzd_data.h"
 #include "wzd_socket.h"

@@ -71,6 +71,7 @@
 #include "wzd_vfs.h"
 #include "wzd_crc32.h"
 #include "wzd_file.h"
+#include "wzd_libmain.h"
 #include "wzd_perm.h"
 #include "wzd_ratio.h"
 #include "wzd_section.h"

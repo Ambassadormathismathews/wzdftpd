@@ -10,10 +10,12 @@ lib_LTLIBRARIES = libwzd_core.la
 libwzd_core_ladir = ${e_prefix}/include/wzdftpd
 
 libwzd_core_la_HEADERS = \
+	ls.h             \
 	wzd_action.h     \
 	wzd_all.h        \
 	wzd_backend.h    \
 	wzd_cache.h      \
+	wzd_ClientThread.h \
 	wzd_commands.h   \
 	wzd_crc32.h  	 \
 	wzd_crontab.h	 \
@@ -30,14 +32,16 @@ libwzd_core_la_HEADERS = \
 	wzd_mod.h        \
 	wzd_mutex.h      \
 	wzd_perm.h       \
+	wzd_ratio.h      \
 	wzd_section.h    \
 	wzd_shm.h        \
-	wzd_site.h         \
-	wzd_site_group.h   \
-	wzd_site_user.h    \
-	wzd_socket.h       \
+	wzd_site.h       \
+	wzd_site_group.h \
+	wzd_site_user.h  \
+	wzd_socket.h     \
 	wzd_string.h     \
 	wzd_structs.h    \
+	wzd_tls.h        \
 	wzd_types.h      \
 	wzd_utf8.h       \
 	wzd_vars.h       \
@@ -47,10 +51,12 @@ libwzd_core_la_SOURCES = \
 	${libwzd_core_la_HEADERS} \
 	inet_ntop.c      \
 	inet_pton.c      \
+	ls.c             \
 	wzd_action.c     \
 	wzd_all.c        \
 	wzd_backend.c    \
 	wzd_cache.c      \
+	wzd_ClientThread.c \
 	wzd_commands.c   \
 	wzd_crc32.c      \
 	wzd_crontab.c    \
@@ -66,13 +72,15 @@ libwzd_core_la_SOURCES = \
 	wzd_mod.c        \
 	wzd_mutex.c      \
 	wzd_perm.c       \
+	wzd_ratio.c      \
 	wzd_section.c    \
 	wzd_shm.c        \
-	wzd_site.c         \
-	wzd_site_group.c   \
-	wzd_site_user.c    \
-	wzd_socket.c       \
+	wzd_site.c       \
+	wzd_site_group.c \
+	wzd_site_user.c  \
+	wzd_socket.c     \
 	wzd_string.c     \
+	wzd_tls.c        \
 	wzd_utf8.c       \
 	wzd_vars.c       \
 	wzd_vfs.c
@@ -86,21 +94,13 @@ libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERS
 sbin_PROGRAMS = wzdftpd
 
 wzdftpd_SOURCES =    \
-	ls.c               \
-	ls.h               \
-	wzd_ClientThread.c \
-	wzd_ClientThread.h \
 	wzd_init.h         \
 	wzd_main.c         \
 	wzd_opts.h         \
-	wzd_ratio.c        \
-	wzd_ratio.h        \
 	wzd_ServerThread.c \
 	wzd_ServerThread.h \
 	wzd_savecfg.c      \
-	wzd_savecfg.h      \
-	wzd_tls.c          \
-	wzd_tls.h
+	wzd_savecfg.h
 
 nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
