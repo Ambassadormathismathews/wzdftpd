@@ -1,6 +1,6 @@
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ wzd_cache_t* wzd_cache_open(const char *file, int flags, unsigned int mode);
 /** force update of specific file, only if present in cache */
 void wzd_cache_update(const char *file);
 
-unsigned int wzd_cache_getsize(wzd_cache_t *c);
+unsigned long wzd_cache_getsize(wzd_cache_t *c);
 
 int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count);
 int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count);

@@ -1,2 +1,2 @@
-man_MANS = wzdftpd.8
-EXTRA_DIST = wzdftpd.8
+man_MANS = wzdftpd.8 siteconfig.1 siteuptime.1 sitewho.1
+EXTRA_DIST = wzdftpd.8 siteconfig.1 siteuptime.1 sitewho.1

@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -565,6 +565,15 @@ int waitaccept(wzd_context_t * context)
   unsigned int remote_port;
   int ret;
 
+  {
+    wzd_user_t * user;
+    user = GetUserByID(context->userid);
+    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->ssl.data_mode != TLS_PRIV) {
+      send_message_with_args(501,context,"Your class must use encrypted data connections");
+      return -1;
+    }
+  }
+
   sock = context->pasvsock;
   do {
     FD_ZERO(&fds);
@@ -574,7 +583,7 @@ int waitaccept(wzd_context_t * context)
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
       socket_close(sock);
-/*      send_message_with_args(501,context,"PASV timeout");*/
+      send_message_with_args(501,context,"PASV timeout");
       return -1;
     }
   } while (!FD_ISSET(sock,&fds));
@@ -584,8 +593,8 @@ int waitaccept(wzd_context_t * context)
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
     socket_close(sock);
-/*    send_message_with_args(501,context,"PASV timeout");*/
-      return -1;
+    send_message_with_args(501,context,"PASV timeout");
+    return -1;
   }
 
 #ifdef HAVE_OPENSSL
@@ -609,6 +618,15 @@ int waitconnect(wzd_context_t * context)
 {
   int sock;
   int ret;
+
+  {
+    wzd_user_t * user;
+    user = GetUserByID(context->userid);
+    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->ssl.data_mode != TLS_PRIV) {
+      send_message_with_args(501,context,"Your class must use encrypted data connections");
+      return -1;
+    }
+  }
 
   if (context->datafamily == WZD_INET4)
   {
@@ -823,7 +841,7 @@ printf("path: '%s'\n",path);
   } else { /* PASV ! */
     ret = send_message(150,context); /* about to open data connection */
     if ((sock=waitaccept(context)) <= 0) {
-      ret = send_message_with_args(501,context,"PASV connection failed");
+      /* note: reply is done in waitaccept() */
       return E_PASV_FAILED;
     }
     context->pasvsock = -1;
@@ -979,7 +997,7 @@ int do_stat(char *name, char *param, wzd_context_t * context)
 printf("path before: '%s'\n",cmd);
 #endif*/
 
-  if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
+  if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
     return E_PARAM_INVALID;
   }
@@ -1163,7 +1181,7 @@ int do_rmdir(char *name, char * param, wzd_context_t * context)
   if (!param || !param[0]) { ret = E_PARAM_NULL; goto label_error_rmdir; }
   if (strlen(param)>WZD_MAX_PATH-1) { ret = E_PARAM_BIG; goto label_error_rmdir; }
 
-  if (checkpath(param,path,context)) { ret = E_WRONGPATH; goto label_error_rmdir; }
+  if (checkpath_new(param,path,context)) { ret = E_WRONGPATH; goto label_error_rmdir; }
 
   /* if path is / terminated, lstat will return the dir itself in case
    * of a symlink
@@ -1675,7 +1693,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
     return E_PARAM_BIG;
   }
 
-  if (checkpath(param,path,context)) {
+  if (checkpath_new(param,path,context)) {
     ret = send_message_with_args(501,context,"Invalid file name");
     return E_PARAM_INVALID;
   }
@@ -1742,7 +1760,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
     if ((sock=waitaccept(context)) < 0) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
-      ret = send_message_with_args(501,context,"PASV connection failed");
+      /* note: reply is done in waitaccept() */
       return E_PASV_FAILED;
     }
   }
@@ -1833,7 +1851,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
       param = strrchr(param,'/')+1; XXX */
 
     strcpy(cmd,".");
-    if (checkpath(cmd,path,context)) {
+    if (checkpath_new(cmd,path,context)) {
       ret = send_message_with_args(501,context,"Incorrect filename");
       return E_PARAM_INVALID;
     }
@@ -1853,7 +1871,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
       *(param=strrchr(path2,'/'))='\0';
       param++;
 
-      if (checkpath(path2,path,context)) return 1;
+      if (checkpath_new(path2,path,context)) return 1;
       if (path[strlen(path)-1] != '/') strcat(path,"/");
       strlcat(path,param,WZD_MAX_PATH);
       out_err(LEVEL_FLOOD,"Resolved: %s\n",path);
@@ -1920,7 +1938,7 @@ int do_stor(char *name, char *param, wzd_context_t * context)
     if ((sock=waitaccept(context)) < 0) {
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
-      ret = send_message_with_args(501,context,"PASV connection failed");
+      /* note: reply is done in waitaccept() */
       return E_PASV_FAILED;
     }
   }
@@ -1990,7 +2008,7 @@ int do_mdtm(char *name, char *param, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-  if (!checkpath(param,path,context)) {
+  if (!checkpath_new(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
@@ -2023,7 +2041,7 @@ int do_size(char *name, char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Incorrect argument");
     return E_PARAM_INVALID;
   }
-  if (!checkpath(param,path,context)) {
+  if (!checkpath_new(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
@@ -2122,8 +2140,25 @@ int do_cwd(char *name, char *param, wzd_context_t * context)
     ret = send_message_with_args(250,context,context->currentpath," now current directory.");
     return E_OK;
   }
-  if (do_chdir(param,context)) {
-    ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?).");
+  if ( (ret=do_chdir(param,context)) ) {
+    switch (ret) {
+    case E_NOTDIR:
+      ret = send_message_with_args(550,context,param?param:"(null)","Not a directory");
+      break;
+    case E_WRONGPATH:
+      ret = send_message_with_args(550,context,param?param:"(null)","Invalid path");
+      break;
+    case E_FILE_NOEXIST:
+      ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?)");
+      break;
+    case E_FILE_FORBIDDEN:
+    case E_NOPERM:
+      ret = send_message_with_args(550,context,param?param:"(null)","Negative on that, Housont (access denied)");
+      break;
+    default:
+      ret = send_message_with_args(550,context,param?param:"(null)","chdir FAILED");
+      break;
+    }
     return E_OK;
   }
   ret = send_message_with_args(250,context,context->currentpath," now current directory.");
@@ -2139,7 +2174,7 @@ int do_dele(char *name, char *param, wzd_context_t * context)
   u64_t file_size;
   wzd_user_t * user, * owner;
 
-  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH || checkpath(param,path,context)) {
+  if (!param || strlen(param)==0 || strlen(param)>=WZD_MAX_PATH || checkpath_new(param,path,context)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
@@ -2343,7 +2378,7 @@ int do_rnfr(char *name, char *filename, wzd_context_t * context)
   char path[WZD_MAX_PATH];
   int ret;
 
-  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath(filename,path,context)) {
+  if (!filename || strlen(filename)==0 || strlen(filename)>=WZD_MAX_PATH || checkpath_new(filename,path,context)) {
     ret = send_message_with_args(550,context,"RNFR","file does not exist");
     return E_FILE_NOEXIST;
   }
@@ -2381,7 +2416,7 @@ int do_rnto(char *name, char *filename, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-  checkpath(filename,path,context);
+  checkpath_new(filename,path,context);
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
 
   /* deny retrieve to permissions file */
@@ -2478,7 +2513,7 @@ int do_xcrc(char *name, char *param, wzd_context_t * context)
     param = buffer;
   }
 
-  if (!checkpath(param,path,context)) {
+  if (!checkpath_new(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 
@@ -2560,7 +2595,7 @@ int do_xmd5(char *name, char *param, wzd_context_t * context)
     param = buffer;
   }
 
-  if (!checkpath(param,path,context)) {
+  if (!checkpath_new(param,path,context)) {
     if (path[strlen(path)-1]=='/')
       path[strlen(path)-1]='\0';
 

@@ -1,6 +1,6 @@
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,8 +63,8 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
 void file_close(int fd, wzd_context_t * context);
 
 /* wrappers just to keep things in same memory zones */
-int file_read(int fd,void *data,size_t length);
-int file_write(int fd,const void *data,size_t length);
+ssize_t file_read(int fd,void *data,size_t length);
+ssize_t file_write(int fd,const void *data,size_t length);
 
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context);
 
@@ -74,7 +74,7 @@ int file_remove(const char *filename, wzd_context_t * context);
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context);
 int file_rmdir(const char *dirname, wzd_context_t * context);
 
-int file_seek(int fd, unsigned long offset, int whence);
+off_t file_seek(int fd, unsigned long offset, int whence);
 
 wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 

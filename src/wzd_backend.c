@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,9 +48,6 @@
 #else
 #define	DL_ARG	RTLD_NOW
 #endif
-
-/* speed up compilation */
-#define	FILE	void
 
 #include "wzd_structs.h"
 
@@ -128,7 +125,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 
   /* default: current path */
   strcpy(path,".");
-  length=strlen(path); /* FIXME wtf are these 4 lines for ? */
+  length=(int)strlen(path); /* FIXME wtf are these 4 lines for ? */
   /* add a / at the end if not present - XXX will conflict if last char is \ ? */
   if (path[length-1]!='/') {
     path[length++] = '/';
@@ -239,7 +236,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
 
   /* default: current path */
   strcpy(path,".");
-  length=strlen(path); /* FIXME wtf are these 4 lines for ? */
+  length=(int)strlen(path); /* FIXME wtf are these 4 lines for ? */
   /* add a / at the end if not present - XXX will conflict if last char is \ ? */
   if (path[length-1]!='/') {
     path[length++] = '/';

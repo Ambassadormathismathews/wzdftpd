@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -798,7 +798,7 @@ static XS(XS_wzd_vars_user)
     }
 
     if (!ret)
-      XSRETURN_PV(buffer);
+      XSRETURN_PV("command ok");
     else
       XSRETURN_UNDEF;
   } /* modification command */
@@ -939,7 +939,21 @@ static XS(XS_wzd_vfs)
       /* we need to convert arg to the link name, _without_ converting the last
        * component (the link name itself), or the remove will fail
        */
-      if (checkpath(arg2,buffer_link,current_context)) XSRETURN_UNDEF;
+      if (!strcmp(arg2,"-r") || !strcmp(arg2,"--real")) {
+        /* ex: vfs link create -r c:\real linkname */
+        pos2++;
+
+        if (items < pos2+1) XSRETURN_NO;
+
+        /** \todo print error message */
+        if ( ! SvPOK(ST(pos2)) ) XSRETURN_UNDEF;
+        arg2 = SvPV_nolen(ST(pos2));
+
+        strncpy(buffer_link, arg2, sizeof(buffer_link));
+      } else {
+        if (checkpath(arg2,buffer_link,current_context))
+          XSRETURN_UNDEF;
+      }
       ret = symlink_remove(buffer_link);
     }
     else

@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -344,7 +344,7 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,username,0,0,str_perms,0,context);
+    _setPerm(buffer,username,0,0,str_perms,(unsigned long)-1,context);
   }
 
   snprintf(buffer,BUFFER_LEN,"acl successfully set");
@@ -381,7 +381,7 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,0,0,groupname,0,0,context);
+    _setPerm(buffer,0,0,groupname,0,(unsigned long)-1,context);
   }
 
   snprintf(buffer,BUFFER_LEN,"group changed to '%s'",groupname);
@@ -428,7 +428,7 @@ int do_site_chmod(char *command_line, wzd_context_t * context)
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    _setPerm(buffer,username,0,0,str_perms,0,context);*/
+/*    _setPerm(buffer,username,0,0,str_perms,(unsigned long)-1,context);*/
     _setPerm(buffer,0,0,0,0,long_perms,context);
   }
 
@@ -467,7 +467,7 @@ int do_site_chown(char *command_line, wzd_context_t * context)
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
     if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
 /*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,0,username,0,0,0,context);
+    _setPerm(buffer,0,username,0,0,(unsigned long)-1,context);
   }
 
   snprintf(buffer,BUFFER_LEN,"owner changed to '%s'",username);
@@ -1196,6 +1196,9 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
 /********************* do_site_savecfg *********************/
 int do_site_savecfg(char *command_line, wzd_context_t * context)
 {
+  send_message_with_args(501,context,"Not yet implemented");
+  return 1;
+
   if( wzd_savecfg() )
     send_message_with_args(501,context,"Cannot save server config");
   else

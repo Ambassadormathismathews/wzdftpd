@@ -14,7 +14,28 @@ They will be used exactly as other SITE commands.
 If the command needs arguments you just have to specify them after the command.
 You can use cookies in the arguments, they will be replaced as usual.
 <screen>site_cmd = rescan /path/to/rescan.sh %username</screen>
+</para>
 
+<para>
+If user gives some arguments to command they will be passed to the program. If
+you add some arguments after the command path they will always be passed to
+the program, followed by arguments given by user if needed.
+</para>
+
+<para>
+Exemple: with the previous definition of the 'rescan' command, the command
+<programlisting>site rescan /dir
+</programlisting>
+run by user 'foo' will make the server run the following command:
+<programlisting>/path/to/rescan.sh foo /dir
+</programlisting>
+</para>
+
+<para>
+If the command name contains spaces, quote it ("/path/to my/command")
+</para>
+
+<para>
 <emphasis>NOTE: </emphasis>remember that SITE commands are not allowed by
 default, so you must add a permission line in your config file, or your command
 will not be accessible.
@@ -35,21 +56,21 @@ If the command needs arguments you just have to specify them after the command.
 You can use cookies in the arguments, they will be replaced as usual.
 <screen>cscript = POSTUPLOAD /path/to/my/zipscript.sh %username</screen>
 <table frame='all' id="table_events">
-<title>Events</title>
-<tgroup cols="2" align='left' colsep='0' rowsep='0'>
-<tbody>
-<row><entry>Event</entry><entry>Description</entry></row>
-
-<row><entry>LOGIN</entry><entry>User logged in</entry></row>
-<row><entry>LOGOUT</entry><entry>User logged out, or timed out</entry></row>
-<row><entry>MKDIR</entry><entry>User created a directory</entry></row>
-<row><entry>RMDIR</entry><entry>User removed a directory</entry></row>
-<row><entry>PREUPLOAD</entry><entry>User is about to upload file</entry></row>
-<row><entry>POSTUPLOAD</entry><entry>User finished an upload</entry></row>
-<row><entry>PREDOWNLOAD</entry><entry>User is about to download file</entry></row>
-<row><entry>POSTDOWNLOAD</entry><entry>User finished a download</entry></row>
-</tbody>
-</tgroup>
+ <title>Events</title>
+ <tgroup cols="2" align='left' colsep='0' rowsep='0'>
+ <tbody>
+ <row><entry>Event</entry><entry>Description</entry></row>
+ 
+ <row><entry>LOGIN</entry><entry>User logged in</entry></row>
+ <row><entry>LOGOUT</entry><entry>User logged out, or timed out</entry></row>
+ <row><entry>MKDIR</entry><entry>User created a directory</entry></row>
+ <row><entry>RMDIR</entry><entry>User removed a directory</entry></row>
+ <row><entry>PREUPLOAD</entry><entry>User is about to upload file</entry></row>
+ <row><entry>POSTUPLOAD</entry><entry>User finished an upload</entry></row>
+ <row><entry>PREDOWNLOAD</entry><entry>User is about to download file</entry></row>
+ <row><entry>POSTDOWNLOAD</entry><entry>User finished a download</entry></row>
+ </tbody>
+ </tgroup>
 </table>
 </para>
 

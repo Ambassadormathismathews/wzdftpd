@@ -23,7 +23,7 @@ tools section of wzdftpd)</para></listitem>
 
 <para>
 Simply copy files wzdftpd.tcl and wzdftpd.help in your eggdrop's scripts
-directory.
+directory (ask kakao on IRC for these files until he put them on the forum ;)
 </para>
 
 </simplesect>

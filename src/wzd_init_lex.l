@@ -80,6 +80,7 @@ typedef enum {
   CFG_BACKEND_PARAM,
   CFG_CRONJOB,
   CFG_CSCRIPT,
+  CFG_DATABUFFER_LENGTH,
   CFG_DENY_ACCESS_FUP,
   CFG_DIR_MESSAGE,
   CFG_DYNAMIC_IP,
@@ -210,6 +211,7 @@ unsigned int cfg_is_keyword(char *word)
     return CFG_BACKEND_PARAM;
   if (!strcmp(word,"cronjob")) return CFG_CRONJOB;
   if (!strcmp(word,"cscript")) return CFG_CSCRIPT;
+  if (!strcmp(word,"data_buffer_length")) return CFG_DATABUFFER_LENGTH;
   if (!strcmp(word,"deny_access_files_uploaded")) return CFG_DENY_ACCESS_FUP;
   if (!strcmp(word,"dir_message")) return CFG_DIR_MESSAGE;
   if (!strcmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
@@ -618,6 +620,36 @@ int cfg_read_cscript(void)
 }
 
 
+/* DATA BUFFER LENGTH (unsigned int)
+*/
+int cfg_read_data_buffer_length(void)
+{
+  unsigned int token;
+  unsigned long l;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'data_buffer_length = num'\n");
+    return 1;
+  }
+
+  if( (token=yylex()) != CFG_NUM ) {
+    out_err(LEVEL_HIGH,"line should be 'data_buffer_length = num'\n");
+    return 1;
+  }
+
+  errno = 0;
+  l = strtoul(yytext,(char**)NULL, 0);
+  if (errno==ERANGE)
+    return 1;
+
+  if (l) {
+    tempConfig.data_buffer_length = l;
+  }
+
+  return 0;
+}
+
 /* DENY_ACCESS_FILES_UPLOADED (integer)
 */
 int cfg_read_deny_access_fup(void)
@@ -795,6 +827,9 @@ int cfg_read_internal_sfv(void)
 {
   unsigned int token;
   unsigned long l;
+
+  out_err(LEVEL_HIGH,"This option has been replaced by the SFV module (see docs).");
+  return 1;
 
   token = yylex();
   if (token!='=') {
@@ -1899,6 +1934,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_CSCRIPT:
       ret = cfg_read_cscript();
+      break;
+    case CFG_DATABUFFER_LENGTH:
+      ret = cfg_read_data_buffer_length();
       break;
     case CFG_DENY_ACCESS_FUP:
       ret = cfg_read_deny_access_fup();

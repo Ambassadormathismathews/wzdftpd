@@ -1,0 +1,43 @@
+.TH sitewho 1 "March 2004" "sitewho (wzdftpd)" "wzdftpd tools"
+.\" Process with
+.\" groff -man -Tascii sitewho.1 
+.\"
+.SH NAME
+sitewho \- show current process information for each FTP session (wzdftpd)
+.SH SYNOPSIS
+.B sitewho [OPTION]
+.SH DESCRIPTION
+The
+.BI sitewho
+command shows process information for all active wzdftpd connections,
+and a count of all connected users off of each server.
+.SH OPTIONS
+.TP 12
+.B \-h
+Display a short usage description, including all available options.
+.TP
+.BI \-k " shm_key"
+Specify the key used to find shared memory segment (configured
+via the \fBshm_key\fP directive in
+.I wzd.cfg
+).
+.TP
+.PD
+.BR
+.SH AUTHORS
+.PP
+wzdftpd is written and maintained by Pierre Chifflier <chifflier@cpe.fr>,
+and some others contributors, full credits can be found in
+.BR /usr/share/doc/wzdftpd/AUTHORS
+.PD
+.SH SEE ALSO
+.BR wzdftpd(8), ftp(1), siteconfig(1), siteuptime(1)
+.PP
+Full documentation on wzdftpd, including configuration and FAQs, is available at
+.BR http://www.wzdftpd.net
+.PP 
+For help/support, try the wzdftpd mailing lists, detailed on
+.BR http://sourceforge.net/mail/?group_id=78247
+.PP
+Report bugs at
+.BR http://www.wzdftpd.net/smf/index.php

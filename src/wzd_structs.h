@@ -1,6 +1,6 @@
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -273,9 +273,10 @@ typedef struct {
 #define	FLAG_SEE_HOME	't'
 #define	FLAG_HIDDEN	'H'
 #define	FLAG_GADMIN	'G'
-#define	FLAG_TLS	'k'	/* explicit and implicit connections only */
-#define	FLAG_ANONYMOUS	'A'	/* anonymous users cannot modify filesystem */
-#define	FLAG_COLOR	'5'	/* enable use of colors */
+#define	FLAG_TLS	'k'	/**< explicit and implicit connections only */
+#define	FLAG_TLS_DATA	'K'	/**< user must use encrypted data connection */
+#define	FLAG_ANONYMOUS	'A'	/**< anonymous users cannot modify filesystem */
+#define	FLAG_COLOR	'5'	/**< enable use of colors */
 
 /************************ MODULES *************************/
 

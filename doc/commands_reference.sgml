@@ -78,35 +78,37 @@ site change &lt;user&gt; &lt;field&gt; &lt;value&gt;
 <listitem>
 <para>Change a field for a user.
 <informaltable id="table_changes">
-<tgroup cols="2">
-<tbody>
-<row><entry>Field</entry><entry>Description</entry></row>
-
-<row><entry>name</entry><entry>This will change the user's login name.
-<emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
-<row><entry>pass</entry><entry>This will change the user's password.
-This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
-<row><entry>homedir</entry><entry>This will change the user's homedir.</entry></row>
-<row><entry>tagline</entry><entry>User's tagline.
-This is similar to the <link linkend='site_tagline'>site tagline</link> command</entry></row>
-<row><entry>group</entry><entry>Add / remove user from group.
-<link linkend='site_chgrp'>site chgrp</link> command is better, as it can
-handle several group changes in one command</entry></row>
-<row><entry>max_idle</entry><entry>Set the maximum idle time for this user.
-See the <link linkend='site_idle'>site idle</link> command</entry></row>
-<row><entry>perms</entry><entry>Set user's default perms (All: 0xffffffff, retrieve only:
-0x03).
-<emphasis>This command will change</emphasis></entry></row>
-<row><entry>flags</entry><entry>Set user's flags.
-This is similar to the <link linkend='site_flags'>site flags</link> command
-For flags info see <link linkend='table_flags'>Flags Table</link>.</entry></row>
-<row><entry>max_ul</entry><entry>Upstream bandwidth control in bytes/sec
-(0 = Unlimited).</entry></row>
-<row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
-<row><entry>ratio</entry><entry>User ratio</entry></row>
-<row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
-</tbody>
-</tgroup>
+ <tgroup cols="2">
+ <tbody>
+ <row><entry>Field</entry><entry>Description</entry></row>
+ 
+ <row><entry>name</entry><entry>This will change the user's login name.
+ <emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
+ <row><entry>pass</entry><entry>This will change the user's password.
+ This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
+ <row><entry>homedir</entry><entry>This will change the user's homedir.</entry></row>
+ <row><entry>tagline</entry><entry>User's tagline.
+ This is similar to the <link linkend='site_tagline'>site tagline</link> command</entry></row>
+ <row><entry>group</entry><entry>Add / remove user from group.
+ <link linkend='site_chgrp'>site chgrp</link> command is better, as it can
+ handle several group changes in one command</entry></row>
+ <row><entry>max_idle</entry><entry>Set the maximum idle time for this user.
+ See the <link linkend='site_idle'>site idle</link> command</entry></row>
+ <row><entry>perms</entry><entry>Set user's default perms (All: 0xffffffff, retrieve only:
+ 0x03).
+ <emphasis>This command will change</emphasis></entry></row>
+ <row><entry>flags</entry><entry>Set user's flags.
+  This is similar to the <link linkend='site_flags'>site flags</link> command
+  For flags info see <link linkend='table_flags'>Flags Table</link>.
+  You can use '+flag' or '-flag' to add or remove flags, otherwise
+  it will replace all existing flags.</entry></row>
+ <row><entry>max_ul</entry><entry>Upstream bandwidth control in bytes/sec
+ (0 = Unlimited).</entry></row>
+ <row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
+ <row><entry>ratio</entry><entry>User ratio</entry></row>
+ <row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
+ </tbody>
+ </tgroup>
 </informaltable>
 </para>
 <para>If you are a gadmin, you can only change users from your group (except homedir, flags, and groups).</para>
@@ -277,7 +279,7 @@ In order to fully delete this user you will need to do a 'site purge'
 </varlistentry>
 
 <varlistentry id='site_flags'><term>
-site flags [&lt;user&gt;]
+site flags [&lt;user&gt;] [&lt;newflags&gt;]
 </term>
 <listitem>
 <para>Display a user's flags.</para>
@@ -286,26 +288,32 @@ site flags [&lt;user&gt;]
 <screen>site flags toto</screen>
 <para>This will show flags of user toto</para>
 <table frame='all'  id="table_flags">
-<title>Flags</title>
-<tgroup cols="3" align='left' colsep='0' rowsep='0'>
-<tbody>
-<row><entry>Flagname</entry><entry>Flag</entry><entry>Description</entry></row>
-
-<row><entry>SITEOP</entry><entry>O</entry><entry>User is siteop</entry></row>
-<row><entry>GADMIN</entry><entry>G</entry><entry>User is groupadmin of his/her
-first public group<superscript>*</superscript></entry></row>
-<row><entry>DELETED</entry><entry>D</entry><entry>User is deleted</entry></row>
-<row><entry>IDLER</entry><entry>I</entry><entry>User is allowed to idle forever</entry></row>
-<row><entry>SEE_IP</entry><entry>s</entry><entry>User is allowed to see other's ip</entry></row>
-<row><entry>SEE_HOME</entry><entry>t</entry><entry>User is allowed to see other's home</entry></row>
-<row><entry>HIDDEN</entry><entry>H</entry><entry>User will not appear in site who</entry></row>
-<row><entry>TLS</entry><entry>k</entry><entry>User will be forced to use TLS/SSL connections</entry></row>
-<row><entry>ANONYMOUS</entry><entry>A</entry><entry>User cannot make any modifications</entry></row>
-<row><entry>COLOR</entry><entry>5</entry><entry>Enable the use of color (toggle with
-<link linkend='site_color'>site color</link>)</entry></row>
-</tbody>
-</tgroup>
+ <title>Flags</title>
+ <tgroup cols="3" align='left' colsep='0' rowsep='0'>
+ <tbody>
+ <row><entry>Flagname</entry><entry>Flag</entry><entry>Description</entry></row>
+ 
+ <row><entry>SITEOP</entry><entry>O</entry><entry>User is siteop</entry></row>
+ <row><entry>GADMIN</entry><entry>G</entry><entry>User is groupadmin of his/her
+ first public group<superscript>*</superscript></entry></row>
+ <row><entry>DELETED</entry><entry>D</entry><entry>User is deleted</entry></row>
+ <row><entry>IDLER</entry><entry>I</entry><entry>User is allowed to idle forever</entry></row>
+ <row><entry>SEE_IP</entry><entry>s</entry><entry>User is allowed to see other's ip</entry></row>
+ <row><entry>SEE_HOME</entry><entry>t</entry><entry>User is allowed to see other's home</entry></row>
+ <row><entry>HIDDEN</entry><entry>H</entry><entry>User will not appear in site who</entry></row>
+ <row><entry>TLS</entry><entry>k</entry><entry>User will be forced to use TLS/SSL connections</entry></row>
+ <row><entry>TLS_DATA</entry><entry>K</entry><entry>User will be forced to use TLS/SSL data connections</entry></row>
+ <row><entry>ANONYMOUS</entry><entry>A</entry><entry>User cannot make any modifications</entry></row>
+ <row><entry>COLOR</entry><entry>5</entry><entry>Enable the use of color (toggle with
+ <link linkend='site_color'>site color</link>)</entry></row>
+ </tbody>
+ </tgroup>
 </table>
+<para>If a second argument is provided, it will be used to change flags for
+ user.
+ You can use '+flag' or '-flag' to add or remove flags, otherwise
+ it will replace all existing flags.
+</para>
 <para>*NOTE* If you have flag O then you do NOT want flag G</para>
 <para>If you are a gadmin, you can only change users from your group.</para>
 </listitem>

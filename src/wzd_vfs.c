@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,9 +42,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #endif
-
-/* speed up compilation */
-#define	FILE	void
 
 #include "wzd_structs.h"
 
@@ -283,7 +280,7 @@ out_err(LEVEL_HIGH,"converted to %s\n",buf);
 char * vfs_replace_cookies(const char * path, wzd_context_t * context)
 {
   char buffer[2*WZD_MAX_PATH];
-  unsigned int length, needed;
+  size_t length, needed;
   char * out=NULL;
   const char * ptr_in;
   char * ptr_out;

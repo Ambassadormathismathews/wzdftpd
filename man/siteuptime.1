@@ -1,20 +1,17 @@
-.TH sitewho 1 "March 2004" "sitewho (wzdftpd)" "wzdftpd tools"
+.TH siteuptime 1 "March 2004" "siteuptime (wzdftpd)" "wzdftpd tools"
 .\" Process with
-.\" groff -man -Tascii sitewho.1 
+.\" groff -man -Tascii siteuptime.1 
 .\"
 .SH NAME
-sitewho \- show current process information for each FTP session (wzdftpd)
+siteuptime \- show current uptime for FTP server (wzdftpd)
 .SH SYNOPSIS
-.B sitewho [OPTION]
+.B siteuptime [OPTION]
 .SH DESCRIPTION
 The
-.BI sitewho
-command shows process information for all active wzdftpd connections,
-and a count of all connected users off of each server..SH OPTIONS
+.BI siteuptime
+command shows current uptime for wzdftpd.
+.SH OPTIONS
 .TP 12
-.B \-h
-Display a short usage description, including all available options.
-.TP
 .BI \-k " shm_key"
 Specify the key used to find shared memory segment (configured
 via the \fBshm_key\fP directive in
@@ -30,7 +27,7 @@ and some others contributors, full credits can be found in
 .BR /usr/share/doc/wzdftpd/AUTHORS
 .PD
 .SH SEE ALSO
-.BR wzdftpd(1), ftp(1), siteconfig(1), siteuptime(1)
+.BR wzdftpd(8), ftp(1), siteconfig(1), sitewho(1)
 .PP
 Full documentation on wzdftpd, including configuration and FAQs, is available at
 .BR http://www.wzdftpd.net
@@ -39,4 +36,4 @@ For help/support, try the wzdftpd mailing lists, detailed on
 .BR http://sourceforge.net/mail/?group_id=78247
 .PP
 Report bugs at
-.BR http://www.wzdftpd.net/yabbse/index.php
+.BR http://www.wzdftpd.net/smf/index.php

@@ -135,7 +135,8 @@ message, else 0</entry></row>
 (read-only)</entry></row>
 <row><entry>pasv_low</entry><entry>Passive range lower bound</entry></row>
 <row><entry>pasv_high</entry><entry>Passive range upper bound</entry></row>
-<row><entry>port</entry><entry>The port the server is currently binded to</entry></row>
+<row><entry>port</entry><entry>The port the server is currently binded to
+(read-only)</entry></row>
 <row><entry>uptime</entry><entry>time elapsed since server start (read-only)</entry></row>
 </tbody>
 </tgroup>
@@ -151,24 +152,24 @@ message, else 0</entry></row>
 The following variable names are available for vars_user get/set:</para>
 
 <table frame='all' id="table_vars_user">
-<title>User variables</title>
-<tgroup cols="2" align='left' colsep='0' rowsep='0'>
-<tbody>
-<row><entry>Variable</entry><entry>Description</entry></row>
-
-<row><entry>group</entry><entry>The main group of the user</entry></row>
-<row><entry>home</entry><entry>User's home directory</entry></row>
-<row><entry>max_dl</entry><entry>User's download limit</entry></row>
-<row><entry>max_ul</entry><entry>User's upload limit</entry></row>
-<row><entry>name</entry><entry>User's login name</entry></row>
-<row><entry>tag</entry><entry>User's tagline (or description)</entry></row>
-</tbody>
-</tgroup>
+ <title>User variables</title>
+ <tgroup cols="2" align='left' colsep='0' rowsep='0'>
+ <tbody>
+ <row><entry>Variable</entry><entry>Description</entry></row>
+ 
+ <row><entry>credits</entry><entry>User credits (0 means unlimited)</entry></row>
+ <row><entry>group</entry><entry>The main group of the user</entry></row>
+ <row><entry>home</entry><entry>User's home directory</entry></row>
+ <row><entry>max_dl</entry><entry>User's download limit</entry></row>
+ <row><entry>max_ul</entry><entry>User's upload limit</entry></row>
+ <row><entry>name</entry><entry>User's login name</entry></row>
+ <row><entry>tag</entry><entry>User's tagline (or description)</entry></row>
+ </tbody>
+ </tgroup>
 </table>
 
 <para><emphasis>addip, delip, flags, leech_slots, max_idle, num_logins, pass,
 perms, ratio, user_slots ?</emphasis></para>
-<para><emphasis>vars_user get use TAG, and var_user set use TAGLINE ?!</emphasis></para>
 
 </simplesect>
 
@@ -195,7 +196,6 @@ The following variable names are available for vars_group get/set:</para>
 </table>
 
 <para><emphasis>addip, delip, max_idle, num_logins, perms, ratio ?</emphasis></para>
-<para><emphasis>vars_group get use TAG, and var_group set use TAGLINE ?!</emphasis></para>
 
 </simplesect>
 

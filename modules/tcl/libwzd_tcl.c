@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -716,10 +716,19 @@ static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *ar
       ret = symlink_create(buffer_real,buffer_link);
     }
     else if (!strcmp(argv[2],"remove")) {
+      pos2 = 3;
       /* we need to convert arg to the link name, _without_ converting the last
        * component (the link name itself), or the remove will fail
        */
-      if (checkpath(argv[3],buffer_link,current_context)) return TCL_ERROR;
+      if (!strcmp(argv[pos2],"-r") || !strcmp(argv[pos2],"--real")) {
+        /* ex: vfs link create -r c:\real linkname */
+        pos2++;
+        if (argc <= pos2) return TCL_ERROR;
+        strncpy(buffer_link, argv[pos2], sizeof(buffer_link));
+      } else {
+        if (checkpath(argv[pos2],buffer_link,current_context))
+          return TCL_ERROR;
+      }
       ret = symlink_remove(buffer_link);
     }
     else

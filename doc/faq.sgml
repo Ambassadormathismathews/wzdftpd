@@ -151,6 +151,18 @@ Add the definition to your config file:
 
 </qandadiv>
 
+<qandadiv><title>Backends</title>
+
+<qandaentry id='faq_edit_users'>
+ <question><para>Can I edit the file 'users' ?</para></question>
+ <answer><para>
+ Yes, but carefully ! You must edit it offline (or the server will overwrite
+ the file on next modification or at server exit).
+ </para></answer>
+</qandaentry>
+
+</qandadiv>
+
 </qandaset>
 
 </chapter>

@@ -59,7 +59,7 @@ passive ip accordingly</para></listitem>
 <para>In order to compile wzdftpd you need the following:
 <itemizedlist>
 <listitem><screen>a C compiler</screen>
-<para>compilation has been tested with gcc versions 2.95, 3.0 to 3.3; and icc (Intel C
+<para>compilation has been tested with gcc versions 2.95, 3.0 to 3.4; and icc (Intel C
 Compiler)
 </para></listitem>
 <listitem><screen>flex</screen>
@@ -76,7 +76,7 @@ The following packages are optional, depending on your configuration
 <para>Required only if you want to compile from cvs. CVS build assumes you have
 basic knowledge of autotools. The following should run all autotools and
 configure package for you:
-<programlisting>./autogen.sh [arguments to ./configure if any]</programlisting>
+<programlisting>./bootstrap</programlisting>
 </para></listitem>
 <listitem><para>OpenSSL development headers and libraries</para>
 <para>Required only if you want to compile with SSL support enabled.

@@ -12,52 +12,24 @@
 
 <para>Wildcards are accepted</para>
 
-<para>There are 3 types of ip supported by wzdftpd, each with a different behaviour
-<variablelist>
-
-<varlistentry><term>numeric ip: xxx.xxx.xxx.xxx</term>
-<listitem>
-<para>This will store the current ip in the authorized list.
-<screen>ip = 127.0.0.1</screen>
-<screen>ip = 127.0.0.*</screen>
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>hostname, resolved by ip: +host.domain.com</term>
-<listitem>
-<para>The name 'host.domain.com' will be converted to an ip and then compared
-to the ip of the user.
-<screen>ip = +hostname.domain.com</screen>
-</para>
-<para>With this syntax you <emphasis>can't</emphasis> use wildcards, as
-it won't be accepted in the name resolution.</para>
-<para><emphasis>IMPORTANT :</emphasis>DNS lookups can slow down connection !</para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term>hostname, resolved by name: -host.domain.com</term>
-<listitem>
-<para>The ip of the connected user will be converted to a name using a DNS
-reverse lookup, and then compared to 'host.domain.com'.
-<screen>ip = -*.nerim.net</screen>
-<screen>ip = -hostname.domain.com</screen>
-</para>
-<para><emphasis>IMPORTANT :</emphasis>DNS lookups can slow down connection !</para>
-</listitem>
-</varlistentry>
-
-</variablelist>
+<para>You can use dynamic ip (e.g xxx.no-ip.com), server will resolve it at
+runtime.
 </para>
 
 <para>When you specify an ip, it means all ident from this ip address are allowed.
 If you want to restrict connection for a specific ident: just add 'ident@' in front
 of the ip.
 </para>
-<screen>ip = ident@+host.domain.com</screen>
+<screen>ip = ident@host.domain.com</screen>
 <para><emphasis>IMPORTANT: This option is DIFFERENT from other ftpd's</emphasis>
 . Instead of specifying '*@ip'¸ just write the ip (wzdftpd understands the fact you
 don't give any ident as an implicit authorization for all idents).
+</para>
+
+<para>
+ <emphasis>NOTE for 0.3 users: signs in front of ip have disappeared and are
+ no more needed (+ and -). Just remove them.
+ </emphasis>
 </para>
 
 </simplesect>
@@ -261,6 +233,18 @@ certain commands.
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_data_buffer_length'><term>data_buffer_length (default: 16384)
+   <emphasis>(ADVANCED, > 0.3.3)</emphasis></term>
+ <listitem>
+  <para>Change the size of the internal buffer used for data transfers.
+  <screen>data_buffer_length = 65536</screen>
+  </para>
+  <para><emphasis>Use this option carefully !</emphasis> This can havea big impact
+  on transfer rates.
+  </para>
+ </listitem>
+</varlistentry>
+
 <varlistentry id='cfg_deny_files_uploaded'><term>deny_files_uploaded (default:
 0)</term>
 <listitem>
@@ -280,15 +264,15 @@ if present will append it to the end of the ftp reply.
 </varlistentry>
 
 <varlistentry id='cfg_dynamicip'><term>dynamic_ip (default: 0)</term>
-<listitem>
-<para>If you specify 1 ou an ip, the server will try to detect ip changes (e.g
-ADSL disconnections).
-<screen>dynamic_ip = 1</screen>
-<screen>dynamic_ip = +xxx.myftp.org</screen>
-</para>
-<para>0 means the option is deactivated, 1 the server will ask the system to
-find its ip, +ip the server will perform DNS lookups</para>
-</listitem>
+ <listitem>
+ <para>If you specify 1 ou an ip, the server will try to detect ip changes (e.g
+ ADSL disconnections).
+ <screen>dynamic_ip = 1</screen>
+ <screen>dynamic_ip = xxx.myftp.org</screen>
+ </para>
+ <para>0 means the option is deactivated, 1 the server will ask the system to
+ find its ip, otherwise the server will perform DNS lookups</para>
+ </listitem>
 </varlistentry>
 
 <varlistentry id='cfg_force_shm_cleanup'><term>force_shm_cleanup (default:

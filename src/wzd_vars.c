@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -169,6 +169,14 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     snprintf(data,datalength,"%lu",user->max_ul_speed);
     return 0;
   }
+  if (strcasecmp(varname,"credits")==0) {
+#ifndef WIN32
+    snprintf(data,datalength,"%llu",user->credits);
+#else
+    snprintf(data,datalength,"%I64u",user->credits);
+#endif
+    return 0;
+  }
   if (strcasecmp(varname,"name")==0) {
     snprintf(data,datalength,"%s",user->username);
     return 0;
@@ -307,6 +315,15 @@ int vars_user_set(const char *username, const char *varname, void *data, unsigne
   if (strcmp(varname, "addip")==0) {
     return vars_user_addip(username, data, config);
   }
+  /* credits */
+  else if (strcmp(varname, "credits")==0) {
+    u64_t ull;
+
+    ull = strtoull(data, &ptr, 0); /** \todo XXX check overflows */
+
+    user->credits = ull;
+    mod_type = _USER_CREDITS;
+  }
   /* bytes_ul and bytes_dl should never be changed ... */
   /* delip */
   else if (strcmp(varname, "delip")==0) {
@@ -314,8 +331,8 @@ int vars_user_set(const char *username, const char *varname, void *data, unsigne
   }
   /* flags */ /* TODO accept modifications style +f or -f */
   else if (strcmp(varname, "flags")==0) {
-    mod_type = _USER_FLAGS;
     strncpy(user->flags, data, MAX_FLAGS_NUM-1);
+    mod_type = _USER_FLAGS;
   }
   /* homedir */
   else if (strcmp(varname, "homedir")==0) {
@@ -379,7 +396,7 @@ int vars_user_set(const char *username, const char *varname, void *data, unsigne
     mod_type = _USER_RATIO; user->ratio = ul;
   }
   /* tagline */
-  else if (strcmp(varname, "tagline")==0) {
+  else if (strcmp(varname, "tag")==0) {
     mod_type = _USER_TAGLINE;
     strncpy(user->tagline, data, sizeof(user->tagline));
   }

@@ -224,13 +224,13 @@ corresponding to file permissions.
 directory dirname. Both paths are relative to user homedir (so, "." is the user
 current directory, and / is the homedir of the current user).
 </para></listitem>
-<listitem><screen>vfs link create -f dirname linkname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
+<listitem><screen>vfs link create [-r/--real] dirname linkname<emphasis>  ( wzdftpd > 0.3.2 )</emphasis></screen>
 <para>This function is identical to the precedent, except that dirname is given
 for filesystem (so it <emphasis>must</emphasis> be an absolute path).
-<programlisting>vfs link create -f c:\real lnk</programlisting>
+<programlisting>vfs link create -r c:\real lnk</programlisting>
 </para></listitem>
-<listitem><screen>vfs link remove linkname</screen>
-<para>Remove a symbolic link (path is relative to user homedir).
+<listitem><screen>vfs link remove [-r/--real] linkname<emphasis>  ( wzdftpd > 0.3.3 )</emphasis></screen>
+  <para>Remove a symbolic link (path is relative to user homedir).
 </para></listitem>
 <listitem><screen>wzd_reply_code</screen>
 <para>Use this variable contains the current reply code used

@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -332,14 +332,19 @@ static int write_user_file(void)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
-    /** \todo XXX FIXME this will not work on win32 (use %I64 format !) */
+#ifndef WIN32
+    fprintf(file,"credits=%llu\n",user_pool[i].credits);
     fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].stats.bytes_ul_total);
     fprintf(file,"bytes_dl_total=%llu\n",user_pool[i].stats.bytes_dl_total);
+#else
+    fprintf(file,"credits=%I64u\n",user_pool[i].credits);
+    fprintf(file,"bytes_ul_total=%I64u\n",user_pool[i].stats.bytes_ul_total);
+    fprintf(file,"bytes_dl_total=%I64u\n",user_pool[i].stats.bytes_dl_total);
+#endif
     if (user_pool[i].stats.files_ul_total)
       fprintf(file,"files_ul_total=%lu\n",user_pool[i].stats.files_ul_total);
     if (user_pool[i].stats.files_dl_total)
       fprintf(file,"files_dl_total=%lu\n",user_pool[i].stats.files_dl_total);
-    fprintf(file,"credits=%llu\n",user_pool[i].credits);
     if (user_pool[i].ratio)
       fprintf(file,"ratio=%d\n",user_pool[i].ratio);
     if (user_pool[i].num_logins)

@@ -1,3 +1,18 @@
+2004-08-14  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: some code audit using splint. Fixed some warnings
+	* feature: tcl/perl: vfs remove -r
+	* feature: config option data_buffer_length
+	* feature: flag K (enforce TLS data connections)
+	* feature: site change user flags now accepts arguments like +H or -I
+	* feature: site flags can now change flags
+	* feature: site change credits
+	* feature: new vars credits (user)
+	* bugfix: many commands not working inside symlinks (RETR, STOR, etc)
+	* bugfix: site chmod 0 not working
+	* bugfix: disabled command SAVECFG (Not Yet Implemented)
+	* bugfix: perl: 'vars_user set' reporting errors on success
+
 2004-08-08  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: transfer data buffer is now dynamic, size can be tweaked in config
@@ -94,7 +109,7 @@
 	* bugfix: send_message with empty message returns garbage (TCL, Perl)
 
 	* IMPORTANT: behaviour change: only file owner and siteop can delete
-        file, except if you set a specific permission line in config file
+	file, except if you set a specific permission line in config file
 
 2004-05-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
@@ -127,7 +142,7 @@
 
 	* feature: system path management rewritten from scratch (obsoletes: checkpath)
 	* feature: soft symlinks (mainly for win32, will avoid crappy ms
-        junctions, never worked correctly)
+	junctions, never worked correctly)
 	* feature: TCL module updated (stat, vfs link)
 	* bugfix: forgot to unregister fd on cache hit
 	* bugfix: site chacl, chgrp, chmod and chmod replies are more verbose

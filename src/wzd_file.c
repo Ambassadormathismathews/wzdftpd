@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -444,19 +444,19 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
         snprintf(buffer,sizeof(buffer),"link\t%s\t%s\t%s\t%s\t%lo\n",
             file_cur->filename,(char*)file_cur->data,file_cur->owner,file_cur->group,file_cur->permissions);
       }
-      fwrite(buffer,strlen(buffer),1,fp);
+      (void)fwrite(buffer,strlen(buffer),1,fp);
     } else { /* not a link */
       /* first write owner if available */
       if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
         snprintf(buffer,sizeof(buffer),"owner\t%s\t%s\t%s\t%lo\n",
             file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
-        fwrite(buffer,strlen(buffer),1,fp);
+        (void)fwrite(buffer,strlen(buffer),1,fp);
       }
       acl_cur = file_cur->acl;
       while (acl_cur) {
         snprintf(buffer,sizeof(buffer),"perm\t%s\t%s\t%c%c%c\n",
             file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
-        fwrite(buffer,strlen(buffer),1,fp);
+        (void)fwrite(buffer,strlen(buffer),1,fp);
         acl_cur = acl_cur->next_acl;
       }
     } /* not a link */
@@ -477,7 +477,7 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
   char perm_filename[WZD_MAX_PATH+1];
-  unsigned int length, neededlength;
+  size_t length, neededlength;
   struct wzd_file_t * file_list=NULL, * file_cur;
   wzd_acl_line_t * acl_cur;
   int ret;
@@ -733,7 +733,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   char perm_filename[WZD_MAX_PATH+1];
   char *ptr;
   struct stat s;
-  unsigned int length, neededlength;
+  size_t length, neededlength;
   struct wzd_file_t * file_list=NULL, * file_cur;
   int ret;
 
@@ -798,7 +798,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   /* remember addAcl REPLACE existing acl on user is already existing */
   if (rights)
     addAcl(stripped_filename,granted_user,rights,file_cur);
-  if (perms)
+  if (perms != (unsigned long)-1)
   {
     file_cur->permissions = perms;
   }
@@ -822,7 +822,7 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
   char dst_perm_filename[BUFFER_LEN];
   char *ptr;
   struct stat s,s2;
-  unsigned int length, neededlength;
+  size_t length, neededlength;
   struct wzd_file_t * src_file_list=NULL, *dst_file_list=NULL,* file_cur, *file_dst;
   wzd_acl_line_t * acl;
   int ret;
@@ -1213,7 +1213,7 @@ int softlink_remove(const char *linkname)
   char perm_filename[WZD_MAX_PATH];
   char stripped_filename[WZD_MAX_PATH];
   char *ptr;
-  unsigned int length;
+  size_t length;
   struct wzd_file_t * perm_list=NULL, * file_cur;
   int ret;
 
@@ -1319,7 +1319,7 @@ void file_close(int fd, wzd_context_t * context)
   close(fd);
 }
 
-int file_seek(int fd, unsigned long offset, int whence)
+off_t file_seek(int fd, unsigned long offset, int whence)
 {
   return lseek(fd,offset,whence);
 }
@@ -1330,7 +1330,7 @@ int file_seek(int fd, unsigned long offset, int whence)
  */
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context)
 {
-  return _setPerm(filename,0,username,groupname,0,0,context);
+  return _setPerm(filename,0,username,groupname,0,(unsigned long)-1,context);
 }
 
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
@@ -1409,7 +1409,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
     strcpy(path_perm,dirname); /* path is already ended by / */
     if (path_perm[strlen(path_perm)-1] != '/')
       strcat(path_perm,"/");
-    strlcat(path_perm,HARD_PERMFILE,sizeof(path_perm));
+    (void)strlcat(path_perm,HARD_PERMFILE,sizeof(path_perm));
     unlink(path_perm);
   }
 
@@ -1472,7 +1472,7 @@ int file_remove(const char *filename, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   struct wzd_file_t * file_list=NULL, * file_cur;
-  int neededlength, length;
+  size_t neededlength, length;
 
   /* find the dir containing the perms file */
   strncpy(perm_filename,filename,BUFFER_LEN);
@@ -1539,7 +1539,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   char * ptr;
   int ret;
   struct wzd_file_t * file_list=NULL, * file_cur;
-  int neededlength, length;
+  size_t neededlength, length;
   struct stat s;
 
   if (stat(filename,&s))
@@ -1611,7 +1611,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   char stripped_filename[WZD_MAX_PATH+1];
   char * ptr;
   struct wzd_file_t * file_list=NULL, * file_cur, *file;
-  int neededlength, length;
+  size_t neededlength, length;
   struct stat s;
   int nx=0;
 
@@ -1788,12 +1788,12 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
 }
 
 /* wrappers just to keep things in same memory zones */
-int file_read(int fd,void *data,size_t length)
+ssize_t file_read(int fd,void *data,size_t length)
 {
   return read(fd,data,length);
 }
 
-int file_write(int fd,const void *data,size_t length)
+ssize_t file_write(int fd,const void *data,size_t length)
 {
   return write(fd,data,length);
 }

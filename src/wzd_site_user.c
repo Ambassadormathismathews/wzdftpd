@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,6 +42,8 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
+#include <limits.h> /* ULONG_MAX */
+
 #include <pthread.h>
 #endif
 
@@ -55,6 +57,13 @@
 #include "wzd_messages.h"
 #include "wzd_ServerThread.h"
 #include "wzd_site_user.h"
+
+#include "wzd_debug.h"
+
+
+
+static int _user_changeflags(wzd_user_t * user, const char *newflags);
+
 
 
 void do_site_help_adduser(wzd_context_t * context)
@@ -647,6 +656,7 @@ void do_site_help_change(wzd_context_t * context)
   send_message_raw(" flags       changes user flags\r\n",context);
   send_message_raw(" max_ul      changes maximum upload speed\r\n",context);
   send_message_raw(" max_dl      changes maximum download speed\r\n",context);
+  send_message_raw(" credits     changes user credits\r\n",context);
   send_message_raw(" ratio       changes user ratio\r\n",context);
   send_message_raw(" num_logins  changes maximum simultaneous logins allowed\r\n",context);
   send_message_raw(" user_slots  changes allowed user slots (for GAdmins)\r\n",context);
@@ -790,8 +800,12 @@ int do_site_change(char *command_line, wzd_context_t * context)
        ret = send_message_with_args(501,context,"You can't change that field");
        return 0;
     }
+
+    if (_user_changeflags(&user,value)) {
+       ret = send_message_with_args(501,context,"Error occurred when changing flags");
+      return 0;
+    }
     mod_type = _USER_FLAGS;
-    strncpy(user.flags,value,MAX_FLAGS_NUM-1);
   }
   /* max_ul */
   else if (strcmp(field,"max_ul")==0) {
@@ -802,6 +816,14 @@ int do_site_change(char *command_line, wzd_context_t * context)
   else if (strcmp(field,"max_dl")==0) {
     ul=strtoul(value,&ptr,0);
     if (!*ptr) { mod_type = _USER_MAX_DLS; user.max_dl_speed = ul; }
+  }
+  /* credits */
+  else if (strcmp(field,"credits")==0) {
+    u64_t ull;
+
+    ull=strtoull(value,&ptr,0);
+
+    if (!*ptr) { mod_type = _USER_CREDITS; user.credits = ull; }
   }
   /* num_logins */
   else if (strcmp(field,"num_logins")==0) {
@@ -1051,13 +1073,13 @@ int do_site_chratio(char *command_line, wzd_context_t * context)
 
 /** site flags: display a user's flags
  *
- * flags &lt;user&gt;
+ * flags &lt;user&gt; &lt;newflags&gt;
  */
 int do_site_flags(char *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   char *ptr;
-  char * username;
+  char * username, * newflags;
   int ret;
   wzd_user_t user;
   int uid;
@@ -1067,6 +1089,9 @@ int do_site_flags(char *command_line, wzd_context_t * context)
   if (!username) {
     username = GetUserByID(context->userid)->username;
   }
+  if (username) {
+    newflags = strtok_r(NULL," \t\r\n",&ptr);
+  }
 
   /* check if user exists */
   if ( backend_find_user(username,&user,&uid) ) {
@@ -1074,9 +1099,43 @@ int do_site_flags(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  snprintf(buffer,1023,"Flags for %s:  %s",username,user.flags);
+  if (!newflags) {
+    snprintf(buffer,1023,"Flags for %s:  %s",username,user.flags);
 
-  ret = send_message_with_args(200,context,buffer);
+    ret = send_message_with_args(200,context,buffer);
+  } else {
+    unsigned int is_gadmin;
+    wzd_user_t * me = GetUserByID(context->userid);
+
+    is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+
+    /* GAdmin ? */
+    if (is_gadmin)
+    {
+      if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+        ret = send_message_with_args(501,context,"You can't change this user");
+        return 0;
+      }
+    }
+    /* authorized ? */
+    if (!strchr(me->flags,FLAG_SITEOP)) {
+      ret = send_message_with_args(501,context,"You can't change flags for other users");
+      return 0;
+    }
+
+    if (_user_changeflags(&user,newflags)) {
+      ret = send_message_with_args(501,context,"Error occurred changing flags");
+      return 0;
+    }
+    /* commit to backend */
+    /* FIXME backend name hardcoded */
+    ret = backend_mod_user("plaintext",username,&user,_USER_FLAGS);
+    if (!ret)
+      ret = send_message_with_args(200,context,"Flags changed");
+    else
+      ret = send_message_with_args(501,context,"Flags changed, but error committing changes to backend");
+  }
+
   return 0;
 }
 
@@ -1516,5 +1575,53 @@ int do_site_su(char *command_line, wzd_context_t * context)
     ret = send_message_with_args(200,context,"Command OK");
   }
   return 0;
+}
+
+
+
+
+
+
+
+static int _user_changeflags(wzd_user_t * user, const char *newflags)
+{
+  size_t length;
+  char * ptr;
+
+  if (!user || !newflags) return -1;
+
+  if (newflags[0] == '+') {
+    /* flag addition */
+    length = strlen(user->flags);
+    if (length+strlen(newflags) >= MAX_FLAGS_NUM) return -1;
+
+    wzd_strncpy(user->flags+length,newflags+1,MAX_FLAGS_NUM-length-1);
+    /** \todo XXX remove duplicate flags */
+
+    return 0;
+  }
+  else if (newflags[0] == '-') {
+    /* flag removal */
+    if ( (ptr = strchr(user->flags,newflags[1])) == NULL ) {
+      return -1;
+    }
+    if (*(ptr+1)) {
+      length = strlen(ptr+1);
+      memmove(ptr,ptr+1,length);
+      *(ptr+length) = '\0';
+    } else {
+      *ptr = '\0';
+    }
+    /** \todo XXX if strlen(newflags) > 1, remove ALL flags from newflags */
+
+    return 0;
+  }
+  else {
+    /* replace flags */
+    strncpy(user->flags,newflags,MAX_FLAGS_NUM-1);
+    return 0;
+  }
+
+  return -1;
 }
 

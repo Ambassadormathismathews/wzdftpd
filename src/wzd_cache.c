@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2003  Pierre Chifflier
+ * Copyright (C) 2002-2004  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ struct wzd_internal_cache_t  {
   int fd;
 
   unsigned long filename_hash;
-  unsigned int datasize;
+  unsigned long datasize;
   time_t mtime;
   unsigned short use;
 
@@ -78,7 +78,7 @@ struct wzd_internal_cache_t  {
 };
 
 struct wzd_cache_t {
-  unsigned int current_location;
+  unsigned long current_location;
 
   wzd_internal_cache_t * cache;
 };
@@ -100,7 +100,7 @@ wzd_internal_cache_t * wzd_cache_find(unsigned long hash)
   return NULL;
 }
 
-unsigned int wzd_cache_getsize(wzd_cache_t *c)
+unsigned long wzd_cache_getsize(wzd_cache_t *c)
 {
   if (!c) return (unsigned int)-1;
   return c->cache->datasize;
@@ -112,7 +112,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   wzd_internal_cache_t * c;
   struct stat s;
   unsigned long hash;
-  unsigned int ret;
+  unsigned long ret;
   unsigned long length;
   int fd;
 
@@ -144,7 +144,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
       return wzd_cache_refresh(c,file,flags,mode);
     }
     /* HIT */
-    lseek(c->fd,0,SEEK_SET);
+    (void)lseek(c->fd,0,SEEK_SET);
     cache = malloc(sizeof(wzd_cache_t));
     cache->current_location = 0;
     cache->cache = c;
@@ -174,7 +174,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     c->datasize = 0;
   } else {
     c->data = malloc(length+1);
-    if ( (ret=read(fd,c->data,length)) != length ) {
+    if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",ret,length);
     }
     c->data[length] = '\0';
@@ -195,7 +195,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   wzd_cache_t * cache;
   struct stat s;
   unsigned long hash;
-  unsigned int length, ret;
+  unsigned long length, ret;
   int fd;
 
   hash = compute_hashval(file,strlen(file));
@@ -222,7 +222,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
     c->datasize = 0;
   } else {
     c->data = malloc(length);
-    if ( (ret=read(fd,c->data,length)) != length ) {
+    if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes\n",ret);
     }
     c->datasize = length;
@@ -250,7 +250,7 @@ void wzd_cache_update(const char *file)
     /* REFRESH */
     /* need refresh */
 /*    out_err(LEVEL_FLOOD,"cache refresh forced\n");*/
-    wzd_cache_refresh(c,file,O_RDONLY,0600);
+    (void)wzd_cache_refresh(c,file,O_RDONLY,0600);
   }
 }
 
@@ -266,15 +266,15 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
     if ( (c->current_location+count) <= cache->datasize ) {
       memcpy(buf,cache->data + c->current_location,count);
       c->current_location += count;
-      return count;
+      return (int)count;
     }
     memcpy(buf,cache->data + c->current_location,cache->datasize-c->current_location);
     c->current_location = cache->datasize;
-    return cache->datasize-c->current_location;
+    return (int)(cache->datasize-c->current_location);
   } else { /* not in cache */
     /* update current_location */
     if (c) {
-      ret = read( cache->fd, buf, count );
+      ret = (int)read( cache->fd, buf, count );
       if (ret>0) c->current_location += ret;
       return ret;
     }
@@ -297,7 +297,7 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
       out_err(LEVEL_INFO,"Trying to write a cached file - stupid !\n");
       return -1;
     }
-    ret = write( cache->fd, buf, count );
+    ret = (int)write( cache->fd, buf, count );
     if (ret>0) c->current_location += ret;
     return ret;
   }
@@ -310,8 +310,8 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
   int fd;
   char buffer[4096], *ptr, *dst;
   char _c;
-  int ret;
-  unsigned int size_to_read;
+  ssize_t ret;
+  unsigned long size_to_read;
   wzd_internal_cache_t * cache;
 
   if (!c) return NULL;
@@ -382,7 +382,7 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     }
     *dst=0;
     if (_c==EOF && ptr==buf) return NULL;
-    lseek(fd,position + (dst-buf), SEEK_SET );
+    (void)lseek(fd,position + (dst-buf), SEEK_SET );
     /* update current_location */
     c->current_location += strlen(buf);
   } /* file in cache ? */

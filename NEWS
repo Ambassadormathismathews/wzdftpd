@@ -1,11 +1,39 @@
    NEWS file for wzdftpd
 
+0.4.0: September 2004
+
+ Many features / parts rewritten:
+
+* Permissions are now displayed correctly on LIST
+* users and groups management has been rewritten
+* uid/gid are now used, so must be set correctly
+* big speed enhancement
+* IP addresses does no more need prefixes (+ and -)
+* TCL module updated
+* Many new cookies
+* Improved events
+
+ Major features:
+
+* new commands: STAT
+* UTF-8 support
+* Perl module
+
+ Work in Progress (not fully working yet):
+
+* MySQL backend
+* config file management
+
+ Bugfixes:
+
+Too many to be listed here ! (see ChangeLog)
+
 
 0.3.2: May 01 2004:
 
  As usual now, some bugfixes:
 
-* log file empty on win32 (except if forcing use_syslog =3D 0)
+* log file empty on win32 (except if forcing use_syslog = 0)
 * user can now see its own home
 
 But the big part is the addition of some new features:

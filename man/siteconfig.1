@@ -1,0 +1,53 @@
+.TH siteconfig 1 "March 2004" "siteconfig (wzdftpd)" "wzdftpd tools"
+.\" Process with
+.\" groff -man -Tascii siteconfig.1 
+.\"
+.SH NAME
+siteconfig \- online configuration of FTP server (wzdftpd)
+.SH SYNOPSIS
+.B siteconfig [OPTION] [ACTION]
+.SH DESCRIPTION
+The
+.BI siteconfig
+command can be used to show or change wzdftpd's parameters online.
+.SH OPTIONS
+.TP 12
+.B \-h
+Display a short usage description, including all available options.
+.TP
+.BI \-k " shm_key"
+Specify the key used to find shared memory segment (configured
+via the \fBshm_key\fP directive in
+.I wzd.cfg
+).
+.SH ACTION
+.TP
+.B get [all/variable/help]
+Display value of variable if the name is given, or all available variables
+if parameter is all.
+A contextual help is displayed if the parameter is help.
+.TP
+.B set variable value
+Change parameter to the new value.
+A contextual help is displayed if the parameter is help (in this case the
+second parameter is ignored).
+.TP
+.PD
+.BR
+.SH AUTHORS
+.PP
+wzdftpd is written and maintained by Pierre Chifflier <chifflier@cpe.fr>,
+and some others contributors, full credits can be found in
+.BR /usr/share/doc/wzdftpd/AUTHORS
+.PD
+.SH SEE ALSO
+.BR wzdftpd(8), ftp(1), siteuptime(1), sitewho(1)
+.PP
+Full documentation on wzdftpd, including configuration and FAQs, is available at
+.BR http://www.wzdftpd.net
+.PP 
+For help/support, try the wzdftpd mailing lists, detailed on
+.BR http://sourceforge.net/mail/?group_id=78247
+.PP
+Report bugs at
+.BR http://www.wzdftpd.net/smf/index.php
