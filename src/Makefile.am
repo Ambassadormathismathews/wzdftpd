@@ -26,6 +26,8 @@ libwzd_la_SOURCES =  \
 	wzd_vfs.h       \
 	wzd_cache.c     \
 	wzd_cache.h     \
+	wzd_section.c      \
+	wzd_section.h      \
 	wzd_shm.c       \
 	wzd_shm.h       \
 	wzd_crontab.c   \
@@ -61,8 +63,6 @@ wzdftpd_SOURCES =    \
 	wzd_perm.h         \
 	wzd_ratio.c        \
 	wzd_ratio.h        \
-	wzd_section.c      \
-	wzd_section.h      \
 	wzd_ServerThread.c \
 	wzd_ServerThread.h \
 	wzd_site.c         \
