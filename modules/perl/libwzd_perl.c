@@ -200,13 +200,10 @@ static int perl_hook_logout(unsigned long event_id, wzd_context_t * context, con
 
 static int perl_hook_protocol(const char *file, const char *args)
 {
-  const char *s;
-  int ret;
   wzd_context_t * context;
   wzd_user_t * user;
   unsigned int reply_code;
   SV * perl_args;
-  size_t length;
 
   current_context = context = GetMyContext();
   user = GetUserByID(context->userid);
@@ -222,7 +219,7 @@ static int perl_hook_protocol(const char *file, const char *args)
 
   execute_perl(newSVpvn("Embed::load", 11), file);
 
-  SvREFCNT_dec(perl_args);
+/*  SvREFCNT_dec(perl_args);*/ /* NO !! this will segfault on second call ! */
 
   current_context = NULL;
 
@@ -253,9 +250,13 @@ static int perl_init(void)
 {
   const char perl_definitions[] = {
 "\n"
-"sub wzd::hello {\n"
-" print \"hello from perl\\n\";\n"
-"}\n"
+"$SIG{__WARN__} = sub {\n"
+"  local $, = \"\\n\";\n"
+"  my ($package, $line, $sub) = caller(1);\n"
+"  wzd::send_message( \"warning from ${package}::${sub} at line $line.\" );\n"
+"  wzd::send_message( @_ );\n"
+"};\n"
+"\n"
 "sub Embed::load {\n"
 "  my $file = shift @_;\n"
 "\n"
@@ -448,6 +449,7 @@ static XS(XS_wzd_ftp2sys)
 
 /**
  * example: wzd::putlog(5,"message\n");
+ *  or    : wzd::putlog 5,"message\n";
  */
 static XS(XS_wzd_putlog)
 {
@@ -750,7 +752,7 @@ static XS(XS_wzd_vars_user)
 
 static XS(XS_wzd_vfs)
 {
-  char *command1, *command2, *arg1, *arg2;
+  char *command1, *arg1, *arg2;
   int ret;
   char buffer_real[WZD_MAX_PATH+1];
   char buffer_link[WZD_MAX_PATH+1];
