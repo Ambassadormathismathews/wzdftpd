@@ -1099,7 +1099,7 @@ int server_switch_to_config(wzd_config_t *config)
 
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (mainConfig->backend.name[0] == '\0') {
+  if (!mainConfig->backend.name) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     return -1;
   }

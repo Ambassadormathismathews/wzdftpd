@@ -1589,7 +1589,7 @@ int do_site_vars_user(char * command_line, wzd_context_t * context)
 int do_site_version(char * ignored, wzd_context_t * context)
 {
   char str[256];
-  snprintf(str,256,"%s build %s (%s)\n",
+  snprintf(str,256,"%s build %s (%s)",
       WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
   send_message_with_args(200,context,str);
   return 0;

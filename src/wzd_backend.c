@@ -82,7 +82,7 @@ char *backend_get_version(wzd_backend_t *backend)
   char ** version_found;
 
   if (backend->handle)
-    version_found = (char**)dlsym(backend->handle,DL_PREFIX "backend_version");
+    version_found = (char**)dlsym(backend->handle,DL_PREFIX "wzd_backend_version");
   else
     return NULL;
 
@@ -94,7 +94,7 @@ char *backend_get_name(wzd_backend_t *backend)
   char ** backend_name;
 
   if (backend->handle)
-    backend_name = (char**)dlsym(backend->handle,DL_PREFIX "backend_name");
+    backend_name = (char**)dlsym(backend->handle,DL_PREFIX "wzd_backend_name");
   else
     return NULL;
 
@@ -207,14 +207,14 @@ int backend_validate(const char *backend, const char *pred, const char *version)
         dlclose(handle);
         return 1;
       }
-      version_found = (char**)dlsym(handle,DL_PREFIX "backend_version");
+      version_found = (char**)dlsym(handle,DL_PREFIX "wzd_backend_version");
 #ifndef _MSC_VER
       if ( (dlerror()) != NULL )
 #else
       if ( !version_found )
 #endif
       {
-        out_err(LEVEL_CRITICAL,"Backend does not contain any \"backend_version\" information\n");
+        out_err(LEVEL_CRITICAL,"Backend does not contain any \"wzd_backend_version\" information\n");
         dlclose(handle);
         return 1;
       }

@@ -1109,8 +1109,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
             {
               total += loop_user->stats.bytes_ul_total;
             }
-          wzd_free(uid_list);
           }
+          wzd_free(uid_list);
         }
         if (convert) {
 #ifndef _MSC_VER

@@ -200,6 +200,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   user.ratio = ratio;
   user.user_slots=0;
   user.leech_slots=0;
+  user.last_login = 0;
 
   i = 0;
   if (ip) {
