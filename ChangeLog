@@ -1,6 +1,7 @@
 2004-03-01  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* backends: pam backend started
+	* configure.in: berkeley db headers and libs detection
 
 2004-02-29  Pierre Chifflier  <pollux@wzdftpd.net>
 

@@ -20,6 +20,7 @@ AM_INIT_AUTOMAKE(wzdftpd,0.3cvs,no-define)
 AM_CONFIG_HEADER([config.h])
 
 dnl helper macros
+sinclude(ac-helpers/berkeley-db.m4)
 sinclude(ac-helpers/mysql.m4)
 sinclude(ac-helpers/pam.m4)
 sinclude(ac-helpers/pgsql.m4)
@@ -71,7 +72,7 @@ AC_CHECK_HEADERS([pthread.h],,exit 1)
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
 AC_FUNC_FORK
-AC_PROG_GCC_TRADITIONAL
+dnl AC_PROG_GCC_TRADITIONAL
 AC_FUNC_LSTAT
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
@@ -82,7 +83,7 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
-AC_FUNC_WAIT3
+dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
 AC_CHECK_FUNC(strptime,[AC_DEFINE(HAVE_STRPTIME)])
 AC_CHECK_FUNC(strtok_r,[AC_DEFINE(HAVE_STRTOK_R)])
@@ -95,6 +96,7 @@ AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
 
+WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_LIB_PAM
 WZD_LIB_MYSQL
 WZD_LIB_PGSQL
