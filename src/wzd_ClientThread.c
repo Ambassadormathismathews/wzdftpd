@@ -1783,20 +1783,22 @@ int do_dele(char *param, wzd_context_t * context)
   /* we should adjust stats for REAL OWNER of file */
   if (!ret && file_size)
   {
-    if (owner && strcmp(owner->username,"nobody"))
-    {
-     if (owner->ratio) {
-       if (owner->credits > owner->ratio*file_size)
-	 owner->credits -= (owner->ratio * file_size);
-       else
-	 owner->credits = 0;
-     }
-     if (owner->stats.bytes_ul_total > file_size)
-       owner->stats.bytes_ul_total -= file_size;
-     else
-       owner->stats.bytes_ul_total = 0;
-     if (owner->stats.files_ul_total)
-       owner->stats.files_ul_total--;
+    if (owner) {
+      if (strcmp(owner->username,"nobody"))
+      {
+        if (owner->ratio) {
+          if (owner->credits > owner->ratio*file_size)
+            owner->credits -= (owner->ratio * file_size);
+          else
+            owner->credits = 0;
+        }
+        if (owner->stats.bytes_ul_total > file_size)
+          owner->stats.bytes_ul_total -= file_size;
+        else
+          owner->stats.bytes_ul_total = 0;
+        if (owner->stats.files_ul_total)
+          owner->stats.files_ul_total--;
+      }
     }
   }
 
