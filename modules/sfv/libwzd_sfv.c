@@ -964,7 +964,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	    continue;
 	  }
 	strcpy(dir+len,dir_filename);
-	remove (dir);
+	rmdir (dir);
 	dir[len]='\0';
       }
 #ifdef _MSC_VER
