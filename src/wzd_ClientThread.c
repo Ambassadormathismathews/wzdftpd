@@ -2423,6 +2423,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       ret = send_message_with_args(530,context,"TLS commands disabled");
       break;
 #endif
+    case TOK_FEAT:
+      ret = send_message_with_args(211,context,SUPPORTED_FEATURES);
+      break;
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
       ret = send_message_with_args(530,context,"Invalid login sequence");

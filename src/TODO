@@ -11,8 +11,6 @@
 '********'
 - siteconfig: get bw, etc. change stats, mkdir open, etc.
 '********'
-- site perm: change permissions online
-'********'
 - remove limit on msg
 '********'
 - announce:

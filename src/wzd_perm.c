@@ -83,6 +83,53 @@ wzd_command_perm_entry_t * perm_create_empty_entry(void)
   return entry;
 }
 
+/***/
+
+int perm_remove(const char *commandname, wzd_config_t * config)
+{
+  wzd_command_perm_t * perm, * previous;
+  wzd_command_perm_entry_t * entry_current, * entry_next;
+  
+  if ( ! config->perm_list ) return -1;
+
+  perm = config->perm_list;
+  if (strcasecmp(perm->command_name,commandname)==0) {
+    /* first element */
+    entry_current = perm->entry_list;
+    while (entry_current) {
+      entry_next = entry_current->next_entry;
+      free(entry_current);
+      entry_current = entry_next;
+    }
+    config->perm_list = perm->next_perm;
+    free(perm);
+    return 0;
+  }
+
+  previous = perm;
+  perm = perm->next_perm;
+
+  while(perm) {
+    if (strcasecmp(perm->command_name,commandname)==0) {
+      entry_current = perm->entry_list;
+      while (entry_current) {
+        entry_next = entry_current->next_entry;
+        free(entry_current);
+        entry_current = entry_next;
+      }
+      previous->next_perm = perm->next_perm;
+      free(perm);
+      return 0;
+    }
+    previous = perm;
+    perm = perm->next_perm;
+  };
+
+  return 1; /* not found */
+}
+
+/***/
+
 void perm_free_recursive(wzd_command_perm_t * perm)
 {
   wzd_command_perm_t * perm_next;
@@ -117,6 +164,40 @@ int perm_is_valid_perm(const char *permname)
   }
 
   return 1;
+}
+
+/***/
+
+int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_length)
+{
+  char *perm_buffer_ptr;
+  unsigned int length;
+  wzd_command_perm_entry_t * entry;
+
+  /* parse current->entry_list */
+  perm_buffer_ptr = perm_buffer;
+  length=0;
+  entry = perm->entry_list;
+  while (entry) {
+    *perm_buffer_ptr++ = ' ';
+    length ++;
+    if (strcmp(entry->target,"*")!=0) {
+      switch(entry->cp) {
+        case CPERM_USER: *perm_buffer_ptr++ = '='; break;
+        case CPERM_GROUP: *perm_buffer_ptr++ = '-'; break;
+        case CPERM_FLAG: *perm_buffer_ptr++ = '+'; break;
+      }
+      length ++;
+    }
+    length += strlen(entry->target);
+    if (length >= max_length) return 1;
+    strncpy(perm_buffer_ptr,entry->target,max_length-length);
+/*    perm_buffer_ptr = perm_buffer+length;*/
+    perm_buffer_ptr += strlen(entry->target);
+    entry = entry->next_entry;
+  }
+  perm_buffer[length]='\0';
+  return 0;
 }
 
 /***/

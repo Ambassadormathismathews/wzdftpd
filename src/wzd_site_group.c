@@ -783,6 +783,9 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
       mod_type = _GROUP_RATIO; group.ratio = ul;
     }
   }
+  else {
+    ret = send_message_with_args(501,context,"syntax error, unknow field");
+  }
 
   /* commit to backend */
   /* FIXME backend name hardcoded */

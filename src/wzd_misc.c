@@ -202,6 +202,19 @@ int split_filename(const char *filename, char *path, char *stripped_filename,
 /** returns system ip on specifed interface (e.g eth0) */
 int get_system_ip(const char * itface, struct in_addr * ina)
 {
+#if defined(_MSC_VER)
+  char buffer_name[256];
+  struct hostent * host;
+
+  if (gethostname(buffer_name,sizeof(buffer_name))) return -1;
+
+  if ( !(host = gethostbyname(buffer_name)) ) return -1;
+
+  memcpy(ina,host->h_addr,4);
+  out_log(LEVEL_FLOOD,"IP: %s\n",inet_ntoa(*ina));
+
+  return 0;
+#endif
 #if BSD || defined(_MSC_VER)
   return -1;
 #else
@@ -224,7 +237,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
   }
 
   memcpy(ina,ifr.ifr_hwaddr.sa_data+2,4);
-  printf("IP: %s\n",inet_ntoa(*ina));
+  out_log(LEVEL_FLOOD,"IP: %s\n",inet_ntoa(*ina));
 
   close(s);
   return 0;

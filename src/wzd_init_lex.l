@@ -690,7 +690,7 @@ int cfg_read_dynamic_ip(void)
 
   switch( (token=yylex()) ) {
   case CFG_NUM:
-    out_err(LEVEL_FLOOD,"dynamic_ip: NUM (%s)\n",yytext);
+/*    out_err(LEVEL_FLOOD,"dynamic_ip: NUM (%s)\n",yytext);*/
     if (strcmp(yytext,"0")==0 || strcmp(yytext,"1")==0) {
       strcpy((char *)tempConfig.dynamic_ip,yytext);
       return 0;

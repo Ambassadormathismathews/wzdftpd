@@ -133,71 +133,81 @@ void do_site_help(const char *site_command, wzd_context_t * context)
 
   send_message_raw("501-\r\n",context);
   if (strcasecmp(site_command,"backend")==0) {
-    send_message_raw("501-operations on backend\r\n",context);
-    send_message_raw("501-site backend command backend_name\r\n",context);
-    send_message_raw("501-command can be one of:\r\n",context);
-    send_message_raw("501- close   (unloads backend)\r\n",context);
-    send_message_raw("501- commit  (commits changes synchronously)\r\n",context);
-    send_message_raw("501- init    (loads new backend)\r\n",context);
-    send_message_raw("501- reload  (close and init)\r\n",context);
-    send_message_raw("501-\r\n",context);
-    send_message_raw("501-e.g: site backend commit plaintext\r\n",context);
-    send_message_raw("501-\r\n",context);
-    send_message_raw("501- THIS IS A DANGEROUS COMMAND\r\n",context);
+    send_message_raw("operations on backend\r\n",context);
+    send_message_raw("site backend command backend_name\r\n",context);
+    send_message_raw("command can be one of:\r\n",context);
+    send_message_raw(" close   (unloads backend)\r\n",context);
+    send_message_raw(" commit  (commits changes synchronously)\r\n",context);
+    send_message_raw(" init    (loads new backend)\r\n",context);
+    send_message_raw(" reload  (close and init)\r\n",context);
+    send_message_raw("\r\n",context);
+    send_message_raw("e.g: site backend commit plaintext\r\n",context);
+    send_message_raw("\r\n",context);
+    send_message_raw(" THIS IS A DANGEROUS COMMAND\r\n",context);
   } else
   if (strcasecmp(site_command,"checkperm")==0) {
-    send_message_raw("501-checks access for a user on a file/dir\r\n",context);
-    send_message_raw("501-site checkperm user file rights\r\n",context);
-    send_message_raw("501- rights can be one of:\r\n",context);
-    send_message_raw("501- RIGHT_LIST\r\n",context);
-    send_message_raw("501- RIGHT_CWD\r\n",context);
-    send_message_raw("501- RIGHT_RETR\r\n",context);
-    send_message_raw("501- RIGHT_STOR\r\n",context);
-    send_message_raw("501- RIGHT_RNFR\r\n",context);
-    send_message_raw("501-e.g: site checkperm toto dir RIGHT_CWD\r\n",context);
+    send_message_raw("checks access for a user on a file/dir\r\n",context);
+    send_message_raw("site checkperm user file rights\r\n",context);
+    send_message_raw(" rights can be one of:\r\n",context);
+    send_message_raw(" RIGHT_LIST\r\n",context);
+    send_message_raw(" RIGHT_CWD\r\n",context);
+    send_message_raw(" RIGHT_RETR\r\n",context);
+    send_message_raw(" RIGHT_STOR\r\n",context);
+    send_message_raw(" RIGHT_RNFR\r\n",context);
+    send_message_raw("e.g: site checkperm toto dir RIGHT_CWD\r\n",context);
   } else
   if (strcasecmp(site_command,"chgrp")==0) {
-    send_message_raw("501-change the group of a file or directory\r\n",context);
-    send_message_raw("501-usage: site chgrp group file1 [file2 ...]\r\n",context);
-    send_message_raw("501-e.g: site chgrp admin file1\r\n",context);
+    send_message_raw("change the group of a file or directory\r\n",context);
+    send_message_raw("usage: site chgrp group file1 [file2 ...]\r\n",context);
+    send_message_raw("e.g: site chgrp admin file1\r\n",context);
   } else
   if (strcasecmp(site_command,"chmod")==0) {
-    send_message_raw("501-change permissions of a file or directory\r\n",context);
-    send_message_raw("501-usage: site chmod mode file1 [file2 ...]\r\n",context);
-    send_message_raw("501-e.g: site chmod 644 file1\r\n",context);
+    send_message_raw("change permissions of a file or directory\r\n",context);
+    send_message_raw("usage: site chmod mode file1 [file2 ...]\r\n",context);
+    send_message_raw("e.g: site chmod 644 file1\r\n",context);
   } else
   if (strcasecmp(site_command,"chown")==0) {
-    send_message_raw("501-change the owner of a file or directory\r\n",context);
-    send_message_raw("501-usage: site chown user file1 [file2 ...]\r\n",context);
-    send_message_raw("501-e.g: site chown toto file1\r\n",context);
+    send_message_raw("change the owner of a file or directory\r\n",context);
+    send_message_raw("usage: site chown user file1 [file2 ...]\r\n",context);
+    send_message_raw("e.g: site chown toto file1\r\n",context);
   } else
   if (strcasecmp(site_command,"chpass")==0) {
-    send_message_raw("501-change the password of a user\r\n",context);
-    send_message_raw("501-site chpass user new_pass\r\n",context);
+    send_message_raw("change the password of a user\r\n",context);
+    send_message_raw("site chpass user new_pass\r\n",context);
   } else
   if (strcasecmp(site_command,"grpkill")==0) {
-    send_message_raw("501-kill all connected users from a group\r\n",context);
-    send_message_raw("501-site grpkill groupname\r\n",context);
+    send_message_raw("kill all connected users from a group\r\n",context);
+    send_message_raw("site grpkill groupname\r\n",context);
   } else
   if (strcasecmp(site_command,"link")==0) {
-    send_message_raw("501-create/remove symbolink links\r\n",context);
-    send_message_raw("501-site link create dir linkname\r\n",context);
-    send_message_raw("501-site link remove linkname\r\n",context);
+    send_message_raw("create/remove symbolink links\r\n",context);
+    send_message_raw("site link create dir linkname\r\n",context);
+    send_message_raw("site link remove linkname\r\n",context);
   } else
   if (strcasecmp(site_command,"msg")==0) {
-    send_message_raw("501-manage directory messages\r\n",context);
-    send_message_raw("501-site msg show\r\n",context);
-    send_message_raw("501-site msg new msg_line\r\n",context);
-    send_message_raw("501-site msg append msg_line\r\n",context);
-    send_message_raw("501-site msg convert file\r\n",context);
-    send_message_raw("501-site msg delete\r\n",context);
+    send_message_raw("manage directory messages\r\n",context);
+    send_message_raw("site msg show\r\n",context);
+    send_message_raw("site msg new msg_line\r\n",context);
+    send_message_raw("site msg append msg_line\r\n",context);
+    send_message_raw("site msg convert file\r\n",context);
+    send_message_raw("site msg delete\r\n",context);
+  } else
+  if (strcasecmp(site_command,"perm")==0) {
+    send_message_raw("manage permissions\r\n",context);
+    send_message_raw("site perm show (show all permissions)\r\n",context);
+    send_message_raw("site perm show name (show permissions for commands starting with perm_name)\r\n",context);
+    send_message_raw("site perm add name perms\r\n",context);
+    send_message_raw("site perm change name perms\r\n",context);
+    send_message_raw("site perm remove\r\n",context);
+    send_message_raw("\r\n",context);
+    send_message_raw("ex: site perm add site_newcmd +O\r\n",context);
   } else
   if (strcasecmp(site_command,"user")==0) {
-    send_message_raw("501-show user info\r\n",context);
-    send_message_raw("501-site user username\r\n",context);
+    send_message_raw("show user info\r\n",context);
+    send_message_raw("site user username\r\n",context);
   } else
   {
-    snprintf(buffer,BUFFER_LEN,"501-Syntax error in command %s\r\n",site_command);
+    snprintf(buffer,BUFFER_LEN,"Syntax error in command %s\r\n",site_command);
     send_message_raw(buffer,context);
   }
   send_message_raw("501 \r\n",context);
@@ -826,21 +836,21 @@ int do_site_msg(char *command_line, wzd_context_t * context)
 }
 
 /********************* do_site_perm ************************/
-/** perm: show
- *       add perm_name perms
- *       change perm_name perms
- *       delete perm_name
+/** perm: show  (show all permissions)
+ *        show perm_name  (show permissions for all commands starting with perm_name)
+ *        add perm_name perms
+ *        change perm_name perms
+ *        remove perm_name
  */
 int do_site_perm(char *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
-  char * command, * ptr, * filename;
+  char * command, * ptr;
   char * perm_name;
-  char perm_buffer[256], *perm_buffer_ptr;
+  char perm_buffer[256];
   char buffer[2048];
-  unsigned int length;
   wzd_command_perm_t * current;
-  wzd_command_perm_entry_t * entry;
+  int ret;
 
   ptr = command_line;
   command = strtok_r(command_line," \t\r\n",&ptr);
@@ -854,59 +864,79 @@ int do_site_perm(char *command_line, wzd_context_t * context)
   {
     send_message_raw("200-\r\n",context);
     current = mainConfig->perm_list;
-    /** \todo replace that with search on perms name*/
-    while (current) {
-      /* parse current->entry_list */
-      perm_buffer_ptr = perm_buffer;
-      length=0;
-      entry = current->entry_list;
-      while (entry) {
-        *perm_buffer_ptr++ = ' ';
-        length ++;
-        if (strcmp(entry->target,"*")!=0) {
-          switch(entry->cp) {
-            case CPERM_USER: *perm_buffer_ptr++ = '='; break;
-            case CPERM_GROUP: *perm_buffer_ptr++ = '-'; break;
-            case CPERM_FLAG: *perm_buffer_ptr++ = '+'; break;
-          }
-          length ++;
+    if ( !perm_name ) {
+      /* no argument: print all perms */
+      while (current) {
+        if ( !perm2str(current,perm_buffer,sizeof(perm_buffer)) )
+        {
+          snprintf( buffer, sizeof(buffer), " %s%s\r\n", current->command_name, perm_buffer);
+          send_message_raw(buffer,context);
         }
-        strncpy(perm_buffer_ptr,entry->target,256-length);
-        length += strlen(perm_buffer_ptr);
-        perm_buffer_ptr = perm_buffer+length;
-        entry = entry->next_entry;
+        current = current->next_perm;
       }
-      perm_buffer[length]='\0';
-      snprintf( buffer, sizeof(buffer), "200- %s%s\r\n", current->command_name, perm_buffer);
-      send_message_raw(buffer,context);
-      current = current->next_perm;
+    } else {
+      /* search on perms name */
+      int found=0;
+      while (current) {
+        if ( !strncasecmp(perm_name,current->command_name,strlen(perm_name)) )
+        {
+          found=1;
+          if ( !perm2str(current,perm_buffer,sizeof(perm_buffer)) )
+          {
+            snprintf( buffer, sizeof(buffer), " %s%s\r\n", current->command_name, perm_buffer);
+            send_message_raw(buffer,context);
+          }
+        }
+        current = current->next_perm;
+      }
+      if (!found)
+        send_message_raw(" permission not found\r\n",context);
     }
     send_message_raw("200 \r\n",context);
     return 0;
   }
-  else if (strcasecmp(command,"convert")==0)
+  else if (strcasecmp(command,"change")==0)
   {
-    if (!perm_name) {
+    ptr = strtok_r(NULL,"\r\n",&ptr);
+    if (!perm_name || !ptr) {
       do_site_help("perm",context);
       return 1;
     }
+    ret = perm_is_valid_perm(perm_name);
+    if (ret) { send_message_with_args(501,context,"perm_name is invalid"); return 1; }
+    if ( perm_remove(perm_name, mainConfig) ) {
+      send_message_with_args(501,context,"error, permission NOT deleted");
+      return 1;
+    }
+    ret = perm_add_perm(perm_name,ptr,mainConfig);
+    if (ret) { send_message_with_args(501,context,"error adding permission"); return 1; }
+    send_message_with_args(200,context,"command ok, permission changed");
     return -1;
   }
-  else if (strcasecmp(command,"delete")==0)
+  else if (strcasecmp(command,"remove")==0)
   {
     if (!perm_name) {
       do_site_help("perm",context);
       return 1;
     }
-    send_message_with_args(200,context,"message file deleted");
+    if ( perm_remove(perm_name, mainConfig) )
+      send_message_with_args(501,context,"error, permission NOT deleted");
+    else
+      send_message_with_args(200,context,"command ok, permission deleted");
     return 0;
   }
-  else if (strcasecmp(command,"new")==0)
+  else if (strcasecmp(command,"add")==0)
   {
-    if (!perm_name) {
+    ptr = strtok_r(NULL,"\r\n",&ptr);
+    if (!perm_name || !ptr) {
       do_site_help("perm",context);
       return 1;
     }
+    ret = perm_is_valid_perm(perm_name);
+    if (ret) { send_message_with_args(501,context,"perm_name is invalid"); return 1; }
+    ret = perm_add_perm(perm_name,ptr,mainConfig);
+    if (ret) { send_message_with_args(501,context,"error adding permission"); return 1; }
+    send_message_with_args(200,context,"command ok, permission added");
     return 0;
   }
 
