@@ -2,7 +2,7 @@
 
 # Start the wzdftpd FTP daemon.
 
-PREFIX=@prefix@
+PREFIX=@e_prefix@
 
 PATH=$PREFIX/sbin:/bin:/usr/bin:/sbin:/usr/sbin
 LD_LIBRARY_PATH=$PREFIX/lib

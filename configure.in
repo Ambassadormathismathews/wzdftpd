@@ -176,9 +176,11 @@ BUILDNUM="`date +\"%Y%m%d\"`"
 #                 ||----w |
 #                 ||     ||
 # 
-e_sysconfdir=$(echo ${sysconfdir/\$\{prefix\}/$prefix})
-e_datadir=$(echo ${datadir/\$\{prefix\}/$prefix})
+e_prefix=${prefix/NONE/\/usr\/local}
+e_sysconfdir=$(echo ${sysconfdir/\$\{prefix\}/$e_prefix})
+e_datadir=$(echo ${datadir/\$\{prefix\}/$e_prefix})
 
+AC_SUBST(e_prefix)
 AC_SUBST(e_datadir)
 AC_SUBST(e_sysconfdir)
 AC_SUBST(BUILDNUM)
