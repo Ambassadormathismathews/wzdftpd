@@ -40,6 +40,7 @@
 
 #include <netdb.h>
 
+#include <fcntl.h> /* O_WRONLY */
 #include <syslog.h>
 
 /* speed up compilation */
@@ -50,6 +51,28 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+
+/* NOTE we are forced to open log in lib, because of win32
+ * memory management
+ */
+int log_open(const char *filename, unsigned int filemode)
+{
+  int fd;
+
+  fd = open(filename, filemode, 0640);
+  if (fd < 0)
+    return -1;
+  mainConfig->logfile = fdopen(fd,"a");
+  if (!mainConfig->logfile) return 1;
+  return 0;
+}
+
+void log_close(void)
+{
+  if (mainConfig->logfile)
+    fclose(mainConfig->logfile);
+  mainConfig->logfile = NULL;
+}
 
 void out_log(int level,const char *fmt,...)
 {
@@ -225,6 +248,22 @@ void out_err(int level, const char *fmt,...)
       /*  }*/
     } /* syslog */
   } /* > loglevel ? */
+}
+
+int xferlog_open(const char *filename, unsigned int filemode)
+{
+  int fd;
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, filemode);
+#else /* ! BSD */
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, filemode);
+#endif /* BSD */
+  return fd;
+}
+
+void xferlog_close(int fd)
+{
+  close(fd);
 }
 
 void out_xferlog(wzd_context_t * context, int is_complete)

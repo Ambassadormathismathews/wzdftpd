@@ -176,8 +176,8 @@ typedef enum {
 
 /*********************** STATS ****************************/
 typedef struct {
-  u_int64_t             bytes_ul_total;
-  u_int64_t             bytes_dl_total;
+  u64_t             bytes_ul_total;
+  u64_t             bytes_dl_total;
   unsigned long		files_ul_total;
   unsigned long		files_dl_total;
 } wzd_stats_t;
@@ -200,7 +200,7 @@ typedef struct {
   unsigned short	num_logins;	/**< number of simultaneous logins allowed */
   char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
   wzd_stats_t		stats;
-  u_int64_t         	credits;
+  u64_t         	credits;
   unsigned int		ratio;
   unsigned short	user_slots;	/**< user slots for gadmins */
   unsigned short	leech_slots;	/**< leech slots for gadmins */

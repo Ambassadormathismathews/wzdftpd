@@ -1823,11 +1823,7 @@ int cfg_read_xferlog(void)
     return 1;
   }
 
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
-#else /* ! BSD */
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, 0600);
-#endif /* BSD */
+  fd = xferlog_open(filename,0600);
   if (fd == -1)
   {
     out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n",filename);

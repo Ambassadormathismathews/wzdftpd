@@ -2421,7 +2421,7 @@ void * clientThreadProc(void *arg)
   context->idle_time_start = time(NULL);
 
   while (!exitclient) {
-#if DEBUG
+#ifdef DEBUG
     if (!context->magic == CONTEXT_MAGIC || sockfd != context->controlfd)
     {
       out_err(LEVEL_CRITICAL,"Omar m'a tuer !\n");
@@ -2429,9 +2429,6 @@ void * clientThreadProc(void *arg)
     }
 #endif /* DEBUG */
     save_errno = 666;
-    /* trying to find if bzero is faster than memset */
-/*    bzero(buffer,BUFFER_LEN);*/
-/*    memset(buffer,0,BUFFER_LEN);*/
     param=NULL;
     /* 1. read */
     FD_ZERO(&fds_r);
@@ -2463,6 +2460,7 @@ void * clientThreadProc(void *arg)
         exitclient = 1;
       }
     }
+    /* TODO XXX FIXME is this empty if() intentional ?? */
     if (FD_ISSET(sockfd,&efds)) {
 /*      if (save_errno == EINTR) continue;*/
 /*      out_log(LEVEL_CRITICAL,"Major error during recv: errno %d error %s\n",save_errno,strerror(save_errno));*/

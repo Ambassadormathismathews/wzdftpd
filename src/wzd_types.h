@@ -29,5 +29,6 @@
 #include <sys/types.h>
 
 /* unsigned int, 64 bits: u_int64_t */
+#define u64_t u_int64_t
 
 #endif /* __WZD_TYPES__ */

@@ -1,3 +1,10 @@
+2003-11-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* added strtok_r detection & default implementation if missing
+	* functions to open/close log file in lib
+	* functions to open/close xferlog file in lib
+	* bugfix: spaces were managed oddly in cookies
+
 2003-11-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* removed 'unsigned long long' type, replaced with 'u_int64_t'

@@ -34,6 +34,8 @@ libwzd_la_SOURCES =  \
 	wzd_section.h   \
 	wzd_shm.c       \
 	wzd_shm.h       \
+	wzd_strtok_r.c  \
+	wzd_strtok_r.h  \
 	wzd_types.h     \
 	wzd_vfs.c       \
 	wzd_vfs.h

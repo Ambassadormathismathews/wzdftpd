@@ -339,7 +339,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   int convert=0;
   float val;
   char c;
-  u_int64_t total;
+  u64_t total;
   unsigned int send_buffer_ptr=0;
   unsigned short use_colors=0;
   char * out_buffer_ptr;
@@ -372,215 +372,217 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
     padding = 0;
     switch(cookie) {
     case COOKIE_IF:
+    {
+      char * tmpbuf;
+      chop(yytext);
+      length = strlen(yytext);
+      if (length<5 || length>=256)
       {
-	char * tmpbuf;
-	length = strlen(yytext);
-	if (length<5 || length>=256)
-	{
-	  printf("invalid if loop\n");
-	  return 1;
-	}
-	memcpy(condition,yytext+4,length-5);
-	condition[length-7]='\0';
-	i=0;
-	tmpbuf = malloc(16384);
-/*	printf("starting if loop (%s)\n",condition);*/
-	while ((cookie=yylex()) && cookie!=COOKIE_ENDIF)
-	{
-	  /*	if (i>=LOOP_MAX_LINES) {
-		printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
-		return 1;
-		}*/
-	  if ( (i+strlen(yytext)) >= 16384 ) {
-	    fprintf(stderr,"loop TOO LONG !\n");
-	    exit(1);
-	  }
-	  strcpy(tmpbuf+i,yytext);
-/*	  printf("%s[31mMARK[0m\n",yytext);*/
-	  i+=strlen(yytext);
-	}
-	if (cookie) {
-/*	  printf("End of if loop (i=%d)\n",i);*/
-	  BEGIN(INITIAL);
-	} else {
-	  printf("unterminated if loop\n");
-	  return 1;
-	}
-	/* flush buffer before executing 'for' loop */
-/*	printf("flushing buffer on [31mIF[0m\n");*/
-	/* flush buffer */
-        if (out_buffer) {
-          unsigned int l = send_buffer_ptr;
-          if (l >= out_buffer_len) {
-#ifdef WZD_DBG_COOKIES
-            out_err(LEVEL_HIGH,"buffer truncated !");
-#endif
-            l = out_buffer_len - 1;
-          }
-          memcpy(out_buffer_ptr,send_buffer,l);
-          out_buffer_ptr[l] = '\0';
-          out_buffer_ptr += l;
-        } else {
-          send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,context);
-          send_buffer_ptr=0;
-        }
-	/* test if() condition */
-	/* TODO XXX FIXME more checks needed ! */
-	if (condition[0] == '+') {
-	  if (current_user->flags && strchr(user->flags,condition[1]))
-	    cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-	}
+        printf("invalid if loop\n");
+        return 1;
       }
-      break;
-    case COOKIE_FOR:
+      memcpy(condition,yytext+4,length-5); /* 5 = strlen("%if()"= */
+      condition[length-5]='\0';
+      i=0;
+      tmpbuf = malloc(16384);
+/*      printf("starting if loop (%s)\n",condition);*/
+      while ((cookie=yylex()) && cookie!=COOKIE_ENDIF)
       {
-	char * tmpbuf;
-	length = strlen(yytext);
-	if (length<7 || length>=256)
-	{
-	  printf("invalid for loop\n");
-	  return 1;
-	}
-	memcpy(condition,yytext+5,length-8);
-	condition[length-8]='\0';
-	i=0;
-	tmpbuf = malloc(16384);
-/*	printf("starting for loop (%s)\n",condition);*/
-	while ((cookie=yylex()) && cookie!=COOKIE_ENDFOR)
-	{
 	  /*	if (i>=LOOP_MAX_LINES) {
 		printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
 		return 1;
 		}*/
-	  if ( (i+strlen(yytext)) >= 16384 ) {
-	    fprintf(stderr,"loop TOO LONG !\n");
-	    exit(1);
-	  }
-	  strcpy(tmpbuf+i,yytext);
-/*	  printf("%s[31mMARK[0m\n",yytext);*/
-	  i+=strlen(yytext);
-	}
-	if (cookie) {
-/*	  printf("End of for loop (i=%d)\n",i);*/
-	  BEGIN(INITIAL);
-	} else {
-	  printf("unterminated for loop\n");
-	  return 1;
-	}
-	/* flush buffer before executing 'for' loop */
-/*	printf("flushing buffer on [31mFOR[0m\n");*/
-	/* flush buffer */
-        if (out_buffer) {
-          unsigned int l = send_buffer_ptr;
-          if (l >= out_buffer_len) {
-#ifdef WZD_DBG_COOKIES
-            out_err(LEVEL_HIGH,"buffer truncated !");
-#endif
-            l = out_buffer_len - 1;
-          }
-          memcpy(out_buffer_ptr,send_buffer,l);
-          out_buffer_ptr[l] = '\0';
-          out_buffer_ptr += l;
-        } else {
-          send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,context);
-          send_buffer_ptr=0;
+        if ( (i+strlen(yytext)) >= 16384 ) {
+          fprintf(stderr,"loop TOO LONG !\n");
+          exit(1);
         }
-	/* execute for loop */
-	if (strcmp(condition,"allusersconnected")==0)
-	{
-	  wzd_user_t * loop_user;
-	  for (i=0; i<HARD_USERLIMIT; i++)
-	  {
-	    if (context_list[i].magic == CONTEXT_MAGIC)
-	    {
-	      loop_user = GetUserByID(context_list[i].userid);
-	      current_user = loop_user;
-	      current_context = &context_list[i];
-	      if (loop_user->username[0] != '\0') {
-		/* check if user is hidden */
-		if (loop_user->flags && strchr(loop_user->flags,FLAG_HIDDEN)
-		    && !strchr(me->flags,FLAG_SITEOP)
-		    && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
-		  continue;
-                if (out_buffer)
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-                else
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
-	      }
-	    }
-	  }
-	  current_user = user;
-	  current_context = NULL;
-	} /* allusersconnected */
-	else if (strcmp(condition,"allusers")==0)
-	{
-	  wzd_user_t * loop_user;
-	  for (i=0; i<HARD_DEF_USER_MAX; i++)
-	  {
-	    loop_user = GetUserByID(i);
-	    current_user = loop_user;
-	    if (loop_user->username[0] != '\0') {
+        strcpy(tmpbuf+i,yytext);
+/*        printf("%s[31mMARK[0m\n",yytext);*/
+        i+=strlen(yytext);
+      }
+      if (cookie) {
+/*        printf("End of if loop (i=%d)\n",i);*/
+        BEGIN(INITIAL);
+      } else {
+        printf("unterminated if loop\n");
+        return 1;
+      }
+      /* flush buffer before executing 'for' loop */
+/*      printf("flushing buffer on [31mIF[0m\n");*/
+      /* flush buffer */
+      if (out_buffer) {
+        unsigned int l = send_buffer_ptr;
+        if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+          out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+          l = out_buffer_len - 1;
+        }
+        memcpy(out_buffer_ptr,send_buffer,l);
+        out_buffer_ptr[l] = '\0';
+        out_buffer_ptr += l;
+      } else {
+        send_buffer[send_buffer_ptr]='\0';
+        send_message_raw(send_buffer,context);
+        send_buffer_ptr=0;
+      }
+      /* test if() condition */
+      /* TODO XXX FIXME more checks needed ! */
+      if (condition[0] == '+') {
+        if (current_user->flags && strchr(user->flags,condition[1]))
+          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+      }
+    }
+    break;
+    case COOKIE_FOR:
+    {
+      char * tmpbuf;
+      chop(yytext);
+      length = strlen(yytext);
+      if (length<7 || length>=256)
+      {
+        printf("invalid for loop\n");
+        return 1;
+      }
+      memcpy(condition,yytext+5,length-6); /* 6 = strlen("%for()") */
+      condition[length-6]='\0';
+      i=0;
+      tmpbuf = malloc(16384);
+/*      printf("starting for loop (%s)\n",condition);*/
+      while ((cookie=yylex()) && cookie!=COOKIE_ENDFOR)
+      {
+	  /*	if (i>=LOOP_MAX_LINES) {
+		printf("too much lines in for loop (max %d\n)",LOOP_MAX_LINES);
+		return 1;
+		}*/
+        if ( (i+strlen(yytext)) >= 16384 ) {
+          fprintf(stderr,"loop TOO LONG !\n");
+          exit(1);
+        }
+        strcpy(tmpbuf+i,yytext);
+/*        printf("%s[31mMARK[0m\n",yytext);*/
+        i+=strlen(yytext);
+      }
+      if (cookie) {
+/*        printf("End of for loop (i=%d)\n",i);*/
+        BEGIN(INITIAL);
+      } else {
+        printf("unterminated for loop\n");
+        return 1;
+      }
+      /* flush buffer before executing 'for' loop */
+/*      printf("flushing buffer on [31mFOR[0m\n");*/
+      /* flush buffer */
+      if (out_buffer) {
+        unsigned int l = send_buffer_ptr;
+        if (l >= out_buffer_len) {
+#ifdef WZD_DBG_COOKIES
+          out_err(LEVEL_HIGH,"buffer truncated !");
+#endif
+          l = out_buffer_len - 1;
+        }
+        memcpy(out_buffer_ptr,send_buffer,l);
+        out_buffer_ptr[l] = '\0';
+        out_buffer_ptr += l;
+      } else {
+        send_buffer[send_buffer_ptr]='\0';
+        send_message_raw(send_buffer,context);
+        send_buffer_ptr=0;
+      }
+      /* execute for loop */
+      if (strcmp(condition,"allusersconnected")==0)
+      {
+        wzd_user_t * loop_user;
+        for (i=0; i<HARD_USERLIMIT; i++)
+        {
+          if (context_list[i].magic == CONTEXT_MAGIC)
+          {
+            loop_user = GetUserByID(context_list[i].userid);
+            current_user = loop_user;
+            current_context = &context_list[i];
+            if (loop_user->username[0] != '\0') {
+              /* check if user is hidden */
+              if (loop_user->flags && strchr(loop_user->flags,FLAG_HIDDEN)
+                  && !strchr(me->flags,FLAG_SITEOP)
+                  && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
+                continue;
               if (out_buffer)
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
-	    }
-	  }
-	  current_user = user;
-	} /* allusers */
-	else if (strcmp(condition,"allgroups")==0)
-	{
-	  wzd_group_t * loop_group;
-	  for (i=0; i<HARD_DEF_GROUP_MAX; i++)
-	  {
-	    loop_group = GetGroupByID(i);
-	    current_group = loop_group;
-	    if (loop_group->groupname[0] != '\0') {
+            }
+          }
+        }
+        current_user = user;
+        current_context = NULL;
+      } /* allusersconnected */
+      else if (strcmp(condition,"allusers")==0)
+      {
+        wzd_user_t * loop_user;
+        for (i=0; i<HARD_DEF_USER_MAX; i++)
+        {
+          loop_user = GetUserByID(i);
+          current_user = loop_user;
+          if (loop_user->username[0] != '\0') {
+            if (out_buffer)
+              cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+            else
+              cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+          }
+        }
+        current_user = user;
+      } /* allusers */
+      else if (strcmp(condition,"allgroups")==0)
+      {
+        wzd_group_t * loop_group;
+        for (i=0; i<HARD_DEF_GROUP_MAX; i++)
+        {
+          loop_group = GetGroupByID(i);
+          current_group = loop_group;
+          if (loop_group->groupname[0] != '\0') {
+            if (out_buffer)
+              cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+            else
+              cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
+          }
+        }
+        current_group = group;
+      } /* allgroups */
+      else if (strcmp(condition,"allgroupmembers")==0)
+      {
+        wzd_user_t * loop_user;
+        int gid;
+        if (current_group) {
+          gid = GetGroupIDByName(current_group->groupname);
+          for (i=0; i<HARD_DEF_USER_MAX; i++)
+          {
+            loop_user = GetUserByID(i);
+            current_user = loop_user;
+            if (loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
               if (out_buffer)
-                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
-                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
-	    }
-	  }
-	  current_group = group;
-	} /* allgroups */
-	else if (strcmp(condition,"allgroupmembers")==0)
-	{
-	  wzd_user_t * loop_user;
-	  int gid;
-	  if (current_group) {
-	    gid = GetGroupIDByName(current_group->groupname);
-	    for (i=0; i<HARD_DEF_USER_MAX; i++)
-	    {
-	      loop_user = GetUserByID(i);
-	      current_user = loop_user;
-	      if (loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
-                if (out_buffer)
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-                else
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
-	      }
-	    }
-	  }
-	  current_user = user;
-	} /* allgroupmembers */
-  else if (strcmp(condition,"allvfs")==0)
-  {
-    current_vfs = mainConfig->vfs;
-    while(current_vfs)
-    {
-      if (out_buffer)
-        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-      else
-        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
-      current_vfs = current_vfs->next_vfs;
+                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+            }
+          }
+        }
+        current_user = user;
+      } /* allgroupmembers */
+      else if (strcmp(condition,"allvfs")==0)
+      {
+        current_vfs = mainConfig->vfs;
+        while(current_vfs)
+        {
+          if (out_buffer)
+            cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+          else
+            cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+          current_vfs = current_vfs->next_vfs;
+        }
+      } /* allvfs */
+      free(tmpbuf);
     }
-  } /* allvfs */
-        free(tmpbuf);
-      }
-      break;
+    break;
 /*** GROUP cookies ***/
     case COOKIE_GROUPHOME:
       get_cookie_format(yytext,&padding);

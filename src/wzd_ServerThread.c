@@ -1033,14 +1033,14 @@ static void free_config(wzd_config_t * config)
   }
 
   if (mainConfig->xferlog_fd != -1)
-    close(mainConfig->xferlog_fd);
+    xferlog_close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     free(mainConfig->xferlog_name);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
     closelog();
   }
   if (mainConfig->logfile)
-    fclose(mainConfig->logfile);
+    log_close();
   if (mainConfig->logfilename)
     free(mainConfig->logfilename);
   if (mainConfig->config_filename)

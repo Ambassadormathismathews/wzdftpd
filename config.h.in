@@ -149,6 +149,9 @@
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
+/* System has the strtok_r function. */
+#undef HAVE_STRTOK_R
+
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 

@@ -327,10 +327,14 @@ int main(int argc, char **argv)
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
   }
   else {
-    fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
+    if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
+    {
+      out_err(LEVEL_CRITICAL,"Could not open log file.\n");
+      return 1;
+    }
     mainConfig->logfile = fdopen(fd,"a");
   }
-  
+
 #ifdef SSL_SUPPORT
   ret = tls_init();
   if (ret) {

@@ -910,6 +910,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
           strcmp(entr->d_name,"..")==0 ||
           strcmp(entr->d_name,HARD_PERMFILE)==0) /* XXX hide perm file ! */
         continue;
+      closedir(dir);
       return 1; /* dir not empty */
     }
 

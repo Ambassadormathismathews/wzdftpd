@@ -22,52 +22,8 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#include <sys/time.h>	/* time_t (wzd_structs.h) */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
+#ifndef HAVE_STRTOK_R
 
-#include <sys/stat.h>
+WZD_EXPORT char * strtok_r(char *s, const char *delim, char **last);
 
-/* speed up compilation */
-#define SSL	void
-#define SSL_CTX	void
-#define FILE	void
-
-#include "wzd_structs.h"
-
-#include "wzd_ratio.h"
-#include "wzd_misc.h"
-
-u64_t ratio_get_credits(wzd_user_t * user)
-{
-  if (!user->ratio) return (u64_t)-1;
-
-  return user->credits;
-}
-
-int ratio_check_download(const char *path, wzd_context_t *context)
-{
-  wzd_user_t * me;
-  u64_t credits;
-  struct stat s;
-  unsigned long needed=0;
-
-  me = GetUserByID(context->userid);
-
-  if (!me->ratio) return 0;
-  credits = ratio_get_credits(me);
-
-  if (stat(path,&s)) {
-    /* problem during stat() */
-    return -1;
-  }
-
-  needed = s.st_size;
-
-  if (needed <= credits)
-    return 0;
-  else
-    return 1;
-}
+#endif
