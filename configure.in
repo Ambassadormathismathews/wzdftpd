@@ -178,9 +178,9 @@ BUILDNUM="`date +\"%Y%m%d\"`"
 #                 ||----w |
 #                 ||     ||
 # 
-e_prefix=${prefix/NONE/\/usr\/local}
-e_sysconfdir=$(echo ${sysconfdir/\$\{prefix\}/$e_prefix})
-e_datadir=$(echo ${datadir/\$\{prefix\}/$e_prefix})
+e_prefix=`echo $prefix | sed -e 's|NONE|/usr/local|'`
+e_sysconfdir=`echo $sysconfdir | sed -e "s|\\${prefix}|$e_prefix|"`
+e_datadir=`echo $datadir | sed -e "s|\\${prefix}|$e_prefix|"`
 
 AC_SUBST(e_prefix)
 AC_SUBST(e_datadir)
