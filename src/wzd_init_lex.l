@@ -718,6 +718,7 @@ int cfg_read_dir_message(void)
 int cfg_read_dynamic_ip(void)
 {
   unsigned int token;
+  char * dynamic_ip;
 
   token = yylex();
   if (token!='=') {
@@ -725,29 +726,27 @@ int cfg_read_dynamic_ip(void)
     return 1;
   }
 
-  switch( (token=yylex()) ) {
-  case CFG_NUM:
-/*    out_err(LEVEL_FLOOD,"dynamic_ip: NUM (%s)\n",yytext);*/
-    if (strcmp(yytext,"0")==0 || strcmp(yytext,"1")==0) {
-      strcpy((char *)tempConfig.dynamic_ip,yytext);
-      return 0;
-    }
-    break;
-  case CFG_IP_STR:
-    out_err(LEVEL_INFO,"Dynamic ip: %s\n",yytext);
-    {
-      char buffer[64];
-      if (socket_getipbyname(yytext+1, buffer, sizeof(buffer))) {
-        out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",yytext);
-        return 1;
-      }
-    }
-    strncpy((char *)tempConfig.dynamic_ip,yytext+1,MAX_IP_LENGTH-1);
-    break;
-  default:
-    out_err(LEVEL_INFO,"ip: read token %d (%c) yytext:\n",token,token,yytext);
-    break;
+  if( !(dynamic_ip=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid ip\n");
+    return 1;
   }
+
+  /* number ? */
+  if (strcmp(dynamic_ip,"0")==0 || strcmp(dynamic_ip,"1")==0) {
+    strcpy((char *)tempConfig.dynamic_ip,dynamic_ip);
+    return 0;
+  }
+
+  out_err(LEVEL_INFO,"Dynamic ip: %s\n",dynamic_ip);
+  {
+    char buffer[64];
+    if (socket_getipbyname(dynamic_ip, buffer, sizeof(buffer))) {
+      out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",dynamic_ip);
+      return 1;
+    }
+  }
+  strncpy((char *)tempConfig.dynamic_ip,dynamic_ip,MAX_IP_LENGTH-1);
+  wzd_free(dynamic_ip);
 
   return 0;
 }

@@ -308,7 +308,6 @@ int check_server_dynamic_ip(void)
 /*  if (mainConfig->dynamic_ip[0]=='+')*/ /** \todo remove me if it works */
   {
     const char *ip = (const char *)mainConfig->dynamic_ip;
-    ip++;
 
    /* 2- resolve config ip */
     if (strcmp(ip,"*")==0)

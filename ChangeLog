@@ -4,6 +4,7 @@
 	* feature: errors in TCL module are catched and displayed to stderr
 	* bugfix: file descriptors not closed on ident connections
 	* bugfix: file descriptors not closed in win32 version
+	* bugfix: dynamic_ip not working
 
 2005-01-28  Pierre Chifflier  <pollux@cpe.fr>
 
