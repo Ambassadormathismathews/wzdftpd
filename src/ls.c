@@ -56,18 +56,22 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   struct stat st;
   struct tm *ntime;
   wzd_user_t * user;
+  short vfs_pad=0;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
     user = &context->userinfo;
   } else
 #endif
-    user = &mainConfig->user_list[context->userid];
+    user = GetUserByID(context->userid);
 
   if (directory==NULL) return 0;
 
   strcpy(filename,directory);
-  strcat(filename,"/");
+  if (directory[strlen(directory)-1]!='/') {
+    strcat(filename,"/");
+    vfs_pad=1;
+  }
   dirlen=strlen(filename);
 
   if ((dir=opendir(directory))==NULL) return 0;
@@ -84,7 +88,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
     while (vfs) {
       if (strncmp(vfs->virtual_dir,directory,strlen(directory))==0) {
-	char * ptr = vfs->virtual_dir + strlen(directory) + 1;
+	char * ptr = vfs->virtual_dir + strlen(directory) + vfs_pad;
 	if (strchr(ptr,'/')==NULL) {
 	  if (stat(vfs->physical_dir,&st)<0) {
 	    vfs = vfs->next_vfs;
