@@ -1,3 +1,7 @@
+2004-08-24  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: changed EPSV reply code to 229 (to be RFC-compliant)
+
 2004-08-14  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: some code audit using splint. Fixed some warnings

@@ -1637,7 +1637,7 @@ int do_epsv(char *name, char *arg, wzd_context_t * context)
   context->datafamily = WZD_INET6;
   {
     char buf[256];
-    snprintf(buf,256,"227 Entering Passive Mode (|||%d|)\r\n",port);
+    snprintf(buf,256,"229 Entering Passive Mode (|||%d|)\r\n",port);
     ret = send_message_raw(buf,context);
   }
 #endif
