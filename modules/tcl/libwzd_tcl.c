@@ -87,6 +87,7 @@ static wzd_context_t * current_context=NULL;
 
 /***** Private fcts ****/
 static void do_tcl_help(wzd_context_t * context);
+static int tcl_diagnose(void);
 
 /***** EVENT HOOKS *****/
 static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
@@ -135,6 +136,13 @@ int WZD_MODULE_INIT(void)
 #else
   Tcl_FindExecutable("wzdftpd");
 #endif /* _MSC_VER */
+
+  if (tcl_diagnose())
+  {
+    out_log(LEVEL_HIGH, "TCL: self-test failed, disabling TCL\n");
+    return -1;
+  }
+
   interp = Tcl_CreateInterp();
   if (!interp) {
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
@@ -274,6 +282,69 @@ static void do_tcl_help(wzd_context_t * context)
   send_message_raw("501-tcl commands\r\n",context);
   send_message_raw("501- site tcl <tcl_command>\r\n",context);
   send_message_raw("501 \r\n",context);
+}
+
+
+/** return 0 if ok */
+static int tcl_diagnose(void)
+{
+  int ret=0, test_int;
+  Tcl_Interp * test_interp, * test_slave;
+  Tcl_Command test_cmd;
+  Tcl_CmdInfo test_info;
+
+  /* creation of interpreter */
+  if ( (test_interp = Tcl_CreateInterp()) == NULL)
+  {
+    out_log(LEVEL_HIGH, "TCL error: could not create interpreter\n");
+    return 1;
+  }
+
+  /* adding a command */
+  test_cmd = Tcl_CreateCommand(test_interp,"ftp2sys",tcl_ftp2sys,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  if (!test_cmd)
+  {
+    out_log(LEVEL_HIGH, "TCL error: could not create command\n");
+    out_log(LEVEL_HIGH, " error: %s\n", Tcl_GetStringResult(test_interp));
+    Tcl_DeleteInterp(test_interp);
+    return 2;
+  }
+
+  /* check that the command is really here */
+  test_int = Tcl_GetCommandInfoFromToken(test_cmd, &test_info);
+  if (!test_int)
+  {
+    out_log(LEVEL_HIGH, "TCL error: could not get info on command\n");
+    out_log(LEVEL_HIGH, " error: %s\n", Tcl_GetStringResult(test_interp));
+    Tcl_DeleteInterp(test_interp);
+    return 3;
+  }
+
+  /* create a slave */
+  if ( (test_slave = Tcl_CreateSlave(test_interp, "slaveName", 0)) == NULL )
+  {
+    out_log(LEVEL_HIGH, "TCL error: could not create slave\n");
+    out_log(LEVEL_HIGH, " error: %s\n", Tcl_GetStringResult(test_interp));
+    Tcl_DeleteInterp(test_interp);
+    return 4;
+  }
+
+  /* create alias */
+  if ( (test_int = Tcl_CreateAlias(test_slave, "ftp2sys", test_interp, "ftp2sys", 0, NULL)) != TCL_OK )
+  {
+    out_log(LEVEL_HIGH, "TCL error: could not create alias for slave\n");
+    out_log(LEVEL_HIGH, " error: %s\n", Tcl_GetStringResult(test_interp));
+    Tcl_DeleteInterp(test_slave);
+    Tcl_DeleteInterp(test_interp);
+    return 5;
+  }
+
+  Tcl_DeleteInterp(test_slave);
+  Tcl_DeleteInterp(test_interp);
+
+  /* run is ok */
+  out_log(LEVEL_INFO, "TCL module passed self-test\n");
+  return 0;
 }
 
 /***** slaves *****/
