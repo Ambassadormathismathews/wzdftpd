@@ -172,6 +172,9 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
     user.ip_allowed[i][0]='\0';
   user.stats.bytes_ul_total=0;
   user.stats.bytes_dl_total=0;
+  user.stats.files_ul_total=0;
+  user.stats.files_dl_total=0;
+  user.credits = 0;
   user.ratio = ratio;
   user.user_slots=0;
   user.leech_slots=0;
