@@ -83,6 +83,8 @@
 
 int identify_token(const char *token)
 {
+  if (!token || strlen(token)==0)
+    return TOK_UNKNOWN;
 /* TODO order the following by probability order */
   if (strcasecmp("USER",token)==0)
     return TOK_USER;
