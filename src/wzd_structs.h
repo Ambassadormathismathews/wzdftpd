@@ -32,26 +32,42 @@
 typedef enum {
   E_OK=0,
 
+  E_NO_DATA_CTX,	/**< no data connection available */
+
   E_PARAM_NULL,		/**< parameter is NULL */
   E_PARAM_BIG,		/**< parameter is too long */
+  E_PARAM_INVALID,	/**< parameter is invalid */
 
   E_WRONGPATH,		/**< path is invalid */
 
   E_NOTDIR,		/**< not a directory */
+  E_ISDIR,		/**< is a directory */
+
+  E_NOPERM,		/**< not enough perms */
 
   E_TIMEOUT,		/**< timeout on control connection */
   E_DATATIMEOUT,	/**< timeout on data connection */
+  E_CONNECTTIMEOUT,	/**< timeout on connect() */
+  E_PASV_FAILED,	/**< pasv connection failed */
+  E_PORT_INVALIDIP,	/**< invalid address in PORT */
 
-  E_LOGIN_PASS,		/**< wrong pass */
-  E_LOGIN_NODIR,	/**< user has no homedir */
-  E_LOGIN_NOIP,		/**< ip not allowed */
-  E_LOGIN_MAXUSERIP,	/**< max number of ip reached for user */
-  E_LOGIN_MAXGROUPIP,	/**< max number of ip reached for group */
-  E_LOGIN_CLOSED,	/**< site is closed for this login */
-  E_LOGIN_DELETED,	/**< user have been deleted */
+  E_CREDS_INSUFF,	/**< insufficient credits */
+
+  E_USER_REJECTED,	/**< user rejected */
+  E_USER_NO_HOME,	/**< user has no homedir */
+  E_USER_NOIP,		/**< ip not allowed */
+  E_USER_MAXUSERIP,	/**< max number of ip reached for user */
+  E_USER_MAXGROUPIP,	/**< max number of ip reached for group */
+  E_USER_CLOSED,	/**< site is closed for this login */
+  E_USER_DELETED,	/**< user have been deleted */
+  E_USER_NUMLOGINS,	/**< user has reached user num_logins limit */
+  E_USER_TLSFORCED,	/**< user must be in TLS mode */
+  
+  E_GROUP_NUMLOGINS,	/**< user has reached group num_logins limit */
+
+  E_PASS_REJECTED,	/**< wrong pass */
 
   E_FILE_NOEXIST,	/**< file does not exist */
-  E_FILE_NOPERM,	/**< not enough perms on file */
   E_FILE_FORBIDDEN,	/**< access to file is forbidden */
 
   E_USER_IDONTEXIST,	/**< server said i don't exist ! */

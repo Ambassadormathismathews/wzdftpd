@@ -472,7 +472,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 #endif
     user = GetUserByID(context->userid);
 
-  if (checkpath(wanted_path,path,context)) return 1;
+  if (checkpath(wanted_path,path,context)) return E_WRONGPATH;
   snprintf(allowed,2048,"%s/",user->rootpath);
 
 
@@ -489,7 +489,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     ret = _checkPerm(tmppath,RIGHT_CWD,user);
   
     if (ret) { /* no access */
-      return 1;
+      return E_NOPERM;
     }
   }
 
@@ -509,15 +509,15 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 /*out_err(LEVEL_INFO,"DIR: %s NEW DIR: %s\n",buffer,buffer2);*/
       strncpy(context->currentpath,buffer2,2047);
     }
-    else return 1;
+    else return E_NOTDIR;
   }
-  else return 1;
+  else return E_FILE_NOEXIST;
 
 #ifdef DEBUG
 out_err(LEVEL_INFO,"current path: '%s'\n",context->currentpath);
 #endif
 
-  return 0;
+  return E_OK;
 }
 
 /*************** childtimeout ************************/
@@ -694,7 +694,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   if (context->pasvsock < 0 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
-    return 1;
+    return E_NO_DATA_CTX;
   }
 
   strcpy(nullch,".");
@@ -738,7 +738,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
     }
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) { /* wildcards in path ? ough */
       ret = send_message_with_args(501,context,"You can't put wildcards in the middle of path, only in the last part.");
-      return 1;
+      return E_PARAM_INVALID;
     }
   } else { /* no param, assume list of current dir */
     cmd[0] = '\0';
@@ -748,7 +748,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   if (param[0]=='/') param++;
   if (param[0]=='/') {
     ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
-    return 1;
+    return E_PARAM_INVALID;
   }
 
   cmask = strrchr(mask,'/');
@@ -765,7 +765,7 @@ printf("path before: '%s'\n",cmd);
 
   if (checkpath(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
-    return 1;
+    return E_PARAM_INVALID;
   }
 
 /*#ifdef DEBUG
@@ -777,13 +777,14 @@ printf("path: '%s'\n",path);
 
   if (ret) { /* no access */
     ret = send_message_with_args(550,context,"LIST","No access");
-    return 1;
+    return E_NOPERM;
   }
 
   if (context->pasvsock < 0) { /* PORT ! */
     sock = waitconnect(context);
     if (sock < 0) {
-      return 1;
+      /* note: reply is done in waitconnect() */
+      return E_CONNECTTIMEOUT;
     }
 #if 0
     /* IP-check needed (FXP ?!) */
@@ -807,7 +808,7 @@ printf("path: '%s'\n",path);
     ret = send_message(150,context); /* about to open data connection */
     if ((sock=waitaccept(context)) <= 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
-      return 1;
+      return E_PASV_FAILED;
     }
   }
 
@@ -828,7 +829,7 @@ printf("path: '%s'\n",path);
 #endif
   ret = socket_close(sock);
 
-  return 0;
+  return E_OK;
 }
 
 /*************** do_mkdir ****************************/
@@ -849,7 +850,7 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   if (!param || !param[0]) return E_PARAM_NULL;
   if (strlen(param)>2047) return E_PARAM_BIG;
-  if (strcmp(param,"/")==0) return 0;
+  if (strcmp(param,"/")==0) return E_OK;
 
   if (param[0] != '/') {
     strcpy(cmd,".");
@@ -1266,12 +1267,12 @@ int do_retr(char *param, wzd_context_t * context)
   /* we must have a data connetion */
   if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
-    return 1;
+    return E_NO_DATA_CTX;
   }
 
   if (checkpath(param,path,context)) {
     ret = send_message_with_args(501,context,"Invalid file name");
-    return 1;
+    return E_PARAM_INVALID;
   }
 
   /* trailing / ? */
@@ -1281,19 +1282,19 @@ int do_retr(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
-    return 1;
+    return E_FILE_FORBIDDEN;
   }
 
   /* check user ratio */
   if (ratio_check_download(path,context)) {
     ret = send_message_with_args(501,context,"Insufficient credits - Upload first");
-    return 0;
+    return E_CREDS_INSUFF;
   }
 
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(550,context,param,"nonexistant file or permission denied");
 /*    socket_close(sock);*/
-    return 1;
+    return E_FILE_NOEXIST;
   }
 
   /* get length */
@@ -1308,7 +1309,7 @@ int do_retr(char *param, wzd_context_t * context)
     if ((int)addr==-1) {
       snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
       ret = send_message_with_args(501,context,cmd);
-      return 1;
+      return E_PORT_INVALIDIP;
     }
 
     /* FIXME */
@@ -1318,7 +1319,7 @@ int do_retr(char *param, wzd_context_t * context)
     sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
     if (sock == -1) {
       ret = send_message(425,context);
-      return 1;
+      return E_CONNECTTIMEOUT;
     }
   } else { /* PASV ! */
     /* FIXME */
@@ -1327,7 +1328,7 @@ int do_retr(char *param, wzd_context_t * context)
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) < 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
-      return 1;
+      return E_PASV_FAILED;
     }
   }
 
@@ -1362,7 +1363,7 @@ int do_retr(char *param, wzd_context_t * context)
    * of the download
    */
   user->stats.files_dl_total++;
-  return 0;
+  return E_OK;
 }
 
 /*************** do_stor *****************************/
@@ -1387,12 +1388,12 @@ int do_stor(char *param, wzd_context_t * context)
   /* we must have a data connetion */
   if ((context->pasvsock < 0) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
-    return 1;
+    return E_NO_DATA_CTX;
   }
 
   if (!param || strlen(param)==0) {
     ret = send_message_with_args(501,context,"Incorrect filename");
-    return 1;
+    return E_PARAM_INVALID;
   }
 
   /* FIXME these 2 lines forbids STOR dir/filename style - normal ? */
@@ -1402,7 +1403,7 @@ int do_stor(char *param, wzd_context_t * context)
   strcpy(cmd,".");
   if (checkpath(cmd,path,context)) {
     ret = send_message_with_args(501,context,"Incorrect filename");
-    return 1;
+    return E_PARAM_INVALID;
   }
   if (path[strlen(path)-1] != '/') strcat(path,"/");
   strcat(path,param);
@@ -1430,7 +1431,7 @@ int do_stor(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
-    return 1;
+    return E_FILE_FORBIDDEN;
   }
 
   /* overwrite protection */
@@ -1445,7 +1446,7 @@ int do_stor(char *param, wzd_context_t * context)
   if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
 /*    socket_close(sock);*/
-    return 1;
+    return E_FILE_NOEXIST;
   }
 
   if (context->pasvsock < 0) { /* PORT ! */
@@ -1456,7 +1457,7 @@ int do_stor(char *param, wzd_context_t * context)
     if ((int)addr==-1) {
       snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
       ret = send_message_with_args(501,context,cmd);
-      return 1;
+      return E_PORT_INVALIDIP;
     }
 
     /* FIXME */
@@ -1466,7 +1467,7 @@ int do_stor(char *param, wzd_context_t * context)
     sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd);
     if (sock == -1) {
       ret = send_message(425,context);
-      return 1;
+      return E_CONNECTTIMEOUT;
     }
   } else { /* PASV ! */
     /* FIXME */
@@ -1475,7 +1476,7 @@ int do_stor(char *param, wzd_context_t * context)
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) < 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
-      return 1;
+      return E_PASV_FAILED;
     }
   }
 
@@ -1525,7 +1526,7 @@ int do_stor(char *param, wzd_context_t * context)
   else
     context->current_ul_limiter.maxspeed = 0;*/
 
-  return 0;
+  return E_OK;
 }
 
 /*************** do_mdtm *****************************/
@@ -1593,13 +1594,13 @@ int do_dele(char *param, wzd_context_t * context)
 
   if (!param || strlen(param)==0 || checkpath(param,path,context)) {
     ret = send_message_with_args(501,context,"Syntax error");
-    return 1;
+    return E_PARAM_INVALID;
   }
 
   user = GetUserByID(context->userid);
   if (!user) {
     ret = send_message_with_args(501,context,"Mama says I don't exist !");
-    return 1;
+    return E_USER_IDONTEXIST;
   }
 
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
@@ -1607,17 +1608,17 @@ int do_dele(char *param, wzd_context_t * context)
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
     ret = send_message_with_args(501,context,"Go away bastard");
-    return 1;
+    return E_FILE_FORBIDDEN;
   }
 
   if (lstat(path,&s)) {
     /* non-existent file ? */
     ret = send_message_with_args(501,context,"File does not exist");
-    return 1;
+    return E_FILE_NOEXIST;
   }
   if (S_ISDIR(s.st_mode)) {
     ret = send_message_with_args(501,context,"This is a directory !");
-    return 1;
+    return E_ISDIR;
   }
   if (S_ISREG(s.st_mode))
     file_size = s.st_size;
@@ -1718,7 +1719,7 @@ void do_rnto(const char *filename, wzd_context_t * context)
 
 /*************** do_pass *****************************/
 
-/* return 0 if ok, 1 if wrong pass, 2 if ok but homedir does not exist */
+/* return E_OK if ok, E_PASS_REJECTED if wrong pass, E_LOGIN_NO_HOME if ok but homedir does not exist */
 int do_pass(const char *username, const char * pass, wzd_context_t * context)
 {
 /*  char buffer[4096];*/
@@ -1736,7 +1737,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   ret = backend_validate_pass(username,pass,user,&context->userid);
   if (ret) {
     /* pass was not accepted */
-    return 1;  /* FIXME - abort thread */
+    return E_PASS_REJECTED;  /* FIXME - abort thread */
   }
 
 #if BACKEND_STORAGE
@@ -1757,20 +1758,21 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   {
     /* could not chdir to home !!!! */
     out_log(LEVEL_CRITICAL,"Could not chdir to home '%s' (root: '%s'), user '%s'\n",context->currentpath,user->rootpath,user->username);
-    return 2;
+    return E_USER_NO_HOME;
   }
 
   /* XXX - now we can wait (or not) the ACCT */
 
-  return 0;
+  return E_OK;
 }
 
 /*************** do_user *****************************/
-/** returns 0 if ok
- * 1 if user name is invalid or has been deleted
- * 2 if user has reached num_logins
- * 3 if site is closed and user is not a siteop
- * 4 if user has reached group num_logins
+/** returns E_OK if ok
+ * E_USER_REJECTED if user name is rejected by backend
+ * E_USER_DELETED if user has been deleted
+ * E_USER_NUMLOGINS if user has reached num_logins
+ * E_USER_CLOSED if site is closed and user is not a siteop
+ * E_GROUP_NUMLOGINS if user has reached group num_logins
  */
 int do_user(const char *username, wzd_context_t * context)
 {
@@ -1786,7 +1788,7 @@ int do_user(const char *username, wzd_context_t * context)
     me = NULL;
 
   ret = backend_validate_login(username,me,&context->userid);
-  if (ret) return 1;
+  if (ret) return E_USER_REJECTED;
 
 #if BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
@@ -1797,12 +1799,12 @@ int do_user(const char *username, wzd_context_t * context)
 
   /* check if user have been deleted */
   if (me->flags && strchr(me->flags,FLAG_DELETED))
-    return 1;
+    return E_USER_DELETED;
 
   /* check if site is closed */
   if (mainConfig->site_closed &&
       !(me->flags && strchr(me->flags,FLAG_SITEOP)))
-    return 3;
+    return E_USER_CLOSED;
 
   /* count logins from user */
   if (me->num_logins)
@@ -1824,7 +1826,7 @@ int do_user(const char *username, wzd_context_t * context)
 
 /*    out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);*/
 
-    if (count >= me->num_logins) return 2;
+    if (count >= me->num_logins) return E_USER_NUMLOGINS;
     /* >= and not ==, because it two attempts are issued simultaneously, count > num_logins ! */
   }
 
@@ -1851,11 +1853,11 @@ int do_user(const char *username, wzd_context_t * context)
       if (group && group->num_logins
 	  && (num_logins[me->groups[i]]>group->num_logins))
 	  /* > and not >= because current login attempt is counted ! */
-	return 4; /* user has reached group max num_logins */
+	return E_GROUP_NUMLOGINS; /* user has reached group max num_logins */
     }
   }
   
-  return 0;
+  return E_OK;
 }
 
 /*************** do_user_ip **************************/
@@ -1881,22 +1883,22 @@ int do_user_ip(const char *username, wzd_context_t * context)
   inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
 #endif
   if (user_ip_inlist(user,ip)==1)
-    return 0;
+    return E_OK;
   
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
     group = GetGroupByID(user->groups[i]);
     if (group_ip_inlist(group,ip)==1)
-      return 0;
+      return E_OK;
   }
 
-  return 1;
+  return E_USER_NOIP;
 }
 
 /*************** check_tls_forced ********************/
 /** check if tls connection must be enforced for user
- * return 0 if user is in tls mode or is not forced to user
- *        1 if user should be in tls but is not
+ * return E_OK if user is in tls mode or is not forced to user
+ *        E_USER_TLSFORCED if user should be in tls but is not
  */
 int check_tls_forced(wzd_context_t * context)
 {
@@ -1913,7 +1915,7 @@ int check_tls_forced(wzd_context_t * context)
 
   if (user->flags && strchr(user->flags,FLAG_TLS)) {
     if ( !(context->connection_flags & CONNECTION_TLS) ) {
-      return 1;
+      return E_USER_TLSFORCED;
     }
   }
   /* TODO XXX FIXME implement flags for groups */
@@ -1928,7 +1930,7 @@ int check_tls_forced(wzd_context_t * context)
   }
 #endif
 
-  return 0;
+  return E_OK;
 }
 
 /*************** do_login_loop ***********************/
@@ -1994,16 +1996,16 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
       }
       ret = do_user(token,context);
       switch (ret) {
-      case 1: /* user was not accepted */
+      case E_USER_REJECTED: /* user was not accepted */
 	ret = send_message_with_args(421,context,"User rejected");
 	return 1;
-      case 2: /* too many logins */
+      case E_USER_NUMLOGINS: /* too many logins */
 	ret = send_message_with_args(421,context,"Too many connections with your login");
 	return 1;
-      case 3: /* site closed */
+      case E_USER_CLOSED: /* site closed */
 	ret = send_message_with_args(421,context,"Site is closed, try again later");
 	return 1;
-      case 4: /* too many logins for group */
+      case E_GROUP_NUMLOGINS: /* too many logins for group */
 	ret = send_message_with_args(421,context,"Too many connections for your group");
 	return 1;
       }
@@ -2028,13 +2030,13 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	return 1;
       }
       ret = do_pass(username,token,context);
-      if (ret==1) { /* pass was not accepted */
+      if (ret==E_PASS_REJECTED) { /* pass was not accepted */
 	ret = send_message_with_args(421,context,"Password rejected");
-	return 1;
+	return E_PASS_REJECTED;
       }
-      if (ret==2) { /* pass is ok, could not chdir */
+      if (ret==E_USER_NO_HOME) { /* pass is ok, could not chdir */
 	ret = send_message_with_args(421,context,"Could not go to my home directory !");
-	return 1;
+	return E_USER_NO_HOME;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
 #ifdef SSL_SUPPORT
