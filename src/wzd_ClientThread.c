@@ -1614,7 +1614,7 @@ int do_dele(char *param, wzd_context_t * context)
   ret = file_remove(path,context);
 
   /* decrement user credits and upload stats */
-  /* TODO XXX FIXME we should adjust stats for REAL OWNER of file */
+  /* we should adjust stats for REAL OWNER of file */
   if (!ret && file_size)
   {
     if (owner && strcmp(owner->username,"nobody"))
@@ -2059,11 +2059,11 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
       break;
     case TOK_PBSZ:
       token = strtok_r(NULL,"\r\n",&ptr);
-      /* TODO convert token to int, set the PBSZ size */
+      /** \todo PBSZ: convert token to int, set the PBSZ size */
       ret = send_message_with_args(200,context,"Command okay");
       break;
     case TOK_PROT:
-      /* TODO if user is NOT in TLS mode, insult him */
+      /** \todo PROT: if user is NOT in TLS mode, insult him */
       token = strtok_r(NULL,"\r\n",&ptr);
       if (strcasecmp("P",token)==0)
         context->ssl.data_mode = TLS_PRIV;
@@ -2385,7 +2385,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    }
 	    /* avoir error if current is "/" and action is ".." */
 	    if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
-	      /* TODO print message file */
+	      /** \todo TOK_CWD: print message file */
 /*	      print_file("/home/pollux/.message",250,context);*/
 	      ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	      break;
@@ -2394,7 +2394,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	      ret = send_message_with_args(550,context,param,"No such file or directory (no access ?).");
 	      break;
 	    }
-	      /* TODO print message file */
+	      /** \todo TOK_CWD: print message file */
 /*            print_file("/home/pollux/.message",250,context);*/
 	    ret = send_message_with_args(250,context,context->currentpath,"now current directory.");
 	    break;
@@ -2561,7 +2561,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    }
 	    if (context->current_action.current_file) {
 	      out_xferlog(context, 0 /* incomplete */);
-	      /* FIXME XXX TODO
+	      /** \bug FIXME XXX TODO
 	       * the two following sleep(5) are MANDATORY
 	       * the reason is unknown, but seems to be link to network
 	       * (not lock)
@@ -2588,7 +2588,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	    break;
 #ifdef SSL_SUPPORT
 	  case TOK_PROT:
-	    /* TODO if user is NOT in TLS mode, insult him */
+	    /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    if (strcasecmp("P",token)==0)
 	      context->ssl.data_mode = TLS_PRIV;

@@ -256,7 +256,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   }
 
   mainConfig->backend.backend_storage = *backend_storage;
-  out_log(LEVEL_NORMAL,"Backend %s loaded\n",backend);
+  out_log(LEVEL_INFO,"Backend %s loaded\n",backend);
 
   return ret;
 }

@@ -51,6 +51,12 @@
 #include <dlfcn.h>
 #include <pthread.h>
 
+#ifdef __CYGWIN__
+/* cygwin does not support ipv6 */
+#define INET_ADDRSTRLEN 16
+#define INET6_ADDRSTRLEN 46
+#endif
+
 /* speed up compilation */
 #define SSL     void
 #define SSL_CTX void
@@ -301,6 +307,7 @@ void server_restart(int signum)
   }
 
   /* 5. Re-open log files */
+  if ( !CFG_GET_USE_SYSLOG(mainConfig) )
   {
     int fd;
     struct stat s;
@@ -894,10 +901,11 @@ void serverMainThreadProc(void *arg)
   /* sets start time, for uptime */
   time(&mainConfig->server_start);
 
-  /* reset stats TODO load stats ! */
+  /* reset stats */
+  /** \todo load stats ! */
   reset_stats(&mainConfig->stats);
 
-  out_log(LEVEL_INFO,"%s started (build %lu)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
+  out_log(LEVEL_HIGH,"%s started (build %lu)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
 
   /* now waiting for a connection */
   out_log(LEVEL_FLOOD,"Waiting for connections (main)\n");
@@ -977,6 +985,9 @@ void free_config(wzd_config_t * config)
     close(mainConfig->xferlog_fd);
   if (mainConfig->xferlog_name)
     free(mainConfig->xferlog_name);
+  if (CFG_GET_USE_SYSLOG(mainConfig)) {
+    closelog();
+  }
   if (mainConfig->logfile)
     fclose(mainConfig->logfile);
   if (mainConfig->logfilename)
@@ -993,7 +1004,7 @@ void free_config(wzd_config_t * config)
 
 void serverMainThreadExit(int retcode)
 {
-  out_log(LEVEL_INFO,"Server exiting, retcode %d\n",retcode);
+  out_log(LEVEL_HIGH,"Server exiting, retcode %d\n",retcode);
 	close(mainConfig->mainSocket);
 #ifdef SSL_SUPPORT
   tls_exit();
@@ -1023,6 +1034,7 @@ void serverMainThreadExit(int retcode)
   /* we need to wait for child threads to be effectively dead */
   sleep(1);
   wzd_cache_purge();
+  server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);
   module_free(&mainConfig->module);
   cronjob_free(&crontab);

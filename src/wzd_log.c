@@ -22,6 +22,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+/** \file wzd_log.c
+ * @brief Contains routines to log files.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -36,6 +40,8 @@
 
 #include <netdb.h>
 
+#include <syslog.h>
+
 /* speed up compilation */
 #define SSL     void
 #define SSL_CTX void
@@ -47,6 +53,7 @@
 
 void out_log(int level,const char *fmt,...)
 {
+  int prior;
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];
@@ -55,58 +62,94 @@ void out_log(int level,const char *fmt,...)
   msg_end[0] = '\0';
 
   if (level >= mainConfig->loglevel) {
+
+    if (CFG_GET_USE_SYSLOG(mainConfig)) {
+      char buffer[1024];
+      switch (level) {
+      case LEVEL_CRITICAL:
+	prior = LOG_ALERT;
+	break;
+      case LEVEL_HIGH:
+	prior = LOG_CRIT;
+	break;
+      case LEVEL_NORMAL:
+	prior = LOG_ERR;
+	break;
+      case LEVEL_INFO:
+	prior = LOG_WARNING;
+	break;
+      case LEVEL_FLOOD:
+	prior = LOG_INFO;
+	break;
+      default:
+	break;
+      }
+
+      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+      vsnprintf(buffer,1023,fmt,argptr);
+      syslog(prior,buffer);
+
+    } else { /* syslog */
+
     char new_format[1024];
 
 #ifdef DEBUG
-    switch (level) {
-    case LEVEL_CRITICAL:
-      strcpy(msg_begin,CLR_BOLD);
-      strcat(msg_begin,CLR_RED);
-      strcpy(msg_end,CLR_NOCOLOR);
-      break;
-    case LEVEL_HIGH:
-      strcpy(msg_begin,CLR_RED);
-      strcpy(msg_end,CLR_NOCOLOR);
-      break;
-    case LEVEL_NORMAL:
-      strcpy(msg_begin,CLR_GREEN);
-      strcpy(msg_end,CLR_NOCOLOR);
-      break;
-    case LEVEL_INFO:
-      strcpy(msg_begin,CLR_BLUE);
-      strcpy(msg_end,CLR_NOCOLOR);
-      break;
-    case LEVEL_FLOOD:
-      strcpy(msg_begin,CLR_CYAN);
-      strcpy(msg_end,CLR_NOCOLOR);
-      break;
-    default:
-      break;
-    }
+      switch (level) {
+	case LEVEL_CRITICAL:
+	  strcpy(msg_begin,CLR_BOLD);
+	  strcat(msg_begin,CLR_RED);
+	  strcpy(msg_end,CLR_NOCOLOR);
+	  prior = LOG_ALERT;
+	  break;
+	case LEVEL_HIGH:
+	  strcpy(msg_begin,CLR_RED);
+	  strcpy(msg_end,CLR_NOCOLOR);
+	  prior = LOG_CRIT;
+	  break;
+	case LEVEL_NORMAL:
+	  strcpy(msg_begin,CLR_GREEN);
+	  strcpy(msg_end,CLR_NOCOLOR);
+	  prior = LOG_ERR;
+	  break;
+	case LEVEL_INFO:
+	  strcpy(msg_begin,CLR_BLUE);
+	  strcpy(msg_end,CLR_NOCOLOR);
+	  prior = LOG_WARNING;
+	  break;
+	case LEVEL_FLOOD:
+	  strcpy(msg_begin,CLR_CYAN);
+	  strcpy(msg_end,CLR_NOCOLOR);
+	  prior = LOG_INFO;
+	  break;
+	default:
+	  break;
+      }
 #endif
 
-    snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
+      snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
     
-    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
 #ifdef DEBUG
-    if (mainConfig->logfile) {
-      vfprintf(stdout,new_format,argptr);
-/*      vfprintf(mainConfig->logfile,fmt,argptr);
-      fflush(mainConfig->logfile);*/
-    } else { /* security - will be used iff log is not opened at this time */
-      vfprintf(stderr,new_format,argptr);
-    }
+      if (mainConfig->logfile) {
+	vfprintf(stdout,new_format,argptr);
+/*        vfprintf(mainConfig->logfile,fmt,argptr);
+	  fflush(mainConfig->logfile);*/
+      } else { /* security - will be used iff log is not opened at this time */
+	vfprintf(stderr,new_format,argptr);
+      }
 #else
-    if (mainConfig->logfile) {
-      vfprintf(mainConfig->logfile,fmt,argptr);
-      fflush(mainConfig->logfile);
-    }
+      if (mainConfig->logfile) {
+	vfprintf(mainConfig->logfile,fmt,argptr);
+	fflush(mainConfig->logfile);
+      }
 #endif
-  }
+    } /* syslog */
+  } /* > loglevel ? */
 }
 
 void out_err(int level, const char *fmt,...)
 {
+  int prior;
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];
@@ -116,7 +159,38 @@ void out_err(int level, const char *fmt,...)
   msg_end[0] = '\0';
 
   if (!mainConfig || level >= mainConfig->loglevel) {
-    switch (level) {
+
+/*    if (CFG_GET_USE_SYSLOG(mainConfig)) {*/
+    if (0) {
+      char buffer[1024];
+      switch (level) {
+      case LEVEL_CRITICAL:
+	prior = LOG_ALERT;
+	break;
+      case LEVEL_HIGH:
+	prior = LOG_CRIT;
+	break;
+      case LEVEL_NORMAL:
+	prior = LOG_ERR;
+	break;
+      case LEVEL_INFO:
+	prior = LOG_WARNING;
+	break;
+      case LEVEL_FLOOD:
+	prior = LOG_INFO;
+	break;
+      default:
+	break;
+      }
+
+      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+      vsnprintf(buffer,1023,fmt,argptr);
+      syslog(prior,buffer);
+
+    } else { /* syslog */
+
+
+      switch (level) {
       case LEVEL_CRITICAL:
 	strcpy(msg_begin,CLR_BOLD);
 	strcat(msg_begin,CLR_RED);
@@ -140,16 +214,17 @@ void out_err(int level, const char *fmt,...)
 	break;
       default:
 	break;
-    }
+      }
 
-    snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
+      snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
 
-    /* XXX we can't use mainConfig, because it could be broken here */
-    /*  if (level >= mainConfig->loglevel) {*/
-    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-    vfprintf(stderr,new_format,argptr);
-    /*  }*/
-  }
+      /* XXX we can't use mainConfig, because it could be broken here */
+      /*  if (level >= mainConfig->loglevel) {*/
+      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+      vfprintf(stderr,new_format,argptr);
+      /*  }*/
+    } /* syslog */
+  } /* > loglevel ? */
 }
 
 void out_xferlog(wzd_context_t * context, int is_complete)

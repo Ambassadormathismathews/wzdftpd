@@ -45,8 +45,13 @@ pid_file = @prefix@/etc/wzdftpd/wzdftpd.pid
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
 
+# use ONE of the following:
+
 # log file for server activity
 logfile = @prefix@/share/wzdftpd/logs/wzd.log
+
+# if you prefer syslog (default: yes, except for cygwin)
+#use_syslog = 1
 
 # log file for transfered files (default: do not log)
 xferlog = @prefix@/share/wzdftpd/logs/xferlog

@@ -467,7 +467,9 @@ int is_hidden_file(const char *filename)
   return 0;
 }
 
-/** returns 1 if file is perm file */
+/** \return 1 if file is perm file
+ * \deprecated Use \ref is_hidden_file
+ */
 int is_perm_file(const char *filename)
 {
   const char *endfile;
@@ -495,6 +497,75 @@ time_t lget_file_ctime(int fd)
   struct stat s;
   if ( fstat(fd,&s) < 0 ) return (time_t)-1;
   return s.st_ctime;
+}
+
+int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_param_t *param_list)
+{
+  wzd_param_t * param;
+
+  param = param_list;
+  while (param) {
+    if (strcmp(name,param->name)==0) {
+      if (maxlen < param->length) return 2;
+      memcpy(buffer,param->param,param->length);
+      memset(buffer+param->length,0,maxlen-param->length);
+      return 0;
+    }
+    param = param->next_param;
+  }
+
+  return 1;
+}
+
+int server_set_param(const char *name, void *data, unsigned int length, wzd_param_t **plist)
+{
+  wzd_param_t * param;
+
+  if (!plist) return -1;
+  if (!name || !data || length==0) return -1;
+
+  param = malloc(sizeof(wzd_param_t));
+  /** \todo ensure param with same name is not already in list */
+  param->name = strdup(name);
+  param->param = malloc(length);
+  memcpy(param->param,data,length);
+  param->length = length;
+
+  /* head insertion */
+  param->next_param = *plist;
+  *plist = param;
+
+  return 0;
+}
+
+void server_clear_param(wzd_param_t **plist)
+{
+  wzd_param_t * current, *next;
+
+  if (!plist) return;
+  current = *plist;
+
+  while (current) {
+    next = current->next_param;
+
+    if (current->name) free(current->name);
+    if (current->param) free(current->param);
+
+    free(current);
+
+    current = next;
+  }
+}
+
+/** Checks server status */
+int server_diagnose(void)
+{
+  if (!mainConfig) return -1;
+  if (mainConfig->serverstop != 0) return -1;
+
+  /** \todo implement more checks */
+
+  return 0;
 }
 
 #define WORK_BUF_LEN	8192

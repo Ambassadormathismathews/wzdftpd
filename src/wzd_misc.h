@@ -58,6 +58,13 @@ int safe_rename(const char *src, const char *dst);
 const char * inet_ntop(int af, const void *src, char *dst, int size);
 #endif
 
+int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_param_t *param_list);
+int server_set_param(const char *name, void *data, unsigned int length, wzd_param_t **plist);
+void server_clear_param(wzd_param_t **plist);
+
+/** Checks server status */
+int server_diagnose(void);
+
 /* formats the message if multiline, e.g 220-hello\r\n220 End */
 /* if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply

@@ -69,6 +69,8 @@ typedef unsigned long wzd_perm_t;
 
 /******************** BANDWIDTH LIMIT *********************/
 
+/** @brief Limit bandwidth
+ */
 typedef struct limiter
 {
   int maxspeed;
@@ -89,6 +91,9 @@ typedef struct wzd_command_perm_entry_t wzd_command_perm_entry_t;
 typedef struct wzd_command_perm_t wzd_command_perm_t;
 
 /*********************** SITE *****************************/
+
+/** @brief names of files used by site commands
+ */
 typedef struct {
   char	file_ginfo[256];
   char	file_group[256];
@@ -284,6 +289,16 @@ typedef struct {
   unsigned long num_childs; /**< total # of childs process created since server start */
 } wzd_server_stat_t;
 
+/********************** SERVER PARAMS *********************/
+
+typedef struct _wzd_param_t {
+  char * name;
+  void * param;
+  unsigned int length;
+
+  struct _wzd_param_t	* next_param;
+} wzd_param_t;
+
 /*************************** TLS **************************/
 
 #ifndef SSL_SUPPORT
@@ -325,6 +340,8 @@ typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,void *);
 
 #include "wzd_action.h"
 
+/** @brief Client-specific data
+ */
 typedef struct {
   unsigned long	magic;
   unsigned char	hostip[16];
@@ -362,16 +379,24 @@ typedef struct {
 /* macros used with options */
 #define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
 #define	CFG_OPT_HIDE_DOTTED_FILES		0x00000002
+#define	CFG_OPT_USE_SYSLOG			0x00000010
 
 #define	CFG_CLEAR_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts &= ~CFG_OPT_DENY_ACCESS_FILES_UPLOADED
 #define	CFG_CLEAR_HIDE_DOTTED_FILES(c)	(c)->server_opts &= ~CFG_OPT_HIDE_DOTTED_FILES
+#define	CFG_CLEAR_USE_SYSLOG(c)	(c)->server_opts &= ~CFG_OPT_USE_SYSLOG
 
 #define	CFG_SET_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts |= CFG_OPT_DENY_ACCESS_FILES_UPLOADED
 #define	CFG_SET_HIDE_DOTTED_FILES(c)	(c)->server_opts |= CFG_OPT_HIDE_DOTTED_FILES
+#define	CFG_SET_USE_SYSLOG(c)	(c)->server_opts |= CFG_OPT_USE_SYSLOG
 
 #define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
 #define	CFG_GET_HIDE_DOTTED_FILES(c)	( (c)->server_opts & CFG_OPT_HIDE_DOTTED_FILES )
+#define	CFG_GET_USE_SYSLOG(c)	( (c)->server_opts & CFG_OPT_USE_SYSLOG )
 
+/** @brief Server config
+ *
+ * Contains all variables specific to a server instance.
+ */
 typedef struct {
   char *	pid_file;
   char *	config_filename;
@@ -410,6 +435,7 @@ typedef struct {
   wzd_command_perm_t	* perm_list;
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
+  wzd_param_t		* param_list;
 /*  wzd_bw_limiter	* limiter_ul;
   wzd_bw_limiter	* limiter_dl;*/
   wzd_bw_limiter	global_ul_limiter;

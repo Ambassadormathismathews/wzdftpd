@@ -49,6 +49,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <syslog.h>
+
 /* speed up compilation */
 #define SSL     void
 #define SSL_CTX void
@@ -261,8 +263,16 @@ int main(int argc, char **argv)
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));
 
-  fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
-  mainConfig->logfile = fdopen(fd,"a");
+  if (CFG_GET_USE_SYSLOG(mainConfig)) {
+    openlog("wzdftpd", LOG_CONS | LOG_NDELAY | LOG_PID, LOG_FTP);
+    // LOG_CONS - If syslog could not pass our messages they'll apear on console,
+    // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
+    // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
+  }
+  else {
+    fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
+    mainConfig->logfile = fdopen(fd,"a");
+  }
   
 #ifdef SSL_SUPPORT
   ret = tls_init();

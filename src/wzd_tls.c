@@ -62,7 +62,7 @@ typedef int (*imp_tls_auth_data_cont)(wzd_ssl_t * wzd_ssl);
 typedef int (*imp_tls_read)(int sock, char *msg, unsigned int length, int flags, int timeout, void * vcontext);
 typedef int (*imp_tls_write)(int sock, const char *msg, unsigned int length, int flags, int timeout, void * vcontext);
 
-#define TLS_WRAPPER_NAME "./wzd_tlswrap.dll"
+/*#define TLS_WRAPPER_NAME "./wzd_tlswrap.dll"*/
 
 typedef struct {
   void *		handle;
@@ -85,8 +85,15 @@ int tls_init(void)
   void * handle;
   void * ptr;
   int ret;
+  char TLS_WRAPPER_NAME[256];
 
   out_err(LEVEL_FLOOD,"Loading TLS wrapper\n");
+
+  if (server_get_param("tls_wrapper",TLS_WRAPPER_NAME,256,mainConfig->param_list))
+  {
+    out_err(LEVEL_CRITICAL,"Could not get wrapper name\n");
+    return 1;
+  }
 
   handle = dlopen(TLS_WRAPPER_NAME,RTLD_NOW);
   if (!handle)

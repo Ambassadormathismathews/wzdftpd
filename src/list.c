@@ -22,6 +22,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+/** \file list.c
+  * \brief Linked list implementation
+  */
+
 #include <stdlib.h>
 #include <string.h>
 

@@ -248,9 +248,9 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
   out_err(LEVEL_FLOOD,"cache write\n");
   /* update current_location */
   if (c) {
-    /* TODO XXX FIXME if in cache, warn user it is rather stupid to cache a file
-     * to be modified, and re-open it in non-cache mode
-     */
+    /** \todo if in cache, warn user it is rather stupid to cache a file
+      * to be modified, and re-open it in non-cache mode
+      */
     if (cache->data) {
       out_err(LEVEL_INFO,"Trying to write a cached file - stupid !\n");
       return -1;

@@ -93,6 +93,7 @@ typedef enum {
   CFG_MAX_UL_SPEED,
   CFG_MESSAGE,
   CFG_MODULE,
+  CFG_PARAM,
   CFG_PASV_IP,
   CFG_PASV_LOW,
   CFG_PASV_HIGH,
@@ -107,6 +108,7 @@ typedef enum {
   CFG_TLS_CERT,
   CFG_TLS_CIPHER_LIST,
   CFG_TLS_MODE,
+  CFG_USE_SYSLOG,
   CFG_VFS,
   CFG_XFERLOG,
   
@@ -218,6 +220,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"max_ul_speed")) return CFG_MAX_UL_SPEED;
   if (!strncasecmp(word,"message_",strlen("message_"))) return CFG_MESSAGE;
   if (!strcasecmp(word,"module")) return CFG_MODULE;
+  if (!strncasecmp(word,"param_",strlen("param_"))) return CFG_PARAM;
   if (!strcasecmp(word,"pasv_ip")) return CFG_PASV_IP;
   if (!strcasecmp(word,"pasv_low_range")) return CFG_PASV_LOW;
   if (!strcasecmp(word,"pasv_high_range")) return CFG_PASV_HIGH;
@@ -232,6 +235,7 @@ unsigned int cfg_is_keyword(const char *word)
   if (!strcasecmp(word,"tls_certificate")) return CFG_TLS_CERT;
   if (!strcasecmp(word,"tls_cipher_list")) return CFG_TLS_CIPHER_LIST;
   if (!strcasecmp(word,"tls_mode")) return CFG_TLS_MODE;
+  if (!strcasecmp(word,"use_syslog")) return CFG_USE_SYSLOG;
   if (!strcasecmp(word,"vfs")) return CFG_VFS;
   if (!strcasecmp(word,"xferlog")) return CFG_XFERLOG;
   return 0;
@@ -285,6 +289,12 @@ int set_default_options(void)
 
   tempConfig.dir_message[0] = 0;
 
+#ifndef __CYGWIN__
+    CFG_SET_USE_SYSLOG(&tempConfig);
+#else
+    CFG_CLEAR_USE_SYSLOG(&tempConfig);
+#endif
+
   tempConfig.logfilename = malloc(256);
   strcpy(tempConfig.logfilename,"wzd.log");
 
@@ -300,6 +310,7 @@ int set_default_options(void)
   tempConfig.perm_list = NULL;
   tempConfig.site_list = NULL;
   tempConfig.section_list = NULL;
+  tempConfig.param_list = NULL;
 
   /* site config */
   tempConfig.site_config.file_help[0] = '\0';
@@ -410,9 +421,6 @@ int cfg_read_backend(void)
     return 1;
   }
 
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"trying backend; '%s'\n",name);
-#endif
   i = backend_validate(name,predicate,version);
   if (!i) {
     if (tempConfig.backend.handle == NULL) {
@@ -968,9 +976,6 @@ int cfg_read_max_dl_speed(void)
   if (errno==ERANGE)
     return 1;
 
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
-#endif
   tempConfig.global_dl_limiter.maxspeed = l;
 
   return 0;
@@ -1004,9 +1009,6 @@ int cfg_read_maxthreads(void)
     out_err(LEVEL_HIGH,"max_threads must be between 1 and 2000 inclusive\n");
     return 1;
   }
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* changing max_threads: new value %lu\n",l);
-#endif
   tempConfig.max_threads = (int)l;
 
   return 0;
@@ -1035,9 +1037,6 @@ int cfg_read_max_ul_speed(void)
   if (errno==ERANGE)
     return 1;
 
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
-#endif
   tempConfig.global_ul_limiter.maxspeed = l;
 
   return 0;
@@ -1093,6 +1092,31 @@ int cfg_read_module(void)
   return 0;
 }
 
+
+/* PARAM
+*/
+int cfg_read_param(const char *paramname)
+{
+  unsigned int token;
+  char * data;
+  int ret;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'param_<name> = ...'\n");
+    return 1;
+  }
+
+  if( !(data=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid argument\n");
+    return 1;
+  }
+
+  ret = server_set_param(paramname,data,strlen(data),&tempConfig.param_list);
+
+  free (data);
+  return ret;
+}
 
 
 /* PASV_IP (ip)
@@ -1168,9 +1192,6 @@ int cfg_read_pasv_low(void)
   if (errno==ERANGE)
     return 1;
 
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* setting pasv_low_range : %lu\n",l);
-#endif
   tempConfig.pasv_low_range = l;
 
   return 0;
@@ -1199,9 +1220,6 @@ int cfg_read_pasv_high(void)
   if (errno==ERANGE)
     return 1;
 
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* setting pasv_high_range : %lu\n",l);
-#endif
   tempConfig.pasv_high_range = l;
 
   return 0;
@@ -1303,9 +1321,6 @@ int cfg_read_port(void)
     out_err(LEVEL_HIGH,"port must be between 1 and 65535 inclusive\n");
     return 1;
   }
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* changing port: new value %lu\n",l);
-#endif
   tempConfig.port = l;
 
   return 0;
@@ -1611,6 +1626,38 @@ int cfg_read_tls_mode(void)
   return 0;
 }
 
+/* USE_SYSLOG (integer)
+*/
+int cfg_read_use_syslog(void)
+{
+  unsigned int token;
+  unsigned long l;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'use_syslog = 0|1'\n");
+    return 1;
+  }
+
+  if( (token=yylex()) != CFG_NUM ) {
+    out_err(LEVEL_HIGH,"line should be 'use_syslog = 0|1'\n");
+    return 1;
+  }
+
+  errno = 0;
+  l = strtoul(yytext,(char**)NULL, 0);
+  if (errno==ERANGE)
+    return 1;
+
+  if (l)
+    CFG_SET_USE_SYSLOG(&tempConfig);
+  else
+    CFG_CLEAR_USE_SYSLOG(&tempConfig);
+
+  return 0;
+}
+
+
 /* VFS : Virtual FileSystem
  */
 int cfg_read_vfs(void)
@@ -1827,6 +1874,19 @@ wzd_config_t * readConfigFile(const char *fileName)
     case CFG_MODULE:
       ret = cfg_read_module();
       break;
+    case CFG_PARAM:
+      {
+	char *buf;
+	if (strlen(yytext)<=strlen("param_") || strlen(yytext)>=256) {
+	  out_err(LEVEL_HIGH,"token too long\n");
+	  continue;
+	}
+	buf = strdup(yytext+strlen("param_"));
+        ret = cfg_read_param(buf);
+	free(buf);
+      }
+      break;
+
     case CFG_PASV_IP:
       ret = cfg_read_pasv_ip();
       break;
@@ -1874,6 +1934,9 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_TLS_MODE:
       ret = cfg_read_tls_mode();
+      break;
+    case CFG_USE_SYSLOG:
+      ret = cfg_read_use_syslog();
       break;
     case CFG_VFS:
       ret = cfg_read_vfs();
