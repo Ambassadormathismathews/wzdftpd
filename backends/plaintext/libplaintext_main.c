@@ -4,6 +4,7 @@
 #include <malloc.h>
 #include <crypt.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <regex.h>
 
 #include <wzd_backend.h>
@@ -150,6 +151,16 @@ int write_user_file(void)
     NULL /* you MUST keep this array NULL-ended ! */
   };
 
+  /* this loop has no real interest ...
+   * it is only used to access each struct once, to provoque SEGFAULT
+   * before we start to erase file in case there is a memory corruption.
+   * But of course, this should never happens - uh ?
+   */
+  for (i=0; i<user_count; i++)
+  {
+    j = user_pool[i].username[0];
+  }
+
   strcpy (filename,USERS_FILE);
   strcpy (filenamenew,USERS_FILE);
   strcat (filenamenew,".NEW");
@@ -202,6 +213,8 @@ int write_user_file(void)
       if (group_pool[i].ip_allowed[j][0] != '\0')
         fprintf(file,"ip_allowed=%s\n",group_pool[i].ip_allowed[j]);
     }
+    if (strlen(group_pool[i].defaultpath)>0)
+      fprintf(file,"default_home=%s\n",group_pool[i].defaultpath);
     fprintf(file,"\n");
   }
 
@@ -238,12 +251,18 @@ int write_user_file(void)
       fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
       fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
+    fprintf(file,"bytes_ul_total=%lu\n",user_pool[i].bytes_ul_total);
+    fprintf(file,"bytes_dl_total=%lu\n",user_pool[i].bytes_dl_total);
     if (user_pool[i].num_logins)
       fprintf(file,"num_logins=%d\n",user_pool[i].num_logins);
     if (user_pool[i].max_idle_time)
       fprintf(file,"max_idle_time=%ld\n",user_pool[i].max_idle_time);
     if (user_pool[i].flags && strlen(user_pool[i].flags)>0)
       fprintf(file,"flags=%s\n",user_pool[i].flags);
+    if (user_pool[i].user_slots)
+      fprintf(file,"user_slots=%hd\n",(unsigned short)user_pool[i].user_slots);
+    if (user_pool[i].leech_slots)
+      fprintf(file,"leech_slots=%hd\n",(unsigned short)user_pool[i].leech_slots);
     fprintf(file,"\n");
   }
 
@@ -272,6 +291,7 @@ int read_section_users(FILE * file_user, char * line)
   char c;
   int err;
   long num;
+  unsigned long u_num;
   char *ptr;
   unsigned long i;
 
@@ -320,8 +340,12 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       memset(user_pool[user_count-1].tagline,0,256);
       user_pool[user_count-1].max_ul_speed = 0;
       user_pool[user_count-1].max_dl_speed = 0;
+      user_pool[user_count-1].bytes_ul_total = 0;
+      user_pool[user_count-1].bytes_dl_total = 0;
       user_pool[user_count-1].num_logins = 0;
       user_pool[user_count-1].max_idle_time = 0;
+      user_pool[user_count-1].user_slots = 0;
+      user_pool[user_count-1].leech_slots = 0;
       for (i=0; i<HARD_IP_PER_USER; i++)
         user_pool[user_count-1].ip_allowed[i][0] = '\0';
       user_pool[user_count-1].flags[0] = '\0';
@@ -329,7 +353,7 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
     else if (strcmp("home",varname)==0) {
       if (!user_count) break;
       /* remove trailing / */
-      if (value[strlen(value)-1] == '/')
+      if (value[strlen(value)-1] == '/' && strcmp(value,"/")!=0)
 	value[strlen(value)-1] = '\0';
       strncpy(user_pool[user_count-1].rootpath,value,1024);
     }
@@ -394,6 +418,24 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
       }
       user_pool[user_count-1].max_dl_speed = num;
     } /* max_ul_speed */
+    else if (strcmp("bytes_ul_total",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid bytes_ul_total %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].bytes_ul_total = u_num;
+    } /* bytes_ul_total */
+    else if (strcmp("bytes_dl_total",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
+        continue;
+      }
+      user_pool[user_count-1].bytes_dl_total = u_num;
+    } /* bytes_dl_total */
     else if (strcmp("num_logins",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
@@ -403,6 +445,24 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
       }
       user_pool[user_count-1].num_logins = (unsigned short)num;
     } /* else if (strcmp("num_logins",... */
+    else if (strcmp("user_slots",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid user_slots %s\n",value);
+	continue;
+      }
+      user_pool[user_count-1].user_slots = (unsigned short)u_num;
+    } /* else if (strcmp("user_slots",... */
+    else if (strcmp("leech_slots",varname)==0) {
+      if (!user_count) break;
+      u_num = strtoul(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0') { /* invalid number */
+fprintf(stderr,"Invalid leech_slots %s\n",value);
+	continue;
+      }
+      user_pool[user_count-1].leech_slots = (unsigned short)u_num;
+    } /* else if (strcmp("user_slots",... */
     else if (strcmp("max_idle_time",varname)==0) {
       if (!user_count) break;
       num = strtol(value, &ptr, 0);
@@ -466,6 +526,7 @@ fprintf(stderr,"Defining new private group %s\n",token);
       group_pool[group_count-1].max_ul_speed = 0;
       group_pool[group_count-1].max_dl_speed = 0;
       group_pool[group_count-1].max_idle_time = 0;
+      group_pool[group_count-1].defaultpath[0] = 0;
       for (i=0; i<HARD_IP_PER_GROUP; i++)
         group_pool[group_count-1].ip_allowed[i][0] = '\0';
       break;
@@ -492,6 +553,9 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
       else if (strcmp("ip_allowed",varname)==0) {
         group_ip_add(&group_pool[group_count-1],value);
       } /* ip_allowed */
+      else if (strcmp("default_home",varname)==0) {
+	strncpy(group_pool[group_count-1].defaultpath,value,1023);
+      } /* default_home */
       break;
     default:
 fprintf(stderr,"Houston, we have a problem\n");
@@ -912,6 +976,8 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
     if (mod_type & _USER_BYTESUL) user_pool[count].bytes_ul_total = user->bytes_ul_total;
     if (mod_type & _USER_BYTESDL) user_pool[count].bytes_dl_total = user->bytes_dl_total;
+    if (mod_type & _USER_USERSLOTS) user_pool[count].user_slots = user->user_slots;
+    if (mod_type & _USER_LEECHSLOTS) user_pool[count].leech_slots = user->leech_slots;
   } else { /* user not found, add it */
     fprintf(stderr,"Add user %s\n",name);
     memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
