@@ -14,7 +14,7 @@
 
 
 /* DEBUG & LOG */
-#define LEVEL_LOWEST	1
+#define LEVEL_LOWEST	0
 #define	LEVEL_FLOOD	1
 #define	LEVEL_INFO	3
 #define	LEVEL_NORMAL	5
@@ -25,5 +25,7 @@
 void out_log(int level,const char *fmt,...);
 void out_err(int level, const char *fmt,...);
 void out_xferlog(wzd_context_t * context, int is_complete);
+
+void log_message(const char *event, const char *fmt, ...);
 
 #endif /* __WZD_LOG__ */

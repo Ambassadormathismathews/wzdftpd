@@ -87,39 +87,41 @@ void out_err(int level, const char *fmt,...)
   msg_begin[0] = '\0';
   msg_end[0] = '\0';
 
-  switch (level) {
-  case LEVEL_CRITICAL:
-    strcpy(msg_begin,CLR_BOLD);
-    strcat(msg_begin,CLR_RED);
-    strcpy(msg_end,CLR_NOCOLOR);
-    break;
-  case LEVEL_HIGH:
-    strcpy(msg_begin,CLR_RED);
-    strcpy(msg_end,CLR_NOCOLOR);
-    break;
-  case LEVEL_NORMAL:
-    strcpy(msg_begin,CLR_GREEN);
-    strcpy(msg_end,CLR_NOCOLOR);
-    break;
-  case LEVEL_INFO:
-    strcpy(msg_begin,CLR_BLUE);
-    strcpy(msg_end,CLR_NOCOLOR);
-    break;
-  case LEVEL_FLOOD:
-    strcpy(msg_begin,CLR_CYAN);
-    strcpy(msg_end,CLR_NOCOLOR);
-    break;
-  default:
-    break;
-  }
+  if (!mainConfig || level >= mainConfig->loglevel) {
+    switch (level) {
+      case LEVEL_CRITICAL:
+	strcpy(msg_begin,CLR_BOLD);
+	strcat(msg_begin,CLR_RED);
+	strcpy(msg_end,CLR_NOCOLOR);
+	break;
+      case LEVEL_HIGH:
+	strcpy(msg_begin,CLR_RED);
+	strcpy(msg_end,CLR_NOCOLOR);
+	break;
+      case LEVEL_NORMAL:
+	strcpy(msg_begin,CLR_GREEN);
+	strcpy(msg_end,CLR_NOCOLOR);
+	break;
+      case LEVEL_INFO:
+	strcpy(msg_begin,CLR_BLUE);
+	strcpy(msg_end,CLR_NOCOLOR);
+	break;
+      case LEVEL_FLOOD:
+	strcpy(msg_begin,CLR_CYAN);
+	strcpy(msg_end,CLR_NOCOLOR);
+	break;
+      default:
+	break;
+    }
 
-  snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
+    snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
 
-  /* XXX we can't use mainConfig, because it could be broken here */
-/*  if (level >= mainConfig->loglevel) {*/
+    /* XXX we can't use mainConfig, because it could be broken here */
+    /*  if (level >= mainConfig->loglevel) {*/
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
     vfprintf(stderr,new_format,argptr);
-/*  }*/
+    /*  }*/
+  }
 }
 
 void out_xferlog(wzd_context_t * context, int is_complete)
@@ -160,3 +162,28 @@ void out_xferlog(wzd_context_t * context, int is_complete)
       );
   write(mainConfig->xferlog_fd,buffer,strlen(buffer));
 }
+
+void log_message(const char *event, const char *fmt, ...)
+{
+  va_list argptr;
+  char buffer[2048];
+  char datestr[128];
+  time_t timeval;
+  struct tm * ntime;
+
+  if (!mainConfig->logfile) return;
+  
+  va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+  vsnprintf(buffer,2047,fmt,argptr);
+
+  timeval = time(NULL);
+  ntime = localtime( &timeval );
+  strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
+  fprintf(mainConfig->logfile,"%s %s: %s\n",
+      datestr,
+      event,
+      buffer
+      );
+  fflush(mainConfig->logfile);
+}
+
