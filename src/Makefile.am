@@ -29,9 +29,9 @@ libwzd_la_SOURCES =  \
 
 libwzd_la_LDFLAGS = -avoid-version -module
 
-sbin_PROGRAMS = wzdFTPd
+sbin_PROGRAMS = wzdftpd
 
-wzdFTPd_SOURCES =    \
+wzdftpd_SOURCES =    \
 	list.c             \
 	list.h             \
 	ls.c               \
@@ -73,7 +73,7 @@ wzdFTPd_SOURCES =    \
 	wzd_tls.h          \
   wzd_init_lex.l
 
-wzdFTPd_LDFLAGS = -lwzd -lssl -lpthread -lfl
+wzdftpd_LDFLAGS = -lwzd -lssl -lpthread -lfl
 
 AM_CPPFLAGS = -DSSL_SUPPORT=1 -DWZD_BUILD_NUM=20030331 -DWZD_VERSION_NUM=\"0.1rc4\" -DWZD_MULTITHREAD -D_REENTRANT
 
@@ -83,4 +83,4 @@ dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 
 sysconfdir = ${prefix}/etc/wzdftpd
 
-dist_sysconf_DATA = wzd.cfg users
+dist_sysconf_DATA = wzd.cfg wzd.pem users
