@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #ifdef __CYGWIN__
 #include <w32api/windows.h>
 #endif /* __CYGWIN__ */
@@ -26,7 +50,7 @@
 #include <sys/shm.h>
 #endif /* __CYGWIN__ */
 
-/* creates a semaphore */
+/** creates a semaphore */
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {
   wzd_sem_t sem;
@@ -35,20 +59,20 @@ wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
   return sem;
 }
 
-/* destroy sem */
+/** destroy sem */
 void wzd_sem_destroy(wzd_sem_t sem)
 {
   sem_destroy((sem_t*)sem);
   free(sem);
 }
 
-/* locks a semaphore */
+/** locks a semaphore */
 int wzd_sem_lock(wzd_sem_t sem, int n)
 {
   return sem_wait((sem_t*)sem);
 }
 
-/* unlocks a semaphore */
+/** unlocks a semaphore */
 int wzd_sem_unlock(wzd_sem_t sem, int n)
 {
   return sem_post((sem_t*)sem);
@@ -59,7 +83,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 #ifdef __CYGWIN__
 
 #ifndef WZD_MULTITHREAD
-/* create a semaphore */
+/** create a semaphore */
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {
   wzd_sem_t sem = malloc(sizeof(struct _CRITICAL_SECTION));
@@ -67,21 +91,21 @@ wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
   return sem;
 }
 
-/* destroy sem */
+/** destroy sem */
 void wzd_sem_destroy(wzd_sem_t sem)
 {
   DeleteCriticalSection(sem);
   free(sem);
 }
 
-/* locks a semaphore */
+/** locks a semaphore */
 int wzd_sem_lock(wzd_sem_t sem, int n)
 {
   EnterCriticalSection(sem);
   return 0;
 }
 
-/* unlocks a semaphore */
+/** unlocks a semaphore */
 int wzd_sem_unlock(wzd_sem_t sem, int n)
 {
   LeaveCriticalSection(sem);
@@ -89,7 +113,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 }
 #endif /* WZD_MULTITHREAD */
 
-/* creates an shm zone */
+/** creates an shm zone */
 wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
 {
   wzd_shm_t *shm;
@@ -118,7 +142,7 @@ fprintf(stderr,"Could not get file mapping view\n");
   return shm;
 }
 
-/* returns an EXISTING shm zone */
+/** returns an EXISTING shm zone */
 wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 {
   wzd_shm_t *shm;
@@ -146,25 +170,25 @@ fprintf(stderr,"Could not get file mapping view\n");
   return shm;
 }
 
-/* read mem */
+/** read mem */
 int wzd_shm_read(wzd_shm_t * shm, void * data, int size, int offset)
 {
   return 0;
 }
 
-/* writes mem */
+/** writes mem */
 int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset)
 {
   return 0;
 }
 
-/* destroys shm */
+/** destroys shm */
 void wzd_shm_free(wzd_shm_t * shm)
 {
     UnmapViewOfFile(shm->handle);
 }
 
-/* cleanup if previous exec has crashed */
+/** cleanup if previous exec has crashed */
 void wzd_shm_cleanup(unsigned long key)
 {
 }
@@ -183,7 +207,7 @@ typedef union semun {
   struct seminfo *__buf;    /* buffer for IPC_INFO */
 } semun_t;
 
-/* creates a semaphore */
+/** creates a semaphore */
 wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
 {
   wzd_sem_t sem;
@@ -199,14 +223,14 @@ wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags)
   return sem;
 }
 
-/* destroy sem */
+/** destroy sem */
 void wzd_sem_destroy(wzd_sem_t sem)
 {
   /* TODO test ret */
   semctl(sem,IPC_RMID,0);
 }
 
-/* locks a semaphore */
+/** locks a semaphore */
 int wzd_sem_lock(wzd_sem_t sem, int n)
 {
   struct sembuf buf;
@@ -217,7 +241,7 @@ int wzd_sem_lock(wzd_sem_t sem, int n)
   return semop( sem, &buf, 1 );
 }
 
-/* unlocks a semaphore */
+/** unlocks a semaphore */
 int wzd_sem_unlock(wzd_sem_t sem, int n)
 {
   struct sembuf buf;
@@ -229,7 +253,7 @@ int wzd_sem_unlock(wzd_sem_t sem, int n)
 }
 #endif /* WZD_MULTITHREAD */
 
-/* creates an shm zone */
+/** creates an shm zone */
 wzd_shm_t * wzd_shm_create(unsigned long key, int size, int flags)
 {
   wzd_shm_t *shm;
@@ -290,7 +314,7 @@ fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,er
   return shm;
 }
 
-/* returns an EXISTING shm zone */
+/** returns an EXISTING shm zone */
 wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 {
   wzd_shm_t *shm;
@@ -352,7 +376,7 @@ fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,er
   return shm;
 }
 
-/* read mem */
+/** read mem */
 int wzd_shm_read(wzd_shm_t * shm, void * data, int size, int offset)
 {
 /*  struct sembuf s;*/
@@ -393,7 +417,7 @@ fprintf(stderr,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s
   return 0;
 }
 
-/* writes mem */
+/** writes mem */
 int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset)
 {
 /*  struct sembuf s;*/
@@ -434,7 +458,7 @@ fprintf(stderr,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s
   return 0;
 }
 
-/* destroys shm */
+/** destroys shm */
 void wzd_shm_free(wzd_shm_t * shm)
 {
   if (!shm) return;
@@ -443,9 +467,10 @@ void wzd_shm_free(wzd_shm_t * shm)
   wzd_sem_destroy(shm->semid);
   shmdt(shm->datazone);
   shmctl(shm->shmid,IPC_RMID,NULL);
+  free(shm);
 }
 
-/* cleanup if previous exec has crashed */
+/** cleanup if previous exec has crashed */
 void wzd_shm_cleanup(unsigned long key)
 {
 #ifndef WZD_MULTITHREAD
