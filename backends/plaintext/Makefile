@@ -1,3 +1,5 @@
+PLATFORM := $(shell uname)
+
 TARGET=libwzdplaintext.so
 OBJS=libplaintext_main.o
 DOBJS=$(OBJS:%.o=%.do)
@@ -7,23 +9,39 @@ SOURCES=$(OBJS:%.o=%.c)
 CFLAGS=-O2 -Wall -Wstrict-prototypes -I../../src
 DCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -I../../src
 PCFLAGS=-g -DDEBUG -Wall -Wstrict-prototypes -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs -I../../src
-LDFLAGS=-shared
-WINLDFLAGS=-shared
+LDFLAGS=-shared -lcrypt
+WINLDFLAGS=-shared -lcrypt
 
+ifeq ($(PLATFORM),Linux)
+CC=gcc-3.1
+else
 CC=gcc
+endif
 
 .SUFFIXES: .c .o .do .po
 
 all: debug
 
 release: $(OBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS); else $(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(WINLDFLAGS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+else
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(WINLDFLAGS)
+endif
 
 debug: $(DOBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(DCFLAGS) -o $(TARGET) $(DOBJS) $(LDFLAGS); else $(CC) $(DCFLAGS) -o $(TARGET) $(DOBJS) $(WINLDFLAGS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(DCFLAGS) -o $(TARGET) $(DOBJS) $(LDFLAGS)
+else
+	$(CC) $(DCFLAGS) -o $(TARGET) $(DOBJS) $(WINLDFLAGS)
+endif
 
 pedantic: $(POBJS)
-	if [ `uname` = "Linux" ]; then $(CC) $(PCFLAGS) -o $(TARGET) $(POBJS) $(LDFLAGS); else $(CC) $(PCFLAGS) -o $(TARGET) $(POBJS) $(WINLDFLAGS); fi
+ifeq ($(PLATFORM),Linux)
+	$(CC) $(PCFLAGS) -o $(TARGET) $(POBJS) $(LDFLAGS)
+else
+	$(CC) $(PCFLAGS) -o $(TARGET) $(POBJS) $(WINLDFLAGS)
+endif
 
 clean:
 	rm -f $(OBJS) $(DOBJS) $(POBJS) *~
