@@ -126,3 +126,41 @@ char * dir_getbasename(const char *file, const char *suffix)
 
   return basename;
 }
+
+/* \brief get the trailing n parts of a filename
+ *
+ * Return file with any leading directory components removed, until
+ * it has n components.
+ * Caller MUST free memory !
+ */
+char * dir_gettrailingname(const char *file, unsigned int n)
+{
+  char * name;
+  const char * ptr;
+  unsigned int length;
+  unsigned int count;
+
+  if (!file) return NULL;
+  ptr = file + strlen(file);
+  count = 0;
+  while ( (ptr > file) && (count < n))
+  {
+    if (*ptr == '/')
+      if (++count >= n) break;
+    ptr--;
+  }
+
+  if (ptr == file)
+  {
+    name = strdup(file);
+  }
+  else
+  {
+    length = strlen(file) - (ptr - file);
+    name = malloc(length+1);
+    strncpy(name,ptr+1,length);
+    name[length] = '\0';
+  }
+
+  return name;
+}

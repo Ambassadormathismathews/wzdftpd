@@ -1,5 +1,10 @@
 2003-12-17  Pierre Chifflier  <pollux@wzdftpd.net>
 
+	* wzd_dir.c: function to get the n trailing parts of a filename
+	* visual: bugfix could not chdir when destination is a top-level dir (c:\) 
+
+2003-12-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
 	* visual: some bugfixes on malloc/free, ensure we can use windows-like paths
 
 2003-12-15  Pierre Chifflier  <pollux@wzdftpd.net>

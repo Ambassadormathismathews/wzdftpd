@@ -40,4 +40,12 @@ char * dir_getdirname(const char *file);
  */
 char * dir_getbasename(const char *file, const char *suffix);
 
+/** \brief get the trailing n parts of a filename
+ *
+ * Return file with any leading directory components removed, until
+ * it has n components.
+ * Caller MUST free memory !
+ */
+char * dir_gettrailingname(const char *file, unsigned int n);
+
 #endif /* __WZD_DIR__ */
