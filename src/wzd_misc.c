@@ -24,6 +24,11 @@
 
 #ifdef __CYGWIN__
 #include <w32api/windows.h>
+
+#ifndef AF_INET6
+#define	AF_INET6 10
+#endif
+
 #endif /* __CYGWIN__ */
 
 #include <stdio.h>
@@ -232,8 +237,10 @@ const char * inet_ntop(int af, const void *src, char *dst, socklen_t size)
   switch (af) {
   case AF_INET:
     return (inet_ntop4(src, dst, size));
+#if defined(IPV6_SUPPORT)
   case AF_INET6:
     return (inet_ntop6(src, dst, size));
+#endif
   default:
 /*    __set_errno (EAFNOSUPPORT); */
     return (NULL);
