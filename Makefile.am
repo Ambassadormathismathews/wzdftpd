@@ -1,6 +1,5 @@
-# include src/Makefile.config
 
-SUBDIRS = src backends modules tools
+SUBDIRS = src backends modules tools init.d
 
 EXTRA_DIST = Permissions.ReadMeFirst TLS.ReadMeFirst wzd_tls.cnf
 
