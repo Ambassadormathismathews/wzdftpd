@@ -299,7 +299,11 @@ int set_default_options(void)
   strcpy(tempConfig.logfilename,"wzd.log");*/
   tempConfig.logfilename = NULL;
 
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+  tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND;
+#else /* ! BSD */
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;
+#endif /* BSD */
 
   tempConfig.logfile = NULL;
 
@@ -1550,7 +1554,11 @@ int cfg_read_tls_certificate(void)
   }
 
 #ifdef SSL_SUPPORT
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
+#else /* ! BSD */
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, 0600);
+#endif /* BSD */
   if (fd == -1)
     return 1;
 
@@ -1760,7 +1768,11 @@ int cfg_read_xferlog(void)
     return 1;
   }
 
-  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, 0600);
+#else /* ! BSD */
+  fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, 0600);
+#endif /* BSD */
   if (fd == -1)
   {
     out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n",filename);

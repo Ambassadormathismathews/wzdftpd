@@ -322,7 +322,11 @@ void server_restart(int signum)
     }
     if (mainConfig->xferlog_name && !stat(mainConfig->xferlog_name,&s)) {
       close(mainConfig->xferlog_fd);
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5))
+      fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND ,0600);
+#else /* ! BSD */
       fd = open(mainConfig->xferlog_name,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
+#endif /* BSD */
       if (fd==-1)
 	out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
 	    mainConfig->xferlog_name);
@@ -771,7 +775,7 @@ void serverMainThreadProc(void *arg)
 
   signal(SIGHUP,server_restart);
 
-#ifdef POSIX /* NO, winblows is NOT posix ! */
+#if defined(POSIX) && ! defined(BSD) /* NO, winblows is NOT posix ! */
   /* set fork() limit */
   {
     struct rlimit rlim;
