@@ -211,6 +211,7 @@ EXPORTS
 	vars_get
 	vars_set
 	vars_group_get
+	vars_group_new
 	vars_group_set
 	vars_shm_free
 	vars_shm_get
