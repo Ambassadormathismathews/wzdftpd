@@ -1352,6 +1352,12 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
     port++; /* retry with next port */
     if (port >= mainConfig->pasv_high_range)
       port = mainConfig->pasv_low_range;
+    /** \bug this could create an infinite loop */
+  }
+  if (port < mainConfig->pasv_low_range || port > mainConfig->pasv_high_range)
+  {
+    out_log(LEVEL_HIGH, "PASV: found port out of range !! (%d not in [%d , %d])\n",
+        mainConfig->pasv_low_range, mainConfig->pasv_high_range);
   }
 
 
