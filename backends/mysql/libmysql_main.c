@@ -52,7 +52,7 @@ MYSQL mysql;
 static char *db_user, *db_passwd, *db_hostname, *db;
 
 /*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
-static int wzd_parse_arg(char *arg);
+static int wzd_parse_arg(const char *arg);
 
 /* get mysql value, in a more robust way than just a copy
  * return 0 if ok, non-zero otherwise (ex: value is NULL)
@@ -75,31 +75,34 @@ void _wzd_mysql_error(const char *filename, const char  *func_name, int line)/*,
   fprintf(stderr, "%s(%s):%d %s\n", filename, func_name, line, mysql_error(&mysql));
 }
 
-static int wzd_parse_arg(char *arg)
+static int wzd_parse_arg(const char *arg)
 {
   char *ptr;
+  char * buffer;
 
-  ptr = arg;
+  if (!arg) return -1;
 
-  db_user = (char*)strtok_r(arg, ":", &ptr);
-  if (!db_user) return -1;
+  ptr = buffer = strdup(arg); /** \todo free buffer at backend exit ! (small memory leak) */
 
-  db_passwd = (char *)strtok_r(NULL,"@", &ptr);
-  if (!db_passwd) return -1;
+  db_user = strtok_r(buffer, ":", &ptr);
+  if (!db_user) { free(buffer); return -1; }
 
-  db_hostname = (char *)strtok_r(NULL, ":\n", &ptr);
-  if (!db_hostname) return -1;
+  db_passwd = strtok_r(NULL,"@", &ptr);
+  if (!db_passwd) { free(buffer); return -1; }
 
-  db = (char *)strtok_r(NULL, "\n", &ptr);
-  if (!db) return -1;
+  db_hostname = strtok_r(NULL, ":\n", &ptr);
+  if (!db_hostname) { free(buffer); return -1; }
+
+  db = strtok_r(NULL, "\n", &ptr);
+  if (!db) { free(buffer); return -1; }
 
   return 0;
 }
 
 
-int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
+int FCN_INIT(const char *arg)
 {
-  if ((wzd_parse_arg((char *)arg)) != 0) {
+  if ((wzd_parse_arg(arg)) != 0) {
     return -1;
   }
 

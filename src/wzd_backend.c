@@ -243,7 +243,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   char path[1024];
   int length;
   void *ptr;
-  int (*init_fcn)(unsigned int, unsigned int, void*);
+  int (*init_fcn)(const char *);
   int ret;
 
   /* default: current path */
@@ -340,7 +340,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
     }
   }
 
-  ptr = init_fcn = (int (*)(unsigned int, unsigned int, void *))dlsym(handle,DL_PREFIX STR_INIT);
+  ptr = init_fcn = (int (*)(const char *))dlsym(handle,DL_PREFIX STR_INIT);
   mainConfig->backend.back_validate_login = (uid_t (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
   mainConfig->backend.back_validate_pass  = (uid_t (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);
   mainConfig->backend.back_get_user  = (wzd_user_t * (*)(uid_t))dlsym(handle,DL_PREFIX STR_GET_USER);
@@ -357,7 +357,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   }
 
   if (ptr) {
-    ret = (*init_fcn)(user_max, group_max, mainConfig->backend.param);
+    ret = (*init_fcn)(mainConfig->backend.param);
     if (ret) { /* backend says NO */
       backend_clear_struct(&mainConfig->backend);
       dlclose(handle);
@@ -456,11 +456,18 @@ wzd_user_t * backend_get_user(uid_t userid)
 int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 {
   int ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return -1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_find_user)
+    ret = b->backend_find_user(name,user);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return -1;
+    }
+    ret = (*mainConfig->backend.back_find_user)(name,user);
   }
-  ret = (*mainConfig->backend.back_find_user)(name,user);
+
   if (ret >= 0 && user) {
     wzd_user_t * _tmp_user;
     _tmp_user = GetUserByID(ret);
@@ -476,6 +483,7 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 wzd_user_t * GetUserByID(uid_t id)
 {
   wzd_user_t *user, *user_return;
+  wzd_backend_t * b;
 
   if (!mainConfig) return NULL;
 
@@ -483,11 +491,16 @@ wzd_user_t * GetUserByID(uid_t id)
   if ( (user = usercache_getbyuid( id )) )
     return user;
 
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return NULL;
+  if ( (b = mainConfig->backend.b) && b->backend_get_user)
+    user = b->backend_get_user(id);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    user = (*mainConfig->backend.back_get_user)( id );
   }
-  user = (*mainConfig->backend.back_get_user)( id );
+
   if (!user) return NULL;
   user_return = usercache_add( user );
   wzd_free(user);
@@ -498,6 +511,7 @@ wzd_user_t * GetUserByName(const char *name)
 {
   uid_t uid;
   wzd_user_t * user=NULL;
+  wzd_backend_t * b;
 
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
 out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
@@ -506,11 +520,16 @@ out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
   if ( (user = usercache_getbyname( name )) )
     return user;
 
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return NULL;
+  if ( (b = mainConfig->backend.b) && b->backend_find_user)
+    uid = b->backend_find_user(name,user);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    uid = (*mainConfig->backend.back_find_user)(name,user);
   }
-  uid = (*mainConfig->backend.back_find_user)(name,user);
+
   if (uid != (uid_t)-1) {
     return GetUserByID( uid );
   }
@@ -533,6 +552,10 @@ uid_t GetUserIDByName(const char *name)
 
 wzd_group_t * backend_get_group(gid_t groupid)
 {
+  wzd_backend_t * b;
+  if ( (b = mainConfig->backend.b) && b->backend_get_group)
+    return b->backend_get_group(groupid);
+
   if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return NULL;
@@ -543,11 +566,18 @@ wzd_group_t * backend_get_group(gid_t groupid)
 int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
 {
   int ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return -1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_find_group)
+    ret = b->backend_find_group(name,group);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return -1;
+    }
+    ret = (*mainConfig->backend.back_find_group)(name,group);
   }
-  ret = (*mainConfig->backend.back_find_group)(name,group);
+
   if (ret >= 0 && group) {
     wzd_group_t * _tmp_group;
     _tmp_group = GetGroupByID(ret);
@@ -564,6 +594,7 @@ int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
 wzd_group_t * GetGroupByID(gid_t id)
 {
   wzd_group_t * group = NULL, * group_return;
+  wzd_backend_t * b;
 
   if (!mainConfig) return NULL;
 
@@ -571,11 +602,16 @@ wzd_group_t * GetGroupByID(gid_t id)
   if ( (group = groupcache_getbygid( id )) )
     return group;
 
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return NULL;
+  if ( (b = mainConfig->backend.b) && b->backend_get_group)
+    group = b->backend_get_group(id);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    group = (*mainConfig->backend.back_get_group)( id );
   }
-  group = (*mainConfig->backend.back_get_group)( id );
+
   if (!group) return NULL;
   group_return = groupcache_add( group );
   wzd_free(group);
@@ -586,6 +622,7 @@ wzd_group_t * GetGroupByName(const char *name)
 {
   gid_t gid;
   wzd_group_t * group = NULL;
+  wzd_backend_t * b;
 
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
 
@@ -593,11 +630,16 @@ wzd_group_t * GetGroupByName(const char *name)
   if ( (group = groupcache_getbyname( name )) )
     return group;
 
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return NULL;
+  if ( (b = mainConfig->backend.b) && b->backend_find_group)
+    gid = b->backend_find_group(name,group);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return NULL;
+    }
+    gid = (*mainConfig->backend.back_find_group)(name,group);
   }
-  gid = (*mainConfig->backend.back_find_group)(name,group);
+
   if (gid != (gid_t)-1) {
     return GetGroupByID( gid );
   }
@@ -619,11 +661,18 @@ gid_t GetGroupIDByName(const char *name)
 int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
 {
   uid_t ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_login) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return -1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_validate_login)
+    ret = b->backend_validate_login(name,user);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_login) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return -1;
+    }
+    ret = (*mainConfig->backend.back_validate_login)(name,user);
   }
-  ret = (*mainConfig->backend.back_validate_login)(name,user);
+
   if (ret != (uid_t)-1) {
     if (user) {
       wzd_user_t * _tmp_user;
@@ -640,11 +689,18 @@ int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
 int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, uid_t * userid)
 {
   uid_t ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_pass) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return 1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_validate_pass)
+    ret = b->backend_validate_pass(name,pass,user);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_pass) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return 1;
+    }
+    ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
   }
-  ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
+
   if (ret != (uid_t)-1) {
     if (user) {
       wzd_user_t * _tmp_user;
@@ -661,6 +717,10 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
 int backend_commit_changes(const char *backend)
 {
   int ret;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_commit_changes)
+    return b->backend_commit_changes();
 
   if (!mainConfig->backend.handle || !mainConfig->backend.back_commit_changes) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
@@ -701,11 +761,17 @@ int backend_inuse(const char *backend)
 int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   int ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_user) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return 1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_mod_user)
+    ret = b->backend_mod_user(name,user,mod_type);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_user) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return 1;
+    }
+    ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
   }
-  ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
 
   if (ret == 0) {
     if (mod_type & _USER_MAX_ULS) _trigger_user_max_ul(user);
@@ -721,11 +787,17 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 int backend_mod_group(const char *backend, const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   int ret;
-  if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_group) {
-    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
-    return 1;
+  wzd_backend_t * b;
+
+  if ( (b = mainConfig->backend.b) && b->backend_mod_group)
+    ret = b->backend_mod_group(name,group,mod_type);
+  else {
+    if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_group) {
+      out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      return 1;
+    }
+    ret = (*mainConfig->backend.back_mod_group)(name,group,mod_type);
   }
-  ret = (*mainConfig->backend.back_mod_group)(name,group,mod_type);
 
   groupcache_invalidate( predicate_groupname, (void *)name );
 

@@ -32,7 +32,7 @@
 #define STRUCT_BACKEND_VERSION  100
 
 /** \brief Initialization for backends */
-typedef struct {
+struct wzd_backend_t {
   unsigned int struct_version; /* used to know which fields are
                                   present in the struct .. */
   char * name;
@@ -52,7 +52,7 @@ typedef struct {
   int (*backend_commit_changes) (void);
 
   int (*backend_exit)(void);
-} wzd_backend_t;
+};
 
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING		0
@@ -92,7 +92,7 @@ typedef struct {
 #define	_GROUP_GID		1<<10
 #define _GROUP_ALL	0xffffffff
 
-/* int FCN_INIT(unsigned int user_max, unsigned int group_max, void * arg) */
+/* int FCN_INIT(const char *arg) */
 #define	FCN_INIT		wzd_init
 #define	STR_INIT		"wzd_init"
 

@@ -188,7 +188,7 @@ wzd_group_t * group_allocate_new(void)
 
 
 
-int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
+int FCN_INIT(const char *arg)
 {
   int ret;
 
@@ -585,11 +585,6 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   return NULL;
 }
 
-static int _new_backend_init(const char * arg)
-{
-  return FCN_INIT((unsigned int)-1, (unsigned int)-1, arg);
-}
-
 int wzd_backend_init(wzd_backend_t * backend)
 {
   if (!backend) return -1;
@@ -597,7 +592,7 @@ int wzd_backend_init(wzd_backend_t * backend)
   backend->name = wzd_strdup("plaintext");
   backend->version = wzd_backend_version;
 
-  backend->backend_init = _new_backend_init;
+  backend->backend_init = FCN_INIT;
   backend->backend_exit = FCN_FINI;
 
   backend->backend_validate_login = FCN_VALIDATE_LOGIN;

@@ -113,7 +113,7 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 
 
 
-int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
+int FCN_INIT(const char *arg)
 {
   int uid;
 
@@ -127,7 +127,7 @@ int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
   user_pool = malloc(HARD_DEF_USER_MAX * sizeof(wzd_user_t));
   memset(user_pool, 0, HARD_DEF_USER_MAX * sizeof(wzd_user_t));
   _user_count = 0;
-  _user_max = user_max;
+  _user_max = HARD_DEF_USER_MAX;
 
   /* user nobody */
   strcpy(user_pool[0].username, "nobody");

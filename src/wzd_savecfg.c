@@ -231,9 +231,9 @@ static void save_backend (FILE *file)
     /* TODO XXX FIXME NO NO NO ! string can be auto-generated with backend name ! */
 /*#warning "FIXME NO NO NO ! string can be auto-generated with backend name !"*/
 /*    if (strcmp("plaintext", name) == 0)
-      fprintf( file, "backend_param_plaintext = %s\n", (char*)mainConfig->backend.param);*/
+      fprintf( file, "backend_param_plaintext = %s\n", mainConfig->backend.param);*/
     if (mainConfig->backend.param)
-      fprintf( file, "backend_param_%s = %s\n", name, (char*)mainConfig->backend.param);
+      fprintf( file, "backend_param_%s = %s\n", name, mainConfig->backend.param);
 
     if (version) free (version);
     if (name) free (name);

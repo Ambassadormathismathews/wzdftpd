@@ -228,7 +228,7 @@ typedef struct {
 
 typedef struct {
   char * name;
-  void * param;
+  char * param;
   void * handle;
   uid_t (*back_validate_login)(const char *, wzd_user_t *);
   uid_t (*back_validate_pass) (const char *, const char *, wzd_user_t *);
@@ -456,6 +456,7 @@ typedef struct _context_t {
 
 /************************ MAIN CONFIG *********************/
 
+typedef struct wzd_backend_t wzd_backend_t;
 #include "wzd_backend.h"
 
 /* macros used with options */

@@ -269,7 +269,9 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   struct sockaddr_in6 from;
   size_t len = sizeof(struct sockaddr_in6);
 #endif
+#if 0
   int i=0;
+#endif
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
 
