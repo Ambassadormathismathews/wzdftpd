@@ -25,15 +25,15 @@ php-online: php
 	./fix_css.sh wzdftpd-doc
 
 wzdftpd-doc/index.php: $(ALL_SGML_FILES) $(HTML_DEPS) $(EXAMPLES) wzd_custom.dsl
-	$(JW) -d wzd_custom.dsl#php -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
+	$(JW) -d $(srcdir)/wzd_custom.dsl#php -o wzdftpd-doc -b html $(srcdir)/$(MAIN_SGML_FILE)
 
 wzdftpd-doc/index.html: $(ALL_SGML_FILES) $(HTML_DEPS) $(EXAMPLES) wzd_custom.dsl
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
-	$(JW) -d wzd_custom.dsl#html -o wzdftpd-doc -b html $(MAIN_SGML_FILE)
+	$(JW) -d $(srcdir)/wzd_custom.dsl#html -o wzdftpd-doc -b html $(srcdir)/$(MAIN_SGML_FILE)
 
 wzdftpd-doc/wzdftpd.pdf: $(ALL_SGML_FILES) $(EXAMPLES)
 	if [ ! -d wzdftpd-doc ]; then mkdir wzdftpd-doc; fi; \
-	$(JW) -o wzdftpd-doc -b pdf $(MAIN_SGML_FILE)
+	$(JW) -o wzdftpd-doc -b pdf $(srcdir)/$(MAIN_SGML_FILE)
 
 clean:
 	rm -f wzdftpd-doc/*.html wzdftpd-doc/*.php wzdftpd-doc/*.pdf wzdftpd-doc/*.out

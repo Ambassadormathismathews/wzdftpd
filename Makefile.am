@@ -6,8 +6,8 @@ bin_SCRIPTS = wzd-config
 m4macrodir = $(datadir)/aclocal
 m4macro_DATA = wzd.m4
 
-EXTRA_DIST = autogen.sh \
-	ermissions.ReadMeFirst \
+EXTRA_DIST = bootstrap \
+	Permissions.ReadMeFirst \
 	TLS.ReadMeFirst wzd_tls.cnf \
 	$(m4macro_DATA)
 

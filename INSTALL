@@ -20,8 +20,7 @@ Windows:
 All paths are relative to rep wzdftpd (root)
 
 1) Generate configure script (if compiling from CVS):
-./autogen.sh [args for configure]
-** You should prefer the 'boostrap' script: ./boostrap
+./boostrap
 If you're FreeBSD user, read notes below.
 
 2) Configure

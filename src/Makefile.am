@@ -122,7 +122,7 @@ install-data-hook:
 	${INSTALL_PROGRAM} -m 775 -d @localstatedir@/log/wzdftpd || true
 
 uninstall-hook:
-	rmdir --ignore-fail-on-non-empty @localstatedir@/log/wzdftpd
+	rmdir --ignore-fail-on-non-empty @localstatedir@/log/wzdftpd || true
 
 # them while "make clean", use CLEANFILES
 CLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
