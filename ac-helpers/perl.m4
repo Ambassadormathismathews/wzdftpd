@@ -11,13 +11,29 @@ dnl   The macro will execute optional argument 1 if given, if PERL
 dnl   libs are found.
 dnl   
 
+
 AC_DEFUN([WZD_LIB_PERL],
+[
+dnl
+dnl enable perl, unless --enable-perl=no or --disable-perl is specified
+dnl
+  AC_ARG_ENABLE(perl, [  --enable-perl           enable perl module (default:yes)],
+    if eval "test x$enable_perl = xyes"; then
+      WZD_LIB_PERL_WRAPPED
+    fi,
+      WZD_LIB_PERL_WRAPPED
+  )
+  ]
+)
+
+AC_DEFUN([WZD_LIB_PERL_WRAPPED],
 [
 dnl   TODO check version !
 dnl
 dnl   AC_PROG_PERL_VERSION(5.6.1)
 dnl   is not working with perl 5.8.4
 dnl
+
   AC_CHECK_PROG(PERL,perl,perl)
   if test "x$PERL" != "x"; then
     WZD_PERL_INCLUDES="`perl -MExtUtils::Embed -e ccopts`"
