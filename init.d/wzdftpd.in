@@ -9,7 +9,7 @@ LD_LIBRARY_PATH=$PREFIX/lib
 DAEMON=$PREFIX/sbin/wzdftpd
 NAME=wzdftpd
 
-CONFIG=$PREFIX/etc/wzdftpd/wzd.cfg
+CONFIG=@e_sysconfdir@/wzd.cfg
 
 # Defaults
 RUN="yes"

@@ -1,7 +1,7 @@
 
 
 #libexecdir = ${prefix}/lib
-libdir = ${prefix}/lib
+#libdir = ${prefix}/lib
 
 #libexec_LTLIBRARIES = libwzd.la
 lib_LTLIBRARIES = libwzd.la
@@ -83,14 +83,14 @@ AM_CPPFLAGS = @SSL_CPPFLAGS@ -DWZD_BUILD_NUM=@BUILDNUM@ -DWZD_VERSION_NUM=\"@VER
 
 dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
-	file_users.txt  file_who.txt
+	file_users.txt  file_who.txt  file_groups.txt  users
 
-sysconfdir = ${prefix}/etc/wzdftpd
+#sysconfdir = ${prefix}/etc/wzdftpd
 
-dist_sysconf_DATA = wzd.cfg wzd.pem users
+dist_sysconf_DATA = wzd.cfg wzd.pem
 
 install-data-hook:
-	${INSTALL_PROGRAM} -m 775 -d @datadir@/wzdftpd/logs
+	${INSTALL_PROGRAM} -m 775 -d @datadir@/wzdftpd/logs || true
 
 uninstall-hook:
 	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs

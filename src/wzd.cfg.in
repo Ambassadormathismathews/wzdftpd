@@ -40,7 +40,7 @@ pasv_high_range  = 3000
 # linux only: file where pid of server will be stored
 # (default: /var/run/wzdftpd.pid)
 # this is used by init.d script
-pid_file = @prefix@/etc/wzdftpd/wzdftpd.pid
+pid_file = @e_datadir@/@PACKAGE@/wzdftpd.pid
 
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
@@ -48,13 +48,13 @@ dir_message = .message
 # use ONE of the following:
 
 # log file for server activity
-logfile = @prefix@/share/wzdftpd/logs/wzd.log
+logfile = @e_datadir@/@PACKAGE@/logs/wzd.log
 
 # if you prefer syslog (default: yes, except for cygwin)
 #use_syslog = 1
 
 # log file for transfered files (default: do not log)
-xferlog = @prefix@/share/wzdftpd/logs/xferlog
+xferlog = @e_datadir@/@PACKAGE@/logs/xferlog
 
 # max number of child threads (default: 32)
 max_threads = 32
@@ -65,8 +65,8 @@ max_threads = 32
 # ONE BACKEND IS NEEDED !
 # backend name SHOULD NEVER contains spaces !
 #backend = plaintext > 122
-backend = @prefix@/share/@PACKAGE@/backends/libwzdplaintext.so > 122
-backend_param_plaintext = @prefix@/etc/wzdftpd/users
+backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 122
+backend_param_plaintext = @e_datadir@/@PACKAGE@/users
 
 # speed limits in bytes /sec (approx !)
 # 0 = no limit
@@ -97,8 +97,12 @@ deny_access_files_uploaded = 1
 #loglevel = lowest
 
 # TLS Options
+
+# cygwin, version winsock only: you must specify where the tls wrapper dll is
+#param_tls_wrapper = @e_datadir@/@PACKAGE@/wzd_tlswrap.dll
+
 # Certificate (only used in ssl mode, otherwise ignored)
-tls_certificate = @prefix@/etc/wzdftpd/wzd.pem
+tls_certificate = @e_sysconfdir@/wzd.pem
 
 # Mode (default: explicit)
 #  explicit: server starts in clear mode, wait for "AUTH TLS" and then switch to ssl
@@ -150,14 +154,18 @@ login_pre_ip_allowed = -*.xxx.fr
 #    vfs = |/home/pollux/K|/cygdrive/k|
 # or
 #    vfs = |/home/pollux/K|k:|
+# you can add permissions at end of line to restrict vfs for some user, group,
+# flags or anything allowed by permissions syntax (see PERMISSIONS at end of
+# this file for more details)
+#   vfs = |/home/pollux/K|k:| +O =user
 #vfs = |/home/pollux/vfs|/etc|
 #vfs = |/home/pollux/K|/tmp|
 
 ##### MODULES
 # modules are dynamic libraries
 # order *IS* important
-#module = @prefix@/share/@PACKAGE@/modules/libwzd_test.so
-module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
+#module = @e_datadir@/@PACKAGE@/modules/libwzd_test.so
+module = @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so
 
 param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]
 param_sfv_del_progressmeter = \[.*] - ...% Complete - \[WzD]
@@ -179,14 +187,15 @@ section = ALL /* ^([][A-Za-z0-9_.'() \t-+])*$
 #site_cmd = my_free ./free.sh
 
 ##### SITE FILES
-sitefile_ginfo	= @prefix@/share/wzdftpd/file_ginfo.txt
-sitefile_group	= @prefix@/share/wzdftpd/file_group.txt
-sitefile_help	= @prefix@/share/wzdftpd/file_help.txt
-sitefile_rules	= @prefix@/share/wzdftpd/file_rules.txt
-sitefile_swho	= @prefix@/share/wzdftpd/file_swho.txt
-sitefile_user	= @prefix@/share/wzdftpd/file_user.txt
-sitefile_users	= @prefix@/share/wzdftpd/file_users.txt
-sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
+sitefile_ginfo	= @e_datadir@/@PACKAGE@/file_ginfo.txt
+sitefile_group	= @e_datadir@/@PACKAGE@/file_group.txt
+sitefile_groups	= @e_datadir@/@PACKAGE@/file_groups.txt
+sitefile_help	= @e_datadir@/@PACKAGE@/file_help.txt
+sitefile_rules	= @e_datadir@/@PACKAGE@/file_rules.txt
+sitefile_swho	= @e_datadir@/@PACKAGE@/file_swho.txt
+sitefile_user	= @e_datadir@/@PACKAGE@/file_user.txt
+sitefile_users	= @e_datadir@/@PACKAGE@/file_users.txt
+sitefile_who	= @e_datadir@/@PACKAGE@/file_who.txt
 
 ##### CRON JOBS
 # cronjobs are commands to execute periodically
@@ -220,13 +229,13 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 #-delete = -admin
 -site_addip = +O +G
 -site_adduser = +O +G
--site_backend = =pollux
--site_chacl = =pollux
+-site_backend = +O
+-site_chacl = +O
 -site_change = +O +G
--site_checkperm = =pollux
+-site_checkperm = +O
 -site_chgrp = +O
--site_chmod = =pollux
--site_chown = =pollux
+-site_chmod = +O
+-site_chown = +O
 -site_chpass = +O +G
 -site_chratio = +O +G
 -site_close = +O
@@ -237,6 +246,7 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 -site_free = *
 -site_ginfo = +O +G
 -site_give = *
+-site_groups = +O
 -site_grpadd = +O
 -site_grpaddip = +O
 -site_grpdel = +O
@@ -248,15 +258,15 @@ sitefile_who	= @prefix@/share/wzdftpd/file_who.txt
 -site_help = *
 -site_idle = *
 -site_invite = !=guest *
--site_kick = =pollux
--site_kill = =pollux
+-site_kick = +O
+-site_kill = +O
 -site_purge = +O +G
 -site_readd = +O +G
--site_reload = =pollux
+-site_reload = +O
 -site_reopen = +O
 -site_rules = *
 -site_sfv = *
--site_shutdown = =pollux =wzdftpd
+-site_shutdown = +O
 -site_swho = -admin
 -site_tagline = !=guest *
 -site_take = +O
