@@ -1,11 +1,16 @@
 ## IN PROGRESS ##
 
+"***"
+module sfv: if uploading an sfv file at user / server will try to create
+an empty file "(incomplete)-%0" at upper level
+-> need to get context from user name _in module_ (cygwin ?!)
+"***"
+
 - avoid sending multiples "250-" to be rfc-compliant (message file + answer)
 
 - rewrite fct do_mkdir
 - SFV: trap EVENT_DELETE, and re-create .missing if file from sfv is deleted ?? (not sure it is a good idea ...)
 - per dir global permissions (to pass over rootpath)
-- lock files when writing (to avoid concurrent writes)
 - VFS (virtual file system): system-wide vfs, group-wide vfs, or user vfs
 - use options in ls
 - hide some filenames in list: .dirinfo .dirmsg
@@ -54,7 +59,6 @@
 - implement 'site purge' without arguments
 - multiple binds / restricted binds: bind to only specified ip(s)
 - change / add / remove vfs with site commands
-- add detection of ip for dynamic ip
 - global config flag to close server except for users having this flag
 - 'include' directive in wzd.cfg: ability to split config file
 - message system for users: site msg and/or inline messages
@@ -79,5 +83,4 @@ _ possibility to link a backend statically (instead of dll)
 - dupe checker
 - default backend hard-coded ?
 - per-dir special permissions (glftpd like)
-- possibility to change user inline
 - cache permissions in memory (parent-process shm zone ?)

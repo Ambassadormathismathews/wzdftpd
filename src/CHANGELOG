@@ -1,3 +1,41 @@
+# Jan, 09 2003
+- bugfix: problem in vfs listing (missing first character)
+- bugfix: mkdir was broken
+- bugfix: incorrect answer for MKD (extra "")
+- reopen log files when receiving SIGHUP
+- added 'install', 'uninstall' targets to Makefile
+- module sfv: create incomplete link when uploading sfv (basic)
+
+# Jan, 03 2003
+- begin to change all direct addressing to user/group list by calls to
+  GetUserByID
+- first coverage \ profiling analysis (with kcachegrind)
+- suppressed memset (bzero) call in ClientThreadProc (about 50% of time
+  spent in function !) by appending a \0
+- huge speedup for fct 'readConfigFile' by moving regexp compilation
+  outside the loop - mainly for server init
+- locks on files when uploading - to be tested !
+- bugfix: many site commands remove trailing character (thinking it is /)
+  due to the <old> function checkpath
+- bugfix: many corrections to compile with cygwin
+- bugfix: backend plaintext checks more for errors when reading/writing
+  users file. Do not rotate them, but deep copy and complete write
+  (need mutex), to avoid problems with permissions
+- bugfix: server do not free shm when aborting due to lack of backend
+- server now creates a transfer log (xferlog format)
+
+# Dec, 21 2002
+- bugfix: timeout was checked on connections during transfers, causing disconnections
+- module sfv: 'site sfv create file.sfv' takes files in sfv dir and creates a new
+  sfv file (except for diz/nfo/sfv/txt files)
+
+# Dec, 16 2002
+- server can periodically perform a DNS lookup to detect dynamic ip changes,
+  and rebind if so.
+- when waiting for PASV connection, bind only to specific address
+- choice of log level in config file
+
+#--- cvs commit TAG: rel-0-1rc2
 # Dec, 10 2002
 - site users: list users online
 - server now tries to bind data PORT connection to control-1 on server-side to be RFC-compliant
@@ -232,7 +270,7 @@
 - permissions on command like site *, delete
 - trap signals interrupt, kill, etc. to end server properly
 - now using shared memory to store contexts
-- acls bugfixs
+- acls bugfixes
 
 # Jun, 12 2002
 - bandwidth upload / download limitation
