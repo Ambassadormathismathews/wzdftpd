@@ -703,8 +703,14 @@ int cfg_read_dir_message(void)
 
   tempConfig.dir_message = wzd_strdup(end);
 
-  if (chtbl_insert((CHTBL*)tempConfig.htab, "dir_message", wzd_strdup(end), NULL, NULL, wzd_free))
-    ; /* error */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "dir_message", wzd_strdup(end), NULL, NULL, wzd_free)) {
+    /** \fixme wzd_strdup(end) will never be freed .. */
+    out_err(LEVEL_HIGH,"error during insertion: dir_message = %s\n",end);
+    wzd_free(tempConfig.dir_message);
+    tempConfig.dir_message = NULL;
+    wzd_free(filename);
+    return 1;
+  }
 
   wzd_free(filename);
 
@@ -880,8 +886,13 @@ int cfg_read_logfile(void)
   }
 
   tempConfig.logfilename = filename; /* will be freed at server exit */
-  if (chtbl_insert((CHTBL*)tempConfig.htab, "logfile", wzd_strdup(filename), NULL, NULL, wzd_free))
-    ; /* error */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "logfile", wzd_strdup(filename), NULL, NULL, wzd_free)) {
+    /** \fixme wzd_strdup(filename) will never be freed .. */
+    out_err(LEVEL_HIGH,"error during insertion: logfile = %s\n",filename);
+    tempConfig.logfilename = NULL;
+    wzd_free(filename);
+    return 1;
+  }
 
   return 0;
 }
@@ -1016,8 +1027,11 @@ int cfg_read_loglevel(void)
     return 1;
   }
 
-  if (chtbl_insert((CHTBL*)tempConfig.htab, "loglevel", wzd_strdup(yytext), NULL, NULL, wzd_free))
-    ; /* error */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "loglevel", wzd_strdup(yytext), NULL, NULL, wzd_free)) {
+    out_err(LEVEL_HIGH,"error during insertion: loglevel = %s\n",yytext);
+    /** \fixme wzd_strdup(yytext) will never be freed .. */
+    return 1;
+  }
 
   tempConfig.loglevel = i;
 
@@ -1810,8 +1824,12 @@ int cfg_read_keyword(void)
     return 1;
   }
 
-  if (chtbl_insert((CHTBL*)tempConfig.htab, key, data, NULL, wzd_free, wzd_free))
-    ; /* error */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, key, data, NULL, wzd_free, wzd_free)) {
+    out_err(LEVEL_HIGH,"error during insertion: %s = %s\n",key,data);
+    wzd_free(data);
+    wzd_free(key);
+    return 1;
+  }
 
   return 0;
 }
