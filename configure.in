@@ -262,7 +262,7 @@ AC_CONFIG_FILES([Makefile
                  modules/tcl/Makefile
                  modules/test/Makefile
                  src/Makefile
-                 src/wzd.cfg
+                 src/wzd.cfg.sample
                  tools/Makefile
                  tools/siteconfig/Makefile
                  tools/siteuptime/Makefile

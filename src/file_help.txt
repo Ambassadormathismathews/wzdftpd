@@ -1,68 +1,72 @@
 .----------------------------------------------------------------------------.
 |                         »   S i T e     H e l P    «                       |
 .----------------.----------------------------------------------.------------.
-|    command     |                  description                 | users can  |
+|    command     |                  description                              |
 .----------------.----------------------------------------------.------------.
-| site addip     | add ip to user                               | r          |
-|                | site addip user ip                           |            |
-| site adduser   | add a new user                               | r          |
-|                | site adduser user pass [group] [backend]     |            |
-| site backend   | (init/close/reload/commit) backend_name      | r          |
-| site chacl     | change access rights on a file or directory  | r,s        |
-|                |   site chacl user mode file1 [file2 ...]     |            |
-|                |   site chacl user rwx dir1                   |            |
-|                |   site chacl user 7 dir1                     |            |
-| site change    | change a field for a user                    | r          |
-|                | site change user field value                 |            |
-| site changegrp | add/remove user from group(s)                | r          |
-|                |   site changegrp user group1 [group2 ... ]   |            |
-| site checkperm | checks access for a user on a file/dir       | r,s        |
-|                | site checkperm user file rights              | r,s        |
-| site chgrp     | change the group of a file or directory      | r,s        |
-|                |   site chgrp group file1 [file2 ...]         |            |
-| site chmod     | change permissions of a file or directory    | r,s        |
-|                |   site chmod mode file1 [file2 ...]          |            |
-|                |   site chmod 644 file1 [file2 ...]           |            |
-| site chown     | change the owner of a file or directory      | r,s        |
-|                |   site chown user file1 [file2 ...]          |            |
-| site chpass    | change the password of a user                | r,s        |
-|                |   site chpass user new_pass                  |            |
-| site chratio   | change ratio of a user                       | r,s        |
-|                |   site chratio user ratio                    |            |
-| site delip     | delete ip from user                          | r          |
-| site deluser   | delete user                                  | r          |
-| site flags     | display user's flags                         | r,s,n,g    |
-|                |   site flags [user]                          |            |
-| site free      | show free space                              | all        |
-| site group     | perform group administration                 | siteop     |
-| site grpadd    | add a new group                              | siteop     |
-| site grpaddip  | add ip to a group                            | siteop     |
-| site grpdel    | delete group                                 | siteop     |
-| site help      | what you are reading !                       | all        |
-| site kick      | kick all connections from a user             | r          |
-| site kill      | kill a pid                                   | r          |
-| site idle      | display your idle time                       | r,s,n,g    |
-| site invite    | tell bot to invite you on irc chan           | r          |
-|                |   site invite irc_nick                       |            |
-| site msg       | (show/delete/convert/new/append)             | siteop     |
-| site purge     | purge deleted user                           | r          |
-|                |   site purge [user]                          |            |
-| site readduser | readd a deleted user                         | r          |
-| site reload    | reloads server config                        | r          |
-| site rules     | show site rules                              | r,s,n,g    |
-| site savecfg   | save server config                           | r          |
-| site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
-| site shutdown  | shutdown the server remotely                 | r          |
-| site tagline   | display/set your tagline                     | r,s,n,g    |
-|                |   site tagline [new tagline]                 |            |
-| site uptime    | give you information about actual uptime of  | all        |
-|                | this server                                  |            |
-| site user      | (username) show user info                    | r,s        |
-| site users     | give list of users on this server            | r          |
-| site version   | show server version                          | r,s,n,g    |
-| site who       | show who's online                            | r,s,n,g    |
-| xcrc           | returns CRC32 value of specified file        | all        |
-| xmd5           | returns MD5 checksum of specified file       | all        |
+| site addip     | add ip to user                                            |
+|                | site addip user ip                                        |
+| site change    | change a field for a user                                 |
+|                | site change user field value                              |
+| site changegrp | add/remove user from group(s)                             |
+|                |   site changegrp user group1 [group2 ... ]                |
+| site chmod     | change permissions of a file or directory                 |
+|                |   site chmod mode file1 [file2 ...]                       |
+|                |   site chmod 644 file1 [file2 ...]                        |
+| site chown     | change the owner of a file or directory                   |
+|                |   site chown user file1 [file2 ...]                       |
+| site chpass    | change the password of a user                             |
+|                |   site chpass user new_pass                               |
+| site chratio   | change ratio of a user                                    |
+|                |   site chratio user ratio                                 |
+| site delip     | delete ip from user                                       |
+| site flags     | display user's flags                                      |
+|                |   site flags [user]                                       |
+| site free      | show free space                                           |
+| site help      | what you are reading !                                    |
+| site idle      | display your idle time                                    |
+| site invite    | tell bot to invite you on irc chan                        |
+|                |   site invite irc_nick                                    |
+| site rules     | show site rules                                           |
+| site sfv       | (add/check/create) sfv tools                              |
+| site tagline   | display/set your tagline                                  |
+|                |   site tagline [new tagline]                              |
+| site uptime    | give you information about actual uptime of               |
+|                | this server                                               |
+| site user      | (username) show user info                                 |
+| site users     | give list of users on this server                         |
+| site who       | show who's online                                         |
+| xcrc           | returns CRC32 value of specified file                     |
+| xmd5           | returns MD5 checksum of specified file                    |
+%if(+O)
+|                                                                            |
+|     SiteOP reserved commands                                               |
+| site adduser   | add a new user                                            |
+|                | site adduser user pass [group] [backend]                  |
+| site backend   | (init/close/reload/commit) backend_name                   |
+| site chacl     | change access rights on a file or directory               |
+|                |   site chacl user mode file1 [file2 ...]                  |
+|                |   site chacl user rwx dir1                                |
+|                |   site chacl user 7 dir1                                  |
+| site checkperm | checks access for a user on a file/dir                    |
+|                | site checkperm user file rights                           |
+| site chgrp     | change the group of a file or directory                   |
+|                |   site chgrp group file1 [file2 ...]                      |
+| site deluser   | delete user                                               |
+| site group     | perform group administration                              |
+| site grpadd    | add a new group                                           |
+| site grpaddip  | add ip to a group                                         |
+| site grpdel    | delete group                                              |
+| site kick      | kick all connections from a user                          |
+| site kill      | kill a pid                                                |
+| site killpath  | kill all users inside a given directory                   |
+| site msg       | (show/delete/convert/new/append)                          |
+| site purge     | purge deleted user                                        |
+|                |   site purge [user]                                       |
+| site readduser | readd a deleted user                                      |
+| site reload    | reloads server config                                     |
+| site shutdown  | shutdown the server remotely                              |
+| site version   | show server version                                       |
+%endif
 .----------------.----------------------------------------------.------------.
 | note: permissions on commands can be changed by server admin               |
 |                                                                            |

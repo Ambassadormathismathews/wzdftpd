@@ -31,6 +31,7 @@ int do_site_readduser(char *command_line, wzd_context_t * context);
 int do_site_purgeuser(char *command_line, wzd_context_t * context);
 int do_site_kick(char *command_line, wzd_context_t * context);
 int do_site_kill(char *command_line, wzd_context_t * context);
+int do_site_killpath(char *command_line, wzd_context_t * context);
 int do_site_su(char *command_line, wzd_context_t * context);
 
 int do_site_addip(char *command_line, wzd_context_t * context);

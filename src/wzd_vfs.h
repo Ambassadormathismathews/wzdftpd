@@ -32,6 +32,10 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context);
 
 int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context);
 
+
+/** kill all users inside path */
+int killpath(const char *path, wzd_context_t * context);
+
 /* remove a vfs entry */
 int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath );
 

@@ -69,11 +69,11 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_file.h" /* file_mkdir, file_stat */
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
-#include "wzd_file.h" /* file_mkdir, file_stat */
-#include "wzd_vfs.h" /* checkpath_new */
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
+#include "wzd_vfs.h" /* checkpath_new */
 #include "wzd_vars.h" /* needed to access variables */
 
 #include "wzd_debug.h"
@@ -100,6 +100,7 @@ static int tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
 static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_killpath(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
@@ -151,6 +152,7 @@ int WZD_MODULE_INIT(void)
     return -1;
   }
   Tcl_CreateCommand(interp,"ftp2sys",tcl_ftp2sys,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"killpath",tcl_killpath,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"putlog",tcl_putlog,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message",tcl_send_message,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"send_message_raw",tcl_send_message_raw,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
@@ -369,6 +371,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
   if ( (slave = Tcl_CreateSlave(interp, buffer, 0)) ) {
     int ret;
     ret = Tcl_CreateAlias(slave, "ftp2sys", interp, "ftp2sys", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "killpath", interp, "killpath", 0, NULL);
     ret = Tcl_CreateAlias(slave, "putlog", interp, "putlog", 0, NULL);
     ret = Tcl_CreateAlias(slave, "send_message", interp, "send_message", 0, NULL);
     ret = Tcl_CreateAlias(slave, "send_message_raw", interp, "send_message_raw", 0, NULL);
@@ -401,6 +404,22 @@ static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char
     return TCL_ERROR;
   }
   Tcl_SetResult(interp, path, (Tcl_FreeProc *)&wzd_free);
+
+  return TCL_OK;
+}
+
+static int tcl_killpath(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  int ret;
+
+  if (argc != 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  ret = killpath(argv[1], current_context);
+
+  if ( ret != E_OK ) {
+    return TCL_ERROR;
+  }
 
   return TCL_OK;
 }

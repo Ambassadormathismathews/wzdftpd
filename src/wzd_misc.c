@@ -1007,6 +1007,34 @@ void win_normalize(char * s, unsigned int length, unsigned int lower)
 
 
 
+/* \return 0 if ok, -1 if error, 1 if trying to kill myself */
+int kill_child_new(unsigned long pid, wzd_context_t * context)
+{
+  int found=0;
+  int i;
+
+  /* preliminary check: i can't kill myself */
+  if (pid==context->pid_child) return 1;
+
+  /* checks that pid is really one of the users */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) { found = 1; break; }
+  }
+  if (!found) return -1;
+
+  /* \todo XXX FIXME remove/fix test !! */
+  context_list[i].exitclient = 1;
+/*  ret = TerminateThread((HANDLE)pid,0);*/
+/*  ret = pthread_cancel(pid);*/
+
+  return 0;
+}
+
+
+
+
+
 short is_user_in_group(wzd_user_t * user, unsigned int gid)
 {
   unsigned int i;

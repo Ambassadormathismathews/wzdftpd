@@ -4,8 +4,7 @@ Makefile
 Makefile.in
 libwzd.la
 tags
-users.OLD
-wzd.cfg
+wzd.cfg.sample
 wzd_init_lex.c
 wzd_init_lex.l.c
 wzd_cookie_lex.c

@@ -1721,6 +1721,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"INVITE",&do_site_invite)) return 1;
   if (site_command_add(&config->site_list,"KICK",&do_site_kick)) return 1;
   if (site_command_add(&config->site_list,"KILL",&do_site_kill)) return 1;
+  if (site_command_add(&config->site_list,"KILLPATH",&do_site_killpath)) return 1;
   if (site_command_add(&config->site_list,"LINK",&do_site_link)) return 1;
   if (site_command_add(&config->site_list,"MSG",&do_site_msg)) return 1;
   if (site_command_add(&config->site_list,"PERM",&do_site_perm)) return 1;
@@ -1809,7 +1810,7 @@ int do_site(char *command, char *command_line, wzd_context_t * context)
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
     /* TODO check if there are arguments, and call specific help */
-    do_site_print_file(mainConfig->site_config.file_help,NULL,NULL,context);
+    do_site_print_file(mainConfig->site_config.file_help,GetUserByID(context->userid),NULL,context);
     return 0;
   } else
 /******************** REOPEN ********************/

@@ -57,6 +57,7 @@
 #include "wzd_messages.h"
 #include "wzd_ServerThread.h"
 #include "wzd_site_user.h"
+#include "wzd_vfs.h"
 
 #include "wzd_debug.h"
 
@@ -1317,6 +1318,50 @@ int do_site_kick(char *command_line, wzd_context_t * context)
   if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
+  return 0;
+}
+
+
+/** site killpath: kick off all users inside a directory
+ *
+ * killpath &lt;path&gt;
+ */
+int do_site_killpath(char *command_line, wzd_context_t * context)
+{
+  char *path;
+  char *ptr;
+  int ret;
+
+  ptr = command_line;
+  path = strtok_r(command_line,"\r\n",&ptr);
+  if (!path) {
+    ret = send_message_with_args(501,context,"Usage: site killpath <path>");
+    return 0;
+  }
+
+  ret = killpath(path,context);
+
+  switch (ret) {
+    case E_FILE_NOEXIST:
+      ret = send_message_with_args(501,context,"path does not exist !");
+      break;
+    case E_USER_IDONTEXIST:
+      ret = send_message_with_args(501,context,"Where am I ? My path does not exist !");
+      break;
+    case E_USER_ICANTSUICIDE:
+      ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+      break;
+    case E_USER_NOBODY:
+      ret = send_message_with_args(200,context,"Nobody in this path");
+      break;
+    case E_OK:
+      ret = send_message_with_args(200,context,"KILL signal sent");
+      break;
+    default:
+      ret = send_message_with_args(501,context,"Unknown error");
+      break;
+  };
+  
   return 0;
 }
 

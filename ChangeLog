@@ -1,6 +1,8 @@
 2004-09-13  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: GnuTLS support
+	* feature: KILLPATH, site, perl and tcl (kill all users inside given directory)
+	* IMPORTANT: wzd.cfg and users files renamed to .sample
 
 2004-09-08  Pierre Chifflier  <pollux@cpe.fr>
 

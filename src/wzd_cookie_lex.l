@@ -524,6 +524,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       /* test if() condition */
       /* TODO XXX FIXME more checks needed ! */
       if (condition[0] == '+') {
+        WZD_ASSERT( (current_user != NULL) );
         if (current_user->flags && strchr(user->flags,condition[1]))
           cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
       }

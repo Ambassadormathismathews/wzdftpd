@@ -66,7 +66,7 @@ typedef enum {
   E_USER_DELETED,	/**< user have been deleted */
   E_USER_NUMLOGINS,	/**< user has reached user num_logins limit */
   E_USER_TLSFORCED,	/**< user must be in TLS mode */
-  
+
   E_GROUP_NUMLOGINS,	/**< user has reached group num_logins limit */
 
   E_PASS_REJECTED,	/**< wrong pass */
@@ -76,6 +76,8 @@ typedef enum {
   E_FILE_TYPE,	        /**< file has wrong type for operation */
 
   E_USER_IDONTEXIST,	/**< server said i don't exist ! */
+  E_USER_ICANTSUICIDE,	/**< user is trying to kill its connection ! */
+  E_USER_NOBODY,	/**< no user was matched by action */
 
   E_MKDIR_PARSE,	/**< directory name parsing gives errors */
   E_MKDIR_PATHFILTER,	/**< dirname rejected by pathfilter */

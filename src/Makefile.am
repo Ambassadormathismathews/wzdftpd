@@ -111,12 +111,12 @@ wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
-dist_sysconf_DATA = wzd.cfg wzd.pem \
+dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
 	file_users.txt  file_who.txt  file_groups.txt  \
 	file_vfs.txt \
-	users
+	users.sample
 
 install-data-hook:
 	${INSTALL_PROGRAM} -m 775 -d @localstatedir@/log/wzdftpd || true

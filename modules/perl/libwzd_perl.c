@@ -105,6 +105,7 @@ static int perl_hook_protocol(const char *file, const char *args);
 /***** PERL commands ***/
 static XS(XS_wzd_test);
 static XS(XS_wzd_ftp2sys);
+static XS(XS_wzd_killpath);
 static XS(XS_wzd_putlog);
 static XS(XS_wzd_send_message_raw);
 static XS(XS_wzd_send_message);
@@ -321,6 +322,7 @@ static void xs_init(pTHX)
 
   newXS("wzd::test", XS_wzd_test, "wzd");
   newXS("wzd::ftp2sys", XS_wzd_ftp2sys, "wzd");
+  newXS("wzd::killpath", XS_wzd_killpath, "wzd");
   newXS("wzd::putlog", XS_wzd_putlog, "wzd");
   newXS("wzd::send_message_raw", XS_wzd_send_message_raw, "wzd");
   newXS("wzd::send_message", XS_wzd_send_message, "wzd");
@@ -458,6 +460,29 @@ static XS(XS_wzd_ftp2sys)
   }
 
   XSRETURN_PV(path);
+}
+
+static XS(XS_wzd_killpath)
+{
+  char * text;
+  int ret;
+  dXSARGS;
+
+  if (!current_context) XSRETURN_UNDEF;
+  if (items < 1) XSRETURN_UNDEF;
+
+  /** \todo print error message */
+  if ( ! SvPOK(ST(0)) )
+    XSRETURN_UNDEF;
+
+  text = SvPV_nolen(ST(0));
+
+  ret = killpath (text,current_context);
+  if ( ret != E_OK ) {
+    XSRETURN_NO;
+  }
+
+  XSRETURN_YES;
 }
 
 /**

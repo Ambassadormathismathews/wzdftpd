@@ -1,0 +1,88 @@
+# general considerations:
+#
+# comment lines begin by #
+# empty lines are removed
+#
+# directives have format: <tagname>=<value>
+# with the regexp: ^([a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)
+#
+# directives are grouped into sections
+# section begins by [SECTIONNAME]
+
+# groups definitions
+[GROUPS]
+privgroup	admin
+ip_allowed=127.0.0.1
+default_home=/home
+gid=15
+
+privgroup	users
+default_home=/home
+ratio=3
+
+privgroup	anonymous
+max_idle_time=10
+default_home=/home
+
+# users definitions
+# users MUST begin by line name=<>
+[USERS]
+name=pollux
+pass=tobNnnhhJY2Fs
+home=/home/pollux/ftp-test
+uid=501
+groups=admin
+rights=0xffffffff
+tagline=v0dk4 kNigHt
+ip_allowed=pollux@127.0.0.1
+ip_allowed=localhost
+ip_allowed=*
+bytes_ul_total=79383089
+bytes_dl_total=1058767184
+flags=OIstH
+
+name=wzdftpd
+pass=Oz1iHGIgV8HIQ
+home=/
+uid=0
+groups=admin
+rights=0xffffffff
+tagline=wzdftpd
+ip_allowed=127.0.0.1
+ip_allowed=::ffff:127.0.0.1
+ip_allowed=::1
+bytes_ul_total=10
+bytes_dl_total=10
+num_logins=1
+flags=OIstH
+
+name=guest
+pass=%
+home=/tmp
+uid=200
+groups=anonymous
+rights=0x10003
+ip_allowed=*
+max_dl_speed=20480
+bytes_ul_total=0
+bytes_dl_total=1918812
+num_logins=2
+
+name=gadmin
+pass=yX8sb90MNTHDE
+home=/home
+uid=50
+groups=users
+rights=0xffffffff
+ip_allowed=127.0.0.1
+bytes_ul_total=0
+bytes_dl_total=0
+ratio=3
+flags=G
+user_slots=3
+leech_slots=1
+
+# per hosts rights
+[HOSTS]
+all = *
+
