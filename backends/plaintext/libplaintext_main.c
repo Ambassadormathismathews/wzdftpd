@@ -83,7 +83,8 @@ fprintf(stderr,"Entering section USERS\n");
     }
     line[0] = c; /* we avoid a stupid ungetc */
     fgets(line+1,MAX_LINE-2,file_user);
-    line[strlen(line)-1] = '\0'; /* clear trailing \n */
+    while ( line[strlen(line)-1] == '\r' || line[strlen(line)-1] == '\n')
+      line[strlen(line)-1] = '\0'; /* clear trailing \n */
 
     err = regexec(&reg_line,line,3,regmatch,0);
     if (err) {
@@ -191,7 +192,8 @@ fprintf(stderr,"Entering section GROUPS\n");
     }
     line[0] = c; /* we avoid a stupid ungetc */
     fgets(line+1,MAX_LINE-2,file_user);
-    line[strlen(line)-1] = '\0'; /* clear trailing \n */
+    while ( line[strlen(line)-1] == '\r' || line[strlen(line)-1] == '\n')
+      line[strlen(line)-1] = '\0'; /* clear trailing \n */
 fprintf(stderr,"i read '%s'\n",line);
     /* read config directive name */
     token = strtok(line," \t");
@@ -236,7 +238,8 @@ fprintf(stderr,"Entering section HOSTS\n");
     }
     line[0] = c; /* we avoid a stupid ungetc */
     fgets(line+1,MAX_LINE-2,file_user);
-    line[strlen(line)-1] = '\0'; /* clear trailing \n */
+    while ( line[strlen(line)-1] == '\r' || line[strlen(line)-1] == '\n')
+      line[strlen(line)-1] = '\0'; /* clear trailing \n */
 fprintf(stderr,"i read '%s'\n",line);
   }
   return 0;
@@ -286,7 +289,8 @@ int read_files(void)
   while (1) {
     ptr = fgets(line,MAX_LINE-1,file_user);
     if (!ptr) { fclose(file_user); free(line); return 0; }
-    line[strlen(line)-1] = '\0'; /* clear trailing \n */
+    while ( line[strlen(line)-1] == '\r' || line[strlen(line)-1] == '\n')
+      line[strlen(line)-1] = '\0'; /* clear trailing \n */
 
     if (line[0] == '\0' || line[0] == '#') { /* ignore empty lines & comments */
       continue;
@@ -433,3 +437,18 @@ int FCN_FIND_GROUP(int num, wzd_group_t * group)
   
   return 0;
 } 
+
+int FCN_MOD_USER(const char *name, wzd_user_t * user)
+{
+  return 0;
+}
+
+int FCN_MOD_GROUP(int num, wzd_group_t * group)
+{
+  return 0;
+}
+
+int  FCN_COMMIT_CHANGES(void)
+{
+  return 0;
+}
