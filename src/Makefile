@@ -5,9 +5,9 @@ WZD_BUILD_NUM=$(DATE_TAG)
 COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
 COMMON_LIBS=
 
-OBJS=wzd_site.o wzd_site_user.o wzd_socket.o \
-  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o wzd_main.o \
-  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o wzd_shm.o
+OBJS=wzd_main.o wzd_site.o wzd_site_user.o wzd_socket.o \
+  wzd_ClientThread.o wzd_ServerThread.o wzd_init.o \
+  ls.o wzd_data.o wzd_action.o wzd_file.o wzd_perm.o list.o stack.o
 DOBJS=$(OBJS:%.o=%.do)
 POBJS=$(OBJS:%.o=%.po)
 SOURCES=$(OBJS:%.o=%.c)
@@ -17,7 +17,7 @@ CFLAGS=-O2 $(COMMON_CFLAGS)
 DCFLAGS=-g -DDEBUG $(COMMON_CFLAGS)
 PCFLAGS=-g -DDEBUG $(COMMON_CFLAGS) -Wcast-align -Wwrite-strings -Wconversion -Waggregate-return -Wmissing-prototypes -Wmissing-declarations -Wredundant-decls -Wnested-externs
 
-LIBWZD_SOURCES = wzd_libmain.c wzd_log.c wzd_misc.c wzd_backend.c wzd_messages.c wzd_mod.c wzd_vfs.c wzd_cache.c
+LIBWZD_SOURCES = wzd_libmain.c wzd_log.c wzd_misc.c wzd_backend.c wzd_messages.c wzd_mod.c wzd_vfs.c wzd_cache.c wzd_shm.c wzd_crontab.c
 LIBWZD_OBJS = $(LIBWZD_SOURCES:%.c=%.o)
 LIBWZD_DOBJS = $(LIBWZD_SOURCES:%.c=%.do)
 LIBWZD_POBJS = $(LIBWZD_SOURCES:%.c=%.po)
@@ -31,6 +31,11 @@ ifeq ($(WZD_MULTIPROCESS),1)
 COMMON_CFLAGS += -DWZD_MULTIPROCESS
 endif
 
+ifeq ($(WZD_MULTITHREAD),1)
+COMMON_CFLAGS += -DWZD_MULTITHREAD -D_REENTRANT
+COMMON_LIBS += -lpthread
+endif
+
 ifeq ($(INTERNAL_SFV),1)
 OBJS += wzd_crc32.o
 COMMON_CFLAGS += -DINTERNAL_SFV=1
@@ -41,7 +46,8 @@ CC=gcc-3.2
 LIBWZD = libwzd.so
 EXEC=wzdFTPd
 COMMON_LIBS += -L. -lwzd -Wl,-rpath,.
-COMMON_CFLAGS += -march=i686 -ffast-math
+COMMON_CFLAGS += -march=i686 -ffast-math -mmmx -msse -mfpmath=sse
+#COMMON_CFLAGS += -march=i586
 else
 CC=gcc
 LIBWZD = libwzd.dll
