@@ -331,7 +331,7 @@ int do_site_delip(char *command_line, wzd_context_t * context)
   /* try to take argument as a slot number */
   ul = strtoul(ip,&ptr,0);
   if (*ptr=='\0') {
-    if (ul < 0 || ul >= HARD_IP_PER_USER) {
+    if (ul <= 0 || ul >= HARD_IP_PER_USER) {
       ret = send_message_with_args(501,context,"Invalid ip slot number");
       return 0;
     }
@@ -623,7 +623,7 @@ int do_site_flags(char *command_line, wzd_context_t * context)
     username = context->userinfo.username;
   } else 
 #endif
-    username = mainConfig->user_list[context->userid].username;
+    username = GetUserByID(context->userid)->username;
   }
 
   /* check if user exists */
@@ -658,7 +658,7 @@ int do_site_idle(char *command_line, wzd_context_t * context)
     username = context->userinfo.username;
   } else 
 #endif
-    username = mainConfig->user_list[context->userid].username;
+    username = GetUserByID(context->userid)->username;
   /* check if user exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
@@ -708,7 +708,7 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
     username = context->userinfo.username;
   } else 
 #endif
-    username = mainConfig->user_list[context->userid].username;
+    username = GetUserByID(context->userid)->username;
   /* check if user exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
@@ -804,7 +804,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
     test_username = context->userinfo.username;
   } else 
 #endif
-    test_username = mainConfig->user_list[context->userid].username;
+    test_username = GetUserByID(context->userid)->username;
   if (strcmp(username,test_username)==0) { ret = send_message_with_args(501,context,"My religion forbids me suicide !"); return 0; }
 
   /* kill'em all ! */
@@ -817,7 +817,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
 	  test_username = context_list[i].userinfo.username;
 	} else 
 #endif
-	  test_username = mainConfig->user_list[context_list[i].userid].username;
+	  test_username = GetUserByID(context_list[i].userid)->username;
 	if (strcmp(username,test_username)==0) {
 	  found = 1;
 	  kill (context_list[i].pid_child,SIGTERM);
