@@ -12,29 +12,31 @@ Provides: ftp-server
 Conflicts: ftp-server
 Suggests: tcl8.4, wzdftpd-doc
 Description: A portable, modular, efficient and not user-friendly ftp server
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
 
 Package: wzdftpd-back-pam
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Description: A portable, modular, efficient and not user-friendly ftp server (pam backend)
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
  .
  This package provides the pam backend.
 
@@ -43,15 +45,16 @@ Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Suggests: mysql-server
 Description: A portable, modular, efficient and not user-friendly ftp server (Mysql backend)
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
  .
  This package provides the Mysql backend.
 
@@ -59,15 +62,16 @@ Package: wzdftpd-mod-sfv
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Description: A portable, modular, efficient and not user-friendly ftp server (SFV module)
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
  .
  This package provides the SFV module.
 
@@ -76,15 +80,16 @@ Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Suggests: tcl8.4
 Description: A portable, modular, efficient and not user-friendly ftp server (TCL module)
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
  .
  This package provides the TCL module.
 
@@ -93,13 +98,14 @@ Architecture: all
 Suggests: wzdftpd
 Section: doc
 Description: A portable, modular, efficient and not user-friendly ftp server (Documentation)
- wzdftpd is designed to be run as a user, and to be entirely configurable using
- SITE commands. It works on linux/bsd/win32, supports Ipv6, SSL, and is multithreaded.
+ wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
+ is multithreaded. Server is fully configurable online using SITE commands, and
+ implements the lastest RFC extensions to FTP protocol.
  .
  Features are: flexible user management, acls, virtual users/groups, security,
- speed, bandwith limitation, per command authorization, virtual directories, dynamic
- ip changes auto-detection, etc.
+ speed, bandwith limitation, per command authorization, virtual directories,
+ dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerfull event-driven system to extend server.
+ a powerful event-driven system to extend server.
 
