@@ -161,8 +161,6 @@ EXPORTS
 	setlib_mainConfig
 	setlib_server_uid
 	setMessage
-	site_cleanup
-	site_init
 	split_filename
 	socket_accept
 	socket_close

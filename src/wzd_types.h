@@ -38,6 +38,9 @@
 
 #if defined(_MSC_VER)
 
+/* windows have wchar.h */
+#define HAVE_WCHAR_H
+
 #ifdef LIBWZD_EXPORTS
 # define WZDIMPORT __declspec (dllexport)
 #else
