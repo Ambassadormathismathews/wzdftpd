@@ -1193,6 +1193,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_MAX_DLS) group_pool[count].max_dl_speed = group->max_dl_speed;
     if (mod_type & _GROUP_RATIO) group_pool[count].ratio = group->ratio;
     if (mod_type & _GROUP_DEFAULTPATH) strcpy(group_pool[count].defaultpath,group->defaultpath);
+    if (mod_type & _GROUP_NUMLOGINS) group_pool[count].num_logins = group->num_logins;
     if (mod_type & _GROUP_IP) {
       int i;
       for ( i=0; i<HARD_IP_PER_GROUP; i++ )
