@@ -159,7 +159,11 @@ int wzd_send_message(const char *message, int msg_length, char * reply, int repl
   buffer[0] = '\0';
   ret = _config->connector.read(buffer,buffer_length);
 
-  if (reply) { memcpy(reply,buffer,reply_length); reply[reply_length]='\0'; }
+  if (reply) {
+    /* TODO XXX decode message in multi-line ? */
+    memcpy(reply,buffer,reply_length);
+    reply[reply_length]='\0';
+  }
 
   return 0;
 }
