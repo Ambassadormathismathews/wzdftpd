@@ -924,5 +924,4 @@ int do_site_tagline(char *command_line, wzd_context_t * context)
 }
 #endif /* 0 */
 
-#endif /* WZD_MULTIPROCESS */
 
