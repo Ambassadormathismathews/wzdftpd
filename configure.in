@@ -18,8 +18,11 @@
 AC_PREREQ(2.53)
 AC_INIT(wzdftpd, 0.1cvs, pollux@wzdftpd.net)
 AM_INIT_AUTOMAKE(wzdftpd,0.1cvs,no-define)
-AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
+# AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
+
+dnl helper macros
+sinclude(ac-helpers/pgsql.m4)
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -218,6 +221,7 @@ AC_SUBST(VERSION)
 AC_SUBST(WZD_BUILD_OPTS)
 
 AC_CONFIG_FILES([Makefile
+                 ac-helpers/Makefile
                  backends/Makefile
                  backends/plaintext/Makefile
                  init.d/Makefile
