@@ -82,6 +82,9 @@
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
 #undef HAVE_OPENSSL_SSL_H
 
+/* Define if using pgsql */
+#undef HAVE_PGSQL
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
