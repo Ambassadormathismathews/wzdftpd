@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -54,7 +78,12 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   }
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name begins with / (or x:/ for win, do not add path */
-  snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  if (length<0)
+  {
+    out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
+    return 1;
+  } 
   ret = lstat(filename,&statbuf);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
@@ -128,7 +157,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
   } /* if (pred) */
 
   dlclose(handle);
-/*  strncpy(mainConfig->backend.name,backend,1023);*/
+/*  strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);*/
   
   return 0;
 }
@@ -140,7 +169,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   char path[1024];
   int length;
   void *ptr;
-  int (*init_fcn)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int);
+  int (*init_fcn)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int, void*);
   int ret;
 
   /* default: current path */
@@ -153,7 +182,12 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   }
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name begins with / (or x:/ for win, do not add path */
-  snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
+  if (length<0)
+  {
+    out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
+    return 1;
+  } 
 
   /* test dlopen */
   handle = dlopen(filename,RTLD_NOW);
@@ -165,19 +199,20 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
   }
 
   mainConfig->backend.handle = handle;
-  ptr = init_fcn = (int (*)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int))dlsym(handle,STR_INIT);
+  ptr = init_fcn = (int (*)(int *, wzd_user_t *, unsigned int, wzd_group_t *, unsigned int, void *))dlsym(handle,STR_INIT);
   mainConfig->backend.back_validate_login = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_LOGIN);
   mainConfig->backend.back_validate_pass  = (int (*)(const char *, const char *, wzd_user_t *))dlsym(handle,STR_VALIDATE_PASS);
   mainConfig->backend.back_find_user  = (int (*)(const char *, wzd_user_t *))dlsym(handle,STR_FIND_USER);
   mainConfig->backend.back_find_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_FIND_GROUP);
   mainConfig->backend.back_chpass  = (int (*)(const char *, const char *))dlsym(handle,STR_CHPASS);
   mainConfig->backend.back_mod_user  = (int (*)(const char *, wzd_user_t *, unsigned long))dlsym(handle,STR_MOD_USER);
-  mainConfig->backend.back_mod_group  = (int (*)(int, wzd_group_t *))dlsym(handle,STR_MOD_GROUP);
+  mainConfig->backend.back_mod_group  = (int (*)(const char *, wzd_group_t *, unsigned long))dlsym(handle,STR_MOD_GROUP);
   mainConfig->backend.back_commit_changes  = (int (*)(void))dlsym(handle,STR_COMMIT_CHANGES);
-  strncpy(mainConfig->backend.name,backend,1023);
+  strncpy(mainConfig->backend.name,backend,HARD_BACKEND_NAME_LENGTH-1);
 
   if (ptr) {
-    ret = (*init_fcn)(backend_storage, user_list, user_max, group_list, group_max);
+    ret = (*init_fcn)(backend_storage, user_list, user_max, group_list, group_max, mainConfig->backend.param);
+/*    ret = (*init_fcn)(backend_storage, user_list, user_max, group_list, group_max, NULL);*/
     if (ret) { /* backend says NO */
       backend_clear_struct(&mainConfig->backend);
       dlclose(handle);
@@ -241,7 +276,7 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
     /*user = GetUserByID(ret);*/
     memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
-    *userid = ret;
+    if (userid) *userid = ret;
     return 0;
   }
   return ret;
@@ -257,7 +292,7 @@ int backend_find_group(int num, wzd_group_t * group, int * groupid)
   ret = (*mainConfig->backend.back_find_group)(num,group);
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
     memcpy(group,GetGroupByID(ret),sizeof(wzd_group_t));
-    *groupid = ret;
+    if (groupid) *groupid = ret;
     return 0;
   }
   return ret;
@@ -356,5 +391,17 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
     return 1;
   }
   ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
+  return ret;
+}
+
+/* if group does not exist, add it */
+int backend_mod_group(const char *backend, const char *name, wzd_group_t * group, unsigned long mod_type)
+{
+  int ret;
+  if (!mainConfig->backend.handle) {
+    out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+    return 1;
+  }
+  ret = (*mainConfig->backend.back_mod_group)(name,group,mod_type);
   return ret;
 }
