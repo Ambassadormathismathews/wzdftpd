@@ -407,7 +407,10 @@ int check_timeout(wzd_context_t * context)
 	if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
 	log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
 	    user->username,
-	    userip[0],userip[1],userip[2],userip[3],
+            *(unsigned char *)&userip[0],
+            *(unsigned char *)&userip[1],
+            *(unsigned char *)&userip[2],
+            *(unsigned char *)&userip[3],
 	    delay
 	    );
       }
@@ -440,7 +443,10 @@ int check_timeout(wzd_context_t * context)
 	  if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
 	  log_message("TIMEOUT","%s (%u.%u.%u.%u) timed out after being idle %d seconds",
 	      user->username,
-	      userip[0],userip[1],userip[2],userip[3],
+              *(unsigned char *)&userip[0],
+              *(unsigned char *)&userip[1],
+              *(unsigned char *)&userip[2],
+              *(unsigned char *)&userip[3],
 	      delay
 	      );
 	}
@@ -2216,7 +2222,10 @@ void * clientThreadProc(void *arg)
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     log_message("LOGIN","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
 	(remote_host)?remote_host:"no host !",
-	userip[0],userip[1],userip[2],userip[3],
+	*(unsigned char *)&userip[0],
+	*(unsigned char *)&userip[1],
+	*(unsigned char *)&userip[2],
+	*(unsigned char *)&userip[3],
 	user->username,
 	(groupname)?groupname:"No Group",
 	user->tagline
@@ -2362,7 +2371,10 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	      if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
 	      log_message("LOGOUT","%s (%u.%u.%u.%u) \"%s\" \"%s\" \"%s\"",
 		  remote_host,
-		  userip[0],userip[1],userip[2],userip[3],
+                  *(unsigned char *)&userip[0],
+                  *(unsigned char *)&userip[1],
+                  *(unsigned char *)&userip[2],
+                  *(unsigned char *)&userip[3],
 		  user->username,
 		  (groupname)?groupname:"No Group",
 		  user->tagline
