@@ -37,6 +37,7 @@
 #define	TOK_ALLO	29
 #define	TOK_RNFR	30
 #define	TOK_RNTO	31
+#define	TOK_APPE	32
 
 #define	TOK_NOTHING	64
 
