@@ -1,0 +1,236 @@
+# This is the main config file
+# lines begining with a # are ignored, as empty lines
+# all lines must be of the form:
+# <name> = <value>
+# (for windows users: without the < > ;-)
+
+# Server ip (default: *)
+# If you specify an ip, the server will bind to this ip and
+# will refuse connections on other interfaces
+# ip should be 128 chars max
+# if you specify an ip beginning by +, the server will use DNS lookups
+ip = *
+#ip = 127.0.0.1
+
+# dynamic ip (default: 0)
+# if you specify 1 here, the server will try to use your system to detect
+# ip changes
+# 0 desactivates checks
+# if you specify an ip beginning by +, the server will use DNS lookups
+#dynamic_ip = +pollux.myftp.org
+#dynamic_ip = 1
+
+# Listen port (default: 21)
+# IMPORTANT: under linux, you'll need privileges to bind to a system port
+# ( < 1024 )
+port = 6969
+
+# PASV range (default: 1025->65536)
+# specify this iff you want to get a specific range
+pasv_low_range = 2500
+pasv_high_range  = 3000
+#pasv_ip = 62.212.107.165
+#pasv_ip = 134.214.71.84
+
+# linux only: server will drop privileges to a user after binding port
+# you can specify a user login name
+# This will only be used if run by root !
+#server_uid = pollux
+
+# the name of the file in each dir that should be added to every answer
+dir_message = .message
+
+# log file for transfered files (default: do not log)
+xferlog = xferlog
+
+# max number of child threads (default: 32)
+max_threads = 32
+
+# backend to use for auth (default: plaintext)
+# you can check backend version with directives > and <
+# e.g: backend = plaintext > 120
+# ONE BACKEND IS NEEDED !
+# backend name SHOULD NEVER contains spaces !
+#backend = plaintext > 122
+backend = @prefix@/share/@PACKAGE@/backends/libwzdplaintext.so > 122
+backend_param_plaintext = @prefix@/etc/wzdftpd/users
+
+# speed limits in bytes /sec (approx !)
+# 0 = no limit
+max_ul_speed = 0
+max_dl_speed = 300000
+
+# deny_access_files_uploaded (default: 0)
+# if you say 1 here, users trying to download file whereas
+# the file is being uploaded will be denied
+deny_access_files_uploaded = 1
+
+# Available ONLY if compiled with INTERNAL_SFV=1
+# Enable internal sfv checking (default: no)
+#internal_sfv_checker = 1
+
+# shm_key: use for share memory (default: 0x1331c0d3)
+#shm_key = 0x2442c0d3
+
+# Log level (default: normal)
+# Verbosity of log (only messages >= level will be displayed)
+# can be one of (in order):
+# lowest, flood, info, normal, high, critical
+loglevel = lowest
+
+# TLS Options
+# Certificate (only used in ssl mode, otherwise ignored)
+tls_certificate = @prefix@/etc/wzdftpd/wzd.pem
+
+# Mode (default: explicit)
+#  explicit: server starts in clear mode, wait for "AUTH TLS" and then switch to ssl
+#    you can use explicit mode with normal (clear) mode
+#  explicit_strict: server will start in clear mode, but will accept ONLY logins switched to ssl
+#  implicit: server starts in ssl mode, no clear connection is possible
+tls_mode = explicit
+
+# cipher list (default: ALL)
+# you should not use this option or lett "ALL" unless you know
+# what you are doing
+# see openssl ciphers, man openssl(1)
+tls_cipher_list = ALL
+
+# /TLS
+
+##### IP RESTRICTIONS
+
+# This is global ip checking, BEFORE KNOWING the user name (default NO)
+# to enable it, uncomment the following
+# 0 = disabled
+# 1 = order allow, deny
+# 2 = order deny, allow
+login_pre_ip_check = 0
+
+# now the allowed ip: you can put as many lines login_pre_ip = as you want,
+# one per line
+# wildcards are accepted (*,?) - NOTE * stops after the first match of the next
+#   char
+# you can write hostname, two possibilities:
+#  +hostname: we will compare gethostbyname(hostname) to user_ip
+#  -hostname: we will compare hostname to gethostbyaddr(user_ip)
+# this is usefull combined with wildcards (-*.abo.wanadoo.fr)
+# YOU CAN ONLY USE WILDCARDS ON LINES BEGINNING BY -
+#
+# WARNING: to match all ip ending by 0.1 you MUST write *.*.0.1, NOT *.0.1
+#login_pre_ip_allowed = +pollux.no-ip.org
+#login_pre_ip_allowed = -pollux
+login_pre_ip_allowed = +localhost
+#login_pre_ip_allowed = +pollux
+login_pre_ip_allowed = -*.cpe.fr
+#login_pre_ip_denied = *
+
+##### VFS
+# first char is delimiter
+# format is e.g vfs = |/home/vfsroot|/physical/path|
+# if delimiter is |
+# for windows you can either write
+#    vfs = |/home/pollux/K|/cygdrive/k|
+# or
+#    vfs = |/home/pollux/K|k:|
+#vfs = |/home/pollux/vfs|/etc|
+#vfs = |/home/pollux/K|/tmp|
+
+##### MODULES
+# modules are dynamic libraries
+# order *IS* important
+#module = @prefix@/share/@PACKAGE@/modules/libwzd_test.so
+module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
+
+##### CUSTOM SCRIPTS
+# Custom scripts (or binaries) to be executed before/after certain commands
+# order *IS* important
+#cscript = MKDIR /bin/df
+
+##### CUSTOM SITE COMMANDS
+# Here you can define external site commands.
+#site_cmd = my_free ./free.sh
+
+##### SITE FILES
+sitefile_ginfo	= @prefix@/etc/wzdftpd/file_ginfo.txt
+sitefile_group	= @prefix@/etc/wzdftpd/file_group.txt
+sitefile_help	= @prefix@/etc/wzdftpd/file_help.txt
+sitefile_rules	= @prefix@/etc/wzdftpd/file_rules.txt
+sitefile_swho	= @prefix@/etc/wzdftpd/file_swho.txt
+sitefile_user	= @prefix@/etc/wzdftpd/file_user.txt
+sitefile_users	= @prefix@/etc/wzdftpd/file_users.txt
+sitefile_who	= @prefix@/etc/wzdftpd/file_who.txt
+
+##### CRON JOBS
+# cronjobs are commands to execute periodically
+# syntax: cronjob = interval command
+# interval is an integer (minimum 3) in seconds
+# command should be an absolute path (with args if needed)
+# NOTE: if command produce output, it will be logged with level LEVEL_INFO
+#cronjob = 6 /bin/df -h
+
+##### CUSTOM MESSAGES
+# You can modify custom ftp replies here
+# I STRONGLY recommend to leave messages 227 (pasv reply), 250 (cwd) untouched
+# most interesting messages are:
+#  220 (banner), 230 (welcome message), 221 (logout)
+#message_220 = pollux ftp server ready
+
+##### INCLUSIONS
+# You can include other files
+# maximum recursion is 16 (too big IMHO)
+#include permissions.cfg
+
+##### PERMISSIONS
+# Permissions lines begin by -
+# permissions can be of form: -group =user +flag or *
+# you can use negations : !*
+# REMEMBER that the FIRST corresponding rule is applied, so order is important (never put * first !)
+# ex: -site_who = =admin -group1 +F =toto
+#-delete = -admin
+-site_addip = +O +G
+-site_adduser = +O +G
+-site_backend = =pollux
+-site_chacl = =pollux
+-site_change = +O +G
+-site_checkperm = =pollux
+-site_chgrp = -admin
+-site_chmod = =pollux
+-site_chown = =pollux
+-site_chpass = +O +G
+-site_chratio = +O +G
+-site_close = +O
+-site_delip = +O +G
+-site_deluser = +O +G
+-site_flags = -admin
+-site_free = *
+-site_ginfo = +O +G
+-site_grpadd = +O
+-site_grpaddip = +O
+-site_grpdel = +O
+-site_grpdelip = +O
+-site_grpratio = +O
+-site_gsinfo = +O +G
+-site_help = *
+-site_idle = *
+-site_invite = !=guest *
+-site_kick = =pollux
+-site_kill = =pollux
+-site_purge = +O +G
+-site_readd = +O +G
+-site_reload = =pollux
+-site_reopen = +O
+-site_rules = *
+-site_sfv = *
+-site_shutdown = =pollux =wzdftpd
+-site_swho = -admin
+-site_tagline = !=guest *
+-site_uptime = *
+-site_user = +O +G
+-site_users = -admin
+-site_utime = *
+-site_version = +O
+-site_who = -admin
+
+# REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
+-site_my_free = *
+-site_test = =pollux
