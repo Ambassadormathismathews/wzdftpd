@@ -1,3 +1,6 @@
+2004-02-28  Roman Bogorodskiy <bogorodskiy@inbox.ru>
+	* backends: mysql backend started
+
 2004-02-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: missing O_BINARY for permission file (visual)
