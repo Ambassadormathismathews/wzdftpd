@@ -939,6 +939,7 @@ static XS(XS_wzd_vfs)
       /* we need to convert arg to the link name, _without_ converting the last
        * component (the link name itself), or the remove will fail
        */
+      pos2 = 3;
       if (!strcmp(arg2,"-r") || !strcmp(arg2,"--real")) {
         /* ex: vfs link create -r c:\real linkname */
         pos2++;
