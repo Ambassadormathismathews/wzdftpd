@@ -486,7 +486,7 @@ fprintf(stderr,"Invalid uid %s\n",value);
       }
     } /* "groups" */
     else if (strcmp("tagline",varname)==0) {
-      strncpy(user_pool[user_count-1].tagline,value,256);
+      strncpy(user_pool[user_count-1].tagline,value,MAX_TAGLINE_LENGTH);
     } /* tagline */
     else if (strcmp("max_ul_speed",varname)==0) {
       if (!user_count) break;
@@ -733,7 +733,7 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
 	group_pool[group_count-1].ratio = num;
       } /* else if (strcmp("ratio",... */
       else if (strcmp("tagline",varname)==0) {
-        strncpy(group_pool[group_count-1].tagline,value,256);
+        strncpy(group_pool[group_count-1].tagline,value,MAX_TAGLINE_LENGTH);
       } /* tagline */
       break;
     default:

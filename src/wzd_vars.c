@@ -52,7 +52,7 @@
 
 
 
-static struct wzd_shm_vars_t * _shm_vars[31] = { 0 };
+static struct wzd_shm_vars_t * _shm_vars[32] = { 0 };
 static wzd_mutex_t * _shm_mutex = NULL;
 
 
@@ -621,8 +621,10 @@ void vars_shm_free(void)
     _shm_vars[i] = 0;
 
     while (var) {
-      wzd_free(var->key);
-      wzd_free(var->data);
+      if (var->key) {
+        wzd_free(var->key);
+        wzd_free(var->data);
+      }
 
       next_var = var->next_var;
       wzd_free(var);

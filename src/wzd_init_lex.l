@@ -285,6 +285,8 @@ int set_default_options(void)
 
   tempConfig.umask = 0775;
 
+  tempConfig.data_buffer_length = 16384; /* default data buffer is 16k */
+
   tempConfig.global_ul_limiter.maxspeed = 0;
   tempConfig.global_ul_limiter.bytes_transfered = 0;
   tempConfig.global_dl_limiter.maxspeed = 0;

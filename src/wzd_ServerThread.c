@@ -113,7 +113,7 @@ wzd_shm_t *	mainConfig_shm;
 wzd_context_t *	context_list;
 wzd_shm_t *	context_shm;
 
-wzd_sem_t	limiter_sem;
+wzd_mutex_t	* limiter_mutex;
 
 wzd_cronjob_t	* crontab;
 
@@ -200,6 +200,7 @@ static void context_init(wzd_context_t * context)
   context->datamode = DATA_PORT;
   context->current_action.token = TOK_UNKNOWN;
   context->connection_flags = 0;
+  context->data_buffer = NULL;
 /*  context->current_limiter = NULL;*/
   context->current_ul_limiter.maxspeed = 0;
   context->current_ul_limiter.bytes_transfered = 0;
@@ -1168,8 +1169,9 @@ int server_switch_to_config(wzd_config_t *config)
 #endif /* WIN32 */
 
 
-  /* create limiter sem */
-  limiter_sem = wzd_sem_create(config->shm_key+1,1,0);
+  /* create limiter mutex */
+  limiter_mutex = wzd_mutex_create(config->shm_key+1);
+
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
   if (mainConfig->backend.name[0] == '\0') {
@@ -1587,7 +1589,7 @@ void serverMainThreadExit(int retcode)
 /*  free(context_list);*/
   /* FIXME should not be done here */
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
-  if (limiter_sem) wzd_sem_destroy(limiter_sem);
+  if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (context_shm) wzd_shm_free(context_shm);
   context_list = NULL;
 

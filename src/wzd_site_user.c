@@ -158,8 +158,8 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
   }
 
   /* create new user */
-  strncpy(user.username,username,255);
-  strncpy(user.userpass,password,255);
+  strncpy(user.username,username,HARD_USERNAME_LENGTH);
+  strncpy(user.userpass,password,MAX_PASS_LENGTH);
   strncpy(user.rootpath,homedir,WZD_MAX_PATH);
   user.tagline[0]='\0';
   user.uid=-1; /* will be changed by backend */

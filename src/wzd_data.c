@@ -41,15 +41,6 @@
 #include <string.h>
 #include <errno.h>
 
-#ifdef HAVE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#else
-#define	SSL	void
-#define	SSL_CTX	void
-#endif /* HAVE_OPENSSL */
-
 #define Sleep(x)        usleep((x)*1000)
 
 #include <time.h>
@@ -159,33 +150,29 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
 
 int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 {
-  char buffer[16384];
   int n;
   unsigned int action;
   int ret;
   wzd_user_t * user;
 
-#ifdef BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==1) {
-    user = GetUserByID(context->userid);
-  } else
-#endif
-    user = GetUserByID(context->userid);
+  user = GetUserByID(context->userid);
 
   if (!context) return -1;
+
+  WZD_ASSERT( context->data_buffer != NULL );
 
   action = context->current_action.token;
 
   switch (action) {
   case TOK_RETR:
-    n = file_read(context->current_action.current_file,buffer,sizeof(buffer));
+    n = file_read(context->current_action.current_file,context->data_buffer,mainConfig->data_buffer_length);
     if (n>0) {
 #ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
-        ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+        ret = clear_write(context->datafd,context->data_buffer,n,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
-        ret = (context->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+        ret = (context->write_fct)(context->datafd,context->data_buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
         file_close(context->current_action.current_file, context);
@@ -203,10 +190,10 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
         return 1;
       }
       context->current_action.bytesnow += n;
-/*      limiter_add_bytes(mainConfig->limiter_dl,n,0);*/
-      limiter_add_bytes(&mainConfig->global_dl_limiter,limiter_sem,n,0);
-      limiter_add_bytes(&context->current_dl_limiter,limiter_sem,n,0);
-/*      limiter_add_bytes(context->current_limiter,n,0);*/
+
+      limiter_add_bytes(&mainConfig->global_dl_limiter,limiter_mutex,n,0);
+      limiter_add_bytes(&context->current_dl_limiter,limiter_mutex,n,0);
+
       user->stats.bytes_dl_total += n;
       if (user->ratio)
         user->credits -= n;
@@ -247,19 +234,19 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
   case TOK_STOR:
 #ifdef HAVE_OPENSSL
       if (context->ssl.data_mode == TLS_CLEAR)
-        n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+        n = clear_read(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
-      n = (context->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+      n = (context->read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
-      if (file_write(context->current_action.current_file,buffer,n) != n) {
+      if (file_write(context->current_action.current_file,context->data_buffer,n) != n) {
         out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
       }
       context->current_action.bytesnow += n;
-/*      limiter_add_bytes(mainConfig->limiter_ul,n,0);*/
-      limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_sem,n,0);
-      limiter_add_bytes(&context->current_ul_limiter,limiter_sem,n,0);
-/*      limiter_add_bytes(context->current_limiter,n,0);*/
+
+      limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_mutex,n,0);
+      limiter_add_bytes(&context->current_ul_limiter,limiter_mutex,n,0);
+
       user->stats.bytes_ul_total += n;
       if (user->ratio)
         user->credits += (user->ratio * n);

@@ -29,10 +29,6 @@
   * only multithread code.
   */
 
-#ifdef __CYGWIN__
-#include <w32api/windows.h>
-#endif /* __CYGWIN__ */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,7 +83,7 @@ wzd_mutex_t * wzd_mutex_create(unsigned long key)
   ret = 0;
 #endif
   
-  if (!ret) { wzd_free(m); return NULL; }
+  if (ret) { wzd_free(m); return NULL; }
 
   return m;
 }

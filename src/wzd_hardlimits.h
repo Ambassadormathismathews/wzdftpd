@@ -56,6 +56,8 @@
 #define	MAX_FLAGS_NUM		32
 #define	MAX_PASS_LENGTH		32
 
+#define	MAX_TAGLINE_LENGTH	256
+
 
 #define	HARD_PERMFILE		".dirinfo"
 

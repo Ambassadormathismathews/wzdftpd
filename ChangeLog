@@ -1,3 +1,10 @@
+2004-08-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: transfer data buffer is now dynamic, size can be tweaked in config
+	* feature: changed semaphore to mutex in bandwidth limiter
+	* bugfix: segfault when exiting (when freeing shm vars)
+	* bugfix: wzd_mutex_create always returning NULL
+
 2004-08-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: permissions not displayed correctly on windows (again)

@@ -346,7 +346,11 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
 #endif
 
 /*  limiter_free(context->current_limiter);*/
-  context->magic = 0;
+
+    if (context->data_buffer) {
+      wzd_free(context->data_buffer);
+      context->data_buffer = NULL;
+    }
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
   /* close existing pasv connections */
@@ -364,6 +368,8 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   socket_close(context->controlfd);
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
+
+  context->magic = 0;
 }
 
 /*************** check_timeout ***********************/
@@ -2992,6 +2998,7 @@ void * clientThreadProc(void *arg)
   sockfd = context->controlfd;
   context->last_file.name[0] = '\0';
   context->last_file.token = TOK_UNKNOWN;
+  context->data_buffer = wzd_malloc(mainConfig->data_buffer_length);
 
 #ifdef _MSC_VER
   context->thread_id = GetCurrentThreadId();

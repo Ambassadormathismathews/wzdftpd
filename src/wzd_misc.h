@@ -25,6 +25,8 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
+#include <wzd_mutex.h>
+
 unsigned long compute_hashval (const void *key, size_t keylen);
 
 char * time_to_str(time_t time);
@@ -74,7 +76,7 @@ void format_message(int code, unsigned int *plength, char **pbuffer, ...);
 
 unsigned long get_bandwidth(void);
 wzd_bw_limiter * limiter_new(int maxspeed);
-void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check);
+void limiter_add_bytes(wzd_bw_limiter *l, wzd_mutex_t *mutex, int byte_count, int force_check);
 void limiter_free(wzd_bw_limiter *l);
 
 /** \brief allocate buffer big enough to format arguments with printf

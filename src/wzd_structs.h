@@ -199,7 +199,7 @@ typedef struct {
   char                  username[HARD_USERNAME_LENGTH];
   char			userpass[MAX_PASS_LENGTH];
   char                  rootpath[WZD_MAX_PATH];
-  char                  tagline[256];
+  char                  tagline[MAX_TAGLINE_LENGTH];
   unsigned int          group_num;
   unsigned int          groups[MAX_GROUPS_PER_USER];
   time_t	        max_idle_time;
@@ -221,7 +221,7 @@ typedef struct {
 typedef struct {
   unsigned int          gid;
   char                  groupname[HARD_GROUPNAME_LENGTH];
-  char                  tagline[256];
+  char                  tagline[MAX_TAGLINE_LENGTH];
   wzd_perm_t            groupperms;
   time_t		max_idle_time;
   unsigned short	num_logins;	/**< number of simultaneous logins allowed */
@@ -363,6 +363,8 @@ typedef struct _wzd_param_t {
 # define SSL_CTX void
 #else
 # include <openssl/ssl.h>
+# include <openssl/rand.h>
+# include <openssl/err.h>
 #endif
 
 typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
@@ -443,6 +445,7 @@ typedef struct {
   wzd_action_t	current_action;
   struct last_file_t	last_file;
   char		last_command[HARD_LAST_COMMAND_LENGTH];
+  char          * data_buffer;
 /*  wzd_bw_limiter * current_limiter;*/
   wzd_bw_limiter current_ul_limiter;
   wzd_bw_limiter current_dl_limiter;
@@ -518,6 +521,7 @@ typedef struct {
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;
+  unsigned int  data_buffer_length; /**< size of buffer used for transfers. This has a great impact on performances */
   unsigned long	server_opts;
   wzd_server_stat_t	stats;
   char		tls_certificate[256];

@@ -77,6 +77,7 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
+#include "wzd_mutex.h"
 #include "wzd_ServerThread.h"
 
 #if defined(WIN32) || defined(BSD)
@@ -743,7 +744,7 @@ wzd_bw_limiter * limiter_new(int maxspeed)
   return l_new;
 }
 
-void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int force_check)
+void limiter_add_bytes(wzd_bw_limiter *l, wzd_mutex_t * mutex, int byte_count, int force_check)
 {
 #ifndef WIN32 /* FIXME VISUAL */
   struct timeval tv;
@@ -759,9 +760,9 @@ void limiter_add_bytes(wzd_bw_limiter *l, wzd_sem_t sem, int byte_count, int for
   if (!l) return;
 /*  if (l->maxspeed == 0) return;*/
 
-wzd_sem_lock(sem,1);
+wzd_mutex_lock(mutex);
   l->bytes_transfered += byte_count;
-wzd_sem_unlock(sem,1);
+wzd_mutex_unlock(mutex);
 
   /* if at least 1 second of data is downloaded, assess the situation
    * and determine how much time to wait */
