@@ -25,6 +25,8 @@
 #ifndef __WZD_DEBUG__
 #define __WZD_DEBUG__
 
+#define WZD_ASSERT(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return -1; }
+
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd);
 

@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 
+#include "wzd_debug.h"
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
@@ -429,6 +430,9 @@ int tls_write(int sock, const char *msg, unsigned int length, int flags, int tim
   else
     ssl = context->ssl.data_ssl;
     /* XXX we assume that if sock != context->controlfd, then we have datas ... */
+
+  WZD_ASSERT( ssl != NULL );
+  
   do {
     ret = SSL_write(ssl, msg, length);
     sslerr = SSL_get_error(ssl, ret);
