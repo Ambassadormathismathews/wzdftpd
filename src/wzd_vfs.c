@@ -219,7 +219,7 @@ printf("Converted to: '%s'\n",path);
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,2048);
-  if (path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
+  if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
 
@@ -266,7 +266,7 @@ printf("Converted to: '%s'\n",path);
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,2048);
-  if (path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
+  if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
 
