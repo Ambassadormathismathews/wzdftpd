@@ -49,6 +49,8 @@
 
 #ifdef HAVE_ICONV
 # include <iconv.h>
+#else
+typedef void * iconv_t;
 #endif
 
 #if HAVE_LANGINFO_CODESET
@@ -71,7 +73,7 @@
 
 #define DEFAULT_CODESET "ISO-8859-1"
 
-typedef void *  iconv_t;
+/*typedef void *  iconv_t;*/
 typedef size_t (*fn_iconv_t)(iconv_t, const char **, size_t *, char **, size_t *);
 typedef iconv_t (*fn_iconv_open_t)(const char *, const char *);
 typedef int (*fn_iconv_close_t)(iconv_t);
