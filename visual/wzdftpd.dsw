@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "perl"=.\MODULES\perl\perl.dsp - Package Owner=<4>
+Project: "libwzd_core"=.\libwzd_core.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -11,14 +11,11 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "libwzd"=.\libwzd.dsp - Package Owner=<4>
+Project: "perl"=.\MODULES\perl\perl.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -38,9 +35,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -53,9 +47,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -68,9 +59,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -83,9 +71,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -98,9 +83,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -113,9 +95,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
@@ -128,9 +107,6 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
 }}}
 
 ###############################################################################
