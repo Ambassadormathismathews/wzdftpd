@@ -9,10 +9,13 @@
 |                | this server                                  | r,s,n,g    |
 | site who       | show who's online                            | r,s,n,g    |
 | site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
-| site chmod     | change access rights on a file or directory  | r,s        |
-|                |   site chmod user mode file1 [file2 ...]     |            |
-|                |   site chmod user rwx dir1                   |            |
-|                |   site chmod user 7 dir1                     |            |
+| site chacl     | change access rights on a file or directory  | r,s        |
+|                |   site chacl user mode file1 [file2 ...]     |            |
+|                |   site chacl user rwx dir1                   |            |
+|                |   site chacl user 7 dir1                     |            |
+| site chmod     | change permissions of a file or directory    | r,s        |
+|                |   site chmod mode file1 [file2 ...]          |            |
+|                |   site chmod 644 file1 [file2 ...]           |            |
 | site chown     | change the owner of a file or directory      | r,s        |
 |                |   site chown user file1 [file2 ...]          |            |
 | site chpass    | change the password of a user                | r,s        |
