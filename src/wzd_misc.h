@@ -25,6 +25,15 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
+#ifdef _MSC_VER
+#include <winsock2.h>
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>  /* struct in_addr */
+#endif
+
 #include "wzd_mutex.h"
 
 unsigned long compute_hashval (const void *key, size_t keylen);
