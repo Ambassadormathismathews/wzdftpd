@@ -16,7 +16,7 @@
 #include "wzd_misc.h"
 
 
-#define BUFFER_LEN	4096
+#define BUFFER_LEN	2048
 
 const char * perm_tab[] = {
   "site",
@@ -50,6 +50,25 @@ wzd_command_perm_entry_t * perm_create_empty_entry(void)
   entry->next_entry = NULL;
 
   return entry;
+}
+
+void perm_free_recursive(wzd_command_perm_t * perm)
+{
+  wzd_command_perm_t * perm_next;
+  wzd_command_perm_entry_t * entry_current, * entry_next;
+
+  if (!perm) return;
+  do {
+    perm_next = perm->next_perm;
+    entry_current = perm->entry_list;
+    while (entry_current) {
+      entry_next = entry_current->next_entry;
+      free(entry_current);
+      entry_current = entry_next;
+    }
+    free(perm);
+    perm = perm_next;
+  } while (perm);
 }
 
 /***/

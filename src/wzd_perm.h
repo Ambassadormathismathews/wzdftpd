@@ -10,6 +10,8 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
 
 int perm_add_perm(const char *permname, const char *permline, wzd_config_t * config);
 
+void perm_free_recursive(wzd_command_perm_t * perm);
+
 /* returns 0 if ok, 1 otherwise */
 int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config);
 
