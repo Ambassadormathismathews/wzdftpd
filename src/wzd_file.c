@@ -289,10 +289,11 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
   }
 
   fp = fopen(permfile,"w"); /* overwrite any existing file */
+  if (!fp) return -1;
 
   while (file_cur) {
     /* first write owner if available */
-    if (strlen(file_cur->owner)>0 && strlen(file_cur->group)>0) {
+    if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
       snprintf(buffer,4096,"owner\t%s\t%s\t%s\t%lo\n",
 	  file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
       fwrite(buffer,strlen(buffer),1,fp);
@@ -660,6 +661,9 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
 
   if (stat(dir,&s)==-1) return -1; /* inexistant ? */
   if (S_ISDIR(s.st_mode)) { /* isdir */
+    /* TODO XXX FIXME Check validity of this assertion ! */
+    /* permissions of directory are self contained ! */
+    return 0;
     strcpy(src_stripped_filename,".");
   } else { /* ! isdir */
     ptr = strrchr(dir,'/');
@@ -688,7 +692,7 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
 
   /* if dst file is a dir and exists, we can't make the operation */
   if (stat(dir,&s2)==0) { /* file exists ? */
-    if (S_ISDIR(s.st_mode)) { /* isdir */
+    if (S_ISDIR(s2.st_mode)) { /* isdir */
       return -1;
     }
   }
@@ -744,14 +748,14 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
   } else {
     
     if (ret) { /* no permissions file */
-      file_cur = add_new_file(dst_stripped_filename,owner,group,&dst_file_list);
+      file_cur = add_new_file(dst_stripped_filename,file_dst->owner,file_dst->group,&dst_file_list);
     } else { /* permission file */
       file_cur = find_file(dst_stripped_filename,dst_file_list);
       if (!file_cur) { /* perm file exists, but does not contains acl concerning filename */
-        file_cur = add_new_file(dst_stripped_filename,owner,group,&dst_file_list);
+        file_cur = add_new_file(dst_stripped_filename,file_dst->owner,file_dst->group,&dst_file_list);
       } else {
-	if (owner) strncpy(file_cur->owner,owner,256);
-	if (group) strncpy(file_cur->group,group,256);
+	if (owner) strncpy(file_cur->owner,file_dst->owner,256);
+	if (group) strncpy(file_cur->group,file_dst->group,256);
       }
     }
   
