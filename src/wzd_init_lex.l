@@ -2012,3 +2012,5 @@ wzd_config_t * readConfigFile(const char *fileName)
   return &tempConfig;
 }
 
+int yywrap(void)
+{ return 1; }
