@@ -71,6 +71,7 @@ max_threads = 32
 backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 123
 backend_param_plaintext = @e_sysconfdir@/users
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
+#backend_param_mysql = login:password@host:base
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
 
 # speed limits in bytes /sec (approx !)

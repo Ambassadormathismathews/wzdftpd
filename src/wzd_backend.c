@@ -381,11 +381,17 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
     return 1;
   }
   ret = (*mainConfig->backend.back_find_user)(name,user);
-  if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = GetUserByID(ret);*/
-    memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
-    if (userid) *userid = ret;
-    return 0;
+  if (ret >= 0) {
+    if (mainConfig->backend.backend_storage == 0) {
+      /*user = GetUserByID(ret);*/
+      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+      if (userid) *userid = ret;
+      return 0;
+    } else {
+      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
+      if (userid) *userid = ret;
+      return 0;
+    }
   }
   return ret;
 }

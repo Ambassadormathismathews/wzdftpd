@@ -378,6 +378,8 @@ int check_timeout(wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
+  if (!user) return 0; /* Hmm humm XXX FIXME */
+
   /* reset global ul/dl counters */
   mainConfig->global_ul_limiter.bytes_transfered = 0;
 #ifndef _MSC_VER
@@ -3017,7 +3019,7 @@ void * clientThreadProc(void *arg)
     struct hostent *h;
     char inet_str[256];
 
-    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    if (user && user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';
     inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
     h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
@@ -3029,9 +3031,9 @@ void * clientThreadProc(void *arg)
     log_message("LOGIN_FAILED","%s (%s) \"%s\" \"%s\" \"%s\"",
         (remote_host)?remote_host:"no host !",
         inet_str,
-        user->username,
+        user ? user->username : "unknown",
         (groupname)?groupname:"No Group",
-        user->tagline
+        user ? user->tagline : "unknown"
         );
 #ifdef WZD_MULTITHREAD
     client_die(context);

@@ -1,8 +1,16 @@
--- MySQL dump 8.23
 --
--- Host: localhost    Database: wzdftpd
----------------------------------------------------------
--- Server version	3.23.54
+-- Create database
+--
+CREATE DATABASE IF NOT EXISTS wzdftpd;
+
+GRANT USAGE ON *.* TO "wzdftpd"@"localhost" IDENTIFIED BY "wzdftpd";
+
+GRANT ALL PRIVILEGES ON `wzdftpd`.* TO "wzdftpd"@"localhost";
+
+FLUSH PRIVILEGES;
+
+
+use wzdftpd;
 
 --
 -- Table structure for table `ugroups`
@@ -24,16 +32,16 @@ CREATE TABLE ugroups (
 --
 
 CREATE TABLE users (
-  username blob NOT NULL,
+  username TINYTEXT NOT NULL,
   userpass varchar(32) default NULL,
-  rootpath blob NOT NULL,
+  rootpath TINYTEXT NOT NULL,
   uid int(10) unsigned NOT NULL,
   group_num int(10) unsigned default NULL,
   flags varchar(32) default NULL,
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
-  ip_allowed blob,
+  ip_allowed TINYTEXT,
   ratio int(10) unsigned default NULL,
   user_slots int(10) unsigned default NULL,
   leech_slots int(10) unsigned default NULL,

@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- provide a socket registration interface to have ~ servers
+'********'
 - change 257 reply to allow customization, and force valid FTP reply
 '********'
 - override internal site commands (wipe, etc)

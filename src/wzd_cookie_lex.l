@@ -418,9 +418,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   real_context = GetMyContext();
   if (!real_context) return -1;
   me = GetUserByID(real_context->userid);
-  if (!me) return -1;
+/*  if (!me) return -1;*/
 
-  if (me->flags && strchr(me->flags,FLAG_COLOR)) use_colors=1;
+  if (me && me->flags && strchr(me->flags,FLAG_COLOR)) use_colors=1;
 
   if ( cookie_include_stack_ptr >= MAX_INCLUDE_DEPTH )
   {
@@ -592,6 +592,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
             if (loop_user->username[0] != '\0') {
               /* check if user is hidden */
               if (loop_user->flags && strchr(loop_user->flags,FLAG_HIDDEN)
+                  && (me)
                   && !strchr(me->flags,FLAG_SITEOP)
                   && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                 continue;
@@ -1341,7 +1342,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         /* check FLAG_SEE_HOME for self */
         if (real_context) user = GetUserByID(real_context->userid);
         if ( (user && strcmp(current_user->username,user->username)==0 ) || /* self */
-          (me->flags && strchr(me->flags,FLAG_SEE_HOME))) /* authorized */
+          (me && me->flags && strchr(me->flags,FLAG_SEE_HOME))) /* authorized */
           snprintf(internalbuffer,IBUFSIZE,"%s",current_user->rootpath);
         else /* not allowed to see */
           snprintf(internalbuffer,IBUFSIZE,"- some where -");
@@ -1365,7 +1366,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       if (current_context)
       {
         /* check FLAG_SEE_IP for self */
-        if (me->flags && strchr(me->flags,FLAG_SEE_IP)) {
+        if (me && me->flags && strchr(me->flags,FLAG_SEE_IP)) {
           inet_ntop(CURRENT_AF,current_context->hostip,internalbuffer,sizeof(internalbuffer));
         } else { /* not allowed to see */
           snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
@@ -1509,8 +1510,9 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 
         if (real_context) user = GetUserByID(real_context->userid);
         /* check FLAG_SEE_HOME for self */
-        if ( (user && strcmp(me->username,user->username)==0) ||
-          (me->flags && strchr(me->flags,FLAG_SEE_HOME))) {
+        if ( me && 
+          ((user && strcmp(me->username,user->username)==0) ||
+          (me->flags && strchr(me->flags,FLAG_SEE_HOME))) ) {
           if (checkpath(context->currentpath,dev_buffer,context)) {
             snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
           } else {
@@ -1530,7 +1532,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       if (current_context)
       {
         /* check FLAG_SITEOP for self */
-        if (me->flags && strchr(me->flags,FLAG_SITEOP))
+        if (me && me->flags && strchr(me->flags,FLAG_SITEOP))
           snprintf(internalbuffer,IBUFSIZE,"%ld",current_context->pid_child);
         else
           snprintf(internalbuffer,IBUFSIZE,"some id");

@@ -26,15 +26,46 @@
 #include <stdio.h>
 #include <mysql.h>
 
-#include "wzd_backend.h"
+#include <wzd_backend.h>
+
+enum {
+  COL_USERNAME=0,
+  COL_USERPASS,
+  COL_ROOTPATH,
+  COL_UID,
+  COL_GROUP_NUM,
+  COL_FLAGS,
+  COL_MAX_UL_SPEED,
+  COL_MAX_DL_SPEED,
+  COL_NUM_LOGINS,
+  COL_IP_ALLOWED,
+  COL_RATIO,
+  COL_USER_SLOTS,
+  COL_LEECH_SLOTS,
+  COL_LAST_LOGIN,
+};
 
 static MYSQL mysql;
 static wzd_user_t *user_pool;
 static char *user, *passwd, *hostname, *db;
 
 static void wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
-/*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname */
+/*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
 static int wzd_parse_arg(char *arg);
+
+/* basic syntax checking to avoid injections */
+static int wzd_mysql_check_name(const char *name);
+
+/* get mysql value, in a more robust way than just a copy
+ * return 0 if ok, non-zero otherwise (ex: value is NULL)
+ */
+static inline int wzd_row_get_string(char *dst, unsigned int dst_len, MYSQL_ROW row, unsigned int index);
+static inline int wzd_row_get_long(long *dst, MYSQL_ROW row, unsigned int index);
+static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned int index);
+static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index);
+
+
+
 
 static void wzd_mysql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
 {
@@ -100,8 +131,10 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
 
 int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
-  //const char *select = "SELECT * FROM users WHERE username=";
   char *query = (char *)malloc((45+HARD_USERNAME_LENGTH));
+  int uid;
+
+  if (!wzd_mysql_check_name(login)) return -1;
 
   snprintf(query, 256, "SELECT * FROM users WHERE username='%s'", login);
 
@@ -110,8 +143,12 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     return -1;
   }
 
+  uid = -1;
 
-  if (mysql_field_count(&mysql) == 1) {
+
+  /** no !! this returns the number of COLUMNS (here, 14) */
+/*  if (mysql_field_count(&mysql) == 1)*/
+  {
     MYSQL_RES   *res;
     MYSQL_ROW    row, end_row;
     int num_fields;
@@ -121,22 +158,37 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
       return -1;
     }
 
+    if ( (int)mysql_num_rows(res) != 1 ) {
+      /* more than 1 result !!!! */
+      /** \todo warn user */
+      mysql_free_result(res);
+      return 1;
+    }
+
     num_fields = mysql_num_fields(res);
     row = mysql_fetch_row(res);
 
+#if 0 /* not working yet */
     strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
     strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
     user->uid = atoi(row[3]);
-  } else // user does not exist in table
-    return -1; 
+#endif /* 0 */
+    uid = atoi(row[COL_UID]);
 
-  return 0;
+    mysql_free_result(res);
+  } /*else // user does not exist in table
+    return -1; */
+
+  return uid;
 }
 
 int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   char *query = (char *)malloc((45+HARD_USERNAME_LENGTH));
   char * cipher;
+  int uid;
+
+  if (!wzd_mysql_check_name(login)) return -1;
 
   snprintf(query, 256, "SELECT * FROM users WHERE username='%s'", login);
 
@@ -145,42 +197,69 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     return -1;
   }
 
-  if (mysql_field_count(&mysql) == 1) {
+  uid = -1;
+
+
+  /** no !! this returns the number of COLUMNS (here, 14) */
+/*  if (mysql_field_count(&mysql) == 1)*/
+  {
     MYSQL_RES   *res;
     MYSQL_ROW    row, end_row;
     int num_fields;
+    char stored_pass[MAX_PASS_LENGTH];
 
     if (!(res = mysql_store_result(&mysql))) {
       wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
       return -1;
     }
 
+    if ( (int)mysql_num_rows(res) != 1 ) {
+      /* more than 1 result !!!! */
+      /** \todo warn user */
+      mysql_free_result(res);
+      return 1;
+    }
+
     num_fields = mysql_num_fields(res);
     row = mysql_fetch_row(res);
+#if 0 /* not working yet */
     strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
     strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
     strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
 
     user->uid = atoi(row[3]);
+#endif /* 0 */
+    uid = atoi(row[COL_UID]);
 
-    if (strlen(user->userpass) == 0) 
-      return user->uid;	// passworldless login
+    if (row[COL_USERPASS])
+      strncpy(stored_pass, row[COL_USERPASS], MAX_PASS_LENGTH);
+    else
+      stored_pass[0] = '\0';
 
-    cipher = (char*)crypt(pass, user->userpass);
+    mysql_free_result(res);
 
-    if (!strcasecmp(cipher,user->userpass))
+    if (strlen(stored_pass) == 0) 
+      return uid;	// passworldless login
+    /** NO ! The 'anything' pass is '%' ! */
+
+    cipher = (char*)crypt(pass, stored_pass);
+
+    if (!strcasecmp(cipher,stored_pass))
       return -1;
 
-  } else // user does not exist in table
-    return -1;
+  } /* else // user does not exist in table
+    return -1;*/
 
 
-  return 0;
+  return uid;
 }
 
 int FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
   char *query = (char *)malloc((45+HARD_USERNAME_LENGTH));
+  int uid;
+
+  if (!wzd_mysql_check_name(name)) return -1;
 
   snprintf(query, 256, "SELECT * FROM users WHERE username='%s'", name);
 
@@ -189,7 +268,11 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
     return -1;
   }
 
-  if (mysql_field_count(&mysql) == 1) { 
+  uid = -1;
+
+  /** no !! this returns the number of COLUMNS (here, 14) */
+/*  if (mysql_field_count(&mysql) == 1)*/
+  {
     MYSQL_RES   *res;
     MYSQL_ROW    row, end_row;
     int num_fields;
@@ -199,16 +282,29 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
       return -1;
     }
 
+    if ( (int)mysql_num_rows(res) != 1 ) {
+      /* more than 1 result !!!! */
+      /** \todo warn user */
+      mysql_free_result(res);
+      return 1;
+    }
+
     num_fields = mysql_num_fields(res);
     row = mysql_fetch_row(res);
+#if 0 /* not working yet */
     strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
     strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
     strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
     user->uid = atoi(row[3]);
-  } else  // no such user
-    return -1;
+#endif /* 0 */
+    uid = atoi(row[COL_UID]);
 
-  return 0;
+    mysql_free_result(res);
+
+  }/* else  // no such user
+    return -1;*/
+
+  return uid;
 }
 
 int FCN_FIND_GROUP(int num, wzd_group_t * group)
@@ -250,3 +346,143 @@ int FCN_FINI()
   return 0;
 }
 
+wzd_user_t * FCN_GET_USER(int uid)
+{
+  char *query = (char *)malloc((45+HARD_USERNAME_LENGTH));
+  MYSQL_RES   *res;
+  MYSQL_ROW    row, end_row;
+  int num_fields;
+  wzd_user_t * user;
+  unsigned int i;
+
+  snprintf(query, 256, "SELECT * FROM users WHERE uid='%d'", uid);
+
+  if (mysql_query(&mysql, query) != 0) { 
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if ( (int)mysql_num_rows(res) != 1 ) {
+    /* more than 1 result !!!! */
+    /** \todo warn user */
+    mysql_free_result(res);
+    return NULL;
+  }
+
+  num_fields = mysql_num_fields(res);
+  row = mysql_fetch_row(res);
+
+  /** XXX FIXME memory leak here !! */
+  user = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t));
+  memset(user, 0, sizeof(wzd_user_t));
+
+  if ( wzd_row_get_uint(&user->uid, row, COL_UID) ) {
+    wzd_free(user);
+    mysql_free_result(res);
+    return NULL;
+  }
+  wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, row, COL_USERNAME);
+  wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, row, COL_USERPASS);
+  wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, COL_ROOTPATH);
+  wzd_row_get_uint(&user->group_num, row, COL_GROUP_NUM);
+  wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, COL_FLAGS);
+  wzd_row_get_ulong(&user->max_ul_speed, row, COL_MAX_UL_SPEED);
+  wzd_row_get_ulong(&user->max_dl_speed, row, COL_MAX_DL_SPEED);
+  if (wzd_row_get_uint(&i, row, COL_NUM_LOGINS)==0) user->num_logins = i;
+  wzd_row_get_uint(&user->ratio, row, COL_RATIO);
+  if (wzd_row_get_uint(&i, row, COL_USER_SLOTS)==0) user->user_slots = i;
+  if (wzd_row_get_uint(&i, row, COL_LEECH_SLOTS)==0) user->leech_slots = i;
+
+
+  /* FIXME */
+  strncpy(user->ip_allowed[0],"*",MAX_IP_LENGTH);
+  user->userperms = 0xffffffff;
+  
+  mysql_free_result(res);
+
+  return user;
+}
+
+wzd_group_t * FCN_GET_GROUP(int gid)
+{
+  return NULL;
+}
+
+
+
+
+
+
+
+/* basic syntax checking to avoid injections */
+static int wzd_mysql_check_name(const char *name)
+{
+  if (strpbrk(name,"'\""))
+    return 0;
+  return 1;
+}
+
+/* get mysql value, in a more robust way than just a copy
+ * return 0 if ok, non-zero otherwise (ex: value is NULL)
+ */
+static inline int wzd_row_get_string(char *dst, unsigned int dst_len, MYSQL_ROW row, unsigned int index)
+{
+  if (!dst || !row || row[index]==NULL) return 1;
+
+  strncpy(dst, row[index], dst_len);
+
+  return 0;
+}
+
+static inline int wzd_row_get_long(long *dst, MYSQL_ROW row, unsigned int index)
+{
+  char *ptr;
+  long i;
+
+  if (!dst || !row || row[index]==NULL) return 1;
+
+  i = strtol(row[index], &ptr, 0);
+  if (ptr && *ptr == '\0') {
+    *dst = i;
+    return 0;
+  }
+
+  return 1;
+}
+
+static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned int index)
+{
+  char *ptr;
+  unsigned long i;
+
+  if (!dst || !row || row[index]==NULL) return 1;
+
+  i = strtoul(row[index], &ptr, 0);
+  if (ptr && *ptr == '\0') {
+    *dst = (unsigned int)i;
+    return 0;
+  }
+
+  return 1;
+}
+
+static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index)
+{
+  char *ptr;
+  unsigned long i;
+
+  if (!dst || !row || row[index]==NULL) return 1;
+
+  i = strtoul(row[index], &ptr, 0);
+  if (ptr && *ptr == '\0') {
+    *dst = i;
+    return 0;
+  }
+
+  return 1;
+}
