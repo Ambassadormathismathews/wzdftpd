@@ -22,8 +22,10 @@ EXPORTS
 	bytes_to_unit
 	calc_crc32
 	calc_md5
+	charset_detect_local
 	checkabspath
 	checkpath
+	checkpath_new
 	chop
 	cookie_parse_buffer
 	cronjob_add
@@ -52,10 +54,12 @@ EXPORTS
 	file_rename
 	file_rmdir
 	file_seek
+	file_stat
 	file_unlock
 	file_write
+	free_file_recursive
 	free_messages
-        get_bandwidth
+	get_bandwidth
 	get_device_info
 	get_system_ip
 	getlib_contextList
@@ -106,6 +110,7 @@ EXPORTS
 	path_getdirname
 	path_gettrailingname
 	print_file
+	read_token
 	readPermFile
 	right_text2word	
 	safe_rename

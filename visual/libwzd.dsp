@@ -227,6 +227,10 @@ SOURCE=..\src\wzd_strtoull.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_utf8.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_vars.c
 # End Source File
 # Begin Source File
@@ -320,6 +324,10 @@ SOURCE=..\src\wzd_strtok_r.h
 # Begin Source File
 
 SOURCE=..\src\wzd_strtoull.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_utf8.h
 # End Source File
 # Begin Source File
 

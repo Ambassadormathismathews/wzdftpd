@@ -518,19 +518,13 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     return E_FILE_FORBIDDEN;
   }
 
+  REMOVE_TRAILING_SLASH(path);
+
   {
-    int ret;
-    int length;
     char tmppath[WZD_MAX_PATH];
 
     strncpy(tmppath,path,WZD_MAX_PATH); /* FIXME slow, and length _MUST_ be tested */
     /* remove trailing / */
-    length = strlen(tmppath);
-    if (length>1 && tmppath[length-1]=='/')
-#ifdef _MSC_VER
-      if (length != 3) /* root of a logical dir */
-#endif
-      tmppath[length-1] = '\0';
 #if 0
     ret = _checkPerm(tmppath,RIGHT_CWD,user); /** \bug checkpath_new already checks for RIGHT_CWD */
   
@@ -821,6 +815,8 @@ printf("path before: '%s'\n",cmd);
     return E_PARAM_INVALID;
   }
 
+  REMOVE_TRAILING_SLASH(path);
+
 /*#ifdef DEBUG
 printf("path: '%s'\n",path);
 #endif*/
@@ -1041,9 +1037,10 @@ int do_mkdir(char *name, char *param, wzd_context_t * context)
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
-  if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
+  REMOVE_TRAILING_SLASH(path);
 
-  ret = checkpath(param,buffer,context);
+  ret = checkpath_new(param,buffer,context);
+  if (ret != E_FILE_NOEXIST) goto label_error_mkdir;
 
 #if DEBUG
   if (ret || errno)

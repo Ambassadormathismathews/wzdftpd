@@ -234,7 +234,6 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 void wzd_cache_update(const char *file)
 {
   wzd_internal_cache_t * c;
-  struct stat s;
   unsigned long hash;
 
   hash = compute_hashval(file,strlen(file));

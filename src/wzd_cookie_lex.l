@@ -925,13 +925,19 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       get_cookie_format(yytext,&padding);
       if (context)
       {
+	    float f;
+#ifndef _MSC_VER
+        f = (float)context->last_file.size;
+#else
+        f = (float)(__int64)context->last_file.size;
+#endif
       /* XXX FIXME assume there is at least 1 sec of download */
       /** \todo convert to kB/s ? */
         if (context->last_file.name[0]!='\0')
           snprintf(internalbuffer,IBUFSIZE,"%.1f",
             (context->last_file.time!=0) ? 
-              ((context->last_file.size/(float)context->last_file.time)) :
-              (float)context->last_file.size);
+              ((f/(float)context->last_file.time)) : f
+			  );
         else
           snprintf(internalbuffer,IBUFSIZE,"0");
       }

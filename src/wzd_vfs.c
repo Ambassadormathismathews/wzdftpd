@@ -49,6 +49,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_vfs.h"
+#include "wzd_dir.h"
 #include "wzd_file.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -601,7 +602,6 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   char * ftppath, *syspath, *ptr, *lpart, *rpart;
   char * ptr_ftppath;
   wzd_user_t * user;
-  wzd_group_t * group;
   unsigned int sys_offset;
   struct stat s;
   struct wzd_file_t * perm_list, * entry;
@@ -661,7 +661,8 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   ptr_ftppath = ftppath;
   if (*ptr_ftppath == '/')
     ptr_ftppath++;
-  syspath[sys_offset++] = '/';
+  if (syspath[sys_offset-1] != '/')
+    syspath[sys_offset++] = '/';
 
   while (ptr_ftppath[0] != '\0')
   {
@@ -718,6 +719,41 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
 
       free_file_recursive(perm_list);
 
+      if (ret) { /* not a symlink, check for VFS */
+        /* XXX add vfs entries */
+        char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
+        char * ptr;
+        wzd_vfs_t * vfs = mainConfig->vfs;
+
+        while (vfs)
+        {
+          ret = 1;
+          ptr = vfs_replace_cookies(vfs->virtual_dir,context);
+          if (!ptr) {
+            out_log(LEVEL_CRITICAL,"vfs_replace_cookies returned NULL for %s\n",vfs->virtual_dir);
+            vfs = vfs->next_vfs;
+            continue;
+          }
+          strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
+          wzd_free(ptr);
+          /** \buf this comparison is false */
+          if (DIRNCMP(buffer_vfs,syspath,strlen(syspath))==0)
+          { /* ok, we have a candidate. Now check if user is allowed to see it */
+            ptr = buffer_vfs + strlen(syspath);
+            /* bingo, vfs */
+            /* we overwrite syspath ! */
+            if ( strchr(ptr,'/')==NULL && !strcmp(lpart,ptr) ) { /* not a subdir and same name */
+              strncpy(syspath, vfs->physical_dir, WZD_MAX_PATH);
+              sys_offset = strlen(syspath);
+              ret = 0;
+              break;
+            }
+          }
+
+          vfs = vfs->next_vfs;
+        } /* while (vfs) */
+      } /* check for vfs entries */
+
       /* even if found, check the new destination exists */
       if (ret || lstat(syspath,&s)) { /* this time, it is really not found */
         if (!rpart || *rpart=='\0') {
@@ -743,7 +779,8 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
      *   - file
      */
     if (S_ISDIR(s.st_mode)) {
-      syspath[sys_offset++] = '/';
+      if (syspath[sys_offset-1] != '/')
+        syspath[sys_offset++] = '/';
       if (_checkFileForPerm(syspath,".",RIGHT_CWD,user)) {
         /* no permissions ! */
         free(ftppath);

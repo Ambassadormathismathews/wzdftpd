@@ -99,6 +99,15 @@
 #define DIRNCMP	strncasecmp
 #define DIRNORM(s,l) win_normalize(s,l)
 
+/** remove trailing / */
+#define REMOVE_TRAILING_SLASH(str) \
+  do { \
+    size_t _length = strlen((str)); \
+    if (_length>1 && (str)[_length-1]=='/') \
+      if (_length != 3) /* root of a logical dir */ \
+        (str)[_length-1] = '\0'; \
+  } while (0)
+
 
 #define chmod	_chmod
 
@@ -176,6 +185,14 @@
 
 #define DIRNORM(x,l)
 
+/** remove trailing / */
+#define REMOVE_TRAILING_SLASH(str) \
+  do { \
+    size_t _length = strlen(path); \
+    if (_length>1 && (str)[_length-1]=='/') \
+      (str)[_length-1] = '\0'; \
+  } while(0)
+
 #endif /* _MSC_VER */
 
 
@@ -202,6 +219,9 @@
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
+
+
+
 
 
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"

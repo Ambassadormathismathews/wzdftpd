@@ -100,7 +100,6 @@ int parse_args(int argc, char **argv)
 int main(int argc, char *argv[])
 {
   char command_buffer[4096];
-  int shmid;
   unsigned int length=0;
   char * datazone;
   wzd_context_t * context_list;
@@ -111,6 +110,8 @@ int main(int argc, char *argv[])
 #ifdef WIN32
   void * handle;
   char name[256];
+#else
+  int shmid;
 #endif
 
   length += HARD_USERLIMIT*sizeof(wzd_context_t);

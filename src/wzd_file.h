@@ -87,8 +87,18 @@ int file_force_unlock(const char *file);
 
 /* low-level func */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);
+
+/** dir MUST be / terminated
+ * wanted_file MUST be a single file name !
+ */
+int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user);
+
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context);
 
+/** \brief Read the permission file and build linked list of files.
+ * \todo should be "atomic"
+ */
+int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles);
 
 void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
 
@@ -97,6 +107,10 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
  * avoid side effects.
  */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
+
+/** Free the memory used by the linked list pointed by file.
+ */
+void free_file_recursive(struct wzd_file_t * file);
 
 /** \brief get file status
  *

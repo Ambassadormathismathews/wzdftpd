@@ -32,6 +32,7 @@
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+#include "wzd_mod.h"
 #include "wzd_crontab.h"
 
 #include "wzd_debug.h"

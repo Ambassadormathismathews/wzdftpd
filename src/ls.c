@@ -112,8 +112,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 
   length = strlen(directory);
   dirname = wzd_strdup(directory);
-  if (length>1 && dirname[length-1]=='/')
-    dirname[length-1]='\0';
+  REMOVE_TRAILING_SLASH(dirname);
 
   strncpy(buffer,directory,WZD_MAX_PATH);
   if (buffer[length-1] != '/') {

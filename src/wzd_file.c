@@ -293,7 +293,7 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
     memcpy(acl_new, file_cur->acl, sizeof(wzd_acl_line_t));
     acl_new->next_acl = NULL;
     new_file->acl = acl_new;
-    acl_current = acl_current->next_acl;
+    acl_current = file_cur->acl->next_acl;
     while (acl_current) {
       acl_next = malloc(sizeof(wzd_acl_line_t));
       memcpy(acl_next, file_cur->acl, sizeof(wzd_acl_line_t));
@@ -662,6 +662,10 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     if (wanted_right != RIGHT_STOR && wanted_right != RIGHT_MKDIR)
       return -1; /* inexistant ? */
     ptr = strrchr(dir,'/');
+#ifdef WIN32
+    if ( (ptr-dir)==2 && dir[1]==':' )
+      ptr++;
+#endif
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
       if (ptr == &dir[0]) *(ptr+1) = '\0';
@@ -689,7 +693,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   /** \bug we need to find a way to know if file is in 'visible' path of user.
    * We can't do that without a function to convert syspath to ftppath
    */
-#if 0
+#if 0 /* checkpath_new already checks that */
   /* check if file is in user's root path */
   if (strncmp(dir,user->rootpath,strlen(user->rootpath))!=0)
   {

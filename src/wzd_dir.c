@@ -227,6 +227,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
         continue;
       }
       strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
+      wzd_free(ptr);
       if (DIRNCMP(buffer_vfs,name,strlen(name))==0)
       { /* ok, we have a candidate. Now check if user is allowed to see it */
         ptr = buffer_vfs + strlen(name) + vfs_pad;
@@ -239,7 +240,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
           entry->permissions = 0755;
           entry->acl = NULL;
           entry->kind = FILE_VFS;
-          entry->data = vfs->physical_dir;
+          entry->data = wzd_strdup(vfs->physical_dir);
           entry->next_file = NULL;
         }
       }
@@ -304,8 +305,6 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
 void dir_close(struct wzd_dir_t * dir)
 {
-  struct wzd_file_t * it, itp;
-
   if (!dir) return;
 
   if (dir->dirname) free(dir->dirname);

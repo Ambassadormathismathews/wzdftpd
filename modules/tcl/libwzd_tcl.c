@@ -79,6 +79,7 @@
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
 #include "wzd_file.h" /* file_mkdir, file_stat */
+#include "wzd_vfs.h" /* checkpath_new */
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 #include "wzd_vars.h" /* needed to access variables */
 
