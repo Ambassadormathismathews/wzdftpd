@@ -7,11 +7,14 @@
 #endif /* __CYGWIN__ */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <wzd.h>
 /*#include <wzd_shm.h>*/
 
 #define	SHM_KEY	0x1331c0d3
 
+unsigned long key;
 
 
 char *time_to_str(time_t time)
@@ -38,7 +41,36 @@ char *time_to_str(time_t time)
   return(workstr);
 }
 
+void usage(const char *progname)
+{
+  fprintf(stderr,"Usage: %s [-k shm_key]\r\n",progname);
+}
 
+int parse_args(int argc, char **argv)
+{
+  int opt;
+  unsigned long l;
+  char *ptr;
+
+   /* please keep options ordered ! */
+  while ((opt=getopt(argc, argv, "hk:")) != -1) {
+    switch (opt) {
+    case 'h':
+      usage(argv[0]);
+      return 1;
+    case 'k':
+      l = strtoul(optarg,&ptr,0);
+      if (*ptr != '\0') {
+	usage(argv[0]);
+	return 1;
+      }
+      key = l;
+      break;
+    }
+  }
+  
+  return 0;
+}
 
 int main(int argc, char *argv[])
 {
@@ -50,13 +82,20 @@ int main(int argc, char *argv[])
   char name[256];
 #endif
 
+  /* default values */
+  key = SHM_KEY;
+
+  if (parse_args(argc,argv)) {
+    usage(argv[0]);
+    exit(1);
+  }
 
 #ifdef __CYGWIN__
-  sprintf(name,"%lu",SHM_KEY-1);
+  sprintf(name,"%lu",key-1);
   handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (handle == NULL)
 #else
-  shmid = shmget(SHM_KEY-1,0,0400);
+  shmid = shmget(key-1,0,0400);
   if (shmid == -1)
 #endif
   {
