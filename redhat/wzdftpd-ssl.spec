@@ -2,7 +2,7 @@
 
 Name: wzdftpd-ssl
 Summary: A very capable ftp server with ssl support
-Version: 0.2.1
+Version: 0.2.2
 Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://wzdftpd.sourceforge.net
@@ -104,6 +104,6 @@ rm -Rf $RPM_BUILD_ROOT
 %_sysconfdir/init.d/wzdftpd
 
 %changelog
-* Sat Feb 14 2004 Chris Lount <mrlount@tiscali.co.uk>
+* Sun Feb 15 2004 Chris Lount <mrlount@tiscali.co.uk>
 - First binary release
 
