@@ -97,6 +97,8 @@ typedef enum {
   COOKIE_CYAN,
   COOKIE_WHITE,
 
+  COOKIE_NEWLINE,
+
   COOKIE_CONNECTED_MAX,
   COOKIE_CONNECTED_USERS,
 
@@ -444,6 +446,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   current_user = user;
   current_group = group;
 
+  if (out_buffer) *out_buffer = '\0';
   out_buffer_ptr = out_buffer;
 
   while ( (cookie=yylex()) )

@@ -2413,6 +2413,7 @@ int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
     return E_OK;
   }
+  /** \bug we have to ensure that the reply is RFC compliant */
   ret = send_message_with_args(250,context,context->currentpath," now current directory.");
   return E_OK;
 }
@@ -3027,8 +3028,12 @@ int do_user(const char *username, wzd_context_t * context)
     for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
       loop_context = list_data(elmnt);
-      if (loop_context->magic == CONTEXT_MAGIC) {
+      if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
         user = GetUserByID(loop_context->userid);
+        if (!user) {
+          /* this can happen if a user disconnects while iterating list */
+          continue;
+        }
         for (j=0; j<user->group_num; j++)
           for (k=0; k<me->group_num; k++)
             if (user->groups[j] == me->groups[k])
