@@ -159,6 +159,7 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
     if (ret) { /* backend says NO */
       backend_clear_struct(&mainConfig->backend);
       dlclose(handle);
+      return ret;
     }
   } else {
     /* if no init function is present, we consider the module is ok */
@@ -216,8 +217,8 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
   }
   ret = (*mainConfig->backend.back_find_user)(name,user);
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = &mainConfig->user_list[ret];*/
-    memcpy(user,&mainConfig->user_list[ret],sizeof(wzd_user_t));
+    /*user = GetUserByID(ret);*/
+    memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
     *userid = ret;
     return 0;
   }
@@ -233,7 +234,7 @@ int backend_find_group(int num, wzd_group_t * group, int * groupid)
   }
   ret = (*mainConfig->backend.back_find_group)(num,group);
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    memcpy(group,&mainConfig->group_list[ret],sizeof(wzd_group_t));
+    memcpy(group,GetGroupByID(ret),sizeof(wzd_group_t));
     *groupid = ret;
     return 0;
   }
@@ -241,7 +242,7 @@ int backend_find_group(int num, wzd_group_t * group, int * groupid)
 }
 
 
-int backend_validate_login(const char *name, wzd_user_t * user, int * userid)
+int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid)
 {
   int ret;
   if (!mainConfig->backend.handle) {
@@ -250,16 +251,16 @@ int backend_validate_login(const char *name, wzd_user_t * user, int * userid)
   }
   ret = (*mainConfig->backend.back_validate_login)(name,user);
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = &mainConfig->user_list[ret];*/
+    /*user = GetUserByID(ret);*/
     if (user != NULL)
-      memcpy(user,&mainConfig->user_list[ret],sizeof(wzd_user_t));
+      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
     *userid = ret;
     return 0;
   }
   return ret;
 }
 
-int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, int * userid)
+int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, unsigned int * userid)
 {
   int ret;
   if (!mainConfig->backend.handle) {
@@ -268,9 +269,9 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
   }
   ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
   if (mainConfig->backend.backend_storage == 0 && ret >= 0) {
-    /*user = &mainConfig->user_list[ret];*/
+    /*user = GetUserByID(ret);*/
     if (user != NULL)
-      memcpy(user,&mainConfig->user_list[ret],sizeof(wzd_user_t));
+      memcpy(user,GetUserByID(ret),sizeof(wzd_user_t));
     *userid = ret;
     return 0;
   }

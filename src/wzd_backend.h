@@ -100,9 +100,9 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
 int backend_find_group(int num, wzd_group_t * group, int * groupid);
 
-int backend_validate_login(const char *name, wzd_user_t * user, int * userid);
+int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid);
 
-int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, int * userid);
+int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, unsigned int * userid);
 
 int backend_chpass(const char *username, const char *new_pass);
 
