@@ -1,3 +1,42 @@
+# Feb, 12 2003
+- timeout counter is reset only with a few commands
+- bugfix: checkpath denies access when homedir is /
+- files/dirs created are now given to main group of user
+- file entry is removed from perm file when deleted
+- new flag FLAG_TLS to enforce tls/ssl connections for specific users
+- new flag FLAG_ANONYMOUS to deny user from any modification (stor,mkdir,etc)
+- events: mkdir/rmdir send events
+- function perm_check rewritten to handle flags, and to optimize lookups
+
+# Feb, 09 2003
+- MAJOR CHANGE: code converted to multithread (prepare to die !)
+- new directive 'include file' to split config file
+  maximum inclusion level is 16 - find me one good reason to increase this level ?
+- crontab support in main server
+- new directive 'cronjob' to run commands periodically
+- bugfix: in tls implicit mode, if tls negotiation failed, login sequence
+  continues
+
+# Feb, 08 2003
+- bugfix: backend plaintext did not read correctly when homedir is /
+- new directive 'cscript', to execute custom scripts befaore/after some commands
+- backend is commited when server exits
+- access to limiters now restricted by semaphores
+- user stats (dl/ul) are updated and saved in backend
+- cookie: total_ul, total_dl: show user stats
+
+# Feb, 03 2003
+- new directive 'server_uid' in config file, to control which uid the server
+  will drop to after doing privileged operations
+
+# Jan, 25 2003
+- module sfv: progress bar when uploading (based on file NUMBER)
+  incomplete indicator is removed when release is complete
+
+# Jan, 16 2003
+- all '#include' directives in sources files have been changed to include
+  only necessary headers, resulting in a huge compilation speedup
+
 # Jan, 09 2003
 - bugfix: problem in vfs listing (missing first character)
 - bugfix: mkdir was broken
