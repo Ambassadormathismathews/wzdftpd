@@ -826,8 +826,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
 
-/*fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);*/
-#ifdef DEBUG
+#ifdef WZD_DBG_PERMS
   out_err(LEVEL_FLOOD,"_setPerm: dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
 #endif
 
@@ -957,10 +956,10 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
 
   strncpy(dst_perm_filename+length,HARD_PERMFILE,neededlength);
 
-#ifdef DEBUG
-fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
-fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,src_perm_filename,src_stripped_filename);
-fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_stripped_filename);
+#ifdef WZD_DBG_PERMS
+out_err(LEVEL_FLOOD,"%s:%d\n",__FILE__,__LINE__);
+out_err(LEVEL_FLOOD,"dir %s filename %s wanted file %s\n",dir,src_perm_filename,src_stripped_filename);
+out_err(LEVEL_FLOOD,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_stripped_filename);
 #endif
 
   WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
