@@ -1623,8 +1623,8 @@ site_fct_t site_find(const char *name)
 
 int site_init(wzd_config_t * config)
 {
-  if (site_command_add(&config->site_list,"ADDUSER",&do_site_adduser)) return 1;
   if (site_command_add(&config->site_list,"ADDIP",&do_site_addip)) return 1;
+  if (site_command_add(&config->site_list,"ADDUSER",&do_site_adduser)) return 1;
   if (site_command_add(&config->site_list,"BACKEND",&do_site_backend)) return 1;
   if (site_command_add(&config->site_list,"CHACL",&do_site_chacl)) return 1;
   if (site_command_add(&config->site_list,"CHANGE",&do_site_change)) return 1;

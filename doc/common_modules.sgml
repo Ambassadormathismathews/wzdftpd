@@ -175,9 +175,18 @@ wzd_reply to "1" to indicate that reply has been completed.
 Use the 'get' method to read variables, the 'set' method to
 change variables (you need to provide a new value).
 </para></listitem>
+<listitem><screen>vars_user get/set username variable_name [value]</screen>
+<para>This function gives access to user variables.
+Use the 'get' method to read variables, the 'set' method to
+change variables (you need to provide a new value).</para>
+<para>Note that this concern variables for user definition, and not
+for connected users: for example, you can't get the current ip (this
+has a sense only for connected users).
+</para></listitem>
 <listitem><screen>wzd_reply_code</screen>
 <para>Use this variable contains the current reply code used
-by server. This must be used with caution.
+by server. This is used for custom replies (see send_message_raw).
+This must be used with caution.
 </para></listitem>
 </itemizedlist>
 </simplesect>

@@ -3,6 +3,7 @@
 	* feature: site PERM add/change/remove/show
 	* bugfix: dynamic_ip=1 not working on win32
 	* bugfix: FEAT allowed in login sequence (makes lftp happy)
+	* doc: update for commands site link, msg, perm, wipe
 
 2004-04-01  Pierre Chifflier  <pollux@wzdftpd.net>
 

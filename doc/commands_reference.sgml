@@ -379,6 +379,36 @@ release</emphasis></para>
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_grpchange'><term>
+site grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
+</term>
+<listitem>
+<para>Change a field for a group.
+<informaltable id="table_changes_group">
+<tgroup cols="2">
+<tbody>
+<row><entry>Field</entry><entry>Description</entry></row>
+
+<row><entry>name</entry><entry>This will change the group name.
+<emphasis>The modification is immediate, even if a user is currently loggued !</emphasis></entry></row>
+<row><entry>homedir</entry><entry>This will change the group's default homedir.</entry></row>
+<row><entry>max_idle</entry><entry>Set the maximum idle time for this
+group.</entry></row>
+<row><entry>perms</entry><entry>Set group's default perms (All: 0xffffffff, retrieve only:
+0x03).
+<emphasis>This command will change</emphasis></entry></row>
+<row><entry>max_ul</entry><entry>Upstream bandwidth control in bytes/sec
+(0 = Unlimited).</entry></row>
+<row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
+<row><entry>ratio</entry><entry>Group default ratio</entry></row>
+<row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
+</tbody>
+</tgroup>
+</informaltable>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_grpdel'><term>
 site grpdel &lt;group&gt;
 </term>
@@ -512,6 +542,41 @@ site kill &lt;pid&gt;
 <para>Kill a PID</para>
 <screen>site kill 345</screen>
 <para>This will kill pid #345 (if it belongs to a glftpd user)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_link'><term>
+site link create &lt;dir&gt; &lt;linkname&gt;
+</term>
+<term>site link remove &lt;linkname&gt;</term>
+<listitem>
+<para>Create or removes symbolic links.</para>
+<para><emphasis>NOTE: the underlying filesystem must support symbolink
+links or equivalents !</emphasis> Most unix filesystem supports
+symbolic links, on win32 NTFS supports junctions (which is almost
+equivalent, but a bit slower), and FAT does not.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_msg'><term>
+site msg &lt;show&gt; | new &lt;line&gt; |
+append &lt;line&gt; | convert &lt;file&gt; |
+delete
+</term>
+<listitem>
+<para>Manage directory message file</para>
+<screen>site msg show</screen>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_perm'><term>
+site perm &lt;show&gt; [&lt;name&gt;] | add &lt;name&gt; &lt;perms&gt; |
+change &lt;name&gt; &lt;perms&gt; | remove
+</term>
+<listitem>
+<para>Manage command permissions</para>
+<screen>site perm show site</screen>
+<para>This will show permissions for all site commands</para>
 </listitem>
 </varlistentry>
 
@@ -661,6 +726,24 @@ site who
 <para>
 Show users online.
 </para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_wipe'><term>
+site wipe [-r] &lt;file1&gt; [&lt;file2&gt; ...]
+</term>
+<listitem>
+<para>
+Delete file (or directory). The difference with the standard removal
+functions is that the uploader does not loose credits and upload stats
+for the removed file.
+</para>
+<para>
+To remove a directory and all subdirectories recursively, you can
+specify the -r option.
+</para>
+<para><emphasis>Be carefull, this command is quite dangerous
+!</emphasis></para>
 </listitem>
 </varlistentry>
 

@@ -17,7 +17,7 @@ Windows:
 * if you want ssl support, openssl-devel headers and libs
 
 
-All paths are relative to rep wzdFTPd (root)
+All paths are relative to rep wzdftpd (root)
 
 1) Generate configure script:
 aclocal
