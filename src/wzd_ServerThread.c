@@ -22,19 +22,21 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined __CYGWIN__
-#if defined WINSOCK_SUPPORT
+#if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #include <w32api/ws2tcpip.h>
-#endif
+
 #else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <netdb.h>
-#endif
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -30,6 +30,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -594,6 +595,8 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   wzd_cache_close(fp);
 
   send_message_raw("200 \r\n",context);
+
+  free(file_buffer);
 }
 
 /********************* do_site_reload **********************/
@@ -622,6 +625,63 @@ int do_site_reload(char * ignored, wzd_context_t * context)
   else
     snprintf(buffer,255,"200 kill returned ok\r\n");
   ret = send_message_raw(buffer,context);
+  return 0;
+}
+
+/********************* do_site_rusage **********************/
+
+int do_site_rusage(char * ignored, wzd_context_t * context)
+{
+  int ret;
+  char buffer[256];
+  struct rusage ru;
+  struct rlimit rlim;
+
+  send_message_raw("200-\r\n",context);
+
+  if (getrusage(RUSAGE_SELF,&ru)<0)
+  {
+    ret=errno; /* save errno value */
+    send_message_raw("200- getrusage() failed !\r\n",context);
+    snprintf(buffer,255,"200-errno: %d (%s)\r\n",ret,strerror(ret));
+    send_message_raw(buffer,context);
+    send_message_raw("200 \r\n",context);
+    return 0;
+  }
+  send_message_raw("200- Ressources used for wzdftpd:\r\n",context);
+  sprintf(buffer,"200-  user time used: %ld s %ld ms\r\n",ru.ru_utime.tv_sec,ru.ru_utime.tv_usec/1000);
+  send_message_raw(buffer,context);
+  sprintf(buffer,"200-  system time used: %ld s %ld ms\r\n",ru.ru_stime.tv_sec,ru.ru_stime.tv_usec/1000);
+  send_message_raw(buffer,context);
+  /* system time used */
+  /* maximum resident set size */
+  /* integral shared memory size */
+  /* integral unshared data size */
+  /* integral unshared stack size */
+  /* page reclaims */
+  /* page faults */
+  /* swaps */
+  /* block input operations */
+  /* block output operations */
+  /* messages sent */
+  /* messages received */
+  /* signals received */
+  /* voluntary context switches */
+  /* involuntary context switches */
+
+  if (getrlimit(RLIMIT_NOFILE,&rlim)<0) {
+    send_message_raw("200- getrlimit(RLIMIT_NOFILE) failed !\r\n",context);
+    snprintf(buffer,255,"200-errno: %d (%s)\r\n",ret,strerror(ret));
+    send_message_raw(buffer,context);
+    send_message_raw("200 \r\n",context);
+    return 0;
+  }
+
+  send_message_raw("200- LIMITS:\r\n",context);
+  sprintf(buffer,"200-  number of open files: %ld ; max: %ld\r\n",(long)rlim.rlim_cur,(long)rlim.rlim_max);
+  send_message_raw(buffer,context);
+
+  send_message_raw("200 \r\n",context);
   return 0;
 }
 
@@ -1012,6 +1072,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"RELOAD",&do_site_reload)) return 1;
   /* reopen */
   /* rules */
+  if (site_command_add(&config->site_list,"RUSAGE",&do_site_rusage)) return 1;
   /* swho */
   if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
   if (site_command_add(&config->site_list,"TAKE",&do_site_take)) return 1;

@@ -25,14 +25,23 @@
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #include <w32api/ws2tcpip.h>
+
 #else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <netdb.h> /* gethostbyaddr */
+
+#ifdef __CYGWIN__
+#define        INET_ADDRSTRLEN         16
+#define        INET6_ADDRSTRLEN        46
 #endif
+
+#endif /* __CYGWIN__ && WINSOCK_SUPPORT */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -838,18 +847,18 @@ int do_mkdir(char *param, wzd_context_t * context)
 #endif
     user = GetUserByID(context->userid);
 
-  if (!param || !param[0]) return 1;
-  if (strlen(param)>2047) return 1;
+  if (!param || !param[0]) return E_PARAM_NULL;
+  if (strlen(param)>2047) return E_PARAM_BIG;
   if (strcmp(param,"/")==0) return 0;
 
   if (param[0] != '/') {
     strcpy(cmd,".");
-    if (checkpath(cmd,path,context)) return 1;
+    if (checkpath(cmd,path,context)) return E_WRONGPATH;
     if (path[strlen(path)-1]!='/') strcat(path,"/");
     strncat(path,param,2047);
   } else {
     strcpy(cmd,param);
-    if (checkpath(cmd,path,context)) return 1;
+    if (checkpath(cmd,path,context)) return E_WRONGPATH;
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
@@ -869,13 +878,12 @@ int do_mkdir(char *param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
-    return 1;
+    return E_FILE_FORBIDDEN;
   }
 
   if (strcmp(path,buffer) != 0) {
     out_err(LEVEL_FLOOD,"strcmp(%s,%s) != 0\n",path,buffer);
-    return 1;
+    return E_MKDIR_PARSE;
   }
 
   /* TODO XXX FIXME check section path-filter */
@@ -888,7 +896,10 @@ int do_mkdir(char *param, wzd_context_t * context)
       *ptr='\0';
       section = section_find(mainConfig->section_list,path);
       if (section && !section_check_filter(section,ptr+1))
-	  return 1;
+      {
+	out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
+	return E_MKDIR_PATHFILTER;
+      }
     }
   }
 
@@ -2426,12 +2437,8 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
             char buffer2[BUFFER_LEN];
 	    token = strtok_r(NULL,"\r\n",&ptr);
 	    /* TODO check perms !! */
-	    if (do_mkdir(token,context)) { /* CAUTION : do_mkdir handle the case token==NULL or strlen(token)==0 ! */
-	      /* could not create dir */
-	      snprintf(buffer2,BUFFER_LEN-1,"could not create dir '%s'",(token)?token:"(NULL)");
-	      ret = send_message_with_args(553,context,buffer2);
-	    } else {
-	      /* success */
+	    switch (do_mkdir(token,context)) { 
+	    case E_OK: /* success */
 /*	      snprintf(buffer2,BUFFER_LEN-1,"\"%s\" created",token);*/
               FORALL_HOOKS(EVENT_MKDIR)
                 typedef int (*mkdir_hook)(unsigned long, const char*);
@@ -2442,6 +2449,18 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
               END_FORALL_HOOKS
 
 	      ret = send_message_with_args(257,context,token,"created");
+	      break;
+	    case E_FILE_FORBIDDEN:
+	      ret = send_message_with_args(553,context,"forbidden !");
+	      break;
+	    case E_MKDIR_PATHFILTER:
+	      ret = send_message_with_args(553,context,"dirname does not match pathfilter");
+	      break;
+	    default:
+	      /* could not create dir */
+	      snprintf(buffer2,BUFFER_LEN-1,"could not create dir '%s'",(token)?token:"(NULL)");
+	      ret = send_message_with_args(553,context,buffer2);
+	      break;
 	    }
 	    context->idle_time_start = time(NULL);
 	    break;

@@ -32,6 +32,11 @@
 typedef enum {
   E_OK=0,
 
+  E_PARAM_NULL,		/**< parameter is NULL */
+  E_PARAM_BIG,		/**< parameter is too long */
+
+  E_WRONGPATH,		/**< path is invalid */
+
   E_TIMEOUT,		/**< timeout on control connection */
   E_DATATIMEOUT,	/**< timeout on data connection */
 
@@ -48,6 +53,9 @@ typedef enum {
   E_FILE_FORBIDDEN,	/**< access to file is forbidden */
 
   E_USER_IDONTEXIST,	/**< server said i don't exist ! */
+
+  E_MKDIR_PARSE,	/**< directory name parsing gives errors */
+  E_MKDIR_PATHFILTER,	/**< dirname rejected by pathfilter */
 } wzd_errno_t;
 
 /*********************** RIGHTS ***************************/
