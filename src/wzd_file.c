@@ -749,10 +749,10 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
 #endif
     user = GetUserByID(context->userid);
 
-  if (mode & O_RDONLY)
-    ret = _checkPerm(filename,RIGHT_RETR,user);
-  else
+  if (mode & O_WRONLY)
     ret = _checkPerm(filename,RIGHT_STOR,user);
+  else
+    ret = _checkPerm(filename,RIGHT_RETR,user);
   if (ret)
     return -1;
   
