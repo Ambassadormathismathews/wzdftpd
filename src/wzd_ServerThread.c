@@ -568,6 +568,9 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
   for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt)) {
     ident_context = list_data(elmnt);
     if (!ident_context) continue;
+
+    context = ident_context->context;
+
     if (ident_context->read_fd != -1)
     {
       if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
