@@ -139,7 +139,7 @@
 /*********************** VERSION **************************/
 
 /* Version */
-#define  WZD_VERSION_NUM "0.3cvs visual"
+#define  WZD_VERSION_NUM "0.3 visual"
 #define  WZD_BUILD_NUM "20040415"
 #define  WZD_BUILD_OPTS  "visual"
 

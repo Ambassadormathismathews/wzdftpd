@@ -1,5 +1,7 @@
 2004-04-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
+	* --- cvs commit TAG: rel-0-3
+
 	* tcl: command vfs (mkdir/rmdir/link create/remove)
 	* bugfix: RNTO without RNFR not rejected (could have side effects with RETR/STOR)
 	* bugfix: REST not working on win32
