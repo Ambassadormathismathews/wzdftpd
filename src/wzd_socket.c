@@ -200,7 +200,7 @@ fd_t socket_make(const char *ip, unsigned int *port, int nListen)
   return sock;
 }
 
- 
+
 /*************** socket_close ***************************/
 int socket_close(fd_t sock)
 {
@@ -348,7 +348,7 @@ static int _waitconnect(fd_t sockfd, /* socket */
   if(-1 == rc)
     /* error, no connect here, try next */
     return -1;
-  
+
   else if(0 == rc)
     /* timeout, no connect today */
     return 1;
@@ -379,7 +379,9 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   size_t len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
+#ifdef WIN32
   int error;
+#endif
 
   if (family == WZD_INET4)
   {
@@ -494,7 +496,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
     ret = connect(sock, sai, len);
     if (ret == -1) {
       /*long timeout_ms=300000;*/ /* default to 5 min */
-	  long timeout_ms=5000;
+      long timeout_ms=5000;
       error = WSAGetLastError();
 
       switch (error) {
@@ -740,7 +742,7 @@ int socket_wait_to_write(fd_t sock, unsigned int timeout)
 
       if (ret == 0) return 1; /* timeout */
 
-      
+
 
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
