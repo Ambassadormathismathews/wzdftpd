@@ -65,6 +65,8 @@ wzdftpd_SOURCES =    \
 	wzd_ratio.h        \
 	wzd_ServerThread.c \
 	wzd_ServerThread.h \
+	wzd_savecfg.c      \
+	wzd_savecfg.h      \
 	wzd_site.c         \
 	wzd_site.h         \
 	wzd_site_group.c    \

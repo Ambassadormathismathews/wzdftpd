@@ -43,6 +43,7 @@
 
 /* IMPORTANT needed to check version */
 const char * module_version="123";
+const char * module_name="plaintext";
 
 char USERS_FILE[256]="/etc/wzdFTPd/users";
 

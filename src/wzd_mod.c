@@ -246,6 +246,18 @@ int hook_call_external(wzd_hook_t *hook, const char *args)
   return 0;
 }
 
+char * event2str(const unsigned long mask)
+{
+  int i=0;
+
+  while (event_tab[i].mask != 0)
+  {
+    if (event_tab[i].mask == mask) return event_tab[i].name;
+    i++;
+  }
+  return 0;
+}
+
 unsigned long str2event(const char *s)
 {
   int i=0;

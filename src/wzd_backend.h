@@ -133,6 +133,8 @@ typedef struct {
 #define	STR_COMMIT_CHANGES	"wzd_commit_changes"
 
 
+char *backend_get_version(wzd_backend_t *backend);
+char *backend_get_name(wzd_backend_t *backend);
 int backend_validate(const char *backend, const char *pred, const char *version);
 
 /**

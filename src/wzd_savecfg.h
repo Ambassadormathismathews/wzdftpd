@@ -22,13 +22,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_DEBUG__
-#define __WZD_DEBUG__
+#ifndef __WZD_SAVECFG_H__
+#define __WZD_SAVECFG_H__
 
-#define WZD_ASSERT_VOID(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return ; }
-#define WZD_ASSERT(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return -1; }
+/* free cfg file */
+int vfs_savecfg(void);
 
-/** Check if fd is a valid file descriptor */
-int fd_is_valid(int fd);
-
-#endif /* __WZD_DEBUG__ */
+#endif /* __WZD_SAVECFG_H__ */

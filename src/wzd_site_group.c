@@ -121,6 +121,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   newgroup.max_dl_speed = 0;
   newgroup.max_ul_speed = 0;
   newgroup.ratio = 0;
+  newgroup.num_logins = 0;
   for (i=0; i<HARD_IP_PER_GROUP; i++)
     newgroup.ip_allowed[i][0]='\0';
 

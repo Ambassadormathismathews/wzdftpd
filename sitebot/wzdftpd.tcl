@@ -25,9 +25,9 @@
 
 set sitename	"WZD"
 
-set wzd(srcdir) "/home/pollux/WORK/PROGS/wzd/wzdFTPd/"
-set wzd(log) "/home/pollux/WORK/PROGS/wzd/wzdFTPd/src/wzd.log"
-set wzd(key)	0x1331c0d3
+set wzd(srcdir) "/home/pollux/WORK/PROGS/wzd/wzdFTPd-configure/wzdftpd"
+set wzd(log) "/usr/share/wzdftpd/logs/wzd.log"
+set wzd(key)	0x44445555
 
 # remember: path is relative to BOT CURRENT WORKING DIRECTORY
 # (should be the one where you started the bot)
@@ -40,7 +40,7 @@ set msgtypes(DEFAULT)	"INVITE LOGIN LOGOUT REQUEST REQFILLED REQDEL GIVE TAKE"
 
 
 #########################################################
-# setup eatch path you need like this
+# setup each path you need like this
 #
 # set paths(section)	"/section/*" (vfs format)
 # set type(section)		"RACE"
@@ -73,24 +73,26 @@ set chanlist(0DAY)	"#wzdftpd-pv"
 #########################################################
 
 set chanlist(ALL)	"#wzdftpd"
-set chanlist(DEFAULT)	"#wzdftpd"
+set chanlist(DEFAULT)	"#wzdftpd-pv"
 set chanlist(DF)	"#wzdftpd"
 set chanlist(INVITE)	"#wzdftpd-pv"
-set chanlist(WELCOME)	"#wzdftpd"
+set chanlist(WELCOME)	"#wzdftpd-pv"
+
+set chanlist(COMPLETE)	"#wzdftpd-pv"
 
 set binary(DF)		"/bin/df"
 set binary(NCFTPLS)	"/usr/bin/ncftpls"
-set binary(UPTIME)	"/home/pollux/WORK/PROGS/wzd/wzdFTPd/tools/siteuptime/siteuptime"
-set binary(WHO)		"/home/pollux/WORK/PROGS/wzd/wzdFTPd/tools/sitewho/sitewho"
+set binary(UPTIME)	"/usr/local/bin/siteuptime"
+set binary(WHO)		"/usr/local/bin/sitewho"
 
 set cmdpre         	"!wzd"
 
 
 
 #set bnc(LIST)		"127.0.0.1:6969 127.0.0.1:10000 127.0.0.1:10001"
-set bnc(LIST)		"127.0.0.1:6969"
-set bnc(USER)		"wzdftpd"
-set bnc(PASS)		"wzdftpd"
+set bnc(LIST)		"127.0.0.1:21"
+set bnc(USER)		"anonymous"
+set bnc(PASS)		"pass"
 set bnc(TIMEOUT)	"3"
 
 
@@ -99,8 +101,8 @@ set bnc(TIMEOUT)	"3"
 #set device(1)           "D: hd-d"
 
 set device(0)		"/dev/hda1 root"
-set device(1)		"/dev/hda5 usr"
-set device(2)		"/dev/hda6 home"
+set device(1)		"/dev/hda3 usr"
+set device(2)		"/dev/hda4 home"
 set device(3)		"134.214.50.12:/bigdisk/pollux linux5"
 set device(TOTAL)	4
 
@@ -116,6 +118,7 @@ set disable(WELCOME)		0
 
 set disable(NEWDIR)		0
 set disable(DELDIR)		0
+set disable(COMPLETE)		0
 set disable(WIPE)		0
 set disable(PRE)		0
 set disable(INVITE)		0
@@ -178,6 +181,7 @@ set splitter(CHAR) "|"
 
 set variables(NEWDIR)		"%pf %user %group"
 set variables(DELDIR)		"%pf %user %group"
+set variables(COMPLETE)		"%pf %user %group %tagline"
 set variables(LOGIN)		"%no %user %group %tagline"
 set variables(LOGOUT)		"%no %user %group %tagline"
 set variables(INVITE)		"%user %group %ircnick"
@@ -212,6 +216,7 @@ set variables(DEFAULT)		"%pf %msg"
 
 set announce(NEWDIR)		"-%sitename- \[%section\] + New Release: %path/%bold%release%bold (%relname) by %bold%user%bold@%group"
 set announce(DELDIR)		"-%sitename- \[%section\] + Directory deleted: %path/%bold%release%bold by %bold%user%bold@%group"
+set announce(COMPLETE)		"-%sitename- \[%section\] + %path/%bold%release%bold (%relname) was completed by %bold%user%bold@%group"
 set announce(BW)			"-%sitename-  \[%section\] + Uploaders: %uploaders@%bold%upspeed%boldkb/sec - Leechers: %leechers@%bold%dnspeed%boldkb/sec - Idlers: %bold%idlers%bold - Total: %totalusers@%bold%totalspeed%boldkb/sec"
 set announce(LOGIN)			"-%sitename- \[LOGIN\] + %bold%user%bold@%group has logged in"
 set announce(LOGOUT)		"-%sitename- \[LOGOUT\] + %bold%user%bold@%group has logged out"
@@ -534,7 +539,7 @@ proc wzd:show_free { nick uhost hand chan arg } {
   }
   set output $announce(DF)
   for {set i 0} {$i < $device(TOTAL)} {incr i} {
-    foreach line [split [exec $binary(DF) "-m" "-P"] "\n"] {
+    foreach line [split [exec $binary(DF) "-P" "-m"] "\n"] {
       if { [string match [lindex $line 0] [string tolower [lindex $device($i) 0]]] == 1 } {
 	append devices "\[[lindex $device($i) 1]: %bold[format %.2f [expr [lindex $line 3].0/1024]]%bold/[format %.2f [expr [lindex $line 1].0/1024]]GB\] - "
       }
@@ -587,12 +592,12 @@ proc wzd_readlog {} {
     if {$line == ""} {continue}
     set msgtype [string trim [lindex $line 5] ":"]
     if { ! [info exists disable($msgtype)] || $disable($msgtype) == 1 } {
-      putlog "$msgtype close of return 0"
+#      putlog "$msgtype close of return 0"
       close $of
       set lastoct [file size $wzd(log)]
       return 0
     }
-    if { $msgtype == "NEWDIR" || $msgtype == "DELDIR" } {
+    if { $msgtype == "NEWDIR" || $msgtype == "DELDIR" || $msgtype == "COMPLETE" } {
       set path [lindex $line 6]
       if { $msgtype == "DELDIR" } { set path [string trimright $path "/"] }
       set var1 "{$path} [lrange $line 7 8]"
@@ -609,6 +614,7 @@ proc wzd_readlog {} {
 	puthelp "INVITE $nick $channel"
       }
     }
+#    say $chanlist(DEFAULT) "prout $path $msgtype"
     set section [wzd:getsection $path $msgtype]
 #    set section "DEFAULT"
     if { [wzd:denycheck "$path"] == 0 } {

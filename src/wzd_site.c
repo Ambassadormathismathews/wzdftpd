@@ -60,6 +60,7 @@
 #include "wzd_perm.h"
 #include "wzd_mod.h"
 #include "wzd_cache.h"
+#include "wzd_savecfg.h"
 
 
 extern int serverstop;
@@ -691,6 +692,15 @@ int do_site_rusage(char * ignored, wzd_context_t * context)
   return 0;
 }
 
+/********************* do_site_savecfg *********************/
+int do_site_savecfg(char *command_line, wzd_context_t * context)
+{
+	if( wzd_savecfg() )
+    send_message_with_args(501,context,"Cannot save server config");
+	else
+    send_message_with_args(200,context,"Server config saved");
+}
+
 #if 0
 /********************* do_site_sfv *************************/
 /* sfv: add / check / create
@@ -1216,6 +1226,8 @@ int site_init(wzd_config_t * config)
   /* reopen */
   /* rules */
   if (site_command_add(&config->site_list,"RUSAGE",&do_site_rusage)) return 1;
+  /* savecfg */
+  if (site_command_add(&config->site_list,"SAVECFG",&do_site_savecfg)) return 1;
   /* swho */
   if (site_command_add(&config->site_list,"TAGLINE",&do_site_tagline)) return 1;
   if (site_command_add(&config->site_list,"TAKE",&do_site_take)) return 1;

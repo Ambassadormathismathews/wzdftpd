@@ -268,8 +268,8 @@ int set_default_options(void)
 
   tempConfig.site_closed=0;
 
-  tempConfig.ip[0] = '\0';
-  tempConfig.dynamic_ip[0] = '\0';
+  strcpy (tempConfig.ip, "*");
+  strcpy (tempConfig.dynamic_ip, "0");
   tempConfig.port = 21;
   tempConfig.max_threads=32;
 
@@ -333,6 +333,8 @@ int set_default_options(void)
   memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
   strcpy(tempConfig.tls_cipher_list,"ALL");
 
+  tempConfig.tls_type = TLS_EXPLICIT;
+#else
   tempConfig.tls_type = TLS_NOTYPE;
 #endif
 

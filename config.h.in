@@ -85,8 +85,7 @@
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
 
-/* Define to 1 if your system has a GNU libc compatible `realloc' function,
-   and to 0 otherwise. */
+/* Define to 1 if you have the `realloc' function. */
 #undef HAVE_REALLOC
 
 /* Define to 1 if you have the `regcomp' function. */
@@ -266,9 +265,6 @@
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
-
-/* Define to rpl_realloc if the replacement function should be used. */
-#undef realloc
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t

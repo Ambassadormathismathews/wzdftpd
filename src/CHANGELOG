@@ -1,3 +1,12 @@
+# Sep, 16 2003
+- bugfix: group.num_logins not initialized when adding a new group
+- contributions from Cyprien Laplace:
+- added a "module_name" in module symbols
+- added backend_get_version() and backend_get_name() in wzd_backend.c
+- added new files wzd_savecfg.c wzd_savecfg.h with wzd_savecfg() function
+- added a new site command 'site savecfg' to call wzd_savecfg()
+- modified the default way that ip and dynamic_ip are set (was buggy if not in wzd.cfg!)
+
 # Sep, 11 2003
 - contributions from Cyprien Laplace:
 - added 'vfs_remove' function, to remove a vfs entry
@@ -11,7 +20,7 @@
 # Sep, 10 2003
 - bugfix: incorrect section match (closes: unable to create dirs in sections)
 - bugfix: incorrect config file parsing (closes: unable to have section names beginning with
-  anything but a letter)
+   anything but a letter)
 
 # Sep, 08 20003
 - Display real owner in LIST (this implementation is particularly bad - we rely on the cache)

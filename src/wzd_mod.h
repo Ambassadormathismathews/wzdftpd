@@ -36,6 +36,7 @@ int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const cha
 int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, const char *args);
 int hook_call_external(wzd_hook_t *hook, const char *args);
 
+char * event2str(const unsigned long mask);
 unsigned long str2event(const char *s);
 
 #define FORALL_HOOKS(test_mask)	{ \

@@ -47,6 +47,7 @@
 | site readduser | readd a deleted user                         | r          |
 | site reload    | reloads server config                        | r          |
 | site rules     | show site rules                              | r,s,n,g    |
+| site savecfg   | save server config                           | r          |
 | site sfv       | (add/check/create) sfv tools                 | r,s,n,g    |
 | site shutdown  | shutdown the server remotely                 | r          |
 | site uptime    | give you information about actual uptime of  |            |

@@ -28,7 +28,7 @@ default_home=/home
 [USERS]
 name=pollux
 pass=tobNnnhhJY2Fs
-home=/home/pollux/TODEL/wzdftpd-root
+home=/home/pollux/ftp-test
 uid=501
 groups=admin
 rights=0xffffffff

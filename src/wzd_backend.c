@@ -61,6 +61,29 @@
 #define	DL_PREFIX
 #endif
 
+char *backend_get_version(wzd_backend_t *backend)
+{
+	char ** version_found;
+	
+	if (backend->handle)
+	  version_found = dlsym(backend->handle,DL_PREFIX "module_version");
+	else
+		return NULL;
+
+	return strdup(*version_found);
+}
+
+char *backend_get_name(wzd_backend_t *backend)
+{
+	char ** backend_name;
+	
+	if (backend->handle)
+	  backend_name = dlsym(backend->handle,DL_PREFIX "module_name");
+	else
+		return NULL;
+
+	return strdup(*backend_name);
+}
 
 void backend_clear_struct(wzd_backend_t *backend)
 {
