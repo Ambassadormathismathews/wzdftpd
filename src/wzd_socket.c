@@ -352,7 +352,7 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
 #else
       ret = select(sock+1,NULL,&fds,&efds,&tv);
 #endif
-#ifndef _MSC_VER
+#ifdef _MSC_VER
       errno = WSAGetLastError();
 #endif
       save_errno = errno;
