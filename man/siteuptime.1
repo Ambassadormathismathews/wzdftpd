@@ -1,4 +1,4 @@
-.TH siteuptime 1 "March 2004" "siteuptime (wzdftpd)" "wzdftpd tools"
+.TH siteuptime 1 "November 2004" "siteuptime (wzdftpd)" "wzdftpd tools"
 .\" Process with
 .\" groff -man -Tascii siteuptime.1 
 .\"
@@ -12,11 +12,17 @@ The
 command shows current uptime for wzdftpd.
 .SH OPTIONS
 .TP 12
-.BI \-k " shm_key"
-Specify the key used to find shared memory segment (configured
-via the \fBshm_key\fP directive in
-.I wzd.cfg
-).
+.BI \-u " XXX"
+Use username \fIXXX\fP instead of wzdftpd. 
+.TP
+.BI \-w " XXX"
+Use password \fIXXX\fP with the username.
+.TP
+.BI \-h " XXX"
+Connect to the specified host.
+.TP
+.BI \-p " XXX"
+Employ the specified port number for connecting to the server.
 .TP
 .PD
 .BR
