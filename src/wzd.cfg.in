@@ -76,7 +76,7 @@ deny_access_files_uploaded = 1
 
 # hide_dotted_files (default: 0)
 # hide files beggining by a '.'
-hide_dotted_files = 1
+#hide_dotted_files = 1
 
 # Available ONLY if compiled with INTERNAL_SFV=1
 # Enable internal sfv checking (default: no)
@@ -89,7 +89,7 @@ hide_dotted_files = 1
 # Verbosity of log (only messages >= level will be displayed)
 # can be one of (in order):
 # lowest, flood, info, normal, high, critical
-loglevel = lowest
+#loglevel = lowest
 
 # TLS Options
 # Certificate (only used in ssl mode, otherwise ignored)
