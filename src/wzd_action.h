@@ -67,7 +67,7 @@
 
 typedef struct {
   unsigned int	token;
-  char		arg[4096];
+  char		arg[HARD_LAST_COMMAND_LENGTH];
 
 /*  FILE *	current_file;*/
   int		current_file;

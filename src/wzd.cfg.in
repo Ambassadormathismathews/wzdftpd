@@ -159,6 +159,11 @@ login_pre_ip_allowed = -*.xxx.fr
 #module = @prefix@/share/@PACKAGE@/modules/libwzd_test.so
 module = @prefix@/share/@PACKAGE@/modules/libwzd_sfv.so
 
+param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]
+param_sfv_del_progressmeter = \[.*] - ...% Complete - \[WzD]
+param_sfv_incomplete_indicator = ../(incomplete)-%0
+param_sfv_other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
+
 ##### SECTIONS
 # sections are used to define local server properties
 # order *IS* important (first matching section is taken)

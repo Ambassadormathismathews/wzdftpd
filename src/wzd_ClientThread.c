@@ -1339,7 +1339,7 @@ int do_retr(char *param, wzd_context_t * context)
     user->username,param,bytestot);
 
   context->current_action.token = TOK_RETR;
-  strncpy(context->current_action.arg,path,4096);
+  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = fd;
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
@@ -1506,7 +1506,7 @@ int do_stor(char *param, wzd_context_t * context)
     user->username,param);
 
   context->current_action.token = TOK_STOR;
-  strncpy(context->current_action.arg,path,4096);
+  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = fd;
   context->current_action.bytesnow = 0;
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
@@ -1677,7 +1677,7 @@ void do_rnfr(const char *filename, wzd_context_t * context)
   }
 
   context->current_action.token = TOK_RNFR;
-  strncpy(context->current_action.arg,path,4096);
+  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = 0;
   context->current_action.bytesnow = 0;
   context->current_action.tm_start = time(NULL);
