@@ -15,9 +15,12 @@ To install wzdftpd use the following commands:
     # make install
 </programlisting>
 
-To compile wzdftpd with SSL support, use <filename># make -DWITH_SSL</filename>.
-To compile wzdftpd with IPv6 support, use <filename># make -DWITH_IPV6</filename>.
-Of course, you can use this keys together.
+To compile wzdftpd with SSL support, use <filename>WITH_SSL</filename> knob.
+To compile wzdftpd with IPv6 support, use <filename>WITH_IPV6</filename> knob.
+To compile wzdftpd with UTF8 support, use <filename>WITH_UTF8</filename> knob.
+To compile wzdftpd with TCL module, use <filename>WITH_TCL</filename> knob.
+Of course, you can use this keys together (i.e. <filename>make -DWITH_TCL -DWITH_SSL</filename>).
+To compile in all supported features you can just use <filename>PACKAGE_BUILDING</filename> knob.
 
 
 That's all, wzdftpd is installed on your machine. Sample config files are:
