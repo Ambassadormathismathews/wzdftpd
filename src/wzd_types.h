@@ -204,10 +204,12 @@
 #define EPOCHFILETIME (116444736000000000LL)
 #endif
 
+#if !defined(_WINSOCK2API_) && !defined(_WINSOCKAPI_)
 struct timeval {
     long tv_sec;        /* seconds */
     long tv_usec;  /* microseconds */
 };
+#endif
 
 struct timezone {
     int tz_minuteswest; /* minutes W of Greenwich */
