@@ -410,7 +410,7 @@ wzd_user_t * GetUserByID(unsigned int id)
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
     /* try cache first */
-    if ( (user = usercache_get( predicate_uid, (void*)id )) )
+    if ( (user = usercache_getbyuid( id )) )
       return user;
 
     if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
@@ -447,7 +447,7 @@ out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
     /* try cache first */
-    if ( (user = usercache_get( predicate_name, (void*)name )) )
+    if ( (user = usercache_getbyname( name )) )
       return user;
 
     if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
@@ -525,7 +525,7 @@ wzd_group_t * GetGroupByID(unsigned int id)
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
     /* try cache first */
-    if ( (group = groupcache_get( predicate_gid, (void*)id )) )
+    if ( (group = groupcache_getbygid( id )) )
       return group;
 
     if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
@@ -564,7 +564,7 @@ wzd_group_t * GetGroupByName(const char *name)
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
     /* try cache first */
-    if ( (group = groupcache_get( predicate_groupname, (void*)name )) )
+    if ( (group = groupcache_getbyname( name )) )
       return group;
 
     if (!mainConfig->backend.handle || !mainConfig->backend.back_find_group) {

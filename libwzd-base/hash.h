@@ -34,8 +34,8 @@
 #include "list.h"
 
 typedef struct CHTBL_ {
-  int   containers;
-  int   (*h)(const void *key);
+  unsigned int   containers;
+  unsigned int   (*h)(const void *key);
   int   (*match)(const void *key1, const void *key2);
   void  (*free)(void *data);
 
@@ -43,7 +43,7 @@ typedef struct CHTBL_ {
   List  *table;
 } CHTBL;
 
-typedef int (*hash_function)(const void*);
+typedef unsigned int (*hash_function)(const void*);
 typedef int (*cmp_function)(const void *, const void*);
 typedef int (*htrigger_function)(void *, void*);
 typedef void (*hfree)(void *);
@@ -52,7 +52,7 @@ typedef void (*hfree)(void *);
 /** generic hash function for strings */
 unsigned int hash_str(const char *key);
 
-int chtbl_init(CHTBL *htab, int containers, int (*h)(const void*),
+int chtbl_init(CHTBL *htab, unsigned int containers, unsigned int (*h)(const void*),
     int (*match)(const void*, const void*),
     void (*ffree)(void*));
 
@@ -65,6 +65,8 @@ int chtbl_insert_or_change(CHTBL *htab, const void *key, void *data, htrigger_fu
 int chtbl_remove(CHTBL *htab, const void *key);
 
 int chtbl_lookup(const CHTBL *htab, const void *key, void **data);
+
+int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), const void *arg, void **data);
 
 #define chtbl_size(htab) ((htab)->size)
 

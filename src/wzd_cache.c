@@ -433,9 +433,20 @@ void wzd_cache_purge(void)
 
 
 
-static List cache_user_list;
-static List cache_group_list;
+static CHTBL index_user_name;
+static CHTBL index_user_uid;
+static CHTBL index_group_name;
+static CHTBL index_group_gid;
 
+int hash_uid(const void *key)
+{
+  return ( (unsigned int) key );
+}
+
+int uidcmp(const void *key1, const void *key2)
+{
+  return ( ((unsigned int)key1) != ((unsigned int)key2) );
+}
 
 int predicate_uid(wzd_user_t * user, void * arg)
 {
@@ -457,195 +468,196 @@ int predicate_groupname(wzd_group_t * group, void * arg)
   return (strcmp(group->groupname,(char*)arg)==0);
 }
 
+int predicate_groupname(wzd_group_t * group, void * arg);
 
 void usercache_init(void)
 {
-  list_init(&cache_user_list,wzd_free);
-  list_init(&cache_group_list,wzd_free);
+  chtbl_init(&index_user_name,128,(hash_function)hash_str,(cmp_function)strcmp,wzd_free);
+  chtbl_init(&index_user_uid,37,(hash_function)hash_uid,(cmp_function)uidcmp,wzd_free);
+  chtbl_init(&index_group_name,128,(hash_function)hash_str,(cmp_function)strcmp,wzd_free);
+  chtbl_init(&index_group_gid,37,(hash_function)hash_uid,(cmp_function)uidcmp,wzd_free);
 }
 
 void usercache_fini(void)
 {
-  list_destroy(&cache_user_list);
-  list_destroy(&cache_group_list);
+  chtbl_destroy(&index_user_uid);
+  chtbl_destroy(&index_user_name);
+  chtbl_destroy(&index_group_gid);
+  chtbl_destroy(&index_group_name);
 }
 
 
 wzd_user_t * usercache_add(wzd_user_t * user)
 {
-  ListElmt * elmnt;
   wzd_user_t * loop_user;
+  wzd_user_t * data;
 
   if (!user) return NULL;
 
-  /* we check that entry is not already present */
-  for (elmnt=cache_user_list.head; elmnt; elmnt=list_next(elmnt)) {
-    loop_user = list_data(elmnt);
-    if (loop_user && loop_user->username[0] != '\0') {
-      if (strcmp(user->username,loop_user->username)==0) {
-#ifdef DEBUG
-        if (user->uid != loop_user->uid) {
-          out_log(LEVEL_NORMAL,"User with same name but different uid is already present !!\n");
-          out_log(LEVEL_NORMAL,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
-        }
+  if ((chtbl_lookup(&index_user_name, user->username, (void**)&data))==0)
+  {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"user cache refresh %s\n",user->username);
 #endif
-        /* found, we overwrite it */
-        memcpy(loop_user,user,sizeof(wzd_user_t));
-        return loop_user;
-      }
-    }
-  } /* for */
+    memcpy(data, user, sizeof(wzd_user_t));
+    return data;
+  }
 
   /* insert entry */
   loop_user = wzd_malloc(sizeof(wzd_user_t));
   memcpy(loop_user,user,sizeof(wzd_user_t));
-  if ((list_ins_next(&cache_user_list, cache_user_list.tail, loop_user))==0)
+  if ((chtbl_insert(&index_user_name, loop_user->username, loop_user, NULL, NULL, wzd_free))==0 &&
+       chtbl_insert(&index_user_uid, (void*)loop_user->uid, loop_user, NULL, NULL, NULL)==0)
   {
-#ifdef DEBUG
+#ifdef WZD_DBG_UGCACHE
     out_err(LEVEL_INFO,"user cache add %s\n",user->username);
 #endif
-    return list_data(cache_user_list.tail);
+    return loop_user;
   }
   wzd_free(loop_user);
 
-#ifdef DEBUG
+#ifdef WZD_DBG_UGCACHE
   out_log(LEVEL_NORMAL,"No more free space in cache\n");
   out_log(LEVEL_NORMAL,"%s:%d     user: %s\n",__FILE__,__LINE__,user->username);
 #endif
   return NULL;
 }
 
-wzd_user_t * usercache_get( predicate_user_t p, void * arg )
+wzd_user_t * usercache_getbyname( const char * name )
 {
-  ListElmt * elmnt;
-  wzd_user_t * loop_user;
+  wzd_user_t * user;
 
-  if (list_size(&cache_user_list)==0) return NULL;
+  if ((chtbl_lookup(&index_user_name, name, (void**)&user))==0) {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"user cache hit NAME %s\n",user->username);
+#endif
+    return user;
+  }
 
-  for (elmnt=cache_user_list.head; elmnt; elmnt=list_next(elmnt)) {
-    loop_user = list_data(elmnt);
-    if (loop_user && loop_user->username[0] != '\0') {
-      /* test entry */
-      if ( (*p)(loop_user,arg) ) {
-        return loop_user;
-      }
-    }
-  } /* for */
+  return NULL;
+}
+
+wzd_user_t * usercache_getbyuid( unsigned int uid )
+{
+  wzd_user_t * user;
+
+  if ((chtbl_lookup(&index_user_uid, (void*)uid, (void**)&user))==0) {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"user cache hit UID %s\n",user->username);
+#endif
+    return user;
+  }
+
+  return NULL;
+}
+
+wzd_user_t * usercache_search( predicate_user_t p, void * arg )
+{
+  wzd_user_t * user;
+
+  if ((chtbl_search(&index_user_name, (cmp_function)p, arg, (void**)&user))==0)
+  {
+    return user;
+  }
+
   return NULL;
 }
 
 void usercache_invalidate( predicate_user_t p, void * arg )
 {
-  ListElmt * elmnt;
-  wzd_user_t * loop_user;
-  void * data;
+  wzd_user_t * user;
 
-  if (!arg) return;
-  if (list_size(&cache_user_list)==0) return;
+  user = usercache_search( p, arg );
 
-  loop_user = list_data(cache_user_list.head);
-  if ( (*p)(loop_user,arg) ) {
-    list_rem_next(&cache_user_list, NULL, &data);
-    return;
-  }
-
-  for (elmnt=cache_user_list.head; list_next(elmnt); elmnt=list_next(elmnt)) {
-    loop_user = list_data(list_next(elmnt));
-    if (loop_user && loop_user->username[0] != '\0') {
-      /* test entry */
-      if ( (*p)(loop_user,arg) )
-        list_rem_next(&cache_user_list, elmnt, &data);
-    }
-  } /* for */
+  if (user) chtbl_remove(&index_user_uid, (void*)user->uid);
+  if (user) chtbl_remove(&index_user_name, user->username);
 }
 
 
 
 wzd_group_t * groupcache_add(wzd_group_t * group)
 {
-  ListElmt * elmnt;
   wzd_group_t * loop_group;
+  wzd_group_t * data;
 
   if (!group) return NULL;
 
-  /* we check that entry is not already present */
-  for (elmnt=cache_group_list.head; elmnt; elmnt=list_next(elmnt)) {
-    loop_group = list_data(elmnt);
-    if (loop_group && loop_group->groupname[0] != '\0') {
-      if (strcmp(group->groupname,loop_group->groupname)==0) {
-#ifdef DEBUG
-        if (group->gid != loop_group->gid) {
-          out_log(LEVEL_NORMAL,"Group with same name but different gid is already present !!\n");
-          out_log(LEVEL_NORMAL,"%s:%d     group: %s\n",__FILE__,__LINE__,group->groupname);
-        }
+  if ((chtbl_lookup(&index_group_name, group->groupname, (void**)&data))==0)
+  {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"group cache refresh %s\n",group->groupname);
 #endif
-        /* found, we overwrite it */
-        memcpy(loop_group,group,sizeof(wzd_group_t));
-        return loop_group;
-      }
-    }
-  } /* for */
+    memcpy(data, group, sizeof(wzd_group_t));
+    return data;
+  }
 
   /* insert entry */
   loop_group = wzd_malloc(sizeof(wzd_group_t));
   memcpy(loop_group,group,sizeof(wzd_group_t));
-  if ((list_ins_next(&cache_group_list, cache_group_list.tail, loop_group))==0)
+  if ((chtbl_insert(&index_group_name, loop_group->groupname, loop_group, NULL, NULL, wzd_free))==0 &&
+       chtbl_insert(&index_group_gid, (void*)loop_group->gid, loop_group, NULL, NULL, NULL)==0)
   {
-#ifdef DEBUG
+#ifdef WZD_DBG_UGCACHE
     out_err(LEVEL_INFO,"group cache add %s\n",group->groupname);
 #endif
-    return list_data(cache_group_list.tail);
+    return loop_group;
   }
-
   wzd_free(loop_group);
-#ifdef DEBUG
+
+#ifdef WZD_DBG_UGCACHE
   out_log(LEVEL_NORMAL,"No more free space in cache\n");
   out_log(LEVEL_NORMAL,"%s:%d     group: %s\n",__FILE__,__LINE__,group->groupname);
 #endif
   return NULL;
 }
 
-wzd_group_t * groupcache_get( predicate_group_t p, void * arg )
+wzd_group_t * groupcache_getbyname( const char * name )
 {
-  ListElmt * elmnt;
-  wzd_group_t * loop_group;
+  wzd_group_t * group;
 
-  if (list_size(&cache_group_list)==0) return NULL;
+  if ((chtbl_lookup(&index_group_name, name, (void**)&group))==0) {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"group cache hit NAME %s\n",group->groupname);
+#endif
+    return group;
+  }
 
-  for (elmnt=cache_group_list.head; elmnt; elmnt=list_next(elmnt)) {
-    loop_group = list_data(elmnt);
-    if (loop_group && loop_group->groupname[0] != '\0') {
-      /* test entry */
-      if ( (*p)(loop_group,arg) ) {
-        return loop_group;
-      }
-    }
-  } /* for */
+  return NULL;
+}
+
+wzd_group_t * groupcache_getbygid( unsigned int gid )
+{
+  wzd_group_t * group;
+
+  if ((chtbl_lookup(&index_group_gid, (void*)gid, (void**)&group))==0) {
+#ifdef WZD_DBG_UGCACHE
+    out_err(LEVEL_INFO,"group cache hit GID %s\n",group->groupname);
+#endif
+    return group;
+  }
+
+  return NULL;
+}
+
+wzd_group_t * groupcache_search( predicate_group_t p, void * arg )
+{
+  wzd_group_t * group;
+
+  if ((chtbl_search(&index_group_name, (cmp_function)p, arg, (void**)&group))==0)
+  {
+    return group;
+  }
+
   return NULL;
 }
 
 void groupcache_invalidate( predicate_group_t p, void * arg )
 {
-  ListElmt * elmnt;
-  wzd_group_t * loop_group;
-  void * data;
+  wzd_group_t * group;
 
-  if (!arg) return;
-  if (list_size(&cache_group_list)==0) return;
+  group = groupcache_search( p, arg );
 
-  loop_group = list_data(cache_group_list.head);
-  if ( (*p)(loop_group,arg) ) {
-    list_rem_next(&cache_group_list, NULL, &data);
-    return;
-  }
-
-  for (elmnt=cache_group_list.head; list_next(elmnt); elmnt=list_next(elmnt)) {
-    loop_group = list_data(list_next(elmnt));
-    if (loop_group && loop_group->groupname[0] != '\0') {
-      /* test entry */
-      if ( (*p)(loop_group,arg) )
-        list_rem_next(&cache_user_list, elmnt, &data);
-    }
-  } /* for */
+  if (group) chtbl_remove(&index_group_gid, (void*)group->gid);
+  if (group) chtbl_remove(&index_group_name, group->groupname);
 }
 

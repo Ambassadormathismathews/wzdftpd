@@ -1,3 +1,8 @@
+2004-12-06  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: user cache and group cache changed for double-indexed hash
+	tables (name and uid)
+
 2004-12-02  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: context_list changed to be a real dynamic list, as well as

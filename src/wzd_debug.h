@@ -85,6 +85,9 @@ void fd_dump(void);
 /* debug file cache */
 /*#define WZD_DBG_CACHE*/
 
+/* debug users/groups cache */
+/*#define WZD_DBG_UGCACHE*/
+
 /* debug cookies parsing code */
 /*#define WZD_DBG_COOKIES*/
 

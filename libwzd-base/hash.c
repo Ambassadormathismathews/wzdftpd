@@ -58,11 +58,11 @@ unsigned int hash_str(const char *key)
 }
 
 
-int chtbl_init(CHTBL *htab, int containers, int (*h)(const void*),
+int chtbl_init(CHTBL *htab, unsigned int containers, unsigned int (*h)(const void*),
     int (*match)(const void*, const void*),
     void (*ffree)(void*))
 {
-  int i;
+  unsigned int i;
 
   if ((htab->table = (List*)malloc(containers * sizeof(List))) == NULL)
     return -1;
@@ -83,7 +83,7 @@ int chtbl_init(CHTBL *htab, int containers, int (*h)(const void*),
 
 void chtbl_destroy(CHTBL *htab)
 {
-  int i;
+  unsigned int i;
 
   for (i=0; i<htab->containers; i++)
   {
@@ -111,7 +111,7 @@ void chtbl_destroy(CHTBL *htab)
 int chtbl_insert(CHTBL *htab, const void *key, void *data, htrigger_function fcn, hfree free_key, hfree free_element)
 {
   CHTBL_Elmnt *entry;
-  int index;
+  unsigned int index;
   int ret;
 
   /* already present ? */
@@ -140,7 +140,7 @@ int chtbl_remove(CHTBL *htab, const void *key)
 {
   ListElmt *prec, *element;
   CHTBL_Elmnt *entry;
-  int index;
+  unsigned int index;
 
   index = htab->h(key) % htab->containers;
 
@@ -167,7 +167,7 @@ int chtbl_lookup(const CHTBL *htab, const void *key, void **data)
 {
   ListElmt *element;
   CHTBL_Elmnt *entry;
-  int index;
+  unsigned int index;
 
   index = htab->h(key) % htab->containers;
 
@@ -188,7 +188,7 @@ int chtbl_change(const CHTBL *htab, const void *key, void *data)
 {
   ListElmt *element;
   CHTBL_Elmnt *entry;
-  int index;
+  unsigned int index;
   int ret;
 
   index = htab->h(key) % htab->containers;
@@ -216,3 +216,31 @@ int chtbl_insert_or_change(CHTBL *htab, const void *key, void *data, htrigger_fu
   }
   return 0;
 }
+
+int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), const void *arg, void **data)
+{
+  unsigned int i;
+  void * test_data;
+
+  for (i=0; i<htab->containers; i++)
+  {
+    CHTBL_Elmnt *tbl_elmnt;
+    List * list;
+    ListElmt * elmnt;
+
+    list = &htab->table[i];
+
+    for (elmnt=list_head(list); elmnt; elmnt=list_next(elmnt)) {
+      tbl_elmnt = list_data(elmnt);
+      if (!tbl_elmnt) continue;
+      test_data = tbl_elmnt->data;
+      if (test_data && (*match)(test_data, arg)) {
+        if (data) *data = test_data;
+        return 0;
+      }
+    }
+  }
+
+  return 1;
+}
+
