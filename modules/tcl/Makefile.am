@@ -6,4 +6,5 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src $(WZD_TCL_INCLUDES)
 lib_LTLIBRARIES = libwzd_tcl.la
 
 libwzd_tcl_la_SOURCES = libwzd_tcl.c
-libwzd_tcl_la_LDFLAGS = -no-undefined -avoid-version -module -L../../src/ -L../../src/.libs/ -lwzd_core $(WZD_TCL_LIBS)
+libwzd_tcl_la_LIBADD = $(top_srcdir)/src/libwzd_core.la
+libwzd_tcl_la_LDFLAGS = -no-undefined -avoid-version -module $(WZD_TCL_LIBS)

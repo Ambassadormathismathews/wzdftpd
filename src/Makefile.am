@@ -111,7 +111,8 @@ nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
 wzdftpd_DEPENDENCIES = libwzd_core.la
 
-wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd_core $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
+wzdftpd_LDADD = libwzd_core.la
+wzdftpd_LDFLAGS = $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
