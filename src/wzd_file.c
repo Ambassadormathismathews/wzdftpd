@@ -110,6 +110,7 @@ typedef struct
 
 #include "wzd_structs.h"
 
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_file.h"
@@ -438,6 +439,8 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
     return unlink(permfile);
   }
 
+  WZD_MUTEX_LOCK(SET_MUTEX_DIRINFO);
+
   fp = fopen(permfile,"w"); /* overwrite any existing file */
   if (!fp) return -1;
 
@@ -483,6 +486,8 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 
   /* force cache update */
   wzd_cache_update(permfile);
+
+  WZD_MUTEX_UNLOCK(SET_MUTEX_DIRINFO);
 
   return 0;
 }

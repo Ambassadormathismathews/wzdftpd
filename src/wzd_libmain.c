@@ -34,6 +34,7 @@
 
 #include "wzd_libmain.h"
 #include "wzd_log.h"
+#include "wzd_mutex.h"
 #endif /* WZD_USE_PCH */
 
 wzd_config_t *  mainConfig;
@@ -42,6 +43,14 @@ static int _wzd_server_uid;
 
 wzd_mutex_t	* limiter_mutex;
 wzd_mutex_t	* server_mutex = NULL;
+
+wzd_mutex_t     * mutex_set[SET_MUTEX_NUM];
+
+unsigned long mutex_set_key[SET_MUTEX_NUM] = {
+  0x22005400,
+  0x22005401,
+  0x22005402,
+};
 
 time_t          server_time;
 
@@ -69,6 +78,27 @@ void libtest(void)
   out_log(LEVEL_CRITICAL,"TEST LIB OK\n");
 }
 
+int server_mutext_set_init(void)
+{
+  unsigned int i;
+
+  for (i=0; i<SET_MUTEX_NUM; i++) {
+    mutex_set[i] = wzd_mutex_create(mutex_set_key[i]);
+  }
+
+  return 0;
+}
+
+int server_mutext_set_fini(void)
+{
+  unsigned int i;
+
+  for (i=0; i<SET_MUTEX_NUM; i++) {
+    wzd_mutex_destroy(mutex_set[i]);
+  }
+
+  return 0;
+}
 
 /** called when SIGHUP received, need to restart the main server
  * (and re-read config file)

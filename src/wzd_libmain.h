@@ -27,11 +27,28 @@
 
 #include "wzd_mutex.h"
 
+typedef enum {
+  SET_MUTEX_GLOBAL=0,
+
+  SET_MUTEX_LIMITER,
+  SET_MUTEX_DIRINFO,
+
+  SET_MUTEX_NUM /* must be last */
+} wzd_set_mutext_t;
+
 WZDIMPORT extern wzd_mutex_t * limiter_mutex;
 WZDIMPORT extern wzd_mutex_t * server_mutex;
 WZDIMPORT extern time_t server_time;
+WZDIMPORT extern wzd_mutex_t * mutex_set[SET_MUTEX_NUM];
 
 void server_restart(int signum);
+
+#define WZD_MUTEX_LOCK(x) wzd_mutex_lock(mutex_set[x])
+#define WZD_MUTEX_UNLOCK(x) wzd_mutex_unlock(mutex_set[x])
+
+
+int server_mutext_set_init(void);
+int server_mutext_set_fini(void);
 
 wzd_config_t * getlib_mainConfig(void);
 void setlib_mainConfig(wzd_config_t *);

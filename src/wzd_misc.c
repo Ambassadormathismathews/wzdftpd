@@ -92,6 +92,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
