@@ -453,9 +453,9 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
       }
       (void)fwrite(buffer,strlen(buffer),1,fp);
     } else { /* not a link */
+      has_spaces = (strchr( (char*)file_cur->filename, ' ') != NULL);
       /* first write owner if available */
       if (strlen(file_cur->owner)>0 || strlen(file_cur->group)>0) {
-        has_spaces = (strchr( (char*)file_cur->filename, ' ') != NULL);
         if (has_spaces)
           snprintf(buffer,sizeof(buffer),"owner\t'%s'\t%s\t%s\t%lo\n",
               file_cur->filename,file_cur->owner,file_cur->group,file_cur->permissions);
