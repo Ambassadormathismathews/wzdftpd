@@ -12,7 +12,9 @@
 
 /* other rights - should not be used directly ! */
 #define RIGHT_CWD       0x00010000
-#define RIGHT_RNFR      0x00020000
+#define RIGHT_MKDIR     0x00020000
+#define RIGHT_RMDIR     0x00040000
+#define RIGHT_RNFR      0x00200000
 
 typedef unsigned long wzd_perm_t;
 
