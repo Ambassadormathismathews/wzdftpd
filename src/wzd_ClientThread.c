@@ -380,14 +380,18 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
     context->pasvsock = -1;
   }
   if (context->datafd != (fd_t)-1) {
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     /* if TLS, shutdown TLS before closing data connection */
     tls_close_data(context);
+#endif
     socket_close(context->datafd);
     FD_UNREGISTER(context->datafd,"Client data fd");
   }
   context->datafd = -1;
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   /* if TLS, shutdown TLS before closing control connection */
   tls_free(context);
+#endif
   socket_close(context->controlfd);
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
