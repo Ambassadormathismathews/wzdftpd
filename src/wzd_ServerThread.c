@@ -1573,7 +1573,6 @@ void serverMainThreadExit(int retcode)
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
-  wzd_shm_free(mainConfig_shm);
 #if defined(_MSC_VER)
   WSACleanup();
 #endif

@@ -210,6 +210,7 @@ int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset)
 /** destroys shm */
 void wzd_shm_free(wzd_shm_t * shm)
 {
+  if (shm)
     UnmapViewOfFile(shm->handle);
 }
 

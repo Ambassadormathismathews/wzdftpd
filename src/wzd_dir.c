@@ -77,6 +77,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   int ret;
   struct stat st;
   unsigned short sorted = 0;
+  unsigned long watchdog = 0;
 
 #ifndef _MSC_VER
   DIR * dir;
@@ -133,6 +134,11 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   while (!finished) {
     dir_filename = fileData.cFileName;
 #endif
+
+    if (watchdog++ > 65535) {
+      out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open\n");
+      return NULL;
+    }
 
   /* XXX remove hidden files and special entries '.' '..' */
 
@@ -223,6 +229,11 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
     while (vfs)
     {
+      if (watchdog++ > 65535) {
+        out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open (in vfs)\n");
+        return NULL;
+      }
+
       entry = NULL;
       ptr = vfs_replace_cookies(vfs->virtual_dir,context);
       if (!ptr) {
@@ -270,6 +281,11 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     itp = NULL;
     while (it)
     {
+      if (watchdog++ > 65535) {
+        out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open (in symlinks check)\n");
+        return NULL;
+      }
+
       if (it->kind == FILE_LNK)
       {
         entry = it;

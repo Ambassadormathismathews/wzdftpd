@@ -7,7 +7,7 @@
 [Setup]
 
 AppName=wzdftpd
-AppVerName=wzdftpd 0.4cvs-20040605
+AppVerName=wzdftpd debug 0.4cvs-20040605
 AppPublisher=pollux
 AppPublisherURL=http://www.wzdftpd.net/
 AppSupportURL=http://www.wzdftpd.net/
@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.4cvs-20040605
+OutputBaseFilename=wzdftpd-debug-0.4cvs-20040605
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -38,8 +38,8 @@ Name: "{app}\tools"
 
 [Files]
 
-Source: ..\release\wzdftpd.exe; DestDir: {app}; Flags: ignoreversion
-Source: ..\release\libwzd.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\debug\wzdftpd.exe; DestDir: {app}; Flags: ignoreversion
+Source: ..\debug\libwzd.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\iconv\bin\libiconv-2.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: ignoreversion
@@ -58,16 +58,16 @@ Source: ..\..\src\wzd.pem; DestDir: {app}; Flags: onlyifdoesntexist ignoreversio
 Source: ..\wzd.cfg; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 
 
-Source: ..\backends\plaintext\release\libwzd_plaintext.dll; DestDir: {app}\backends; Flags: ignoreversion
+Source: ..\backends\plaintext\debug\libwzd_plaintext.dll; DestDir: {app}\backends; Flags: ignoreversion
 Source: ..\users; DestDir: {app}; Flags: onlyifdoesntexist uninsneveruninstall
 
-Source: ..\modules\perl\release\libwzd_perl.dll; DestDir: {app}\modules; Flags: ignoreversion
-Source: ..\modules\sfv\release\libwzd_sfv.dll; DestDir: {app}\modules; Flags: ignoreversion
-Source: ..\modules\tcl\release\libwzd_tcl.dll; DestDir: {app}\modules; Flags: ignoreversion
+Source: ..\modules\perl\debug\libwzd_perl.dll; DestDir: {app}\modules; Flags: ignoreversion
+Source: ..\modules\sfv\debug\libwzd_sfv.dll; DestDir: {app}\modules; Flags: ignoreversion
+Source: ..\modules\tcl\debug\libwzd_tcl.dll; DestDir: {app}\modules; Flags: ignoreversion
 
-Source: ..\tools\siteconfig\release\siteconfig.exe; DestDir: {app}\tools; Flags: ignoreversion
-Source: ..\tools\siteuptime\release\siteuptime.exe; DestDir: {app}\tools; Flags: ignoreversion
-Source: ..\tools\sitewho\release\sitewho.exe; DestDir: {app}\tools; Flags: ignoreversion
+Source: ..\tools\siteconfig\debug\siteconfig.exe; DestDir: {app}\tools; Flags: ignoreversion
+Source: ..\tools\siteuptime\debug\siteuptime.exe; DestDir: {app}\tools; Flags: ignoreversion
+Source: ..\tools\sitewho\debug\sitewho.exe; DestDir: {app}\tools; Flags: ignoreversion
 
 ;Source: wzdftpd\*; DestDir: {app}; Flags: ignoreversion recursesubdirs
 

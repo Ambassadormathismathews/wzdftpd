@@ -96,6 +96,7 @@ typedef enum {
   COOKIE_CYAN,
   COOKIE_WHITE,
 
+  COOKIE_CONNECTED_MAX,
   COOKIE_CONNECTED_USERS,
 
   COOKIE_TOTAL_DL,
@@ -304,6 +305,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_BW}total_ul2	BEGIN(INITIAL); return COOKIE_TOTAL_UL2;
 <sc_cook>{C_BW}total_ul		BEGIN(INITIAL); return COOKIE_TOTAL_UL;
 
+<sc_cook>{C_CONN}maxusers	BEGIN(INITIAL); return COOKIE_CONNECTED_MAX;
 <sc_cook>{C_CONN}users		BEGIN(INITIAL); return COOKIE_CONNECTED_USERS;
 
 <sc_cook>{C_FILE}crc		BEGIN(INITIAL); return COOKIE_FILECRC;
@@ -727,6 +729,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
       convert=0;
       break;
 /*** Connecte users cookies ***/
+    case COOKIE_CONNECTED_MAX:
+      snprintf(internalbuffer,IBUFSIZE,"%d",mainConfig->max_threads);
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_CONNECTED_USERS:
       get_cookie_format(yytext,&padding);
       {

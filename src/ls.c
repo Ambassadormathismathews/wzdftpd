@@ -105,6 +105,7 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
   time_t timeval;
   struct tm *ntime;
   int i;
+  unsigned long watchdog=0;
 
   if (!directory || strlen(directory)<1) return 0;
 
@@ -128,6 +129,16 @@ int list(unsigned int sock,wzd_context_t * context,list_type_t format,char *dire
 
   while ( (file = dir_read(dir,context)) )
   {
+    if (watchdog++ > 65535) {
+      out_log(LEVEL_HIGH, "watchdog: detected infinite loop in list()\n");
+      /* flush buffer ! */
+      list_call_wrapper(sock, context, NULL, send_buffer, &send_buffer_len, callback);
+      dir_close(dir);
+
+      return 1;
+    }
+
+
     if (file->filename[0] == '.' && !(format & LIST_SHOW_HIDDEN)) continue;
     if (mask && !list_match(file->filename,mask)) continue;
 
