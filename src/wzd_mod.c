@@ -312,10 +312,34 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   FILE *command_output;
   unsigned int l_command;
   protocol_handler_t * proto;
+  char *real_command, *ptr, *first_args;
 
   if (!hook || !hook->external_command) return 1;
   l_command = strlen(hook->external_command);
   if (l_command>=1022) return 1;
+
+  /* do we have args specified in command ? */
+  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
+  ptr = buffer;
+  real_command = read_token(buffer, &ptr);
+  if (!read_token) return 1;
+  first_args = strtok_r(NULL, "\r\n", &ptr);
+  if (first_args) {
+    if (args) {
+      int l;
+      /* add command line args to permanent args */
+      if (strlen(args) + strlen(hook->external_command) >= sizeof(buffer)+1) return 1;
+      /* insert space if not present */
+      l = strlen(first_args);
+      if (first_args[l-1] != ' ') {
+        first_args[l++] = ' ';
+        first_args[l++] = '\0';
+      }
+      strlcat(first_args, args, sizeof(buffer));
+    }
+    args = first_args;
+  }
+
   /* replace cookies in args */
   {
     wzd_context_t * context = GetMyContext();
@@ -324,7 +348,10 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
 
     cookie_parse_buffer(args, user, group, context, buffer_args, sizeof(buffer_args));
   }
-  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
+/*  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));*/
+  /* already done by read_token */
+  l_command = strlen(buffer);
+  
   while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
     buffer[--l_command] = '\0';
   _reply_code = code;

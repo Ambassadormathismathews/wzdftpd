@@ -1,3 +1,8 @@
+2004-06-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: arguments not passed to custom site commands
+	* bugfix: ABOR command leaves files unclosed, and non-RFC reply
+
 2004-05-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: all users created with same uid

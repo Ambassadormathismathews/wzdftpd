@@ -113,7 +113,7 @@ void ascii_lower(char * s, unsigned int length);
  * only whitespaces, or if quotes are unbalanced
  *
  * Read next token separated by a whitespace, except if string begins
- * with a ´ or ", in this case it searches the matching character.
+ * with a ' or ", in this case it searches the matching character.
  * Note: input string is modified as a \0 is written.
  */
 char * read_token(char *s, char **endptr);

@@ -203,7 +203,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       user->stats.bytes_dl_total += n;
       if (user->ratio)
         user->credits -= n;
-      context->idle_time_data_start = time(NULL);
+      context->idle_time_data_start = server_time;
     } else { /* end */
       file_close(context->current_action.current_file, context);
       FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
@@ -234,7 +234,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 
       context->current_action.token = TOK_UNKNOWN;
-      context->idle_time_start = time(NULL);
+      context->idle_time_start = server_time;
     }
     break;
   case TOK_STOR:
@@ -256,7 +256,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       user->stats.bytes_ul_total += n;
       if (user->ratio)
         user->credits += (user->ratio * n);
-      context->idle_time_data_start = time(NULL);
+      context->idle_time_data_start = server_time;
     } else { /* consider it is finished */
       file_unlock(context->current_action.current_file);
       file_close(context->current_action.current_file,context);
@@ -292,7 +292,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 
       context->current_action.token = TOK_UNKNOWN;
-      context->idle_time_start = time(NULL);
+      context->idle_time_start = server_time;
     }
     break;
   }

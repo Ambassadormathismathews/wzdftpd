@@ -2065,44 +2065,52 @@ int do_abor(char *name, char *arg, wzd_context_t * context)
 
 /*      if (context->pid_child) kill(context->pid_child,SIGTERM);
       context->pid_child = 0;*/
-  if (context->pasvsock) {
+  if (context->pasvsock && context->datafd != context->pasvsock) {
     socket_close(context->pasvsock);
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
     context->pasvsock=-1;
   }
   if (context->current_action.current_file) {
+    /* transfer aborted, we should send a 426 */
+    ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
     /** \bug FIXME XXX TODO
      * the two following sleep(5) are MANDATORY
      * the reason is unknown, but seems to be link to network
      * (not lock)
+     * Perhaps it was due to the missing 426 reply ?
      */
 #ifndef _MSC_VER
-    sleep(5);
+    sleep(1);
 #else
-    Sleep(5000);
+    Sleep(1000);
 #endif
-    if (context->current_action.token == TOK_STOR) {
+    if (context->current_action.token == TOK_STOR || context->current_action.token == TOK_RETR) {
       file_unlock(context->current_action.current_file);
       file_close(context->current_action.current_file,context);
-      /* send events here allow sfv checker to mark file as bad if
-       * partially uploaded
-       */
-      FORALL_HOOKS(EVENT_POSTUPLOAD)
-        typedef int (*upload_hook)(unsigned long, const char*, const char *);
-      if (hook->hook)
-        ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-      END_FORALL_HOOKS
+      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
+      if (context->current_action.token == TOK_STOR) {
+        /* send events here allow sfv checker to mark file as bad if
+         * partially uploaded
+         */
+        FORALL_HOOKS(EVENT_POSTUPLOAD)
+          typedef int (*upload_hook)(unsigned long, const char*, const char *);
+          if (hook->hook)
+            ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
+        END_FORALL_HOOKS
+      }
     }
     context->current_action.current_file = 0;
     context->current_action.bytesnow = 0;
     context->current_action.token = TOK_UNKNOWN;
     context->state = STATE_COMMAND;
     data_close(context);
+    if (context->pasvsock)
+      context->pasvsock = -1;
 #ifndef _MSC_VER
-    sleep(5);
+    sleep(1);
 #else
-    Sleep(5000);
+    Sleep(1000);
 #endif
   }
   ret = send_message(226,context);
