@@ -510,7 +510,12 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
   if (cmd[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
   if (wanted_path) {
-    if (wanted_path[0]!='/') {
+#ifndef _MSC_VER
+    if (wanted_path[0]!='/')
+#else
+    if (wanted_path[0]!='/' && wanted_path[1]!=':')
+#endif
+	{
       return -1; /* we need absolute path, but it doesn't begin with / */
     } else {
       strcpy(cmd,wanted_path);

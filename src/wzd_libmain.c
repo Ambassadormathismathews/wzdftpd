@@ -34,6 +34,7 @@
 
 wzd_config_t *  mainConfig;
 wzd_context_t * context_list;
+int wzd_server_uid;
 
 wzd_config_t * getlib_mainConfig(void)
 { return mainConfig; }
@@ -46,6 +47,12 @@ wzd_context_t * getlib_contextList(void)
 
 void setlib_contextList(wzd_context_t *c)
 { context_list = c; }
+
+int getlib_server_uid(void)
+{ return wzd_server_uid; }
+
+void setlib_server_uid(int uid)
+{ wzd_server_uid = uid; }
 
 void libtest(void)
 {

@@ -131,7 +131,6 @@ int include_stack_ptr=0;
 wzd_config_t tempConfig;
 
 extern wzd_cronjob_t * crontab;
-extern unsigned int wzd_server_uid;
 
 %}
 
@@ -1449,6 +1448,7 @@ int cfg_read_server_uid(void)
   unsigned int token;
   unsigned long l;
   char *ptr;
+  int wzd_server_uid;
 
   token = yylex();
   if (token!='=') {
@@ -1461,6 +1461,7 @@ int cfg_read_server_uid(void)
     errno = 0;
     l = strtoul(yytext,(char**)&ptr, 0);
     wzd_server_uid = (unsigned int)l;
+    setlib_server_uid(wzd_server_uid);
     return 0;
 #ifndef WIN32
   case CFG_ID:
@@ -1472,6 +1473,7 @@ int cfg_read_server_uid(void)
 	return 1;
       }
       wzd_server_uid = p->pw_uid;
+	  setlib_server_uid(wzd_server_uid);
       return 0;
     }
 #endif

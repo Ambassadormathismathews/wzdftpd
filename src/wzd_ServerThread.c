@@ -121,7 +121,7 @@ wzd_cronjob_t	* crontab;
 
 /*time_t server_start;*/
 
-unsigned int wzd_server_uid;
+/*unsigned int wzd_server_uid;*/
 
 short created_shm=0;
 
@@ -1172,8 +1172,8 @@ void serverMainThreadProc(void *arg)
   {
     /* effective uid if 0 if run as root or setuid */
     if (geteuid() == 0) {
-      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",wzd_server_uid,getuid());
-      setuid(wzd_server_uid);
+      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",getlib_server_uid(),getuid());
+      setuid(getlib_server_uid());
     }
   }
 #endif /* __CYGWIN__ */

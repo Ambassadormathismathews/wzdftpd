@@ -1,3 +1,9 @@
+2004-02-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: missing O_BINARY for permission file (visual)
+	* bugfix: remove wzd_server_uid var (causing link problems)
+	* bugfix: incomplete and progress bar not working (visual)
+
 2004-02-17  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: WZD_MODULE_CLOSE function called (if existing) before module unload

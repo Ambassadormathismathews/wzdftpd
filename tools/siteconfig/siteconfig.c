@@ -39,9 +39,6 @@
 
 unsigned long key;
 
-/* avoid bring undefined reference */
-unsigned int wzd_server_uid;
-
 wzd_config_t * config;
 wzd_context_t * context_list;
 wzd_user_t * user_list;

@@ -39,9 +39,6 @@
 
 unsigned long key;
 
-/* FIXME ... this is an unresolved symbol */
-unsigned int wzd_server_uid;
-
 #ifdef _MSC_VER /* FIXME VISUAL */
   int optind;
 #endif

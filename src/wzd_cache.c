@@ -145,6 +145,10 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   out_err(LEVEL_FLOOD,"Cache MISS %s\n",file);
 #endif
 
+#ifdef _MSC_VER
+  flags |= _O_BINARY;
+#endif
+
   fd = open(file,flags,mode);
   if (fd==-1) return NULL;
 

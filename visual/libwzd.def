@@ -55,6 +55,7 @@ EXPORTS
 	get_system_ip
 	getlib_contextList
 	getlib_mainConfig
+	getlib_server_uid
 	getMessage
 	group_ip_add
 	group_ip_inlist
@@ -65,6 +66,7 @@ EXPORTS
 	hook_call_custom
 	hook_call_external
 	hook_free
+	hook_remove
 	inet_ntop
 	inet_pton
 	init_default_messages
@@ -86,6 +88,7 @@ EXPORTS
 	module_check
 	module_free
 	module_load
+	module_unload
 	msg_tab
 	my_str_compare
 	out_err
@@ -109,6 +112,7 @@ EXPORTS
 	setkey
 	setlib_contextList
 	setlib_mainConfig
+	setlib_server_uid
 	setMessage
 	split_filename
 	str2event

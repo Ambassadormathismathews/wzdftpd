@@ -605,17 +605,20 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
       incomplete = c_incomplete(incomplete_indicator,dirname);
       /* create empty file|dir / symlink ? */
       if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
-      strcat(dir,incomplete);
+      strcat(dir,incomplete); /* XXX FIXME bad ! */
       if (!checkabspath(dir,filename,context))
       {
+#ifndef _MSC_VER
 	/* symlink ? */
 	if (symlink(dirname,filename) && errno != EEXIST)
 	{
 	  out_log(LEVEL_INFO,"Symlink creation failed (%s -> %s) %d (%s)\n",
 	      dir, filename, errno, strerror(errno));
 	}
+#else
 	/* empty file ? */
-/*	close(creat(filename,0400));*/
+	close(creat(filename,0600));
+#endif
       }
     }
   }
@@ -894,7 +897,11 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
   if (get_all_params()) return;
 
   /* do NOT comment this, we get len here ! */
+#ifndef _MSC_VER
   if (!filename || (len=strlen(filename))<2 || filename[0]!='/') return;
+#else
+  if (!filename || (len=strlen(filename))<2 || (filename[0]!='/' && filename[1]!=':')) return;
+#endif
   ptr = strrchr(filename,'/');
   len = (ptr-filename)+1; /* +1 because we want the / */
   strncpy(dir,filename,len);
@@ -1027,7 +1034,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
     } else { /* incomplete */
       snprintf(buffer,255,progressmeter,(int)percent);
 
-      strcat(dir,buffer);
+      strcat(dir,buffer); /* XXX FIXME bad ! */
       /* create empty dir ? */
       mkdir (dir,0755);
     } /* complete ? */
@@ -1185,7 +1192,7 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
   ret = _internal_sfv_check_zip(zip_file,context);
 
   length = strlen(zip_file);
-  bad = malloc(length + 4);
+  bad = malloc(length + 5);
   strncpy(bad,zip_file,length);
   memcpy(bad+length,".bad",4);
   bad[length+4] = '\0';
