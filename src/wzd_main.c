@@ -1,3 +1,13 @@
+/* Sanity check */
+#ifdef WZD_MULTIPROCESS
+#ifdef WZD_MULTITHREAD
+
+#error "You CAN'T have a multi-thread multi-process server, stupid !"
+
+#endif /* WZD_MULTITHREAD */
+#endif /* WZD_MULTIPROCESS */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +177,11 @@ int main(int argc, char **argv)
 
   /* initialize random seed */
   srand((int)(time(NULL)+0x13313043));
+
+  /* not really usefull, but will also initialize var if not used :) */
+#ifndef __CYGWIN__
+  wzd_server_uid = geteuid();
+#endif
 
   config = NULL;
   config = readConfigFile("wzd.cfg"); /* XXX */
