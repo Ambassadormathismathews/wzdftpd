@@ -27,7 +27,7 @@ CREATE TABLE users (
   username blob NOT NULL,
   userpass varchar(32) default NULL,
   rootpath blob NOT NULL,
-  uid int(10) unsigned default NULL,
+  uid int(10) unsigned NOT NULL,
   group_num int(10) unsigned default NULL,
   flags varchar(32) default NULL,
   max_ul_speed double unsigned default NULL,
@@ -45,6 +45,6 @@ CREATE TABLE users (
 --
 
 
-INSERT INTO users VALUES ('novel',NULL,'/usr/home/novel',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO users VALUES ('anonymous',NULL,'/tmp',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('novel',NULL,'/usr/home/novel',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO users VALUES ('anonymous',NULL,'/tmp',2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 
