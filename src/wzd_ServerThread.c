@@ -1338,6 +1338,10 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
+  /******** init shm *******/
+  /* do this _before_ loading config, config can use it ! */
+  vars_shm_init();
+
   if (server_switch_to_config(mainConfig))
   {
     serverMainThreadExit(-1);
@@ -1542,6 +1546,7 @@ void serverMainThreadExit(int retcode)
   tls_exit();
 #endif
   wzd_cache_purge();
+  vars_shm_free();
   utf8_end(mainConfig);
   server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);

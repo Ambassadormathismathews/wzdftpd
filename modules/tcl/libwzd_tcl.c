@@ -103,6 +103,7 @@ static int tcl_send_message_raw(ClientData data, Tcl_Interp *interp, int argc, c
 static int tcl_stat(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_vars_shm(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vars_user(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_vfs(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 
@@ -146,6 +147,7 @@ int WZD_MODULE_INIT(void)
   Tcl_CreateCommand(interp,"stat",tcl_stat,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars",tcl_vars,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_group",tcl_vars_group,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"vars_shm",tcl_vars_shm,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
@@ -191,7 +193,7 @@ static int tcl_hook_site(unsigned long event_id, wzd_context_t * context, const 
       s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
       if (!s || *s!='1') {
         if (ret != TCL_OK)
-          send_message_with_args(501,context,"Error in TCL command");
+          send_message_with_args(200,context,"Error in TCL command");
         else
           send_message_with_args(200,context,"TCL command ok");
       }
@@ -296,6 +298,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
     ret = Tcl_CreateAlias(slave, "stat", interp, "stat", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars", interp, "vars", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars_group", interp, "vars_group", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "vars_shm", interp, "vars_shm", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars_user", interp, "vars_user", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vfs", interp, "vfs", 0, NULL);
 
@@ -370,6 +373,7 @@ static int tcl_send_message(ClientData data, Tcl_Interp *interp, int argc, const
   /** \todo XXX we could format the string using argv[2,] */
 
   ptr = malloc(4096);
+  *ptr = '\0';
 
   cookie_parse_buffer(argv[1],user,group,current_context,ptr,4096);
 
@@ -489,6 +493,36 @@ static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const c
     /** \todo handle return */
     return (ret)?TCL_ERROR:TCL_OK;
 #endif
+  }
+
+  return TCL_OK;
+}
+
+static int tcl_vars_shm(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  int ret;
+  char *buffer;
+
+  if (argc <= 2) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  Tcl_ResetResult(interp);
+
+  if (!strcmp(argv[1],"get")) {
+    buffer = wzd_malloc(1024);
+
+    ret = vars_shm_get(argv[2], buffer, 1024, getlib_mainConfig());
+    if (!ret)
+      Tcl_SetResult(interp, buffer, (Tcl_FreeProc *)&wzd_free);
+    else
+    {
+      Tcl_SetResult(interp, "0", (Tcl_FreeProc *)NULL);
+      wzd_free(buffer);
+      return TCL_OK;
+    }
+  } else if (!strcmp(argv[1],"set")) {
+    ret = vars_shm_set(argv[2], (void*)argv[3], strlen(argv[3])+1, getlib_mainConfig());
+    return TCL_OK;
   }
 
   return TCL_OK;

@@ -111,6 +111,7 @@ static XS(XS_wzd_send_message);
 static XS(XS_wzd_stat);
 static XS(XS_wzd_vars);
 static XS(XS_wzd_vars_group);
+static XS(XS_wzd_vars_shm);
 static XS(XS_wzd_vars_user);
 static XS(XS_wzd_vfs);
 
@@ -322,6 +323,7 @@ static void xs_init(pTHX)
   newXS("wzd::stat", XS_wzd_stat, "wzd");
   newXS("wzd::vars", XS_wzd_vars, "wzd");
   newXS("wzd::vars_group", XS_wzd_vars_group, "wzd");
+  newXS("wzd::vars_shm", XS_wzd_vars_shm, "wzd");
   newXS("wzd::vars_user", XS_wzd_vars_user, "wzd");
   newXS("wzd::vfs", XS_wzd_vfs, "wzd");
 }
@@ -530,6 +532,7 @@ static XS(XS_wzd_send_message)
   /** \todo XXX we could format the string using argv[2,] */
 
   ptr = malloc(4096);
+  *ptr = '\0';
 
   cookie_parse_buffer(text,user,group,current_context,ptr,4096);
 
@@ -679,6 +682,49 @@ static XS(XS_wzd_vars_group)
     ret = vars_group_set(groupname,text,(void*)value,sizeof(buffer),getlib_mainConfig());
     if (!ret)
       XSRETURN_PV(buffer);
+    else
+      XSRETURN_UNDEF;
+  }
+
+  XSRETURN_UNDEF;
+}
+
+static XS(XS_wzd_vars_shm)
+{
+  char *command, *text, *value;
+  int ret;
+  char buffer[1024];
+
+  dXSARGS;
+
+  if (!current_context) XSRETURN_UNDEF;
+  if (items < 2) XSRETURN_UNDEF;
+
+  /** \todo print error message */
+  if ( ! SvPOK(ST(0)) )
+    XSRETURN_UNDEF;
+  if ( ! SvPOK(ST(1)) )
+    XSRETURN_UNDEF;
+
+  command = SvPV_nolen(ST(0));
+  text = SvPV_nolen(ST(1));
+
+  if (!strcmp(command,"get")) {
+
+    ret = vars_shm_get(text,buffer,sizeof(buffer),getlib_mainConfig());
+    if (!ret)
+      XSRETURN_PV(buffer);
+    else
+      XSRETURN_UNDEF;
+  } else if (!strcmp(command,"set")) {
+    if (items < 3) XSRETURN_UNDEF;
+    /** \todo print error message */
+    if ( ! SvPOK(ST(2)) )
+      XSRETURN_UNDEF;
+    value = SvPV_nolen(ST(2));
+    ret = vars_set(text,(void*)value,strlen(value)+1,getlib_mainConfig());
+    if (!ret)
+      XSRETURN_PV(value);
     else
       XSRETURN_UNDEF;
   }

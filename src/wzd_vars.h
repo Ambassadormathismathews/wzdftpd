@@ -25,6 +25,14 @@
 #ifndef __WZD_VARS__
 #define __WZD_VARS__
 
+struct wzd_shm_vars_t {
+  char *key;
+  void * data;
+  unsigned long datalength;
+
+  struct wzd_shm_vars_t * next_var;
+};
+
 /** fills data with varname content, max size: datalength
  * @returns 0 if ok, 1 if an error occured
  */
@@ -69,5 +77,24 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
  * @returns 0 if ok, 1 if an error occured
  */
 int vars_group_set(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
+
+void vars_shm_init(void);
+void vars_shm_free(void);
+
+/* finds shm entry corresponding to 'varname'
+ * @returns a pointer to the struct or NULL
+ */
+struct wzd_shm_vars_t * vars_shm_find(const char *varname, wzd_config_t * config);
+
+/** fills data with varname content, max size: datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+
+/** change varname with data contents size of data is datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
 
 #endif /* __WZD_VARS__ */

@@ -154,6 +154,8 @@ EXPORTS
 	vars_set
 	vars_group_get
 	vars_group_set
+	vars_shm_free
+	vars_shm_init
 	vars_user_addip
 	vars_user_delip
 	vars_user_get

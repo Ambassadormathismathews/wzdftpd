@@ -1,10 +1,12 @@
-2004-05-21  Pierre Chifflier  <pollux@wzdftpd.net>
+2004-05-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new config directive: umask, to set default files/dirs permissions
 	* feature: randomize PASV ports, hopefully it will avoid reusing same connections
+	* feature: vars_shm (API, TCL, Perl)
 	* doc: update on PERL module, server variables
 	* doc: added examples for tcl and perl
 	* bugfix: sfv module use case-sensitive file names on windows
+	* bugfix: send_message with empty message returns garbage (TCL, Perl)
 
 	* IMPORTANT: behaviour change: only file owner and siteop can delete
         file, except if you set a specific permission line in config file

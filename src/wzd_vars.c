@@ -27,6 +27,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef WIN32
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
 #include <sys/stat.h>
 
 #include "wzd_structs.h"
@@ -35,6 +45,15 @@
 
 #include "wzd_vars.h"
 #include "wzd_log.h"
+
+#include "wzd_debug.h"
+
+
+
+
+static struct wzd_shm_vars_t * _shm_vars[31] = { 0 };
+
+
 
 int vars_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
 {
@@ -563,4 +582,121 @@ int vars_group_set(const char *groupname, const char *varname, void *data, unsig
   ret = backend_mod_group("plaintext", groupname, group, mod_type);
 
   return ret;
+}
+
+
+static unsigned int _str_hash(const char *key)
+{
+  const char *p = key;
+  unsigned int h = *p;
+
+  if (h)
+    for (p += 1; *p != '\0'; p++)
+      h = (h << 5) - h + *p;
+  return h;
+}
+
+
+
+void vars_shm_init(void)
+{
+  memset(_shm_vars, 0, sizeof(_shm_vars));
+}
+
+void vars_shm_free(void)
+{
+  unsigned int i;
+  struct wzd_shm_vars_t * var, * next_var;
+
+  for (i=0; i<32; i++)
+  {
+    var = _shm_vars[i];
+    _shm_vars[i] = 0;
+
+    while (var) {
+      wzd_free(var->key);
+      wzd_free(var->data);
+
+      next_var = var->next_var;
+      wzd_free(var);
+      var = next_var;
+    }
+  }
+}
+
+/* finds shm entry corresponding to 'varname'
+ * @returns a pointer to the struct or NULL
+ */
+struct wzd_shm_vars_t * vars_shm_find(const char *varname, wzd_config_t * config)
+{
+  unsigned int hash;
+  unsigned short index;
+  struct wzd_shm_vars_t * var;
+
+  hash = _str_hash(varname);
+  index = (hash >> 7) & 31; /* take 5 bits start from the seventh, to give an index in 0 -> 31 */
+
+  var = _shm_vars[index];
+  while (var)
+  {
+    if (strcmp(var->key, varname)==0)
+      return var;
+  }
+
+  return NULL;
+}
+
+/* fills data with varname content, max size: datalength
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  struct wzd_shm_vars_t * var;
+
+  var = vars_shm_find(varname, config);
+  if (!var) return 1;
+
+  memcpy(data, var->data, MIN(datalength,var->datalength));
+
+  return 0;
+}
+
+/* change varname with data contents size of data is datalength
+ * Create varname if needed.
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+{
+  struct wzd_shm_vars_t * var;
+
+  var = vars_shm_find(varname, config);
+
+  if (!var) { /* new variable, must create it */
+    unsigned int hash;
+    unsigned short index;
+
+    hash = _str_hash(varname);
+    index = (hash >> 7) & 31; /* take 5 bits start from the seventh, to give an index in 0 -> 31 */
+
+    var = wzd_malloc(sizeof(struct wzd_shm_vars_t));
+    var->key = wzd_strdup(varname);
+    var->data = wzd_malloc(datalength);
+    memcpy(var->data, data, datalength);
+    var->datalength = datalength;
+
+    /* insertion */
+    var->next_var = _shm_vars[index];
+    _shm_vars[index] = var;
+  } else {
+    /* modification */
+    if (datalength < var->datalength)
+      memcpy(var->data, data, datalength);
+    else { /* need to realloc */
+      var->data = wzd_realloc(var->data, datalength);
+      memcpy(var->data, data, datalength);
+      var->datalength = datalength;
+    }
+  }
+
+  return 1;
 }
