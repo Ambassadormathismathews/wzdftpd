@@ -32,7 +32,7 @@ libwzd_la_SOURCES =  \
 	wzd_crontab.h	\
 	wzd_cookie_lex.l
 
-libwzd_la_LDFLAGS = -avoid-version -module -no-undefined
+libwzd_la_LDFLAGS = @PTHREAD_FLAGS@ -avoid-version -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 
@@ -94,6 +94,9 @@ install-data-hook:
 
 uninstall-hook:
 	rmdir --ignore-fail-on-non-empty @datadir@/wzdftpd/logs
+
+# them while "make clean", use CLEANFILES
+DISTCLEANFILES = wzd_init_lex.c wzd_cookie_lex.c
 
 EXTRA_DIST = CHANGELOG DOCS_XFERLOG_FORMAT KNOWN_BUGS TODO
 
