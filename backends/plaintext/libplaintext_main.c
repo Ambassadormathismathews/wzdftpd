@@ -1079,13 +1079,11 @@ fprintf(stderr,"User %s not found\n",login);
    *  is accepted */
   if (strcasecmp(loop_user->userpass,"%")==0) {
   }
-  /* TODO choose encryption func ? */
+  /* authentication is delegated to libwzd-auth */
   else {
-    found = (! checkpass_crypt(pass,loop_user->userpass));
-    if (found) {
-/*fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",loop_user->username,pass);*/
-      return -1; /* passwords do not match */
-    }
+    if (check_auth(login, pass, loop_user->userpass)==1)
+      return loop_user->uid;
+    return -1;
   }
 
   return loop_user->uid;
