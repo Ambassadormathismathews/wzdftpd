@@ -1,0 +1,8 @@
+libmysql_main.lo 
+libmysql_main.o  
+libwzdmysql.la
+Makefile
+Makefile.in
+cscope.out
+.deps
+.libs

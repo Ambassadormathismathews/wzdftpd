@@ -1,1 +1,1 @@
-SUBDIRS = plaintext
+SUBDIRS = plaintext mysql

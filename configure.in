@@ -268,7 +268,8 @@ AC_CONFIG_FILES([Makefile
                  ac-helpers/Makefile
                  backends/Makefile
                  backends/plaintext/Makefile
-                 init.d/Makefile
+                 backends/mysql/Makefile
+		 init.d/Makefile
                  init.d/wzdftpd
                  modules/Makefile
                  modules/sfv/Makefile
