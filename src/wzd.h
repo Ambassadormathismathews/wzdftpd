@@ -15,8 +15,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <netdb.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #define INVALID_SOCKET -1
 
 #if SSL_SUPPORT
@@ -128,6 +129,13 @@ typedef struct {
 
 void set_action(wzd_context_t * context, unsigned int token, const char *arg);
 
+/* macros used with options */
+#define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED	0x00000001
+
+#define	CFG_SET_DENY_ACCESS_FILES_UPLOADED(c)	(c)->server_opts |= CFG_OPT_DENY_ACCESS_FILES_UPLOADED
+
+#define	CFG_GET_DENY_ACCESS_FILES_UPLOADED(c)	( (c)->server_opts & CFG_OPT_DENY_ACCESS_FILES_UPLOADED )
+
 typedef struct {
   int		serverstop;
   wzd_backend_t	backend;
@@ -135,9 +143,13 @@ typedef struct {
   char *	logfilename;
   char *	logfilemode;
   FILE *	logfile;
+  char *	xferlog_name;
+  int		xferlog_fd;
   int		loglevel;
   char		messagefile[256]; /* useless */
   int		mainSocket;
+  unsigned char	ip[64];
+  unsigned char	dynamic_ip[64];
   int		port;
   unsigned long	pasv_low_range;
   unsigned long	pasv_up_range;
@@ -148,6 +160,7 @@ typedef struct {
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;
+  unsigned long	server_opts;
   wzd_server_stat_t	stats;
 #if SSL_SUPPORT
   char		tls_certificate[256];
@@ -200,7 +213,7 @@ extern wzd_context_t *	context_list;
 #include "ls.h"
 
 /* Version */
-#define	WZD_VERSION_NUM	"0.1rc2"
+/*#define	WZD_VERSION_NUM	"0.1rc2"*/
 
 #ifdef WZD_MULTIPROCESS
 #define	WZD_MP	" mp "
