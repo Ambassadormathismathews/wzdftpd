@@ -639,66 +639,53 @@ int waitconnect(wzd_context_t * context)
   int sock;
   int ret;
 
-  snprintf(str,64,"%d.%d.%d.%d",
-      context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-  remote_host = inet_addr(str);
-  if (remote_host == (unsigned long)-1) {
-    snprintf(str,1024,"Invalid ip address %d.%d.%d.%d in PORT",
-	context->dataip[0],context->dataip[1], context->dataip[2], context->dataip[3]);
-     ret = send_message_with_args(501,context,str);
-     return -1;
-  }
+  if (context->datafamily == WZD_INET4)
+  {
 
-  ret = send_message(150,context); /* about to open data connection */
-  sock = socket_connect(remote_host,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
-  if (sock == -1) {
+    /** \todo TODO XXX FIXME check ipv4 IP at this point ! */
+
+    ret = send_message(150,context); /* about to open data connection */
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
+    if (sock == -1) {
+      ret = send_message(425,context);
+      return -1;
+    }
+
+#ifdef SSL_SUPPORT
+    if (context->ssl.data_mode == TLS_PRIV)
+      ret = tls_init_datamode(sock, context);
+#endif
+
+  } /* context->datafamily == WZD_INET4 */
+#if defined(IPV6_SUPPORT)
+  else if (context->datafamily == WZD_INET6)
+  {
+
+    /** \todo TODO XXX FIXME check ipv6 IP at this point ! */
+
+    ret = send_message(150,context); /* about to open data connection */
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
+    if (sock == -1) {
+      out_log(LEVEL_FLOOD,"Error establishing PORT connection: %s (%d)\n",strerror(errno),errno);
+      ret = send_message(425,context);
+      return -1;
+    }
+
+#ifdef SSL_SUPPORT
+    if (context->ssl.data_mode == TLS_PRIV)
+      ret = tls_init_datamode(sock, context);
+#endif
+
+  } /* context->datafamily == WZD_INET6 */
+#endif /* IPV6_SUPPORT */
+  else
+  {
+    out_err(LEVEL_CRITICAL,"Invalid protocol %s:%d\n",__FILE__,__LINE__);
     ret = send_message(425,context);
     return -1;
   }
  
-#ifdef SSL_SUPPORT
-  if (context->ssl.data_mode == TLS_PRIV)
-    ret = tls_init_datamode(sock, context);
-#endif
- 
   return sock;
-#if 0
-  sock = context->pasvsock;
-  do {
-    FD_ZERO(&fds);
-    FD_SET(sock,&fds);
-    tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
-
-    if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
-#ifdef DEBUG
-      fprintf(stderr,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
-#endif
-      socket_close(sock);
-      send_message_with_args(501,context,"PASV timeout");
-      return -1;
-    }
-  } while (!FD_ISSET(sock,&fds));
-
-  sock = socket_accept(context->pasvsock, &remote_host, &remote_port);
-  if (sock == -1) {
-    socket_close(sock);
-    send_message_with_args(501,context,"PASV timeout");
-      return -1;
-  }
-
-#ifdef SSL_SUPPORT
-  if (context->ssl.data_mode == TLS_PRIV)
-    ret = tls_init_datamode(sock, context);
-#endif
-
-  socket_close (context->pasvsock);
-  context->pasvsock = sock;
-
-  context->datafd = sock;
-  context->datamode = DATA_PASV;
-
-  return sock;
-#endif
 }
 
 /*************** list_callback ***********************/
@@ -757,11 +744,7 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   strcpy(nullch,".");
   mask[0] = '\0';
   if (param) {
-#if 0
-#if DEBUG
-  out_err(LEVEL_FLOOD,"PARAM: '%s'\n",param);
-#endif
-#endif /* 0 */
+
     while (param[0]=='-') {
       n=1;
       while (param[n]!=' ' && param[n]!=0) {
@@ -842,29 +825,15 @@ printf("path: '%s'\n",path);
   }
 
   if (context->pasvsock < 0) { /* PORT ! */
+
+    /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
+
     sock = waitconnect(context);
     if (sock < 0) {
       /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
-#if 0
-    /* IP-check needed (FXP ?!) */
-    snprintf(cmd,2048,"%d.%d.%d.%d",
-	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-    addr = inet_addr(cmd);
-    if ((int)addr==-1) {
-      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-      ret = send_message_with_args(501,context,cmd);
-      return 1;
-    }
 
-    ret = send_message(150,context); /* about to open data connection */
-    sock = socket_connect(addr,context->dataport);
-    if (sock == -1) {
-      ret = send_message(425,context);
-      return 1;
-    }
-#endif
   } else { /* PASV ! */
     ret = send_message(150,context); /* about to open data connection */
     if ((sock=waitaccept(context)) <= 0) {
@@ -1184,9 +1153,10 @@ void do_pasv(wzd_context_t * context)
 #endif
 }
 
-/*************** do_epsv *****************************/
+/*************** do_eprt *****************************/
 void do_eprt(char *param, wzd_context_t * context)
 {
+#if defined(IPV6_SUPPORT)
   int ret;
   char sep;
   char net_prt;
@@ -1194,6 +1164,8 @@ void do_eprt(char *param, wzd_context_t * context)
   char * ptr;
   unsigned int tcp_port;
   struct hostent * host;
+  struct in_addr addr4;
+  struct in6_addr addr6;
 
   if (context->pasvsock) {
     socket_close(context->pasvsock);
@@ -1239,18 +1211,36 @@ void do_eprt(char *param, wzd_context_t * context)
   }
 
   /* resolve net_addr to context->dataip */
-  host = gethostbyname(net_addr);
-  if (!host) { ret = send_message_with_args(501,context,"Invalid host"); return; }
-  /* TODO XXX FIXME gethostbyname will NOT work without DNS server */
-  /** \todo copy address in numeric form to context->dataip,
-   * try to convert using inet_pton (provide implementation for some platforms ?)
-   * and explicitely prefix to IPv6-compatible if IPv4
-   */
+  switch (net_prt - '0') {
+  case WZD_INET4:
+    if ( (ret=inet_pton(AF_INET,net_addr,&addr4)) <= 0 )
+    {
+      ret = send_message_with_args(501,context,"Invalid host");
+      return;
+    }
+    memcpy(context->dataip,(const char *)addr4.s_addr,4);
+    break;
+  case WZD_INET6:
+    if ( (ret=inet_pton(AF_INET6,net_addr,&addr6)) <= 0 )
+    {
+      ret = send_message_with_args(501,context,"Invalid host");
+      return;
+    }
+    memcpy(context->dataip,addr6.s6_addr,16);
+    break;
+  default:
+    ret = send_message_with_args(501,context,"Invalid protocol");
+    return;
+  }
+  
 
   context->dataport = tcp_port;
-  context->datafamily = net_prt - '1';
+  context->datafamily = net_prt - '0';
 
   ret = send_message_with_args(200,context,"Command okay");
+#else /* defined(IPV6_SUPPORT) */
+  send_message(202,context);
+#endif
 }
 
 /*************** do_epsv *****************************/
@@ -1447,25 +1437,14 @@ int do_retr(char *param, wzd_context_t * context)
   bytesnow = byteslast=context->resume;
 
   if (context->pasvsock < 0) { /* PORT ! */
-    /* IP-check needed (FXP ?!) */
-    snprintf(cmd,2048,"%d.%d.%d.%d",
-	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-    addr = inet_addr(cmd);
-    if ((int)addr==-1) {
-      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-      ret = send_message_with_args(501,context,cmd);
-      return E_PORT_INVALIDIP;
-    }
 
-    /* FIXME */
-/*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
-      param, bytestot);*/
-    ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd,HARD_XFER_TIMEOUT);
-    if (sock == -1) {
-      ret = send_message(425,context);
+    /* \todo TODO IP-check needed (FXP ?!) */
+    sock = waitconnect(context);
+    if (sock < 0) {
+      /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
+
   } else { /* PASV ! */
     /* FIXME */
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
@@ -1603,26 +1582,14 @@ int do_stor(char *param, wzd_context_t * context)
   }
 
   if (context->pasvsock < 0) { /* PORT ! */
-    /* \todo TODO IP-check needed (FXP ?!) */
-    /* \todo XXX FIXME only works with IPv4 */
-    snprintf(cmd,2048,"%d.%d.%d.%d",
-	    context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-    addr = inet_addr(cmd);
-    if ((int)addr==-1) {
-      snprintf(cmd,2048,"Invalid ip address %d.%d.%d.%d in PORT",context->dataip[0], context->dataip[1], context->dataip[2], context->dataip[3]);
-      ret = send_message_with_args(501,context,cmd);
-      return E_PORT_INVALIDIP;
-    }
 
-    /* FIXME */
-/*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
-      param);*/
-    ret = send_message(150,context);
-    sock = socket_connect(addr,context->dataport,mainConfig->port,context->controlfd,HARD_XFER_TIMEOUT);
-    if (sock == -1) {
-      ret = send_message(425,context);
+    /* \todo TODO IP-check needed (FXP ?!) */
+    sock = waitconnect(context);
+    if (sock < 0) {
+      /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
+
   } else { /* PASV ! */
     /* FIXME */
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",

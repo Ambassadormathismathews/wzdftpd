@@ -586,7 +586,12 @@ static int server_add_ident_candidate(int socket_accept_fd)
 #endif
 
   /* try to open ident connection */
-  fd_ident = socket_connect(*(unsigned long*)&userip,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
+  /** \todo TODO XXX FIXME remove this hardcoded WZD_INET4 */
+#if defined(IPV6_SUPPORT)
+  fd_ident = socket_connect(userip,WZD_INET6,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
+#else
+  fd_ident = socket_connect(userip,WZD_INET4,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
+#endif
 
   if (fd_ident == -1) {
     if (errno == ECONNREFUSED) {

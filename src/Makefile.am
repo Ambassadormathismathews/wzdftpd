@@ -8,6 +8,8 @@ lib_LTLIBRARIES = libwzd.la
 
 
 libwzd_la_SOURCES =  \
+	inet_ntop.c     \
+	inet_pton.c     \
 	wzd_backend.c   \
 	wzd_backend.h   \
 	wzd_cache.c     \

@@ -268,10 +268,14 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned long remote_host, int remote_port, int localport, int fd, unsigned int timeout)
+int socket_connect(void * remote_host, int family, int remote_port, int localport, int fd, unsigned int timeout)
 {
   int sock;
-  struct sockaddr_in sai;
+  struct sockaddr *sai;
+  struct sockaddr_in sai4;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 sai6;
+#endif
   unsigned int len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
@@ -279,32 +283,88 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
   struct timeval tv;
   int save_errno;
 
-  if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
-    out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
-    return -1;
-  }
+  if (family == WZD_INET4)
+  {
+    len = sizeof(sai4);
 
-  /* See if we can get the local port we want to bind to */
-  /* If we can't, just let the computer choose a port for us */
-  sai.sin_family = AF_INET;
-  getsockname(fd,(struct sockaddr *)&sai,&len);
-  sai.sin_port = htons((unsigned short)localport);
+    if ((sock = socket(PF_INET,SOCK_STREAM,0)) < 0) {
+      out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+      return -1;
+    }
+
+    /* See if we can get the local port we want to bind to */
+    /* If we can't, just let the computer choose a port for us */
+    sai4.sin_family = AF_INET;
+    getsockname(fd,(struct sockaddr *)&sai4,&len);
+    sai4.sin_port = htons((unsigned short)localport);
 
 #ifndef WINSOCK_SUPPORT
-  ret = setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
+    ret = setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
 #endif
 
-  /* attempt to bind the socket - if it doesn't work, it is not a problem */
-  if (localport) {
-    bind(sock,(struct sockaddr *)&sai,sizeof(sai));
+    /* attempt to bind the socket - if it doesn't work, it is not a problem */
+    if (localport) {
+      bind(sock,(struct sockaddr *)&sai4,sizeof(sai4));
+    }
+
+    /* makes the connection */
+    sai4.sin_port = htons((unsigned short)remote_port);
+    sai4.sin_family = AF_INET;
+    memcpy(&sai4.sin_addr,remote_host,sizeof(remote_host));
+
+    sai = (struct sockaddr *)&sai4;
+
+  } /* family == WZD_INET4 */
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6)
+  {
+    len = sizeof(sai6);
+
+#if 0
+    {
+      char buffer[256];
+      inet_ntop(AF_INET6,remote_host,buffer,256);
+      out_log(LEVEL_FLOOD,"Trying to connect to %s : %d (localport: %d)\n",buffer,remote_port,localport);
+    }
+#endif /* 0 */
+
+    if ((sock = socket(PF_INET6,SOCK_STREAM,0)) < 0) {
+      out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+      return -1;
+    }
+
+    /* See if we can get the local port we want to bind to */
+    /* If we can't, just let the computer choose a port for us */
+    sai6.sin6_family = AF_INET6;
+    sai6.sin6_flowinfo = 0;
+    sai6.sin6_scope_id = 0;
+    getsockname(fd,(struct sockaddr *)&sai6,&len);
+    sai6.sin6_port = htons((unsigned short)localport);
+
+#ifndef WINSOCK_SUPPORT
+    ret = setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&on,sizeof(on));
+#endif
+
+    /* attempt to bind the socket - if it doesn't work, it is not a problem */
+    if (localport) {
+      bind(sock,(struct sockaddr *)&sai6,sizeof(sai6));
+    }
+
+    /* makes the connection */
+    sai6.sin6_port = htons((unsigned short)remote_port);
+    sai6.sin6_family = AF_INET6;
+    sai6.sin6_flowinfo = 0;
+    sai6.sin6_scope_id = 0;
+    memcpy(&sai6.sin6_addr,remote_host,16);
+
+    sai = (struct sockaddr *)&sai6;
+
+  } /* family == WZD_INET6 */
+#endif /* IPV6_SUPPORT */
+  else
+  {
+    return -1; /* invalid protocol */
   }
-
-  /* makes the connection */
-  sai.sin_port = htons((unsigned short)remote_port);
-  sai.sin_family = AF_INET;
-  memcpy(&sai.sin_addr,&remote_host,sizeof(remote_host));
-
-/*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
 
 #ifndef LINUX
 #ifndef WINSOCK_SUPPORT
@@ -340,47 +400,33 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
     fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
 
-    while (1)
-    {
-      FD_ZERO(&fds);
-      FD_ZERO(&efds);
-      FD_SET(sock,&fds);
-      FD_SET(sock,&efds);
-      tv.tv_sec = timeout; tv.tv_usec = 0;
-#if defined(_MSC_VER) || (defined (__CYGWIN__) && defined(WINSOCK_SUPPORT))
-      ret = select(0,NULL,&fds,&efds,&tv);
-#else
-      ret = select(sock+1,NULL,&fds,&efds,&tv);
-#endif
+    do {
+      int save_errno;
+      int sock_error;
+      int s_len;
+      if (socket_wait_to_write(sock,timeout)==0) {
+        ret = connect(sock, sai, len); save_errno = errno;
+        if (ret < 0) {
+          if (errno == EINPROGRESS) {
+            continue;
+          }
 #ifdef _MSC_VER
-      errno = WSAGetLastError();
+          errno = WSAGetLastError();
 #endif
-      save_errno = errno;
-
-      if (FD_ISSET(sock,&efds)) {
-	if (save_errno == EINTR) continue;
-	out_log(LEVEL_CRITICAL,"Error during connect: %s\n",strerror(save_errno));
-	return -1;
-      }
-      if (!FD_ISSET(sock,&fds)) /* timeout */
-      {
+          socket_close(sock);
+          return -1;
+        }
+      } else {
+        if (errno == EINPROGRESS) continue;
+        out_log(LEVEL_NORMAL,"Error waiting for connection %s\n",strerror(errno));
         socket_close(sock);
-	return -1;
+        return -1;
       }
       break;
-    } /* while (1) */
+    } while (1);
 
   } /* if (timeout) */
 
-  /* man connect(2): connectionless protocol sockets  may  use  connect  multiple
-   * times to change their association.
-   */
-  do {
-    ret = connect(sock,(struct sockaddr *)&sai, len);
-#ifdef _MSC_VER
-	errno = WSAGetLastError();
-#endif
-  } while ( (ret==-1) && (errno==EINPROGRESS));
   if (ret < 0) {
     out_log(LEVEL_FLOOD,"Connect failed %s:%d\n", __FILE__, __LINE__);
     socket_close (sock);

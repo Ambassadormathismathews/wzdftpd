@@ -29,6 +29,10 @@
 #ifndef __WZD_TYPES__
 #define __WZD_TYPES__
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include <sys/types.h>
 
 

@@ -1,3 +1,13 @@
+2004-01-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* wzd_misc.c: fix incorrect free space size reported
+	* wzd_socket.c: change socket_connect() to accept IPv6
+	* wzd_ClientThread.c: implementation of EPRT (IPv6)
+	* wzd_ServerThread.c: ident connection use same net family as control
+        connection (IPv6)
+	* configure.in: check for function inet_pton() and provides
+        replacement code if necessary
+
 2004-01-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* cookies: msg delete (remove dir_message)
