@@ -76,7 +76,7 @@ static int _trigger_user_max_dl(wzd_user_t * user);
 static int _trigger_user_max_ul(wzd_user_t * user);
 
 
-char *backend_get_version(wzd_backend_t *backend)
+char *backend_get_version(wzd_backend_def_t *backend)
 {
   char ** version_found;
 
@@ -88,7 +88,7 @@ char *backend_get_version(wzd_backend_t *backend)
   return strdup(*version_found);
 }
 
-char *backend_get_name(wzd_backend_t *backend)
+char *backend_get_name(wzd_backend_def_t *backend)
 {
   char ** backend_name;
 
@@ -100,7 +100,7 @@ char *backend_get_name(wzd_backend_t *backend)
   return strdup(*backend_name);
 }
 
-static void backend_clear_struct(wzd_backend_t *backend)
+static void backend_clear_struct(wzd_backend_def_t *backend)
 {
   if (backend->param) {
     wzd_free(backend->param);
@@ -119,6 +119,8 @@ static void backend_clear_struct(wzd_backend_t *backend)
   backend->back_mod_user = NULL;
   backend->back_mod_group = NULL;
   backend->back_commit_changes = NULL;
+  wzd_free(backend->b);
+  backend->b = NULL;
 }
 
 int backend_validate(const char *backend, const char *pred, const char *version)
@@ -178,6 +180,19 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
     out_err(LEVEL_HIGH,"dlerror: %s\n",dlerror());
     return 1;
+  }
+
+  /* search wzd_backend_init. If found, use the new interface */
+  {
+    typedef int (*backend_init_function)(wzd_backend_t*);
+
+    backend_init_function fcn;
+
+    fcn = (backend_init_function)dlsym(handle, DL_PREFIX "wzd_backend_init");
+    if (fcn) {
+      dlclose(handle);
+      return 0;
+    }
   }
 
   /* check functions */
@@ -276,6 +291,64 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
   }
 
   mainConfig->backend.handle = handle;
+
+  /* search wzd_backend_init. If found, use the new interface */
+  {
+    typedef int (*backend_init_function)(wzd_backend_t*);
+
+    backend_init_function fcn;
+    wzd_backend_t * b;
+
+    b = mainConfig->backend.b = wzd_malloc(sizeof(wzd_backend_t));
+    memset(b,0,sizeof(wzd_backend_t));
+    b->struct_version = STRUCT_BACKEND_VERSION;
+
+    mainConfig->backend.handle = handle;
+    if (backend != mainConfig->backend.name) /* strings must not overlap */
+    {
+      wzd_free(mainConfig->backend.name);
+      mainConfig->backend.name = wzd_strdup(backend);
+    }
+
+    fcn = (backend_init_function)dlsym(handle, DL_PREFIX "wzd_backend_init");
+    if (fcn) {
+      ret = (*fcn)(b);
+
+      /* compatibility layer (to be removed)
+       *   copy all fields from backend->b to backend
+       */
+      {
+        mainConfig->backend.name = b->name;
+        mainConfig->backend.back_validate_login= b->backend_validate_login;
+        mainConfig->backend.back_validate_pass= b->backend_validate_pass;
+        mainConfig->backend.back_get_user= b->backend_get_user;
+        mainConfig->backend.back_get_group= b->backend_get_group;
+        mainConfig->backend.back_find_user= b->backend_find_user;
+        mainConfig->backend.back_find_group= b->backend_find_group;
+        mainConfig->backend.back_chpass= b->backend_chpass;
+        mainConfig->backend.back_mod_user= b->backend_mod_user;
+        mainConfig->backend.back_mod_group= b->backend_mod_group;
+        mainConfig->backend.back_commit_changes= b->backend_commit_changes;
+      }
+
+      if (b->backend_init) {
+        ret = (b->backend_init)(mainConfig->backend.param);
+        if (ret) { /* backend says NO */
+          backend_clear_struct(&mainConfig->backend);
+          dlclose(handle);
+          return ret;
+        }
+      } else {
+        /* if no init function is present, we consider the module is ok */
+        ret = 0;
+      }
+
+      out_log(LEVEL_INFO,"Backend %s loaded (new interface)\n",backend);
+
+      return ret;
+    }
+  }
+
   ptr = init_fcn = (int (*)(unsigned int, unsigned int, void *))dlsym(handle,DL_PREFIX STR_INIT);
   mainConfig->backend.back_validate_login = (uid_t (*)(const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_LOGIN);
   mainConfig->backend.back_validate_pass  = (uid_t (*)(const char *, const char *, wzd_user_t *))dlsym(handle,DL_PREFIX STR_VALIDATE_PASS);

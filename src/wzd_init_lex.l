@@ -285,6 +285,7 @@ int set_default_options(void)
 
   tempConfig.backend.handle=NULL;
   tempConfig.backend.param=NULL;
+  tempConfig.backend.b=NULL;
 
   tempConfig.site_closed=0;
 

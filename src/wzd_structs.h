@@ -117,30 +117,6 @@ typedef struct limiter
   int bytes_transfered;
   float current_speed;
 } wzd_bw_limiter;
-#if 0
-/**************** COMMANDS PERMISSIONS ********************/
-typedef enum {
-  CPERM_USER,
-  CPERM_GROUP,
-  CPERM_FLAG
-} wzd_cp_t;
-
-/* opaque struct */
-typedef struct wzd_command_perm_entry_t wzd_command_perm_entry_t;
-typedef struct wzd_command_perm_t wzd_command_perm_t;
-struct wzd_command_perm_entry_t {
-  wzd_cp_t cp; 
-  char target[256];
-  struct wzd_command_perm_entry_t * next_entry;
-};
-
-struct wzd_command_perm_t {
-  char  command_name[256];
-  wzd_command_perm_entry_t * entry_list;
-  struct wzd_command_perm_t * next_perm;
-};
-#endif
-
 
 /*********************** SITE *****************************/
 
@@ -264,7 +240,9 @@ typedef struct {
   int (*back_mod_user) (const char *, wzd_user_t *, unsigned long);
   int (*back_mod_group) (const char *, wzd_group_t *, unsigned long);
   int (*back_commit_changes) (void);
-} wzd_backend_t;
+
+  struct wzd_backend_t * b;
+} wzd_backend_def_t;
 
 
 /************************ FLAGS ***************************/
@@ -502,7 +480,7 @@ typedef struct {
   time_t	server_start;
   unsigned char	serverstop;
   unsigned char	site_closed;
-  wzd_backend_t	backend;
+  wzd_backend_def_t	backend;
   int		max_threads;
   char *	logfilename;
   unsigned int	logfilemode;

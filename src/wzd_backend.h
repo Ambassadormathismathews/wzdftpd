@@ -30,6 +30,30 @@
 #include "wzd_hardlimits.h"
 #include "wzd_structs.h"
 
+#define STRUCT_BACKEND_VERSION  100
+
+typedef struct {
+  unsigned int struct_version; /* used to know which fields are
+                                  present in the struct .. */
+  char * name;
+  unsigned int version;
+
+  int (*backend_init)(const char * param);
+
+  uid_t (*backend_validate_login)(const char *, wzd_user_t *);
+  uid_t (*backend_validate_pass) (const char *, const char *, wzd_user_t *);
+  wzd_user_t * (*backend_get_user)(uid_t uid);
+  wzd_group_t * (*backend_get_group)(gid_t gid);
+  uid_t (*backend_find_user) (const char *, wzd_user_t *);
+  gid_t (*backend_find_group) (const char *, wzd_group_t *);
+  int (*backend_chpass) (const char *, const char *);
+  int (*backend_mod_user) (const char *, wzd_user_t *, unsigned long);
+  int (*backend_mod_group) (const char *, wzd_group_t *, unsigned long);
+  int (*backend_commit_changes) (void);
+
+  int (*backend_exit)(void);
+} wzd_backend_t;
+
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING		0
 #define	_USER_USERNAME		1<<0
@@ -113,8 +137,8 @@
 #define	STR_COMMIT_CHANGES	"wzd_commit_changes"
 
 
-char *backend_get_version(wzd_backend_t *backend);
-char *backend_get_name(wzd_backend_t *backend);
+char *backend_get_version(wzd_backend_def_t *backend);
+char *backend_get_name(wzd_backend_def_t *backend);
 int backend_validate(const char *backend, const char *pred, const char *version);
 
 /**
