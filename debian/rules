@@ -1,19 +1,24 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
 # Sample debian/rules that uses debhelper.
 # GNU copyright 1997 to 1999 by Joey Hess.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
 
 # These are used for cross-compiling and for saving the configure script
 # from having to guess our platform (since we know it already)
 DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-VARIANTS=notls tls dev
 
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
 	CFLAGS += -O0
@@ -24,49 +29,39 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-CFGFLAGS_tls = $(CFGFLAGS) --enable-ssl
-
-build: build-stamp
-
-build-stamp: $(foreach v,$(VARIANTS),build-stamp-$(v))
+config.status: configure
 	dh_testdir
+	# Add here commands to configure the package.
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --sysconfdir=/etc/wzdftpd --with-pam
 
-#	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
 
-	# Add here commands to compile the package.
-#	$(MAKE)
-	#/usr/bin/docbook-to-man debian/wzdftpd.sgml > wzdftpd.1
+#Architecture 
+build: build-arch build-indep
 
-	touch build-stamp
+build-arch: build-arch-stamp
+build-arch-stamp:  config.status
 
-build-stamp-dev:
-	echo "---- Building wzdftpd-dev ----"
-	touch $@
+	# Add here commands to compile the arch part of the package.
+	$(MAKE) 
+	touch build-arch-stamp
 
-build-stamp-%:
-	dh_testdir
+build-indep: build-indep-stamp
+build-indep-stamp:  config.status
 
-	echo "---- Building wzdftpd-$(*) ----"
+	# Add here commands to compile the indep part of the package.
+	#$(MAKE) doc
+	$(MAKE) -C doc
+	touch build-indep-stamp
 
-	-$(MAKE) clean
-	./configure $(CFGFLAGS_$(*)) --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --sysconfdir=/etc
-
-	# Add here commands to compile the package.
-	$(MAKE)
-	#/usr/bin/docbook-to-man debian/wzdftpd.sgml > wzdftpd.1
-
-	mv src/.libs/wzdftpd src/wzdftpd-$(*)
-	mv src/.libs/libwzd.so src/libwzd-$(*).so
-
-	touch $@
-
-clean: $(foreach v,$(VARIANTS),clean-$(v))
+clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp*
+	rm -f build-arch-stamp build-indep-stamp #CONFIGURE-STAMP#
+
+	-$(MAKE) -C doc clean
 
 	# Add here commands to clean up after the build process.
-#	-$(MAKE) distclean
+	-$(MAKE) distclean
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.sub
 endif
@@ -74,117 +69,81 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
 
+
 	dh_clean
 
-clean-%:
-	for x in preinst postinst postrm menu mime install dirs links ; do \
-	  rm -f debian/wzdftpd-$*.$$x ;\
-	done
+install: install-indep install-arch
 
-install: build
-install: install-stamp
-
-install-stamp: DH_OPTIONS=
-install-stamp: $(foreach v,$(VARIANTS),install-stamp-$(v))
-#	dh_testdir
-#	dh_testroot
-#	dh_clean -k
-#	dh_installdirs
-
-	# Add here commands to install the package into debian/wzdftpd.
-#	$(MAKE) install DESTDIR=$(CURDIR)/debian/wzdftpd
-
-install-stamp-dev: DH_OPTIONS=-pwzdftpd-dev
-install-stamp-dev: DESTDIR=$(PWD)/debian/wzdftpd-dev
-install-stamp-dev:
-
+install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -Xwzd
-	dh_installdirs
+	dh_clean -k -i
+	dh_installdirs -i
 
-	install -d $(CURDIR)/debian/wzdftpd-dev/usr/include/wzdftpd;
-	install $(CURDIR)/src/*.h $(CURDIR)/debian/wzdftpd-dev/usr/include/wzdftpd
+	# Add here commands to install the indep part of the package into
+	# debian/<package>-doc.
+	#INSTALLDOC#
+	install -m 755 -d debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
+	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
 
-	# Add here commands to install the package into debian/wzdftpd.
-#	$(MAKE) install DESTDIR=$(CURDIR)/debian/wzdftpd-$*
-#
-#	# The following lines move the tls version of site* tools to create a separate package
-#	if [ "$(*)" = "tls" ]; then \
-#	  install -d $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-#	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/siteconfig $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-#	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/siteuptime $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-#	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/sitewho $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-#	fi
-#	rm -f $(CURDIR)/debian/wzdftpd-$*/usr/bin/site*
-#
-#	# mv init.d script from /usr/etc/init.d to /etc/init.d
-#	mv $(CURDIR)/debian/wzdftpd-$*/usr/etc/init.d $(CURDIR)/debian/wzdftpd-$*/etc/
+	dh_install -i
 
-install-stamp-%: DH_OPTIONS=-pwzdftpd-$(*)
-install-stamp-%: DESTDIR=$(PWD)/debian/wzdftpd-$(*)
-install-stamp-%:
-
-	mv src/wzdftpd-$(*) src/.libs/wzdftpd
-	mv src/libwzd-$(*).so src/.libs/libwzd.so
-
+install-arch:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -Xwzd
-	dh_installdirs
+	dh_clean -k -s
+	dh_installdirs -s
 
-	# Add here commands to install the package into debian/wzdftpd.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/wzdftpd-$*
+	# Add here commands to install the arch part of the package into 
+	# debian/tmp.
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/wzdftpd
+	install -m 644 debian/*.1.gz debian/wzdftpd/usr/share/man/man1/
 
-	# The following lines move the tls version of site* tools to create a separate package
-	if [ "$(*)" = "tls" ]; then \
-	  install -d $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/siteconfig $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/siteuptime $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-	  install $(CURDIR)/debian/wzdftpd-$*/usr/bin/sitewho $(CURDIR)/debian/wzdftpd-tools/usr/bin; \
-	fi
-	rm -f $(CURDIR)/debian/wzdftpd-$*/usr/bin/site*
+	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdmysql* debian/wzdftpd-back-mysql/usr/lib/wzdftpd/backends
+	mv debian/wzdftpd/usr/lib/wzdftpd/backends/libwzdpam* debian/wzdftpd-back-pam/usr/lib/wzdftpd/backends
+	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_tcl* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
+	mv debian/wzdftpd/usr/lib/wzdftpd/modules/libwzd_sfv* debian/wzdftpd-mod-tcl/usr/lib/wzdftpd/modules
 
-	# mv init.d script from /usr/etc/init.d to /etc/init.d
-	mv $(CURDIR)/debian/wzdftpd-$*/usr/etc/init.d $(CURDIR)/debian/wzdftpd-$*/etc/
-
-
-# Build architecture-independent files here.
-binary-indep: DH_OPTIONS=-i
-binary-indep: build install
-# We have nothing to do by default.
-
-# Build architecture-dependent files here.
-binary-arch: DH_OPTIONS=-a
-binary-arch: build install
+	dh_install -s
+# Must not depend on anything. This is to be called by
+# binary-arch/binary-indep
+# in another 'make' thread.
+binary-common:
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs ChangeLog
-	dh_installdocs
+#	dh_installdocs
+	dh_installdocs -i debian/copyright
 	dh_installexamples
-#	dh_install
 #	dh_installmenu
 #	dh_installdebconf	
-#	dh_installlogrotate
+#	dh_installlogrotate	
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-#	dh_installinit
+	dh_installinit
 #	dh_installcron
 #	dh_installinfo
 	dh_installman
 	dh_link
 	dh_strip
-	dh_compress
+	dh_compress 
 	dh_fixperms
 #	dh_perl
 #	dh_python
-#	dh_makeshlibs
+	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
+# Build architecture independant packages using the common target.
+binary-indep: build-indep install-indep
+	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install 
+# Build architecture dependant packages using the common target.
+binary-arch: build-arch install-arch
+	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
+
+binary: binary-arch binary-indep
+.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch 

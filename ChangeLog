@@ -1,3 +1,10 @@
+2004-03-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* debian: debian packages restarted from scratch
+	* bugfix: removed compilations speed-ups, conflicting with openssl
+
+	* IMPORTANT: installation path changed for *.txt, and  users files
+
 2004-03-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: fixed build on visual

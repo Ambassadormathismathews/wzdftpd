@@ -40,7 +40,7 @@ pasv_high_range  = 3000
 # unix only: file where pid of server will be stored
 # (default: /var/run/wzdftpd.pid)
 # this is used by init.d script
-pid_file = @e_datadir@/@PACKAGE@/wzdftpd.pid
+#pid_file = @e_datadir@/@PACKAGE@/wzdftpd.pid
 
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
@@ -50,8 +50,8 @@ dir_message = .message
 # log file for server activity
 logfile = @e_datadir@/@PACKAGE@/logs/wzd.log
 
-# if you prefer syslog (default: yes, except for cygwin)
-#use_syslog = 1
+# set to 0 if you do not want syslog (default: 1)
+#use_syslog = 0
 
 # log file for transfered files (default: do not log)
 xferlog = @e_datadir@/@PACKAGE@/logs/xferlog

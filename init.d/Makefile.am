@@ -1,4 +1,6 @@
 
-sbindir = ${prefix}/etc/init.d
+#sbindir = ${prefix}/etc/init.d
+#
+#sbin_SCRIPTS = wzdftpd
 
-sbin_SCRIPTS = wzdftpd
+EXTRA_DIST = wzdftpd

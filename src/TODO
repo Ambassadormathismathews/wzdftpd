@@ -1,10 +1,11 @@
 ## IN PROGRESS ##
 
-- use 'rats','splint' for security audit
+- use 'rats','splint', 'pscan' for security audit
 
 '********'
-- mistake in backends/mysql/libmysql_main.c:
-    s/WZD_FINI/FCN_FINI/
+- create manpages !
+- move some files to doc/examples
+- package wzdftpd-dev
 '********'
 - modules: activate/desactivate module, remove from list
 '********'

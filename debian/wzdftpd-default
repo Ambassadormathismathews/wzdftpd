@@ -1,0 +1,10 @@
+# Defaults for wzdftpd initscript
+# sourced by /etc/init.d/wzdftpd
+# installed at /etc/default/wzdftpd by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS="-f /etc/wzdftpd/wzd.cfg"

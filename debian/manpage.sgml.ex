@@ -20,11 +20,11 @@ manpage.1: manpage.sgml
   <!ENTITY dhfirstname "<firstname>FIRSTNAME</firstname>">
   <!ENTITY dhsurname   "<surname>SURNAME</surname>">
   <!-- Please adjust the date whenever revising the manpage. -->
-  <!ENTITY dhdate      "<date>mai 28, 2003</date>">
+  <!ENTITY dhdate      "<date>mars  3, 2004</date>">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
        allowed: see man(7), man(1). -->
   <!ENTITY dhsection   "<manvolnum>SECTION</manvolnum>">
-  <!ENTITY dhemail     "<email>pollux@wzdftpd.net</email>">
+  <!ENTITY dhemail     "<email>chifflier@cpe.fr</email>">
   <!ENTITY dhusername  "unknown">
   <!ENTITY dhucpackage "<refentrytitle>WZDFTPD</refentrytitle>">
   <!ENTITY dhpackage   "wzdftpd">
@@ -125,10 +125,13 @@ manpage.1: manpage.sgml
     <para>This manual page was written by &dhusername; &dhemail; for
       the &debian; system (but may be used by others).  Permission is
       granted to copy, distribute and/or modify this document under
-      the terms of the &gnu; Free Documentation
-      License, Version 1.1 or any later version published by the Free
-      Software Foundation; with no Invariant Sections, no Front-Cover
-      Texts and no Back-Cover Texts.</para>
+      the terms of the &gnu; General Public License, Version 2 any 
+	  later version published by the Free Software Foundation.
+    </para>
+	<para>
+	  On Debian systems, the complete text of the GNU General Public
+	  License can be found in /usr/share/common-licenses/GPL.
+	</para>
 
   </refsect1>
 </refentry>

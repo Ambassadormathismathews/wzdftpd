@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH WZDFTPD SECTION "mai 28, 2003"
+.TH WZDFTPD SECTION "mars  3, 2004"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -56,5 +56,5 @@ The programs are documented fully by
 .IR "The Rise and Fall of a Fooish Bar" ,
 available via the Info system.
 .SH AUTHOR
-This manual page was written by unknown <pollux@wzdftpd.net>,
+This manual page was written by unknown <chifflier@cpe.fr>,
 for the Debian project (but may be used by others).

@@ -17,13 +17,22 @@ DESC=wzdftpd
 
 test -x $DAEMON || exit 0
 
+# Include wzdftpd defaults if available
+if [ -f /etc/default/wzdftpd ] ; then
+	. /etc/default/wzdftpd
+fi
+
+if [ -n "$CONFIG" ]; then
+  DAEMON_OPTS="$DAEMON_OPTS -f $CONFIG"
+fi
+
 set -e
 
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
 	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON
+		--exec $DAEMON -- $DAEMON_OPTS
 	echo "$NAME."
 	;;
   stop)
@@ -32,7 +41,7 @@ case "$1" in
 		--exec $DAEMON
 	echo "$NAME."
 	;;
-  #reload)
+  reload)
 	#
 	#	If the daemon can reload its config files on the fly
 	#	for example by sending it SIGHUP, do it here.
@@ -40,10 +49,10 @@ case "$1" in
 	#	If the daemon responds to changes in its config file
 	#	directly anyway, make this a do-nothing entry.
 	#
-	# echo "Reloading $DESC configuration files."
-	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
-	#	/var/run/$NAME.pid --exec $DAEMON
-  #;;
+	echo "Reloading $DESC configuration files."
+	start-stop-daemon --stop --signal 1 --quiet --pidfile \
+		/var/run/$NAME.pid --exec $DAEMON
+  	;;
   restart|force-reload)
 	#
 	#	If the "reload" option is implemented, move the "force-reload"
@@ -55,7 +64,7 @@ case "$1" in
 		/var/run/$NAME.pid --exec $DAEMON
 	sleep 1
 	start-stop-daemon --start --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
+		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
 	echo "$NAME."
 	;;
   *)

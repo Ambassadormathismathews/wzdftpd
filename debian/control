@@ -1,61 +1,104 @@
 Source: wzdftpd
 Section: net
 Priority: optional
-Maintainer: pollux <pollux@wzdftpd.net>
-Build-Depends: debhelper (>> 4.0.0), libssl-dev
-Standards-Version: 3.5.8
+Maintainer: Pierre Chifflier <chifflier@cpe.fr>
+Build-Depends: debhelper (>= 4.0.0), libssl-dev, zlib1g-dev, tcl8.4-dev, libpam0g-dev
+Standards-Version: 3.6.0
 
-Package: wzdftpd-notls
+Package: wzdftpd
 Architecture: any
-Depends: netbase (>= 2.0), ${shlibs:Depends}
-Conflicts: wzdftpd-tls
-Replaces: wzdftpd-tls
-Provides: ftp-server, wzdftpd
+Depends: ${shlibs:Depends}
+Provides: ftp-server
+Conflicts: ftp-server
+Suggests: tcl8.4, wzdftpd-doc
 Description: A portable, modular, efficient and not user-friendly ftp server
  wzdftpd is designed to run in user-mode, and to be entirely configurable using
  SITE commands (no gui !). It works on linux/win32 (use winsock for best perfs),
  supports SSL, and is multithreaded.
+ .
  Extensions can be written using modules or externals scripts.
  Features are: unix-like permissions+acls, virtual users/groups, security,
  speed, bandwith limitation (user,group,global), group admins, per command
  authorizations, ratio, etc.
+ .
  Virtual dirs/files can be defined, with restrictions on users/groups/flags.
  Users can belong to several groups, allowing to define group properties.
  wzdftpd is distributed under the terms of the GPL.
- This version does not provide any SSL function.
 
-Package: wzdftpd-tls
+Package: wzdftpd-back-pam
 Architecture: any
-Depends: netbase (>= 2.0), ${shlibs:Depends}, libssl0.9.7 | libssl0.9.6
-Conflicts: wzdftpd-notls
-Replaces: wzdftpd-notls
-Provides: ftp-server, wzdftpd
-Description: A portable, modular, efficient and not user-friendly ftp server
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Description: A portable, modular, efficient and not user-friendly ftp server (pam backend)
  wzdftpd is designed to run in user-mode, and to be entirely configurable using
  SITE commands (no gui !). It works on linux/win32 (use winsock for best perfs),
  supports SSL, and is multithreaded.
+ .
  Extensions can be written using modules or externals scripts.
  Features are: unix-like permissions+acls, virtual users/groups, security,
  speed, bandwith limitation (user,group,global), group admins, per command
  authorizations, ratio, etc.
+ .
  Virtual dirs/files can be defined, with restrictions on users/groups/flags.
  Users can belong to several groups, allowing to define group properties.
  wzdftpd is distributed under the terms of the GPL.
+ .
+ This package provides the pam backend.
 
-Package: wzdftpd-tools
+Package: wzdftpd-back-mysql
 Architecture: any
-Depends: netbase (>= 2.0), ${shlibs:Depends}, wzdftpd-tls (= ${Source-Version}) | wzdftpd-notls (= ${Source-Version})
-Description: Tools for wzdftpd
- This is a set of tools for wzdftpd (A portable, modular, efficient and not
- user-friendly ftp server).
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Suggests: mysql-server
+Description: A portable, modular, efficient and not user-friendly ftp server (Mysql backend)
+ wzdftpd is designed to run in user-mode, and to be entirely configurable using
+ SITE commands (no gui !). It works on linux/win32 (use winsock for best perfs),
+ supports SSL, and is multithreaded.
+ .
+ Extensions can be written using modules or externals scripts.
+ Features are: unix-like permissions+acls, virtual users/groups, security,
+ speed, bandwith limitation (user,group,global), group admins, per command
+ authorizations, ratio, etc.
+ .
+ Virtual dirs/files can be defined, with restrictions on users/groups/flags.
+ Users can belong to several groups, allowing to define group properties.
+ wzdftpd is distributed under the terms of the GPL.
+ .
+ This package provides the Mysql backend.
 
-Package: wzdftpd-dev
+Package: wzdftpd-mod-tcl
 Architecture: any
-Depends: ${shlibs:Depends}, libc6-dev, wzdftpd-tls (= ${Source-Version}) | wzdftpd-notls (= ${Source-Version})
-Description: Tools for wzdftpd
- wedftpd is a portable, modular, efficient and not user-friendly ftp
- server.
- This package contains the header files and libraries for developing
- with wzdftpd.
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Suggests: tcl8.4
+Description: A portable, modular, efficient and not user-friendly ftp server (TCL module)
+ wzdftpd is designed to run in user-mode, and to be entirely configurable using
+ SITE commands (no gui !). It works on linux/win32 (use winsock for best perfs),
+ supports SSL, and is multithreaded.
+ .
+ Extensions can be written using modules or externals scripts.
+ Features are: unix-like permissions+acls, virtual users/groups, security,
+ speed, bandwith limitation (user,group,global), group admins, per command
+ authorizations, ratio, etc.
+ .
+ Virtual dirs/files can be defined, with restrictions on users/groups/flags.
+ Users can belong to several groups, allowing to define group properties.
+ wzdftpd is distributed under the terms of the GPL.
+ .
+ This package provides the TCL module.
 
+Package: wzdftpd-doc
+Architecture: all
+Suggests: wzdftpd
+Section: doc
+Description: A portable, modular, efficient and not user-friendly ftp server (Documentation)
+ wzdftpd is designed to run in user-mode, and to be entirely configurable using
+ SITE commands (no gui !). It works on linux/win32 (use winsock for best perfs),
+ supports SSL, and is multithreaded.
+ .
+ Extensions can be written using modules or externals scripts.
+ Features are: unix-like permissions+acls, virtual users/groups, security,
+ speed, bandwith limitation (user,group,global), group admins, per command
+ authorizations, ratio, etc.
+ .
+ Virtual dirs/files can be defined, with restrictions on users/groups/flags.
+ Users can belong to several groups, allowing to define group properties.
+ wzdftpd is distributed under the terms of the GPL.
 

@@ -95,15 +95,20 @@ wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
-dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
+#dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
+#	file_user.txt file_group.txt  file_rules.txt  \
+#	file_users.txt  file_who.txt  file_groups.txt  \
+#	file_vfs.txt \
+#	users
+
+#sysconfdir = ${prefix}/etc/wzdftpd
+
+dist_sysconf_DATA = wzd.cfg wzd.pem \
+	file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
 	file_users.txt  file_who.txt  file_groups.txt  \
 	file_vfs.txt \
 	users
-
-#sysconfdir = ${prefix}/etc/wzdftpd
-
-dist_sysconf_DATA = wzd.cfg wzd.pem
 
 install-data-hook:
 	${INSTALL_PROGRAM} -m 775 -d @datadir@/wzdftpd/logs || true
