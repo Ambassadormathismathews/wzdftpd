@@ -543,6 +543,10 @@ int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 
 /********************* do_site_chpass **********************/
 /** chpass: [user] new_pass
+ *   siteops can change everyones password
+ *   gadmins can change the groups password
+ *   everyone can change their own password
+ *   noone can change a siteops password except himself
  */
 int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
@@ -570,6 +574,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     /* check that username exists */
     user = GetUserByName(str_tochar(username));
     str_deallocate(username);
+    username = NULL;
     if ( !user ) {
       ret = send_message_with_args(501,context,"User does not exists");
       str_deallocate(username); str_deallocate(new_pass);
@@ -594,6 +599,13 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
       str_deallocate(username); str_deallocate(new_pass);
       return 1;
     }
+  }
+  if ( (user->flags && strchr(user->flags,FLAG_SITEOP)) 
+      && me->uid != user->uid )
+  {
+    ret = send_message_with_args(501,context,"You can't change password for a siteop");
+    str_deallocate(username); str_deallocate(new_pass);
+    return 1;
   }
 
   mod_type = _USER_USERPASS;
