@@ -5,63 +5,68 @@ LIBWZD_AGE=0
 
 LT_VERSION_INFO=${LIBWZD_CURRENT}:${LIBWZD_REVISION}:${LIBWZD_AGE}
 
-#libexecdir = ${prefix}/lib
-#libdir = ${prefix}/lib
-
-#libexec_LTLIBRARIES = libwzd.la
 lib_LTLIBRARIES = libwzd.la
 
+libwzd_ladir = ${prefix}/include/wzdftpd
+
+libwzd_la_HEADERS =  \
+	wzd_action.h     \
+	wzd_backend.h    \
+	wzd_cache.h      \
+	wzd_crc32.h  	 \
+	wzd_crontab.h	 \
+	wzd_debug.h      \
+	wzd_dir.h	 \
+	wzd_file.h       \
+	wzd_hardlimits.h \
+	wzd_ip.h         \
+	wzd_libmain.h    \
+	wzd_log.h        \
+	wzd_md5.h        \
+	wzd_messages.h   \
+	wzd_misc.h       \
+	wzd_mod.h        \
+	wzd_mutex.h      \
+	wzd_perm.h       \
+	wzd_section.h    \
+	wzd_shm.h        \
+	wzd_strlcat.h    \
+	wzd_strtok_r.h   \
+	wzd_structs.h    \
+	wzd_types.h      \
+	wzd_utf8.h       \
+	wzd_vars.h       \
+	wzd_vfs.h
 
 libwzd_la_SOURCES =  \
-	inet_ntop.c     \
-	inet_pton.c     \
-	wzd_backend.c   \
-	wzd_backend.h   \
-	wzd_cache.c     \
-	wzd_cache.h     \
-	wzd_crc32.c     \
-	wzd_crc32.h  	\
-	wzd_crontab.c   \
-	wzd_crontab.h	\
-	wzd_debug.c     \
-	wzd_debug.h     \
-	wzd_dir.c	\
-	wzd_dir.h	\
-	wzd_file.c      \
-	wzd_file.h      \
-	wzd_ip.c        \
-	wzd_ip.h        \
-	wzd_libmain.c   \
-	wzd_libmain.h   \
-	wzd_log.c       \
-	wzd_log.h       \
-	wzd_md5.c       \
-	wzd_md5.h       \
-	wzd_messages.c  \
-	wzd_messages.h  \
-	wzd_misc.c      \
-	wzd_misc.h      \
-	wzd_mod.c       \
-	wzd_mod.h       \
-	wzd_mutex.c     \
-	wzd_mutex.h     \
-	wzd_perm.c      \
-	wzd_perm.h      \
-	wzd_section.c   \
-	wzd_section.h   \
-	wzd_shm.c       \
-	wzd_shm.h       \
-	wzd_strlcat.c   \
-	wzd_strlcat.h   \
-	wzd_strtok_r.c  \
-	wzd_strtok_r.h  \
-	wzd_types.h     \
-	wzd_utf8.c      \
-	wzd_utf8.h      \
-	wzd_vars.c      \
-	wzd_vars.h      \
-	wzd_vfs.c       \
-	wzd_vfs.h
+	${libwzd_la_HEADERS} \
+	inet_ntop.c      \
+	inet_pton.c      \
+	wzd_action.c     \
+	wzd_backend.c    \
+	wzd_cache.c      \
+	wzd_crc32.c      \
+	wzd_crontab.c    \
+	wzd_debug.c      \
+	wzd_dir.c	 \
+	wzd_file.c       \
+	wzd_ip.c         \
+	wzd_libmain.c    \
+	wzd_log.c        \
+	wzd_md5.c        \
+	wzd_messages.c   \
+	wzd_misc.c       \
+	wzd_mod.c        \
+	wzd_mutex.c      \
+	wzd_perm.c       \
+	wzd_section.c    \
+	wzd_shm.c        \
+	wzd_strlcat.c    \
+	wzd_strtok_r.c   \
+	wzd_utf8.c       \
+	wzd_vars.c       \
+	wzd_vfs.c
+
 
 nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
 
@@ -76,13 +81,10 @@ wzdftpd_SOURCES =    \
 	ls.h               \
 	stack.c            \
 	stack.h            \
-	wzd_action.c       \
-	wzd_action.h       \
 	wzd_ClientThread.c \
 	wzd_ClientThread.h \
 	wzd_data.c         \
 	wzd_data.h         \
-	wzd_hardlimits.h   \
 	wzd_init.h         \
 	wzd_main.c         \
 	wzd_opts.h         \
@@ -100,7 +102,6 @@ wzdftpd_SOURCES =    \
 	wzd_site_user.h    \
 	wzd_socket.c       \
 	wzd_socket.h       \
-	wzd_structs.h      \
 	wzd_tls.c          \
 	wzd_tls.h
 
@@ -109,14 +110,6 @@ nodist_wzdftpd_SOURCES = wzd_init_lex.l
 wzdftpd_LDFLAGS = -L./ -L.libs/ -lwzd $(WZD_SSL_LIBS) @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
-
-#dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
-#	file_user.txt file_group.txt  file_rules.txt  \
-#	file_users.txt  file_who.txt  file_groups.txt  \
-#	file_vfs.txt \
-#	users
-
-#sysconfdir = ${prefix}/etc/wzdftpd
 
 dist_sysconf_DATA = wzd.cfg wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \
@@ -151,5 +144,5 @@ wzd_shm.lo: wzd_shm.c
 	$(LTCOMPILE) -c -I/usr/include -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
 endif
 
-doxygen:
+doxy:
 	doxygen doxygen.cfg
