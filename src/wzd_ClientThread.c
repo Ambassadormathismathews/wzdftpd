@@ -529,15 +529,16 @@ int waitaccept(wzd_context_t * context)
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
       socket_close(sock);
-      send_message_with_args(501,context,"PASV timeout");
+/*      send_message_with_args(501,context,"PASV timeout");*/
       return -1;
     }
   } while (!FD_ISSET(sock,&fds));
 
   sock = socket_accept(context->pasvsock, remote_host, &remote_port);
   if (sock == -1) {
+    out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     socket_close(sock);
-    send_message_with_args(501,context,"PASV timeout");
+/*    send_message_with_args(501,context,"PASV timeout");*/
       return -1;
   }
 
@@ -1303,7 +1304,7 @@ int do_retr(char *param, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
       param, bytestot);*/
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) <= 0) {
+    if ((sock=waitaccept(context)) < 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
       return 1;
     }
@@ -1451,7 +1452,7 @@ int do_stor(char *param, wzd_context_t * context)
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
       param);*/
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) <= 0) {
+    if ((sock=waitaccept(context)) < 0) {
       ret = send_message_with_args(501,context,"PASV connection failed");
       return 1;
     }
