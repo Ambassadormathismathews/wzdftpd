@@ -299,6 +299,16 @@ site ginfo &lt;group&gt;
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_give'><term>
+site give &lt;user&gt; &lt;kbytes&gt;
+</term>
+<listitem>
+<para>Gives credits to user (Taken from you)</para>
+<screen>site give toto 100000</screen>
+<para>This will give around 100mb of credits to user 'toto'</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_grpadd'><term>
 site grpadd &lt;group&gt; [&lt;backend&gt;]
 </term>
@@ -529,6 +539,18 @@ site tagline [&lt;tagline&gt;]
 <screen>site tagline my new tagline</screen>
 <para>This will set your tagline to 'my new tagline'</para>
 <para>If you are a gadmin, you can only change users from your group.</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_take'><term>
+site take &lt;user&gt; &lt;kbytes&gt;
+</term>
+<listitem>
+<para>Removes credits from user (this is not the opposite from <link
+linkend='site_give'>site give</link>, you are NOT granted from the same
+account)</para>
+<screen>site take toto 100000</screen>
+<para>This will remove 100mb of credits from user 'toto'</para>
 </listitem>
 </varlistentry>
 
