@@ -16,7 +16,7 @@ DefaultDirName={pf}\wzdftpd
 DefaultGroupName=wzdftpd
 
 
-OutputBaseFilename=wzdftpd-0.3cvs
+OutputBaseFilename=wzdftpd-0.3cvs-4
 ShowLanguageDialog=yes
 
 [Tasks]
@@ -40,6 +40,8 @@ Name: "{app}\ftproot"
 Source: ..\release\wzdftpd.exe; DestDir: {app}; Flags: ignoreversion
 Source: ..\release\libwzd.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\gnu_regex_dist\gnu_regex.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
+Source: ..\openssl\lib\libeay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
+Source: ..\openssl\lib\ssleay32.dll; DestDir: {app}; Flags: onlyifdoesntexist ignoreversion
 Source: ..\..\src\file_*.txt; DestDir: {app}\etc; Flags: ignoreversion
 Source: ..\..\AUTHORS; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\ChangeLog; DestDir: {app}; Flags: ignoreversion

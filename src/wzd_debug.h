@@ -25,8 +25,17 @@
 #ifndef __WZD_DEBUG__
 #define __WZD_DEBUG__
 
+#ifdef DEBUG
+
 #define WZD_ASSERT_VOID(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return ; }
 #define WZD_ASSERT(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return -1; }
+
+#else
+
+#define WZD_ASSERT_VOID(x)
+#define WZD_ASSERT(x)
+
+#endif
 
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd);
@@ -40,10 +49,11 @@ void wzd_free(void *ptr);
 /** Copy with allocation */
 char * wzd_strdup(const char *s);
 
-#ifdef DEBUG
-
 /* Test backend storage */
 #define BACKEND_STORAGE
+
+
+#ifdef DEBUG
 
 /* debug file cache */
 /*#define WZD_DBG_CACHE*/

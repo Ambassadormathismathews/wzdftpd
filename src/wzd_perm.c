@@ -41,6 +41,8 @@
 #include "wzd_perm.h"
 #include "wzd_misc.h"
 
+#include "wzd_debug.h"
+
 
 #define BUFFER_LEN	2048
 
@@ -256,7 +258,7 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
 
   if ( (length = strlen(permline)) >= BUFFER_LEN) return 1;
   dyn_buffer = malloc(length+1);
-  strncpy(dyn_buffer,permline,length);
+  strncpy(dyn_buffer,permline,length+1);
 
   /* find the perm */
   command_perm = perm_find_create(permname,config);
@@ -268,6 +270,8 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   while (token) {
     negate=0;
     /* FIXME split token to find entry type : user, group, flag */
+    WZD_ASSERT (token < dyn_buffer)
+    WZD_ASSERT (token > (dyn_buffer+length))
     c = *token++;
     if (c == '!') {
       negate = 1;
@@ -296,6 +300,7 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
     }
     if (negate)
       *(--token)='!';
+    if (token < dyn_buffer) fprintf(stderr,"token < dyn_buffer !! %s:%d\n",__FILE__,__LINE__);
     /* add entry */
     perm_entry = perm_find_create_entry(token,command_perm);
     perm_entry->cp = cp;
@@ -320,7 +325,7 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
   int negate;
   const char * entry_target;
 
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
     user = &context->userinfo;
   } else
