@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #if defined __CYGWIN__ && defined WINSOCK_SUPPORT
 #include <winsock2.h>
 #else
@@ -6,7 +30,7 @@
 #include <arpa/inet.h>
 #endif
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -38,7 +62,7 @@ void data_close(wzd_context_t * context)
 {
   int ret;
 
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
@@ -117,7 +141,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   case TOK_RETR:
     n = read(context->current_action.current_file,buffer,sizeof(buffer));
     if (n>0) {
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
       if (context->ssl.data_mode == TLS_CLEAR)
 	ret = clear_write(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       else
@@ -163,7 +187,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
     }
     break;
   case TOK_STOR:
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
       if (context->ssl.data_mode == TLS_CLEAR)
 	n = clear_read(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
       else
