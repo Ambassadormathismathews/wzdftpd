@@ -129,6 +129,7 @@ void limiter_add_bytes(wzd_bw_limiter *l, int byte_count, int force_check)
   struct timezone tz;
 
   if (!l) return;
+  if (l->maxspeed == 0) return;
 
   l->bytes_transfered += byte_count;
 
