@@ -1,11 +1,11 @@
 # general considerations:
-# 
+#
 # comment lines begin by #
 # empty lines are removed
-# 
+#
 # directives have format: <tagname>=<value>
 # with the regexp: ^([a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)
-# 
+#
 # directives are grouped into sections
 # section begins by [SECTIONNAME]
 
@@ -20,10 +20,9 @@ max_idle_time=10
 # users definitions
 # users MUST begin by line name=<>
 [USERS]
-
 name=pollux
-home=/home/pollux
 pass=tobNnnhhJY2Fs
+home=/home/pollux
 uid=501
 groups=admin
 rights=0xffffffff
@@ -32,35 +31,37 @@ ip_allowed=+localhost
 ip_allowed=+pollux.no-ip.org
 ip_allowed=*
 ip_allowed=134.214.71.84
-ip_allowed=62.212.107.165
 ip_allowed=10.0.0.10
-ip_allowed=127.0.0.1
-max_idle_time=0
-max_dl_speed=100000
-flags=OIstH
+max_dl_speed=204800
+bytes_ul_total=7742
+bytes_dl_total=0
+flags=OIstHk
 
 name=wzdftpd
+pass=UZWwpILn1i4QI
 home=/
-pass=Oz1iHGIgV8HIQ
 uid=0
-rights=0xffffffff
 groups=admin
+rights=0xffffffff
 tagline=wzdftpd
 ip_allowed=127.0.0.1
-max_idle_time=0
+bytes_ul_total=0
+bytes_dl_total=0
 num_logins=1
 flags=OIstH
 
 name=guest
-home=/var/tmp
 pass=%
+home=/var/tmp
 uid=200
 groups=nogroup
-rights=0x03
-max_dl_speed=100000
+rights=0x10003
 ip_allowed=*
-max_idle_time=90
+max_dl_speed=100000
+bytes_ul_total=0
+bytes_dl_total=0
 num_logins=2
+max_idle_time=90
 
 # per hosts rights
 [HOSTS]
