@@ -2752,19 +2752,24 @@ int do_user(const char *username, wzd_context_t * context)
   {
     ListElmt * elmnt;
     wzd_context_t * loop_context;
-    unsigned int i,j;
+    unsigned int i,j,k;
     wzd_group_t * group;
     wzd_user_t * user;
-    unsigned int num_logins[HARD_DEF_GROUP_MAX];
-    memset(num_logins,0,HARD_DEF_GROUP_MAX*sizeof(int));
+    unsigned int * num_logins;
+
+    num_logins = malloc(me->group_num * sizeof(unsigned int));
+    memset(num_logins,0,me->group_num*sizeof(int));
     /* try to do it in one pass only */
+    /* we build the same tab as me->groups, containing the counters */
     for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
       loop_context = list_data(elmnt);
       if (loop_context->magic == CONTEXT_MAGIC) {
         user = GetUserByID(loop_context->userid);
         for (j=0; j<user->group_num; j++)
-          num_logins[ user->groups[j] ]++;
+          for (k=0; k<me->group_num; k++)
+            if (user->groups[j] == me->groups[k])
+              num_logins[ k ]++;
       }
     }
     /* checks num_logins for all groups */
@@ -2772,10 +2777,14 @@ int do_user(const char *username, wzd_context_t * context)
     {
       group = GetGroupByID( me->groups[i] );
       if (group && group->num_logins
-          && (num_logins[me->groups[i]]>group->num_logins))
+          && (num_logins[i]>group->num_logins))
         /* > and not >= because current login attempt is counted ! */
+      {
+        free(num_logins);
         return E_GROUP_NUMLOGINS; /* user has reached group max num_logins */
+      }
     }
+    free(num_logins);
   }
 
   return E_OK;
