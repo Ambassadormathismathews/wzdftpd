@@ -4,6 +4,16 @@
 /* this file is ultra platform dependant, as long as cygwin does not implement IPC */
 /* note that read/write functions are encapsulated, to avoid concurrent access */
 
+#ifdef __CYGWIN__
+typedef void * wzd_sem_t;
+#else /* __CYGWIN__ */
+#ifdef WZD_MULTITHREAD
+typedef struct sem_t * wzd_sem_t;
+#else /* WZD_MULTITHREAD */
+typedef int wzd_sem_t;
+#endif /* WZD_MULTITHREAD */
+#endif
+
 
 /* You'd better NEVER touch this */
 typedef struct {
@@ -13,8 +23,21 @@ typedef struct {
   int shmid;
 #endif /* __CYGWIN__ */
   void * datazone;
-  int semid;
+  wzd_sem_t semid;
 } wzd_shm_t;
+
+
+/* creates a semaphore */
+wzd_sem_t wzd_sem_create(unsigned long key, int nsems, int flags);
+
+/* destroy sem */
+void wzd_sem_destroy(wzd_sem_t sem);
+
+/* locks a semaphore */
+int wzd_sem_lock(wzd_sem_t sem, int n);
+
+/* unlocks a semaphore */
+int wzd_sem_unlock(wzd_sem_t sem, int n);
 
 
 /* creates an shm zone */
