@@ -38,6 +38,12 @@
 
 #if defined(_MSC_VER)
 
+#ifdef LIBWZD_EXPORTS
+# define WZDIMPORT __declspec (dllexport)
+#else
+# define WZDIMPORT __declspec (dllimport)
+#endif
+
 /* unsigned int, 64 bits: u64_t */
 #define u64_t unsigned __int64
 #define u32_t unsigned __int32
@@ -285,6 +291,8 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 
 
 #else /* _MSC_VER */
+
+#define WZDIMPORT
 
 /* unsigned int, 64 bits: u64_t */
 #define i16_t int16_t

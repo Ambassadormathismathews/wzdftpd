@@ -541,8 +541,8 @@ typedef struct {
   struct CHTBL * htab;
 } wzd_config_t;
 
-extern wzd_config_t *	mainConfig;
-extern List * context_list;
+WZDIMPORT extern wzd_config_t *	mainConfig;
+WZDIMPORT extern List * context_list;
 
 /************************ LIST ****************************/
 

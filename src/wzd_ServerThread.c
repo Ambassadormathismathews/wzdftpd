@@ -112,10 +112,10 @@ typedef struct {
 } wzd_ident_context_t;
 
 /************ VARS *****************/
-wzd_config_t *	mainConfig;
+/*wzd_config_t *	mainConfig;*/
 wzd_shm_t *	mainConfig_shm;
 
-List *	context_list;
+/*List *	context_list;*/
 wzd_shm_t *	context_shm;
 
 wzd_cronjob_t	* crontab;

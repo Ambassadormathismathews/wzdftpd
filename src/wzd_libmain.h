@@ -27,9 +27,9 @@
 
 #include "wzd_mutex.h"
 
-extern wzd_mutex_t * limiter_mutex;
-extern wzd_mutex_t * server_mutex;
-extern time_t server_time;
+WZDIMPORT extern wzd_mutex_t * limiter_mutex;
+WZDIMPORT extern wzd_mutex_t * server_mutex;
+WZDIMPORT extern time_t server_time;
 
 void server_restart(int signum);
 

@@ -1140,7 +1140,7 @@ int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
   /* FIXME VISUAL : call server_restart explicitely ? */
   /*ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");*/
   ret = send_message_with_args(501, context, "restarting server, cross your fingers ...");
-  server_restart();
+  server_restart(SIGHUP);
   return 1;
 #endif
   return 0;
