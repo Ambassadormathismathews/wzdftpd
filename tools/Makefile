@@ -1,4 +1,9 @@
-SUBDIRS = sitewho
+PLATFORM:=$(shell uname)
+SUBDIRS =
+
+ifeq ($(PLATFORM),Linux)
+SUBDIRS += sitewho
+endif
 
 debug:
 	make recursive 'RECURSIVE_TARGET=debug'

@@ -2,7 +2,11 @@
 SSL_SUPPORT=1
 
 
-CC = gcc-3.2
+ifeq ($(PLATFORM),Linux)
+CC=gcc-3.2
+else
+CC=gcc
+endif
 CFLAGS=-g -I../../src -Wall -Wstrict-prototypes -DSSL_SUPPORT=${SSL_SUPPORT}
 #LDFLAGS=-L../../src -lwzd -ldl -Wl,-rpath,../../src
 
