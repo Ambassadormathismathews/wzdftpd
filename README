@@ -1,0 +1,43 @@
+#####
+##### README for wzdFTPd
+#####
+
+General remarks:
+
+* This is not a program for beginners
+* This is a buggy program
+* You won't have any support
+* You won't get sources too
+
+Notes:
+* If you want the internal sfv checker to work, archive files and sfv file
+    must have same prefix
+
+
+Installation:
+
+* copy the config file and the executable in the install dir
+* copy AT LEAST one backend in the same dir
+* edit wzd.cfg
+  The file is commented, you shouldn't need help - if you need, install serv-u
+* run the .exe
+* login for the first time FROM LOCALHOST and create users
+
+HOOKS parameters:
+
+* all: first parameter is event id
+
+* login: username
+* logout: username
+* file_preupload: username, filename
+* file_postupload: username, filename
+
+Troubleshooting:
+
+* SHM (linux)
+  If (this should never happend ;-) the daemon crashes and the shared memory is not freed, you'll have
+  to delete share memory by hand, 2 solutions
+    + become the samer user as the daemon runs, and run: ipcrm shm `ipcs -m | grep 0x1331c0d3 |  awk '{print $2}'`
+      ->> replace 0x1331c0d3 with your key if you changed in wzd.cfg <<-
+    + become root and do the same thing
+    ± reboot the machine :)
