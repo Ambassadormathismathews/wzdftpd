@@ -32,6 +32,8 @@
 #include <arpa/inet.h>
 #endif
 
+#include <stdio.h>
+
 #ifdef SSL_SUPPORT
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
@@ -39,7 +41,6 @@
 #else
 #define	SSL	void
 #define	SSL_CTX	void
-#define	FILE	void
 #endif /* SSL_SUPPORT */
 
 #define Sleep(x)        usleep((x)*1000)
