@@ -734,6 +734,36 @@ site users
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_vars'><term>
+site vars get &lt;variable&gt;
+</term>
+<listitem>
+<para>Access server variables.
+See the <link linkend='vars'>Config Variables list</link>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_vars_group'><term>
+site vars_group get/set &lt;groupname&gt; &lt;variable&gt;
+</term>
+<listitem>
+<para>Display or change a value for a group.
+See the <link linkend='vars_group'>Group Variables list</link>.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='site_vars_user'><term>
+site vars_user get/set &lt;username&gt; &lt;variable&gt;
+</term>
+<listitem>
+<para>Display or change a value for a user.
+See the <link linkend='vars_user'>User Variables list</link>.
+</para>
+</listitem>
+</varlistentry>
+
 <!-- site utime is not documented -->
 
 <varlistentry id='site_uptime'><term>

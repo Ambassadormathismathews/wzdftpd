@@ -291,6 +291,9 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 -site_user = +O +G
 -site_users = -admin
 -site_utime = *
+-site_vars = +O
+-site_vars_group = +O
+-site_vars_user = +O
 -site_version = +O
 -site_who = !=guest *
 -site_wipe = +O

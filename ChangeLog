@@ -3,6 +3,7 @@
 	* bugfix: unresolved symbols when compiling without TLS
 	* bugfix: unable to change directory when name ends with .
 	* bugfix: custom site commands not authorized
+	* doc: site vars/vars_group/vars_user
 
 2005-03-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
