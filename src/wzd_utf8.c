@@ -58,9 +58,9 @@
 #endif
 
 typedef void *  iconv_t;
-typedef size_t (__cdecl *fn_iconv_t)(iconv_t, const char **, size_t *, char **, size_t *);
-typedef iconv_t (__cdecl *fn_iconv_open_t)(const char *, const char *);
-typedef int (__cdecl *fn_iconv_close_t)(iconv_t);
+typedef size_t (*fn_iconv_t)(iconv_t, const char **, size_t *, char **, size_t *);
+typedef iconv_t (*fn_iconv_open_t)(const char *, const char *);
+typedef int (*fn_iconv_close_t)(iconv_t);
 
 static void * _iconv_lib_handle = NULL;
 static fn_iconv_t _iconv_fn_iconv = NULL;
@@ -68,10 +68,10 @@ static fn_iconv_open_t _iconv_fn_iconv_open = NULL;
 static fn_iconv_close_t _iconv_fn_iconv_close = NULL;
 
 
-#ifdef HAVE_UTF8
-
 static void _iconv_openlib(void)
 {
+#ifdef HAVE_UTF8
+
 #ifdef HAVE_ICONV
   _iconv_fn_iconv = (fn_iconv_t)&iconv;
   _iconv_fn_iconv_open = (fn_iconv_open_t)&iconv_open;
@@ -107,6 +107,8 @@ static void _iconv_openlib(void)
 #endif /* WIN32 */
 
 #endif /* HAVE_ICONV */
+
+#endif /* HAVE_UTF8 */
 }
 
 static void _iconv_closelib(void)
@@ -122,8 +124,6 @@ static void _iconv_closelib(void)
   }
 #endif /* HAVE_ICONV */
 }
-
-#endif
 
 
 static const char * _local_charset = NULL;
