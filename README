@@ -21,16 +21,25 @@ Installation:
 * edit wzd.cfg
   The file is commented, you shouldn't need help - if you need, install serv-u
 * run the .exe
-* login for the first time FROM LOCALHOST and create users
+* login for the first time FROM LOCALHOST, user/pass: wzdftpd and create users
 
 HOOKS parameters:
 
 * all: first parameter is event id
+* all: second parameter is user context
 
 * login: username
 * logout: username
 * file_preupload: username, filename
 * file_postupload: username, filename
+* site: command, args
+
+MODULES:
+
+* fct WZD_MODULE_INIT is called at module load
+* fct WZD_MODULE_CLOSE is called at module unload
+* struct hook_table contains pairs (event_id,hook_fct) to trap events
+* fct WZD_MODULE_INIT is called _BEFORE_ registering hook_table
 
 Troubleshooting:
 

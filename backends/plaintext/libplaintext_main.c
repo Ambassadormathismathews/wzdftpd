@@ -779,8 +779,36 @@ fprintf(stderr,"User %s not found\n",username);
   return 0;
 }
 
+/* if user does not exist, add it */
 int FCN_MOD_USER(const char *name, wzd_user_t * user)
 {
+  int count;
+  int found;
+  char * cipher;
+  char salt[3];
+  
+  count=0;
+  found = 0;
+  while (count<user_count) {
+    if (strcmp(name,user_pool[count].username)==0)
+      { found = 1; break; }
+    count++;
+  }
+
+  if (found) { /* user exist */
+    fprintf(stderr,"User %s exist\n",name);
+  } else { /* user not found, add it */
+    fprintf(stderr,"Add user %s\n",name);
+    memcpy(&user_pool[user_count],user,sizeof(wzd_user_t));
+    if (strcasecmp(user->userpass,"%")!=0) {
+      salt[0] = 'a' + (char)(rand()%26);
+      salt[1] = 'a' + (char)((rand()*72+3)%26);
+      cipher = crypt(user->userpass, salt);
+      strcpy(user_pool[user_count].userpass,cipher);
+    }
+    user_count++;
+  }
+
   return 0;
 }
 

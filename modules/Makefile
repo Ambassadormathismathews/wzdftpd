@@ -1,4 +1,4 @@
-SUBDIRS = src backends modules
+SUBDIRS = test sfv
 
 debug:
 	make recursive 'RECURSIVE_TARGET=debug'
@@ -14,12 +14,6 @@ clean:
 
 distclean:
 	make recursive 'RECURSIVE_TARGET=distclean'
-
-deps:
-	(cd src && make deps) || exit 1
-
-check_symlinks:
-	(cd src && make check_symlinks) || exit 1
 
 recursive:
 	@CWD=`pwd`; \

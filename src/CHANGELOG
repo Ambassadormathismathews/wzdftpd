@@ -1,3 +1,4 @@
+#--- cvs commit
 # Dec, 02 2002
 - site adduser: what do you think it can be for ?
   site adduser user pass homedir [backend]
