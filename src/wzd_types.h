@@ -219,8 +219,8 @@ typedef size_t ssize_t;
 
 #define WZD_DEFAULT_CONF "wzd-win32.cfg"
 
-#include "wzd_crypt.h"
-#include "wzd_md5crypt.h"
+#include <libwzd-auth/wzd_crypt.h>
+#include <libwzd-auth/wzd_md5crypt.h>
 #include "wzd_strptime.h"
 #include "wzd_strtoull.h"
 

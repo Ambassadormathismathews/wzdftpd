@@ -30,6 +30,7 @@ EXPORTS
 	chtbl_destroy
 	chtbl_init
 	chtbl_insert
+	chtbl_lookup
 	chtbl_search
 	cookie_parse_buffer
 	cronjob_add

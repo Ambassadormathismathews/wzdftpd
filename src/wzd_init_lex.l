@@ -358,8 +358,6 @@ int set_default_options(void)
   tempConfig.site_config.file_vfs = NULL;
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  strcpy(tempConfig.tls_cipher_list,"ALL");
-
   tempConfig.tls_type = TLS_EXPLICIT;
 #else
   tempConfig.tls_type = TLS_NOTYPE;
@@ -1618,35 +1616,6 @@ int cfg_read_sitecmd(void)
   return 0;
 }
 
-
-/* TLS CIPHER LIST
- * string
- */
-int cfg_read_tls_cipher_list(void)
-{
-  unsigned int token;
-  char * buffer;
-
-  token = yylex();
-  if (token!='=') {
-    out_err(LEVEL_HIGH,"line should be 'tls_cipher_list = ...'\n");
-    return 1;
-  }
-
-  if( !(buffer=read_until_eol(256)) ) {
-    out_err(LEVEL_HIGH,"invalid cipher list\n");
-    return 1;
-  }
-
-#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  strcpy(tempConfig.tls_cipher_list,buffer);
-#else
-  out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
-#endif /* HAVE_OPENSSL */
-
-  wzd_free(buffer);
-  return 0;
-}
 
 /* TLS MODE
  * string: implicit/explicit/explicit_strict

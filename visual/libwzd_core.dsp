@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 libwzd-base\release\libwzd_base.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd_core.def"
+# ADD LINK32 libwzd-base\release\libwzd_base.lib libwzd-auth\release\libwzd_auth.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /machine:I386 /def:"libwzd_core.def"
 # SUBTRACT LINK32 /pdb:none /debug
 
 !ELSEIF  "$(CFG)" == "libwzd_core - Win32 Debug"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 libwzd-base\debug\libwzd_base.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd_core.def" /pdbtype:sept
+# ADD LINK32 libwzd-base\debug\libwzd_base.lib libwzd-auth\debug\libwzd_auth.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /dll /debug /machine:I386 /def:"libwzd_core.def" /pdbtype:sept
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -167,11 +167,6 @@ SOURCE=..\src\wzd_crontab.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_crypt.c
-# SUBTRACT CPP /YX /Yc /Yu
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_debug.c
 # End Source File
 # Begin Source File
@@ -193,15 +188,6 @@ SOURCE=..\src\wzd_libmain.c
 # Begin Source File
 
 SOURCE=..\src\wzd_log.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_md5.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_md5crypt.c
-# SUBTRACT CPP /YX /Yc /Yu
 # End Source File
 # Begin Source File
 
@@ -285,10 +271,6 @@ SOURCE=..\src\wzd_crontab.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_crypt.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_debug.h
 # End Source File
 # Begin Source File
@@ -314,14 +296,6 @@ SOURCE=..\src\wzd_libmain.h
 # Begin Source File
 
 SOURCE=..\src\wzd_log.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_md5.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_md5crypt.h
 # End Source File
 # Begin Source File
 

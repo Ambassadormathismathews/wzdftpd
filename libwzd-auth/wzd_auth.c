@@ -37,6 +37,8 @@
 #ifndef BSD
 #include <crypt.h>
 #endif /* BSD */
+#else /* WIN32 */
+# include "wzd_crypt.h"
 #endif
 
 #include "wzd_auth.h"

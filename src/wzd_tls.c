@@ -439,6 +439,8 @@ int tls_auth_cont(wzd_context_t * context)
 
 int tls_init_datamode(int sock, wzd_context_t * context)
 {
+  char * tls_cipher_list;
+
   if (!context->ssl.data_ssl) {
     context->ssl.data_ssl = SSL_new(mainConfig->tls_ctx);
   }
@@ -452,7 +454,12 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     return 1;
   }
 
-  SSL_set_cipher_list(context->ssl.data_ssl, mainConfig->tls_cipher_list);
+  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
+  {
+    tls_cipher_list = "ALL";
+  }
+
+  SSL_set_cipher_list(context->ssl.data_ssl, tls_cipher_list);
 
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   {
