@@ -78,7 +78,7 @@ void libtest(void)
   out_log(LEVEL_CRITICAL,"TEST LIB OK\n");
 }
 
-int server_mutext_set_init(void)
+int server_mutex_set_init(void)
 {
   unsigned int i;
 
@@ -89,7 +89,7 @@ int server_mutext_set_init(void)
   return 0;
 }
 
-int server_mutext_set_fini(void)
+int server_mutex_set_fini(void)
 {
   unsigned int i;
 

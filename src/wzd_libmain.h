@@ -47,8 +47,8 @@ void server_restart(int signum);
 #define WZD_MUTEX_UNLOCK(x) wzd_mutex_unlock(mutex_set[x])
 
 
-int server_mutext_set_init(void);
-int server_mutext_set_fini(void);
+int server_mutex_set_init(void);
+int server_mutex_set_fini(void);
 
 wzd_config_t * getlib_mainConfig(void);
 void setlib_mainConfig(wzd_config_t *);

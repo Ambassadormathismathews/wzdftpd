@@ -154,6 +154,8 @@ EXPORTS
 	server_clear_param
 	server_get_param
 	server_mutex
+	server_mutex_set_fini
+	server_mutex_set_init
 	server_set_param
 	server_time
 	setkey

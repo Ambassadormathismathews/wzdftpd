@@ -1150,7 +1150,7 @@ void serverMainThreadProc(void *arg)
   /******** init shm *******/
   /* do this _before_ loading config, config can use it ! */
   vars_shm_init();
-  server_mutext_set_init();
+  server_mutex_set_init();
 
   /********* set up functions *******/
   if (commands_init()) {
@@ -1420,7 +1420,7 @@ void serverMainThreadExit(int retcode)
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
-  server_mutext_set_fini();
+  server_mutex_set_fini();
 #if defined(_MSC_VER)
   WSACleanup();
 #endif
