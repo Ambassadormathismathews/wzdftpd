@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/socket.h>
 
 /* speed up compilation */
 #define SSL     void

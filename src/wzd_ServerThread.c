@@ -14,6 +14,7 @@
 #include <regex.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 
 /* speed up compilation */
 #define SSL     void
