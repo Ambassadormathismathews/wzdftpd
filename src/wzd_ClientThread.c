@@ -2885,7 +2885,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
     if (fs_stat(path,&s)==0) {
       ret = calc_crc32(path,&crc,startpos,length);
-      snprintf(buffer,1024,"%lX\r\n",crc);
+      snprintf(buffer,1024,"%lX",crc);
 /*      snprintf(buffer,1024,"%d %lX\r\n",250,crc);*/
 /*      ret = send_message_raw(buffer,context);*/
       ret = send_message_with_args(250,context,buffer,"");
