@@ -263,6 +263,10 @@ int write_user_file(void)
   }
   
   file = freopen(filename,"w+",file);
+  if (!file) {
+    fprintf(stderr,"ERROR: unable to reopen users file (%s:%d)\n",__FILE__,__LINE__);
+    return -1;
+  }
   fseek(file,SEEK_SET,0);
 
   i=0;
