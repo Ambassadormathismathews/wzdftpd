@@ -3,9 +3,7 @@
 --
 CREATE DATABASE IF NOT EXISTS wzdftpd;
 
-GRANT USAGE ON *.* TO "wzdftpd"@"localhost" IDENTIFIED BY "wzdftpd";
-
-GRANT ALL PRIVILEGES ON `wzdftpd`.* TO "wzdftpd"@"localhost";
+GRANT ALL ON `wzdftpd`.* TO "wzdftpd"@"localhost" IDENTIFIED BY "wzdftpd";
 
 FLUSH PRIVILEGES;
 

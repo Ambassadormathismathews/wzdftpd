@@ -2,18 +2,14 @@
 -- Use this to completely destroy wzdftpd
 --
 
-use mysql;
+-- Removing privileges
+REVOKE ALL ON *.* FROM "wzdftpd"@"localhost";
 
--- Deleting 'wzdftpd ...
-DELETE FROM `user` WHERE `User` = "wzdftpd";
+-- Deleting user ...
+DELETE FROM mysql.user WHERE User='wzdftpd';
 
-DELETE FROM `db` WHERE `User` = "wzdftpd";
-
-DELETE FROM `tables_priv` WHERE `User` = "wzdftpd";
-
-DELETE FROM `columns_priv` WHERE `User` = "wzdftpd";
-
-DROP DATABASE IF EXISTS `wzdftpd` ;
+-- Droping database and all the tables in it
+DROP DATABASE IF EXISTS `wzdftpd`;
 
 -- Reloading the privileges ...
-FLUSH PRIVILEGES ;
+FLUSH PRIVILEGES;
