@@ -151,6 +151,7 @@ typedef struct _wzd_module_t {
 #define	EVENT_POSTDOWNLOAD	0x00000080
 
 #define	EVENT_MKDIR		0x00000100
+#define	EVENT_RMDIR		0x00000200
 
 #define	EVENT_SITE		0x00010000
 
@@ -166,6 +167,7 @@ typedef struct {
   char *        filename;
   unsigned long crc;
   unsigned int	state;
+  unsigned long	size;
 } wzd_sfv_entry;
 
 typedef struct {
