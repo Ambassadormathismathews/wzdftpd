@@ -1052,6 +1052,10 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   if (ret)
     return -1;
 
+#ifdef _MSC_VER
+  mode |= _O_BINARY;
+#endif
+
   fd = open(filename,mode,0666);
   if (fd == -1) {
     fprintf(stderr,"Can't open %s,errno %d : %s\n",filename,errno,strerror(errno));

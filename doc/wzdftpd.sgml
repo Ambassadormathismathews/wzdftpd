@@ -9,6 +9,7 @@
 <!ENTITY common_backends SYSTEM "common_backends.sgml">
 <!ENTITY sitebot SYSTEM "sitebot.sgml">
 <!ENTITY programming_modules SYSTEM "programming_modules.sgml">
+<!ENTITY freebsd_notes SYSTEM "freebsd_notes.sgml">
 <!ENTITY license SYSTEM "license.sgml">
 <!ENTITY faq SYSTEM "faq.sgml">
 <!ENTITY a_bugs SYSTEM "appendix_bugs.sgml">
@@ -24,6 +25,7 @@
 &common_backends;
 &sitebot;
 &programming_modules;
+&freebsd_notes;
 &faq;
 &a_bugs;
 &license;

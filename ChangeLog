@@ -1,3 +1,8 @@
+2004-02-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* docs: added notes for FreeBSD (contribution from Roman Bogorodskiy)
+	* bugfix: files corrupted after upload on windows (closes: #885559)
+
 2004-02-11  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: incorrect path displayed in NEWDIR event

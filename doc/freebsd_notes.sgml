@@ -1,0 +1,49 @@
+<chapter>
+<title>wzdftpd FreeBSD notes</title>
+
+<para>If you are a FreeBSD user, you can install wzdftpd using FreeBSD Port Collection.
+You need port tree dated 2003-10-22 or more recent. If you have an old port tree, please
+update it, you can find instructions how to do it in
+<ulink url="http://www.freebsd.org/handbook/ports-using.html"> FreeBSD Handbook</ulink>.</para>
+
+<para>
+To install wzdftpd use the following commands:
+
+<programlisting>
+    $ cd /usr/ports/ftp/wzdftpd
+    # make
+    # make install
+</programlisting>
+
+To compile wzdftpd with SSL support, use <filename># make -DWITH_SSL</filename>.
+To compile wzdftpd with IPv6 support, use <filename># make -DWITH_IPV6</filename>.
+Of course, you can use this keys together.
+
+
+That's all, wzdftpd is installed on your machine. Sample config files are:
+<filename>%PREFIX/etc/wzd.cfg.sample</filename> and <filename>%PREFIX/share/wzdftpd/users.sample</filename>
+For quick start,
+<programlisting>
+	# cp wzd.cfg.sample wzd.cfg
+</programlisting>
+and
+<programlisting>
+	# cp users.sample users
+</programlisting>
+
+To deinstall wzdftpd use
+<programlisting>
+	$ cd /usr/ports/ftp/wzdftpd
+	# make deinstall
+</programlisting>
+
+Binary packages are also available, you can find them on <ulink url="http://www.wzdftpd.net">wzdftpd site</ulink>.
+To install package you should use <filename>pkg_add(1)</filename>. Package can be removed using 
+<filename>pkg_delete(1)</filename>.
+
+Additional info about FreeBSD ports and packages can be found in <ulink url="http://www.freebsd.org/doc/handbook">FreeBSD 
+Handbook</ulink>, chapter <ulink url="http://www.freebsd.org/doc/handbook/ports.html">Installing Applications: Packages and Ports</ulink>.
+
+</para>	
+</chapter>
+
