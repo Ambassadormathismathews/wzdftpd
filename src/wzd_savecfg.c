@@ -134,18 +134,21 @@ static void save_pasvip (FILE *file)
 
 static void save_serveruid (FILE *file)
 {
-  struct passwd * p;
-
   WZD_ASSERT_VOID( file != NULL );
-#warning "FIXME server does not always have a uid"
-  p = getpwuid (wzd_server_uid);
 
   fprintf( file, "# unix only: server will drop privileges to a user after binding port\n");
   fprintf( file, "# you can specify a user login name\n");
   fprintf( file, "# This will only be used if run by root !\n");
   fprintf( file, "#server_uid = pollux\n");
-  if (p!=NULL)
-    fprintf( file, "server_uid = %s\n", p->pw_name );
+#ifndef __CYGWIN__
+  {
+    struct passwd * p;
+#warning "FIXME server does not always have a uid"
+    p = getpwuid (wzd_server_uid);
+    if (p!=NULL)
+      fprintf( file, "server_uid = %s\n", p->pw_name );
+  }
+#endif /* __CYGWIN__ */
   fprintf( file, "\n");
 }
 
