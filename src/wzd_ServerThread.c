@@ -121,9 +121,9 @@ int runMainThread(int argc, char **argv)
 
 /************ PRIVATE *************/
 
-void free_config(wzd_config_t * config);
+static void free_config(wzd_config_t * config);
 
-void cleanchild(int nr) {
+static void cleanchild(int nr) {
   wzd_context_t * context;
   int i;
   pid_t pid;
@@ -158,7 +158,7 @@ void cleanchild(int nr) {
   }*/
 }
 
-void context_init(wzd_context_t * context)
+static void context_init(wzd_context_t * context)
 {
   context->magic = 0;
   memset(context->hostip,0,4);
@@ -185,7 +185,7 @@ void context_init(wzd_context_t * context)
   context->write_fct = (write_fct_t)clear_write;
 }
 
-wzd_context_t * context_find_free(wzd_context_t * context_list)
+static wzd_context_t * context_find_free(wzd_context_t * context_list)
 {
   wzd_context_t * context=NULL;
   int i=0;
@@ -292,7 +292,7 @@ void server_restart(int signum)
 
   /* create socket iff different ports ! */
   if (rebind) {
-    sock = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,5);
+    sock = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
     if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
 	  __FILE__, __LINE__);
@@ -344,7 +344,7 @@ void server_rebind(const unsigned char *new_ip, unsigned int new_port)
   sock = mainConfig->mainSocket;
   close(sock);
 
-  sock = mainConfig->mainSocket = socket_make(ip,&new_port,5);
+  sock = mainConfig->mainSocket = socket_make(ip,&new_port,mainConfig->max_threads);
   if (sock == -1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
 	  __FILE__, __LINE__);
@@ -808,7 +808,7 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
-  ret = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,5);
+  ret = mainConfig->mainSocket = socket_make(mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -986,7 +986,7 @@ void serverMainThreadProc(void *arg)
   serverMainThreadExit(0);
 }
 
-void free_config(wzd_config_t * config)
+static void free_config(wzd_config_t * config)
 {
   wzd_ip_t * current_ip, * next_ip;
 

@@ -323,9 +323,13 @@ int tls_init(void)
   SSL_CTX_set_default_verify_paths(tls_ctx);
 
   /* set certificate */
-  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);
+  /* from manual: SSL_CTX_use_certificate_chain_file should be prefered to
+   * SSL_CTX_use_certificate_file
+   */
+/*  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);*/
+  status = SSL_CTX_use_certificate_chain_file(tls_ctx, mainConfig->tls_certificate);
   if (status <= 0) {
-    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
+    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
   }
 

@@ -2026,7 +2026,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	ret = send_message_with_args(421,context,"USER command issued twice");
 	return 1;
       }
-      token = strtok_r(NULL," \t\r\n",&ptr);
+      token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
 	ret = send_message_with_args(421,context,"Give me a user name !");
 	return 1;
@@ -2061,7 +2061,7 @@ out_err(LEVEL_FLOOD,"RAW: '%s'\n",buffer);
 	ret = send_message_with_args(421,context,"Incorrect login sequence");
 	return 1;
       }
-      token = strtok_r(NULL," \t\r\n",&ptr);
+      token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
 	ret = send_message_with_args(421,context,"Give me a password !");
 	return 1;

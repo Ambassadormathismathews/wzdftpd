@@ -1,3 +1,11 @@
+# Oct, 01 2003
+- bugfix: spaces at end of USER and PASS lines were removed
+- ssl: use SSL_CTX_use_certificate_chain_file instead of SSL_CTX_use_certificate_file
+
+# Sep, 22 2003
+- bugfix: wrong display of ip addresses in log file
+- bugfix: error `wzd_server_uid' undeclared (first use in this function) during compilation on cygwin
+
 # Sep, 16 2003
 - bugfix: group.num_logins not initialized when adding a new group
 - contributions from Cyprien Laplace:
