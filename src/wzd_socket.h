@@ -2,6 +2,7 @@
 #define __WZD_SOCKET__
 
 int socket_make(const char *ip, int *port, int nListen);
+int socket_close(int sock);
 
 int socket_accept(int sock, unsigned long *remote_host, unsigned int *remote_port);
 
