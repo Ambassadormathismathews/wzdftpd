@@ -1211,6 +1211,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"FREE",&do_site_free)) return 1;
   if (site_command_add(&config->site_list,"GINFO",&do_site_ginfo)) return 1;
   if (site_command_add(&config->site_list,"GIVE",&do_site_give)) return 1;
+  if (site_command_add(&config->site_list,"GROUP",&do_site_group)) return 1;
   if (site_command_add(&config->site_list,"GRPADD",&do_site_grpadd)) return 1;
   if (site_command_add(&config->site_list,"GRPADDIP",&do_site_grpaddip)) return 1;
   if (site_command_add(&config->site_list,"GRPCHANGE",&do_site_grpchange)) return 1;

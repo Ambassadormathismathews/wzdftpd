@@ -260,6 +260,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_free = *
 -site_ginfo = +O +G
 -site_give = *
+-site_group = +O
 -site_groups = +O
 -site_grpadd = +O
 -site_grpaddip = +O

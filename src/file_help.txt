@@ -32,6 +32,7 @@
 | site flags     | display user's flags                         | r,s,n,g    |
 |                |   site flags [user]                          |            |
 | site free      | show free space                              | r,s,n,g    |
+| site group     | perform group administration                 | siteop     |
 | site grpadd    | add a new group                              | siteop     |
 | site grpaddip  | add ip to a group                            | siteop     |
 | site grpdel    | delete group                                 | siteop     |

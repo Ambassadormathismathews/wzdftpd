@@ -25,6 +25,7 @@
 #ifndef __WZD_SITE_GROUP__
 #define __WZD_SITE_GROUP__
 
+int do_site_group(char *command_line, wzd_context_t * context);
 int do_site_grpadd(char *command_line, wzd_context_t * context);
 int do_site_grpdel(char *command_line, wzd_context_t * context);
 int do_site_grpren(char *command_line, wzd_context_t * context);

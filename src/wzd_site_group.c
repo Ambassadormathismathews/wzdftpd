@@ -792,6 +792,73 @@ int do_site_grpchange(char *command_line, wzd_context_t * context)
   return 0;
 }
 
+
+void do_site_help_group(wzd_context_t * context)
+{
+  send_message_raw("501-site group <action> ...\r\n",context);
+  send_message_raw("action can be one of:\r\n",context);
+  send_message_raw(" info       give group info\r\n",context);
+  send_message_raw(" add        add a new group\r\n",context);
+  send_message_raw(" delele     delete a group\r\n",context);
+  send_message_raw(" rename     rename a group\r\n",context);
+  send_message_raw(" stat       give group statistic\r\n",context);
+  send_message_raw(" addip      add an IP for group\r\n",context);
+  send_message_raw(" delip      delete an IP for group\r\n",context);
+  send_message_raw(" ratio      set group ratio\r\n",context);
+  send_message_raw(" kill       kill all group connections\r\n",context);
+  send_message_raw(" change     change group fields\r\n",context);
+  send_message_raw(" list       list all existing groups\r\n",context);
+  send_message_raw("use site <action> for specific action help\r\n",context);
+  send_message_raw("501 site group aborted\r\n",context);
+}
+
+/* regroup all group administration in one site command */
+int do_site_group(char *command_line, wzd_context_t * context)
+{
+  
+  char * cmd, * ptr;
+  int ret;
+  
+  
+  ptr = command_line;
+  cmd = strtok_r(command_line," \t\r\n",&ptr);
+
+  if( cmd == NULL ) {
+    do_site_help_group(context);
+    return 0;
+  }
+  
+  ptr = strtok_r(NULL, "\r\n", &ptr);
+    
+  if(strcmp("info", cmd) == 0) {
+    do_site_gsinfo( ptr, context );
+  } else if(strcmp( "add", cmd) == 0) {
+    do_site_grpadd( ptr, context );
+  } else if(strcmp( "delete", cmd) == 0) {
+    do_site_grpdel( ptr, context );
+  } else if(strcmp( "rename", cmd) == 0) {
+    do_site_grpren( ptr, context );
+  } else if(strcmp( "stat", cmd) == 0) {
+    do_site_ginfo( ptr, context );
+  } else if(strcmp( "addip", cmd) == 0) {
+    do_site_grpaddip( ptr, context );
+  } else if(strcmp( "delip", cmd) == 0) {
+    do_site_grpdelip( ptr, context );
+  } else if(strcmp( "ratio", cmd) == 0) {
+    do_site_grpratio( ptr, context );
+  } else if(strcmp( "kill", cmd) == 0) {
+    do_site_grpkill( ptr, context );
+  } else if(strcmp( "change", cmd) == 0) {
+    do_site_grpchange( ptr, context );
+  } else if(strcmp( "list", cmd) == 0) {
+    do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);
+  } else {
+    ret = send_message_with_args(501,context,"site group action invalid");
+  }
+
+  return 0;
+}
+
 #if 0
 /* site flags: display a user's flags
  * flags <user>
