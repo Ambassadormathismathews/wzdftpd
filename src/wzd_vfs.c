@@ -169,9 +169,9 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
   } else
 #endif
   {
-    sprintf(allowed,"%s/",mainConfig->user_list[context->userid].rootpath);
+    sprintf(allowed,"%s/",GetUserByID(context->userid)->rootpath);
     if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    sprintf(cmd,"%s%s",mainConfig->user_list[context->userid].rootpath,context->currentpath);
+    sprintf(cmd,"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
   }
   if (cmd[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
@@ -191,8 +191,8 @@ printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
 /*#ifdef DEBUG
 printf("Converted to: '%s'\n",path);
 #endif*/
-/*  if (path[strlen(path)-1] != '/')
-    strcat(path,"/");*/
+  if (path[strlen(path)-1] != '/')
+    strcat(path,"/");
   strcpy(cmd,path);
   cmd[strlen(allowed)]='\0';
   if (path[strlen(cmd)-1] != '/')
@@ -201,6 +201,54 @@ printf("Converted to: '%s'\n",path);
   if (strncmp(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,2048);
+  if (path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
+  return 0;
+}
+
+int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
+{
+  char allowed[2048];
+  char cmd[2048];
+  
+#if BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage == 0) {
+    sprintf(allowed,"%s/",context->userinfo.rootpath);
+    sprintf(cmd,"%s%s",context->userinfo.rootpath,context->currentpath);
+  } else
+#endif
+  {
+    sprintf(allowed,"%s/",GetUserByID(context->userid)->rootpath);
+    if (strcmp(allowed,"//")==0) allowed[1]='\0';
+    sprintf(cmd,"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
+  }
+  if (cmd[strlen(cmd)-1] != '/')
+    strcat(cmd,"/");
+  if (wanted_path) {
+    if (wanted_path[0]!='/') {
+      return -1; /* we need absolute path, but it doesn't begin with / */
+    } else {
+      strcpy(cmd,wanted_path);
+    } 
+  } 
+/*#ifdef DEBUG
+printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
+#endif*/
+/*  if (!realpath(cmd,path)) return 1;*/
+  if (!stripdir(cmd,path,2048)) return 1;
+/*#ifdef DEBUG
+printf("Converted to: '%s'\n",path);
+#endif*/
+  if (path[strlen(path)-1] != '/')
+    strcat(path,"/");
+  strcpy(cmd,path);
+  cmd[strlen(allowed)]='\0';
+  if (path[strlen(cmd)-1] != '/')
+    strcat(cmd,"/");
+  /* check if user is allowed to even see the path */
+  if (strncmp(cmd,allowed,strlen(allowed))) return 1;
+  /* in the case of VFS, we need to convert here to a realpath */
+  vfs_replace(mainConfig->vfs,path,2048);
+  if (path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
   return 0;
 }
 
