@@ -6,7 +6,7 @@
 | site addip     | add ip to user                               | r          |
 |                | site addip user ip                           |            |
 | site adduser   | add a new user                               | r          |
-|                | site adduser user pass homedir [backend]     |            |
+|                | site adduser user pass [group] [backend]     |            |
 | site backend   | (init/close/reload/commit) backend_name      | r          |
 | site chacl     | change access rights on a file or directory  | r,s        |
 |                |   site chacl user mode file1 [file2 ...]     |            |
@@ -35,7 +35,10 @@
 | site kill      | kill a pid                                   | r          |
 | site idle      | display/set your tagline                     | r,s,n,g     |
 |                |   site tagline [new tagline]                 |            |
+| site invite    | tell bot to invite you on irc chan           | r          |
+|                |   site invite irc_nick                       |            |
 | site purge     | purge deleted user                           | r          |
+|                |   site purge [user]                          |            |
 | site readduser | readd a deleted user                         | r          |
 | site reload    | reloads server config                        | r          |
 | site rules     | show site rules                              | r,s,n,g    |
