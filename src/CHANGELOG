@@ -1,3 +1,20 @@
+# Aug, 12 2003
+- bugfix: autogen.sh not working on bsd
+- bugfix: O_SYNC not declared on freebsd 4.8
+- bugfix: undefined reference to getopt_long on freebsd 4.8
+- bugfix: undefined reference to errno on Mandrake 9.1
+- added auto-generated .c files to 'make distclean' target
+
+# Aug, 07 2003
+- renamed CP_USER to CPERM_USER (conflicts with system definition in bsd)
+
+# Jun, 29 2003
+- bugfix: segfault when using SSL+protected data mode+PORT
+
+# Jun, 17 2003
+- bugfix: added missing include for BSD
+- bugfix: user credits taken even with a ratio of 0 (leech)
+
 # Jun, 13 2003
 - bugfix: site change perms modifying max_idle
 - allow modifications of group->num_logins
