@@ -1,9 +1,11 @@
 
-libexecdir = ${pkgdatadir}/modules
+#libexecdir = ${pkgdatadir}/modules
+libdir = ${pkgdatadir}/modules
 
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
 
-libexec_LTLIBRARIES = libwzd_sfv.la
+#libexec_LTLIBRARIES = libwzd_sfv.la
+lib_LTLIBRARIES = libwzd_sfv.la
 
 libwzd_sfv_la_SOURCES = libwzd_sfv.c
 libwzd_sfv_la_LDFLAGS = -avoid-version -module -L../../src/ -lwzd 

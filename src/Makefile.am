@@ -1,8 +1,10 @@
 
 
-libexecdir = ${prefix}/lib
+#libexecdir = ${prefix}/lib
+libdir = ${prefix}/lib
 
-libexec_LTLIBRARIES = libwzd.la
+#libexec_LTLIBRARIES = libwzd.la
+lib_LTLIBRARIES = libwzd.la
 
 
 libwzd_la_SOURCES =  \
@@ -25,7 +27,8 @@ libwzd_la_SOURCES =  \
 	wzd_shm.c       \
 	wzd_shm.h       \
 	wzd_crontab.c   \
-	wzd_crontab.h
+	wzd_crontab.h	\
+	wzd_cookie_lex.l
 
 libwzd_la_LDFLAGS = -avoid-version -module
 
@@ -71,7 +74,7 @@ wzdftpd_SOURCES =    \
 	wzd_structs.h      \
 	wzd_tls.c          \
 	wzd_tls.h          \
-  wzd_init_lex.l
+	wzd_init_lex.l
 
 wzdftpd_LDFLAGS = -lwzd @SSL_LDFLAGS@ -lpthread -lfl @DL_FLAGS@
 
