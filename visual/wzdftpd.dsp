@@ -66,7 +66,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "DEBUG" /D "_DEBUG" /D "WZD_MULTITHREAD" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /D "DEBUG" /D "_DEBUG" /D "WZD_MULTITHREAD" /D "SSL_SUPPORT" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /GZ /c
 # SUBTRACT CPP /Fr /YX
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /d "_DEBUG"
@@ -159,6 +159,10 @@ SOURCE=..\src\wzd_site_user.c
 
 SOURCE=..\src\wzd_socket.c
 # End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_tls.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -243,6 +247,14 @@ SOURCE=..\src\wzd_types.h
 # Begin Source File
 
 SOURCE=.\gnu_regex_dist\gnu_regex.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\openssl\lib\ssleay32.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\openssl\lib\libeay32.lib
 # End Source File
 # End Target
 # End Project

@@ -26,25 +26,36 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <direct.h>
+#include <io.h>
+
+#include "../../visual/gnu_regex_dist/regex.h"
+#else
 #include <dirent.h>
 #include <sys/types.h>
 #include <regex.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /*#include "wzd.h"*/
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_libmain.h"
+#include "wzd_messages.h"
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 #include "wzd_cache.h"
 #include "wzd_crc32.h"
+#include "wzd_vfs.h" /* checkabspath */
 
 #include "libwzd_sfv.h"
 #include "libwzd_sfv_zip.h"
@@ -263,8 +274,16 @@ int sfv_create(const char * sfv_file)
   int i;
   unsigned long crc;
   struct stat s;
+#ifndef _MSC_VER
   DIR *dir;
   struct dirent *entr;
+#else
+  HANDLE dir;
+  WIN32_FIND_DATA fileData;
+  int finished;
+  char dirfilter[MAX_PATH];
+#endif
+  char *dir_filename;
   int count_comments=0, count_entries=0;
 
   sfv_init(&sfv);
@@ -279,28 +298,41 @@ int sfv_create(const char * sfv_file)
   *(++ptr) = '\0';
 
   strcpy(filename,directory);
+#ifndef _MSC_VER
   if ((dir=opendir(directory))==NULL) return -1;
+#else
+  _snprintf(dirfilter,2048,"%s/*",directory);
+  if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return -1;
+#endif
 
+#ifndef _MSC_VER
   while ((entr=readdir(dir))!=NULL) {
-    if (entr->d_name[0]=='.') continue;
+    dir_filename = entr->d_name;
+#else
+  finished = 0;
+  while (!finished) {
+	dir_filename = fileData.cFileName;
+#endif
+    if (dir_filename[0]=='.') DIR_CONTINUE
     /* TODO check that file matches mask */
 
-    if (strlen(entr->d_name)>4) {
+    if (strlen(dir_filename)>4) {
       char extension[5];
-      strcpy(extension,entr->d_name+strlen(entr->d_name)-4);
+      strcpy(extension,dir_filename+strlen(dir_filename)-4);
       /* files that should not be in a sfv */
       if (strcasecmp(extension,".nfo")==0 ||
 	  strcasecmp(extension,".diz")==0 ||
 	  strcasecmp(extension,".sfv")==0 ||
 	  strcasecmp(extension,".txt")==0)
-	continue;
+	  DIR_CONTINUE
     }
     /* add to sfv file */
     strcpy(filename,directory);
     ptr = filename + strlen(directory);
 /*    strcpy(ptr,sfv.sfv_list[i]->filename);*/
-    strcpy(ptr,entr->d_name);
-    if (stat(filename,&s) || S_ISDIR(s.st_mode)) { continue; }
+    strcpy(ptr,dir_filename);
+    if (stat(filename,&s) || S_ISDIR(s.st_mode))
+	  DIR_CONTINUE
     thisret = calc_crc32(filename,&crc,0,-1);
     /* count_entries + 2 : +1 for the new line to add, +1 to terminate
        array by NULL */
@@ -308,11 +340,13 @@ int sfv_create(const char * sfv_file)
       sfv.sfv_list = realloc(sfv.sfv_list,(count_entries+50)*sizeof(wzd_sfv_entry*));
     sfv.sfv_list[count_entries] = malloc(sizeof(wzd_sfv_entry));
     sfv.sfv_list[count_entries]->crc = crc;
-    sfv.sfv_list[count_entries]->filename = strdup(entr->d_name);
+    sfv.sfv_list[count_entries]->filename = strdup(dir_filename);
     sfv.sfv_list[count_entries]->state = SFV_OK;
     sfv.sfv_list[count_entries]->state = s.st_size;
     count_entries++;
+	DIR_CONTINUE
   } /* while ((entr=readdir(dir))!=NULL) */
+  closedir(dir);
   sfv.comments[count_comments] = NULL;
   sfv.sfv_list[count_entries] = NULL;
 
@@ -344,7 +378,6 @@ int sfv_create(const char * sfv_file)
     close(fd_sfv);
   }
 
-  closedir(dir);
   sfv_free(&sfv);
   return 0;
 }
@@ -415,11 +448,19 @@ out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,c
  */
 int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 {
+#ifndef _MSC_VER
   DIR *dir;
+  struct dirent *entr;
+#else
+  HANDLE dir;
+  WIN32_FIND_DATA fileData;
+  int finished;
+  char dirfilter[MAX_PATH];
+#endif
+  char * dir_filename;
   char sfv_dir[1024];
   char stripped_filename[1024];
   char *ptr;
-  struct dirent *entr;
   unsigned int length;
   int ret;
 
@@ -432,33 +473,45 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
   strncpy(stripped_filename,ptr+1,1023);
   if (strlen(stripped_filename)<=0) return -1;
 
+#ifndef _MSC_VER
   if ( (dir=opendir(sfv_dir)) == NULL ) return -1;
+#else
+  _snprintf(dirfilter,2048,"%s/*",sfv_dir);
+  if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return -1;
+#endif
 
   sfv_init(sfv);
 
+#ifndef _MSC_VER
   while ( (entr=readdir(dir)) != NULL ) {
-    if (strcmp(entr->d_name,".")==0 ||
-	strcmp(entr->d_name,"..")==0 ||
-        strcmp(entr->d_name,HARD_PERMFILE)==0)
-    continue;
-    length = strlen(entr->d_name);
-    if (length<5) continue;
-    if (strcasecmp(entr->d_name+length-3,"sfv")==0)
+    dir_filename = entr->d_name;
+#else
+  finished = 0;
+  while (!finished) {
+	dir_filename = fileData.cFileName;
+#endif
+    if (strcmp(dir_filename,".")==0 ||
+	strcmp(dir_filename,"..")==0 ||
+        strcmp(dir_filename,HARD_PERMFILE)==0)
+	  DIR_CONTINUE;
+    length = strlen(dir_filename);
+    if (length<5) DIR_CONTINUE;
+    if (strcasecmp(dir_filename+length-3,"sfv")==0)
     {
       char sfv_name[1024];
       int i;
       i = 0;
       ptr = sfv_dir;
       while (*ptr) {
-	if (i >= 1022) continue;
+	if (i >= 1022) DIR_CONTINUE
 	sfv_name[i] = *ptr;
 	i++;
 	ptr++;
       }	
       sfv_name[i++] = '/';
-      ptr = entr->d_name;
+      ptr = dir_filename;
       while (*ptr) {
-	if (i >= 1023) continue;
+	if (i >= 1023) DIR_CONTINUE
 	sfv_name[i] = *ptr;
 	i++;
 	ptr++;
@@ -486,6 +539,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       }
       sfv_free(sfv);
     }
+	DIR_CONTINUE
   } /* while readdir */
 
   closedir(dir);
@@ -508,7 +562,7 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
   int i;
   int num_files;
 
-  if (get_all_params()) return;
+  if (get_all_params()) return -1;
 
   if (strlen(sfv_file) >= 1024) return -1;
   strncpy(dir,sfv_file,1023);
@@ -846,23 +900,72 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
   regcomp( &preg, del_progressmeter, REG_NEWLINE|REG_EXTENDED );
   {
     char buffer[512];
+#ifndef _MSC_VER
     DIR *d;
     struct dirent *entr;
+#else
+    HANDLE d;
+    WIN32_FIND_DATA fileData;
+    int finished;
+    char dirfilter[MAX_PATH];
+#endif
+    char *dir_filename;
     float percent;
 
     /* Removes previous progressmeter */
+#ifndef _MSC_VER
     if ( (d=opendir(dir))==NULL ) return;
+#else
+    snprintf(dirfilter,2048,"%s/*",dir);
+    if ((d = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return;
+#endif
+#ifndef _MSC_VER
     while ((entr=readdir(d))!=NULL) {
-      if (entr->d_name[0]=='.') continue;
-      if ( regexec( &preg, entr->d_name, 1, pmatch, 0) == 0 ) {
+      dir_filename = entr->d_name;
+#else
+    finished = 0;
+    while (!finished) {
+	  dir_filename = fileData.cFileName;
+#endif
+      if (dir_filename[0]=='.')
+	  {
+#ifdef _MSC_VER
+        if (!FindNextFile(d,&fileData))
+		{
+	      if (GetLastError() == ERROR_NO_MORE_FILES)
+		    finished = 1;
+		}
+#endif
+	    continue;
+	  }
+      if ( regexec( &preg, dir_filename, 1, pmatch, 0) == 0 ) {
 	/* found, remove it  */
 	/* security check */
-	if (len+strlen(entr->d_name)>510) continue;
-	strcpy(dir+len,entr->d_name);
+	if (len+strlen(dir_filename)>510)
+	  {
+#ifdef _MSC_VER
+        if (!FindNextFile(d,&fileData))
+		{
+	      if (GetLastError() == ERROR_NO_MORE_FILES)
+		    finished = 1;
+		}
+#endif
+	    continue;
+	  }
+	strcpy(dir+len,dir_filename);
 	remove (dir);
 	dir[len]='\0';
       }
+#ifdef _MSC_VER
+    if (!FindNextFile(d,&fileData))
+	{
+      if (GetLastError() == ERROR_NO_MORE_FILES)
+	    finished = 1;
+	}
+#endif
     }
+    closedir(d);
+
     percent = _sfv_get_release_percent(dir, sfv);
     if (percent >= 100.f) { /* complete */
       const char *complete;
@@ -925,7 +1028,6 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
       /* create empty dir ? */
       mkdir (dir,0755);
     } /* complete ? */
-    closedir(d);
   }
 }
 
@@ -1349,3 +1451,7 @@ int WZD_MODULE_INIT(void)
   return 0;
 }
 
+int WZD_MODULE_CLOSE(void)
+{
+  return 0;
+}

@@ -30,6 +30,21 @@ Package=<4>
 
 ###############################################################################
 
+Project: "sfv"=.\MODULES\sfv\sfv.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "wzdftpd"=.\wzdftpd.dsp - Package Owner=<4>
 
 Package=<5>

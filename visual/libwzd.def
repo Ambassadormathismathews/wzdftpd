@@ -22,6 +22,7 @@ EXPORTS
 	bytes_to_unit
 	calc_crc32
 	calc_md5
+	checkabspath
 	checkpath
 	cookie_parse_buffer
 	cronjob_add
@@ -144,6 +145,7 @@ EXPORTS
 	GetGroupByID
 	GetGroupByName
 	GetGroupIDByName
+	GetMyContext
 	GetUserByID
 	GetUserByName
 	GetUserIDByName
