@@ -42,6 +42,9 @@ char * wzd_strdup(const char *s);
 
 #ifdef DEBUG
 
+/* Test backend storage */
+#define BACKEND_STORAGE
+
 /* debug file cache */
 /*#define WZD_DBG_CACHE*/
 

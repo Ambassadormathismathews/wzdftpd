@@ -329,17 +329,19 @@ void client_die(wzd_context_t * context)
 
   FORALL_HOOKS(EVENT_LOGOUT)
     typedef int (*login_hook)(unsigned long, const char*);
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
     if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,context->userinfo.username);
+      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
 #endif
     if (hook->hook)
       ret = (*(login_hook)hook->hook)(EVENT_LOGOUT,GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
-#if BACKEND_STORAGE
+#if 0
+#ifdef BACKEND_STORAGE
   if (context->userinfo.flags)
     free(context->userinfo.flags);
+#endif
 #endif
 
 #ifdef DEBUG
@@ -374,9 +376,9 @@ int check_timeout(wzd_context_t * context)
   int i, ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage == 0)
-    user = &context->userinfo;
+    user = GetUserByID(context->userid);
   else
 #endif
     user = GetUserByID(context->userid);
@@ -490,8 +492,8 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   struct stat buf;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -710,8 +712,8 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
   char * cmask;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -856,8 +858,8 @@ int do_mkdir(char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -998,8 +1000,8 @@ int do_rmdir(char * param, wzd_context_t * context)
     wzd_user_t * user;
     char buffer[WZD_MAX_PATH], path[WZD_MAX_PATH];
 
-#if BACKEND_STORAGE
-    if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+    if (mainConfig->backend.backend_storage==1) {
       user = &context->userinfo;
     } else
 #endif
@@ -1389,8 +1391,8 @@ int do_retr(char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -1515,8 +1517,8 @@ int do_stor(char *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -2048,8 +2050,8 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -2062,12 +2064,8 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
     return E_PASS_REJECTED;
   }
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
-    user = &context->userinfo;
-  } else
-#endif
-  user = GetUserByID(context->userid);
+  if ( ! mainConfig->backend.backend_storage )
+    user = GetUserByID(context->userid);
 
   /* normalize rootpath */
 
@@ -2101,8 +2099,8 @@ int do_user(const char *username, wzd_context_t * context)
   int ret;
   wzd_user_t * me;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     me = &context->userinfo;
   } else
 #endif
@@ -2112,12 +2110,8 @@ int do_user(const char *username, wzd_context_t * context)
   ret = backend_validate_login(username,me,&context->userid);
   if (ret) return E_USER_REJECTED;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
-    me = &context->userinfo;
-  } else
-#endif
-  me = GetUserByID(context->userid);
+  if ( ! mainConfig->backend.backend_storage )
+    me = GetUserByID(context->userid);
 
   /* check if user have been deleted */
   if (me->flags && strchr(me->flags,FLAG_DELETED))
@@ -2135,7 +2129,7 @@ int do_user(const char *username, wzd_context_t * context)
     int i;
     for (i=0; i<HARD_USERLIMIT; i++)
     {
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
       /* strcmp user->username , ? */
 #else
       if (context_list[i].magic == CONTEXT_MAGIC && context->userid == context_list[i].userid)
@@ -2192,8 +2186,8 @@ int do_user_ip(const char *username, wzd_context_t * context)
   wzd_group_t *group;
   int i;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -2228,7 +2222,7 @@ int check_tls_forced(wzd_context_t * context)
 /*  wzd_group_t *group;
   int i;*/
 
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
     user = &context->userinfo;
   } else
@@ -2493,9 +2487,9 @@ void * clientThreadProc(void *arg)
     return NULL;
   }
 
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
-    user = &context->userinfo;
+    user = GetUserByID(context->userid);
   } else
 #endif
     user = GetUserByID(context->userid);

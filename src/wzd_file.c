@@ -1038,8 +1038,8 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   wzd_user_t * user;
   short is_locked;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -1111,8 +1111,8 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else 
 #endif
@@ -1131,8 +1131,8 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
   wzd_user_t * user;
   struct stat s;
   
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else 
 #endif
@@ -1218,8 +1218,8 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif
@@ -1273,8 +1273,8 @@ int file_remove(const char *filename, wzd_context_t * context)
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
   perm_filename[length+neededlength]='\0';
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif

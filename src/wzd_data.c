@@ -143,9 +143,9 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   int ret;
   wzd_user_t * user;
 
-#if BACKEND_STORAGE
+#ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==0) {
-    user = &context->userinfo;
+    user = GetUserByID(context->userid);
   } else
 #endif
     user = GetUserByID(context->userid);

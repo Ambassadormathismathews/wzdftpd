@@ -414,7 +414,7 @@ typedef struct {
   unsigned long	resume;
   unsigned long	connection_flags;
   char          currentpath[WZD_MAX_PATH];
-/*  wzd_user_t    userinfo;*/
+  wzd_user_t    userinfo; /**< userinfo, only for backend_storage=1 */
   unsigned int	userid;
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;

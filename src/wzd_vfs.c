@@ -288,7 +288,13 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
   wzd_user_t * user;
   wzd_group_t * group;
 
-  user=GetUserByID(context->userid);
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
+    user = &context->userinfo;
+  } else
+#endif
+    user = GetUserByID(context->userid);
+
   if (!user) return NULL;
 
   if (user->group_num > 0) {
@@ -446,10 +452,12 @@ int checkpath(const char *wanted_path, char *path, wzd_context_t *context)
   allowed = malloc(WZD_MAX_PATH);
   cmd = malloc(WZD_MAX_PATH);
   
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 0) {
-    snprintf(allowed,WZD_MAX_PATH,"%s/",context->userinfo.rootpath);
-    snprintf(cmd,WZD_MAX_PATH,"%s%s",context->userinfo.rootpath,context->currentpath);
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage == 1) {
+    wzd_user_t * user = &context->userinfo;
+    snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
+    if (strcmp(allowed,"//")==0) allowed[1]='\0';
+    snprintf(cmd,WZD_MAX_PATH,"%s%s",user->rootpath,context->currentpath);
   } else
 #endif
   {
@@ -496,10 +504,12 @@ int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
   char allowed[WZD_MAX_PATH];
   char cmd[WZD_MAX_PATH];
   
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage == 0) {
-    sprintf(allowed,"%s/",context->userinfo.rootpath);
-    sprintf(cmd,"%s%s",context->userinfo.rootpath,context->currentpath);
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage == 1) {
+    wzd_user_t * user = &context->userinfo;
+    snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
+    if (strcmp(allowed,"//")==0) allowed[1]='\0';
+    snprintf(cmd,WZD_MAX_PATH,"%s%s",user->rootpath,context->currentpath);
   } else
 #endif
   {

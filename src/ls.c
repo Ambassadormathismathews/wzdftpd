@@ -114,8 +114,8 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
   wzd_user_t * user, * owner;
   short vfs_pad=0;
 
-#if BACKEND_STORAGE
-  if (mainConfig->backend.backend_storage==0) {
+#ifdef BACKEND_STORAGE
+  if (mainConfig->backend.backend_storage==1) {
     user = &context->userinfo;
   } else
 #endif

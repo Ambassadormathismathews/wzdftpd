@@ -1,3 +1,7 @@
+2004-03-01  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* backends: pam backend started
+
 2004-02-29  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: first implementation of protocols (used in custom

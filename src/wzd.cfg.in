@@ -67,6 +67,8 @@ max_threads = 32
 #backend = plaintext > 122
 backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 122
 backend_param_plaintext = @e_datadir@/@PACKAGE@/users
+#backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
+#backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
 
 # speed limits in bytes /sec (approx !)
 # 0 = no limit

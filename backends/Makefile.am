@@ -4,4 +4,8 @@ if HAVE_MYSQL
   MAYBE_MYSQL = mysql
 endif
 
-SUBDIRS = plaintext $(MAYBE_MYSQL)
+if HAVE_PAM
+  MAYBE_PAM = pam
+endif
+
+SUBDIRS = plaintext $(MAYBE_MYSQL) $(MAYBE_PAM)
