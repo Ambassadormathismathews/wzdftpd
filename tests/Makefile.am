@@ -1,7 +1,7 @@
-EXTRA_DIST = file_crc.txt
+EXTRA_DIST = file_crc.txt test_common.h
 
 INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src
-LDADD = ../src/libwzd_core.la
+LDADD = @DL_FLAGS@ ../src/libwzd_core.la
 
 test_programs = \
 	test_wzd_action \

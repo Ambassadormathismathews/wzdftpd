@@ -63,8 +63,8 @@ static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned in
 static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int index);
 
-static int * wzd_mysql_get_user_list(void);
-static int * wzd_mysql_get_group_list(void);
+static uid_t * wzd_mysql_get_user_list(void);
+static gid_t * wzd_mysql_get_group_list(void);
 
 
 
@@ -115,24 +115,24 @@ int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
   return 0;
 }
 
-int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
+uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
   char *query;
-  int uid;
+  uid_t uid;
 
-  if (!wzd_mysql_check_name(login)) return -1;
+  if (!wzd_mysql_check_name(login)) return (uid_t)-1;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return -1;
+    return (uid_t)-1;
   }
   free(query);
 
-  uid = -1;
+  uid = (uid_t)-1;
 
 
   /** no !! this returns the number of COLUMNS (here, 14) */
@@ -144,13 +144,13 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 
     if (!(res = mysql_store_result(&mysql))) {
       _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return -1;
+      return (uid_t)-1;
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
       /* 0 or more than 1 result  */
       mysql_free_result(res);
-      return -1;
+      return (uid_t)-1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -170,14 +170,14 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
   return uid;
 }
 
-int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   char *query;
   char * cipher;
-  int uid;
+  uid_t uid;
   char buffer[128];
 
-  if (!wzd_mysql_check_name(login)) return -1;
+  if (!wzd_mysql_check_name(login)) return (uid_t)-1;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
@@ -185,11 +185,11 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
   if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return -1;
+    return (uid_t)-1;
   }
 
   free(query);
-  uid = -1;
+  uid = (uid_t)-1;
 
 
   /** no !! this returns the number of COLUMNS (here, 14) */
@@ -202,13 +202,13 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
     if (!(res = mysql_store_result(&mysql))) {
       _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return -1;
+      return (uid_t)-1;
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
       /* 0 or more than 1 result */
       mysql_free_result(res);
-      return -1;
+      return (uid_t)-1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -240,10 +240,10 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
       return uid; /* passworldless login */
 
     cipher = (char*)md5_hash_r(pass, buffer, sizeof(buffer));
-    if (!cipher) return -1;
+    if (!cipher) return (uid_t)-1;
 
     if (strncasecmp(cipher,stored_pass,32))
-      return -1;
+      return (uid_t)-1;
 
   } /* else // user does not exist in table
     return -1;*/
@@ -257,7 +257,7 @@ uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
   char *query;
   uid_t uid;
 
-  if (!wzd_mysql_check_name(name)) return -1;
+  if (!wzd_mysql_check_name(name)) return (uid_t)-1;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", name);
@@ -265,11 +265,11 @@ uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
   if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return -1;
+    return (uid_t)-1;
   }
 
   free(query);
-  uid = -1;
+  uid = (uid_t)-1;
 
   /** no !! this returns the number of COLUMNS (here, 14) */
 /*  if (mysql_field_count(&mysql) == 1)*/
@@ -319,7 +319,7 @@ int FCN_FINI()
   return 0;
 }
 
-wzd_user_t * FCN_GET_USER(int uid)
+wzd_user_t * FCN_GET_USER(uid_t uid)
 {
   char *query;
   MYSQL_RES   *res;
@@ -328,12 +328,12 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_user_t * user;
   unsigned int i,j;
 
-  if (uid == -2) return (wzd_user_t*)wzd_mysql_get_user_list();
+  if (uid == (uid_t)-2) return (wzd_user_t*)wzd_mysql_get_user_list();
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM users WHERE uid='%d'", uid);
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
@@ -387,7 +387,7 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   snprintf(query, 512, "select UserIP.ip from UserIP,users where users.uid='%d' AND users.ref=UserIP.ref", uid);
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
@@ -415,7 +415,7 @@ wzd_user_t * FCN_GET_USER(int uid)
 
   snprintf(query, 512, "select groups.gid from groups,users,UGR where users.uid='%d' AND users.ref=UGR.uref AND groups.ref=UGR.gref", uid);
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return user;
@@ -446,7 +446,7 @@ wzd_user_t * FCN_GET_USER(int uid)
 }
 
 
-wzd_group_t * FCN_GET_GROUP(int gid)
+wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
   char *query;
   MYSQL_RES   *res;
@@ -455,12 +455,12 @@ wzd_group_t * FCN_GET_GROUP(int gid)
   wzd_group_t * group;
   unsigned int i;
 
-  if (gid == -2) return (wzd_group_t*)wzd_mysql_get_group_list();
+  if (gid == (gid_t)-2) return (wzd_group_t*)wzd_mysql_get_group_list();
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM groups WHERE gid='%d'", gid);
 
-  if (mysql_query(&mysql, query) != 0) { 
+  if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return NULL;
@@ -598,12 +598,12 @@ static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int ind
 }
 
 
-static int * wzd_mysql_get_user_list(void)
+static uid_t * wzd_mysql_get_user_list(void)
 {
   char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  int * uid_list;
+  uid_t * uid_list;
   unsigned int index, i;
   my_ulonglong num_rows;
 
@@ -625,15 +625,15 @@ static int * wzd_mysql_get_user_list(void)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  uid_list = (int*)wzd_malloc(((u32_t)num_rows+1)*sizeof(int));
+  uid_list = wzd_malloc(((u32_t)num_rows+1)*sizeof(uid_t));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
     wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
-    uid_list[index++] = (int)i;
+    uid_list[index++] = (uid_t)i;
   }
-  uid_list[index] = -1;
-  uid_list[num_rows] = -1;
+  uid_list[index] = (uid_t)-1;
+  uid_list[num_rows] = (uid_t)-1;
 
   mysql_free_result(res);
   free(query);
@@ -641,12 +641,12 @@ static int * wzd_mysql_get_user_list(void)
   return uid_list;
 }
 
-static int * wzd_mysql_get_group_list(void)
+static gid_t * wzd_mysql_get_group_list(void)
 {
   char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  int * gid_list;
+  gid_t * gid_list;
   unsigned int index, i;
   my_ulonglong num_rows;
 
@@ -668,15 +668,15 @@ static int * wzd_mysql_get_group_list(void)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  gid_list = (int*)wzd_malloc(((u32_t)num_rows+1)*sizeof(int));
+  gid_list = wzd_malloc(((u32_t)num_rows+1)*sizeof(gid_t));
 
   index = 0;
   while ( (row = mysql_fetch_row(res)) ) {
     wzd_row_get_uint(&i, row, 0 /* query asks only one column */);
-    gid_list[index++] = (int)i;
+    gid_list[index++] = (gid_t)i;
   }
-  gid_list[index] = -1;
-  gid_list[num_rows] = -1;
+  gid_list[index] = (gid_t)-1;
+  gid_list[num_rows] = (gid_t)-1;
 
 
   mysql_free_result(res);

@@ -116,7 +116,7 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
 {
   int uid;
-  
+
   /* preliminary checks */
   uid = getuid();
   if (uid != 0) {
@@ -124,7 +124,6 @@ int FCN_INIT(unsigned int user_max, unsigned int group_max, void *arg)
     return 1;
   }
 
-  
   user_pool = malloc(HARD_DEF_USER_MAX * sizeof(wzd_user_t));
   memset(user_pool, 0, HARD_DEF_USER_MAX * sizeof(wzd_user_t));
   _user_count = 0;
@@ -144,7 +143,7 @@ int FCN_FINI()
   return 0;
 }
 
-int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
+uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
   pam_handle_t *pamh;
   struct pam_conv PAM_conversation = { su_conv, NULL };
@@ -158,12 +157,12 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
     if (ret != PAM_SUCCESS)
     {
       printf("pam error: %s\n",pam_strerror(pamh,ret));
-      return -1;
+      return (uid_t)-1;
     }
   }
 
   pwd = getpwnam(login);
-  if (!pwd) return -1;
+  if (!pwd) return (uid_t)-1;
 
   _pam_adduser(login, pwd->pw_uid, pwd->pw_dir);
 
@@ -173,7 +172,7 @@ int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 }
 
 /** \todo XXX FIXME is the mixed use of pam and getpwnam correct ? */
-int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   pam_handle_t *pamh=NULL;
   int ret;
@@ -189,7 +188,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     if (ret != PAM_SUCCESS)
     {
       printf("pam_authenticate error: %s\n",pam_strerror(pamh,ret));
-      return -1;
+      return (uid_t)-1;
     }
 #if 0
     ret = pam_open_session(pamh, 0); /* open session */
@@ -204,12 +203,12 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
   pam_end(pamh, PAM_SUCCESS);
 
   pwd = getpwnam(login);
-  if (!pwd) return -1;
+  if (!pwd) return (uid_t)-1;
 
   return pwd->pw_uid;
 }
 
-int FCN_FIND_USER(const char *name, wzd_user_t * user)
+uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
   int i;
 
@@ -218,13 +217,13 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
     if (strcmp(user_pool[i].username, name)==0)
       return user_pool[i].uid;
   }
-  
-  return -1;
+
+  return (uid_t)-1;
 }
 
-int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
+gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
-  return -1;
+  return (gid_t)-1;
 }
 
 /* if user does not exist, add it */
@@ -253,11 +252,11 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
     if (user_pool[i].uid == uid)
       return &user_pool[i];
   }
-  
+
   return NULL;
 }
 
-wzd_group_t * FCN_GET_GROUP(int gid)
+wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
   return NULL;
 }

@@ -76,11 +76,11 @@
 #define	FCN_FINI		wzd_fini
 #define	STR_FINI		"wzd_fini"
 
-/* int FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user) */
+/* uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user) */
 #define	FCN_VALIDATE_LOGIN	wzd_validate_login
 #define	STR_VALIDATE_LOGIN	"wzd_validate_login"
 
-/* int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user) */
+/* uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user) */
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
 
@@ -137,9 +137,9 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
 int backend_find_group(const char *name, wzd_group_t * group, int * groupid);
 
-int backend_validate_login(const char *name, wzd_user_t * user, unsigned int * userid);
+int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid);
 
-int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, unsigned int * userid);
+int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, uid_t * userid);
 
 /* if user does not exist, add it
  * if struct user is NULL, delete user

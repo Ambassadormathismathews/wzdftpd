@@ -8,9 +8,6 @@
 - finish MLST
 - implement MLSD
 '********'
-- check if 'dh_shlibdeps -L wzdftpd' would be better than ugly sed in
-  debian/rules
-'********'
 - use generic list definition when possible
 '********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=

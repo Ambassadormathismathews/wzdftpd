@@ -52,7 +52,7 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
   char *query;
   gid_t gid;
 
-  if (!wzd_mysql_check_name(name)) return -1;
+  if (!wzd_mysql_check_name(name)) return (gid_t)-1;
 
   query = malloc(512);
   snprintf(query, 512, "SELECT * FROM groups WHERE groupname='%s'", name);

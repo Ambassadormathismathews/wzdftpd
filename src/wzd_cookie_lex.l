@@ -633,10 +633,10 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allusers")==0)
       {
         wzd_user_t * loop_user;
-        int * uid_list;
-        uid_list = (int*)backend_get_user(-2);
+        uid_t * uid_list;
+        uid_list = (uid_t*)backend_get_user(-2);
         if (uid_list) {
-          for (i=0; uid_list[i] >= 0; i++)
+          for (i=0; uid_list[i] != (uid_t)-1; i++)
           {
             loop_user = GetUserByID(uid_list[i]);
             current_user = loop_user;
@@ -654,10 +654,10 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allgroups")==0)
       {
         wzd_group_t * loop_group;
-        int * gid_list;
-        gid_list = (int*)backend_get_group(-2);
+        gid_t * gid_list;
+        gid_list = (gid_t*)backend_get_group(-2);
         if (gid_list) {
-          for (i=0; gid_list[i] >= 0; i++)
+          for (i=0; gid_list[i] != (gid_t)-1; i++)
           {
             loop_group = GetGroupByID(gid_list[i]);
             current_group = loop_group;
@@ -675,14 +675,14 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       else if (strcmp(condition,"allgroupmembers")==0)
       {
         wzd_user_t * loop_user;
-        int gid;
+        gid_t gid;
         if (current_group) {
-          int * uid_list;
+          uid_t * uid_list;
 
-          uid_list = (int*)backend_get_user(-2);
+          uid_list = (uid_t*)backend_get_user(-2);
           if (uid_list) {
             gid = GetGroupIDByName(current_group->groupname);
-            for (i=0; uid_list[i] >= 0; i++)
+            for (i=0; uid_list[i] != (uid_t)-1; i++)
             {
               loop_user = GetUserByID(uid_list[i]);
               current_user = loop_user;
@@ -1383,7 +1383,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         if (current_user && current_user->group_num>0)
         {
           group = GetGroupByID(current_user->groups[0]);
-          snprintf(internalbuffer,IBUFSIZE,"%s",group->groupname);
+          if (group) {
+            snprintf(internalbuffer,IBUFSIZE,"%s",group->groupname);
+          }
+          else {
+            snprintf(internalbuffer,IBUFSIZE,"invalid group");
+          }
         }
         else
         {
@@ -1401,7 +1406,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         cookie_ptr = internalbuffer;
         i = 0;
         if (current_user && current_user->group_num > 0) {
-          while (current_user && i < current_user->group_num)
+          while (current_user && (unsigned int)i < current_user->group_num)
           {
             group = GetGroupByID(current_user->groups[i]);
             if (group) {

@@ -254,9 +254,9 @@ typedef struct {
   char * name;
   void * param;
   void * handle;
-  int (*back_validate_login)(const char *, wzd_user_t *);
-  int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
-  wzd_user_t * (*back_get_user)(int uid);
+  uid_t (*back_validate_login)(const char *, wzd_user_t *);
+  uid_t (*back_validate_pass) (const char *, const char *, wzd_user_t *);
+  wzd_user_t * (*back_get_user)(uid_t uid);
   wzd_group_t * (*back_get_group)(int gid);
   uid_t (*back_find_user) (const char *, wzd_user_t *);
   gid_t (*back_find_group) (const char *, wzd_group_t *);
