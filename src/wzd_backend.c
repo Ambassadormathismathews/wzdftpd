@@ -441,6 +441,10 @@ int backend_reload(const char *backend)
 
 wzd_user_t * backend_get_user(uid_t userid)
 {
+  wzd_backend_t * b;
+  if ( (b = mainConfig->backend.b) && b->backend_get_user)
+    return b->backend_get_user(userid);
+
   if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
     out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
     return NULL;

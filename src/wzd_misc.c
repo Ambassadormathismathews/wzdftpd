@@ -575,6 +575,10 @@ void server_clear_param(wzd_param_t **plist)
     if (current->name) free(current->name);
     if (current->param) free(current->param);
 
+#ifdef DEBUG
+    memset(current,0,sizeof(wzd_param_t));
+#endif
+
     free(current);
 
     current = next;

@@ -605,7 +605,7 @@ int wzd_backend_init(wzd_backend_t * backend)
 
   backend->backend_get_user = FCN_GET_USER;
   backend->backend_get_group = FCN_GET_GROUP;
-  
+
   backend->backend_find_user = FCN_FIND_USER;
   backend->backend_find_group = FCN_FIND_GROUP;
 
@@ -614,7 +614,7 @@ int wzd_backend_init(wzd_backend_t * backend)
 
   backend->backend_chpass = NULL;
   backend->backend_commit_changes = FCN_COMMIT_CHANGES;
-  
+
   return 0;
 }
 

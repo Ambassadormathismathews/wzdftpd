@@ -27,11 +27,11 @@
 
 #include <stdarg.h>
 
-#include "wzd_hardlimits.h"
 #include "wzd_structs.h"
 
 #define STRUCT_BACKEND_VERSION  100
 
+/** \brief Initialization for backends */
 typedef struct {
   unsigned int struct_version; /* used to know which fields are
                                   present in the struct .. */
@@ -153,8 +153,28 @@ int backend_close(const char *backend);
 
 int backend_reload(const char *backend);
 
+/**
+ * \brief Get user informations
+ * \param userid The user id, or the special value (uid_t)-2
+ *
+ * Search backend for user with the corresponding uid and return the corresponding struct.
+ *
+ * If the argument is -2, this function returns an array of uid (ended with -1) containing
+ * the list of all known users (you have to cast the return to a (uid_t *) to use it). You must
+ * free the returned array using wzd_free().
+ */
 wzd_user_t * backend_get_user(uid_t userid);
 
+/**
+ * \brief Get group informations
+ * \param groupid The group id, or the special value (gid_t)-2
+ *
+ * Search backend for group with the corresponding gid and return the corresponding struct.
+ *
+ * If the argument is -2, this function returns an array of gid (ended with -1) containing
+ * the list of all known groups (you have to cast the return to a (gid_t *) to use it). You must
+ * free the returned array using wzd_free().
+ */
 wzd_group_t * backend_get_group(gid_t groupid);
 
 int backend_find_user(const char *name, wzd_user_t * user, int * userid);
