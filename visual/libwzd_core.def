@@ -167,6 +167,7 @@ EXPORTS
 	socket_connect
 	socket_get_local_port
 	socket_get_remote_port
+	socket_getipbyname
 	socket_make
 	str_allocate
 	str_append
