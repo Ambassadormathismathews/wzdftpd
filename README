@@ -50,3 +50,8 @@ Troubleshooting:
       ->> replace 0x1331c0d3 with your key if you changed in wzd.cfg <<-
     + become root and do the same thing
     ± reboot the machine :)
+
+* LOGIN
+  Q: Sometimes login seems to freeze, and some time later all seems to go normal
+  A: This is probably to a DNS lookup - it can be very long if you specified many
+    addresses il config file and in allowed ip/user.
