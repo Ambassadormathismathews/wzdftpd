@@ -16,12 +16,12 @@ ip_allowed=127.0.0.1
 default_home=/home/pollux
 
 privgroup	users
-default_home=/home/pollux/TODEL/wzdftpd-root
+default_home=/home
 ratio=3
 
 privgroup	anonymous
 max_idle_time=10
-default_home=/home/pollux/TODEL/wzdftpd-root
+default_home=/home
 
 # users definitions
 # users MUST begin by line name=<>
@@ -34,10 +34,7 @@ groups=admin
 rights=0xffffffff
 tagline=v0dk4 kNigHt
 ip_allowed=+localhost
-ip_allowed=+pollux.no-ip.org
 ip_allowed=*
-ip_allowed=134.214.71.84
-ip_allowed=10.0.0.10
 bytes_ul_total=79383089
 bytes_dl_total=1058767184
 flags=OIstH
@@ -69,7 +66,7 @@ num_logins=2
 
 name=gadmin
 pass=yX8sb90MNTHDE
-home=/home/pollux/TODEL/wzdftpd-root
+home=/home
 uid=0
 groups=users
 rights=0xffffffff
