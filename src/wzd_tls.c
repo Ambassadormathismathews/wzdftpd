@@ -117,6 +117,8 @@ int tls_init(void)
   status = SSL_CTX_use_certificate_chain_file(tls_ctx, mainConfig->tls_certificate);
   if (status <= 0) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
+    SSL_CTX_free(tls_ctx);
+    mainConfig->tls_ctx = NULL;
     return 1;
   }
 
@@ -124,6 +126,8 @@ int tls_init(void)
   status = SSL_CTX_use_PrivateKey_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);
   if (status <= 0) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
+    SSL_CTX_free(tls_ctx);
+    mainConfig->tls_ctx = NULL;
     return 1;
   }
 
@@ -223,7 +227,7 @@ int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int 
     /* XXX we assume that if sock != context->controlfd, then we have datas ... */
 
   WZD_ASSERT( ssl != NULL );
-  
+
   do {
     ret = SSL_write(ssl, msg, length);
     sslerr = SSL_get_error(ssl, ret);
@@ -313,7 +317,7 @@ int tls_auth_cont(wzd_context_t * context)
 #ifdef WZD_DBG_TLS
   out_err(LEVEL_HIGH,"TLS: Non-blocking accept\n");
 #endif
-  
+
   SSL_set_accept_state(ssl);
   fd = SSL_get_fd(ssl);
   /* ensure socket is non-blocking */
