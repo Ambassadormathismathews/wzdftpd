@@ -1349,12 +1349,6 @@ int cfg_read_section(void)
     out_err(LEVEL_HIGH,"line should be 'section = ...'\n");
     return 1;
   }
-  if ( (token=yylex()) != CFG_ID ) {
-    out_err(LEVEL_HIGH,"line should be 'section = <name> <mask> <regexp>'\n");
-    return 1;
-  }
-  sectionname = strdup(yytext);
-  /* TODO check section unicity ? */
 
   if( !(ptr=read_until_eol(256)) ) {
     out_err(LEVEL_HIGH,"line should be 'section = <name> <mask> <regexp>'\n");
@@ -1364,7 +1358,12 @@ int cfg_read_section(void)
   strncpy(buffer,ptr,256);
   free(ptr);
 
-  sectionmask = strtok_r(buffer," \t\n\r",&ptr);
+  sectionname = strtok_r(buffer," \t\n\r",&ptr);
+  if( !sectionname ) {
+    out_err(LEVEL_HIGH,"invalid name\n");
+    return 1;
+  }
+  sectionmask = strtok_r(NULL," \t\n\r",&ptr);
   if( !sectionmask ) {
     out_err(LEVEL_HIGH,"invalid mask\n");
     return 1;
@@ -1377,7 +1376,6 @@ int cfg_read_section(void)
     free(sectionname);
     return 1;
   }
-  free(sectionname);
   return 0;
 }
 
