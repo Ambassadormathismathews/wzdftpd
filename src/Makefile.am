@@ -76,3 +76,11 @@ wzdFTPd_SOURCES =    \
 wzdFTPd_LDFLAGS = -lwzd -lssl -lpthread -lfl
 
 AM_CPPFLAGS = -DSSL_SUPPORT=1 -DWZD_BUILD_NUM=20030331 -DWZD_VERSION_NUM=\"0.1rc4\" -DWZD_MULTITHREAD -D_REENTRANT
+
+dist_pkgdata_DATA = file_ginfo.txt  file_help.txt   file_swho.txt \
+	file_user.txt file_group.txt  file_rules.txt  \
+	file_users.txt  file_who.txt
+
+sysconfdir = ${prefix}/etc/wzdftpd
+
+dist_sysconf_DATA = wzd.cfg users
