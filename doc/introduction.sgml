@@ -9,6 +9,25 @@ wzdftpd is a ftp server designed to be modular, work under linux/win32, and to b
 entirely configurable online using SITE commands.
 </para>
 
+<para>
+Moreover, wzdftpd is based on a particular philosophy:
+<itemizedlist>
+<listitem><para><emphasis>free software</emphasis>: wzdftpd is, and will remain
+free software, meaning you have complete access to the source code, the right
+to modify it, and the right to redistribute it.</para></listitem>
+<listitem><para><emphasis>transparency</emphasis>: source code is documented,
+and available to everyone. The bug-tracker database is also freely accessible,
+and any bug report will be considered appropriately.</para></listitem>
+<listitem><para><emphasis>designed for users</emphasis>: any idea/suggestion is
+welcome, and even if all will not be implemented, they will be taken into
+consideration.</para></listitem>
+<listitem><para><emphasis>respect of licenses</emphasis>: all libraries or code
+fragments used by wzdftpd are used in proper respect to the author's license.
+Any file/feature/library in contradiction with this idea will be
+removed.</para></listitem>
+</itemizedlist>
+</para>
+
 </sect1>
 
 <sect1 id='features'>
