@@ -1097,7 +1097,7 @@ int do_internal_wipe(const char *filename, wzd_context_t * context)
 #ifndef _MSC_VER
     while ( (entry=readdir(dir)) )
     {
-		dir_filename = entr->d_name;
+      dir_filename = entry->d_name;
 #else
     finished = 0;
     while (!finished)
