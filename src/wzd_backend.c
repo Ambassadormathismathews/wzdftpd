@@ -48,6 +48,8 @@ int backend_validate(const char *backend)
   ret = ret & (ptr!=NULL);
   ptr = dlsym(handle,STR_FIND_USER);
   ret = ret & (ptr!=NULL);
+  ptr = dlsym(handle,STR_FIND_GROUP);
+  ret = ret & (ptr!=NULL);
   if (!ret) {
     out_log(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n");
     return 1;
@@ -87,19 +89,21 @@ int backend_init(const char *backend)
     return 1;
   }
 
-  mainConfig.backend.handle = handle;
+  mainConfig->backend.handle = handle;
   ptr = init_fcn = dlsym(handle,STR_INIT);
-  mainConfig.backend.back_validate_login = dlsym(handle,STR_VALIDATE_LOGIN);
-  mainConfig.backend.back_validate_pass  = dlsym(handle,STR_VALIDATE_PASS);
-  mainConfig.backend.back_find_user  = dlsym(handle,STR_FIND_USER);
+  mainConfig->backend.back_validate_login = dlsym(handle,STR_VALIDATE_LOGIN);
+  mainConfig->backend.back_validate_pass  = dlsym(handle,STR_VALIDATE_PASS);
+  mainConfig->backend.back_find_user  = dlsym(handle,STR_FIND_USER);
+  mainConfig->backend.back_find_group  = dlsym(handle,STR_FIND_GROUP);
 
   if (ptr) {
     ret = (*init_fcn)();
     if (ret) { /* backend says NO */
-      mainConfig.backend.handle = NULL;
-      mainConfig.backend.back_validate_login = NULL;
-      mainConfig.backend.back_validate_pass = NULL;
-      mainConfig.backend.back_find_user = NULL;
+      mainConfig->backend.handle = NULL;
+      mainConfig->backend.back_validate_login = NULL;
+      mainConfig->backend.back_validate_pass = NULL;
+      mainConfig->backend.back_find_user = NULL;
+      mainConfig->backend.back_find_group = NULL;
       dlclose(handle);
     }
   } else {
@@ -115,8 +119,13 @@ int backend_init(const char *backend)
 int backend_find_user(const char *name, wzd_user_t * user)
 {
   int ret;
+  ret = (*mainConfig->backend.back_find_user)(name,user);
+  return ret;
+}
 
-  ret = (*mainConfig.backend.back_find_user)(name,user);
-
+int backend_find_group(int num, wzd_group_t * group)
+{
+  int ret;
+  ret = (*mainConfig->backend.back_find_group)(num,group);
   return ret;
 }

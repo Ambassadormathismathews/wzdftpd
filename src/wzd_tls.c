@@ -42,7 +42,7 @@ int tls_init(void)
   SSL_load_error_strings();	/* readable error messages */
   SSL_library_init();		/* initialize library */
 
-  mainConfig.tls_ctx = tls_ctx = SSL_CTX_new(SSLv23_method());
+  mainConfig->tls_ctx = tls_ctx = SSL_CTX_new(SSLv23_method());
   if (!tls_ctx) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_new() %s\r\n",(char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
@@ -57,14 +57,14 @@ int tls_init(void)
   SSL_CTX_set_default_verify_paths(tls_ctx);
 
   /* set certificate */
-  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig.tls_certificate, X509_FILETYPE_PEM);
+  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);
   if (status <= 0) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
   }
 
   /* set private key file - usually the same */
-  status = SSL_CTX_use_PrivateKey_file(tls_ctx, mainConfig.tls_certificate, X509_FILETYPE_PEM);
+  status = SSL_CTX_use_PrivateKey_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);
   if (status <= 0) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", "", (char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
@@ -82,7 +82,7 @@ int tls_init(void)
 
 int tls_exit(void)
 {
-  SSL_CTX_free(mainConfig.tls_ctx);
+  SSL_CTX_free(mainConfig->tls_ctx);
   return 0;
 }
 
@@ -200,17 +200,17 @@ int tls_auth (const char *type, wzd_context_t * context)
 
   if (!type || type[0]==0) return 1;
 
-  if (strcasecmp(type,"SSL")==0 || mainConfig.tls_type == TLS_IMPLICIT)
+  if (strcasecmp(type,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
     context->ssl.data_mode = TLS_PRIV; /* SSL must hava encrypted data connection */
   else
     context->ssl.data_mode = TLS_CLEAR;
 
-  if (mainConfig.tls_type != TLS_IMPLICIT) {
+  if (mainConfig->tls_type != TLS_IMPLICIT) {
     ret = send_message_with_args(234, context, type);
   }
 
-  context->ssl.obj = SSL_new(mainConfig.tls_ctx);
-  SSL_set_cipher_list(context->ssl.obj,mainConfig.tls_cipher_list);
+  context->ssl.obj = SSL_new(mainConfig->tls_ctx);
+  SSL_set_cipher_list(context->ssl.obj,mainConfig->tls_cipher_list);
   ret = SSL_set_fd(context->ssl.obj,context->controlfd);
   if (ret != 1) {
     out_log(LEVEL_CRITICAL,"SSL_set_fd failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
@@ -249,8 +249,8 @@ int tls_auth_cont(wzd_context_t * context)
   context->ssl.data_ssl = NULL;
 
   /* set read/write functions */
-  mainConfig.read_fct = tls_read;
-  mainConfig.write_fct = tls_write;
+  mainConfig->read_fct = tls_read;
+  mainConfig->write_fct = tls_write;
 
   return 0;
 }
@@ -260,7 +260,7 @@ int tls_auth_cont(wzd_context_t * context)
 int tls_init_datamode(int sock, wzd_context_t * context)
 {
   if (!context->ssl.data_ssl) {
-    context->ssl.data_ssl = SSL_new(mainConfig.tls_ctx);
+    context->ssl.data_ssl = SSL_new(mainConfig->tls_ctx);
   }
   else {
 fprintf(stderr,"tls_init_datamode: this should NOT be happening\n");
@@ -272,7 +272,7 @@ fprintf(stderr,"tls_init_datamode: this should NOT be happening\n");
     return 1;
   }
 
-  SSL_set_cipher_list(context->ssl.data_ssl, mainConfig.tls_cipher_list);
+  SSL_set_cipher_list(context->ssl.data_ssl, mainConfig->tls_cipher_list);
 
   if (SSL_set_fd(context->ssl.data_ssl, sock) != 1)
   /* FIXME PORT ? */

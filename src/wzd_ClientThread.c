@@ -134,7 +134,7 @@ int send_message(int code, wzd_context_t * context)
 #ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = (mainConfig.write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+  ret = (mainConfig->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -152,7 +152,7 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 #ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",buffer);
 #endif
-  ret = (mainConfig.write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
+  ret = (mainConfig->write_fct)(context->controlfd,buffer,strlen(buffer),0,HARD_XFER_TIMEOUT,context);
 
   return 0;
 }
@@ -163,10 +163,10 @@ int send_message_raw(const char *msg, wzd_context_t * context)
 {
   int ret;
 
-#ifdef DEBUG
+/*#ifdef DEBUG
 fprintf(stderr,"I answer: %s\n",msg);
-#endif
-  ret = (mainConfig.write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
+#endif*/
+  ret = (mainConfig->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -359,7 +359,7 @@ int list_callback(int sock, wzd_context_t * context, char *line)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
 #endif
-    (mainConfig.write_fct)(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
+    (mainConfig->write_fct)(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
 
   return 1;
 }
@@ -386,7 +386,13 @@ int do_list(char *param, list_type_t listtype, wzd_context_t * context)
 fprintf(stderr,"PARAM: '%s'\n",param);
     while (param[0]=='-') {
       n=1;
-      while (param[n]!=' ' && param[n]!=0) n++;
+      while (param[n]!=' ' && param[n]!=0) {
+	switch (param[n]) {
+	case 'a':
+	  listtype |= LIST_SHOW_HIDDEN;
+	}
+	n++;
+      }
       if (param[n]==' ') param = param+n+1;
       else param = param+n;
     }
@@ -1012,7 +1018,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
   char buffer[4096];
   int ret;
 
-  ret = (*mainConfig.backend.back_validate_pass)(username,pass,&context->userinfo);
+  ret = (*mainConfig->backend.back_validate_pass)(username,pass,&context->userinfo);
   if (ret) {
     /* pass was not accepted */
     return 1;  /* FIXME - abort thread */
@@ -1040,7 +1046,7 @@ int do_user(const char *username, wzd_context_t * context)
 {
   int ret;
 
-  ret = (*mainConfig.backend.back_validate_login)(username,&context->userinfo);
+  ret = (*mainConfig->backend.back_validate_login)(username,&context->userinfo);
   
   return ret;
 }
@@ -1062,7 +1068,7 @@ int do_login_loop(wzd_context_t * context)
 
   while (1) {
     /** wait response **/
-    ret = (mainConfig.read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
+    ret = (mainConfig->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
 fprintf(stderr,"Connection closed or timeout\n");
@@ -1110,7 +1116,7 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
 #if SSL_SUPPORT
-      if (mainConfig.tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
+      if (mainConfig->tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
 	ret = send_message_with_args(421,context,"TLS session MUST be engaged");
 	return 1;
       }
@@ -1258,7 +1264,7 @@ void clientThreadProc(void *arg)
       /* XXX CHECK FOR TIMEOUT: control & data if needed */
       continue;
     }
-    ret = (mainConfig.read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
+    ret = (mainConfig->read_fct)(sockfd,buffer,BUFFER_LEN,0,0,context); /* timeout = 0, we know there's something to read */
 
 	  /* remote host has closed session */
     if (ret==0) {
@@ -1269,10 +1275,15 @@ void clientThreadProc(void *arg)
 
     if (buffer[0]=='\0') continue;
 #ifdef DEBUG
-fprintf(stderr,"RAW: '%s'\n",buffer);
+fprintf(stderr,"RAW: '%s'",buffer);
 #endif
 
-    strncpy(context->last_command,buffer,2048);
+    {
+      int length = strlen(buffer);
+      while (length >= 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
+	buffer[length-- -1] = '\0';
+      strncpy(context->last_command,buffer,2048);
+    }
 
     /* 2. get next token */
     ptr = &buffer[0];
@@ -1472,8 +1483,8 @@ fprintf(stderr,"RAW: '%s'\n",buffer);
 	      ret = send_message_with_args(501,context,"DELE failed");
 	    break;
 	  case TOK_ABOR:
-	    if (context->pid_child) kill(context->pid_child,SIGTERM);
-	    context->pid_child = 0;
+/*	    if (context->pid_child) kill(context->pid_child,SIGTERM);
+	    context->pid_child = 0;*/
 	    if (context->pasvsock) {
 	      close(context->pasvsock);
 	      context->pasvsock=0;

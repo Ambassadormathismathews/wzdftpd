@@ -1,16 +1,17 @@
 #include "wzd.h"
 
-/*#define WZD_MULTITHREAD*/
+#define WZD_MULTITHREAD
 
 /************ PROTOTYPES ***********/
 void serverMainThreadProc(void *arg);
 void serverMainThreadExit(int);
 
 /************ VARS *****************/
-int serverstop;
+wzd_config_t *	mainConfig;
+wzd_shm_t *	mainConfig_shm;
 
-wzd_context_t *context_list;
-wzd_shm_t * context_shm;
+wzd_context_t *	context_list;
+wzd_shm_t *	context_shm;
 
 time_t server_start;
 
@@ -26,19 +27,41 @@ int runMainThread(int argc, char **argv)
 /************ PRIVATE *************/
 void cleanchild(int nr) {
   wzd_context_t * context;
+  int i;
+  pid_t pid;
 
-  while (wait3(NULL, WNOHANG, NULL) > 0);
+  while (1) {
+    
+    if ( (pid = wait3(NULL, WNOHANG, NULL)) > 0)
+    {
+      context = &context_list[0];
+      out_log(LEVEL_FLOOD,"Child %u exiting\n",pid);
+      /* TODO search context list and cleanup context */
+      for (i=0; i<HARD_USERLIMIT; i++)
+      {
+	if (context_list[i].pid_child == pid) {
+#ifdef DEBUG
+	  fprintf(stderr,"Context found for pid %u - cleaning up\n",pid);
+#endif
+	  context_list[i].magic = 0;
+	  break;
+	}
+      }
+      if (i == HARD_USERLIMIT) break; /* context not found ?! */
+    } else { /* no more childs */
+      break;
+    } /* if */
+  } /* while */
 
-  context = &context_list[0];
-  out_log(LEVEL_FLOOD,"Child %d exiting\n",nr);
-  if (nr == context->pid_child) {
+/*  if (nr == context->pid_child) {
     context->pid_child = 0;
-  }
+  }*/
 }
 
 void context_init(wzd_context_t * context)
 {
   context->magic = 0;
+  memset(context->hostip,0,4);
   context->controlfd = -1;
   context->datafd = 0;
   context->portsock = 0;
@@ -80,7 +103,7 @@ void login_new(int socket_accept_fd)
   wzd_context_t	* context;
   unsigned char *p;
 
-  newsock = socket_accept(mainConfig.mainSocket, &remote_host, &remote_port);
+  newsock = socket_accept(mainConfig->mainSocket, &remote_host, &remote_port);
   if (newsock <0)
   {
     out_log(LEVEL_HIGH,"Error while accepting\n");
@@ -112,17 +135,23 @@ void login_new(int socket_accept_fd)
   /* don't forget init is done before */
   context->magic = CONTEXT_MAGIC;
   context->controlfd = newsock;
+  context->hostip[0] = userip[0];
+  context->hostip[1] = userip[1];
+  context->hostip[2] = userip[2];
+  context->hostip[3] = userip[3];
 
   /* switch to tls mode ? */
 #if SSL_SUPPORT
-  if (mainConfig.tls_type == TLS_IMPLICIT)
+  if (mainConfig->tls_type == TLS_IMPLICIT)
     tls_auth("SSL",context);
   context->ssl.data_mode = TLS_CLEAR;
 #endif
 
 #ifdef WZD_MULTITHREAD
   if (fork()==0) { /* child */
-    close (mainConfig.mainSocket);
+    close (mainConfig->mainSocket);
+    out_log(LEVEL_FLOOD,"Child %d created\n",getpid());
+    context->pid_child = getpid();
 #endif
     clientThreadProc(context);
 #ifdef WZD_MULTITHREAD
@@ -157,9 +186,9 @@ void serverMainThreadProc(void *arg)
   int i;
 
 /*  context_list = malloc(HARD_USERLIMIT*sizeof(wzd_context_t));*/ /* FIXME 256 */
-  context_shm = wzd_shm_create(mainConfig.shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
+  context_shm = wzd_shm_create(mainConfig->shm_key,HARD_USERLIMIT*sizeof(wzd_context_t),0);
   if (context_shm == NULL) {
-    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig.shm_key);
+    out_log(LEVEL_CRITICAL,"Could not get share memory with key 0x%lx - check your config file\n",mainConfig->shm_key);
     exit(1);
   }
   context_list = context_shm->datazone;
@@ -168,7 +197,7 @@ void serverMainThreadProc(void *arg)
   }
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (mainConfig.backend.handle == NULL) {
+  if (mainConfig->backend.handle == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     exit (1);
   }
@@ -188,7 +217,7 @@ void serverMainThreadProc(void *arg)
   signal(SIGTERM,interrupt);
   signal(SIGKILL,interrupt);
 
-  ret = mainConfig.mainSocket = socket_make(&mainConfig.port);
+  ret = mainConfig->mainSocket = socket_make(&mainConfig->port);
   if (ret == -1) {
     out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
       __FILE__, __LINE__);
@@ -201,12 +230,12 @@ void serverMainThreadProc(void *arg)
   /* now the blocking call: accept */
   out_log(LEVEL_INFO,"Entering accept mode (main)\n");
 
-  serverstop=0;
-  while (!serverstop) {
+  mainConfig->serverstop=0;
+  while (!mainConfig->serverstop) {
     FD_ZERO(&r);
-    FD_SET(mainConfig.mainSocket,&r);
+    FD_SET(mainConfig->mainSocket,&r);
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
-    ret = select(mainConfig.mainSocket+1, &r, NULL, NULL, &tv);
+    ret = select(mainConfig->mainSocket+1, &r, NULL, NULL, &tv);
     
     switch (ret) {
     case -1: /* error */
@@ -219,8 +248,8 @@ void serverMainThreadProc(void *arg)
       /* check for timeout logins */
       break;
     default: /* input */
-      if (FD_ISSET(mainConfig.mainSocket,&r)) {
-        login_new(mainConfig.mainSocket);
+      if (FD_ISSET(mainConfig->mainSocket,&r)) {
+        login_new(mainConfig->mainSocket);
       }
     }
   } /* while (!serverstop) */
@@ -232,13 +261,16 @@ void serverMainThreadProc(void *arg)
 void serverMainThreadExit(int retcode)
 {
   out_log(LEVEL_INFO,"Server exiting, retcode %d\n",retcode);
-	close(mainConfig.mainSocket);
+	close(mainConfig->mainSocket);
 #if SSL_SUPPORT
   tls_exit();
 #endif
 /*  free(context_list);*/
-  limiter_free(mainConfig.limiter_ul);
-  limiter_free(mainConfig.limiter_dl);
+  limiter_free(mainConfig->limiter_ul);
+  limiter_free(mainConfig->limiter_dl);
   wzd_shm_free(context_shm);
+  fclose(mainConfig->logfile);
+  /* free(mainConfig); */
+  wzd_shm_free(mainConfig_shm);
   exit (retcode);
 }

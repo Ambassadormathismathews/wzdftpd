@@ -40,9 +40,9 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
   if ((dir=opendir(directory))==NULL) return 0;
 
-#ifdef DEBUG
+/*#ifdef DEBUG
   fprintf(stderr,"list(): %s\n",directory);
-#endif  
+#endif*/
 
   while ((entr=readdir(dir))!=NULL) {
     if (entr->d_name[0]=='.') {
@@ -52,12 +52,13 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 	  {
 	continue;
       }
+      if ( ! (format & LIST_SHOW_HIDDEN) ) continue;
     }
-#ifdef DEBUG
+/*#ifdef DEBUG
     fprintf(stderr,"list_match(%s,%s)\n",entr->d_name,mask);
-#endif  
+#endif*/
     if (list_match(entr->d_name,mask)) {
-      if (format==LIST_TYPE_SHORT) {
+      if (format & LIST_TYPE_SHORT) {
 	strcpy(line,entr->d_name);
 	strcat(line,"\r\n");
 	if (!callback(sock,context,line)) break;

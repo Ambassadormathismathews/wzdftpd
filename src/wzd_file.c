@@ -57,6 +57,36 @@ wzd_file_t * find_file(const char *name, wzd_file_t *first)
   return NULL;
 }
 
+wzd_file_t * remove_file(const char *name, wzd_file_t **first)
+{
+  wzd_file_t *current=*first,*prev,*removed;
+
+  if (!current) return NULL;
+  
+  /* first to be removed ? */
+  if (strcmp(name,current->filename)==0) {
+    removed = current;
+    *first = removed->next_file;
+    removed->next_file = NULL;
+    return removed;
+  }
+  
+  prev = current;
+  current = current->next_file;
+
+  while (current) {
+    if (strcmp(name,current->filename)==0) {
+      removed = current;
+      prev->next_file = current->next_file;
+      current->next_file = NULL;
+      return removed;
+    }
+    prev = current;
+    current = current->next_file;
+  } /* while current */
+  return NULL;
+}
+
 wzd_acl_line_t * find_acl(const char * username, wzd_file_t * file)
 {
   wzd_acl_line_t *current = file->acl;
@@ -132,10 +162,13 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
   char * token1, *token2, *token3, *token4;
   char *ptr;
 
+  if ( !pTabFiles ) return 0;
+
+  current_file = *pTabFiles;
+
   fp = fopen(permfile,"r");
   if (!fp) return 1;
 
-  current_file = *pTabFiles;
   ptr = (char*)current_file;
   current_file = NULL;
   while ( fgets(line_buffer,BUFFER_LEN-1,fp) )
@@ -174,9 +207,14 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
   wzd_file_t * file_cur;
   wzd_acl_line_t * acl_cur;
 
-  fp = fopen(permfile,"w"); /* overwrite any existing file */
-
   file_cur = *pTabFiles;
+
+  if ( !file_cur ) {
+    /* delete permission file */
+    return unlink(permfile);
+  }
+
+  fp = fopen(permfile,"w"); /* overwrite any existing file */
 
   while (file_cur) {
     /* first write owner if available */
@@ -187,8 +225,8 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
     }
     acl_cur = file_cur->acl;
     while (acl_cur) {
-      snprintf(buffer,4096,"perm\t%s\t%s\t%s\n",
-	  file_cur->filename,acl_cur->user,acl_cur->perms);
+      snprintf(buffer,4096,"perm\t%s\t%s\t%c%c%c\n",
+	  file_cur->filename,acl_cur->user,acl_cur->perms[0],acl_cur->perms[1],acl_cur->perms[2]);
       fwrite(buffer,strlen(buffer),1,fp);
       acl_cur = acl_cur->next_acl;
     }
@@ -403,6 +441,142 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_
   return 0;
 }
 
+/* MUST NOT be / terminated (except /) */
+int _movePerm(const char *oldfilename, const char *newfilename, const char *owner, const char *group, wzd_context_t * context)
+{
+  char dir[BUFFER_LEN];
+  char src_stripped_filename[BUFFER_LEN];
+  char src_perm_filename[BUFFER_LEN];
+  char dst_stripped_filename[BUFFER_LEN];
+  char dst_perm_filename[BUFFER_LEN];
+  char *ptr;
+  struct stat s,s2;
+  unsigned int length, neededlength;
+  wzd_file_t * src_file_list=NULL, *dst_file_list=NULL,* file_cur, *file_dst;
+  wzd_acl_line_t * acl;
+  int ret;
+
+  if (!oldfilename || oldfilename[0] == '\0') return -1;
+  if (!newfilename || newfilename[0] == '\0') return -1;
+
+  /* find src perm file name */
+  strncpy(dir,oldfilename,BUFFER_LEN);
+
+  if (stat(dir,&s)==-1) return -1; /* inexistant ? */
+  if (S_ISDIR(s.st_mode)) { /* isdir */
+    strcpy(src_stripped_filename,".");
+  } else { /* ! isdir */
+    ptr = strrchr(dir,'/');
+    if (ptr) {
+      strcpy(src_stripped_filename,ptr+1);
+      *ptr = 0;
+    }
+  } /* ! isdir */
+
+  if (dir[strlen(dir)-1] != '/') {
+    strcat(dir,"/");
+  }
+
+  /* find the dir containing the perms file */
+  strncpy(src_perm_filename,dir,BUFFER_LEN);
+  neededlength = strlen(HARD_PERMFILE);
+  length = strlen(src_perm_filename);
+  /* check if !overflow */
+  if ( length+neededlength > 4095 )
+      return -1;
+
+  strncpy(src_perm_filename+length,HARD_PERMFILE,neededlength);
+
+  /* find dst perm file name */
+  strncpy(dir,newfilename,BUFFER_LEN);
+
+  /* if dst file is a dir and exists, we can't make the operation */
+  if (stat(dir,&s2)==0) { /* file exists ? */
+    if (S_ISDIR(s.st_mode)) { /* isdir */
+      return -1;
+    }
+  }
+
+
+  if (S_ISDIR(s.st_mode)) { /* isdir */
+    strcpy(dst_stripped_filename,".");
+  } else { /* ! isdir */
+    ptr = strrchr(dir,'/');
+    if (ptr) {
+      strcpy(dst_stripped_filename,ptr+1);
+      *ptr = 0;
+    }
+  } /* ! isdir */
+
+  if (dir[strlen(dir)-1] != '/') {
+    strcat(dir,"/");
+  }
+
+  /* find the dir containing the perms file */
+  strncpy(dst_perm_filename,dir,BUFFER_LEN);
+  neededlength = strlen(HARD_PERMFILE);
+  length = strlen(dst_perm_filename);
+  /* check if !overflow */
+  if ( length+neededlength > 4095 )
+      return -1;
+
+  strncpy(dst_perm_filename+length,HARD_PERMFILE,neededlength);
+
+
+fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
+fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,src_perm_filename,src_stripped_filename);
+fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_stripped_filename);
+
+  ret = readPermFile(src_perm_filename,&src_file_list);
+  if (ret) { /* no permissions file */
+    file_dst = NULL;
+  } else { /* permission file */
+    file_dst = remove_file(src_stripped_filename,&src_file_list);
+  } /* permission file */
+
+  /* finally writes perm file on disk */
+  ret = writePermFile(src_perm_filename,&src_file_list);
+  free_file_recursive(src_file_list);
+  src_file_list = NULL;
+
+  ret = readPermFile(dst_perm_filename,&dst_file_list);
+
+  if (!file_dst) { /* src_file had no acl, so we have to remove acl on dst_file if present, and set owner/group */
+    file_cur = remove_file(dst_stripped_filename,&dst_file_list);
+    free_file_recursive(file_cur);
+  } else {
+    
+    if (ret) { /* no permissions file */
+      file_cur = add_new_file(dst_stripped_filename,owner,group,&dst_file_list);
+    } else { /* permission file */
+      file_cur = find_file(dst_stripped_filename,dst_file_list);
+      if (!file_cur) { /* perm file exists, but does not contains acl concerning filename */
+        file_cur = add_new_file(dst_stripped_filename,owner,group,&dst_file_list);
+      } else {
+	if (owner) strncpy(file_cur->owner,owner,256);
+	if (group) strncpy(file_cur->group,group,256);
+      }
+    }
+  
+    /* replace the new acl */
+    acl = file_cur->acl;
+    file_cur->acl = file_dst->acl;
+    file_dst->acl = acl;
+
+    free_file_recursive(file_dst);
+
+  } /* if file_dst */
+
+  /* finally writes perm file on disk */
+  ret = writePermFile(dst_perm_filename,&dst_file_list);
+
+  free_file_recursive(dst_file_list);
+  dst_file_list = NULL;
+
+  return 0;
+}
+
+
 /************ PUBLIC FUNCTIONS ***************/
 
 FILE * file_open(const char *filename, const char *mode, unsigned long wanted_right, wzd_context_t * context)
@@ -454,6 +628,9 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   if (ret)
     return 1;
 
+  /* change file name in perm file !! */
+  ret = _movePerm(old_filename,new_filename,0,0,context);
+  
   ret = rename(old_filename,new_filename);
   if (ret==-1) {
 #ifdef DEBUG
@@ -461,7 +638,6 @@ fprintf(stderr,"rename error %d (%s)\n", errno, strerror(errno));
 #endif
     return 1;
   }
-  /* TODO change file name in perm file !! */
-  
+
   return 0;
 }

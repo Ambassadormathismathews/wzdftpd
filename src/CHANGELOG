@@ -1,3 +1,18 @@
+# Jul, 12 2002
+- site shutdown now kills the server IMMEDIATLY
+- cookie: usergroup
+- cookie: new option to format length of cookie: %num.cookie
+   (e.g %15.username will make username EXACTLY 15 chars)
+
+# Jul, 10 2002
+- LIST now hide files beginning by . except if -a is passed
+- cookie: possibility of loop using %forallusersconnected / %endfor
+- cookie: lastcommand
+
+# Jul, 02 2002
+- RNFR/RNTO now handles correctly permission file
+- cookie: userip
+
 # Jun, 24 2002
 - site commands that print files content: rules, help
 - first cookie ! (username)

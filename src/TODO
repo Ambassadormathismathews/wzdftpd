@@ -1,6 +1,7 @@
 ## IN PROGRESS ##
 
-- rename chould change filename in permission file
+- add size parameter in cookies : %num.cookie
+- use options in ls
 - hide some filenames in list: .dirinfo .dirmsg
 - modify checkpath to return 0 if ok and file exists, 1 if !ok, -1 if file does not
   exist but path was converted
@@ -17,6 +18,8 @@
 ## PRIORITY ##
 
 - cookies
+- hide IP in site who, except for admin
+- add a flag for users: hide in WHO
 - ACL: ascendant recursion for permissions ? need to check if >= rootpath !
 - data connection: either management in a thread, either rewrite of
    list, retr & stor

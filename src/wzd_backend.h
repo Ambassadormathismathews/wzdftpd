@@ -39,6 +39,8 @@ typedef struct {
   char			rootpath[1024];
   char			tagline[256];
   unsigned int		uid;
+  unsigned int          group_num;
+  unsigned int          groups[256];
   struct timeval	max_idle_time;	/* not used yet */
   wzd_perm_t		perms;		/* not used yet */
   unsigned long		flags;		/* not used yet */
@@ -46,12 +48,20 @@ typedef struct {
   unsigned long		max_dl_speed;	/* bytes / sec */
 } wzd_user_t;
 
+typedef struct {
+  char                  groupname[256];
+  wzd_perm_t            groupperms;
+  unsigned long         max_ul_speed;
+  unsigned long         max_dl_speed;
+} wzd_group_t;
+
 
 typedef struct {
   void * handle;
   int (*back_validate_login)(const char *, wzd_user_t *);
   int (*back_validate_pass) (const char *, const char *, wzd_user_t *);
   int (*back_find_user) (const char *, wzd_user_t *);
+  int (*back_find_group) (int, wzd_group_t *);
 } wzd_backend_t;
 
 /* int FCN_INIT(void) */
@@ -70,11 +80,17 @@ typedef struct {
 #define	FCN_FIND_USER		wzd_find_user
 #define	STR_FIND_USER	 	"wzd_find_user"
 
+/* int FCN_FIND_GROUP(int num, wzd_group_t * group) */
+#define	FCN_FIND_GROUP		wzd_find_group
+#define	STR_FIND_GROUP	 	"wzd_find_group"
+
 
 int backend_validate(const char *backend);
 
 int backend_init(const char *backend);
 
 int backend_find_user(const char *name, wzd_user_t * user);
+
+int backend_find_group(int num, wzd_group_t * group);
 
 #endif /* __WZD_BACKEND__ */

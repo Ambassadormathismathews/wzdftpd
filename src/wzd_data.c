@@ -72,7 +72,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
   case TOK_RETR:
     n = fread(buffer,1,sizeof(buffer),context->current_action.current_file);
     if (n>0) {
-      ret = (mainConfig.write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
+      ret = (mainConfig->write_fct)(context->datafd,buffer,n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
         /* XXX error/timeout sending data */
 	fclose(context->current_action.current_file);
@@ -86,7 +86,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
 	return 1;
       }
       context->current_action.bytesnow += n;
-      limiter_add_bytes(mainConfig.limiter_dl,n,0);
+      limiter_add_bytes(mainConfig->limiter_dl,n,0);
       limiter_add_bytes(context->current_limiter,n,0);
     } else { /* end */
       fclose(context->current_action.current_file);
@@ -100,11 +100,11 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
     }
     break;
   case TOK_STOR:
-    n = (mainConfig.read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
+    n = (mainConfig->read_fct)(context->datafd,buffer,sizeof(buffer),0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
       fwrite(buffer,1,n,context->current_action.current_file);
       context->current_action.bytesnow += n;
-      limiter_add_bytes(mainConfig.limiter_ul,n,0);
+      limiter_add_bytes(mainConfig->limiter_ul,n,0);
       limiter_add_bytes(context->current_limiter,n,0);
     } else { /* consider it is finished */
       fclose(context->current_action.current_file);

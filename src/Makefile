@@ -36,27 +36,27 @@ all: debug
 
 release: $(OBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS);
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(LIBS)
 else
 	$(CC) $(CFLAGS) -o $(EXEC) $(OBJS) $(WINLIBS)
 endif
 
 debug: $(DOBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS);
+	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(LIBS)
 else
 	$(CC) $(DCFLAGS) -o $(EXEC) $(DOBJS) $(WINLIBS)
 endif
 
 pedantic: $(POBJS)
 ifeq ($(PLATFORM),Linux)
-	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS);
+	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(LIBS)
 else
 	$(CC) $(PCFLAGS) -o $(EXEC) $(POBJS) $(WINLIBS)
 endif
 
 clean:
-	rm -f *.o *.do *.po *~
+	rm -f *.o *.do *.po *~ core
 
 distclean: clean
 	rm -f $(EXEC)

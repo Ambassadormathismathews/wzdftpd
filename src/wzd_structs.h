@@ -27,6 +27,7 @@ typedef struct _wzd_command_perm_t {
 typedef struct {
   char	file_help[256];
   char	file_rules[256];
+  char	file_who[256];
 } wzd_site_config_t;
 
 #endif /* __WZD_STRUCTS__ */

@@ -4,43 +4,50 @@
 
 #define BUFSIZE	1024
 
+wzd_config_t tempConfig;
+
+
+
 int set_default_options(void)
 {
-  mainConfig.backend.handle=NULL;
+  mainConfig = &tempConfig;
 
-  mainConfig.port = 21;
-  mainConfig.max_threads=32;
+  tempConfig.backend.handle=NULL;
 
-  mainConfig.limiter_ul = NULL;
-  mainConfig.limiter_dl = NULL;
+  tempConfig.port = 21;
+  tempConfig.max_threads=32;
 
-  mainConfig.logfilename = malloc(256);
-  strcpy(mainConfig.logfilename,"wzd.log");
+  tempConfig.limiter_ul = NULL;
+  tempConfig.limiter_dl = NULL;
 
-  mainConfig.logfilemode = malloc(3);
-  strcpy(mainConfig.logfilemode,"a");
+  tempConfig.logfilename = malloc(256);
+  strcpy(tempConfig.logfilename,"wzd.log");
 
-  mainConfig.logfile = NULL;
+  tempConfig.logfilemode = malloc(3);
+  strcpy(tempConfig.logfilemode,"a");
 
-  mainConfig.loglevel=LEVEL_LOWEST;
+  tempConfig.logfile = NULL;
 
-  mainConfig.perm_list = NULL;
+  tempConfig.loglevel=LEVEL_LOWEST;
+
+  tempConfig.perm_list = NULL;
 
   /* site config */
-  mainConfig.site_config.file_help[0] = '\0';
-  mainConfig.site_config.file_rules[0] = '\0';
+  tempConfig.site_config.file_help[0] = '\0';
+  tempConfig.site_config.file_rules[0] = '\0';
+  tempConfig.site_config.file_who[0] = '\0';
 
 #if SSL_SUPPORT
-  memset(mainConfig.tls_certificate,0,sizeof(mainConfig.tls_certificate));
-  strcpy(mainConfig.tls_cipher_list,"ALL");
+  memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
+  strcpy(tempConfig.tls_cipher_list,"ALL");
 
-  mainConfig.tls_type = TLS_NOTYPE;
+  tempConfig.tls_type = TLS_NOTYPE;
 #endif
 
-  mainConfig.read_fct = clear_read;
-  mainConfig.write_fct = clear_write;
+  tempConfig.read_fct = clear_read;
+  tempConfig.write_fct = clear_write;
 
-  mainConfig.shm_key = 0x1331c0d3;
+  tempConfig.shm_key = 0x1331c0d3;
 
   return 0;
 }
@@ -55,7 +62,7 @@ int do_permission_line(const char *permname, const char *permline)
   ret = perm_is_valid_perm(permname);
   if (ret) return 1;
 
-  ret = perm_add_perm(permname, permline,&mainConfig);
+  ret = perm_add_perm(permname, permline,mainConfig);
   if (ret) return 1;
 
   return 0;
@@ -122,7 +129,16 @@ int readConfigFile(const char *fileName)
 
 
   fclose(configfile);
-/*exit(1);*/
+
+//  mainConfig = malloc(sizeof(wzd_config_t));
+  mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
+  if (mainConfig_shm == NULL) {
+    fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
+    exit(1);
+  }
+  mainConfig = mainConfig_shm->datazone;
+  memcpy(mainConfig,&tempConfig,sizeof(wzd_config_t));
+
   return 0;
 }
 
@@ -147,7 +163,7 @@ int parseVariable(const char *varname, const char *value)
       return 1;
     }
     out_log(LEVEL_INFO,"******* changing port: new value %d\n",i);
-    mainConfig.port = i;
+    tempConfig.port = i;
     return 0;
   }
   /* MAX_THREADS (int)
@@ -164,7 +180,7 @@ int parseVariable(const char *varname, const char *value)
       return 1;
     }
     out_log(LEVEL_INFO,"******* changing max_threads: new value %d\n",i);
-    mainConfig.max_threads = i;
+    tempConfig.max_threads = i;
     return 0;
   }
   /* BACKEND (string)
@@ -175,7 +191,7 @@ int parseVariable(const char *varname, const char *value)
     out_log(LEVEL_INFO,"trying backend; '%s'\n",value);
     i = backend_validate(value);
     if (!i) {
-      if (mainConfig.backend.handle == NULL) {
+      if (tempConfig.backend.handle == NULL) {
         i = backend_init(value);
       } else { /* multiple backends ?? */
 	i=0;
@@ -191,12 +207,12 @@ int parseVariable(const char *varname, const char *value)
     l = strtol(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    if (mainConfig.limiter_ul) {
+    if (tempConfig.limiter_ul) {
       out_log(LEVEL_HIGH,"Have you define max_ul_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
     out_log(LEVEL_INFO,"******* setting max_ul_speed : %lu\n",l);
-    mainConfig.limiter_ul = limiter_new(l);
+    tempConfig.limiter_ul = limiter_new(l);
     return 0;
   }
   /* MAX_DL_SPEED (unsigned long)
@@ -207,12 +223,12 @@ int parseVariable(const char *varname, const char *value)
     l = strtol(value,(char**)NULL, 0);
     if (errno==ERANGE)
       return 1;
-    if (mainConfig.limiter_dl) {
+    if (tempConfig.limiter_dl) {
       out_log(LEVEL_HIGH,"Have you define max_dl_speed multiple times ? This one (%lu) will be ignored !\n",l);
       return 1;
     }
     out_log(LEVEL_INFO,"******* setting max_dl_speed : %lu\n",l);
-    mainConfig.limiter_dl = limiter_new(l);
+    tempConfig.limiter_dl = limiter_new(l);
     return 0;
   }
   /* SHM_KEY (unsigned long)
@@ -224,15 +240,17 @@ int parseVariable(const char *varname, const char *value)
     if (errno==ERANGE)
       return 1;
     out_log(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
-    mainConfig.shm_key = l;
+    tempConfig.shm_key = l;
     return 0;
   }
   /* SITE CONFIG
    */
-  if (strcasecmp("sitefile_rules",varname)==0)
-  { strncpy(mainConfig.site_config.file_rules,value,256); return 0; }
   if (strcasecmp("sitefile_help",varname)==0)
-  { strncpy(mainConfig.site_config.file_help,value,256); return 0; }
+  { strncpy(tempConfig.site_config.file_help,value,256); return 0; }
+  if (strcasecmp("sitefile_rules",varname)==0)
+  { strncpy(tempConfig.site_config.file_rules,value,256); return 0; }
+  if (strcasecmp("sitefile_who",varname)==0)
+  { strncpy(tempConfig.site_config.file_who,value,256); return 0; }
 #if SSL_SUPPORT
   /* CERTIFICATES
    * absolute file name
@@ -240,7 +258,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("tls_certificate",varname)==0)
   {
     out_log(LEVEL_INFO,"TLS Certificate name: %s\n",value);
-    strcpy(mainConfig.tls_certificate,value);
+    strcpy(tempConfig.tls_certificate,value);
     return 0;
   }
   /* CIPHER LIST
@@ -249,7 +267,7 @@ int parseVariable(const char *varname, const char *value)
   if (strcasecmp("tls_cipher_list",varname)==0)
   {
     out_log(LEVEL_INFO,"TLS Cipher list: %s\n",value);
-    strcpy(mainConfig.tls_cipher_list,value);
+    strcpy(tempConfig.tls_cipher_list,value);
     return 0;
   }
   /* MODE
@@ -259,11 +277,11 @@ int parseVariable(const char *varname, const char *value)
   {
     out_log(LEVEL_INFO,"TLS mode: %s\n",value);
     if (strcasecmp("explicit",value)==0)
-      mainConfig.tls_type = TLS_EXPLICIT;
+      tempConfig.tls_type = TLS_EXPLICIT;
     else if (strcasecmp("explicit_strict",value)==0)
-      mainConfig.tls_type = TLS_STRICT_EXPLICIT;
+      tempConfig.tls_type = TLS_STRICT_EXPLICIT;
     else if (strcasecmp("implicit",value)==0)
-      mainConfig.tls_type = TLS_IMPLICIT;
+      tempConfig.tls_type = TLS_IMPLICIT;
     else
       return 1;
     return 0;

@@ -169,8 +169,10 @@ void limiter_free(wzd_bw_limiter *l)
 /* cookies */
 int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
 {
+  unsigned long length=0;
   wzd_context_t * context = void_context;
   char work_buffer[4096];
+  char tmp_buffer[4096];
   char *srcptr, *dstptr;
   unsigned int bytes_written=0;
   char * cookie;
@@ -184,6 +186,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
     return -1;
   }
 
+  memset(work_buffer,0,4096);
   srcptr = buffer;
   dstptr = work_buffer;
 
@@ -205,24 +208,87 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_context)
       continue;
     }
 
+    length = 0;
+
+    /* test if a number is written here - is the exact length the cookie will have */
+    if ( *srcptr>='0' && *srcptr <= '9') {
+      char *ptr;
+      length = strtol(srcptr,&ptr,10);
+      if (*ptr != '.') {
+	length = 0;
+      }
+      srcptr = ptr + 1;
+    }
+
     cookielength = 0;
     cookie = NULL;
 
     /* %username */
     if (strncmp(srcptr,"username",8)==0) {
       cookie = context->userinfo.username;
-      cookielength = strlen(context->userinfo.username);
+      cookielength = strlen(cookie);
       srcptr += 8; /* strlen("username"); */
     }
-    /* end of cookies */
-    
-    if (bytes_written+cookielength >= buffersize) {
-      return 1;
+    /* %userip */
+    if (strncmp(srcptr,"userip",6)==0) {
+      snprintf(tmp_buffer,4096,"%d.%d.%d.%d",context->hostip[0],
+	  context->hostip[1],context->hostip[2],context->hostip[3]);
+      cookie = tmp_buffer;
+      cookielength = strlen(cookie);
+      srcptr += 6; /* strlen("userip"); */
     }
+    /* %usergroup */
+    if (strncmp(srcptr,"usergroup",9)==0) {
+      wzd_group_t group;
+      if ( (context->userinfo.group_num > 0) && (backend_find_group(context->userinfo.groups[0],&group)==0) ) {
+        snprintf(tmp_buffer,4096,"%s",group.groupname);
+      } else {
+	strcpy(tmp_buffer,"nogroup");
+      }
+      cookie = tmp_buffer;
+      cookielength = strlen(cookie);
+      srcptr += 9; /* strlen("usergroup"); */
+    }
+    /* %lastcommand */
+    if (strncmp(srcptr,"lastcommand",11)==0) {
+      cookie = context->last_command;
+      cookielength = strlen(cookie);
+      srcptr += 11; /* strlen("lastcommand"); */
+    }
+    /* end of cookies */
 
-    memcpy(dstptr,cookie,cookielength);
-    bytes_written += cookielength;
-    dstptr += cookielength;
+
+    /* TODO if length is non null, we will proceed differently: write maximum length chars, and pad with spaces (FIXME) */
+    if (length <= 0) {
+      if (bytes_written+cookielength >= buffersize) {
+        return 1;
+      }
+  
+      memcpy(dstptr,cookie,cookielength);
+      bytes_written += cookielength;
+      dstptr += cookielength;
+    } else { /* length > 0 */
+      if (bytes_written+cookielength >= buffersize) {
+        return 1;
+      }
+  
+      if (length < cookielength) {
+        memcpy(dstptr,cookie,length);
+        bytes_written += length;
+        dstptr += length;
+      } else {
+        memcpy(dstptr,cookie,cookielength);
+        bytes_written += cookielength;
+        dstptr += cookielength;
+	/* TODO check that total length will not exceed buffer size */
+	while (cookielength < length) {
+	  bytes_written++;
+	  *dstptr++ = ' '; /* FIXME choose padding character */
+	  cookielength++;
+	}
+      } /* length < cookielength */
+    } /* length <= 0 */
+    
   }
 
   memcpy(buffer,work_buffer,buffersize);

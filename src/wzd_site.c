@@ -94,28 +94,6 @@ void do_site_chmod(char *command_line, wzd_context_t * context)
   ret = send_message_with_args(200,context,buffer);
 }
 
-/********************* do_site_who *************************/
-void do_site_who(wzd_context_t * context)
-{
-  int ret;
-  char buffer[BUFFER_LEN];
-
-/*  ret = send_message_with_args(200,context,"[ WHO ]\r\n   prout\r\n[ WHO ]");*/
-/*  send_message_raw("200 [ WHO ]\r\n",context);*/
-  send_message_raw("200- [ WHO ]\r\n",context);
-  send_message_raw("                        ________ ____________________\r\n",context);
-  send_message_raw("                       /___    //    /  |  \\_____    \\\r\n",context);
-  send_message_raw("                       \\ /    //    /   _   \\    \\   \\\\\r\n",context);
-  send_message_raw("                        /    //    /    |    \\    \\   .\\\r\n",context);
-  send_message_raw("                       /____/\\___ //    |     \\ ________\\\r\n",context);
-  send_message_raw("                       \\    \\ \\ \\/______|______\\/       /\r\n",context);
-  send_message_raw("                        \\____\\/\\_\\      |      /_______/\r\n",context);
-  send_message_raw("                                  \\_____|_____/\r\n",context);
-  snprintf(buffer,4096," you are: %s\n",context->userinfo.username);
-  send_message_raw(buffer,context);
-  send_message_raw("200 [ WHO ]\r\n",context);
-}
-
 /********************* do_site_print_file ******************/
 void do_site_print_file(const char * filename, wzd_context_t * context)
 {
@@ -149,6 +127,37 @@ void do_site_print_file(const char * filename, wzd_context_t * context)
   send_message_raw("200-\r\n",context);
 
   do {
+    if (strncmp(buffer,"%forallusersconnected",strlen("%forallusersconnected"))==0) {
+      char * tab_line[256];
+      int i, j;
+      wzd_context_t * tab_context = context_list;
+      for (i=0; i<256; i++) tab_line[i] = NULL;
+      i=0;
+      while ( (fgets(buffer,1022,fp)) && strncmp(buffer,"%endfor",strlen("%endfor")) ) {
+	tab_line[i] = malloc(1024);
+	strcpy(tab_line[i],buffer);
+	i++;
+      } /* while */
+      i=0;
+      while (i<HARD_USERLIMIT) {
+	if (tab_context[i].magic == CONTEXT_MAGIC) {
+	  j=0;
+	  while (tab_line[j]) {
+	    memcpy(buffer,tab_line[j],1024);
+            ret = cookies_replace(buffer,1024,tab_context+i); /* TODO test ret */
+            send_message_raw(buffer,context);
+	    j++;
+	  }
+	}
+	i++;
+      } /* while */
+      j=0;
+      while (tab_line[j]) {
+	free(tab_line[j]);
+	tab_line[j] = NULL;
+      }
+      continue;
+    }
     ret = cookies_replace(buffer,1024,context); /* TODO test ret */
     send_message_raw(buffer,context);
   } while ( (fgets(buffer,1022,fp)) != NULL);
@@ -185,17 +194,12 @@ int do_site(char *command_line, wzd_context_t * context)
     strcpy(permname_buf,"site_");
     strncpy(permname_buf+5,token,250); /* 250 = 256 - strlen("site_") - 1 */
 
-    if (perm_check(permname_buf,context,&mainConfig)) {
+    if (perm_check(permname_buf,context,mainConfig)) {
       ret = send_message_with_args(501,context,"Permission Denied");
       return 1;
     }
   }
 
-/******************* WHO ************************/
-  if (strcasecmp(token,"WHO")==0) {
-    do_site_who(context);
-    return 0;
-  } else
 /******************* CHMOD **********************/
   if (strcasecmp(token,"CHMOD")==0) {
     do_site_chmod(command_line+6,context); /* 6 = strlen("chmod")+1 */
@@ -206,14 +210,19 @@ int do_site(char *command_line, wzd_context_t * context)
     do_site_chown(command_line+6,context); /* 6 = strlen("chown")+1 */
     return 0;
   } else
-/******************* RULES **********************/
-  if (strcasecmp(token,"RULES")==0) {
-    do_site_print_file(mainConfig.site_config.file_rules,context);
-    return 0;
-  } else
 /******************* HELP ***********************/
   if (strcasecmp(token,"HELP")==0) {
-    do_site_print_file(mainConfig.site_config.file_help,context);
+    do_site_print_file(mainConfig->site_config.file_help,context);
+    return 0;
+  } else
+/******************* RULES **********************/
+  if (strcasecmp(token,"RULES")==0) {
+    do_site_print_file(mainConfig->site_config.file_rules,context);
+    return 0;
+  } else
+/******************* WHO ************************/
+  if (strcasecmp(token,"WHO")==0) {
+    do_site_print_file(mainConfig->site_config.file_who,context);
     return 0;
   } else
 /******************* UPTIME *********************/
@@ -227,7 +236,7 @@ int do_site(char *command_line, wzd_context_t * context)
 /******************* SHUTDOWN *******************/
   } else
   if (strcasecmp(token,"SHUTDOWN")==0) {
-    serverstop = 1;
+    mainConfig->serverstop = 1;
     ret = send_message_with_args(250,context,"SITE:","server will shutdown NOW");
     return 0;
   }

@@ -32,4 +32,7 @@ int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset);
 /* destroys shm */
 void wzd_shm_free(wzd_shm_t * shm);
 
+/* cleanup if previous exec has crashed */
+void wzd_shm_cleanup(unsigned long key);
+
 #endif /* __WZD_SHM__ */

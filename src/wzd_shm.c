@@ -59,6 +59,11 @@ void wzd_shm_free(wzd_shm_t * shm)
     UnmapViewOfFile(shm->handle);
 }
 
+/* cleanup if previous exec has crashed */
+void wzd_shm_cleanup(unsigned long_key)
+{
+}
+
 
 #else /* __CYGWIN__ */
 
@@ -214,6 +219,17 @@ void wzd_shm_free(wzd_shm_t * shm)
   semctl(shm->semid,IPC_RMID,0);
   shmdt(shm->datazone);
   shmctl(shm->shmid,IPC_RMID,NULL);
+}
+
+/* cleanup if previous exec has crashed */
+void wzd_shm_cleanup(unsigned long key)
+{
+  unsigned int shmid, semid;
+
+  shmid = shmget((key_t)key,0,0600 );
+  if (shmid != -1) shmctl(shmid,IPC_RMID,NULL);
+  semid = semget((key_t)key,0,0 );
+  if (semid != -1) semctl(semid,IPC_RMID,0);
 }
 
 

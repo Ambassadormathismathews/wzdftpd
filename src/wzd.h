@@ -65,10 +65,10 @@ typedef enum {
   BINARY
 } xfer_t;
 
-typedef enum {
-  LIST_TYPE_SHORT=0,
-  LIST_TYPE_LONG
-} list_type_t;
+#define	LIST_TYPE_SHORT		0x0000
+#define	LIST_TYPE_LONG		0x0001
+#define	LIST_SHOW_HIDDEN	0x0010
+typedef unsigned long list_type_t;
 
 typedef enum {
   DATA_PORT,
@@ -82,6 +82,7 @@ typedef enum {
 
 typedef struct {
   unsigned long	magic;
+  unsigned char	hostip[4];
   int           state;
   int           controlfd;
   int           datafd;
@@ -110,6 +111,7 @@ typedef int (*read_fct_t)(int,char*,unsigned int,int,int,wzd_context_t *);
 typedef int (*write_fct_t)(int,const char*,unsigned int,int,int,wzd_context_t *);
 
 typedef struct {
+  int		serverstop;
   wzd_backend_t	backend;
   int		max_threads;
   char *	logfilename;
@@ -133,7 +135,8 @@ typedef struct {
   wzd_site_config_t	site_config;
 } wzd_config_t;
 
-extern wzd_config_t	mainConfig;
+extern wzd_config_t *	mainConfig;
+extern wzd_shm_t * 	mainConfig_shm;
 extern wzd_context_t *	context_list;
 
 
