@@ -341,16 +341,16 @@ int set_default_options(void)
   tempConfig.param_list = NULL;
 
   /* site config */
-  tempConfig.site_config.file_ginfo[0] = '\0';
-  tempConfig.site_config.file_group[0] = '\0';
-  tempConfig.site_config.file_groups[0] = '\0';
-  tempConfig.site_config.file_help[0] = '\0';
-  tempConfig.site_config.file_rules[0] = '\0';
-  tempConfig.site_config.file_swho[0] = '\0';
-  tempConfig.site_config.file_user[0] = '\0';
-  tempConfig.site_config.file_users[0] = '\0';
-  tempConfig.site_config.file_who[0] = '\0';
-  tempConfig.site_config.file_vfs[0] = '\0';
+  tempConfig.site_config.file_ginfo = NULL;
+  tempConfig.site_config.file_group = NULL;
+  tempConfig.site_config.file_groups = NULL;
+  tempConfig.site_config.file_help = NULL;
+  tempConfig.site_config.file_rules = NULL;
+  tempConfig.site_config.file_swho = NULL;
+  tempConfig.site_config.file_user = NULL;
+  tempConfig.site_config.file_users = NULL;
+  tempConfig.site_config.file_who = NULL;
+  tempConfig.site_config.file_vfs = NULL;
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
@@ -1559,27 +1559,30 @@ int cfg_read_sitefile(const char *type)
 
   ret = 1;
   if (strcasecmp("ginfo",type)==0)
-  { strncpy(tempConfig.site_config.file_ginfo,filename,256); ret = 0; }
+  { tempConfig.site_config.file_ginfo = filename; ret = 0; }
   if (strcasecmp("groups",type)==0)
-  { strncpy(tempConfig.site_config.file_groups,filename,256); ret = 0; }
+  { tempConfig.site_config.file_groups = filename; ret = 0; }
   if (strcasecmp("group",type)==0)
-  { strncpy(tempConfig.site_config.file_group,filename,256); ret = 0; }
+  { tempConfig.site_config.file_group = filename; ret = 0; }
   if (strcasecmp("help",type)==0)
-  { strncpy(tempConfig.site_config.file_help,filename,256); ret = 0; }
+  { tempConfig.site_config.file_help = filename; ret = 0; }
   if (strcasecmp("rules",type)==0)
-  { strncpy(tempConfig.site_config.file_rules,filename,256); ret = 0; }
+  { tempConfig.site_config.file_rules = filename; ret = 0; }
   if (strcasecmp("swho",type)==0)
-  { strncpy(tempConfig.site_config.file_swho,filename,256); ret = 0; }
+  { tempConfig.site_config.file_swho = filename; ret = 0; }
   if (strcasecmp("user",type)==0)
-  { strncpy(tempConfig.site_config.file_user,filename,256); ret = 0; }
+  { tempConfig.site_config.file_user = filename; ret = 0; }
   if (strcasecmp("users",type)==0)
-  { strncpy(tempConfig.site_config.file_users,filename,256); ret = 0; }
+  { tempConfig.site_config.file_users = filename; ret = 0; }
   if (strcasecmp("who",type)==0)
-  { strncpy(tempConfig.site_config.file_who,filename,256); ret = 0; }
+  { tempConfig.site_config.file_who = filename; ret = 0; }
   if (strcasecmp("vfs",type)==0)
-  { strncpy(tempConfig.site_config.file_vfs,filename,256); ret = 0; }
+  { tempConfig.site_config.file_vfs = filename; ret = 0; }
 
-  wzd_free (filename);
+  /* if ret is 0, filename will be freed at server exit */
+  if (ret==1)
+    wzd_free (filename);
+
   return ret;
 }
 

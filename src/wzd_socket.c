@@ -240,7 +240,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
   struct sockaddr_in6 from;
   size_t len = sizeof(struct sockaddr_in6);
 #endif
-  int i;
+  int i=0;
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
 
@@ -261,7 +261,7 @@ int socket_accept(int sock, unsigned char *remote_host, unsigned int *remote_por
 #ifndef LINUX
 #ifndef WINSOCK_SUPPORT
 /* see lundftpd : socket.c for explanation */
-  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, (char*)&i, sizeof(i));
+  setsockopt(new_sock, SOL_SOCKET, SO_SNDLOWAT, &i, sizeof(i));
 #endif
 #endif
 

@@ -198,6 +198,7 @@ static void context_init(wzd_context_t * context)
   context->pasvsock = -1;
   context->dataport=0;
   context->resume = 0;
+  context->userid = (unsigned int)-1;
   context->thread_id = (unsigned long)-1;
   context->pid_child = 0;
   context->state = STATE_UNKNOWN;
@@ -1586,6 +1587,27 @@ static void free_config(wzd_config_t * config)
     wzd_free(mainConfig->config_filename);
   if (mainConfig->pid_file)
     wzd_free(mainConfig->pid_file);
+
+  wzd_free(mainConfig->site_config.file_ginfo);
+  mainConfig->site_config.file_ginfo = NULL;
+  wzd_free(mainConfig->site_config.file_group);
+  mainConfig->site_config.file_group = NULL;
+  wzd_free(mainConfig->site_config.file_groups);
+  mainConfig->site_config.file_groups = NULL;
+  wzd_free(mainConfig->site_config.file_help);
+  mainConfig->site_config.file_help = NULL;
+  wzd_free(mainConfig->site_config.file_rules);
+  mainConfig->site_config.file_rules = NULL;
+  wzd_free(mainConfig->site_config.file_swho);
+  mainConfig->site_config.file_swho = NULL;
+  wzd_free(mainConfig->site_config.file_user);
+  mainConfig->site_config.file_user = NULL;
+  wzd_free(mainConfig->site_config.file_users);
+  mainConfig->site_config.file_users = NULL;
+  wzd_free(mainConfig->site_config.file_vfs);
+  mainConfig->site_config.file_vfs = NULL;
+  wzd_free(mainConfig->site_config.file_who);
+  mainConfig->site_config.file_who = NULL;
 #if 0
   wzd_shm_free(mainConfig_shm);
 #endif

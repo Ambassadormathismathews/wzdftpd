@@ -122,6 +122,8 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   unsigned long length;
   int fd;
 
+  if (!file) return NULL;
+
   hash = compute_hashval(file,strlen(file));
 /*  out_err(LEVEL_FLOOD,"HASH %s: %lu\n",file,hash);*/
 

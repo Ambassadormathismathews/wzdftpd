@@ -147,16 +147,16 @@ struct wzd_command_perm_t {
 /** @brief names of files used by site commands
  */
 typedef struct {
-  char	file_ginfo[256];
-  char	file_group[256];
-  char	file_groups[256];
-  char	file_help[256];
-  char	file_rules[256];
-  char	file_swho[256];
-  char	file_user[256];
-  char	file_users[256];
-  char	file_who[256];
-  char	file_vfs[256];
+  char * file_ginfo;
+  char * file_group;
+  char * file_groups;
+  char * file_help;
+  char * file_rules;
+  char * file_swho;
+  char * file_user;
+  char * file_users;
+  char * file_vfs;
+  char * file_who;
 } wzd_site_config_t;
 
 /* opaque struct */
