@@ -171,6 +171,10 @@ SOURCE=..\src\wzd_crontab.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_data.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_debug.c
 # End Source File
 # Begin Source File
@@ -220,6 +224,22 @@ SOURCE=..\src\wzd_section.c
 # Begin Source File
 
 SOURCE=..\src\wzd_shm.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site_group.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site_user.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_socket.c
 # End Source File
 # Begin Source File
 
@@ -279,6 +299,10 @@ SOURCE=..\src\wzd_crontab.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_data.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_debug.h
 # End Source File
 # Begin Source File
@@ -332,6 +356,22 @@ SOURCE=..\src\wzd_section.h
 # Begin Source File
 
 SOURCE=..\src\wzd_shm.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site_group.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_site_user.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_socket.h
 # End Source File
 # Begin Source File
 

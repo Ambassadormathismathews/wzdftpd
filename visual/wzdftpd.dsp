@@ -98,10 +98,6 @@ SOURCE=..\src\wzd_ClientThread.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_data.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_init_lex.c
 # End Source File
 # Begin Source File
@@ -153,22 +149,6 @@ SOURCE=..\src\wzd_ServerThread.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_site.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_site_group.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_site_user.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_socket.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_tls.c
 # End Source File
 # End Group
@@ -182,10 +162,6 @@ SOURCE=..\src\ls.h
 # Begin Source File
 
 SOURCE=..\src\wzd_ClientThread.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_data.h
 # End Source File
 # Begin Source File
 
@@ -206,22 +182,6 @@ SOURCE=..\src\wzd_savecfg.h
 # Begin Source File
 
 SOURCE=..\src\wzd_ServerThread.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_site.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_site_group.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_site_user.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_socket.h
 # End Source File
 # Begin Source File
 

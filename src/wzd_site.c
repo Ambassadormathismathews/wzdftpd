@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,6 +78,14 @@
 #include <libwzd-auth/wzd_tls.h> /* XXX test only */
 
 #include "wzd_debug.h"
+
+#else /* WZD_USE_PCH */
+
+#ifdef WIN32
+# include <sys/utime.h>
+#endif
+
+#endif /* WZD_USE_PCH */
 
 extern int serverstop;
 extern time_t server_start;

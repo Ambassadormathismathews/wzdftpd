@@ -27,6 +27,10 @@
   * \brief Helper routines for network access
   */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #if defined(_MSC_VER)
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -50,6 +54,8 @@
 #include "wzd_socket.h"
 
 #include "wzd_debug.h"
+
+#endif /* WZD_USE_PCH */
 
 /*************** ul2a ***********************************/
 

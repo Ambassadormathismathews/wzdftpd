@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +64,8 @@
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
+
+#endif /* WZD_USE_PCH */
 
 
 

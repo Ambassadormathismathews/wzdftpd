@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #ifdef _MSC_VER
@@ -40,6 +44,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+
+#endif /* WZD_USE_PCH */
 
 #define Sleep(x)        usleep((x)*1000)
 
