@@ -747,7 +747,6 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
         send_buffer_ptr=0;
       }
 
-out_err(LEVEL_HIGH, "Before parsing include: [%s]\n", out_buffer);
       if (out_buffer) {
         cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
 
@@ -761,7 +760,6 @@ out_err(LEVEL_HIGH, "Before parsing include: [%s]\n", out_buffer);
       }
       else
         cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
-out_err(LEVEL_HIGH, "After parsing include: [%s]\n", out_buffer);
 
       wzd_free(tmpbuf);
 
