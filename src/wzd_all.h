@@ -80,6 +80,7 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_perm.h"
+#include "wzd_string.h"
 #include "wzd_vars.h"
 #include "wzd_vfs.h"
 

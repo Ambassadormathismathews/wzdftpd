@@ -52,6 +52,8 @@
 
 #include "wzd_structs.h"
 
+#include "hash.h"
+
 #include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_libmain.h"
@@ -269,6 +271,9 @@ int set_default_options(void)
 /*  mainConfig = &tempConfig;*/
   setlib_mainConfig(mainConfig);
 /*  setlib_mainConfig(&tempConfig);*/
+
+  tempConfig.htab = wzd_malloc(sizeof(CHTBL));
+  if (chtbl_init((CHTBL*)tempConfig.htab, 256, (hash_function)hash_str, (cmp_function)strcmp, free)) return -1;
 
   tempConfig.pid_file = wzd_strdup(WZD_DEFAULT_PIDFILE);
 
@@ -576,13 +581,12 @@ int cfg_read_cronjob(void)
 */
 int cfg_read_cscript(void)
 {
-  char command[1024];
+  char *command;
   char *eventname;
   unsigned int eventmask=0;
-  char c;
   char *end;
   unsigned int token;
-  unsigned int length;
+  int ret;
 
   token = yylex();
   if (token!='=') {
@@ -600,25 +604,19 @@ int cfg_read_cscript(void)
     return 1;
   }
 
-  /* read til EOL */
-  length = 0;
-  end=command;
-  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
-  {
-    *end++ = c;
-    if (++length >= 1024) {
-      out_err(LEVEL_HIGH,"command is too long (max 1024 chars)\n");
-      return 1;
-    }
+  if( !(command=read_until_eol(1024)) ) {
+    out_err(LEVEL_HIGH,"invalid command\n");
+    return 1;
   }
-  *end='\0';
 
   /* skip leading spaces */
   end = command;
   while (*end && (*end==' ' || *end=='\t')) end++;
 
-  if (hook_add_external(&tempConfig.hook,eventmask,end)) return 1;
-  return 0;
+  ret = hook_add_external(&tempConfig.hook,eventmask,end);
+  wzd_free(command);
+
+  return ret;
 }
 
 
@@ -687,11 +685,9 @@ int cfg_read_deny_access_fup(void)
 */
 int cfg_read_dir_message(void)
 {
-  char filename[256];
-  char c;
+  char *filename;
   char *end;
   unsigned int token;
-  unsigned int length;
 
   token = yylex();
   if (token!='=') {
@@ -699,24 +695,21 @@ int cfg_read_dir_message(void)
     return 1;
   }
 
-  /* read til EOL */
-  length = 0;
-  end=filename;
-  while ( (c = input()) && c!=(char)EOF && c!='\r' && c!='\n')
-  {
-    *end++ = c;
-    if (++length >= 256) {
-      out_err(LEVEL_HIGH,"filename is too long (max 256 chars)\n");
-      return 1;
-    }
+  if( !(filename=read_until_eol(256)) ) {
+    out_err(LEVEL_HIGH,"invalid filename\n");
+    return 1;
   }
-  *end='\0';
 
   /* skip leading spaces */
   end = filename;
   while (*end && (*end==' ' || *end=='\t')) end++;
 
-  strcpy(tempConfig.dir_message,end);
+  strncpy(tempConfig.dir_message,end,sizeof(tempConfig.dir_message));
+
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "dir_message", wzd_strdup(end), NULL, NULL, wzd_free))
+    ; /* error */
+
+  wzd_free(filename);
 
   return 0;
 }
@@ -946,6 +939,8 @@ int cfg_read_logfile(void)
   }
 
   tempConfig.logfilename = filename; /* will be freed at server exit */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "logfile", wzd_strdup(filename), NULL, NULL, wzd_free))
+    ; /* error */
 
   return 0;
 }
@@ -1079,6 +1074,9 @@ int cfg_read_loglevel(void)
     out_err(LEVEL_HIGH,"valid levels are lowest, flood, info, normal, high, critical\n");
     return 1;
   }
+
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "loglevel", wzd_strdup(yytext), NULL, NULL, wzd_free))
+    ; /* error */
 
   tempConfig.loglevel = i;
 

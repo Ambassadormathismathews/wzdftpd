@@ -527,9 +527,6 @@ wzd_user_t * usercache_get( predicate_user_t p, void * arg )
     if (cache_user_pool[i].username[0] != '\0') {
       /* test entry */
       if ( (*p)(&cache_user_pool[i],arg) ) {
-#ifdef DEBUG
-        out_log(LEVEL_INFO,"user cache hit %s\n",cache_user_pool[i].username);
-#endif
         return &cache_user_pool[i];
       }
     }
@@ -603,9 +600,6 @@ wzd_group_t * groupcache_get( predicate_group_t p, void * arg )
     if (cache_group_pool[i].groupname[0] != '\0') {
       /* test entry */
       if ( (*p)(&cache_group_pool[i],arg) ) {
-#ifdef DEBUG
-        out_log(LEVEL_INFO,"group cache hit %s\n",cache_group_pool[i].groupname);
-#endif
         return &cache_group_pool[i];
       }
     }

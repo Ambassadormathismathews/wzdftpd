@@ -54,6 +54,7 @@
 #include "wzd_structs.h"
 #include "wzd_libmain.h" /* getlib_server_uid */
 #include "wzd_log.h"
+#include "wzd_shm.h"
 #include "wzd_ServerThread.h"
 
 #ifdef WZD_MULTITHREAD

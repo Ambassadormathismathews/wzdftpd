@@ -553,12 +553,10 @@ typedef struct {
   wzd_site_config_t	site_config;
   wzd_user_t	*user_list;
   wzd_group_t	*group_list;
+  struct CHTBL * htab;
 } wzd_config_t;
 
-#include "wzd_shm.h"
-
 extern wzd_config_t *	mainConfig;
-extern wzd_shm_t * 	mainConfig_shm;
 extern wzd_context_t *	context_list;
 
 /************************ LIST ****************************/

@@ -68,6 +68,8 @@
 
 #include "wzd_structs.h"
 
+#include "hash.h"
+
 #include "wzd_misc.h"
 #include "wzd_log.h"
 #include "wzd_tls.h"
@@ -84,6 +86,7 @@
 #include "wzd_crontab.h"
 #include "wzd_messages.h"
 #include "wzd_section.h"
+#include "wzd_shm.h"
 #include "wzd_site.h"
 #include "wzd_utf8.h"
 #include "wzd_vars.h"
@@ -1680,6 +1683,9 @@ void serverMainThreadExit(int retcode)
   wzd_free(context_list);
 
   context_list = NULL;
+
+  chtbl_destroy((CHTBL*)mainConfig->htab);
+  wzd_free(mainConfig->htab);
 
   wzd_debug_fini();
 

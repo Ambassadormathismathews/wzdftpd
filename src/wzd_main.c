@@ -73,6 +73,7 @@
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
 #include "wzd_opts.h"
+#include "wzd_shm.h"
 #include "wzd_utf8.h"
 
 #include "wzd_debug.h"

@@ -48,6 +48,8 @@
 
 #include "wzd_structs.h"
 
+#include "hash.h"
+
 #include "wzd_misc.h"
 
 #include "wzd_vars.h"
@@ -78,8 +80,12 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcmp(varname,"loglevel")==0) {
-    snprintf(data,datalength,"%s",loglevel2str(config->loglevel));
-    return 0;
+    char * level;
+    if (!(chtbl_lookup((CHTBL*)config->htab, "loglevel", (void**)&level))) {
+      snprintf(data,datalength,"%s",level);
+      return 0;
+    }
+    return 1;
   }
   if (strcasecmp(varname,"max_dl")==0) {
     snprintf(data,datalength,"%u",config->global_dl_limiter.maxspeed);

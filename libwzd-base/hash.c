@@ -41,6 +41,9 @@
 typedef struct {
   void *key;
   void *data;
+  htrigger_function trigger; /* trigger function to be called on modification */
+  hfree free_key;
+  hfree free_element;
 } CHTBL_Elmnt;
 
 
@@ -93,8 +96,8 @@ void chtbl_destroy(CHTBL *htab)
 
     while (list_size(list) > 0) {
       if (list_rem_next(list,0,(void**)&data)==0 && list->destroy != NULL) {
-        htab->free(data->key);
-        htab->free(data->data);
+        if (data->free_key) data->free_key(data->data);
+        if (data->free_element) data->free_element(data->data);
         list->destroy(data);
       }
     }
@@ -105,7 +108,7 @@ void chtbl_destroy(CHTBL *htab)
   memset(htab, 0, sizeof(CHTBL));
 }
 
-int chtbl_insert(CHTBL *htab, const void *key, void *data)
+int chtbl_insert(CHTBL *htab, const void *key, void *data, htrigger_function fcn, hfree free_key, hfree free_element)
 {
   CHTBL_Elmnt *entry;
   int index;
@@ -121,6 +124,9 @@ int chtbl_insert(CHTBL *htab, const void *key, void *data)
   entry = malloc(sizeof(CHTBL_Elmnt));
   entry->key = (void*)key;
   entry->data = data;
+  entry->trigger = fcn;
+  entry->free_key = free_key;
+  entry->free_element = free_element;
 
   if ((ret = list_ins_next(&htab->table[index], NULL, entry)) == 0)
     htab->size++;
@@ -183,6 +189,7 @@ int chtbl_change(const CHTBL *htab, const void *key, void *data)
   ListElmt *element;
   CHTBL_Elmnt *entry;
   int index;
+  int ret;
 
   index = htab->h(key) % htab->containers;
 
@@ -192,6 +199,9 @@ int chtbl_change(const CHTBL *htab, const void *key, void *data)
     if (!entry) return -1;
     if (htab->match(key, entry->key)==0) {
       if (data) entry->data = data;
+      if (entry->trigger) {
+        ret = (entry->trigger)(entry->key,entry->data);
+      }
       return 0;
     }
   }
@@ -199,3 +209,10 @@ int chtbl_change(const CHTBL *htab, const void *key, void *data)
   return 1;
 }
 
+int chtbl_insert_or_change(CHTBL *htab, const void *key, void *data, htrigger_function fcn, hfree free_key, hfree free_element)
+{
+  if(chtbl_insert(htab, key, data, fcn, free_key, free_element)) {
+    return chtbl_change(htab, key, data);
+  }
+  return 0;
+}
