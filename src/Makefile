@@ -1,10 +1,8 @@
 include Makefile.config
 
-PLATFORM:=$(shell uname)
+WZD_BUILD_NUM=$(DATE_TAG)
 
-WZD_BUILD_NUM:=$(shell date +"%Y%m%d")
-
-COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)
+COMMON_CFLAGS=-pipe -Wall -Wstrict-prototypes -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"
 COMMON_LIBS=
 
 OBJS=wzd_site.o wzd_site_user.o wzd_socket.o \
@@ -52,11 +50,20 @@ endif
 
 all: debug
 
+install: release
+	install --mode=755 $(EXEC) $(LIBWZD) $(DESTDIR); \
+	install --mode=600 wzd.cfg $(DESTDIR); \
+	install --mode=644 file_{help,swho,user,rules,users,who}.txt $(DESTDIR)
+
+uninstall:
+	rm -f $(DESTDIR)/file_{help,swho,user,rules,users,who}.txt; \
+	rm -f $(DESTDIR)/{$(EXEC),$(LIBWZD),wzd.cfg};
+
 intel:
-	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)'
+	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"'
 
 intel_release:
-	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM)' release
+	$(MAKE) 'CC=icc' 'COMMON_CFLAGS=-w1 -DSSL_SUPPORT=$(SSL_SUPPORT) -DWZD_BUILD_NUM=$(WZD_BUILD_NUM) -DWZD_VERSION_NUM=\"$(WZD_VERSION_NUM)\"' release
 
 release: $(OBJS) $(LIBWZD_OBJS)
 ifeq ($(PLATFORM),Linux)
