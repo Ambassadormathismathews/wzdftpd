@@ -56,7 +56,6 @@ wzdftpd_SOURCES =    \
 	wzd_data.h         \
 	wzd_file.c         \
 	wzd_file.h         \
-	wzd.h              \
 	wzd_hardlimits.h   \
 	wzd_init.h         \
 	wzd_main.c         \

@@ -22,12 +22,19 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include <stdio.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <wzd.h>
+/*#include <wzd.h>*/
+#include "wzd_structs.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_libmain.h"
+#include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 
 /***** EVENT HOOKS *****/
 int my_event_hook(unsigned long event_id, const char *p1, const char *p2);

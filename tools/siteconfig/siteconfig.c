@@ -15,7 +15,17 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <wzd.h>
+/*#include <wzd.h>*/
+
+/* speed up compilation */
+#define SSL void
+#define SSL_CTX void
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
+#include "wzd_libmain.h"
+#include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
 /*#include <wzd_shm.h>*/
 
 #define	SHM_KEY	0x1331c0d3

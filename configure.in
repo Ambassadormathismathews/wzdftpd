@@ -17,6 +17,13 @@
 
 AC_PREREQ(2.53)
 AC_INIT(wzdftpd, 0.2cvs, pollux@wzdftpd.net)
+
+#AC_CANONICAL_HOST
+
+# having both commands will give warnings, but is necessary for BSD
+AC_CANONICAL_TARGET
+AC_CYGWIN
+
 AM_INIT_AUTOMAKE(wzdftpd,0.2cvs,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
@@ -24,9 +31,6 @@ AM_CONFIG_HEADER([config.h])
 dnl helper macros
 sinclude(ac-helpers/pgsql.m4)
 sinclude(ac-helpers/tcl.m4)
-
-AC_CANONICAL_HOST
-AC_CANONICAL_TARGET
 
 AM_MAINTAINER_MODE
 
@@ -49,8 +53,6 @@ AM_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-
-AC_CYGWIN
 
 dnl not building static libraries makes compilation fail on *bsd !
 dnl AC_DISABLE_STATIC
