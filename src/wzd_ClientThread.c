@@ -2007,7 +2007,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* get length */
   bytestot = file_seek(fd,0,SEEK_END);
-  if (bytestot == -1) /* happens with 0-length files */
+  if ((off_t)bytestot == (off_t)-1) /* happens with 0-length files */
     bytestot = 0;
   bytesnow = byteslast=context->resume;
 
