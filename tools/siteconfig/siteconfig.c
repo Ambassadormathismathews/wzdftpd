@@ -148,7 +148,7 @@ void print_config(wzd_config_t * config)
 
   if (vars_get("pasv_low",buffer,1024,config)) return;
   printf("Passive Range: %s",buffer);
-  if (vars_get("pasv_low",buffer,1024,config)) return;
+  if (vars_get("pasv_high",buffer,1024,config)) return;
   printf(" -> %s\n",buffer);
 
   if (vars_get("max_dl",buffer,1024,config)) return;

@@ -65,8 +65,6 @@ AC_DEFUN([WZD_LIB_PGSQL],
   WZD_LIB_PGSQL_save_libs="$LIBS"
   WZD_LIB_PGSQL_save_cppflags="$CPPFLAGS"
 
-  AC_MSG_CHECKING([for OpenSSL])
-
   # The variable 'found' is the prefix under which we've found
   # PostgreSQL, or 'not' if we haven't found it anywhere yet.
   found=not

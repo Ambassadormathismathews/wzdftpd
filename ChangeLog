@@ -1,3 +1,8 @@
+2004-06-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: typo in siteconfig giving wrong pasv_range for 'get all'
+	* bugfix: typo in pgsql.m4 displaying OpenSSL
+
 2004-06-11  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: site_cmd not working (yeah, again)
