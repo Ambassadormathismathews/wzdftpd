@@ -338,6 +338,7 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   int count;
   int found;
+  int i;
   char * cipher;
 
   count=0;
@@ -374,6 +375,11 @@ fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",user_pool[co
   strncpy(user->username,user_pool[count].username,255);
   strncpy(user->rootpath,user_pool[count].homedir,1023);
   user->uid = user_pool[count].uid;
+  user->group_num = user_pool[count].group_num;
+  for (i=0; i<user->group_num; i++)
+  {
+    user->groups[i]=user_pool[count].groups[i];
+  }
   memcpy(&user->perms,&user_pool[count].userperms,sizeof(wzd_perm_t));
   user->max_ul_speed = user_pool[count].max_ul_speed;
   user->max_dl_speed = user_pool[count].max_dl_speed;
@@ -385,6 +391,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
   int count;
   int found;
+  int i;
 
   count=0;
   found = 0;
@@ -403,9 +410,26 @@ fprintf(stderr,"found user at index: %d\n",count);
   strncpy(user->username,user_pool[count].username,255);
   strncpy(user->rootpath,user_pool[count].homedir,1023);
   user->uid = user_pool[count].uid;
+  user->group_num = user_pool[count].group_num;
+  for (i=0; i<user->group_num; i++)
+  {
+    user->groups[i]=user_pool[count].groups[i];
+  }
   memcpy(&user->perms,&user_pool[count].userperms,sizeof(wzd_perm_t));
   user->max_ul_speed = user_pool[count].max_ul_speed;
   user->max_dl_speed = user_pool[count].max_dl_speed;
 
   return 0;
 }
+
+int FCN_FIND_GROUP(int num, wzd_group_t * group)
+{
+  if (num < 0 || num >= group_count) return 1;
+
+  strncpy(group->groupname,group_pool[num].groupname,256);
+  group->groupperms = group_pool[num].groupperms;
+  group->max_ul_speed = group_pool[num].max_ul_speed;
+  group->max_dl_speed = group_pool[num].max_dl_speed;
+  
+  return 0;
+} 
