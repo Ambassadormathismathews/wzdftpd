@@ -53,6 +53,7 @@ wzdftpd_SOURCES =    \
 	wzd_hardlimits.h   \
 	wzd_init.h         \
 	wzd_main.c         \
+	wzd_opts.h         \
 	wzd_perm.c         \
 	wzd_perm.h         \
 	wzd_ratio.c        \

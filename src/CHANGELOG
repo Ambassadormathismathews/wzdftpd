@@ -1,3 +1,10 @@
+# May, 07 2003
+- syslog integration
+- fixed several bugs
+- support parameters in config
+- some cygwin-related bugfixes
+- long options support
+
 # Apr, 30 2003
 - fixed bug: segfault if unable to bind to specified port
 - fixed bug: segfault if unable to write users file at server exit

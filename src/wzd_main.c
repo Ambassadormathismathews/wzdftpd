@@ -63,6 +63,7 @@
 #include "wzd_init.h"
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
+#include "wzd_opts.h"
 
 char configfile_name[256];
 int stay_foreground=0;
@@ -71,15 +72,18 @@ extern short created_shm;
 
 void display_usage(void)
 {
-  fprintf(stderr,"Usage:\r\n");
-  fprintf(stderr,"\t -h        - Display this text \r\n");
+  fprintf(stderr,"%s build %lu (%s)\n",
+         WZD_VERSION_STR,(unsigned long)WZD_BUILD_NUM,WZD_BUILD_OPTS);
+  fprintf(stderr, "\nusage: wzdftpd [arguments]\n");
+  fprintf(stderr,"\narguments:\r\n");
+  fprintf(stderr," -h, --help                  - Display this text \n");
 #if DEBUG
-  fprintf(stderr,"\t -b        - Force background \r\n");
+  fprintf(stderr," -b, --background            - Force background \n");
 #endif
-  fprintf(stderr,"\t -d        - Delete IPC if present (Linux only) \r\n");
-  fprintf(stderr,"\t -f <file> - Load alternative config file \r\n");
-  fprintf(stderr,"\t -s        - Stay in foreground \r\n");
-  fprintf(stderr,"\t -V        - Show version \r\n");
+  fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
+  fprintf(stderr," -f <file>                   - Load alternative config file \n");
+  fprintf(stderr," -s, --force-foreground      - Stay in foreground \n");
+  fprintf(stderr," -V, --version               - Show version \n");
 }
 
 void cleanup_shm(void)
@@ -155,8 +159,21 @@ int main_parse_args(int argc, char **argv)
 {
   int opt;
 
+
+  static struct option long_options[] =
+  {
+    /* Options without arguments: */
+    { "background", no_argument, NULL, 'b' },
+    { "config-file", required_argument, NULL, 'f' },
+    { "help", no_argument, NULL, 'h' },
+    { "force-foreground", no_argument, NULL, 's' },
+    { "version", no_argument, NULL, 'V' },
+    { NULL, 0, NULL, 0 } /* sentinel */
+  };
+
   /* please keep options ordered ! */
-  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {
+/*  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {*/
+  while ((opt=getopt_long(argc, argv, "hbdf:sV", long_options, (int *)0)) != -1) {
     switch((char)opt) {
     case 'b':
       stay_foreground = 0;
