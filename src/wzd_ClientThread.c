@@ -3569,7 +3569,7 @@ void * clientThreadProc(void *arg)
     FD_ZERO(&efds);
     /* set control fd */
 #ifdef DEBUG
-    if (sockfd != (fd_t)-1 || !fd_is_valid(sockfd)) {
+    if (sockfd == (fd_t)-1 || !fd_is_valid(sockfd)) {
       fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
           sockfd,__FILE__,__LINE__);
       context->exitclient=1;
