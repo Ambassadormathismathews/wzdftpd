@@ -44,7 +44,7 @@
 
 #include "libmysql.h"
 
-unsigned int user_get_ref(const char * name, unsigned int ref);
+uid_t user_get_ref(const char * name, unsigned int ref);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
 {
@@ -72,7 +72,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
   MYSQL_RES   *res;
   int modified = 0;
   unsigned int query_length = 512;
-  unsigned int ref = 0;
+  uid_t ref = 0;
   unsigned int i;
 
   if (!user) { /* delete user permanently */
@@ -259,7 +259,7 @@ error_mod_user_free:
   return -1;
 }
 
-unsigned int user_get_ref(const char * name, unsigned int ref)
+uid_t user_get_ref(const char * name, unsigned int ref)
 {
   char *query;
   MYSQL_RES   *res;

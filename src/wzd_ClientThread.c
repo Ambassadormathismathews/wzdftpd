@@ -3714,7 +3714,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
       command = NULL;
     else
     {
-      command = commands_find(token);
+      command = commands_find(mainConfig->commands_list,token);
     }
 
     if (command) {
@@ -3732,18 +3732,17 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
           str_deallocate(site_command);
         }
 
-        command_real = commands_find(token);
+        command_real = commands_find(mainConfig->commands_list,token);
         if (command_real) command = command_real;
 
-        /* TODO XXX FIXME this will not allow custom site commands ... */
-
-        if (perm_check(str_tochar(token),context,mainConfig) == 1) {
+        if (commands_check_permission(command_real,context)) {
           ret = send_message_with_args(501,context,"Permission Denied");
           str_deallocate(token);
           str_deallocate(command_buffer);
           continue;
         }
       }
+      /** \todo XXX FIXME check permission here */
       ret = (*(command->command))(token,command_buffer,context);
       str_deallocate(token);
       str_deallocate(command_buffer);

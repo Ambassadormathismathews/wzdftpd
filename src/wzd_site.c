@@ -1064,7 +1064,7 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
       str_deallocate(perm_name); str_deallocate(ptr);
       return 1;
     }
-    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),mainConfig);
+    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),&mainConfig->perm_list);
     str_deallocate(perm_name);
     str_deallocate(ptr);
     if (ret) {send_message_with_args(501,context,"error adding permission"); return 1; }
@@ -1100,7 +1100,7 @@ int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
       str_deallocate(perm_name); str_deallocate(ptr);
       return 1;
     }
-    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),mainConfig);
+    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),&mainConfig->perm_list);
     if (ret) {
       send_message_with_args(501,context,"error adding permission");
       str_deallocate(perm_name); str_deallocate(ptr);
@@ -2049,9 +2049,18 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   }
 #endif
 
-  if (perm_check(str_tochar(command),context,mainConfig) == 1) {
-    ret = send_message_with_args(501,context,"Permission Denied");
-    return 1;
+  {
+    wzd_command_t * command_real;
+
+    command_real = commands_find(mainConfig->commands_list,command);
+    if (!command_real) {
+      ret = send_message_with_args(501,context,"Permission Denied");
+      return 1;
+    }
+    if (commands_check_permission(command_real,context)) {
+      ret = send_message_with_args(501,context,"Permission Denied");
+      return 1;
+    }
   }
 
   s_token = str_tochar(command);

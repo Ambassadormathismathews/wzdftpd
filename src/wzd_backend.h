@@ -84,19 +84,19 @@
 #define	FCN_VALIDATE_PASS	wzd_validate_pass
 #define	STR_VALIDATE_PASS	"wzd_validate_pass"
 
-/* wzd_user_t * FCN_GET_USER(int uid) */
+/* wzd_user_t * FCN_GET_USER(uid_t uid) */
 #define	FCN_GET_USER		wzd_get_user
 #define	STR_GET_USER	 	"wzd_get_user"
 
-/* wzd_group_t * FCN_GET_GROUP(int gid) */
+/* wzd_group_t * FCN_GET_GROUP(gid_t gid) */
 #define	FCN_GET_GROUP		wzd_get_group
 #define	STR_GET_GROUP	 	"wzd_get_group"
 
-/* int FCN_FIND_USER(const char *name, wzd_user_t * user) */
+/* uid_t FCN_FIND_USER(const char *name, wzd_user_t * user) */
 #define	FCN_FIND_USER		wzd_find_user
 #define	STR_FIND_USER	 	"wzd_find_user"
 
-/* int FCN_FIND_GROUP(const char *name, wzd_group_t * group) */
+/* gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group) */
 #define	FCN_FIND_GROUP		wzd_find_group
 #define	STR_FIND_GROUP	 	"wzd_find_group"
 
@@ -129,9 +129,9 @@ int backend_close(const char *backend);
 
 int backend_reload(const char *backend);
 
-wzd_user_t * backend_get_user(int userid);
+wzd_user_t * backend_get_user(uid_t userid);
 
-wzd_group_t * backend_get_group(int groupid);
+wzd_group_t * backend_get_group(gid_t groupid);
 
 int backend_find_user(const char *name, wzd_user_t * user, int * userid);
 
@@ -162,12 +162,12 @@ int backend_inuse(const char *backend);
 
 /* wrappers to user list */
 
-wzd_user_t * GetUserByID(unsigned int id);
+wzd_user_t * GetUserByID(uid_t id);
 wzd_user_t * GetUserByName(const char *name);
-wzd_group_t * GetGroupByID(unsigned int id);
+wzd_group_t * GetGroupByID(gid_t id);
 wzd_group_t * GetGroupByName(const char *name);
-unsigned int GetUserIDByName(const char *name);
-unsigned int GetGroupIDByName(const char *name);
+uid_t GetUserIDByName(const char *name);
+gid_t GetGroupIDByName(const char *name);
 
 
 #endif /* __WZD_BACKEND__ */

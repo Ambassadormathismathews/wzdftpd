@@ -263,7 +263,7 @@ wzd_string_t * str_trim_right(wzd_string_t *str)
 
   len = str->length;
 
-  while ((--len >= 0) &&
+  while ((--len > 0) &&
       (isspace(str->buffer[len]) ||
        str->buffer[len] == '\n')) {
     str->buffer[len] = '\0';
@@ -401,7 +401,7 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   result = vsnprintf(str->buffer, str->allocated, format, argptr);
 #ifndef WIN32
   if (result < 0) return result;
-  if (result >= str->allocated)
+  if ((unsigned int)result >= str->allocated)
   {
     _str_set_min_size(str, result+1);
     va_end(argptr);

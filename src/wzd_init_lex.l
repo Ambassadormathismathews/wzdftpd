@@ -346,6 +346,9 @@ int set_default_options(void)
 
   tempConfig.loglevel=LEVEL_NORMAL;
 
+  tempConfig.commands_list = NULL;
+  commands_init(&tempConfig.commands_list);
+  commands_add_defaults(tempConfig.commands_list);
   tempConfig.perm_list = NULL;
   tempConfig.site_list = NULL;
   tempConfig.section_list = NULL;
@@ -416,7 +419,10 @@ int do_permission_line(const char *permname, const char *permline)
   ret = perm_is_valid_perm(permname);
   if (ret) return 1;
 
-  ret = perm_add_perm(permname, permline,&tempConfig);
+  ret = perm_add_perm(permname, permline,&tempConfig.perm_list);
+  if (ret) return 1;
+
+  ret = commands_set_permission(tempConfig.commands_list, permname, permline);
   if (ret) return 1;
 
   return 0;

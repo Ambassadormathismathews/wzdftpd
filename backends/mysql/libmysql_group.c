@@ -44,13 +44,13 @@
 
 #include "libmysql.h"
 
-unsigned int group_get_ref(const char * name, unsigned int ref);
+gid_t group_get_ref(const char * name, unsigned int ref);
 
 
-int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
+gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
   char *query;
-  int gid;
+  gid_t gid;
 
   if (!wzd_mysql_check_name(name)) return -1;
 
@@ -60,11 +60,11 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
   if (mysql_query(&mysql, query) != 0) {
     free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return -1;
+    return (gid_t)-1;
   }
 
   free(query);
-  gid = -1;
+  gid = (gid_t)-1;
 
   /** no !! this returns the number of COLUMNS (here, 14) */
 /*  if (mysql_field_count(&mysql) == 1)*/
@@ -75,13 +75,13 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 
     if (!(res = mysql_store_result(&mysql))) {
       _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return -1;
+      return (gid_t)-1;
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
       /* 0 or more than 1 result */
       mysql_free_result(res);
-      return -1;
+      return (gid_t)-1;
     }
 
     num_fields = mysql_num_fields(res);
@@ -110,7 +110,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
   MYSQL_RES   *res;
   int modified = 0;
   unsigned int query_length = 512;
-  unsigned int ref = 0;
+  gid_t ref = 0;
   unsigned int i;
 
   if (!group) { /* delete user permanently */
@@ -248,12 +248,12 @@ error_mod_group_free:
 }
 
 
-unsigned int group_get_ref(const char * name, unsigned int ref)
+gid_t group_get_ref(const char * name, unsigned int ref)
 {
   char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  unsigned int gid=0;
+  gid_t gid=0;
   unsigned long ul;
   char *ptr;
 
@@ -281,7 +281,7 @@ unsigned int group_get_ref(const char * name, unsigned int ref)
 
     ul = strtoul(row[0], &ptr, 0);
     if (ptr && *ptr == '\0') {
-      gid = (unsigned int)ul;
+      gid = (gid_t)ul;
     }
 
   }

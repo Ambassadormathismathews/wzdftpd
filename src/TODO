@@ -9,7 +9,9 @@
   - create command hash table / OK
   - initialize commands before reading config file ? / OK
   - add site commands / OK
-  - add permissions from config file in hash table
+  - add permissions from config file in hash table / OK
+  - use permissions from hash table / OK
+  - remove permissions from perm_list
 '********'
 - finish MLST
 - implement MLSD

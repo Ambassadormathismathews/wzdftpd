@@ -40,20 +40,35 @@ typedef struct _wzd_command_t {
   struct wzd_command_perm_t * perms;
 } wzd_command_t;
 
-int commands_init(void);
-void commands_fini(void);
+int commands_init(CHTBL ** _ctable);
+void commands_fini(CHTBL * _ctable);
 
-int commands_add(const char *name,
+int commands_add(CHTBL * _ctable,
+    const char *name,
     wzd_function_command_t command,
     wzd_function_command_t help,
     u32_t id);
 
-int commands_add_defaults(void);
+int commands_add_defaults(CHTBL * _ctable);
 
-wzd_command_t * commands_find(wzd_string_t *str);
+wzd_command_t * commands_find(CHTBL * _ctable, wzd_string_t *str);
+
+/** \brief Set permissions associated to a command
+ *
+ * Add (or replace if existing) permissions for the specified command.
+ * The command must exist.
+ * \return 0 if command is ok
+ */
+int commands_set_permission(CHTBL * _ctable, const char * permname, const char * permline);
+
+/** \brief Check if user is authorized to run specified command
+ *
+ * Check if the user in the specific context is allowed to run the command.
+ * \return 0 if command is ok
+ */
+int commands_check_permission(wzd_command_t * command, wzd_context_t * context);
 
 /****** to be implemented ********/
-int commands_set_permission();
 int commands_add_permission();
 
 #endif /* __WZD_COMMANDS__ */

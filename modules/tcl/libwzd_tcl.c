@@ -277,6 +277,7 @@ static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * co
       Tcl_Obj * TempObj;
       Tcl_Interp * slave = NULL;
       const char *s;
+      char * errorinfo;
       wzd_user_t * user;
       int ret;
 
@@ -297,9 +298,11 @@ static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * co
       current_context = NULL;
       s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
       if (!s || *s!='1') {
-        if (ret != TCL_OK)
+        if (ret != TCL_OK) {
+          errorinfo = (char *) Tcl_GetVar(interp, "errorInfo", 0);
+          out_err(LEVEL_HIGH,"TCL error: %s\n",errorinfo);
           send_message_with_args(200,context,"Error in TCL command");
-        else
+        } else
           send_message_with_args(200,context,"TCL command ok");
       }
     }
@@ -793,7 +796,7 @@ static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const c
 #endif
   }
 
-  return TCL_OK;
+  return TCL_ERROR;
 }
 
 static int tcl_vars_shm(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])

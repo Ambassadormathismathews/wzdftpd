@@ -207,17 +207,17 @@ int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_len
 
 /***/
 
-wzd_command_perm_t * perm_find_create(const char *commandname, wzd_config_t * config)
+wzd_command_perm_t * perm_find_create(const char *commandname, wzd_command_perm_t ** perm_list)
 {
   wzd_command_perm_t * perm, * insert_point;
 
-  if ( ! config->perm_list ) {
-    perm = config->perm_list = perm_create_empty_perm();
+  if ( ! *perm_list ) {
+    perm = *perm_list = perm_create_empty_perm();
     strncpy(perm->command_name,commandname,256);
     return perm;
   }
 
-  perm = config->perm_list;
+  perm = *perm_list;
   do {
     /* we use strcmp because commandname is lowered in wzd_init_lex.l (readConfigFile, case '-') */
     if (strcmp(perm->command_name,commandname)==0) {
@@ -229,12 +229,12 @@ wzd_command_perm_t * perm_find_create(const char *commandname, wzd_config_t * co
   /* not found, insert a new perm (tail insertion) */
   perm = perm_create_empty_perm();
   strncpy(perm->command_name,commandname,256);
-  insert_point = config->perm_list;
+  insert_point = *perm_list;
   if (insert_point) {
     while (insert_point->next_perm) insert_point = insert_point->next_perm;
     insert_point->next_perm = perm;
   } else {
-    config->perm_list = perm;
+    *perm_list = perm;
   }
 
   return perm;
@@ -330,7 +330,7 @@ wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd
 
 /***/
 
-int perm_add_perm(const char *permname, const char *permline, wzd_config_t * config)
+int perm_add_perm(const char *permname, const char *permline, wzd_command_perm_t ** perm_list)
 {
   char * dyn_buffer;
   char * token, * ptr;
@@ -349,7 +349,7 @@ int perm_add_perm(const char *permname, const char *permline, wzd_config_t * con
   strncpy(dyn_buffer,permline,length+1);
 
   /* find the perm */
-  command_perm = perm_find_create(permname,config);
+  command_perm = perm_find_create(permname,perm_list);
 
   /* for each element of the permline, add it to the entries */
   ptr = dyn_buffer;
@@ -406,6 +406,18 @@ fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
 int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t * config)
 {
   wzd_command_perm_t * command_perm;
+
+  if (!permname || !context) return -1;
+  if (!config->perm_list) return -1;
+  if (!strlen(permname)) return -1;
+
+  command_perm = perm_find(permname,config);
+
+  return perm_check_perm(command_perm,context);
+}
+
+int perm_check_perm(const wzd_command_perm_t *perm, const wzd_context_t * context)
+{
   wzd_command_perm_entry_t * entry;
   const wzd_user_t * user;
   wzd_group_t * group;
@@ -415,14 +427,9 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_config_t
 
   user = GetUserByID(context->userid);
 
-  if (!permname || !context) return -1;
-  if (!config->perm_list) return -1;
-  if (!strlen(permname)) return -1;
+  if (!perm || !context) return -1;
 
-  command_perm = perm_find(permname,config);
-  if (!command_perm) return -1;
-
-  entry = command_perm->entry_list;
+  entry = perm->entry_list;
   if (!entry) return 1;
 
   /** \todo TODO compare entries with target (regexp powaa) and if same, ok */

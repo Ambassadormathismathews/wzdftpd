@@ -1209,6 +1209,7 @@ void serverMainThreadProc(void *arg)
   server_mutex_set_init();
 
   /********* set up functions *******/
+#if 0
   if (commands_init()) {
     out_log(LEVEL_HIGH,"Could not set up functions\n");
   }
@@ -1216,6 +1217,7 @@ void serverMainThreadProc(void *arg)
   if (commands_add_defaults()) {
     out_log(LEVEL_HIGH,"Could not set up default functions\n");
   }
+#endif
 
 
   if (server_switch_to_config(mainConfig))
@@ -1461,7 +1463,7 @@ void serverMainThreadExit(int retcode)
   if (context_shm) wzd_shm_free(context_shm);
 #endif
 
-  commands_fini();
+  commands_fini(mainConfig->commands_list);
   list_destroy(&server_ident_list);
   list_destroy(context_list);
   wzd_free(context_list);

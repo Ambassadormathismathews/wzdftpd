@@ -252,10 +252,10 @@ int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
   return uid;
 }
 
-int FCN_FIND_USER(const char *name, wzd_user_t * user)
+uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
   char *query;
-  int uid;
+  uid_t uid;
 
   if (!wzd_mysql_check_name(name)) return -1;
 
@@ -280,13 +280,13 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
 
     if (!(res = mysql_store_result(&mysql))) {
       _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return -1;
+      return (uid_t)-1;
     }
 
     if ( (int)mysql_num_rows(res) != 1 ) {
       /* 0 or more than 1 result */
       mysql_free_result(res);
-      return -1;
+      return (uid_t)-1;
     }
 
     num_fields = mysql_num_fields(res);

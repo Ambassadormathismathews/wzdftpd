@@ -1,3 +1,7 @@
+2005-03-01  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: use permissions from command list
+
 2005-02-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: perl: chmod, chgrp, chown

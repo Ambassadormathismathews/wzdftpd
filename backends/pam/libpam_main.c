@@ -244,7 +244,7 @@ int  FCN_COMMIT_CHANGES(void)
   return 0;
 }
 
-wzd_user_t * FCN_GET_USER(int uid)
+wzd_user_t * FCN_GET_USER(uid_t uid)
 {
   int i;
 

@@ -79,7 +79,7 @@ static char value[2048];
 
 
 
-int FCN_FIND_GROUP(const char *name, wzd_group_t * group);
+gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
 
 static wzd_user_t * user_allocate_new(void);
 static wzd_group_t * group_allocate_new(void);
@@ -601,7 +601,7 @@ fprintf(stderr,"Invalid uid %s\n",value);
       user_new->userperms = num | RIGHT_CWD;
     }
     else if (strcmp("groups",varname)==0) {
-      unsigned int _gid;
+      gid_t _gid;
       char * group_ptr;
 
       if (!user_new) continue;
@@ -610,14 +610,14 @@ fprintf(stderr,"Invalid uid %s\n",value);
       if (!ptr) continue;
       /* we use exported function: FCN_FIND_GROUP */
       _gid = FCN_FIND_GROUP(ptr,NULL);
-      if (_gid != -1) {
+      if (_gid != (gid_t)-1) {
         user_new->groups[user_new->group_num++] = _gid; /* ouch */
       }
 
       while ( (ptr = strtok_r(NULL,",",&group_ptr)) )
       {
         _gid = FCN_FIND_GROUP(ptr,NULL);
-        if (_gid != -1) {
+        if (_gid != (gid_t)-1) {
           user_new->groups[user_new->group_num++] = _gid; /* ouch */
         }
       }
@@ -1136,7 +1136,7 @@ fprintf(stderr,"User %s not found\n",login);
 #endif
 }
 
-int FCN_FIND_USER(const char *name, wzd_user_t * user)
+uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
   int found;
   ListElmt * elmnt;
@@ -1149,7 +1149,7 @@ int FCN_FIND_USER(const char *name, wzd_user_t * user)
       { found = 1; break; }
   }
 
-  if (!found) return -1;
+  if (!found) return (uid_t)-1;
   else return loop_user->uid;
 
 #if 0
@@ -1182,7 +1182,7 @@ fprintf(stderr,"User %s not found\n",name);
 #endif
 }
 
-int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
+gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
   int found;
   ListElmt * elmnt;
@@ -1197,7 +1197,7 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
       { found = 1; break; }
   }
 
-  return (found) ? loop_group->gid : -1;
+  return (found) ? loop_group->gid : (gid_t)-1;
 }
 
 
@@ -1416,7 +1416,7 @@ wzd_user_t * FCN_GET_USER(int uid)
     index = 0;
     for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
       loop_user = list_data(elmnt);
-      if (loop_user && loop_user->username[0]!='\0' && loop_user->uid!=-1)
+      if (loop_user && loop_user->username[0]!='\0' && loop_user->uid!=(uid_t)-1)
         uid_list[index++] = loop_user->uid;
     }
     uid_list[index] = -1;
@@ -1456,7 +1456,7 @@ wzd_group_t * FCN_GET_GROUP(int gid)
     index = 0;
     for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt)) {
       loop_group = list_data(elmnt);
-      if (loop_group && loop_group->groupname[0]!='\0' && loop_group->gid!=-1)
+      if (loop_group && loop_group->groupname[0]!='\0' && loop_group->gid!=(gid_t)-1)
         gid_list[index++] = loop_group->gid;
     }
     gid_list[index] = -1;
