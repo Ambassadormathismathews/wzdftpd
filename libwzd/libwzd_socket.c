@@ -142,7 +142,9 @@ int server_try_socket(void)
   return _config->sock;
 
 server_try_socket_abort:
+#ifdef DEBUG
   printf("error (last message was: [%s]\n",buffer);
+#endif
   free(buffer);
   _config->connector.disconnect();
   return -1;

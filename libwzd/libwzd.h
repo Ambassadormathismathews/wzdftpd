@@ -31,12 +31,18 @@
 #ifndef __LIBWZD__
 #define __LIBWZD__
 
+/* wzd_parse_args
+ *
+ * parse command line arguments to detect libwzd-specific switches
+ */
+int wzd_parse_args(int argc, char **argv);
+
 /* wzd_init: connect to server
  * 
  * parameters are still being defined
  *
  */
-int wzd_init(const char *host, int port, const char *user, const char *pass);
+int wzd_init(void);
 
 int wzd_fini(void);
 

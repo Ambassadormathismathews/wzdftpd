@@ -51,19 +51,61 @@ static int _connect_server(void);
 
 struct libwzd_config * _config=NULL;
 
+static char * _host = NULL;
+static int _port = 0;
+static char * _user = NULL;
+static char * _pass = NULL;
 
+
+
+/* wzd_parse_args
+ *
+ * parse command line arguments to detect libwzd-specific switches
+ */
+int wzd_parse_args(int argc, char **argv)
+{
+  int opt;
+  int val;
+
+  while ((opt=getopt(argc, argv, "u:w:h:p:")) != -1)
+  {
+    switch ((char)opt) {
+      case 'u':
+        if (strlen(optarg)>0) {
+          _user = strdup(optarg);
+        }
+        break;
+      case 'w':
+        if (strlen(optarg)>0) {
+          _pass = strdup(optarg);
+        }
+        break;
+      case 'h':
+        if (strlen(optarg)>0) {
+          _host = strdup(optarg);
+        }
+        break;
+      case 'p':
+        val = atoi(optarg); /* FIXME no test ... */
+        _port = val;
+        break;
+    }
+  }
+
+  return 0;
+}
 
 /** parameters are still being defined */
-int wzd_init(const char *host, int port, const char *user, const char *pass)
+int wzd_init(void)
 {
   /* 0- init structs */
   if (_config != NULL) return -1; /* init already done */
   _config = malloc(sizeof(struct libwzd_config));
   memset(_config,0,sizeof(struct libwzd_config));
-  _config->host = strdup(host);
-  _config->port = port;
-  _config->user = strdup(user);
-  _config->pass = strdup(pass);
+  _config->host = (_host) ? _host : "localhost";
+  _config->port = (_port) ? _port : 21;
+  _config->user = (_user) ? _user : "wzdftpd";
+  _config->pass = (_pass) ? _pass : "wzdftpd";
 
   /* 1- connect to server */
   if (_connect_server()<0) { free(_config); return -1; }
@@ -75,6 +117,11 @@ int wzd_init(const char *host, int port, const char *user, const char *pass)
 
 int wzd_fini(void)
 {
+  if (_host) { free(_host); _host = NULL; }
+  if (_port) { _port = 0; }
+  if (_user) { free(_user); _user = NULL; }
+  if (_pass) { free(_pass); _pass = NULL; }
+
   if (_config) {
     wzd_send_message("QUIT\r\n",6,NULL,0);
 #ifdef WIN32
@@ -82,9 +129,6 @@ int wzd_fini(void)
 #else
     sleep(1);
 #endif
-    if (_config->host) free(_config->host);
-    if (_config->user) free(_config->user);
-    if (_config->pass) free(_config->pass);
     free(_config);
     _config = NULL;
   }
