@@ -32,14 +32,6 @@
 
 #include <wzd.h>
 
-#define	incomplete_indicator	"../(incomplete)-%0"
-
-#define	progressmeter		"[WzD] - %3d%% Complete - [WzD]"
-#define	del_progressmeter	"\\[.*] - ...% Complete - \\[WzD]"
-
-#define	other_completebar	"[WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]"
-
-
 #define BUFFER_LEN      4096
 
 /* CRC lookup table */
@@ -81,6 +73,12 @@ static unsigned long crcs[256]={ 0x00000000,0x77073096,0xEE0E612C,0x990951BA,
 0x53B39330,0x24B4A3A6,0xBAD03605,0xCDD70693,0x54DE5729,0x23D967BF,0xB3667A2E,
 0xC4614AB8,0x5D681B02,0x2A6F2B94,0xB40BBE37,0xC30C8EA1,0x5A05DF1B,0x2D02EF8D};
 
+static char progressmeter[256];
+static char del_progressmeter[256];
+static char incomplete_indicator[256];
+static char other_completebar[256];
+static short params_ok=0;
+
 /* Converts cookies in incomplete indicators */
 char *c_incomplete(char *instr, char *path);
 
@@ -89,6 +87,32 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 
 /* parse dir to calculate release completion % */
 float _sfv_get_release_percent(const char *dir, wzd_sfv_file sfv);
+
+/* get params from server */
+static int get_all_params(void)
+{
+  if (params_ok) return 0;
+
+  if (server_get_param("sfv_progressmeter",progressmeter,256,getlib_mainConfig()->param_list)) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_progressmeter'\n");
+    return 1;
+  }
+  if (server_get_param("sfv_del_progressmeter",del_progressmeter,256,getlib_mainConfig()->param_list)) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_del_progressmeter'\n");
+    return 1;
+  }
+  if (server_get_param("sfv_incomplete_indicator",incomplete_indicator,256,getlib_mainConfig()->param_list)) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_incomplete_indicator'\n");
+    return 1;
+  }
+  if (server_get_param("sfv_other_completebar",other_completebar,256,getlib_mainConfig()->param_list)) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_other_completebar'\n");
+    return 1;
+  }
+
+  params_ok = 1;
+  return 0;
+}
 
 /* Calculates the 32-bit checksum of fname, and stores the result
  * in crc. Returns 0 on success, nonzero on error.
@@ -525,6 +549,8 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
   char *ptr;
   int i;
 
+  if (get_all_params()) return;
+
   if (strlen(sfv_file) >= 1024) return -1;
   strncpy(dir,sfv_file,1023);
   ptr = strrchr(dir,'/');
@@ -823,10 +849,13 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_t * context)
 {
   char dir[512];
+  int ret;
   char *ptr;
   size_t len;
   regex_t preg;
   regmatch_t pmatch[1];
+
+  if (get_all_params()) return;
 
   /* do NOT comment this, we get len here ! */
   if (!filename || (len=strlen(filename))<2 || filename[0]!='/') return;
