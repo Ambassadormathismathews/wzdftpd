@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -129,7 +153,7 @@ wzd_acl_line_t * find_acl(const char * username, wzd_file_t * file)
   return NULL;
 }
 
-/* creation and tail insertion */
+/** creation and tail insertion */
 wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, wzd_file_t **first)
 {
   wzd_file_t *current, *new_file;
@@ -154,7 +178,7 @@ wzd_file_t * add_new_file(const char *name, const char *owner, const char *group
   return new_file;
 }
 
-/* replace or add acl rule */
+/** replace or add acl rule */
 void addAcl(const char *filename, const char *user, const char *rights, wzd_file_t * file)
 {
   wzd_acl_line_t * acl_current, * acl_new;
@@ -184,7 +208,7 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
   file->acl = acl_new;
 }
 
-/* should be <<atomic>> */
+/** \todo should be "atomic" */
 int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
 {
   FILE *fp;
@@ -240,7 +264,7 @@ int readPermFile(const char *permfile, wzd_file_t **pTabFiles)
   return 0;
 }
 
-/* should be <<atomic>> */
+/** \todo should be "atomic" */
 int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
 {
   char buffer[BUFFER_LEN];
@@ -279,8 +303,9 @@ int writePermFile(const char *permfile, wzd_file_t **pTabFiles)
   return 0;
 }
 
-/* dir MUST be / terminated */
-/* wanted_file MUST be a single file name ! */
+/** dir MUST be / terminated
+ * wanted_file MUST be a single file name !
+ */
 int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
   char perm_filename[BUFFER_LEN];
@@ -439,7 +464,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_fi
 
 }
 
-/* MUST NOT be / terminated (except /) */
+/** MUST NOT be / terminated (except /) */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * user)
 {
   char dir[BUFFER_LEN];
@@ -512,7 +537,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
 }
 
-/* MUST NOT be / terminated (except /) */
+/** MUST NOT be / terminated (except /) */
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context)
 {
   char dir[BUFFER_LEN];
@@ -597,7 +622,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   return 0;
 }
 
-/* MUST NOT be / terminated (except /) */
+/** MUST NOT be / terminated (except /) */
 int _movePerm(const char *oldfilename, const char *newfilename, const char *owner, const char *group, wzd_context_t * context)
 {
   char dir[BUFFER_LEN];
@@ -802,7 +827,7 @@ void file_close(int fd, wzd_context_t * context)
   close(fd);
 }
 
-/* NOTE:
+/** NOTE:
  * one of username/groupname can be NULL
  * context is usefull to check if the user can chown to other users
  */
@@ -887,7 +912,7 @@ fprintf(stderr,"Removing directory '%s'\n",dirname);
 
 }
 
-/* RENAME
+/** RENAME
  * old_filename and new_filename must be ABSOLUTE paths
  */
 int file_rename(const char *old_filename, const char *new_filename, wzd_context_t * context)
