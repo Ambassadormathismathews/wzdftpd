@@ -685,11 +685,11 @@ static int tcl_vars_group(ClientData data, Tcl_Interp *interp, int argc, const c
   } else if (!strcmp(argv[1],"set")) {
     ret = vars_group_set(argv[2],argv[3],(void*)argv[4],1024,getlib_mainConfig());
     return (ret)?TCL_ERROR:TCL_OK;
-#if 0
-  } else if (!strcmp(argv[1],"new")) { /* new user creation */
-    ret = vars_group_new(argv[2],argv[3],argv[4],getlib_mainConfig());
+  } else if (!strcmp(argv[1],"new")) { /* new group creation */
+    ret = vars_group_new(argv[2],getlib_mainConfig());
     /** \todo handle return */
     return (ret)?TCL_ERROR:TCL_OK;
+#if 0
   } else if (!strcmp(argv[1],"addip")) { /* add new ip */
     ret = vars_group_addip(argv[2],argv[3],getlib_mainConfig());
     /** \todo handle return */

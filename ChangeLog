@@ -1,3 +1,8 @@
+2005-02-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: misc problems with str_dup, str_copy
+	* feature: vars_group new (new group creation)
+
 2005-02-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: some small memory leaks and potential buffer overflows

@@ -653,6 +653,57 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
   return ret;
 }
 
+int vars_group_new(const char *groupname, wzd_config_t * config)
+{
+  char *homedir;
+  int ret;
+  wzd_group_t newgroup;
+  int i;
+
+  /* check if group already exists */
+  if ( GetGroupByName(groupname) ) {
+    return 1;
+  }
+
+  /* FIXME rootpath */
+  homedir = "";
+#if 0
+  mygroup = GetGroupByID(me->groups[0]);
+  if (mygroup) {
+    homedir = mygroup->defaultpath;
+  } else {
+    homedir = me->rootpath;
+  }
+  /* check if homedir exist */
+  {
+    struct statbuf s;
+    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+      ret = send_message_with_args(501,context,"Homedir does not exist");
+      str_deallocate(groupname);
+      return 1;
+    }
+  }
+#endif
+
+  /* create new group */
+  strncpy(newgroup.groupname,groupname,sizeof(newgroup.groupname));
+  strncpy(newgroup.defaultpath,homedir,WZD_MAX_PATH);
+  newgroup.groupperms = 0;
+  newgroup.max_idle_time = 0;
+  newgroup.max_dl_speed = 0;
+  newgroup.max_ul_speed = 0;
+  newgroup.ratio = 0;
+  newgroup.num_logins = 0;
+  newgroup.tagline[0] = '\0';
+  for (i=0; i<HARD_IP_PER_GROUP; i++)
+    newgroup.ip_allowed[i][0]='\0';
+
+  /* add it to backend */
+  ret = backend_mod_group(config->backend.name,groupname,&newgroup,_GROUP_ALL);
+
+  return (ret) ? 1 : 0;
+}
+
 
 static unsigned int _str_hash(const char *key)
 {

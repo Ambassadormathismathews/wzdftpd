@@ -736,6 +736,13 @@ static XS(XS_wzd_vars_group)
       XSRETURN_PV(buffer);
     else
       XSRETURN_UNDEF;
+  } else if (!strcmp(command,"new")) { /* new user creation */
+    ret = vars_group_new(groupname,getlib_mainConfig());
+    /** \todo handle return */
+    if (!ret)
+      XSRETURN_PV("command ok");
+    else
+      XSRETURN_UNDEF;
   }
 
   XSRETURN_UNDEF;

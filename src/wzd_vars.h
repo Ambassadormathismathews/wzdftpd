@@ -83,6 +83,11 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
  */
 int vars_group_set(const char *groupname, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config);
 
+/** create a new group
+ * @returns 0 if ok, 1 if an error occured
+ */
+int vars_group_new(const char *groupname, wzd_config_t * config);
+
 
 void vars_shm_init(void);
 void vars_shm_free(void);
