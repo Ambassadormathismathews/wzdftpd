@@ -4,6 +4,9 @@
 |  username      : %40.username                  |
 |  User's group  : %40.usergroup                  |
 |  Flags         : %40.userflags                  |
+%if G
+|  Slots         : user: %10.userslots    leech: %10.userleechslots                     |
+%endif
 |  Stats         : dl: %15.usertotal_dl    ul: %15.usertotal_ul                |
 |  Home dir      : %55.userhome   |
 |  Max Idle Time : %40.usermaxidle                  |
