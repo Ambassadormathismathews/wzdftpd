@@ -1,3 +1,7 @@
+2004-12-08  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: crash during site purge (closes: #0022)
+
 2004-12-06  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: user cache and group cache changed for double-indexed hash

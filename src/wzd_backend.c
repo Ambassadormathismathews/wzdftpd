@@ -735,6 +735,7 @@ static int _trigger_user_max_dl(wzd_user_t * user)
   ListElmt * el;
   wzd_context_t * context;
 
+  if (!user) return 0;
   for (el = list_head(context_list); el != NULL; el = list_next(el))
   {
     context = list_data(el);
@@ -753,6 +754,7 @@ static int _trigger_user_max_ul(wzd_user_t * user)
   ListElmt * el;
   wzd_context_t * context;
 
+  if (!user) return 0;
   for (el = list_head(context_list); el != NULL; el = list_next(el))
   {
     context = list_data(el);
