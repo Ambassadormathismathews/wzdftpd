@@ -23,6 +23,10 @@
 
 #ifndef HAVE_CRYPT
 
+/* BSD has crypt but it is not detected by configure... */
+
+#ifndef __FreeBSD__
+
 #include "wzd_crypt.h"
 
 #include <time.h>
@@ -340,5 +344,7 @@ crypt (const char *pw, const char *salt)
     return des_crypt(pw, salt);
   }
 }
+
+#endif /* __FreeBSD__ */
 
 #endif /* HAVE_CRYPT */

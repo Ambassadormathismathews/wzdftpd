@@ -28,7 +28,12 @@
 #include <string.h>
 #include <ctype.h> /* isspace */
 
+#if HAVE_SYS_PARAM_H
+# include <sys/param.h>
+#endif
+
 #ifndef _MSC_VER
+#include <unistd.h>
 #ifndef BSD
 #include <crypt.h>
 #endif /* BSD */

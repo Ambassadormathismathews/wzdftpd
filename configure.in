@@ -65,11 +65,13 @@ dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
 AC_CHECK_FUNCS([crypt strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton])
 
-AC_CHECK_HEADERS([sys/vfs.h sys/mount.h])
+AC_CHECK_HEADERS([sys/param.h sys/vfs.h sys/mount.h])
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
+
+AC_CHECK_FUNCS([crypt])
 
 AC_PATH_PROG(JW, jw, no)
 AC_SUBST(JW)
