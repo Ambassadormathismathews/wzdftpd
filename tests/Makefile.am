@@ -8,7 +8,8 @@ test_programs = \
 	test_wzd_crc32 \
 	test_wzd_ratio \
 	test_wzd_section \
-	test_wzd_string
+	test_wzd_string \
+	test_wzd_vfs
 
 check_PROGRAMS = $(test_programs)
 
