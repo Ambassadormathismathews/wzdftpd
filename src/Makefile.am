@@ -11,6 +11,7 @@ libwzd_ladir = ${prefix}/include/wzdftpd
 
 libwzd_la_HEADERS =  \
 	wzd_action.h     \
+	wzd_all.h        \
 	wzd_backend.h    \
 	wzd_cache.h      \
 	wzd_crc32.h  	 \
@@ -43,6 +44,7 @@ libwzd_la_SOURCES =  \
 	inet_ntop.c      \
 	inet_pton.c      \
 	wzd_action.c     \
+	wzd_all.c        \
 	wzd_backend.c    \
 	wzd_cache.c      \
 	wzd_crc32.c      \
