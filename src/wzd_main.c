@@ -249,7 +249,7 @@ int main(int argc, char **argv)
   fprintf(stderr,"\n");
   fprintf(stderr,"This is a beta release, in active development\n");
   fprintf(stderr,"Things may break from version to version\n");
-  fprintf(stderr,"Want stability ? Use a 0.1 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"Want stability ? Use a 0.2 version. YOU WERE WARNED!\n");
   fprintf(stderr,"\n");
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");

@@ -179,6 +179,11 @@ void do_site_help(const char *site_command, wzd_context_t * context)
     send_message_raw("501-kill all connected users from a group\r\n",context);
     send_message_raw("501-site grpkill groupname\r\n",context);
   } else
+  if (strcasecmp(site_command,"link")==0) {
+    send_message_raw("501-create/remove symbolink links\r\n",context);
+    send_message_raw("501-site link create dir linkname\r\n",context);
+    send_message_raw("501-site link remove linkname\r\n",context);
+  } else
   if (strcasecmp(site_command,"msg")==0) {
     send_message_raw("501-manage directory messages\r\n",context);
     send_message_raw("501-site msg show\r\n",context);
@@ -636,6 +641,65 @@ int do_site_invite(char *command_line, wzd_context_t * context)
       ircnick);
 
   ret = send_message_with_args(200,context,"SITE INVITE command ok");
+  return 0;
+}
+
+/********************* do_site_link ************************/
+/** link: create dir linkname
+  * link: remove linkname
+  */
+
+int do_site_link(char *command_line, wzd_context_t * context)
+{
+  char buffer_dir[BUFFER_LEN], buffer_link[BUFFER_LEN];
+  char * ptr;
+  char * dirname, *linkname;
+  char * command;
+  int ret;
+
+  ptr = command_line;
+  command = strtok_r(command_line," \t\r\n",&ptr);
+  if (!command) {
+    do_site_help("link",context);
+    return 1;
+  }
+  dirname = strtok_r(NULL," \t\r\n",&ptr);
+  if (!dirname) {
+    do_site_help("link",context);
+    return 1;
+  }
+ 
+  /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+  if (checkpath(dirname,buffer_dir,context)) {
+    ret = send_message_with_args(501,context,"dirname is invalid");
+    return 0;
+  }
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
+
+  if (strcasecmp(command,"CREATE")==0)
+  {
+    linkname = strtok_r(NULL," \t\r\n",&ptr);
+    if (!linkname) {
+      do_site_help("link",context);
+      return 1;
+    }
+    if (checkpath(linkname,buffer_link,context)) {
+      ret = send_message_with_args(501,context,"linkname is invalid");
+      return 0;
+    }
+    ret = symlink_create(buffer_dir, buffer_link);
+  }
+  else if (strcasecmp(command,"REMOVE")==0)
+  {
+    ret = symlink_remove(buffer_dir);
+  }
+  else {
+    do_site_help("link",context);
+    return 1;
+  }
+
+  ret ? send_message_with_args(501,context,"command_failed") : send_message_with_args(200,context,"command ok");
+
   return 0;
 }
 
@@ -1469,6 +1533,7 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"INVITE",&do_site_invite)) return 1;
   if (site_command_add(&config->site_list,"KICK",&do_site_kick)) return 1;
   if (site_command_add(&config->site_list,"KILL",&do_site_kill)) return 1;
+  if (site_command_add(&config->site_list,"LINK",&do_site_link)) return 1;
   if (site_command_add(&config->site_list,"MSG",&do_site_msg)) return 1;
   if (site_command_add(&config->site_list,"PURGE",&do_site_purgeuser)) return 1;
   if (site_command_add(&config->site_list,"READD",&do_site_readduser)) return 1;

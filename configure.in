@@ -7,7 +7,7 @@
 #WZD_MULTITHREAD=1
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.2, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.3cvs, pollux@wzdftpd.net)
 
 #AC_CANONICAL_HOST
 
@@ -15,7 +15,7 @@ AC_INIT(wzdftpd, 0.2, pollux@wzdftpd.net)
 AC_CANONICAL_TARGET
 AC_CYGWIN
 
-AM_INIT_AUTOMAKE(wzdftpd,0.2,no-define)
+AM_INIT_AUTOMAKE(wzdftpd,0.3cvs,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 

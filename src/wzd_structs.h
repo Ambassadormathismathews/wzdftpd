@@ -71,6 +71,7 @@ typedef enum {
 
   E_FILE_NOEXIST,	/**< file does not exist */
   E_FILE_FORBIDDEN,	/**< access to file is forbidden */
+  E_FILE_TYPE,	        /**< file has wrong type for operation */
 
   E_USER_IDONTEXIST,	/**< server said i don't exist ! */
 

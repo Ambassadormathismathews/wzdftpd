@@ -1,3 +1,7 @@
+2004-01-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: site link create/remove (posix platforms)
+
 2004-01-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- cvs commit TAG: rel-0-2

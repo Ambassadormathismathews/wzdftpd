@@ -1254,3 +1254,25 @@ int file_write(int fd,const void *data,unsigned int length)
 	return write(fd,data,length);
 }
 
+/* symlink operations */
+int symlink_create(const char *existing, const char *link)
+{
+#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+  return symlink(existing,link);
+#else
+  return -1;
+#endif
+}
+
+int symlink_remove(const char *link)
+{
+#if !defined(_MSC_VER) && !defined(__CYGWIN__)
+  struct stat s;
+
+  if (lstat(link,&s)) return E_FILE_NOEXIST;
+  if ( !S_ISLNK(s.st_mode) ) return E_FILE_TYPE;
+  return unlink(link);
+#else
+  return -1;
+#endif
+}
