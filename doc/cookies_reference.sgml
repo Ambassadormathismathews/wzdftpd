@@ -62,7 +62,7 @@ Loop on all connected users:
 <row><entry>%userfiles_ul</entry><entry>Total number of files uploaded</entry></row>
 <row><entry>%userflags</entry><entry>Flags</entry></row>
 <row><entry>%usergroup</entry><entry>User MAIN group</entry></row>
-<row><entry>%usergroup</entry><entry>User groups (main is first)</entry></row>
+<row><entry>%usergroups</entry><entry>User groups (main is first)</entry></row>
 <row><entry>%userhome</entry><entry>User home directory</entry></row>
 <row><entry>%userip</entry><entry>Current ip</entry></row>
 <row><entry>%userip_allow<emphasis>num</emphasis></entry><entry>Authorized ip
