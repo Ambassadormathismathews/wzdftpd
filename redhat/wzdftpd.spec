@@ -1,7 +1,7 @@
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.2
-Release: 2
+Version: 0.2.1
+Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://wzdftpd.sourceforge.net
 Source: http://heanet.dl.sourceforge.net/sourceforge/wzdftpd/%{name}-%{version}.tar.gz
@@ -173,9 +173,7 @@ rmdir --ignore-fail-on-non-empty -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/back
 /usr/local/include/wzdftpd/wzd_tls.h
 
 %changelog
-* Tue Feb 10 2004 Pierre Chifflier <pollux@wzdftpd.net>
-- Small bugfix to have correct files in tools package
 
-* Sat Feb 07 2004 Chris Lount <mrlount@tiscali.co.uk>
+* Sat Feb 14 2004 Chris Lount <mrlount@tiscali.co.uk>
 - First binary release
 
