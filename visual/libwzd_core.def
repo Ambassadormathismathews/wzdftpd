@@ -30,6 +30,7 @@ EXPORTS
 	chtbl_destroy
 	chtbl_init
 	chtbl_insert
+	chtbl_search
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
@@ -151,6 +152,16 @@ EXPORTS
 	setlib_server_uid
 	setMessage
 	split_filename
+	str_allocate
+	str_deallocate
+	str_fromchar
+	str_tolower
+	str_tok
+	str_trim
+	str_trim_left
+	str_trim_right
+	str_tochar
+	str_utf8_to_local
 	str2event
 	str2loglevel
 	stripdir

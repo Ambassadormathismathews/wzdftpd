@@ -26,11 +26,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mysql.h>
 
-#ifndef _MSC_VER
-#include <unistd.h>
+#ifdef _MSC_VER
+# include <windows.h>
+#else
+# include <unistd.h>
 #endif
+
+#include <mysql.h>
 
 #include <wzd_backend.h>
 #include <wzd_strlcat.h>

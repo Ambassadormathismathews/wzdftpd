@@ -50,6 +50,8 @@ typedef size_t ssize_t;
 
 #include <sys/timeb.h>
 
+#define inline __inline
+
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
 #define ECONNREFUSED WSAECONNREFUSED
 #define EINPROGRESS  WSAEINPROGRESS
@@ -353,6 +355,6 @@ char * strtok_r(char *s, const char *delim, char **last);
 #include <libwzd-base/list.h>
 #include <libwzd-base/hash.h>
 
-#include <wzd_string.h>
+#include "wzd_string.h"
 
 #endif /* __WZD_TYPES__ */

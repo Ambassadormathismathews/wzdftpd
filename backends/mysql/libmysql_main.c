@@ -26,14 +26,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <mysql.h>
 
-#ifndef _MSC_VER
+#ifdef _MSC_VER
+# include <windows.h>
+# define inline __inline
+#else /* !_MSC_VER */
 #include <unistd.h>
 #ifndef BSD
 #include <crypt.h>
 #endif /* BSD */
 #endif
+
+#include <mysql.h>
 
 #include <wzd_backend.h>
 #include <wzd_md5.h>
@@ -42,6 +46,9 @@
 
 #include "libmysql.h"
 
+/* IMPORTANT needed to check version */
+BACKEND_NAME(mysql);
+BACKEND_VERSION(110);
 
 
 MYSQL mysql;
@@ -57,7 +64,7 @@ static inline int wzd_row_get_string(char *dst, unsigned int dst_len, MYSQL_ROW 
 static inline int wzd_row_get_long(long *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_uint(unsigned int *dst, MYSQL_ROW row, unsigned int index);
 static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned int index);
-static inline int wzd_row_get_ullong(unsigned long long *dst, MYSQL_ROW row, unsigned int index);
+static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int index);
 
 static int * wzd_mysql_get_user_list(void);
 static int * wzd_mysql_get_group_list(void);
@@ -577,10 +584,10 @@ static inline int wzd_row_get_ulong(unsigned long *dst, MYSQL_ROW row, unsigned 
   return 1;
 }
 
-static inline int wzd_row_get_ullong(unsigned long long *dst, MYSQL_ROW row, unsigned int index)
+static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int index)
 {
   char *ptr;
-  unsigned long long i;
+  u64_t i;
 
   if (!dst || !row || row[index]==NULL) return 1;
 
