@@ -99,10 +99,6 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
     return -1;
   }
 
-#ifdef DEBUG
-  fprintf(stderr, "User: %s\nHostname: %s\nDatabase name: %s\n", db_user, db_hostname, db);
-#endif
-
   *backend_storage = 1;
 
   mysql_init(&mysql);
@@ -112,10 +108,6 @@ int FCN_INIT(int *backend_storage, wzd_user_t * user_list, unsigned int user_max
     mysql_close(&mysql);
     return -1;
   }
-#ifdef DEBUG
-  else
-    fprintf(stderr, "Connected to database");
-#endif
 
   return 0;
 }
@@ -319,10 +311,6 @@ int  FCN_COMMIT_CHANGES(void)
 
 int FCN_FINI()
 {
-#ifdef DEBUG
-  fprintf(stderr, "Closing connection");
-#endif
-
   mysql_close(&mysql);
 
   return 0;
@@ -379,8 +367,8 @@ wzd_user_t * FCN_GET_USER(int uid)
   wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, UCOL_ROOTPATH);
   wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, UCOL_FLAGS);
   wzd_row_get_uint((unsigned int*)&user->max_idle_time, row, UCOL_MAX_IDLE_TIME);
-  wzd_row_get_ulong(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);
-  wzd_row_get_ulong(&user->max_dl_speed, row, UCOL_MAX_DL_SPEED);
+  wzd_row_get_uint(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&user->max_dl_speed, row, UCOL_MAX_DL_SPEED);
   if (wzd_row_get_uint(&i, row, UCOL_NUM_LOGINS)==0) user->num_logins = i;
   wzd_row_get_uint(&user->ratio, row, UCOL_RATIO);
   if (wzd_row_get_uint(&i, row, UCOL_USER_SLOTS)==0) user->user_slots = i;
@@ -506,8 +494,8 @@ wzd_group_t * FCN_GET_GROUP(int gid)
   wzd_row_get_ulong(&group->groupperms, row, GCOL_GROUPPERMS);
   wzd_row_get_uint((unsigned int*)&group->max_idle_time, row, GCOL_MAX_IDLE_TIME);
   if (wzd_row_get_uint(&i, row, GCOL_NUM_LOGINS)==0) group->num_logins = i;
-  wzd_row_get_ulong(&group->max_ul_speed, row, GCOL_MAX_UL_SPEED);
-  wzd_row_get_ulong(&group->max_dl_speed, row, GCOL_MAX_DL_SPEED);
+  wzd_row_get_uint(&group->max_ul_speed, row, GCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&group->max_dl_speed, row, GCOL_MAX_DL_SPEED);
   wzd_row_get_uint(&group->ratio, row, GCOL_RATIO);
 
   mysql_free_result(res);

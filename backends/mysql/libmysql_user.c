@@ -127,9 +127,9 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       APPEND_STRING_TO_QUERY("flags='%s' ", user->flags, query, query_length, mod, modified);
     }
     if (mod_type & _USER_MAX_ULS)
-      APPEND_STRING_TO_QUERY("max_ul_speed='%lu' ", user->max_ul_speed, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_ul_speed='%u' ", user->max_ul_speed, query, query_length, mod, modified);
     if (mod_type & _USER_MAX_DLS)
-      APPEND_STRING_TO_QUERY("max_dl_speed='%lu' ", user->max_dl_speed, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_dl_speed='%u' ", user->max_dl_speed, query, query_length, mod, modified);
     if (mod_type & _USER_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", user->num_logins, query, query_length, mod, modified);
 

@@ -392,9 +392,9 @@ static int write_user_file(void)
         fprintf(file,"ip_allowed=%s\n",user_pool[i].ip_allowed[j]);
     }
     if (user_pool[i].max_ul_speed)
-      fprintf(file,"max_ul_speed=%ld\n",user_pool[i].max_ul_speed);
+      fprintf(file,"max_ul_speed=%u\n",user_pool[i].max_ul_speed);
     if (user_pool[i].max_dl_speed)
-      fprintf(file,"max_dl_speed=%ld\n",user_pool[i].max_dl_speed);
+      fprintf(file,"max_dl_speed=%u\n",user_pool[i].max_dl_speed);
 #ifndef WIN32
     fprintf(file,"credits=%llu\n",user_pool[i].credits);
     fprintf(file,"bytes_ul_total=%llu\n",user_pool[i].stats.bytes_ul_total);

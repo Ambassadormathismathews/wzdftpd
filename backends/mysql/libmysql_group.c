@@ -153,9 +153,9 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     if (mod_type & _GROUP_GROUPPERMS)
       APPEND_STRING_TO_QUERY("groupperms='%lx' ", group->groupperms, query, query_length, mod, modified);
     if (mod_type & _GROUP_MAX_ULS)
-      APPEND_STRING_TO_QUERY("max_ul_speed='%lu' ", group->max_ul_speed, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_ul_speed='%u' ", group->max_ul_speed, query, query_length, mod, modified);
     if (mod_type & _GROUP_MAX_DLS)
-      APPEND_STRING_TO_QUERY("max_dl_speed='%lu' ", group->max_dl_speed, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("max_dl_speed='%u' ", group->max_dl_speed, query, query_length, mod, modified);
     if (mod_type & _GROUP_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", group->num_logins, query, query_length, mod, modified);
 
