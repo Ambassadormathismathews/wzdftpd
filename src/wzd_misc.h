@@ -1,12 +1,21 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
+unsigned long compute_hashval (const void *key, size_t keylen);
+
 char * time_to_str(time_t time);
 
 void chop(char *s);
 
+/* returns system ip on specifed interface (e.g eth0) */
+int get_system_ip(const char * itface, struct in_addr * ina);
+
 /* returns 1 if file is perm file */
 int is_perm_file(const char *filename);
+
+/* get file last change time */
+time_t get_file_ctime(const char *file);
+time_t lget_file_ctime(int fd);
 
 /* renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst);
@@ -45,6 +54,15 @@ int user_ip_inlist(wzd_user_t * user, const char *ip);
 
 int group_ip_add(wzd_group_t * group, const char *newip);
 int group_ip_inlist(wzd_group_t * group, const char *ip);
+
+/* wrappers to user list */
+wzd_user_t * GetUserByID(unsigned int id);
+wzd_user_t * GetUserByName(const char *name);
+wzd_group_t * GetGroupByID(unsigned int id);
+wzd_group_t * GetGroupByName(const char *name);
+
+/* wrappers to context list */
+void * GetMyContext(void);
 
 #endif /* __WZD_MISC__ */
 

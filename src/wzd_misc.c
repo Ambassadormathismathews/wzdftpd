@@ -1,4 +1,36 @@
+#ifdef __CYGWIN__
+#include <w32api/windows.h>
+#endif /* __CYGWIN__ */
+
 #include "wzd.h"
+
+#ifdef __CYGWIN__
+#define LONGBITS  0x20
+#else
+/* needed  for LONGBITS */
+#include <values.h>
+#endif
+
+/* Compute the hash value for the given string.  The algorithm
+ * is taken from [Aho,Sethi,Ullman], modified to reduce the number of
+ * collisions for short strings with very varied bit patterns.
+ * See http://www.clisp.org/haible/hashfunc.html.
+ */
+
+unsigned long compute_hashval (const void *key, size_t keylen)
+{
+  size_t cnt;
+  unsigned long int hval;
+
+  cnt = 0;
+  hval = keylen;
+  while (cnt < keylen)
+  {
+    hval = (hval << 9) | (hval >> (LONGBITS - 9));
+    hval += (unsigned long int) *(((char *) key) + cnt++);
+  }
+  return hval != 0 ? hval : ~((unsigned long) 0);
+}
 
 char *time_to_str(time_t time)
 { /* This support functionw as written by George Shearer (Dr_Delete) */
@@ -32,6 +64,34 @@ void chop(char *s)
     *r = '\0';
   if ((r=(char*) strchr(s,'\n')))
     *r = '\0';
+}
+
+/* returns system ip on specifed interface (e.g eth0) */
+int get_system_ip(const char * itface, struct in_addr * ina)
+{
+/*  struct in_addr *ina = void_in;*/
+  struct ifreq ifr;
+  int s;
+
+  if ( (s = socket(PF_INET,SOCK_STREAM,0))<0 ) {
+    out_log(LEVEL_CRITICAL,"Can't create new socket (%s:%d)\n",__FILE__,__LINE__);
+    ina->s_addr = 0;
+    return -1;
+  } 
+  memset(&ifr,0,sizeof(ifr));
+  strncpy(ifr.ifr_name,itface,sizeof(ifr.ifr_name));
+
+  if (ioctl(s,SIOCGIFADDR,&ifr)<0) {
+    out_log(LEVEL_CRITICAL,"Can't get my ip (ioctl %s:%d)\n",__FILE__,__LINE__);
+    ina->s_addr = 0;
+    return -1;
+  }
+
+  memcpy(ina,ifr.ifr_hwaddr.sa_data+2,4);
+  printf("IP: %s\n",inet_ntoa(*ina));
+
+  close(s);
+  return 0;
 }
 
 /* internal fct, rename files by copying data */
@@ -136,6 +196,21 @@ int is_perm_file(const char *filename)
     }
   }
   return 0;
+}
+
+/* get file last change time */
+time_t get_file_ctime(const char *file)
+{
+  struct stat s;
+  if ( stat(file,&s) < 0 ) return (time_t)-1;
+  return s.st_ctime;
+}
+
+time_t lget_file_ctime(int fd)
+{
+  struct stat s;
+  if ( fstat(fd,&s) < 0 ) return (time_t)-1;
+  return s.st_ctime;
 }
 
 #define WORK_BUF_LEN	8192
@@ -353,8 +428,8 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
     }
 
     if (mainConfig->backend.backend_storage == 0) {
-      user = &mainConfig->user_list[param_context->userid];
-      context_user = &mainConfig->user_list[context->userid];
+      user = GetUserByID(param_context->userid);
+      context_user = GetUserByID(context->userid);
 #if BACKEND_STORAGE
     } else {
       user = &param_context->user;
@@ -419,7 +494,7 @@ int cookies_replace(char * buffer, unsigned int buffersize, void * void_param, v
         if ( (user->group_num > 0)) {
           ret = backend_find_group(user->groups[0],&group,&gid);
 	  if (mainConfig->backend.backend_storage==0) {
-	    gptr = &mainConfig->group_list[ret];
+	    gptr = GetGroupByID(ret);
 	  } else {
 	    gptr = &group;
 	  }
@@ -1013,5 +1088,86 @@ out_err(LEVEL_CRITICAL,"IP %s\n",ptr_test);
   } /* while current_ip */
 
   return 0;
+}
+
+/* wrappers to user list */
+wzd_user_t * GetUserByID(unsigned int id)
+{
+  if (!mainConfig->user_list || id >= HARD_DEF_USER_MAX) return NULL;
+
+  return &mainConfig->user_list[id];
+}
+
+wzd_user_t * GetUserByName(const char *name)
+{
+  int i=0;
+  if (!mainConfig->user_list || !name || strlen(name)<=0) return NULL;
+
+  while (i<HARD_DEF_USER_MAX)
+  {
+    if (mainConfig->user_list[i].username[0] != '\0') {
+      if (strcmp(name,mainConfig->user_list[i].username)==0)
+	return &mainConfig->user_list[i];
+    }
+    i++;
+  }
+
+  return NULL;
+}
+
+/* wrappers to Group list */
+wzd_group_t * GetGroupByID(unsigned int id)
+{
+  if (!mainConfig->group_list || id >= HARD_DEF_GROUP_MAX ) return NULL;
+
+  return &mainConfig->group_list[id];
+}
+
+wzd_group_t * GetGroupByName(const char *name)
+{
+  int i=0;
+  if (!mainConfig->group_list || !name || strlen(name)<=0) return NULL;
+
+  while (i<HARD_DEF_GROUP_MAX)
+  {
+    if (mainConfig->group_list[i].groupname[0] != '\0') {
+      if (strcmp(name,mainConfig->group_list[i].groupname)==0)
+	return &mainConfig->group_list[i];
+    }
+    i++;
+  }
+
+  return NULL;
+}
+
+/* wrappers to context list */
+void * GetMyContext(void)
+{
+  int i;
+#ifdef WZD_MULTIPROCESS
+  wzd_context_t * context=NULL;
+  pid_t pid;
+
+  pid = getpid();
+
+  context = &context_list[0];
+  /* TODO search context list and cleanup context */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC && context_list[i].pid_child == pid) {
+      return (&context_list[i]);
+    }
+  }
+
+#else /* WZD_MULTIPROCESS */
+  /* we have only one process */
+  for (i=0; i<HARD_USERLIMIT; i++)
+  {
+    if (context_list[i].magic == CONTEXT_MAGIC)
+      return (&context_list[i]);
+  }
+#endif /* WZD_MULTIPROCESS */
+
+  return NULL;
 }
 
