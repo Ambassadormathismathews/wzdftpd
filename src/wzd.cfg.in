@@ -242,6 +242,7 @@ sitefile_vfs	= @e_datadir@/@PACKAGE@/file_vfs.txt
 -site_backend = +O
 -site_chacl = +O
 -site_change = +O +G
+-site_changegrp = +O +G
 -site_checkperm = +O
 -site_chgrp = +O
 -site_chmod = +O

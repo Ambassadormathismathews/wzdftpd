@@ -3,7 +3,7 @@
 - use 'rats','splint' for security audit
 
 '********'
-- add ident string in supported ip's
+- siteconfig: get bw, etc. change stats, mkdir open, etc.
 '********'
 - remove limit on msg
 '********'
@@ -56,6 +56,7 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
   -- need to store info on who created user
 '********'
 - implement recursive chown/chmod
+- allow users to chmod/chown/chgrp their own files if owner
 '********'
 - implement group flags
 '********'

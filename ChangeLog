@@ -1,3 +1,16 @@
+2003-12-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* siteconfig: get bandwidth
+
+2003-12-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: change all malloc and free to internal function
+          wzd_{malloc,free} to avoid memory problems on win32
+
+2003-12-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: renamed chrgrp to changegrp, and implemented chgrp
+
 2003-12-08  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* wzd_dir.c: functions to manipulate file/dir names

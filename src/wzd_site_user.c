@@ -881,19 +881,19 @@ int do_site_change(char *command_line, wzd_context_t * context)
   return 0;
 }
 
-void do_site_help_chgrp(wzd_context_t * context)
+void do_site_help_changegrp(wzd_context_t * context)
 {
-  send_message_raw("501-site chgrp <user> <group1> [<group2> ...]\r\n",context);
+  send_message_raw("501-site changegrp <user> <group1> [<group2> ...]\r\n",context);
   send_message_raw(" Add user to group, or remove it if already in group\r\n",context);
 
-  send_message_raw("501 site chgrp aborted\r\n",context);
+  send_message_raw("501 site changegrp aborted\r\n",context);
 }
 
-/** site chgrp: add/remove user from group
+/** site changegrp: add/remove user from group
  *
- * chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
+ * changegrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
  */
-int do_site_chgrp(char *command_line, wzd_context_t * context)
+int do_site_changegrp(char *command_line, wzd_context_t * context)
 {
   char *ptr;
   char * username, * group_name;
@@ -906,12 +906,12 @@ int do_site_chgrp(char *command_line, wzd_context_t * context)
   ptr = command_line;
   username = strtok_r(command_line," \t\r\n",&ptr);
   if (!username) {
-    do_site_help_chgrp(context);
+    do_site_help_changegrp(context);
     return 0;
   }
   group_name = strtok_r(NULL," \t\r\n",&ptr);
   if (!group_name) {
-    do_site_help_chgrp(context);
+    do_site_help_changegrp(context);
     return 0;
   }
 

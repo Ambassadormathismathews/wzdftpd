@@ -377,7 +377,7 @@ int socket_connect(unsigned long remote_host, int remote_port, int localport, in
    */
   do {
     ret = connect(sock,(struct sockaddr *)&sai, len);
-#ifndef _MSC_VER
+#ifdef _MSC_VER
 	errno = WSAGetLastError();
 #endif
   } while ( (ret==-1) && (errno==EINPROGRESS));

@@ -154,6 +154,11 @@ void do_site_help(const char *site_command, wzd_context_t * context)
     send_message_raw("501- RIGHT_RNFR\r\n",context);
     send_message_raw("501-e.g: site checkperm toto dir RIGHT_CWD\r\n",context);
   } else
+  if (strcasecmp(site_command,"chgrp")==0) {
+    send_message_raw("501-change the group of a file or directory\r\n",context);
+    send_message_raw("501-usage: site chgrp group file1 [file2 ...]\r\n",context);
+    send_message_raw("501-e.g: site chgrp admin file1\r\n",context);
+  } else
   if (strcasecmp(site_command,"chmod")==0) {
     send_message_raw("501-change permissions of a file or directory\r\n",context);
     send_message_raw("501-usage: site chmod mode file1 [file2 ...]\r\n",context);
@@ -301,6 +306,50 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
 
   snprintf(buffer,BUFFER_LEN,"CHACL: '%s'",command_line);
   ret = send_message_with_args(200,context,buffer);
+  return 0;
+}
+
+/********************* do_site_chgrp ***********************/
+/** chgrp: group file1 [file2 ...]
+ */
+
+int do_site_chgrp(char *command_line, wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * groupname, *filename;
+  int ret;
+  wzd_group_t group;
+  int gid;
+
+  ptr = command_line;
+  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  if (!groupname) {
+    do_site_help("chgrp",context);
+    return 1;
+  }
+  /* check that groupname exists */
+  gid = GetGroupIDByName(groupname);
+  if ( !(gid=GetGroupIDByName(groupname)) ) {
+    ret = send_message_with_args(501,context,"Group does not exists");
+    return 1;
+  }
+  if ( backend_find_group(gid, &group, NULL) ) {
+    ret = send_message_with_args(501,context,"Error getting group info");
+    return 0;
+  }
+
+  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  {
+    /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
+    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
+/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
+    _setPerm(buffer,0,0,groupname,0,0,context);
+  }
+
+  snprintf(buffer,BUFFER_LEN,"CHGRP: '%s'",command_line);
+  ret = send_message_with_args(200,context,buffer);
+
   return 0;
 }
 
@@ -1257,8 +1306,9 @@ int site_init(wzd_config_t * config)
   if (site_command_add(&config->site_list,"ADDUSER",&do_site_adduser)) return 1;
   if (site_command_add(&config->site_list,"ADDIP",&do_site_addip)) return 1;
   if (site_command_add(&config->site_list,"BACKEND",&do_site_backend)) return 1;
-  if (site_command_add(&config->site_list,"CHANGE",&do_site_change)) return 1;
   if (site_command_add(&config->site_list,"CHACL",&do_site_chacl)) return 1;
+  if (site_command_add(&config->site_list,"CHANGE",&do_site_change)) return 1;
+  if (site_command_add(&config->site_list,"CHANGEGRP",&do_site_changegrp)) return 1;
   if (site_command_add(&config->site_list,"CHECKPERM",&do_site_checkperm)) return 1;
   if (site_command_add(&config->site_list,"CHGRP",&do_site_chgrp)) return 1;
   if (site_command_add(&config->site_list,"CHMOD",&do_site_chmod)) return 1;

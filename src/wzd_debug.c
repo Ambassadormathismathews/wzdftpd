@@ -58,3 +58,15 @@ int fd_is_valid(int fd)
 #endif
 }
 
+/* Memory allocation */
+void * wzd_malloc(size_t size)
+{
+  return malloc(size);
+}
+
+/* Free memory allocated by wzd_malloc */
+void wzd_free(void *ptr)
+{
+  free(ptr);
+}
+

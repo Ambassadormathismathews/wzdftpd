@@ -31,6 +31,12 @@
 /** Check if fd is a valid file descriptor */
 int fd_is_valid(int fd);
 
+/** Memory allocation */
+void * wzd_malloc(size_t size);
+
+/** Free memory allocated by wzd_malloc */
+void wzd_free(void *ptr);
+
 #ifdef DEBUG
 
 /* debug file cache */

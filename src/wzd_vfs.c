@@ -70,9 +70,9 @@ int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
       if (current_vfs == *vfs_list)
       {
         *vfs_list = next_vfs;
-        free (current_vfs);
+        wzd_free (current_vfs);
       } else {
-        free (current_vfs);
+        wzd_free (current_vfs);
         previous_vfs->next_vfs = next_vfs;
       }
       return 0;
@@ -95,9 +95,9 @@ int vfs_free(wzd_vfs_t **vfs_list)
   while (current_vfs) {
     next_vfs = current_vfs->next_vfs;
 
-    free(current_vfs->virtual_dir);
-    free(current_vfs->physical_dir);
-    if (current_vfs->target) free(current_vfs->target);
+    wzd_free(current_vfs->virtual_dir);
+    wzd_free(current_vfs->physical_dir);
+    if (current_vfs->target) wzd_free(current_vfs->target);
 
 #ifdef DEBUG
     current_vfs->virtual_dir = NULL;
@@ -105,7 +105,7 @@ int vfs_free(wzd_vfs_t **vfs_list)
     current_vfs->target = NULL;
     current_vfs->next_vfs = NULL;
 #endif /* DEBUG */
-    free(current_vfs);
+    wzd_free(current_vfs);
 
     current_vfs = next_vfs;
   }
@@ -136,7 +136,7 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
     return 1;
   }
 
-  new_vfs = malloc(sizeof(wzd_vfs_t));
+  new_vfs = wzd_malloc(sizeof(wzd_vfs_t));
   if (!new_vfs) return 1;
 
   new_vfs->virtual_dir = strdup(vpath);
@@ -219,7 +219,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
   }
 
 
-  free(buffer);
+  wzd_free(buffer);
   return 0;
 }
 
@@ -245,7 +245,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
       continue;
     }
     strncpy(buffer_vfs,ptr_out,4096);
-    free(ptr_out);
+    wzd_free(ptr_out);
 
     if (strncmp(buffer_vfs,buffer,strlen(buffer_vfs))==0
 	&&
@@ -357,7 +357,7 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
   }
   *ptr_out = '\0';
 
-  out = malloc(length+1);
+  out = wzd_malloc(length+1);
   strncpy(out,buffer,length+1);
 
   return out;

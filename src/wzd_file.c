@@ -105,11 +105,11 @@ void free_file_recursive(wzd_file_t * file)
     if (acl_current) {
       do {
 	acl_next = acl_current->next_acl;
-	free(acl_current);
+	wzd_free(acl_current);
 	acl_current = acl_next;
       } while (acl_current);
     }
-    free (file);
+    wzd_free (file);
     file = next_file;
   } while (file);
 }
@@ -173,7 +173,7 @@ wzd_file_t * add_new_file(const char *name, const char *owner, const char *group
 {
   wzd_file_t *current, *new_file;
 
-  new_file = malloc(sizeof(wzd_file_t));
+  new_file = wzd_malloc(sizeof(wzd_file_t));
   strncpy(new_file->filename,name,256);
   memset(new_file->owner,0,256);
   if (owner) strncpy(new_file->owner,owner,256);
@@ -198,7 +198,7 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
 {
   wzd_acl_line_t * acl_current, * acl_new;
 
-  acl_new = malloc(sizeof(wzd_acl_line_t));
+  acl_new = wzd_malloc(sizeof(wzd_acl_line_t));
   strncpy(acl_new->user,user,256);
   strncpy(acl_new->perms,rights,3);
   
@@ -213,7 +213,7 @@ void addAcl(const char *filename, const char *user, const char *rights, wzd_file
   while (acl_current) {
     if (strcmp(acl_current->user,user)==0) { /* found ! */
       strncpy(acl_current->perms,rights,3); /* replace old perms */
-      free (acl_new);
+      wzd_free (acl_new);
     }
     acl_current = acl_current->next_acl;
   }
@@ -632,9 +632,9 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   if (owner || group)
   {
     if (owner) strncpy(file_cur->owner,owner,256);
-    else strcpy(file_cur->owner,"nobody");
+/*    else strcpy(file_cur->owner,"nobody");*/
     if (group) strncpy(file_cur->group,group,256);
-    else strcpy(file_cur->group,"nogroup");
+/*    else strcpy(file_cur->group,"nogroup");*/
   }
 
   /* add the new acl */

@@ -4,7 +4,7 @@
 |   login       |    group    |      ip         |      spyin' time           |
 .---------------.-------------.----------------------------------------------.
 %for(allusersconnected)
-| %14.username| %12.usergroup| %15.userip | %17.userlastcmd%10.userspeed|
+| %14.username| %12.usergroup| %15.userip | %17.userlastcmd %9.userspeed|
 %endfor
 .----------------------------------------------------------------------------.
 | site who provide infos on people connected (their group, their ip if you're|

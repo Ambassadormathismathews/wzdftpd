@@ -14,10 +14,12 @@
 |                |   site chacl user 7 dir1                     |            |
 | site change    | change a field for a user                    | r          |
 |                | site change user field value                 |            |
+| site changegrp | add/remove user from group(s)                | r          |
+|                |   site changegrp user group1 [group2 ... ]   |            |
 | site checkperm | checks access for a user on a file/dir       | r,s        |
 |                | site checkperm user file rights              | r,s        |
-| site chgrp     | add/remove user from group(s)                | r          |
-|                |   site chpgrp user group1 [group2 ... ]      |            |
+| site chgrp     | change the group of a file or directory      | r,s        |
+|                |   site chgrp group file1 [file2 ...]         |            |
 | site chmod     | change permissions of a file or directory    | r,s        |
 |                |   site chmod mode file1 [file2 ...]          |            |
 |                |   site chmod 644 file1 [file2 ...]           |            |

@@ -130,6 +130,8 @@ EXPORTS
 	wzd_cache_read
 	wzd_cache_update
 	wzd_cache_write
+	wzd_free
+	wzd_malloc
 	wzd_sem_create
 	wzd_sem_destroy
 	wzd_sem_lock

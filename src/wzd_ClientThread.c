@@ -184,6 +184,8 @@ int identify_token(char *token)
    */
   if (strcmp("\xff\xf2",token)==0)
     return TOK_NOTHING;
+  if (strcmp("\xff\xf4\xff\xf2",token)==0)
+    return TOK_NOTHING;
   return TOK_UNKNOWN;
 }
 

@@ -36,6 +36,9 @@ unsigned long key;
 unsigned int wzd_server_uid;
 
 wzd_config_t * config;
+wzd_context_t * context_list;
+wzd_user_t * user_list;
+wzd_group_t * group_list;
 
 #ifndef __CYGWIN__
 char *time_to_str(time_t time); /* defined in wzd_misc.c */
@@ -64,6 +67,32 @@ char *time_to_str(time_t time)
   return(workstr);
 }
 #endif
+
+unsigned long get_bandwidth(void)
+{
+  char buffer[256];
+  unsigned long bandwidth=0;
+  unsigned int i;
+  unsigned int id;
+  wzd_user_t * user;
+  wzd_context_t * context;
+
+  for (i=0; i<HARD_USERLIMIT; i++) {
+    if (context_list[i].magic == CONTEXT_MAGIC) {
+      context = &context_list[i];
+      id = context_list[i].userid;
+      user = &user_list[id];
+      if (strncasecmp(context->last_command,"retr",4)==0) {
+        bandwidth += context->current_dl_limiter.current_speed;
+      }
+      if (strncasecmp(context->last_command,"stor",4)==0) {
+        bandwidth += context->current_ul_limiter.current_speed;
+      }
+    } /* if CONTEXT_MAGIC */
+  } /* forall contexts */
+
+  return bandwidth;
+}
 
 void usage(const char *progname)
 {
@@ -134,6 +163,10 @@ int request_get(const char *arg)
 
   if (strcasecmp(arg,"all")==0) {
     print_config(config);
+    return 0;
+  }
+  if (strcasecmp(arg,"bw")==0) {
+    printf("%lu\n",get_bandwidth());
     return 0;
   }
   if (strcasecmp(arg,"max_threads")==0) {
@@ -212,7 +245,9 @@ int request_set(const char *arg, const char *value)
 
 int main(int argc, char *argv[])
 {
+  char * datazone;
   int shmid;
+  unsigned int i;
 #ifdef __CYGWIN__
   void * handle;
   char name[256];
@@ -254,6 +289,44 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+#ifdef __CYGWIN__
+  sprintf(name,"%lu",key);
+  handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
+  if (handle == NULL)
+#else
+  shmid = shmget(key,0,0400);
+/*  shm = wzd_shm_get(key,0400);*/
+  if (shmid == -1)
+/*  if (!shm) */
+#endif
+  {
+    fprintf(stderr,"shmget failed\n");
+    fprintf(stderr,"This is probably due to\n");
+    fprintf(stderr,"\t* server not started\n");
+    fprintf(stderr,"\t* wrong key\n");
+    return -1;
+  }
+
+#ifdef __CYGWIN__
+  datazone = MapViewOfFile(handle,FILE_MAP_ALL_ACCESS,0, 0, 0);
+  if (datazone == NULL)
+#else
+  datazone = shmat(shmid,NULL,SHM_RDONLY);
+  if (datazone == (void*)-1)
+#endif
+  {
+    fprintf(stderr,"shmat failed\n");
+    return -1;
+  }
+/*  datazone = shm->datazone;*/
+
+  context_list = (wzd_context_t*)datazone;
+  i = HARD_USERLIMIT;
+  i = HARD_USERLIMIT*sizeof (wzd_context_t);
+  user_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t));
+  group_list = (void*)((char*)context_list) + (HARD_USERLIMIT*sizeof(wzd_context_t)) + (HARD_DEF_USER_MAX*sizeof(wzd_user_t)); 
+
+
   /************ begin user part *************************/
 
   if (optind+1 >= argc) {
@@ -281,6 +354,7 @@ int main(int argc, char *argv[])
   CloseHandle(handle);
 #else
   shmdt(config);
+  shmdt(datazone);
 #endif
   return 0;
 }

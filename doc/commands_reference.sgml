@@ -112,6 +112,20 @@ For flags info see <link linkend='table_flags'>Flags Table</link>.</entry></row>
 </listitem>
 </varlistentry>
 
+<varlistentry id='site_changegrp'><term>
+site changegrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
+</term>
+<listitem>
+<para>For each group in list, add user to group or removes it if he/she already
+belongs to group.</para>
+<screen>site changegrp toto guest admin </screen>
+<para>This will add user <quote>toto</quote> to group <quote>admin</quote> and remove
+<quote>toto</quote> from group <quote>guest</quote>, if user had group
+<quote>guest</quote> before.
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='site_checkperm'><term>
 site checkperm &lt;user&gt; &lt;file&gt; &lt;rights&gt;
 </term>
@@ -139,15 +153,13 @@ site checkperm &lt;user&gt; &lt;file&gt; &lt;rights&gt;
 </varlistentry>
 
 <varlistentry id='site_chgrp'><term>
-site chgrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
+site chgrp &lt;group&gt; &lt;file1&gt; [&lt;file2&gt; ...]
 </term>
 <listitem>
-<para>For each group in list, add user to group or removes it if he/she already
-belongs to group.</para>
-<screen>site chgrp toto guest admin </screen>
-<para>This will add user <quote>toto</quote> to group <quote>admin</quote> and remove
-<quote>toto</quote> from group <quote>guest</quote>, if user had group
-<quote>guest</quote> before.
+<para>Change file group
+<screen>site chgrp admin dir1</screen>
+This will give dir1 to group <quote>admin</quote>,
+<emphasis>but not its content !</emphasis>
 </para>
 </listitem>
 </varlistentry>
