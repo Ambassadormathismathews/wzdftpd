@@ -9,7 +9,7 @@
 <question><para>Can I run several servers on the same machine ?</para></question>
 <answer><para>
 Yes ! You will need to have a separate config file for each instance (look the
--f option), and to specify at least different ports & shm key in each config file.
+-f option), and to specify at least different ports in each config file.
 </para>
 <para>
 Remember wzdftp uses <emphasis>two</emphasis> shared memory zones, so do NOT
@@ -79,44 +79,6 @@ Symlinks can also be manipulated with scripts.
 </qandadiv>
 
 <qandadiv><title>Linux</title>
-
-<qandaentry id='faq_shm'>
-<question><para>Server dies with error 'CRITICAL: shm exists with selected shm_key
-xxxxxx'</para></question>
-<answer><para>
-This means the server shared memory zone is already allocated, it can only
-happen in two cases: last execution crashed, or another server is running.
-</para>
-<para>
-To remove a zone resulting from a crash (this should never happen :) just run
-(with options <emphasis>in the same order</emphasis>)
-</para>
-<screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg -d</screen>
-<para>
-To run multiples instance of a ftp server look at <link linkend='faq_multipleservers'>
-"Running multiples instances</link>.
-</para>
-<para>
-You can also set the option <link linkend='cfg_force_shm_cleanup'>
-<emphasis>force_shm_cleanup</emphasis></link> in the config file to
-automatically try to delete shm - this option can be DANGEROUS !
-</para></answer>
-</qandaentry>
-
-<qandaentry id='faq_shm2'>
-<question><para>The precedent command (-d) does not work !</para></question>
-<answer><para>
-First of all, check that you have set option <filename>-f /path/to/configfile</filename>
- <emphasis>before</emphasis> option <filename>-d</filename>.
-</para>
-<para>
-Else, let's play: get the id using
-<screen>ipcs</screen> 
-and remove memory zones using
-<screen>ipcrm shm id</screen>
-If the memory zone is still there after running that as root, call an exorcist
-</para></answer>
-</qandaentry>
 
 <qandaentry id='faq_server_uid'>
 <question><para>When I run the server with uid 0 (root) it complains it

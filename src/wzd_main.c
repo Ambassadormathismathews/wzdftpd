@@ -78,7 +78,6 @@
 #include "wzd_libmain.h"
 #include "wzd_ServerThread.h"
 #include "wzd_opts.h"
-#include "wzd_shm.h"
 #include "wzd_utf8.h"
 
 #include "wzd_debug.h"
@@ -100,7 +99,6 @@ SERVICE_STATUS_HANDLE       service_status_handle;
 
 typedef enum {
   CMD_NONE=0,
-  CMD_CLEANUP_SHM,
 #ifdef _MSC_VER
   CMD_SRV_REGISTER,
   CMD_SRV_UNREGISTER,
@@ -112,8 +110,6 @@ typedef enum {
 char configfile_name[256];
 int stay_foreground=0;
 static wzd_arg_command_t start_command=CMD_NONE;
-
-extern short created_shm;
 
 static const char * config_files[] = {
   "",
@@ -165,75 +161,6 @@ static wzd_config_t * load_config_file(const char *name, wzd_config_t ** config)
   return *config;
 }
 
-void cleanup_shm(void)
-{
-  char buffer[1024];
-  char value[1024];
-  char varname[1024];
-  char *ptr;
-  regex_t reg_line;
-  regmatch_t regmatch[3];
-  FILE *configfile;
-  size_t length;
-  int err;
-  unsigned long shm_key=0x1331c0d3;
-
-  configfile = fopen(configfile_name,"r");
-  if (!configfile)
-    return;
-
-  while (fgets(buffer,1024,configfile))
-  {
-    ptr = buffer;
-    length = strlen(buffer); /* fgets put a '\0' at the end */
-    /* trim leading spaces */
-    while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
-      ptr++;
-    if ((*ptr)=='#' || length<=1)       /* comment and empty lines */
-      continue;
-
-    /** \todo TODO if line contains a " and is not ended, it is a multi-line */
-    /** \todo TODO replace special chars (\\n,\\t,\\xxx,etc) */
-
-    /* trim trailing space, because fgets keep a \n */
-    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
-      *(ptr+length-1) = '\0';
-      length--;
-    }
-    if (length == 0) continue;
-
-    reg_line.re_nsub = 2;
-    err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
-    if (err) {
-      out_log(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
-      out_log(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
-      exit (1);
-    }
-
-    err = regexec(&reg_line,ptr,3,regmatch,0);
-    if (err) {
-      out_log(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
-    } else {
-      memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
-      varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
-      memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
-      value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
-
-      if (strcasecmp(varname,"shm_key")==0) {
-        unsigned long new_key=0;
-        errno = 0;
-        new_key = strtoul(value,(char**)NULL,0);
-        if (errno == ERANGE) return;
-        shm_key = new_key;
-      }
-    }
-  }
-  (void)fclose(configfile);
-
-  wzd_shm_cleanup(shm_key-1);
-  wzd_shm_cleanup(shm_key);
-}
-
 
 int main_parse_args(int argc, char **argv)
 {
@@ -255,18 +182,14 @@ int main_parse_args(int argc, char **argv)
 
   /* please keep options ordered ! */
 /*  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {*/
-  while ((opt=getopt_long(argc, argv, "hbdf:sV", long_options, (int *)0)) != -1)
+  while ((opt=getopt_long(argc, argv, "hbf:sV", long_options, (int *)0)) != -1)
 #else /* HAVE_GETOPT_LONG */
-  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1)
+  while ((opt=getopt(argc, argv, "hbf:sV")) != -1)
 #endif /* HAVE_GETOPT_LONG */
   {
     switch((char)opt) {
     case 'b':
       stay_foreground = 0;
-      break;
-    case 'd':
-/*      readConfigFile("wzd.cfg");*/
-      start_command = CMD_CLEANUP_SHM;
       break;
     case 'f':
       if (strlen(optarg)>=255) {
@@ -446,9 +369,6 @@ int main(int argc, char **argv)
   switch (start_command) {
     case CMD_NONE:
       break;
-    case CMD_CLEANUP_SHM:
-      cleanup_shm();
-      exit(0);
 #ifdef _MSC_VER
     case CMD_SRV_REGISTER:
       mainConfig = config;
@@ -469,25 +389,6 @@ int main(int argc, char **argv)
 #endif
   }
 
-  /** \todo we are replacing shm with standard memory */
-#if 0
-  mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
-  if (mainConfig_shm == NULL) {
-    /* 2nd chance ? */
-    if (CFG_GET_OPTION(config,CFG_OPT_FORCE_SHM_CLEANUP)) {
-      out_err(LEVEL_NORMAL,"Forcing shm cleanup on request\n");
-      wzd_shm_cleanup(config->shm_key-1);
-      wzd_shm_cleanup(config->shm_key);
-      mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
-    }
-    if (mainConfig_shm == NULL) {
-      fprintf(stderr,"MainConfig shared memory zone could not be created !\n");
-      exit(1);
-    }
-  }
-  created_shm=1;
-  mainConfig = mainConfig_shm->datazone;
-#endif
 
   mainConfig = wzd_malloc(sizeof(wzd_config_t));
 

@@ -86,7 +86,6 @@ typedef enum {
   CFG_DENY_ACCESS_FUP,
   CFG_DIR_MESSAGE,
   CFG_DYNAMIC_IP,
-  CFG_FORCE_SHM_CLEANUP,
   CFG_HIDE_DOTTED_FILES,
   CFG_INTERNAL_SFV,
   CFG_IP,
@@ -110,7 +109,6 @@ typedef enum {
   CFG_SECTION,
   CFG_SERVER_GID,
   CFG_SERVER_UID,
-  CFG_SHM_KEY,
   CFG_SITE,
   CFG_SITECMD,
   CFG_SITEFILE,
@@ -218,7 +216,6 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"deny_access_files_uploaded")) return CFG_DENY_ACCESS_FUP;
   if (!strcmp(word,"dir_message")) return CFG_DIR_MESSAGE;
   if (!strcmp(word,"dynamic_ip")) return CFG_DYNAMIC_IP;
-  if (!strcmp(word,"force_shm_cleanup")) return CFG_FORCE_SHM_CLEANUP;
   if (!strcmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
   if (!strcmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
   if (!strcmp(word,"ip")) return CFG_IP;
@@ -241,7 +238,6 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"section")) return CFG_SECTION;
   if (!strcmp(word,"server_gid")) return CFG_SERVER_GID;
   if (!strcmp(word,"server_uid")) return CFG_SERVER_UID;
-  if (!strcmp(word,"shm_key")) return CFG_SHM_KEY;
   if (!strcmp(word,"site_cmd")) return CFG_SITECMD;
   if (!strncmp(word,"sitefile_",strlen("sitefile_"))) return CFG_SITEFILE;
   if (!strncmp(word,"site_",strlen("site_"))) return CFG_SITE;
@@ -370,8 +366,6 @@ int set_default_options(void)
 #else
   tempConfig.tls_type = TLS_NOTYPE;
 #endif
-
-  tempConfig.shm_key = 0x1331c0d3;
 
   memset(tempConfig.pasv_ip,0,16);
 
@@ -751,37 +745,6 @@ int cfg_read_dynamic_ip(void)
   }
   strncpy((char *)tempConfig.dynamic_ip,dynamic_ip,MAX_IP_LENGTH-1);
   wzd_free(dynamic_ip);
-
-  return 0;
-}
-
-/* FORCE_SHM_CLEANUP (integer)
-*/
-int cfg_read_force_shm_cleanup(void)
-{
-  unsigned int token;
-  unsigned long l;
-
-  token = yylex();
-  if (token!='=') {
-    out_err(LEVEL_HIGH,"line should be 'force_shm_cleanup = 0|1'\n");
-    return 1;
-  }
-
-  if( (token=yylex()) != CFG_NUM ) {
-    out_err(LEVEL_HIGH,"line should be 'force_shm_cleanup = 0|1'\n");
-    return 1;
-  }
-
-  errno = 0;
-  l = strtoul(yytext,(char**)NULL, 0);
-  if (errno==ERANGE)
-    return 1;
-
-  if (l)
-    CFG_SET_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
-  else
-    CFG_CLR_OPTION(&tempConfig,CFG_OPT_FORCE_SHM_CLEANUP);
 
   return 0;
 }
@@ -1521,37 +1484,6 @@ int cfg_read_server_uid(void)
   return 1;
 }
 
-/* SHM_KEY (unsigned long)
-*/
-int cfg_read_shm_key(void)
-{
-  unsigned int token;
-  unsigned long l;
-
-  token = yylex();
-  if (token!='=') {
-    out_err(LEVEL_HIGH,"line should be 'shm_key = ...'\n");
-    return 1;
-  }
-
-  if( (token=yylex()) != CFG_NUM ) {
-    out_err(LEVEL_HIGH,"shm_key must be a positive or nul number\n");
-    return 1;
-  }
-
-  errno = 0;
-  l = strtoul(yytext,(char**)NULL, 0);
-  if (errno==ERANGE)
-    return 1;
-
-#ifdef DEBUG
-  out_err(LEVEL_INFO,"******* changing shm_key: new value 0x%lx\n",l);
-#endif
-  tempConfig.shm_key = l;
-
-  return 0;
-}
-
 /* SITE CONFIG
 */
 int cfg_read_sitefile(const char *type)
@@ -1939,9 +1871,6 @@ wzd_config_t * readConfigFile(const char *fileName)
     case CFG_DYNAMIC_IP:
       ret = cfg_read_dynamic_ip();
       break;
-    case CFG_FORCE_SHM_CLEANUP:
-      ret = cfg_read_force_shm_cleanup();
-      break;
     case CFG_HIDE_DOTTED_FILES:
       ret = cfg_read_hide_dotted_files();
       break;
@@ -2030,9 +1959,6 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_SERVER_UID:
       ret = cfg_read_server_uid();
-      break;
-    case CFG_SHM_KEY:
-      ret = cfg_read_shm_key();
       break;
     case CFG_SITECMD:
       ret = cfg_read_sitecmd();

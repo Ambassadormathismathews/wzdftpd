@@ -84,7 +84,6 @@
 #include "wzd_crontab.h"
 #include "wzd_messages.h"
 #include "wzd_section.h"
-#include "wzd_shm.h"
 #include "wzd_site.h"
 #include "wzd_utf8.h"
 #include "wzd_vars.h"
@@ -112,17 +111,9 @@ typedef struct {
 } wzd_ident_context_t;
 
 /************ VARS *****************/
-/*wzd_config_t *	mainConfig;*/
-wzd_shm_t *	mainConfig_shm;
-
-/*List *	context_list;*/
-wzd_shm_t *	context_shm;
-
 wzd_cronjob_t	* crontab;
 
 /*time_t server_start;*/
-
-short created_shm=0;
 
 
 /************ PUBLIC **************/
@@ -719,11 +710,6 @@ static void server_login_accept(wzd_context_t * context)
 {
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
   unsigned char * userip;
-#ifdef WZD_MULTIPROCESS
-#ifdef __CYGWIN__
-  unsigned long shm_key = mainConfig->shm_key;
-#endif /* __CYGWIN__ */
-#endif /* WZD_MULTIPROCESS */
 
   userip = context->hostip;
 #if !defined(IPV6_SUPPORT)
@@ -980,10 +966,10 @@ int server_switch_to_config(wzd_config_t *config)
 
   /* create server mutex */
   WZD_ASSERT( server_mutex == NULL );
-  server_mutex = wzd_mutex_create(config->shm_key);
+  server_mutex = wzd_mutex_create((unsigned long)config); /* use the pointer as key .. */
 
   /* create limiter mutex */
-  limiter_mutex = wzd_mutex_create(config->shm_key+1);
+  limiter_mutex = wzd_mutex_create((unsigned long)config+1);
 
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
@@ -1083,9 +1069,7 @@ int server_switch_to_config(wzd_config_t *config)
     snprintf(buf,64,"%ld\n",(unsigned long)getpid());
     if (fd==-1) {
       out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
-      if (created_shm) {
-        free_config(config);
-      }
+      free_config(config);
       exit(1);
     }
     ret = write(fd,buf,strlen(buf));
@@ -1363,13 +1347,7 @@ static void free_config(wzd_config_t * config)
   mainConfig->site_config.file_vfs = NULL;
   wzd_free(mainConfig->site_config.file_who);
   mainConfig->site_config.file_who = NULL;
-#if 0
-  wzd_shm_free(mainConfig_shm);
-#endif
   wzd_free(mainConfig);
-#ifdef DEBUG
-  mainConfig_shm = NULL;
-#endif
 }
 
 void serverMainThreadExit(int retcode)
@@ -1427,9 +1405,6 @@ void serverMainThreadExit(int retcode)
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (server_mutex) wzd_mutex_destroy(server_mutex);
-#if 0
-  if (context_shm) wzd_shm_free(context_shm);
-#endif
 
   commands_fini(mainConfig->commands_list);
   list_destroy(&server_ident_list);

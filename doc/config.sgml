@@ -275,17 +275,6 @@ if present will append it to the end of the ftp reply.
  </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_force_shm_cleanup'><term>force_shm_cleanup (default:
-0)</term>
-<listitem>
-<para>Specify 1 here to automatically try to delete shm zone if existing.
-<screen>force_shm_cleanup = 1</screen>
-</para>
-<para><emphasis>IMPORTANT: This option is dangerous !</emphasis>. If you start server when
-another instance is running, you'll certainly encounter problems.</para>
-</listitem>
-</varlistentry>
-
 <varlistentry id='cfg_hide_dotted_files'><term>hide_dotted_files (default:
 0)</term>
 <listitem>
@@ -432,17 +421,6 @@ after binding port. This is usefull only if server is runned by root
 </para>
 <para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system
 port ( &lt; 1024 )</emphasis></para>
-</listitem>
-</varlistentry>
-
-<varlistentry id='cfg_shm_key'><term>shm_key (default: 0x1331c0d3)</term>
-<listitem>
-<para>Controls key used for shared memory zones.
-<screen>shm_key = 0x2442c0d3</screen>
-</para>
-<para>This is used to run two or more servers on the same machine</para>
-<para>Remember wzdftpd uses <emphasis>two</emphasis> shared memory zones,
-shm_key and shm_key-1</para>
 </listitem>
 </varlistentry>
 

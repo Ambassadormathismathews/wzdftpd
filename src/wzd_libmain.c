@@ -164,7 +164,6 @@ void server_restart(int signum)
     /* what can we do with ssl ? */
     /* reload certificate ? */
 #endif
-    /* we currently do NOT support shm_key dynamic change */
     /* reload permission list ?? */
     /* reload global_ul_limiter ?? */
     /* reload global_dl_limiter ?? */

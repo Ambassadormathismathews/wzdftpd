@@ -286,22 +286,6 @@ static void save_sfvchecker (FILE *file)
 #endif
 
 
-  
-static void save_shmkey (FILE *file)
-{
-  if (file==NULL) return;
-  fprintf( file, "# shm_key: use for share memory (default: 0x1331c0d3)\n");
-  fprintf( file, "#shm_key = 0x2442c0d3\n");
-  fprintf( file, "shm_key = 0x%08lx\n", mainConfig->shm_key);
-  fprintf( file, "\n");
-  fprintf( file, "# force_shm_cleanup: server will always try to delete shm if existing (default: 0)\n");
-  fprintf( file, "# WARNING: if you enable this and a server really exists, ...\n");
-  if (CFG_GET_OPTION(mainConfig,CFG_OPT_FORCE_SHM_CLEANUP))
-    fprintf( file, "force_shm_cleanup = 1\n");
-  else
-    fprintf( file, "#force_shm_cleanup = 1\n");
-  fprintf( file, "\n");
-}
 
 static void save_loglevel (FILE *file)
 {
@@ -322,7 +306,7 @@ static void save_tlsoptions (FILE *file)
   if (file==NULL) return;
   fprintf( file, "# TLS Options\n");
   fprintf( file, "\n");
-  
+
   fprintf( file, "# cygwin, version winsock only: you must specify where the tls wrapper dll is\n");
   current = mainConfig->param_list;
   while (current) {
@@ -744,7 +728,6 @@ int wzd_savecfg( void )
 #if 0
   save_sfvchecker (file);
 #endif
-  save_shmkey (file);
   save_loglevel (file);
   save_tlsoptions (file);
   save_iprestrictions (file);

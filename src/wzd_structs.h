@@ -481,10 +481,9 @@ typedef struct _context_t {
 #include "wzd_backend.h"
 
 /* macros used with options */
-#define	CFG_OPT_DENY_ACCESS_FILES_UPLOADED  0x00000001
-#define	CFG_OPT_HIDE_DOTTED_FILES           0x00000002
-#define	CFG_OPT_USE_SYSLOG                  0x00000010
-#define CFG_OPT_FORCE_SHM_CLEANUP           0x00000100
+#define CFG_OPT_DENY_ACCESS_FILES_UPLOADED  0x00000001
+#define CFG_OPT_HIDE_DOTTED_FILES           0x00000002
+#define CFG_OPT_USE_SYSLOG                  0x00000010
 #define CFG_OPT_UTF8_CAPABLE                0x00001000
 
 
@@ -533,9 +532,7 @@ typedef struct {
   wzd_server_stat_t	stats;
   SSL_CTX *	tls_ctx;
   tls_type_t	tls_type;
-  unsigned long	shm_key;
   CHTBL          * commands_list;
-/*  struct wzd_command_perm_t	* perm_list;*/
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
   wzd_param_t		* param_list;
