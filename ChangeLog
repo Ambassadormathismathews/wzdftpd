@@ -1,6 +1,7 @@
 2005-02-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: perl: chmod, chgrp, chown
+	* feature: perl warnings and errors are logged to a file
 	* bugfix: site_cmd not working
 
 2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>

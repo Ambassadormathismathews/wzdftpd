@@ -71,10 +71,13 @@
 #include "wzd_file.h" /* file_mkdir, file_stat */
 #include "wzd_vfs.h" /* checkpath_new */
 #include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
+#include "wzd_string.h"
 #include "wzd_vars.h" /* needed to access variables */
 
 #include "wzd_debug.h"
 
+
+#define PERL_ERRORLOGNAME "perlerr.log"
 
 extern void boot_DynaLoader (pTHX_ CV* cv);
 
@@ -82,6 +85,8 @@ extern void boot_DynaLoader (pTHX_ CV* cv);
 /***** Private vars ****/
 static PerlInterpreter * my_perl=NULL;
 static wzd_context_t * current_context=NULL;
+
+static int perl_fd_errlog=-1;
 
 #define PERL_ARGS        "wzd::args"
 #define TCL_CURRENT_USER "wzd_current_user"
@@ -108,6 +113,7 @@ static XS(XS_wzd_chmod);
 static XS(XS_wzd_chown);
 static XS(XS_wzd_ftp2sys);
 static XS(XS_wzd_killpath);
+static XS(XS_wzd_logperl);
 static XS(XS_wzd_putlog);
 static XS(XS_wzd_send_message_raw);
 static XS(XS_wzd_send_message);
@@ -142,8 +148,37 @@ int WZD_MODULE_INIT(void)
   if (my_perl) /* init already done */
     return -1;
 
+  {
+    char * logdir;
+    int ret;
+
+    ret = -1;
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0)
+    {
+      int fd;
+
+      wzd_string_t *str = str_allocate();
+      str_sprintf(str,"%s/%s", logdir, PERL_ERRORLOGNAME);
+      fd = open(str_tochar(str),O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
+      if (fd >= 0) {
+        perl_fd_errlog = fd;
+        ret = 0;
+      }
+      str_deallocate(str);
+    }
+    if (ret) {
+      out_log(LEVEL_HIGH,"perl: i found no 'logdir' in your config file\n");
+      out_log(LEVEL_HIGH,"perl: this means I will be unable to log PERL errors\n");
+      out_log(LEVEL_HIGH,"perl: please refer to the 'logdir' config directive in help\n");
+    }
+  }
+
   if ( !(my_perl = perl_init()) ) {
     out_log(LEVEL_HIGH,"PERL could not create interpreter\n");
+    if (perl_fd_errlog >= 0) {
+      close(perl_fd_errlog);
+      perl_fd_errlog = -1;
+    }
     return -1;
   }
   memset(_slaves, 0, MAX_SLAVES*sizeof(struct _slave_t));
@@ -160,6 +195,10 @@ void WZD_MODULE_CLOSE(void)
   perl_destruct(my_perl);
   perl_free(my_perl);
   my_perl = NULL;
+  if (perl_fd_errlog >= 0) {
+    close(perl_fd_errlog);
+    perl_fd_errlog = -1;
+  }
   out_log(LEVEL_INFO,"PERL module unloaded\n");
 }
 
@@ -184,8 +223,12 @@ static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * c
     if (SvTRUE(val))
       send_message_with_args(200,context,"PERL command ok");
     else {
-      /** \todo log this to perlerr.log */
-      out_err(LEVEL_HIGH,"Perl error: %s\n",SvPV_nolen(ERRSV));
+      /* log error */
+      if (perl_fd_errlog >= 0) {
+        wzd_string_t * str = str_allocate();
+        str_sprintf(str,"Error in %s: %s\n",args,SvPV_nolen(ERRSV));
+        write(perl_fd_errlog,str_tochar(str),strlen(str_tochar(str)));
+      }
       send_message_with_args(200,context,"PERL command reported errors");
     }
     return EVENT_HANDLED;
@@ -270,8 +313,8 @@ static PerlInterpreter * perl_init(void)
 "$SIG{__WARN__} = sub {\n"
 "  local $, = \"\\n\";\n"
 "  my ($package, $line, $sub) = caller(1);\n"
-"  wzd::send_message( \"warning from ${package}::${sub} at line $line.\" );\n"
-"  wzd::send_message( @_ );\n"
+"  wzd::logperl( \"warning from ${package}::${sub} at line $line.\" );\n"
+"  wzd::logperl( @_ );\n"
 "};\n"
 "\n"
 "sub Embed::load {\n"
@@ -285,13 +328,13 @@ static PerlInterpreter * perl_init(void)
 "\n"
 "	 if( $@ ) {\n"
 "		# something went wrong\n"
-"		print( \"Error loading '$file':\\n$@\n\" );\n"
+"		wzd::logperl( \"Error loading '$file':\\n$@\n\" );\n"
 "		return 1;\n"
 "	 }\n"
 "\n"
 "  } else {\n"
 "\n"
-"	 print( \"Error opening '$file': $!\\n\" );\n"
+"	 wzd::logperl( \"Error opening '$file': $!\\n\" );\n"
 "	 return 2;\n"
 "  }\n"
 "\n"
@@ -332,6 +375,7 @@ static void xs_init(pTHX)
   newXS("wzd::chown", XS_wzd_chown, "wzd");
   newXS("wzd::ftp2sys", XS_wzd_ftp2sys, "wzd");
   newXS("wzd::killpath", XS_wzd_killpath, "wzd");
+  newXS("wzd::logperl", XS_wzd_logperl, "wzd");
   newXS("wzd::putlog", XS_wzd_putlog, "wzd");
   newXS("wzd::send_message_raw", XS_wzd_send_message_raw, "wzd");
   newXS("wzd::send_message", XS_wzd_send_message, "wzd");
@@ -361,9 +405,12 @@ static int execute_perl( SV *function, const char *args)
 
   sv = GvSV(gv_fetchpv("@", TRUE, SVt_PV));
   if (SvTRUE(sv)) {
-    /* perl error */
-      /** \todo log this to perlerr.log */
-      out_err(LEVEL_HIGH,"Perl error: %s\n",SvPV_nolen(ERRSV));
+    /* perl error, log it */
+    if (perl_fd_errlog >= 0) {
+      wzd_string_t * str = str_allocate();
+      str_sprintf(str,"Error in %s: %s\n",args,SvPV_nolen(ERRSV));
+      write(perl_fd_errlog,str_tochar(str),strlen(str_tochar(str)));
+    }
     POPs; /* remove undef from the top of the stack */
   }
   else if (count != 1) {
@@ -638,6 +685,42 @@ static XS(XS_wzd_killpath)
   }
   if ( ret != E_OK && ret != E_USER_NOBODY ) {
     XSRETURN_NO;
+  }
+
+  XSRETURN_YES;
+}
+
+/**
+ * example: wzd::logperl("message\n");
+ *  or    : wzd::logperl "message\n";
+ */
+static XS(XS_wzd_logperl)
+{
+  char * text;
+  int index=0;
+  STRLEN length;
+
+  dXSARGS;
+
+  if (!current_context) XSRETURN_NO;
+  if (items < 1) XSRETURN_NO;
+
+  /** \todo print error message */
+  if ( ! SvPOK(ST(0)) )
+    XSRETURN_NO;
+
+  if (perl_fd_errlog >= 0) {
+    while (SvPOK(ST(index))) {
+      text = SvPV(ST(index),length);
+
+      /** \todo XXX we could format the string using argv[2,] */
+
+      /* replace cookies ? */
+
+      write(perl_fd_errlog,text,length);
+
+      index++;
+    }
   }
 
   XSRETURN_YES;

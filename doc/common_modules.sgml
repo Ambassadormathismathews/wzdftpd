@@ -297,6 +297,10 @@ use a Perl script with direct access to server internals
 Perl is provided as a module, keeping main server from adding
 many useless dependancies.
 </para>
+<para>
+Warning and errors are logged in the file "perlerr.log", located in the directory specified in
+the <link linkend='cfg_logdir'>logdir</link> directive of the config file.
+</para>
 </simplesect>
 
 <simplesect id='mod_perl_install'>
@@ -323,6 +327,12 @@ homedir) to an absolute filename (for the system).
 </para><para>Note that the returned path can be different for different
 users, if they have different home directories.
 </para></listitem>
+
+<listitem><screen>wzd::logperl "message"</screen>
+<para>Put the message in perl log file.
+<screen>wzd::logperl "zipscript: file is corrupted";</screen>
+</para></listitem>
+
 <listitem><screen>wzd::putlog level, "message"</screen>
 <para>Put the message in log file, only if level is greater or equal to
 the current loglevel. level is an integer in range 0 to 10, 0 is the
