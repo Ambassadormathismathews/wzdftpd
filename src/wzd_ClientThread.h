@@ -38,7 +38,7 @@ void command_list_cleanup(wzd_command_t **list);
 wzd_command_t * command_list_find(const char *name);
 
 #define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 #define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n"
 #else
 #define TEMP_FEAT GLOBAL_FEATURES

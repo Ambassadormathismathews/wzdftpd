@@ -25,7 +25,7 @@
 #ifndef __WZD_TLS__
 #define __WZD_TLS__
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 
 int tls_init(void);
 int tls_exit(void);

@@ -1,3 +1,7 @@
+2004-09-13  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: GnuTLS support
+
 2004-09-08  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: wzdftpd broken on debian arm, ppc and s390 (Thanks to zentor)

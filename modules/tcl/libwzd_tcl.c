@@ -39,6 +39,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 #include <winsock2.h>

@@ -212,6 +212,10 @@ static void context_init(wzd_context_t * context)
   context->ssl.obj = NULL;
   context->ssl.data_ssl = NULL;
 #endif
+#ifdef HAVE_GNUTLS
+  context->tls.session = NULL;
+  context->tls.data_session = NULL;
+#endif
   context->read_fct = (read_fct_t)clear_read;
   context->write_fct = (write_fct_t)clear_write;
 }
@@ -852,7 +856,7 @@ static void server_login_accept(wzd_context_t * context)
     
 
     /* switch to tls mode ? */
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (mainConfig->tls_type == TLS_IMPLICIT) {
       if (tls_auth("SSL",context)) {
         close(context->controlfd);
@@ -984,7 +988,7 @@ void child_interrupt(int signum)
 #endif
       client_die(&context_list[i]);
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
       tls_free(&context_list[i]);
 #endif
       break;
@@ -1559,9 +1563,6 @@ void serverMainThreadExit(int retcode)
 #endif
 /*	client_die(&context_list[i]);*/
 
-#ifdef HAVE_OPENSSL
-/*	tls_free(&context_list[i]);*/
-#endif
       }
     }
   }
@@ -1573,7 +1574,7 @@ void serverMainThreadExit(int retcode)
 #else
   Sleep(1000);
 #endif
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   tls_exit();
 #endif
   wzd_cache_purge();

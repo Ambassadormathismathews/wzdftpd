@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- get_bandwidth(): give download, upload, total
+'********'
 - rename wzd.cfg to wzd.cfg.sample and users to users.sample
 '********'
 - provide a socket registration interface to have ~ servers

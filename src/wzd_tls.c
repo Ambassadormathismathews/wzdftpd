@@ -529,3 +529,342 @@ int tls_free(wzd_context_t * context)
 }
 
 #endif /* HAVE_OPENSSL */
+
+#ifdef HAVE_GNUTLS
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <gnutls/gnutls.h>
+#include <gcrypt.h>
+#include <errno.h>
+#include <pthread.h>
+GCRY_THREAD_OPTION_PTHREAD_IMPL;
+
+#include <fcntl.h>
+
+
+#define DH_BITS 1024
+
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
+
+#include "wzd_tls.h"
+
+#include "wzd_messages.h"
+
+#include "wzd_debug.h"
+
+/*************** tls_init ****************************/
+
+static gnutls_dh_params dh_params;
+
+static int generate_dh_params(void)
+{
+
+  /* Generate Diffie Hellman parameters - for use with DHE
+   * kx algorithms. These should be discarded and regenerated
+   * once a day, once a week or once a month. Depending on the
+   * security requirements.
+   */
+  gnutls_dh_params_init(&dh_params);
+  gnutls_dh_params_generate2(dh_params, DH_BITS);
+
+  return 0;
+}
+
+/* These are global */
+static gnutls_certificate_credentials x509_cred;
+
+int tls_init(void)
+{
+  /* The order matters.
+   */
+  gcry_control (GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
+  gnutls_global_init();
+
+  /** \todo TODO XXX move this code to global init ? */
+  gnutls_certificate_allocate_credentials(&x509_cred);
+  gnutls_certificate_set_x509_trust_file(x509_cred, mainConfig->tls_certificate,
+      GNUTLS_X509_FMT_PEM);
+
+/*
+  gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
+      GNUTLS_X509_FMT_PEM);
+*/
+
+  gnutls_certificate_set_x509_key_file(x509_cred,
+      mainConfig->tls_certificate /* CERTFILE */,
+      mainConfig->tls_certificate /* KEYFILE */,
+      GNUTLS_X509_FMT_PEM);
+
+  generate_dh_params();
+
+  gnutls_certificate_set_dh_params(x509_cred, dh_params);
+
+  out_log(LEVEL_INFO,"TLS initialization successful.\n");
+
+  return 0;
+}
+
+int tls_exit(void)
+{
+  gnutls_certificate_free_credentials(x509_cred);
+  gnutls_global_deinit();
+
+  return 0;
+}
+
+static gnutls_session initialize_tls_session()
+{
+  /* Allow connections to servers that have OpenPGP keys as well.
+   */
+  const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
+
+  gnutls_session session;
+
+  gnutls_init(&session, GNUTLS_SERVER);
+
+  /* avoid calling all the priority functions, since the defaults
+   * are adequate.
+   */
+  gnutls_set_default_priority(session);
+  gnutls_certificate_type_set_priority(session, cert_type_priority);
+
+  gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, x509_cred);
+
+  /* request client certificate if any.
+  */
+  gnutls_certificate_server_set_request(session, GNUTLS_CERT_REQUEST);
+
+  gnutls_dh_set_prime_bits(session, DH_BITS);
+
+  return session;
+}
+
+int tls_auth (const char *type, wzd_context_t * context)
+{
+  int ret;
+  gnutls_session session;
+  int fd = context->controlfd;
+  int was_writing=0;
+  fd_set fd_r, fd_w;
+  struct timeval tv;
+ 
+
+  session = initialize_tls_session();
+
+  gnutls_transport_set_ptr(session, (gnutls_transport_ptr) fd);
+
+  /* ensure socket is non-blocking */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+    {
+    unsigned long noBlock=1;
+    ioctlsocket(fd,FIONBIO,&noBlock);
+  }
+#else
+  fcntl(fd,F_SETFL,(fcntl(fd,F_GETFL)|O_NONBLOCK));
+#endif
+
+  /* Perform the TLS handshake
+   */
+  do {
+    ret = gnutls_handshake(session);
+    if (ret == 0) {
+      break;
+    }
+    if (gnutls_error_is_fatal(ret)) {
+      out_log(LEVEL_HIGH,"GnuTLS: handshake failed: %s\n",gnutls_strerror(ret));
+      gnutls_deinit(session);
+      free(session);
+      return 1;
+    }
+    switch (ret) {
+      case GNUTLS_E_AGAIN:
+      case GNUTLS_E_INTERRUPTED:
+        was_writing = gnutls_record_get_direction(session);
+        break;
+      default:
+        out_log(LEVEL_HIGH,"GnuTLS: handshake failed, unknown non-fatal error: %s\n",gnutls_strerror(ret));
+        gnutls_deinit(session);
+        free(session);
+        return 1;
+    }
+
+    /* we need to wait before continuing the handshake */
+    FD_ZERO(&fd_r);
+    FD_ZERO(&fd_w);
+    tv.tv_usec = 0;
+    tv.tv_sec = 5;
+    if (was_writing) { FD_SET(fd,&fd_w); }
+    else { FD_SET(fd,&fd_r); }
+
+    ret = select(fd+1, &fd_r, &fd_w, NULL, &tv);
+
+    if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
+      out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
+      gnutls_deinit(session);
+      free(session);
+      return 1;
+    }
+    ret = 1;
+  } while (ret != 0);
+
+  /* set read/write functions */
+  context->read_fct = (read_fct_t)tls_read;
+  context->write_fct = (write_fct_t)tls_write;
+
+  context->tls.session = malloc(sizeof(gnutls_session));
+  *( (gnutls_session*)context->tls.session) = session;
+
+  return 0;
+}
+
+int tls_auth_cont(wzd_context_t * context)
+{
+  out_log(LEVEL_CRITICAL,"Function not implemented: %s\n",__FUNCTION__);
+  return 0;
+}
+
+int tls_init_datamode(int sock, wzd_context_t * context)
+{
+  int ret;
+  gnutls_session session;
+  int was_writing=0;
+  fd_set fd_r, fd_w;
+  struct timeval tv;
+ 
+  if (context->tls.data_session) {
+    out_log(LEVEL_NORMAL,"tls_init_datamode: a data session already exist (%p) !\n",
+        context->tls.data_session);
+    return 1;
+  }
+
+  session = initialize_tls_session();
+
+  gnutls_transport_set_ptr(session, (gnutls_transport_ptr) sock);
+
+  /* ensure socket is non-blocking */
+#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+    {
+    unsigned long noBlock=1;
+    ioctlsocket(fd,FIONBIO,&noBlock);
+  }
+#else
+  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
+#endif
+
+  /* Perform the TLS handshake
+   */
+  do {
+    ret = gnutls_handshake(session);
+    if (ret == 0) {
+      break;
+    }
+    if (gnutls_error_is_fatal(ret)) {
+      out_log(LEVEL_HIGH,"GnuTLS: handshake failed: %s\n",gnutls_strerror(ret));
+      gnutls_deinit(session);
+      free(session);
+      return 1;
+    }
+    switch (ret) {
+      case GNUTLS_E_AGAIN:
+      case GNUTLS_E_INTERRUPTED:
+        was_writing = gnutls_record_get_direction(session);
+        break;
+      default:
+        out_log(LEVEL_HIGH,"GnuTLS: handshake failed, unknown non-fatal error: %s\n",gnutls_strerror(ret));
+        gnutls_deinit(session);
+        free(session);
+        return 1;
+    }
+
+    /* we need to wait before continuing the handshake */
+    FD_ZERO(&fd_r);
+    FD_ZERO(&fd_w);
+    tv.tv_usec = 0;
+    tv.tv_sec = 5;
+    if (was_writing) { FD_SET(sock,&fd_w); }
+    else { FD_SET(sock,&fd_r); }
+
+    ret = select(sock+1, &fd_r, &fd_w, NULL, &tv);
+
+    if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
+      out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
+      gnutls_deinit(session);
+      free(session);
+      return 1;
+    }
+    ret = 1;
+  } while (ret != 0);
+
+
+  context->tls.data_session = malloc(sizeof(gnutls_session));
+  *( (gnutls_session*)context->tls.data_session) = session;
+  
+  return 0;
+}
+
+int tls_close_data(wzd_context_t * context)
+{
+  if (context->tls.data_session) {
+    gnutls_deinit( *(gnutls_session*)context->tls.data_session );
+    free ( (gnutls_session*)context->tls.data_session );
+  }
+  context->tls.data_session = NULL;
+  return 0;
+}
+
+int tls_free(wzd_context_t * context)
+{
+  tls_close_data(context);
+  if (context->tls.session) {
+    gnutls_deinit( *(gnutls_session*)context->tls.session );
+    free ( (gnutls_session*)context->tls.session );
+  }
+  context->tls.session = NULL;
+  return 0;
+}
+
+int tls_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+{
+  wzd_context_t * context = vcontext;
+  int ret=0;
+
+  do {
+    if (sock == context->controlfd)
+      ret = gnutls_record_recv(*((gnutls_session*)context->tls.session), msg, length);
+    else
+      ret = gnutls_record_recv(*((gnutls_session*)context->tls.data_session), msg, length);
+
+    if (gnutls_error_is_fatal(ret)) {
+      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d(%s)\n",ret,gnutls_strerror(ret));
+      return -1;
+    }
+  } while ( (ret==GNUTLS_E_INTERRUPTED) || (ret==GNUTLS_E_AGAIN) );
+
+  return ret;
+}
+
+int tls_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+{
+  wzd_context_t * context = vcontext;
+  int ret=0;
+
+  do {
+    if (sock == context->controlfd)
+      ret = gnutls_record_send(*((gnutls_session*)context->tls.session), msg, length);
+    else
+      ret = gnutls_record_send(*((gnutls_session*)context->tls.data_session), msg, length);
+
+    if (gnutls_error_is_fatal(ret)) {
+      out_log(LEVEL_HIGH,"gnutls_record_send returned %d(%s)\n",ret,gnutls_strerror(ret));
+      return -1;
+    }
+  } while ( (ret==GNUTLS_E_INTERRUPTED) || (ret==GNUTLS_E_AGAIN) );
+
+  return ret;
+}
+
+#endif /* HAVE_GNUTLS */

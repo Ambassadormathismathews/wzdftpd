@@ -142,7 +142,7 @@ int identify_token(char *token)
     return TOK_DELE;
   if (strcmp("abor",token)==0)
     return TOK_ABOR;
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (strcmp("pbsz",token)==0)
     return TOK_PBSZ;
   if (strcmp("prot",token)==0)
@@ -597,7 +597,7 @@ int waitaccept(wzd_context_t * context)
     return -1;
   }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_init_datamode(sock, context);
 #endif
@@ -640,7 +640,7 @@ int waitconnect(wzd_context_t * context)
       return -1;
     }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
 #endif
@@ -660,7 +660,7 @@ int waitconnect(wzd_context_t * context)
       return -1;
     }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (context->ssl.data_mode == TLS_PRIV)
       ret = tls_init_datamode(sock, context);
 #endif
@@ -673,7 +673,7 @@ int waitconnect(wzd_context_t * context)
     ret = send_message(425,context);
     return -1;
   }
- 
+
   return sock;
 }
 
@@ -697,7 +697,7 @@ int list_callback(unsigned int sock, wzd_context_t * context, char *line)
     }
   } while (!FD_ISSET(sock,&fds));
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->ssl.data_mode == TLS_CLEAR)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
@@ -711,7 +711,7 @@ int list_callback(unsigned int sock, wzd_context_t * context, char *line)
 
 int do_list(char *name, char *param, wzd_context_t * context)
 {
-  char mask[1024],cmd[WZD_MAX_PATH],path[WZD_MAX_PATH];
+  char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,sock,n;
   char nullch[8];
   char * cmask;
@@ -809,8 +809,10 @@ int do_list(char *name, char *param, wzd_context_t * context)
 printf("path before: '%s'\n",cmd);
 #endif*/
 
+  path = wzd_malloc(WZD_MAX_PATH+1);
   if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
+    wzd_free(path);
     return E_PARAM_INVALID;
   }
 
@@ -825,6 +827,7 @@ printf("path: '%s'\n",path);
 
   if (ret) { /* no access */
     ret = send_message_with_args(550,context,"LIST","No access");
+    wzd_free(path);
     return E_NOPERM;
   }
 
@@ -835,6 +838,7 @@ printf("path: '%s'\n",path);
     sock = waitconnect(context);
     if (sock < 0) {
       /* note: reply is done in waitconnect() */
+      wzd_free(path);
       return E_CONNECTTIMEOUT;
     }
 
@@ -842,6 +846,7 @@ printf("path: '%s'\n",path);
     ret = send_message(150,context); /* about to open data connection */
     if ((sock=waitaccept(context)) <= 0) {
       /* note: reply is done in waitaccept() */
+      wzd_free(path);
       return E_PASV_FAILED;
     }
     context->pasvsock = -1;
@@ -857,7 +862,9 @@ printf("path: '%s'\n",path);
   else
     ret = send_message_with_args(501,context,"Error processing list");
 
-#ifdef HAVE_OPENSSL
+  wzd_free(path);
+
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->ssl.data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
@@ -910,7 +917,7 @@ label_opts_error:
 
 int do_stat(char *name, char *param, wzd_context_t * context)
 {
-  char mask[1024],cmd[WZD_MAX_PATH],path[WZD_MAX_PATH];
+  char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,sock,n;
   char nullch[8];
   char * cmask;
@@ -997,8 +1004,10 @@ int do_stat(char *name, char *param, wzd_context_t * context)
 printf("path before: '%s'\n",cmd);
 #endif*/
 
+  path = wzd_malloc(WZD_MAX_PATH + 1);
   if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
     ret = send_message_with_args(501,context,"invalid filter/path");
+    wzd_free(path);
     return E_PARAM_INVALID;
   }
 
@@ -1011,6 +1020,7 @@ printf("path: '%s'\n",path);
 
   if (ret) { /* no access */
     ret = send_message_with_args(550,context,"STAT","No access");
+    wzd_free(path);
     return E_NOPERM;
   }
 
@@ -1032,6 +1042,8 @@ printf("path: '%s'\n",path);
   context->idle_time_start = time(NULL);
   context->state = STATE_UNKNOWN;
   context->ssl.data_mode = old_data_mode;
+
+  wzd_free(path);
 
   return E_OK;
 }
@@ -1374,7 +1386,7 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
     /* XXX TODO FIXME always bind to 'myip' ?! */
     addr = INADDR_ANY;
 /*    memcpy( (void*)&addr, pasv_bind_ip, sizeof(unsigned long));*/
-    
+
     memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
@@ -1411,7 +1423,7 @@ int do_pasv(char *name, char *args, wzd_context_t * context)
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
-  
+
 #if 0
   if (mainConfig->pasv_ip[0] == 0) {
     ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
@@ -1508,7 +1520,7 @@ int do_eprt(char *name, char *param, wzd_context_t * context)
     ret = send_message_with_args(501,context,"Invalid protocol");
     return E_PARAM_INVALID;
   }
-  
+
 
   context->dataport = tcp_port;
   context->datafamily = net_prt - '0';
@@ -1588,7 +1600,7 @@ int do_epsv(char *name, char *arg, wzd_context_t * context)
     /* XXX TODO FIXME always bind to 'myip' ?! */
     addr = INADDR_ANY;
 /*    memcpy( (void*)&addr, pasv_bind_ip, sizeof(unsigned long));*/
-    
+
     memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
@@ -1603,7 +1615,7 @@ int do_epsv(char *name, char *arg, wzd_context_t * context)
     /* XXX TODO FIXME bind to specific address works, but not for NAT */
     /* XXX TODO FIXME always bind to 'myip' ?! */
 /*    addr = INADDR_ANY;*/
-    
+
 /*    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));*/
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai6,size)==0) break;
@@ -1641,7 +1653,7 @@ int do_epsv(char *name, char *arg, wzd_context_t * context)
     ret = send_message_raw(buf,context);
   }
 #endif
-  
+
 #if 0
   if (mainConfig->pasv_ip[0] == 0) {
     ret = send_message_with_args(227,context,myip[0], myip[1], myip[2], myip[3],(port>>8)&0xff, port&0xff);
@@ -1813,7 +1825,7 @@ int do_retr(char *name, char *param, wzd_context_t * context)
 /*************** do_stor *****************************/
 int do_stor(char *name, char *param, wzd_context_t * context)
 {
-  char path[WZD_MAX_PATH],path2[WZD_MAX_PATH],cmd[WZD_MAX_PATH];
+  char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
   int fd;
   unsigned long bytesnow, byteslast;
   int sock;
@@ -1850,8 +1862,8 @@ int do_stor(char *name, char *param, wzd_context_t * context)
 /*   XXX if (strrchr(param,'/'))
       param = strrchr(param,'/')+1; XXX */
 
-    strcpy(cmd,".");
-    if (checkpath_new(cmd,path,context)) {
+    strcpy(path2,".");
+    if (checkpath_new(path2,path,context)) {
       ret = send_message_with_args(501,context,"Incorrect filename");
       return E_PARAM_INVALID;
     }
@@ -2291,7 +2303,7 @@ int do_print_message(char *name, char *filename, wzd_context_t * context)
   return E_OK;
 }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_prot *****************************/
 int do_prot(char *name, char *arg, wzd_context_t * context)
 {
@@ -2809,7 +2821,7 @@ static int do_login_loop(wzd_context_t * context)
   char username[HARD_USERNAME_LENGTH];
   int ret;
   int user_ok=0, pass_ok=0;
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   int tls_ok=0;
 #endif
   int command;
@@ -2911,7 +2923,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return E_USER_NO_HOME;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
       if (mainConfig->tls_type == TLS_STRICT_EXPLICIT && !tls_ok) {
         ret = send_message_with_args(421,context,"TLS session MUST be engaged");
         return 1;
@@ -2924,7 +2936,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       return 0; /* user + pass ok */
       break;
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     case TOK_AUTH:
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token || token[0]==0) {
@@ -3281,7 +3293,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
   client_die(context);
 #endif /* WZD_MULTITHREAD */
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   tls_free(context);
 #endif
   return NULL;
@@ -3338,7 +3350,7 @@ int command_list_init(wzd_command_t **list)
   last_command->next_command = NEW_STD_COMMAND(xmd5,do_xmd5,NULL,TOK_XMD5); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(opts,do_opts,NULL,TOK_OPTS); last_command = last_command->next_command;
   last_command->next_command = NEW_STD_COMMAND(quit,do_quit,NULL,TOK_QUIT); last_command = last_command->next_command;
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   last_command->next_command = NEW_STD_COMMAND(prot,do_prot,NULL,TOK_PROT); last_command = last_command->next_command;
 #endif
 

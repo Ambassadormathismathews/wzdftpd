@@ -74,7 +74,16 @@ AC_SUBST(JW)
 AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 
 WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
-WZD_LIB_OPENSSL(0,9,6,2)
+AM_PATH_LIBGNUTLS(0.9.8,wzd_have_gnutls=yes)
+# if we found libgnutls, we have no need for openssl
+if test "x$wzd_have_gnutls" = "xyes"
+then
+  AC_DEFINE(HAVE_GNUTLS,1,"Define to 1 if you have the gnutls library")
+  CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
+  LDFLAGS="$LDFLAGS $LIBGNUTLS_LIBS"
+else
+  WZD_LIB_OPENSSL(0,9,6,2)
+fi
 WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
@@ -273,19 +282,20 @@ cat << EOF
 Here is a short summary of what I've found on your system :
 
   core options:
-       debug: $enable_debug
-       IPv6:  $enable_ipv6
-       SSL:   $wzd_lib_openssl
-       UTF-8: $enable_utf8
+       debug:  $enable_debug
+       IPv6:   $enable_ipv6
+       SSL:    $wzd_lib_openssl
+       GnuTLS: $wzd_have_gnutls
+       UTF-8:  $enable_utf8
 
   backends:
-       MySQL: $wzd_have_mysql
-       PAM:   $wzd_have_pam
+       MySQL:  $wzd_have_mysql
+       PAM:    $wzd_have_pam
 
   modules:
-       Perl:  $wzd_have_perl
-       SFV:   yes
-       TCL:   $wzd_have_tcl
+       Perl:   $wzd_have_perl
+       SFV:    yes
+       TCL:    $wzd_have_tcl
 
 EOF
 

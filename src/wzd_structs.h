@@ -387,6 +387,11 @@ typedef struct {
   ssl_fd_mode_t ssl_fd_mode;
 } wzd_ssl_t;
 
+typedef struct {
+  void * session;
+  void * data_session;
+} wzd_tls_t;
+
 typedef enum {
   ASCII=0,
   BINARY
@@ -454,6 +459,7 @@ typedef struct {
   time_t	idle_time_start;
   time_t	idle_time_data_start;
   wzd_ssl_t   	ssl;
+  wzd_tls_t   	tls;
 } wzd_context_t;
 
 /********************** COMMANDS **************************/

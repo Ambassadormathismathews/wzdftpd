@@ -467,7 +467,7 @@ int main(int argc, char **argv)
   if (mainConfig_shm == NULL) {
     /* 2nd chance ? */
     if (CFG_GET_OPTION(config,CFG_OPT_FORCE_SHM_CLEANUP)) {
-      out_err(LEVEL_NORMAL,"Forcing shm cleanup on request");
+      out_err(LEVEL_NORMAL,"Forcing shm cleanup on request\n");
       wzd_shm_cleanup(config->shm_key-1);
       wzd_shm_cleanup(config->shm_key);
       mainConfig_shm = wzd_shm_create(config->shm_key-1,sizeof(wzd_config_t),0);
@@ -498,7 +498,7 @@ int main(int argc, char **argv)
     }
   }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   ret = tls_init();
   if (ret) {
     out_log(LEVEL_CRITICAL,"TLS subsystem could not be initialized.\n");

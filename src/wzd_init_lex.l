@@ -350,7 +350,7 @@ int set_default_options(void)
   tempConfig.site_config.file_who[0] = '\0';
   tempConfig.site_config.file_vfs[0] = '\0';
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   memset(tempConfig.tls_certificate,0,sizeof(tempConfig.tls_certificate));
   strcpy(tempConfig.tls_cipher_list,"ALL");
 
@@ -1637,7 +1637,7 @@ int cfg_read_tls_certificate(void)
     return 1;
   }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   strcpy(tempConfig.tls_certificate,filename);
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
@@ -1666,7 +1666,7 @@ int cfg_read_tls_cipher_list(void)
     return 1;
   }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   strcpy(tempConfig.tls_cipher_list,buffer);
 #else
   out_err(LEVEL_INFO,"server compiled without tls support - line ignored\n");
@@ -1695,7 +1695,7 @@ int cfg_read_tls_mode(void)
     return 1;
   }
 
-#ifdef HAVE_OPENSSL
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     if (strcasecmp("explicit",buffer)==0)
       tempConfig.tls_type = TLS_EXPLICIT;
     else if (strcasecmp("explicit_strict",buffer)==0)
