@@ -44,6 +44,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <time.h>
 #include <regex.h>
