@@ -133,6 +133,9 @@ static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const
 static int tcl_hook_protocol(const char *file, const char *args);
 
 /***** TCL commands ****/
+static int tcl_chgrp(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_chmod(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
+static int tcl_chown(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_killpath(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
 static int tcl_putlog(ClientData data, Tcl_Interp *interp, int argc, const char *argv[]);
@@ -230,6 +233,9 @@ int WZD_MODULE_INIT(void)
 
 
 
+  Tcl_CreateCommand(interp,"chgrp",tcl_chgrp,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"chmod",tcl_chmod,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
+  Tcl_CreateCommand(interp,"chown",tcl_chown,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"ftp2sys",tcl_ftp2sys,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"killpath",tcl_killpath,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"putlog",tcl_putlog,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
@@ -468,6 +474,9 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
     Tcl_RegisterChannel(slave, ch1);
     Tcl_RegisterChannel(slave, ch2);
 
+    ret = Tcl_CreateAlias(slave, "chgrp", interp, "chgrp", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "chmod", interp, "chmod", 0, NULL);
+    ret = Tcl_CreateAlias(slave, "chown", interp, "chown", 0, NULL);
     ret = Tcl_CreateAlias(slave, "ftp2sys", interp, "ftp2sys", 0, NULL);
     ret = Tcl_CreateAlias(slave, "killpath", interp, "killpath", 0, NULL);
     ret = Tcl_CreateAlias(slave, "putlog", interp, "putlog", 0, NULL);
@@ -488,6 +497,89 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
 
 
 /******* TCL functions ********/
+
+static int tcl_chgrp(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char path[WZD_MAX_PATH+1];
+  const char * groupname;
+
+  if (argc < 3) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  groupname = argv[1];
+
+  if ( checkpath_new(argv[2], path, current_context) ) {
+    out_log(LEVEL_INFO,"tcl chgrp could not resolv path %s\n",argv[1]);
+    return TCL_ERROR;
+  }
+  if (file_chown(path,NULL,groupname,current_context)) {
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+static int tcl_chmod(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char path[WZD_MAX_PATH+1];
+  char * endptr;
+  unsigned long perms;
+
+  if (argc < 3) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  perms = strtoul(argv[1],&endptr,8);
+  if (endptr == argv[1]) {
+    /** TODO try to convert from string rwxr-xr-x */
+    out_log(LEVEL_INFO,"tcl chmod could not convert mode %s to octal number\n",argv[1]);
+    return TCL_ERROR;
+  }
+
+  if ( checkpath_new(argv[2], path, current_context) ) {
+    out_log(LEVEL_INFO,"tcl chmod could not resolv path %s\n",argv[1]);
+    return TCL_ERROR;
+  }
+  if (_setPerm(path,NULL,NULL,NULL,NULL,perms,current_context)) {
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+static int tcl_chown(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
+{
+  char path[WZD_MAX_PATH+1];
+  const char * username=NULL, * groupname=NULL;
+  const char * ptr;
+
+  if (argc < 3) return TCL_ERROR;
+  if (!current_context) return TCL_ERROR;
+
+  username = argv[1];
+
+  if ((ptr = strchr(username,':'))) {
+    groupname = ptr+1;
+    if (ptr == username) { /* chown :group file */
+      username = NULL;
+    }
+    else {
+      *(char*)ptr = '\0'; /* yes, we're changing read-only arguments .. */
+      /* from man chmod: If a colon or dot but no group name follows the user name, that user is made
+       * the owner of the files and the group of the files is  changed  to  that  user’s login group.
+       */
+    }
+  }
+
+  if ( checkpath_new(argv[2], path, current_context) ) {
+    out_log(LEVEL_INFO,"tcl chown could not resolv path %s\n",argv[1]);
+    return TCL_ERROR;
+  }
+  if (file_chown(path,username,groupname,current_context)) {
+    return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
 
 static int tcl_ftp2sys(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {

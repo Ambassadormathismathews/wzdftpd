@@ -2,6 +2,7 @@
 
 	* feature: perl: chmod, chgrp, chown
 	* feature: perl warnings and errors are logged to a file
+	* feature: tcl: chmod, chgrp, chown
 	* bugfix: site_cmd not working
 
 2005-02-21  Pierre Chifflier  <pollux@wzdftpd.net>
