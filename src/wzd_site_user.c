@@ -104,7 +104,8 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  /* check users limit */
+  /* check users limit -> backend will do that !! */
+#if 0
   {
     /* count users */
     unsigned int i=0;
@@ -115,6 +116,7 @@ int do_site_adduser(char *command_line, wzd_context_t * context)
       return 0;
     }
   }
+#endif /* 0 */
 
   groupname = strtok_r(NULL," \t\r\n",&ptr);
   group = GetGroupByName(groupname);
@@ -1207,7 +1209,7 @@ int do_site_idle(char *command_line, wzd_context_t * context)
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
-    snprintf(buffer,1023,"Your idle time is %ld",user.max_idle_time);
+    snprintf(buffer,1023,"Your idle time is %u",user.max_idle_time);
   } /* if (*command_line != '\0') */
 
   ret = send_message_with_args(200,context,buffer);
