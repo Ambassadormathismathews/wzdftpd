@@ -49,6 +49,23 @@ void wzd_free(void *ptr);
 /** Copy with allocation */
 char * wzd_strdup(const char *s);
 
+/** init all debug functions */
+void wzd_debug_init(void);
+
+/** end all debug functions */
+void wzd_debug_fini(void);
+
+int fd_register(int fd, const char *desc, const char *file, unsigned int line, const char *function);
+int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function);
+void fd_dump(void);
+#ifdef DEBUG
+# define FD_REGISTER(fd,desc)   fd_register(fd,desc,__FILE__,__LINE__,__FUNCTION__)
+# define FD_UNREGISTER(fd,desc)   fd_unregister(fd,desc,__FILE__,__LINE__,__FUNCTION__)
+#else
+# define FD_REGISTER(fd,desc)
+# define FD_UNREGISTER(fd,desc)
+#endif
+
 /* Test backend storage */
 #define BACKEND_STORAGE
 

@@ -48,6 +48,8 @@
 #include "wzd_log.h"
 #include "wzd_socket.h"
 
+#include "wzd_debug.h"
+
 /*************** ul2a ***********************************/
 
 char * ul2a(unsigned long q)

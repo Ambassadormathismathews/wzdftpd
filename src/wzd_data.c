@@ -81,6 +81,7 @@ void data_close(wzd_context_t * context)
 out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
 #endif
   ret = socket_close(context->datafd);
+  FD_UNREGISTER(context->datafd,"Client data socket");
   context->datafd = 0;
 }
 
@@ -169,6 +170,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       if (ret <= 0) {
         /* XXX error/timeout sending data */
         close(context->current_action.current_file);
+        FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
         context->current_action.current_file = 0;
         context->current_action.bytesnow = 0;
         context->current_action.token = TOK_UNKNOWN;
@@ -192,6 +194,7 @@ int data_execute(wzd_context_t * context, fd_set *fdr, fd_set *fdw)
       context->idle_time_data_start = time(NULL);
     } else { /* end */
       close(context->current_action.current_file);
+      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
 
       out_xferlog(context,1 /* complete */);
 
@@ -239,6 +242,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
     } else { /* consider it is finished */
       file_unlock(context->current_action.current_file);
       file_close(context->current_action.current_file,context);
+      FD_UNREGISTER(context->current_action.current_file,"Client file (STOR)");
 
       out_xferlog(context,1 /* complete */);
       /* we increment the counter of uploaded files at the end

@@ -641,9 +641,10 @@ int module_unload(wzd_module_t **module_list, const char *name)
       f_close = (fcn_module_close)dlsym(current_module->handle,DL_PREFIX STR_MODULE_CLOSE);
       if (f_close) (*f_close)();
 
-/* XXX FIXME
+/** \todo XXX FIXME
  * dlclose() on a shared lib in a multithread application will likely cause a segfault
  * when thread exits, because thread will try to free some specific thread-vars
+ * update: it seems behaviour improves with linux 2.6.5
  */
 /*      dlclose(current_module->handle);*/
     

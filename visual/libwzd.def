@@ -35,7 +35,10 @@ EXPORTS
 	dir_gettrailingname
 	encrypt
 	event2str
+	fd_dump
 	fd_is_valid
+	fd_register
+	fd_unregister
 	file_chown
 	file_close
 	file_force_unlock

@@ -355,13 +355,17 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   /* close existing pasv connections */
   if (context->pasvsock >= 0) {
     socket_close(context->pasvsock);
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = -1;
   }
-  if (context->datafd >= 0)
+  if (context->datafd >= 0) {
     socket_close(context->datafd);
+    FD_UNREGISTER(context->pasvsock,"Client data fd");
+  }
   context->datafd = -1;
   socket_close(context->controlfd);
+  FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
 }
 
@@ -825,6 +829,7 @@ printf("path: '%s'\n",path);
       return E_PASV_FAILED;
     }
   }
+  FD_REGISTER(sock,"Client LIST socket");
 
 
   if (strlen(mask)==0) strcpy(mask,"*");
@@ -839,6 +844,7 @@ printf("path: '%s'\n",path);
     ret = tls_close_data(context);
 #endif
   ret = socket_close(sock);
+  FD_UNREGISTER(sock,"Client LIST socket");
 
   return E_OK;
 }
@@ -1055,6 +1061,7 @@ void do_pasv(wzd_context_t * context)
   /* close existing pasv connections */
   if (context->pasvsock >= 0) {
     socket_close(context->pasvsock);
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = -1;
   }
@@ -1135,6 +1142,8 @@ void do_pasv(wzd_context_t * context)
     ret = send_message(425,context);
     return;
   }
+
+  FD_REGISTER(context->pasvsock,"Client PASV socket");
 
   context->datafamily = WZD_INET4;
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
@@ -1446,6 +1455,7 @@ int do_retr(char *param, wzd_context_t * context)
 /*    socket_close(sock);*/
     return E_FILE_NOEXIST;
   }
+  FD_REGISTER(fd,"Client file (RETR)");
 
   /* get length */
   bytestot = lseek(fd,0,SEEK_END);
@@ -1458,6 +1468,8 @@ int do_retr(char *param, wzd_context_t * context)
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
     if (sock < 0) {
+      file_close(fd,context);
+      FD_UNREGISTER(fd,"Client file (RETR)");
       /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
@@ -1468,10 +1480,13 @@ int do_retr(char *param, wzd_context_t * context)
       param, bytestot);*/
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) < 0) {
+      file_close(fd,context);
+      FD_UNREGISTER(fd,"Client file (RETR)");
       ret = send_message_with_args(501,context,"PASV connection failed");
       return E_PASV_FAILED;
     }
   }
+  FD_REGISTER(sock,"Client data socket (RETR)");
 
   context->datafd = sock;
 
@@ -1601,12 +1616,15 @@ int do_stor(char *param, wzd_context_t * context)
 /*    socket_close(sock);*/
     return E_FILE_NOEXIST;
   }
+  FD_REGISTER(fd,"Client file (STOR)");
 
   if (context->pasvsock < 0) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
     if (sock < 0) {
+      file_close(fd,context);
+      FD_UNREGISTER(fd,"Client file (STOR)");
       /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
@@ -1617,10 +1635,13 @@ int do_stor(char *param, wzd_context_t * context)
       param);*/
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) < 0) {
+      file_close(fd,context);
+      FD_UNREGISTER(fd,"Client file (STOR)");
       ret = send_message_with_args(501,context,"PASV connection failed");
       return E_PASV_FAILED;
     }
   }
+  FD_REGISTER(sock,"Client data socket (STOR)");
 
   context->datafd = sock;
 
@@ -2488,21 +2509,44 @@ void * clientThreadProc(void *arg)
 
   ret = do_login(context);
 
-  if (ret) { /* USER not logged in */
-    socket_close (sockfd);
-    out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
-#ifdef WZD_MULTITHREAD
-    client_die(context);
-#endif /* WZD_MULTITHREAD */
-    return NULL;
-  }
-
+/** \todo XXX FIXME what is the utility of these lines ?! */
 #ifdef BACKEND_STORAGE
   if (mainConfig->backend.backend_storage==1) {
     user = GetUserByID(context->userid);
   } else
 #endif
     user = GetUserByID(context->userid);
+
+  if (ret) { /* USER not logged in */
+    const char * groupname = NULL;
+    const unsigned char * userip = context->hostip;
+    const char * remote_host;
+    struct hostent *h;
+    char inet_str[256];
+
+    socket_close (sockfd);
+
+    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    inet_str[0] = '\0';
+    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    if (h==NULL)
+      remote_host = inet_str;
+    else
+      remote_host = h->h_name;
+    out_log(LEVEL_INFO,"LOGIN FAILURE Client dying (socket %d)\n",sockfd);
+    log_message("LOGIN_FAILED","%s (%s) \"%s\" \"%s\" \"%s\"",
+        (remote_host)?remote_host:"no host !",
+        inet_str,
+        user->username,
+        (groupname)?groupname:"No Group",
+        user->tagline
+        );
+#ifdef WZD_MULTITHREAD
+    client_die(context);
+#endif /* WZD_MULTITHREAD */
+    return NULL;
+  }
 
   context->state = STATE_COMMAND;
 
@@ -2909,6 +2953,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       context->pid_child = 0;*/
       if (context->pasvsock) {
         socket_close(context->pasvsock);
+        FD_UNREGISTER(context->pasvsock,"Client PASV socket");
         context->pasvsock=-1;
       }
       if (context->current_action.current_file) {

@@ -113,11 +113,13 @@ int do_site_test(char *command, wzd_context_t * context)
   out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
   out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
 
-  ret = module_unload(&mainConfig->module,command);
+  fd_dump();
+
+/*  ret = module_unload(&mainConfig->module,command);*/
 
 /*  libtest();*/
 
-/*  ret = 0;*/
+  ret = 0;
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 

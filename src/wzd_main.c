@@ -330,6 +330,8 @@ int main(int argc, char **argv)
   struct stat s;
   const char * ptr;
 
+  wzd_debug_init();
+
 #if 0
   fprintf(stderr,"--------------------------------------\n");
   fprintf(stderr,"\n");

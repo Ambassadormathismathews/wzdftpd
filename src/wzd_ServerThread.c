@@ -524,8 +524,9 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   if (newsock <0)
   {
     out_log(LEVEL_HIGH,"Error while accepting\n");
-    serverMainThreadExit(-1);
+    serverMainThreadExit(-1); /** \todo do not exit server, just client */
   }
+  FD_REGISTER(newsock,"Client socket");
 
   memcpy(userip,remote_host,16);
 
@@ -543,6 +544,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
         global_check_ip_allowed(userip)<=0) { /* IP was rejected */
     /* close socket without warning ! */
     socket_close(newsock);
+    FD_UNREGISTER(newsock,"Client socket");
     out_log(LEVEL_HIGH,"Failed login from %s: global ip rejected\n",
       inet_buf);
     return 1;
@@ -554,7 +556,8 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   context = context_find_free(context_list);
   if (!context) {
     out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
-    close(newsock);
+    socket_close(newsock);
+    FD_UNREGISTER(newsock,"Client socket");
     return 1;
   }
   context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
@@ -584,9 +587,11 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
       return 0;
     }
     out_log(LEVEL_INFO,"Could not get ident (error: %s)\n",strerror(errno));
-    close(newsock);
+    socket_close(newsock);
+    FD_UNREGISTER(newsock,"Client socket");
     return 1;
   }
+  FD_REGISTER(fd_ident,"Ident socket"); /** \todo add more info to description: client number, etc */
 
   /* add connection to ident list */
   i=0;
@@ -656,18 +661,21 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 #ifdef _MSC_VER
           errno = WSAGetLastError();
           socket_close(fd_ident);
+          FD_UNREGISTER(newsock,"Ident socket");
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
 #endif
           if (errno == EINPROGRESS) continue;
           out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
           socket_close(fd_ident);
+          FD_UNREGISTER(fd_ident,"Ident socket");
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
         }
         buffer[ret] = '\0';
 
         socket_close(fd_ident);
+        FD_UNREGISTER(fd_ident,"Ident socket");
 
         /* 5- decode response */
         ptr = strrchr(buffer,':');
@@ -716,12 +724,14 @@ continue_connection:
 #ifdef _MSC_VER
           errno = WSAGetLastError();
           socket_close(fd_ident);
+          FD_UNREGISTER(fd_ident,"Ident socket");
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
 #endif
           if (errno == EINPROGRESS) continue;
           out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
           socket_close(fd_ident);
+          FD_UNREGISTER(fd_ident,"Ident socket");
           /* remove ident connection from list and continues with no ident */
           goto continue_connection;
         }
@@ -1134,6 +1144,7 @@ void serverMainThreadProc(void *arg)
     free_config(mainConfig);
     exit(-1);
   }
+  FD_REGISTER(ret,"Server listening socket");
   {
     int one=1;
 
@@ -1413,6 +1424,7 @@ void serverMainThreadExit(int retcode)
 #endif
   
   close(mainConfig->mainSocket);
+  FD_UNREGISTER(mainConfig->mainSocket,"Server listening socket");
 #ifdef WZD_MULTITHREAD
 #ifndef _MSC_VER
   /* kill all childs threads */
@@ -1464,12 +1476,16 @@ void serverMainThreadExit(int retcode)
   wzd_sem_destroy(limiter_sem);
   wzd_shm_free(context_shm);
   context_list = NULL;
+
+  wzd_debug_fini();
+
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
 #if defined(_MSC_VER)
   WSACleanup();
 #endif
+
 #ifdef DEBUG
   /* reset color, there can be some bad control codes ... */
   fprintf(stdout,"%s",CLR_NOCOLOR);

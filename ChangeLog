@@ -1,3 +1,9 @@
+2004-04-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: failed logins are loggued (message LOGIN_FAILED)
+	* debug: functions to debug file descriptos (FD_REGISTER)
+	* bugfix: possible unclosed file descriptors in RETR and STOR
+
 2004-04-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: site PERM add/change/remove/show
