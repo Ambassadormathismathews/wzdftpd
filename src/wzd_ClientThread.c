@@ -503,9 +503,9 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     if (S_ISDIR(buf.st_mode)) {
       char buffer[2048], buffer2[2048];
       if (wanted_path[0] == '/') { /* absolute path */
-        strcpy(buffer,wanted_path);
+        strncpy(buffer,wanted_path,2048);
       } else {
-        strcpy(buffer,context->currentpath);
+        strncpy(buffer,context->currentpath,2048);
         if (buffer[strlen(buffer)-1] != '/')
           strcat(buffer,"/");
         strcat(buffer,wanted_path);
@@ -608,7 +608,12 @@ int waitconnect(wzd_context_t * context)
     ret = send_message(425,context);
     return -1;
   }
-  
+ 
+#ifdef SSL_SUPPORT
+  if (context->ssl.data_mode == TLS_PRIV)
+    ret = tls_init_datamode(sock, context);
+#endif
+ 
   return sock;
 #if 0
   sock = context->pasvsock;
