@@ -217,7 +217,6 @@ typedef size_t ssize_t;
 #include "wzd_crypt.h"
 #include "wzd_md5crypt.h"
 #include "wzd_strptime.h"
-#include "wzd_strtok_r.h"
 #include "wzd_strtoull.h"
 
 
@@ -339,5 +338,8 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
+#ifndef HAVE_STRTOK_R
+char * strtok_r(char *s, const char *delim, char **last);
+#endif
 
 #endif /* __WZD_TYPES__ */

@@ -3294,10 +3294,13 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 
       if (utf8_to_local_charset(buffer, utf_buf, WZD_BUFFER_LEN, local_charset()))
       {
+        /* XXX FIXME error, but use buffer anyway */
         out_log(LEVEL_NORMAL,"error converting UTF-8 input '%s'\n", buffer);
       }
-
-      wzd_strncpy(buffer, utf_buf, WZD_BUFFER_LEN);
+      else
+      {
+        wzd_strncpy(buffer, utf_buf, WZD_BUFFER_LEN);
+      }
     }
 #endif
 
