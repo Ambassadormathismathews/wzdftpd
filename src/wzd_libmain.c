@@ -27,6 +27,5 @@ void setlib_contextList(wzd_context_t *c)
 
 void libtest(void)
 {
-/*  fprintf(mainConfig->logfile,"TEST LIB OK\n");*/
   out_log(LEVEL_CRITICAL,"TEST LIB OK\n");
 }
