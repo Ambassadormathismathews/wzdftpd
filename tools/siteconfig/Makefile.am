@@ -5,6 +5,6 @@ bin_PROGRAMS = siteconfig
 
 siteconfig_SOURCES = siteconfig.c
 
-siteconfig_LDFLAGS = @SSL_LDFLAGS@ -no-undefined -L../../src/.libs -lwzd @DL_FLAGS@
+siteconfig_LDFLAGS = @SSL_LDFLAGS@ -no-undefined -L../../src -L../../src/.libs -lwzd @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
 AM_CPPFLAGS = -DSSL_SUPPORT=1

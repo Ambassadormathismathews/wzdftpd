@@ -84,8 +84,7 @@ AC_CHECK_FUNCS([inet_ntop])
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
-AC_CHECK_LIB(pthread, pthread_create,PTHREAD_FLAGS="-lpthread")
-AC_PTHREAD_FREEBSD
+ACX_PTHREAD(,exit 1)
 
 # Build options string
 WZD_BUILD_OPTS="threads"
