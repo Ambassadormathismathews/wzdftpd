@@ -272,7 +272,8 @@ int main(int argc, char **argv)
   stay_foreground = 1;
 #endif
   /* default value */
-  strcpy(configfile_name,"wzd.cfg");
+/*  strcpy(configfile_name,"wzd.cfg");*/
+  configfile_name[0]='\0';
 
   if (argc > 1) {
     ret = main_parse_args(argc,argv);

@@ -1853,6 +1853,8 @@ wzd_config_t * readConfigFile(const char *fileName)
   unsigned int token;
   int ret;
 
+  if (!fileName || strlen(fileName)==0) return NULL;
+
   yyin = fopen(fileName,"r");
   if (!yyin) {
 /*    fprintf(stderr,"Unable to open file\n");*/

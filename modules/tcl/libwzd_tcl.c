@@ -106,6 +106,21 @@ static int tcl_vars(ClientData data, Tcl_Interp *interp, int argc, const char *a
 
 int WZD_MODULE_INIT(void)
 {
+#ifdef _MSC_VER
+  {
+    char buffer[MAX_PATH+1];
+    char *p;
+
+    GetModuleFileName(NULL,buffer,sizeof(buffer));
+    /* converts path to tcl format */
+    for (p=buffer; *p!='\0'; p++) {
+      if (*p=='\\') *p = '/';
+    }
+    Tcl_FindExecutable(buffer);
+  }
+#else
+  Tcl_FindExecutable("wzdftpd");
+#endif /* _MSC_VER */
   interp = Tcl_CreateInterp();
   if (!interp) {
     out_log(LEVEL_HIGH,"TCL could not create interpreter\n");
@@ -175,7 +190,7 @@ static int tcl_hook_protocol(const char *file, const char *args)
   Tcl_SetVar(interp,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
   Tcl_SetVar(interp,TCL_ARGS,args,TCL_GLOBAL_ONLY);
 
-  Tcl_EvalFile(interp, file);
+  ret = Tcl_EvalFile(interp, file);
 
   /* XXX FIXME should we call Tcl_DecrRefCount() ? */
   current_context = NULL;
