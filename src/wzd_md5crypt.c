@@ -10,9 +10,7 @@
 #include "wzd_md5.h"
 #include "wzd_md5crypt.h"
 
-#ifdef WIN32
 typedef struct MD5Context MD5_CTX;
-#endif
 
 static unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
   "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
