@@ -178,7 +178,8 @@ out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
       limiter_add_bytes(&context->current_dl_limiter,limiter_sem,n,0);
 /*      limiter_add_bytes(context->current_limiter,n,0);*/
       user->stats.bytes_dl_total += n;
-      user->credits -= n;
+      if (user->ratio)
+        user->credits -= n;
       context->idle_time_data_start = time(NULL);
     } else { /* end */
       close(context->current_action.current_file);
