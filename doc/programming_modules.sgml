@@ -187,10 +187,10 @@ The following variable names are available for vars_group get/set:</para>
 <row><entry>Variable</entry><entry>Description</entry></row>
 
 <row><entry>home</entry><entry>Group's default home directory</entry></row>
-<row><entry>max_dl</entry><entry>User's download limit</entry></row>
-<row><entry>max_ul</entry><entry>User's upload limit</entry></row>
-<row><entry>name</entry><entry>User's login name</entry></row>
-<row><entry>tag</entry><entry>User's tagline (or description)</entry></row>
+<row><entry>max_dl</entry><entry>Group's download limit</entry></row>
+<row><entry>max_ul</entry><entry>Group's upload limit</entry></row>
+<row><entry>name</entry><entry>Group's login name</entry></row>
+<row><entry>tag</entry><entry>Group's tagline (or description)</entry></row>
 </tbody>
 </tgroup>
 </table>
