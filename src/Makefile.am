@@ -62,6 +62,8 @@ wzdFTPd_SOURCES =    \
 	wzd_ServerThread.h \
 	wzd_site.c         \
 	wzd_site.h         \
+	wzd_site_group.c    \
+	wzd_site_group.h    \
 	wzd_site_user.c    \
 	wzd_site_user.h    \
 	wzd_socket.c       \
