@@ -1,4 +1,9 @@
 
+LIBWZD_CURRENT=1
+LIBWZD_REVISION=1
+LIBWZD_AGE=0
+
+LT_VERSION_INFO=${LIBWZD_CURRENT}:${LIBWZD_REVISION}:${LIBWZD_AGE}
 
 #libexecdir = ${prefix}/lib
 #libdir = ${prefix}/lib
@@ -60,7 +65,7 @@ libwzd_la_SOURCES =  \
 
 nodist_libwzd_la_SOURCES = wzd_cookie_lex.l
 
-libwzd_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -avoid-version -module -no-undefined
+libwzd_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERSION_INFO} -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
 
