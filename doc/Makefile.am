@@ -38,6 +38,10 @@ wzdftpd-doc/wzdftpd.pdf: $(ALL_SGML_FILES) $(EXAMPLES)
 clean-local:
 	rm -f wzdftpd-doc/*.html wzdftpd-doc/*.php wzdftpd-doc/*.pdf wzdftpd-doc/*.out
 
+else
+
+clean-local:
+
 endif
 
 EXTRA_DIST = $(ALL_SGML_FILES) $(HTML_DEPS) $(MAIN_SGML_FILE) $(EXAMPLES) fix_css.sh add_header_footer.pl wzd_custom.dsl
