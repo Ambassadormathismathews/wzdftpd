@@ -52,6 +52,8 @@ AC_DEFUN([WZD_LIB_TCL],
   # test the location !
   if test "$found" != "not"; then
 
+    WZD_LIB_TCL_save_cppflags="$CPPFLAGS"
+
     . $place/tclConfig.sh
 
     WZD_TCL_LIBS=$(eval echo $TCL_LIB_SPEC)
