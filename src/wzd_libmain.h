@@ -30,8 +30,14 @@
 typedef enum {
   SET_MUTEX_GLOBAL=0,
 
+  SET_MUTEX_SHVARS,
+
   SET_MUTEX_LIMITER,
+
+  SET_MUTEX_PERMISSION,
   SET_MUTEX_DIRINFO,
+  SET_MUTEX_FILE_T,
+  SET_MUTEX_ACL_T,
 
   SET_MUTEX_NUM /* must be last */
 } wzd_set_mutext_t;

@@ -931,6 +931,7 @@ int server_switch_to_config(wzd_config_t *config)
     FD_REGISTER(mainConfig->controlfd,"Server control fd");
   }
 #endif /* _MSC_VER */
+#endif /* 0 */
 
 #ifndef WIN32
   /* if running as root, we must give up root rigths for security */
@@ -942,7 +943,6 @@ int server_switch_to_config(wzd_config_t *config)
     }
   }
 #endif /* WIN32 */
-#endif
 
 
   context_list = wzd_malloc(sizeof(List));

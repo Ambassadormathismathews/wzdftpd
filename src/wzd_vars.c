@@ -48,6 +48,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_libmain.h"
 #include "wzd_misc.h"
 
 #include "wzd_vars.h"
@@ -63,7 +64,6 @@
 
 
 static struct wzd_shm_vars_t * _shm_vars[32] = { NULL };
-static wzd_mutex_t * _shm_mutex = NULL;
 
 
 
@@ -671,10 +671,6 @@ static unsigned int _str_hash(const char *key)
 void vars_shm_init(void)
 {
   memset(_shm_vars, 0, sizeof(_shm_vars));
-  if (_shm_mutex) {
-    wzd_mutex_destroy(_shm_mutex);
-  }
-  _shm_mutex = wzd_mutex_create(0x5566423);
 }
 
 void vars_shm_free(void)
@@ -682,7 +678,7 @@ void vars_shm_free(void)
   unsigned int i;
   struct wzd_shm_vars_t * var, * next_var;
 
-  wzd_mutex_lock(_shm_mutex);
+  WZD_MUTEX_LOCK(SET_MUTEX_SHVARS);
   for (i=0; i<32; i++)
   {
     var = _shm_vars[i];
@@ -699,11 +695,7 @@ void vars_shm_free(void)
       var = next_var;
     }
   }
-  wzd_mutex_unlock(_shm_mutex);
-  if (_shm_mutex) {
-    wzd_mutex_destroy(_shm_mutex);
-    _shm_mutex = NULL;
-  }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_SHVARS);
 }
 
 /* finds shm entry corresponding to 'varname'
@@ -734,13 +726,18 @@ struct wzd_shm_vars_t * vars_shm_find(const char *varname, wzd_config_t * config
 int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
 {
   struct wzd_shm_vars_t * var;
+  int ret = 1;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_SHVARS);
   var = vars_shm_find(varname, config);
-  if (!var) return 1;
 
-  memcpy(data, var->data, MIN(datalength,var->datalength));
+  if (var) {
+    memcpy(data, var->data, MIN(datalength,var->datalength));
+    ret = 0;
+  }
 
-  return 0;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_SHVARS);
+  return ret;
 }
 
 /* change varname with data contents size of data is datalength
@@ -750,6 +747,8 @@ int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_c
 int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
 {
   struct wzd_shm_vars_t * var;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_SHVARS);
 
   var = vars_shm_find(varname, config);
 
@@ -766,13 +765,10 @@ int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_c
     memcpy(var->data, data, datalength);
     var->datalength = datalength;
 
-    wzd_mutex_lock(_shm_mutex);
     /* insertion */
     var->next_var = _shm_vars[index];
     _shm_vars[index] = var;
-    wzd_mutex_unlock(_shm_mutex);
   } else {
-    wzd_mutex_lock(_shm_mutex);
     /* modification */
     if (datalength < var->datalength)
       memcpy(var->data, data, datalength);
@@ -781,8 +777,8 @@ int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_c
       memcpy(var->data, data, datalength);
       var->datalength = datalength;
     }
-    wzd_mutex_unlock(_shm_mutex);
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_SHVARS);
 
   return 0;
 }

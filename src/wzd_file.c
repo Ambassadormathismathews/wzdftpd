@@ -144,6 +144,7 @@ void free_file_recursive(struct wzd_file_t * file)
   wzd_acl_line_t *acl_current,*acl_next;
 
   if (!file) return;
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   do {
     next_file = file->next_file;
     acl_current = file->acl;
@@ -158,17 +159,22 @@ void free_file_recursive(struct wzd_file_t * file)
     wzd_free (file);
     file = next_file;
   } while (file);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
 }
 
 static struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
 {
   struct wzd_file_t *current=first;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   while (current) {
-    if (strcmp(name,current->filename)==0)
+    if (strcmp(name,current->filename)==0) {
+      WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
       return current;
+    }
     current = current->next_file;
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
   return NULL;
 }
 
@@ -178,11 +184,13 @@ static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **fir
 
   if (!current) return NULL;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   /* first to be removed ? */
   if (strcmp(name,current->filename)==0) {
     removed = current;
     *first = removed->next_file;
     removed->next_file = NULL;
+    WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
     return removed;
   }
 
@@ -194,11 +202,13 @@ static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **fir
       removed = current;
       prev->next_file = current->next_file;
       current->next_file = NULL;
+      WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
       return removed;
     }
     prev = current;
     current = current->next_file;
   } /* while current */
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
   return NULL;
 }
 
@@ -212,6 +222,7 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
     return;
   }
 
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   while (it) {
     if (strcmp(entry->filename,it->filename)>0)
     {
@@ -226,6 +237,7 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
     if (itp == NULL) {
       entry->next_file = *tab;
       *tab = entry;
+      WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
       return;
     }
 
@@ -233,6 +245,7 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
     entry->next_file = it;
     itp->next_file = entry;
 
+    WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
     return;
   }
 
@@ -240,6 +253,7 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
   /* itp can't be NULL here, the first case would have trapped it */
   itp->next_file = entry;
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
   return;
 }
 
@@ -248,11 +262,15 @@ wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
 {
   wzd_acl_line_t *current = file->acl;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_ACL_T);
   while (current) {
-    if (strcmp(username,current->user)==0)
+    if (strcmp(username,current->user)==0) {
+      WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
       return current;
+    }
     current = current->next_acl;
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
   return NULL;
 }
 
@@ -261,6 +279,7 @@ static struct wzd_file_t * add_new_file(const char *name, const char *owner, con
 {
   struct wzd_file_t *current, *new_file;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   new_file = wzd_malloc(sizeof(struct wzd_file_t));
   strncpy(new_file->filename,name,256);
   memset(new_file->owner,0,256);
@@ -280,6 +299,7 @@ static struct wzd_file_t * add_new_file(const char *name, const char *owner, con
       current = current->next_file;
     current->next_file = new_file;
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
   return new_file;
 }
 
@@ -290,6 +310,7 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
 
   if (!file_cur) return NULL;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_FILE_T);
   new_file = wzd_malloc(sizeof(struct wzd_file_t));
   memcpy(new_file, file_cur, sizeof(struct wzd_file_t));
   if (file_cur->data)
@@ -314,6 +335,7 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
   /* exception: we set next_file to NULL to avoid side effects */
   new_file->next_file = NULL;
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
   return new_file;
 }
 
@@ -321,6 +343,8 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
 void addAcl(const char *filename, const char *user, const char *rights, struct wzd_file_t * file)
 {
   wzd_acl_line_t * acl_current, * acl_new;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_ACL_T);
 
   acl_new = wzd_malloc(sizeof(wzd_acl_line_t));
   strncpy(acl_new->user,user,256);
@@ -331,6 +355,7 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
   if (!acl_current) { /* simple case, first insertion */
     file->acl = acl_new;
     acl_new->next_acl = NULL;
+    WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
     return;
   }
 
@@ -338,6 +363,7 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
     if (strcmp(acl_current->user,user)==0) { /* found ! */
       strncpy(acl_current->perms,rights,3); /* replace old perms */
       wzd_free (acl_new);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
       return;
     }
     acl_current = acl_current->next_acl;
@@ -346,6 +372,7 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
   /* new acl for this file */
   acl_new->next_acl = file->acl;
   file->acl = acl_new;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
 }
 
 /** \todo should be "atomic" */
@@ -361,8 +388,13 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 
   current_file = *pTabFiles;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_DIRINFO);
   fp = wzd_cache_open(permfile,O_RDONLY,0644);
-  if (!fp) { wzd_cache_close(fp); return E_FILE_NOEXIST; }
+  if (!fp) {
+    wzd_cache_close(fp);
+    WZD_MUTEX_UNLOCK(SET_MUTEX_DIRINFO);
+    return E_FILE_NOEXIST;
+  }
 
   ptr = (char*)current_file;
   current_file = NULL;
@@ -420,6 +452,8 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   }
 
   wzd_cache_close(fp);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_DIRINFO);
+
   return E_OK;
 }
 
@@ -442,7 +476,10 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   WZD_MUTEX_LOCK(SET_MUTEX_DIRINFO);
 
   fp = fopen(permfile,"w"); /* overwrite any existing file */
-  if (!fp) return -1;
+  if (!fp) {
+    WZD_MUTEX_UNLOCK(SET_MUTEX_DIRINFO);
+    return -1;
+  }
 
   /* if file_cur->filename contains spaces, we MUST quote it when writing name */
   while (file_cur) {
@@ -794,6 +831,8 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   out_err(LEVEL_FLOOD,"_setPerm: dir %s filename %s wanted file %s\n",dir,perm_filename,stripped_filename);
 #endif
 
+  WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
+
   ret = readPermFile(perm_filename,&file_list);
   if (ret) { /* no permissions file */
     file_cur = add_new_file(stripped_filename,0,0,&file_list);
@@ -830,6 +869,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   free_file_recursive(file_list);
   file_list = NULL;
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
   return 0;
 }
 
@@ -923,6 +963,8 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,src_perm_filename,src_s
 fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_stripped_filename);
 #endif
 
+  WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
+
   ret = readPermFile(src_perm_filename,&src_file_list);
   if (ret) { /* no permissions file */
     file_dst = NULL;
@@ -969,6 +1011,7 @@ fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,dst_perm_filename,dst_s
   free_file_recursive(dst_file_list);
   dst_file_list = NULL;
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
   return 0;
 }
 
@@ -1251,6 +1294,7 @@ int softlink_remove(const char *linkname)
   strncpy(stripped_filename, ptr, WZD_MAX_PATH);
   strncpy(ptr, HARD_PERMFILE, WZD_MAX_PATH - (ptr-perm_filename));
 
+  WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
   /* read perm file */
   ret = readPermFile(perm_filename,&perm_list);
 
@@ -1261,7 +1305,8 @@ int softlink_remove(const char *linkname)
     {
       free_file_recursive(perm_list);
       out_err(LEVEL_FLOOD, "symlink: trying to remove something that is not a link (%s)\n", linkname);
-     return -1;
+      WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
+      return -1;
     }
 
     file_cur = remove_file(stripped_filename, &perm_list);
@@ -1274,6 +1319,7 @@ int softlink_remove(const char *linkname)
   }
 
   perm_list = NULL;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
 
   return 0;
 }
@@ -1542,6 +1588,7 @@ int file_remove(const char *filename, wzd_context_t * context)
   if (ret)
     return 1;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_PERMISSION);
   /* remove name in perm file !! */
   ret = readPermFile(perm_filename,&file_list);
   if (!ret) {
@@ -1555,8 +1602,10 @@ int file_remove(const char *filename, wzd_context_t * context)
 #ifdef DEBUG
 fprintf(stderr,"remove error %d (%s)\n", errno, strerror(errno));
 #endif
+    WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
     return 1;
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
 
   return 0;
 }
