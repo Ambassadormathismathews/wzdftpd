@@ -115,7 +115,7 @@ InputDir=\HOMEDIR\wzdftpd\src
 InputPath=..\src\wzd_init_lex.l
 InputName=wzd_init_lex
 
-"$(InputName).l.c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	.\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
 
 # End Custom Build

@@ -903,7 +903,12 @@ void serverMainThreadProc(void *arg)
   {
     int fd;
     char buf[64];
+#ifndef _MSC_VER
     fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+#else
+	/* ignore if file exists for visual version ... */
+    fd = open(mainConfig->pid_file,O_WRONLY | O_CREAT,0644);
+#endif
     snprintf(buf,64,"%ld\n\0",(unsigned long)getpid());
     if (fd==-1) {
       fprintf(stderr,"Unable to open pid file %s\n",strerror(errno));

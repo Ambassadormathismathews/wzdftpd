@@ -121,6 +121,8 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     path[length++] = '/';
     path[length]='\0';
   }
+
+  DIRNORM(backend,strlen(backend));
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)
@@ -237,6 +239,8 @@ int backend_init(const char *backend, int *backend_storage, wzd_user_t * user_li
     path[length++] = '/';
     path[length]='\0';
   }
+
+  DIRNORM(backend,strlen(backend));
   /* TODO if backend name already contains .so, do not add .o */
   /* if backend name contains /, do not add path */
   if (strchr(backend,'/')==NULL)

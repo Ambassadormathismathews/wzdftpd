@@ -1035,6 +1035,20 @@ void ascii_lower(char * s, unsigned int length)
 }
 
 
+/* replace all \ with / and lower string */
+void win_normalize(char * s, unsigned int length)
+{
+  register int i=0;
+  while (i<length) {
+    if (s[i] >= 'A' && s[i] <= 'Z') {
+      s[i] |= 0x20;
+    }
+	if (s[i] == '\\') s[i] = '/';
+    i++;
+  }
+}
+
+
 int ip_inlist(wzd_ip_t *list, const char *ip)
 {
   wzd_ip_t * current_ip;

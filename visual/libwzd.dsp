@@ -122,7 +122,7 @@ InputDir=\HOMEDIR\wzdftpd\src
 InputPath=..\src\wzd_cookie_lex.l
 InputName=wzd_cookie_lex
 
-"$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	.\flex\Release\flex.exe -t $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).c
 
 # End Custom Build

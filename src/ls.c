@@ -157,9 +157,10 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
         continue;
       }
       strncpy(buffer_vfs,ptr_out,4096);
-      free(ptr_out);
+      wzd_free(ptr_out);
 
-      if (strncmp(buffer_vfs,directory,strlen(directory))==0) {
+      if (DIRNCMP(buffer_vfs,directory,strlen(directory))==0)
+	  {
 	char * ptr = buffer_vfs + strlen(directory) + vfs_pad;
 	if (strchr(ptr,'/')==NULL) {
 	  if (stat(vfs->physical_dir,&st)<0) {
@@ -414,7 +415,7 @@ int list(int sock,wzd_context_t * context,list_type_t format,char *directory,cha
 
 int guess_star(char *str,char *mask) {
   /* pump from here !!! */
-  int i=0;
+  unsigned int i=0;
 
 #ifdef DEBUG
   /*  fprintf(stderr,"Entered guess_star(%s,%s).\n",str,mask);*/

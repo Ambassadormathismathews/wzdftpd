@@ -85,6 +85,9 @@
         continue; \
       }
 
+#define DIRCMP	strcasecmp
+#define DIRNCMP	strncasecmp
+#define DIRNORM(s,l) win_normalize(s,l)
 
 
 #define chmod	_chmod
@@ -159,6 +162,11 @@
 #include <sys/time.h> /* struct timeval */
 
 #define DIR_CONTINUE continue;
+
+#define DIRCMP	strcmp
+#define DIRNCMP	strncmp
+
+#define DIRNORM(x,l)
 
 #endif /* _MSC_VER */
 

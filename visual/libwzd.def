@@ -122,6 +122,7 @@ EXPORTS
 	vfs_remove
 	vfs_replace
 	vfs_replace_cookies
+	win_normalize
 	wzd_cache_close
 	wzd_cache_gets
 	wzd_cache_getsize

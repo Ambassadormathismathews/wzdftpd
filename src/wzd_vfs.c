@@ -139,6 +139,8 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   new_vfs = wzd_malloc(sizeof(wzd_vfs_t));
   if (!new_vfs) return 1;
 
+  DIRNORM(vpath,strlen(vpath));
+  DIRNORM(path,strlen(path));
   new_vfs->virtual_dir = strdup(vpath);
   new_vfs->physical_dir = strdup(path);
   if (target)
@@ -247,7 +249,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
     strncpy(buffer_vfs,ptr_out,4096);
     wzd_free(ptr_out);
 
-    if (strncmp(buffer_vfs,buffer,strlen(buffer_vfs))==0
+    if (DIRNCMP(buffer_vfs,buffer,strlen(buffer_vfs))==0
 	&&
 	(buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
 	strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
@@ -478,7 +480,7 @@ printf("Converted to: '%s'\n",path);
   if (path[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
   /* check if user is allowed to even see the path */
-  if (strncmp(cmd,allowed,strlen(allowed))) return 1;
+  if (DIRNCMP(cmd,allowed,strlen(allowed))) return 1;
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,2048,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';

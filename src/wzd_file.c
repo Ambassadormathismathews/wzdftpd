@@ -560,7 +560,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     /* if dir is not a vfs, we can have a vfile */
     vfs = mainConfig->vfs;
     while(vfs) {
-      if (strcmp(filename,vfs->physical_dir)==0)
+      if (DIRCMP(filename,vfs->physical_dir)==0)
 	return _checkFileForPerm(dir,stripped_filename,wanted_right,user);
       vfs = vfs->next_vfs;
     }
