@@ -5,29 +5,30 @@ set -e
 # Source debconf library.
 . /usr/share/debconf/confmodule
 
-CONFIG=/etc/wzdftpd/wzd.cfg
-PID_DIR=/var/run/wzdftpd
+# helper functions
 
-if [ "$1" != "configure" ]; then
-	exit 0
-fi
+replace_file () {
+    file=$1
+    if [ ! -f ${file} ] ; then
+      mv ${file}.wzdftpd-new ${file}
+    else
+      cp $file ${file}.wzdftpd-old
+      ucf --three-way --debconf-ok ${file}.wzdftpd-new $file
+    fi
+}
 
-if [ -f $CONFIG ]; then
-	if [ ! -d $PID_DIR ]; then
-	  mkdir $PID_DIR
-	fi
-	if grep -q "^pid_file[[:space:]]*=[[:space:]]*.*" $CONFIG
-	then
-	  sed -e "s|^pid_file[[:space:]]*=[[:space:]]*.*|pid_file = $PID_DIR/wzdftpd.pid|" $CONFIG >$CONFIG.wzdconf
-	  chmod --reference=$CONFIG $CONFIG.wzdconf
-	  mv $CONFIG.wzdconf $CONFIG
-	else
-	  echo "pid_file = $PID_DIR/wzdftpd.pid" >> $CONFIG
-	fi
-	if (id ftp &>/dev/null) ; then
-	  chown ftp $PID_DIR
-	fi
-fi
+do_update () {
+    file=$1
+    if diff -q ${file} ${file}.wzdftpd-new >/dev/null 2>&1; then
+        # Old file and new file are identical
+        rm -f ${file}.wzdftpd-new
+    else
+        replace_file $file
+    fi
+}
+
+
+# real config
 
 # summary of how this script can be called:
 #        * <postinst> `configure' <most-recently-configured-version>
@@ -40,6 +41,41 @@ fi
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 #
+
+CONF="/etc/wzdftpd/wzd.cfg"
+CONF_NEW="/etc/wzdftpd/wzd.cfg.wzdftpd-new"
+
+PID_DIR=/var/run/wzdftpd
+
+if [ "$1" != "configure" ]; then
+	exit 0
+fi
+
+if [ "$1" = "configure" ]; then
+
+    # merge configuration
+    cp /usr/share/doc/wzdftpd/examples/wzd.cfg.sample $CONF_NEW
+
+    do_update $CONF
+fi
+
+if [ -f $CONF ]; then
+	if [ ! -d $PID_DIR ]; then
+	  mkdir $PID_DIR
+	fi
+	if grep -q "^pid_file[[:space:]]*=[[:space:]]*.*" $CONF
+	then
+	  sed -e "s|^pid_file[[:space:]]*=[[:space:]]*.*|pid_file = $PID_DIR/wzdftpd.pid|" $CONF >$CONF.wzdconf
+	  chmod --reference=$CONF $CONF.wzdconf
+	  mv $CONF.wzdconf $CONF
+	else
+	  echo "pid_file = $PID_DIR/wzdftpd.pid" >> $CONF
+	fi
+	if (id ftp &>/dev/null) ; then
+	  chown ftp $PID_DIR
+	fi
+fi
+
 
 case "$1" in
     configure)

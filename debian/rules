@@ -103,8 +103,12 @@ install-arch:
 
 	# TODO since we install in standard dir, the following is becoming
 	# useless ??
-	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/html
-	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/wzdftpd/html
+	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/html ;\
+	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/doc/wzdftpd/html;\
+
+	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	install -m 644 src/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	install -m 644 src/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples
 
 	# we don't need them, and dh_install complains !
 	# so i remove them (was proposed on #debian-devel)
@@ -137,7 +141,7 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_strip
-	dh_compress 
+	dh_compress -Xwzd.cfg.sample
 	dh_fixperms
 #	dh_perl
 #	dh_python
