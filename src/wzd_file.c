@@ -1770,7 +1770,7 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
 
   fd = open(file,O_RDWR);
   if (fd < 0) return -1;
-  
+
 #ifndef _MSC_VER
   {
     struct flock lck;

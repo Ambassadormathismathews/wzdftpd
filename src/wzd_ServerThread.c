@@ -523,7 +523,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   unsigned char userip[16];
   int newsock, fd_ident;
   unsigned short ident_port = 113;
-  wzd_context_t	* context;
+  wzd_context_t * context;
   int context_index;
   int i;
 
@@ -558,14 +558,14 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   }
 
   out_log(LEVEL_NORMAL,"Connection opened from %s\n", inet_buf);
-    
+
   /* 1. create new context */
   context = context_find_free(context_list);
   if (!context) {
     out_log(LEVEL_CRITICAL,"Could not get a free context - hard user limit reached ?\n");
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
-    return 1;
+    return 2;
   }
   context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
@@ -596,7 +596,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     out_log(LEVEL_INFO,"Could not get ident (error: %s)\n",strerror(errno));
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
-    return 1;
+    return 3;
   }
   FD_REGISTER(fd_ident,"Ident socket"); /** \todo add more info to description: client number, etc */
 
@@ -1455,7 +1455,7 @@ void serverMainThreadProc(void *arg)
     time (&server_time);
 /*    out_err(LEVEL_FLOOD,".");*/
 /*    fflush(stderr);*/
-    
+
     switch (ret) {
     case -1: /* error */
       if (errno == EINTR) continue; /* retry */
@@ -1478,9 +1478,9 @@ void serverMainThreadProc(void *arg)
       /* check ident timeout */
       server_ident_timeout_check();
       if (FD_ISSET(mainConfig->mainSocket,&r_fds)) {
-        if (server_add_ident_candidate(mainConfig->mainSocket)) {
-          out_log(LEVEL_NORMAL,"could not add connection for ident (%s) :%s:%d\n",
-              strerror(errno), __FILE__, __LINE__);
+        if ((ret=server_add_ident_candidate(mainConfig->mainSocket))) {
+          out_log(LEVEL_NORMAL,"could not add connection for ident: %d (errno: %d: %s) :%s:%d\n",
+              ret, errno, strerror(errno), __FILE__, __LINE__);
           continue; /* possible cause of error: global ip rejected */
 /*          serverMainThreadExit(-1);*/
           /* we abort, so we never returns */

@@ -1,5 +1,16 @@
    NEWS file for wzdftpd
 
+0.4.2: September 29 2004
+
+Again, bugfixes. Problems were detected and fixed on permissions, gadmins,
+groups, and paths on windows.
+
+0.4.1: September 15 2004
+
+Bugfixes ! The previous rewrite of users management has broken many things,
+so this release should make the server usable again.
+
+
 0.4.0: August 26 2004
 
  Many features / parts rewritten:
