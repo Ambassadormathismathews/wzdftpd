@@ -1088,6 +1088,10 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       memset(&user_pool[count],0,sizeof(wzd_user_t));
       return 0;
     }
+    /* basic verification: trying to commit on self ? then ok */
+    if (&user_pool[count] == user) {
+      return 0;
+    }
     if (mod_type & _USER_USERNAME) strcpy(user_pool[count].username,user->username);
     if (mod_type & _USER_USERPASS) {
       if (strcasecmp(user->userpass,"%")==0) {
@@ -1159,6 +1163,10 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
        *   in middle of functions it will cause unstability
        */
       memset(&group_pool[count],0,sizeof(wzd_group_t));
+      return 0;
+    }
+    /* basic verification: trying to commit on self ? then ok */
+    if (&group_pool[count] == group) {
       return 0;
     }
     if (mod_type & _GROUP_GROUPNAME) strcpy(group_pool[count].groupname,group->groupname);
