@@ -1,3 +1,7 @@
+2005-01-28  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: disable file cache code, it is broken (not thread-safe)
+
 2005-01-25  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: added event DELE when a file is deleted

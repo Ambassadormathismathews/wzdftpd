@@ -54,6 +54,7 @@
 
 
 #include "wzd_structs.h"
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
@@ -114,6 +115,7 @@ u64_t wzd_cache_getsize(wzd_cache_t *c)
 
 wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 {
+#ifdef ENABLE_CACHE
   wzd_cache_t * cache;
   wzd_internal_cache_t * c;
   struct statbuf s;
@@ -157,6 +159,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     cache = malloc(sizeof(wzd_cache_t));
     cache->current_location = 0;
     cache->cache = c;
+    c->use++;
 #ifdef WZD_DBG_CACHE
     out_err(LEVEL_FLOOD,"Cache HIT %s\n",file);
 #endif
@@ -165,14 +168,14 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 
   /* MISS */
 #ifdef WZD_DBG_CACHE
-  out_err(LEVEL_FLOOD,"Cache MISS %s\n",file);
+  out_err(LEVEL_FLOOD,"Cache MISS %s (%d)\n",file,fd);
 #endif
 
   cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
   c = malloc(sizeof(wzd_internal_cache_t));
   c->fd = fd;
   c->filename_hash = hash;
-  c->use = 0;
+  c->use = 1;
   c->mtime = s.st_mtime;
   cache->cache = c;
   cache->current_location = 0;
@@ -182,7 +185,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     c->data = NULL;
     c->datasize = 0;
   } else {
-	length = (unsigned int)l64;
+    length = (unsigned int)l64;
     c->data = malloc(length+1);
     if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
       out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",ret,length);
@@ -198,10 +201,46 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   global_cache = c;
 
   return cache;
+#else /* ENABLE_CACHE */
+
+  struct statbuf s;
+  wzd_cache_t * cache;
+  wzd_internal_cache_t * c;
+  int fd;
+  u64_t l64;
+
+  if (!file) return NULL;
+
+#ifdef _MSC_VER
+  flags |= _O_BINARY;
+#endif
+
+  fd = fs_open(file,flags,mode);
+  if (fd==-1) return NULL;
+
+  if (fs_fstat(fd,&s)) { close(fd); return NULL; }
+  FD_REGISTER(fd,"Cached file");
+
+  cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
+  c = malloc(sizeof(wzd_internal_cache_t));
+  c->fd = fd;
+  c->filename_hash = 0;
+  c->use = 1;
+  c->mtime = s.st_mtime;
+  cache->cache = c;
+  cache->current_location = 0;
+  l64 = s.st_size;
+  c->data = NULL;
+  c->datasize = 0;
+
+  return cache;
+  
+#endif /* ENABLE_CACHE */
 }
 
 wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode)
 {
+#ifdef ENABLE_CACHE
   wzd_cache_t * cache;
   struct statbuf s;
   unsigned long hash;
@@ -212,11 +251,11 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 
   fd = fs_open(file,flags,mode);
   if (fd==-1) return NULL;
-  FD_REGISTER(fd,"Cached file");
 
   if (fs_fstat(fd,&s)) { close(fd); return NULL; }
+  FD_REGISTER(fd,"Cached file");
 
-  if (c->fd != -1) { close(c->fd); FD_UNREGISTER(fd,"Cached file"); }
+  if (c->fd != -1) { close(c->fd); FD_UNREGISTER(c->fd,"Cached file"); }
   if (c->data) free(c->data);
 
   cache = malloc(sizeof(wzd_cache_t));
@@ -226,6 +265,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   cache->cache = c;
   cache->current_location = 0;
   length = s.st_size;
+  c->use++;
   if (length > MAX_CACHE_FILE_LEN) {
     out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
     c->data = NULL;
@@ -244,11 +284,56 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
 
   return cache;
 
+#else /* ENABLE_CACHE */
+
+  struct statbuf s;
+  wzd_cache_t * cache;
+  wzd_internal_cache_t c2, c_old;
+  int fd;
+  u64_t l64;
+
+  if (!file) return NULL;
+
+#ifdef _MSC_VER
+  flags |= _O_BINARY;
+#endif
+
+  fd = fs_open(file,flags,mode);
+  if (fd==-1) return NULL;
+
+  if (fs_fstat(fd,&s)) { close(fd); return NULL; }
+  FD_REGISTER(fd,"Cached file");
+
+  cache = (wzd_cache_t*)malloc(sizeof(wzd_cache_t));
+  c2.fd = fd;
+  c2.filename_hash = 0;
+  c2.use = 1;
+  c2.mtime = s.st_mtime;
+  cache->cache = c;
+  cache->current_location = 0;
+  l64 = s.st_size;
+  c2.data = NULL;
+  c2.datasize = 0;
+
+  /* atomic part */
+  memcpy(&c_old, c, sizeof(wzd_internal_cache_t));
+  memcpy(c, &c2, sizeof(wzd_internal_cache_t));
+
+  if (c_old.fd) {
+    FD_UNREGISTER(c_old.fd, "Cached file");
+    close(c_old.fd);
+  }
+  if (c_old.data) free(c_old.data);
+
+  return cache;
+  
+#endif /* ENABLE_CACHE */
 }
 
 /** force update of specific file, only if present in cache */
 void wzd_cache_update(const char *file)
 {
+#ifdef ENABLE_CACHE
   wzd_internal_cache_t * c;
   unsigned long hash;
 
@@ -262,6 +347,11 @@ void wzd_cache_update(const char *file)
 /*    out_err(LEVEL_FLOOD,"cache refresh forced\n");*/
     (void)wzd_cache_refresh(c,file,O_RDONLY,0600);
   }
+#else /* ENABLE_CACHE */
+
+  out_err(LEVEL_HIGH,"*** warning *** call to %s\n",__FUNCTION__);
+  
+#endif /* ENABLE_CACHE */
 }
 
 int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
@@ -272,6 +362,7 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
 /*  out_err(LEVEL_FLOOD,"cache read\n");*/
   /* if in cache, read data and pay attention to size ! */
   /* is file stored in cache ? */
+#ifdef ENABLE_CACHE
   if (cache->data) {
     if ( (c->current_location+count) <= cache->datasize ) {
       memcpy(buf,cache->data + c->current_location,count);
@@ -282,13 +373,16 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
     c->current_location = cache->datasize;
     return (int)(cache->datasize-c->current_location);
   } else { /* not in cache */
+#endif
     /* update current_location */
     if (c) {
       ret = (int)read( cache->fd, buf, count );
       if (ret>0) c->current_location += ret;
       return ret;
     }
+#ifdef ENABLE_CACHE
   } /* file in cache ? */
+#endif
   return -1;
 }
 
@@ -299,6 +393,7 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
   cache = c->cache;
   out_err(LEVEL_FLOOD,"cache write\n");
   /* update current_location */
+#ifdef ENABLE_CACHE
   if (c) {
     /** \todo if in cache, warn user it is rather stupid to cache a file
       * to be modified, and re-open it in non-cache mode
@@ -311,6 +406,7 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
     if (ret>0) c->current_location += ret;
     return ret;
   }
+#endif
   return -1;
 }
 
@@ -329,6 +425,7 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
   cache = c->cache;
   fd = cache->fd;
   /* is file stored in cache ? */
+#ifdef ENABLE_CACHE
   if (cache->data) {
     /* get start position */
     position = c->current_location;
@@ -369,6 +466,7 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     c->current_location = position + (dst-buf);
 
   } else { /* file is not in cache ! */
+#endif
 
     /* get start position */
     position = lseek(fd,0,SEEK_CUR);
@@ -395,7 +493,9 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     (void)lseek(fd,position + (dst-buf), SEEK_SET );
     /* update current_location */
     c->current_location += strlen(buf);
+#ifdef ENABLE_CACHE
   } /* file in cache ? */
+#endif
 
   return buf;
 }
@@ -404,11 +504,13 @@ void wzd_cache_close(wzd_cache_t * c)
 {
   if (c) {
     c->cache->use--;
-    free(c);
     /** \bug XXX FIXME possible leak here if big file, fd is not closed */
- /*   close( c->fd );
-    free(c);*/
+    if (c->cache->use == 0) {
+      out_log(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
+      FD_UNREGISTER(c->cache->fd,"Cached file"); }
+      close( c->cache->fd );
   }
+  free(c);
 }
 
 void wzd_cache_purge(void)
@@ -426,6 +528,7 @@ void wzd_cache_purge(void)
     }
     if (cache_current->fd != -1) {
       close(cache_current->fd);
+      FD_UNREGISTER(cache_current->fd,"Cached file");
       cache_current->fd = -1;
     }
     free(cache_current);
