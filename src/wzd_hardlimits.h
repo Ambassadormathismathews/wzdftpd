@@ -25,6 +25,9 @@
 
 #define	HARD_PERMFILE		".dirinfo"
 
+/* interval of time to check dynamic ip (default: 10 mns) */
+#define	HARD_DYNAMIC_IP_INTVL	60
+
 
 #define	HARD_LS_BUFFERSIZE	4096
 
