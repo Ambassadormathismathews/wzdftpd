@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #ifdef _MSC_VER
 #include <winsock2.h>
 #else
@@ -40,6 +44,8 @@
 
 #include "wzd_ratio.h"
 #include "wzd_misc.h"
+
+#endif /* WZD_USE_PCH */
 
 u64_t ratio_get_credits(wzd_user_t * user)
 {

@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /O2 /I "../" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
@@ -90,14 +90,6 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\src\ls.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_ClientThread.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_init_lex.c
 # End Source File
 # Begin Source File
@@ -137,32 +129,16 @@ SOURCE=..\src\wzd_main.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_ratio.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_savecfg.c
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\wzd_ServerThread.c
 # End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_tls.c
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\src\ls.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_ClientThread.h
-# End Source File
 # Begin Source File
 
 SOURCE=..\src\wzd_init.h
@@ -173,19 +149,11 @@ SOURCE=..\src\wzd_opts.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_ratio.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\src\wzd_savecfg.h
 # End Source File
 # Begin Source File
 
 SOURCE=..\src\wzd_ServerThread.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\src\wzd_tls.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"

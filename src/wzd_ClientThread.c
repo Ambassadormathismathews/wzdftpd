@@ -24,6 +24,8 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include "wzd_all.h"
+
 #ifdef WIN32
 
 #define        INET_ADDRSTRLEN         16

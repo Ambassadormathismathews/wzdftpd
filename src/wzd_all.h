@@ -76,6 +76,7 @@
 #include "wzd_dir.h"
 #include "wzd_crontab.h"
 #include "wzd_file.h"
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_messages.h"
 #include "wzd_misc.h"

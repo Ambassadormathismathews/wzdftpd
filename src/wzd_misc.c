@@ -991,6 +991,38 @@ void win_normalize(char * s, unsigned int length, unsigned int lower)
 
 
 /* \return 0 if ok, -1 if error, 1 if trying to kill myself */
+int kill_child(unsigned long pid, wzd_context_t * context)
+{
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
+  int found=0;
+#ifndef WIN32
+  int ret;
+#endif
+
+  /* preliminary check: i can't kill myself */
+  if (pid==context->pid_child) return 1;
+
+  /* checks that pid is really one of the users */
+  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+  {
+    loop_context = list_data(elmnt);
+    if (loop_context && loop_context->magic == CONTEXT_MAGIC && loop_context->pid_child == pid) { found = 1; break; }
+  }
+  if (!found) return -1;
+
+#ifdef _MSC_VER
+  /* \todo XXX FIXME remove/fix test !! */
+  loop_context->exitclient = 1;
+/*  ret = TerminateThread((HANDLE)pid,0);*/
+#else
+  ret = pthread_cancel(pid);
+#endif
+
+  return 0;
+}
+
+/* \return 0 if ok, -1 if error, 1 if trying to kill myself */
 int kill_child_new(unsigned long pid, wzd_context_t * context)
 {
   ListElmt * elmnt;

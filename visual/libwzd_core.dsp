@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "HAVE_OPENSSL" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"wzd_all.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
@@ -106,6 +106,10 @@ SOURCE=.\libwzd_core.def
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\ls.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_action.c
 # End Source File
 # Begin Source File
@@ -120,6 +124,10 @@ SOURCE=..\src\wzd_backend.c
 # Begin Source File
 
 SOURCE=..\src\wzd_cache.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_ClientThread.c
 # End Source File
 # Begin Source File
 
@@ -219,6 +227,10 @@ SOURCE=..\src\wzd_perm.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_ratio.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_section.c
 # End Source File
 # Begin Source File
@@ -255,6 +267,10 @@ SOURCE=..\src\wzd_strtoull.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_tls.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_utf8.c
 # End Source File
 # Begin Source File
@@ -271,6 +287,10 @@ SOURCE=..\src\wzd_vfs.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=..\src\ls.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_action.h
 # End Source File
 # Begin Source File
@@ -284,6 +304,10 @@ SOURCE=..\src\wzd_backend.h
 # Begin Source File
 
 SOURCE=..\src\wzd_cache.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_ClientThread.h
 # End Source File
 # Begin Source File
 
@@ -351,6 +375,10 @@ SOURCE=..\src\wzd_perm.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_ratio.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_section.h
 # End Source File
 # Begin Source File
@@ -391,6 +419,10 @@ SOURCE=..\src\wzd_structs.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_tls.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_types.h
 # End Source File
 # Begin Source File
@@ -417,6 +449,14 @@ SOURCE=.\ReadMe.txt
 # Begin Source File
 
 SOURCE=.\gnu_regex_dist\gnu_regex.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\openssl\lib\ssleay32.lib
+# End Source File
+# Begin Source File
+
+SOURCE=.\openssl\lib\libeay32.lib
 # End Source File
 # End Target
 # End Project

@@ -25,14 +25,6 @@
 #ifndef __WZD_SERVER_THREAD__
 #define __WZD_SERVER_THREAD__
 
-#include "wzd_mutex.h"
-
-extern wzd_mutex_t * limiter_mutex;
-extern wzd_mutex_t * server_mutex;
-extern time_t server_time;
-
 int runMainThread(int argc, char **argv);
-
-int kill_child(unsigned long pid, wzd_context_t * context);
 
 #endif /* __WZD_SERVER_THREAD__ */

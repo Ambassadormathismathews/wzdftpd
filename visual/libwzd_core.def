@@ -32,6 +32,12 @@ EXPORTS
 	chtbl_insert
 	chtbl_lookup
 	chtbl_search
+	clear_read
+	clear_write
+	clientThreadProc
+	commands_add_defaults
+	commands_fini
+	commands_init
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
@@ -98,6 +104,7 @@ EXPORTS
 	killpath
 	limiter_add_bytes
 	limiter_free
+	limiter_mutex
 	limiter_new
 	list_destroy
 	list_init
@@ -146,13 +153,23 @@ EXPORTS
 	send_message_raw
 	server_clear_param
 	server_get_param
+	server_mutex
 	server_set_param
+	server_time
 	setkey
 	setlib_contextList
 	setlib_mainConfig
 	setlib_server_uid
 	setMessage
+	site_cleanup
+	site_init
 	split_filename
+	socket_accept
+	socket_close
+	socket_connect
+	socket_get_local_port
+	socket_get_remote_port
+	socket_make
 	str_allocate
 	str_append
 	str_checklength
@@ -178,6 +195,9 @@ EXPORTS
 	symlink_create
 	symlink_remove
 	time_to_str
+	tls_auth
+	tls_exit
+	tls_init
 	user_ip_add
 	user_ip_inlist
 	usercache_init

@@ -29,6 +29,10 @@
    security reasons
  */
 
+#include "wzd_all.h"
+
+#ifndef WZD_USE_PCH
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,6 +62,8 @@
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
+
+#endif /* WZD_USE_PCH */
 
 static int _format_date(time_t time, char * buffer, size_t length);
 

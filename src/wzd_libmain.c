@@ -40,6 +40,12 @@ wzd_config_t *  mainConfig;
 List * context_list;
 static int _wzd_server_uid;
 
+wzd_mutex_t	* limiter_mutex;
+wzd_mutex_t	* server_mutex = NULL;
+
+time_t          server_time;
+
+
 wzd_config_t * getlib_mainConfig(void)
 { return mainConfig; }
 
@@ -62,3 +68,106 @@ void libtest(void)
 {
   out_log(LEVEL_CRITICAL,"TEST LIB OK\n");
 }
+
+
+/** called when SIGHUP received, need to restart the main server
+ * (and re-read config file)
+ * Currently loggued users are NOT kicked
+ */
+void server_restart(int signum)
+{
+#if 0
+  wzd_config_t * config;
+  int sock;
+  int rebind=0;
+
+  fprintf(stderr,"Sighup received\n");
+
+  /* 1- Re-read config file, abort if error */
+  config = readConfigFile(mainConfig->config_filename);
+  if (!config) return;
+
+  /* 2- Shutdown existing socket */
+  if (config->port != mainConfig->port) {
+    sock = mainConfig->mainSocket;
+    close(sock);
+    rebind = 1;
+  }
+
+  /* 3- Copy new config */
+  {
+    /* do not touch serverstop */
+    /* do not touch backend */
+    mainConfig->max_threads = config->max_threads;
+    /* do not touch logfile */
+    mainConfig->loglevel = config->loglevel;
+    /* do not touch messagefile */
+    /* mainSocket will be modified later */
+    mainConfig->port = config->port;
+    mainConfig->pasv_low_range = config->pasv_low_range;
+    mainConfig->pasv_high_range = config->pasv_high_range;
+    memcpy(mainConfig->pasv_ip, config->pasv_ip, sizeof(mainConfig->pasv_ip));
+    mainConfig->login_pre_ip_check = config->login_pre_ip_check;
+    /* reload pre-ip lists */
+    /* reload vfs lists */
+    vfs_free(&mainConfig->vfs);
+    mainConfig->vfs = config->vfs;
+    /* do not touch hooks */
+    hook_free(&mainConfig->hook);
+    mainConfig->hook = config->hook;
+    /* do not touch modules */
+#ifdef HAVE_OPENSSL
+    /* what can we do with ssl ? */
+    /* reload certificate ? */
+#endif
+    /* we currently do NOT support shm_key dynamic change */
+    /* reload permission list ?? */
+    /* reload global_ul_limiter ?? */
+    /* reload global_dl_limiter ?? */
+    mainConfig->site_config = config->site_config;
+  }
+
+  /* 4- Re-open server */
+
+  /* create socket iff different ports ! */
+  if (rebind) {
+    sock = mainConfig->mainSocket = socket_make((const char *)mainConfig->ip,&mainConfig->port,mainConfig->max_threads);
+    if (sock == -1) {
+      out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
+          __FILE__, __LINE__);
+      serverMainThreadExit(-1);
+    }
+    {
+      int one=1;
+
+      if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+        out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+        serverMainThreadExit(-1);
+      }
+    }
+    out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
+  }
+
+  /* 5. Re-open log files */
+  if ( !CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG) )
+  {
+    int fd;
+    log_close();
+    if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
+    {
+      out_err(LEVEL_CRITICAL,"Could not reopen log file !!!\n");
+    }
+    if (mainConfig->xferlog_name) {
+      xferlog_close(mainConfig->xferlog_fd);
+      fd = xferlog_open(mainConfig->xferlog_name, 0600);
+      if (fd==-1)
+        out_log(LEVEL_HIGH,"Could not open xferlog file: %s\n",
+            mainConfig->xferlog_name);
+      mainConfig->xferlog_fd = fd;
+    }
+  }
+#endif
+
+  out_log(LEVEL_CRITICAL, " ** server_restart:  Not yet implemented\n");
+}
+

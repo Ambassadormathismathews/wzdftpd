@@ -45,6 +45,8 @@ void chop(char *s);
 int split_filename(const char *filename, char *path, char *stripped_filename, int pathlen, unsigned int filelen);
 
 /** send exit signal to a child */
+int kill_child(unsigned long pid, wzd_context_t * context);
+/** send exit signal to a child */
 int kill_child_new(unsigned long pid, wzd_context_t * context);
 
 /* returns system ip on specifed interface (e.g eth0) */

@@ -25,6 +25,12 @@
 #ifndef __WZD_LIBMAIN__
 #define __WZD_LIBMAIN__
 
+#include "wzd_mutex.h"
+
+extern wzd_mutex_t * limiter_mutex;
+extern wzd_mutex_t * server_mutex;
+extern time_t server_time;
+
 wzd_config_t * getlib_mainConfig(void);
 void setlib_mainConfig(wzd_config_t *);
 
