@@ -1,0 +1,38 @@
+<chapter>
+<title>Programming modules</title>
+
+<sect1>
+<title>Kernel-level modules</title>
+
+<para>This section describes how to create a new module in C.</para>
+
+<simplesect>
+<title>Prerequisites</title>
+<para>
+You need the following to compile and use new modules for wzdftpd:
+</para>
+<itemizedlist>
+<listitem><para>A working version of wzdftpd compiled from sources.</para></listitem>
+</itemizedlist>
+
+</simplesect>
+
+<simplesect>
+<title>Compilation</title>
+
+<para>If you are using auto* tools, just configure and make.</para>
+
+</simplesect>
+
+</sect1>
+
+<sect1>
+<title>External modules</title>
+
+<para>This sections describes how to develop an external module, which must be an
+executable program.</para>
+
+</sect1>
+
+
+</chapter>
