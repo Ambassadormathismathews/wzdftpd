@@ -49,6 +49,7 @@
 
 #include "wzd_cache.h"
 #include "wzd_section.h"
+#include "wzd_utf8.h"
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
