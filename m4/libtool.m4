@@ -40,11 +40,11 @@ m4_ifdef([AC_PROVIDE_IFELSE],
 # ---------------
 AC_DEFUN([AC_PROG_LIBTOOL],
 [AC_REQUIRE([_AC_PROG_LIBTOOL])dnl
-dnl If AC_PROG_CXX has already been expanded, run AC_LIBTOOL_CXX
-dnl immediately, otherwise, hook it in at the end of AC_PROG_CXX.
-  AC_PROVIDE_IFELSE([AC_PROG_CXX],
+dnl If AC_PROG_CC has already been expanded, run AC_LIBTOOL_CXX
+dnl immediately, otherwise, hook it in at the end of AC_PROG_CC.
+  AC_PROVIDE_IFELSE([AC_PROG_CC],
     [AC_LIBTOOL_CXX],
-    [define([AC_PROG_CXX], defn([AC_PROG_CXX])[AC_LIBTOOL_CXX
+    [define([AC_PROG_CC], defn([AC_PROG_CC])[AC_LIBTOOL_CXX
   ])])
 dnl And a similar setup for Fortran 77 support
   AC_PROVIDE_IFELSE([AC_PROG_F77],
@@ -2412,8 +2412,7 @@ AC_DEFUN([AC_LIBTOOL_CXX],
 # _LT_AC_LANG_CXX
 # ---------------
 AC_DEFUN([_LT_AC_LANG_CXX],
-[AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([AC_PROG_CXXCPP])
+[AC_REQUIRE([AC_PROG_CC])
 _LT_AC_SHELL_INIT([tagnames=${tagnames+${tagnames},}CXX])
 ])# _LT_AC_LANG_CXX
 
@@ -2617,8 +2616,7 @@ CC="$lt_save_CC"
 AC_DEFUN([AC_LIBTOOL_LANG_CXX_CONFIG], [_LT_AC_LANG_CXX_CONFIG(CXX)])
 AC_DEFUN([_LT_AC_LANG_CXX_CONFIG],
 [AC_LANG_PUSH(C++)
-AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([AC_PROG_CXXCPP])
+AC_REQUIRE([AC_PROG_CC])
 
 _LT_AC_TAGVAR(archive_cmds_need_lc, $1)=no
 _LT_AC_TAGVAR(allow_undefined_flag, $1)=
