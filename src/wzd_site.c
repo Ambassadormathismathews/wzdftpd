@@ -201,7 +201,7 @@ void do_site_help(const char *site_command, wzd_context_t * context)
   } else
   if (strcasecmp(site_command,"chpass")==0) {
     send_message_raw("change the password of a user\r\n",context);
-    send_message_raw("site chpass user new_pass\r\n",context);
+    send_message_raw("site chpass [user] new_pass\r\n",context);
   } else
   if (strcasecmp(site_command,"grpkill")==0) {
     send_message_raw("kill all connected users from a group\r\n",context);
@@ -542,7 +542,7 @@ int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 }
 
 /********************* do_site_chpass **********************/
-/** chpass: user new_pass
+/** chpass: [user] new_pass
  */
 int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
@@ -560,12 +560,21 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     do_site_help("chpass",context);
     return 1;
   }
-  /* check that username exists */
-  user = GetUserByName(str_tochar(username));
-  str_deallocate(username);
-  if ( !user ) {
-    ret = send_message_with_args(501,context,"User does not exists");
-    return 1;
+  new_pass = str_tok(command_line," \t\r\n");
+  if (!new_pass) { /* assume changing own password */
+    new_pass = username;
+    username = NULL;
+    user = me;
+  }
+  else {
+    /* check that username exists */
+    user = GetUserByName(str_tochar(username));
+    str_deallocate(username);
+    if ( !user ) {
+      ret = send_message_with_args(501,context,"User does not exists");
+      str_deallocate(username); str_deallocate(new_pass);
+      return 1;
+    }
   }
 
   /* GAdmin ? */
@@ -573,14 +582,18 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   {
     if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
       ret = send_message_with_args(501,context,"You can't change this user");
+      str_deallocate(username); str_deallocate(new_pass);
       return 1;
     }
   }
-
-  new_pass = str_tok(command_line," \t\r\n");
-  if (!new_pass) {
-    do_site_help("chpass",context);
-    return 1;
+  else {
+    if ( !(me->flags && strchr(me->flags,FLAG_SITEOP)) 
+        && me->uid != user->uid )
+    {
+      ret = send_message_with_args(501,context,"You can't change password for other users");
+      str_deallocate(username); str_deallocate(new_pass);
+      return 1;
+    }
   }
 
   mod_type = _USER_USERPASS;
@@ -593,7 +606,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   if (ret)
     ret = send_message_with_args(501,context,"An error occurred during password change");
   else
-    ret = send_message_with_args(200,context,"Password changed, don't forget to commit changes");
+    ret = send_message_with_args(200,context,"Password changed");
   return 0;
 }
 

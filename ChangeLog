@@ -2,6 +2,7 @@
 
 	* bugfix: server does not change uid when running as root
 	* bugfix: added several mutexes to avoid race conditions
+	* feature: CHPASS command changed to allow changing own password
 
 2005-02-04  Pierre Chifflier  <pollux@cpe.fr>
 
