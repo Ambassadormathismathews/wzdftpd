@@ -15,6 +15,8 @@ int set_default_options(void)
 
   tempConfig.backend.handle=NULL;
 
+  tempConfig.ip[0] = '\0';
+  tempConfig.dynamic_ip[0] = '\0';
   tempConfig.port = 21;
   tempConfig.max_threads=32;
 
@@ -42,6 +44,9 @@ int set_default_options(void)
 
   tempConfig.logfile = NULL;
 
+  tempConfig.xferlog_name = NULL;
+  tempConfig.xferlog_fd = -1;
+
   tempConfig.loglevel=LEVEL_LOWEST;
 
   tempConfig.perm_list = NULL;
@@ -64,6 +69,8 @@ int set_default_options(void)
   tempConfig.shm_key = 0x1331c0d3;
 
   memset(tempConfig.pasv_ip,0,4);
+
+  tempConfig.server_opts = 0;
 
   return 0;
 }
@@ -104,6 +111,14 @@ wzd_config_t * readConfigFile(const char *fileName)
   if (!configfile)
     return NULL;
 
+  reg_line.re_nsub = 2;
+  err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
+  if (err) {
+    out_err(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
+    out_err(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
+    exit (1);
+  }
+
   while (fgets(buffer,BUFSIZE,configfile))
   {
     ptr = buffer;
@@ -123,14 +138,6 @@ wzd_config_t * readConfigFile(const char *fileName)
       length--;
     }
     if (length <= 0) continue;
-
-    reg_line.re_nsub = 2;
-    err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
-    if (err) {
-      out_err(LEVEL_CRITICAL,"Regexp could not compile (file %s line %d)\n",__FILE__,__LINE__);
-      out_err(LEVEL_CRITICAL,"Possible error cause: bad libc installation\n");
-      exit (1);
-    }
 
     err = regexec(&reg_line,ptr,3,regmatch,0);
     if (err) {
@@ -177,7 +184,54 @@ int parseVariable(const char *varname, const char *value)
 {
   long i;
   unsigned long l;
+  const char * ptr = value;
 
+  /* IP (ip)
+   */
+  if (strcasecmp("ip",varname)==0)
+  {
+    if (strcmp(value,"*")==0) {
+      strcpy((char *)tempConfig.ip,value);
+      return 0;
+    }
+    if (value[0]=='+') {
+      fprintf(stderr,"Dynamic ip\n");
+      ptr++;
+    }
+    {
+      struct hostent *host;
+      host = gethostbyname(ptr);
+      if (!host) {
+	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (ip)\n",ptr);
+	return 1;
+      }
+    }
+    strncpy((char *)tempConfig.ip,value,63);
+    return 0;
+  } 
+   /* DYNAMIC_IP (ip)
+   */
+  if (strcasecmp("dynamic_ip",varname)==0)
+  {
+    if (strcmp(value,"0")==0 || strcmp(value,"1")==0) {
+      strcpy((char *)tempConfig.dynamic_ip,value);
+      return 0;
+    }
+    if (value[0]=='+') {
+      fprintf(stderr,"IP to resolve by DNS lookups\n");
+      ptr++;
+    }
+    {
+      struct hostent *host;
+      host = gethostbyname(ptr);
+      if (!host) {
+	out_err(LEVEL_HIGH,"Could NOT resolve ip %s (dynamic_ip)\n",ptr);
+	return 1;
+      }
+    }
+    strncpy((char *)tempConfig.dynamic_ip,value,63);
+    return 0;
+  } 
   /* PORT (int)
    * 2 remarks:
    * - use strtoul (instead of atoi) to detect errors
@@ -248,6 +302,13 @@ int parseVariable(const char *varname, const char *value)
       }
     }
     return i;
+  }
+  /* DENY_ACCESS_FILES_UPLOADED (string)
+   */
+  if (strcasecmp("deny_access_files_uploaded",varname)==0)
+  {
+    CFG_SET_DENY_ACCESS_FILES_UPLOADED(&tempConfig);
+    return 0;
   }
   /* MAX_UL_SPEED (unsigned long)
    */
@@ -368,6 +429,20 @@ int parseVariable(const char *varname, const char *value)
     if (ip_add(&tempConfig.login_pre_ip_denied,value)) return 1;
     return 0;
   }
+  /* LOGLEVEL (string)
+   * specify verbosity level
+   */
+  if (strcasecmp("loglevel",varname)==0)
+  {
+    if (strcasecmp(value,"lowest")==0) tempConfig.loglevel = LEVEL_LOWEST;
+    else if (strcasecmp(value,"flood")==0) tempConfig.loglevel = LEVEL_FLOOD;
+    else if (strcasecmp(value,"info")==0) tempConfig.loglevel = LEVEL_INFO;
+    else if (strcasecmp(value,"normal")==0) tempConfig.loglevel = LEVEL_NORMAL;
+    else if (strcasecmp(value,"high")==0) tempConfig.loglevel = LEVEL_HIGH;
+    else if (strcasecmp(value,"critical")==0) tempConfig.loglevel = LEVEL_CRITICAL;
+    else return -1;
+    return 0;
+  }
   /* MESSAGE_FILE (string)
    */
   if (strcasecmp("message_file",varname)==0)
@@ -413,6 +488,20 @@ int parseVariable(const char *varname, const char *value)
   { strncpy(tempConfig.site_config.file_users,value,256); return 0; }
   if (strcasecmp("sitefile_who",varname)==0)
   { strncpy(tempConfig.site_config.file_who,value,256); return 0; }
+  /* XFERLOG
+   * absolute file name
+   */
+  if (strcasecmp("xferlog",varname)==0)
+  {
+    int fd;
+    fd = open(value,O_WRONLY | O_CREAT | O_APPEND | O_SYNC,0600);
+    if (fd == -1)
+      return 1;
+    tempConfig.xferlog_name = strdup(value);
+    tempConfig.xferlog_fd = fd;
+    return 0;
+  }
+ 
 #if SSL_SUPPORT
   /* CERTIFICATES
    * absolute file name
