@@ -112,6 +112,7 @@ wzd_context_t *	context_list;
 wzd_shm_t *	context_shm;
 
 wzd_mutex_t	* limiter_mutex;
+wzd_mutex_t	* server_mutex = NULL;
 
 wzd_cronjob_t	* crontab;
 
@@ -227,10 +228,13 @@ static wzd_context_t * context_find_free(wzd_context_t * context_list)
   wzd_context_t * context=NULL;
   int i=0;
 
+  wzd_mutex_lock(server_mutex);
   while (i<HARD_USERLIMIT) {
     if (context_list[i].magic == 0) {
       /* cleanup context */
       context_init(context_list+i);
+      context_list[i].magic = CONTEXT_MAGIC; /* set magic number inside lock ! */
+      wzd_mutex_unlock(server_mutex);
       return (context_list+i);
     }
 #ifdef DEBUG
@@ -240,6 +244,7 @@ fprintf(stderr,"*** CRITICAL *** context list could be corrupted at index %d\n",
 #endif /* DEBUG */
     i++;
   }
+  wzd_mutex_unlock(server_mutex);
 
   return context;
 }
@@ -583,7 +588,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
     return 1;
   }
 
-  out_log(LEVEL_NORMAL,"Connection opened from %s\n", inet_buf);
+  out_log(LEVEL_NORMAL,"Connection opened from %s (socket %d)\n", inet_buf,newsock);
 
   /* 1. create new context */
   context = context_find_free(context_list);
@@ -596,7 +601,7 @@ static int server_add_ident_candidate(unsigned int socket_accept_fd)
   context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
   /* don't forget init is done before */
-  context->magic = CONTEXT_MAGIC;
+/*  context->magic = CONTEXT_MAGIC;*/  /* magic is set inside lock, it makes no sense here */
   context->state = STATE_CONNECTING;
   context->controlfd = newsock;
   time (&context->login_time);
@@ -685,8 +690,9 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
     {
       if (FD_ISSET(server_ident_list[i],e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
+        out_log(LEVEL_NORMAL,"error reading ident response %d %s\n",errno,strerror(errno));
         goto continue_connection;
-      }
+      } else
       if (FD_ISSET(server_ident_list[i],r_fds)) { /* get ident */
         fd_ident = server_ident_list[i];
         context = &context_list[server_ident_list[i+2]];
@@ -737,13 +743,14 @@ continue_connection:
     }
     else if (server_ident_list[i+1] != -1)
     {
+      fd_ident = server_ident_list[i+1];
       if (FD_ISSET(server_ident_list[i+1],e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
+        out_log(LEVEL_NORMAL,"error sending ident request %d %s\n",errno,strerror(errno));
         goto continue_connection;
         ret = 0;
       }
       if (FD_ISSET(server_ident_list[i+1],w_fds)) { /* write ident request */
-        fd_ident = server_ident_list[i+1];
         context = &context_list[server_ident_list[i+2]];
 
         /* 2- get local and remote ports */
@@ -789,12 +796,13 @@ static void server_ident_remove(int index)
 
   index *= 3;
   i = index;
-  while (server_ident_list[i] != -1 && server_ident_list[i+1] != -1)
+  while ((i < 3*HARD_USERLIMIT) && (server_ident_list[i] != -1 || server_ident_list[i+1] != -1))
     i += 3;
   if (i == 0) { /* only one entry */
     server_ident_list[0] = -1;
     server_ident_list[1] = -1;
     server_ident_list[2] = -1;
+
     return;
   }
   i -= 3;
@@ -810,6 +818,7 @@ static void server_ident_remove(int index)
   server_ident_list[i]   = -1;
   server_ident_list[i+1] = -1;
   server_ident_list[i+2] = -1;
+
 }
 
 /*
@@ -1207,6 +1216,10 @@ int server_switch_to_config(wzd_config_t *config)
   setlib_contextList(context_list);
 #endif /* WIN32 */
 
+
+  /* create server mutex */
+  WZD_ASSERT( server_mutex == NULL );
+  server_mutex = wzd_mutex_create(config->shm_key);
 
   /* create limiter mutex */
   limiter_mutex = wzd_mutex_create(config->shm_key+1);
@@ -1637,6 +1650,7 @@ void serverMainThreadExit(int retcode)
   /* FIXME should not be done here */
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
+  if (server_mutex) wzd_mutex_destroy(server_mutex);
   if (context_shm) wzd_shm_free(context_shm);
   context_list = NULL;
 

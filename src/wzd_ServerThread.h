@@ -28,6 +28,7 @@
 #include "wzd_mutex.h"
 
 extern wzd_mutex_t * limiter_mutex;
+extern wzd_mutex_t * server_mutex;
 extern time_t server_time;
 
 int runMainThread(int argc, char **argv);

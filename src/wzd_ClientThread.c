@@ -78,6 +78,7 @@
 #include "wzd_utf8.h"
 #include "ls.h"
 #include "wzd_ClientThread.h"
+#include "wzd_ServerThread.h"
 
 #include "wzd_debug.h"
 
@@ -345,6 +346,9 @@ void client_die(wzd_context_t * context)
   END_FORALL_HOOKS
 
 #ifdef DEBUG
+    if (context->magic != CONTEXT_MAGIC) {
+out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
+    }
 /*  if (context->current_limiter) {
 out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   }*/
@@ -374,7 +378,9 @@ out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
 
+  wzd_mutex_lock(server_mutex);
   context->magic = 0;
+  wzd_mutex_unlock(server_mutex);
 }
 
 /*************** check_timeout ***********************/
@@ -2174,7 +2180,7 @@ int do_cwd(char *name, char *param, wzd_context_t * context)
       break;
     case E_FILE_FORBIDDEN:
     case E_NOPERM:
-      ret = send_message_with_args(550,context,param?param:"(null)","Negative on that, Housont (access denied)");
+      ret = send_message_with_args(550,context,param?param:"(null)","Negative on that, Houston (access denied)");
       break;
     default:
       ret = send_message_with_args(550,context,param?param:"(null)","chdir FAILED");
@@ -2844,11 +2850,11 @@ static int do_login_loop(wzd_context_t * context)
     ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
-      out_err(LEVEL_FLOOD,"Connection closed or timeout\n");
+      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
       return 1;
     }
     if (ret==-1) {
-      out_err(LEVEL_FLOOD,"Error reading client response\n");
+      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->controlfd);
       return 1;
     }
 
