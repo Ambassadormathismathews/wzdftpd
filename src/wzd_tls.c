@@ -591,10 +591,18 @@ int tls_auth_data_cont(wzd_context_t * context)
   struct timeval tv;
   unsigned int fd,r;
 
-  SSL_set_accept_state(ssl);
+  if (context->tls_role == TLS_SERVER_MODE)
+    SSL_set_accept_state(ssl);
+  else
+    SSL_set_connect_state(ssl);
+
   fd = SSL_get_fd(ssl);
   do {
-    status = SSL_accept(ssl);
+    if (context->tls_role == TLS_SERVER_MODE)
+      status = SSL_accept(ssl);
+    else
+      status = SSL_connect(ssl);
+
     sslerr = SSL_get_error(ssl,status);
 
     if (status==1) {
