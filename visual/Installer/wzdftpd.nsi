@@ -14,7 +14,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.4.4"
+  !define VER_DISPLAY "0.5.0-20050110"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -30,6 +30,7 @@
   !define SRC_DIR "..\..\src\"
   !define ROOT_DIR "..\..\"
   !define DOT_DOT_DIR "..\"
+  !define BACKEND_MYSQL_RELEASE_DIR "..\backends\mysql\release\"
   !define BACKEND_PLAINTEXT_RELEAS_DIR "..\backends\plaintext\release\"
   !define TOOLS_SITECONFIG_RELEASE_DIR "..\tools\siteconfig\release\"
   !define TOOLS_SITEUPTIME_RELEASE_DIR "..\tools\siteuptime\release\"
@@ -162,7 +163,7 @@ Var WindowsFamily
   
   ;Finish Page with wzdftpd website URL
   !define MUI_FINISHPAGE_LINK $(DESC_Link_Finish)
-  !define MUI_FINISHPAGE_LINK_LOCATION "http://wzdftpd.sourceforge.net/"
+  !define MUI_FINISHPAGE_LINK_LOCATION "http://www.wzdftpd.net/"
   
   !define MUI_FINISHPAGE_NOREBOOTSUPPORT
   !insertmacro MUI_PAGE_FINISH
@@ -285,8 +286,8 @@ Section "!$(CAPT_MainSec)" MainSec
   ;Files
   SetOutPath "$INSTDIR"
   File "${RELEASE_DIR}wzdftpd.exe"
-  ;File "${RELEASE_DIR}libwzd_core.dll" ;This file exists only on 0.5.0 and above
-  File "${LIBWZD_RELEASE_DIR}libwzd.dll"
+  File "${RELEASE_DIR}libwzd_core.dll" ;This file exists only on 0.5.0 and above
+  ;File "${LIBWZD_RELEASE_DIR}libwzd.dll"
   File "${GNU_REGEX_DIST_DIR}gnu_regex.dll"
   File "${ICONV_BIN_DIR}libiconv-2.dll"
   File "${OPENSSL_LIB_DIR}ssleay32.dll"
@@ -324,6 +325,7 @@ Section "!$(CAPT_MainSec)" MainSec
   ;backends
   SetOutPath "$INSTDIR\backends"
   File "${BACKEND_PLAINTEXT_RELEAS_DIR}libwzd_plaintext.dll"
+  File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
   
   ;Tools
   SetOutPath "$INSTDIR\tools"
