@@ -227,11 +227,11 @@ int write_message_footer(int code, wzd_context_t * context)
   if (user->ratio) {
     bytes_credits = (float)user->credits;
     bytes_to_unit(&bytes_credits,&unit_credits);
-    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Ul: %.2f %c] - [Dl: %.2f %c] - [Cred: %.2f %c] -\r\n",
+    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] - [Cred: %.2f %c] -\r\n",
       code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul,
       bytes_credits,unit_credits);
   } else {
-    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Ul: %.2f %c] - [Dl: %.2f %c] -\r\n",
+    snprintf(buffer,2047,"%3d - [Free: %.2f %c] - [Dl: %.2f %c] - [Ul: %.2f %c] -\r\n",
       code,free,unit,bytes_dl,unit_dl,bytes_ul,unit_ul);
   }
   ret = send_message_raw(buffer, context);
