@@ -1,4 +1,6 @@
-SUBDIRS = src backends modules
+DATE_TAG:=$(shell date +"%Y%m%d")
+
+SUBDIRS = src backends modules tools
 
 debug:
 	make recursive 'RECURSIVE_TARGET=debug'
@@ -26,3 +28,6 @@ recursive:
 	for i in $(SUBDIRS); do \
 		(cd $$CWD/$$i && $(MAKE) $(RECURSIVE_TARGET)) || exit 1; \
 	done
+
+tarball: distclean
+	cd .. && tar czf wzd-$(DATE_TAG).tgz wzdFTPd
