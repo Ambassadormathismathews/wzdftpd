@@ -10,6 +10,13 @@
 #include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <ctype.h>
+#include <limits.h> /* ULONG_MAX */
+
+#ifndef __CYGWIN__
+/* needed for getpwnam() */
+#include <pwd.h>
+#endif
 
 /* speed up compilation */
 #define SSL     void
@@ -25,12 +32,22 @@
 #include "wzd_messages.h"
 #include "wzd_mod.h"
 #include "wzd_vfs.h"
+#include "wzd_ServerThread.h"
+#include "wzd_crontab.h"
+
+#include "stack.h"
 
 
 #define BUFSIZE	1024
 
 wzd_config_t tempConfig;
 
+extern wzd_cronjob_t * crontab;
+
+typedef struct {
+  const char * filename;
+  FILE * fp;
+} wzd_config_file_t;
 
 
 int set_default_options(void)
@@ -128,13 +145,23 @@ wzd_config_t * readConfigFile(const char *fileName)
   int length;
   regex_t reg_line;
   regmatch_t regmatch[3];
+  Stack stack_config;
+  wzd_config_file_t * new_cfg_file, * current_cfg_file;
+  int recurs_stop=0;
 
+  stack_init(&stack_config,free);
   init_default_messages();
   set_default_options();
 
   configfile = fopen(fileName,"r");
   if (!configfile)
     return NULL;
+
+  new_cfg_file = malloc(sizeof(wzd_config_file_t));
+  new_cfg_file->filename = fileName;
+  new_cfg_file->fp = configfile;
+
+  current_cfg_file = new_cfg_file;
 
   reg_line.re_nsub = 2;
   err = regcomp (&reg_line, "^([-]?[a-zA-Z0-9_]+)[ \t]*=[ \t]*(.+)", REG_EXTENDED);
@@ -144,45 +171,78 @@ wzd_config_t * readConfigFile(const char *fileName)
     exit (1);
   }
 
-  while (fgets(buffer,BUFSIZE,configfile))
-  {
-    ptr = buffer;
-    length = strlen(buffer); /* fgets put a '\0' at the end */
-    /* trim leading spaces */
-    while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
-      ptr++;
-    if ((*ptr)=='#' || length<=1)	/* comment and empty lines */
-      continue;
+  do {
+    while (fgets(buffer,BUFSIZE,current_cfg_file->fp))
+    {
+      ptr = buffer;
+      length = strlen(buffer); /* fgets put a '\0' at the end */
+      /* trim leading spaces */
+      while (((*ptr)==' ' || (*ptr)=='\t') && (length-- > 0))
+	ptr++;
+      if ((*ptr)=='#' || length<=1)	/* comment and empty lines */
+	continue;
 
-    /* TODO if line contains a " and is not ended, it is a multi-line */
-    /* TODO replace special chars (\n,\t,\xxx,etc) */
+      /* TODO if line contains a " and is not ended, it is a multi-line */
+      /* TODO replace special chars (\n,\t,\xxx,etc) */
 
-    /* trim trailing space, because fgets keep a \n */
-    while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
-      *(ptr+length-1) = '\0';
-      length--;
-    }
-    if (length <= 0) continue;
+      /* trim trailing space, because fgets keep a \n */
+      while ( *(ptr+length-1) == '\r' || *(ptr+length-1) == '\n') {
+	*(ptr+length-1) = '\0';
+	length--;
+      }
+      if (length <= 0) continue;
 
-    err = regexec(&reg_line,ptr,3,regmatch,0);
-    if (err) {
-      out_err(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
-    } else {
-      memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
-      varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
-      memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
-      value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
+      /* include ? */
+      if (strncmp(ptr,"include",7)==0) { /* 7 == strlen("include") */
+	if (++recurs_stop >= 16) {
+	  out_err(LEVEL_HIGH,"Too many inclusions in directive: '%s' - ignoring\n",buffer);
+	  continue;
+	}
 
-      err = parseVariable(varname,value);
+	ptr += 7;
+	while (*ptr && isspace(*ptr)) ptr++;
+	if (!*ptr) {
+	  out_err(LEVEL_HIGH,"Invalid include directive: '%s' - ignoring\n",buffer);
+	  continue;
+	}
+	configfile = fopen(ptr,"r");
+	if (!configfile) {
+	  out_err(LEVEL_HIGH,"Unable to open file: '%s' for inclusion - ignoring\n",ptr);
+	  continue;
+	}
+	new_cfg_file = malloc(sizeof(wzd_config_file_t));
+	new_cfg_file->filename = fileName;
+	new_cfg_file->fp = configfile;
+	stack_push(&stack_config,current_cfg_file);
+
+	current_cfg_file = new_cfg_file;
+	continue;
+      }
+
+      err = regexec(&reg_line,ptr,3,regmatch,0);
       if (err) {
-        out_err(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
+	out_err(LEVEL_HIGH,"Line '%s' does not respect config line format - ignoring\n",buffer);
+      } else {
+	memcpy(varname,ptr+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
+	varname[regmatch[1].rm_eo-regmatch[1].rm_so]='\0';
+	memcpy(value,ptr+regmatch[2].rm_so,regmatch[2].rm_eo-regmatch[2].rm_so);
+	value[regmatch[2].rm_eo-regmatch[2].rm_so]='\0';
+
+	err = parseVariable(varname,value);
+	if (err) {
+	  out_err(LEVEL_HIGH,"Line '%s' is not a valid config line (probably var name mistake) - ignoring\n",buffer);
+	}
       }
     }
+    fclose(current_cfg_file->fp);
+    free(current_cfg_file);
+    err = stack_pop(&stack_config,(void**)&current_cfg_file);
+    if (err) break;
   }
-	
+  while (1);
 
 
-  fclose(configfile);
+/*  fclose(cfg_file->fp);*/
 
 #if 0
   mainConfig_shm = wzd_shm_create(tempConfig.shm_key-1,sizeof(wzd_config_t),0);
@@ -327,6 +387,25 @@ int parseVariable(const char *varname, const char *value)
       }
     }
     return i;
+  }
+  /* CRONJOB (unsigned int+string)
+   */
+  if (strcasecmp("cronjob",varname)==0)
+  {
+    char *end;
+    l = strtoul(value,&end,0);
+    if (end == value) { return 1; }
+    if (l==ULONG_MAX && errno==ERANGE) { return 1; }
+    while (isspace(*end)) end++;
+    return cronjob_add(&crontab,NULL,end,l);
+  }
+  /* CSCRIPT (string)
+   */
+  if (strcasecmp("cscript",varname)==0)
+  {
+    /* TODO XXX check hook */
+    if (hook_add_external(&tempConfig.hook,EVENT_MKDIR,value)) return 1;
+    return 0;
   }
   /* DENY_ACCESS_FILES_UPLOADED (string)
    */
@@ -483,6 +562,26 @@ int parseVariable(const char *varname, const char *value)
     if (module_check(value)) return 1;
     /* XXX add module to list */
     if (module_add(&tempConfig.module,value)) return 1;
+    return 0;
+  }
+  /* SERVER_UID (unsigned int)
+   */
+  if (strcasecmp("server_uid",varname)==0)
+  {
+#ifndef __CYGWIN__
+    errno = 0;
+    l = strtoul(value,(char**)&ptr, 0);
+    if (*ptr != '\0') { /* not a number, try a login */
+      struct passwd * p;
+      p = getpwnam(value);
+      if (!p) return 1;
+      wzd_server_uid = p->pw_uid;
+    } else {
+      if (errno==ERANGE)
+	return 1;
+      wzd_server_uid = (unsigned int)l;
+    }
+#endif
     return 0;
   }
   /* SHM_KEY (unsigned long)
