@@ -1,7 +1,7 @@
 Name: wzdftpd
 Summary: A very capable ftp server.
 Version: 0.2
-Release: 1
+Release: 2
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://wzdftpd.sourceforge.net
 Source: http://heanet.dl.sourceforge.net/sourceforge/wzdftpd/%{name}-%{version}.tar.gz
@@ -60,7 +60,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/{modules,backends,logs}
 mkdir -p $RPM_BUILD_ROOT%_sysconfdir/init.d/
 %__install src/wzd.cfg $RPM_BUILD_ROOT/%_sysconfdir/
 %__install src/wzd.pem $RPM_BUILD_ROOT/%_sysconfdir/
-%__install -s tools/siteconfig/siteconfig $RPM_BUILD_ROOT/usr/local/bin/
+%__install -s tools/siteconfig/.libs/siteconfig $RPM_BUILD_ROOT/usr/local/bin/
 %__install -s tools/siteuptime/siteuptime $RPM_BUILD_ROOT/usr/local/bin/
 %__install -s tools/sitewho/sitewho $RPM_BUILD_ROOT/usr/local/bin/
 %__install src/.libs/libwzd.a $RPM_BUILD_ROOT/usr/local/lib/
@@ -173,6 +173,9 @@ rmdir --ignore-fail-on-non-empty -p $RPM_BUILD_ROOT/usr/local/share/wzdftpd/back
 /usr/local/include/wzdftpd/wzd_tls.h
 
 %changelog
+* Tue Feb 10 2004 Pierre Chifflier <pollux@wzdftpd.net>
+- Small bugfix to have correct files in tools package
+
 * Sat Feb 07 2004 Chris Lount <mrlount@tiscali.co.uk>
 - First binary release
 
