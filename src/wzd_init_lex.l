@@ -1196,8 +1196,8 @@ int cfg_read_param(const char *paramname)
 int cfg_read_pasv_ip(void)
 {
   unsigned int token;
-  unsigned int new_ip[4];
-  int r;
+  unsigned int new_ip[16];
+/*  int r;*/
 
   token = yylex();
   if (token!='=') {
@@ -1205,32 +1205,25 @@ int cfg_read_pasv_ip(void)
     return 1;
   }
 
-  switch( (token=yylex()) ) {
-  case CFG_IP_NUM:
-    r = sscanf(yytext,"%u.%u.%u.%u",&new_ip[0],&new_ip[1],&new_ip[2],&new_ip[3]);
-    if (r!=4 || new_ip[0] >= 255 || new_ip[1] >= 255 || new_ip[2] >= 255 || new_ip[3] >= 255)
+  {
+    unsigned char * line;
+    unsigned char host_ip[64];
+    line = read_until_eol(256);
+    if (!line) {
+      out_err(LEVEL_HIGH,"line should be 'pasv_ip = ...'\n");
       return 1;
-    break;
-  case CFG_IP_STR:
-    {
-      unsigned char host_ip[64];
-      if (socket_getipbyname(yytext+1, host_ip, sizeof(host_ip))) {
-        out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",yytext);
-        return 1;
-      }
-      /** \bug IPv6 ?? */
-      memcpy(new_ip, host_ip, 4);
     }
-    break;
-  default:
-    out_err(LEVEL_INFO,"ip: read token %d (%c) yytext:\n",token,token,yytext);
-    return 1;
+    if (socket_getipbyname(line, host_ip, sizeof(host_ip))) {
+      out_err(LEVEL_HIGH,"Could NOT resolve ip %s (pasv_ip)\n",line);
+      wzd_free(line);
+      return 1;
+    }
+    /** \bug IPv6 ?? */
+    memcpy(new_ip, host_ip, 4);
+    wzd_free(line);
   }
 
-  tempConfig.pasv_ip[0] = (unsigned char)new_ip[0];
-  tempConfig.pasv_ip[1] = (unsigned char)new_ip[1];
-  tempConfig.pasv_ip[2] = (unsigned char)new_ip[2];
-  tempConfig.pasv_ip[3] = (unsigned char)new_ip[3];
+  memcpy(tempConfig.pasv_ip, new_ip, 4);
 
   return 0;
 }
