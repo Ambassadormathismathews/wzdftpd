@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 #include <dirent.h>
 #include <regex.h>
 #include <wzd.h>
@@ -458,7 +482,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 #ifdef DEBUG
       out_err(LEVEL_CRITICAL,"sfv file: %s\n",entr->d_name);
 #endif
-      if (ret == -1 || sfv->sfv_list == NULL) return -1;
+      if (ret == -1 || sfv->sfv_list == NULL) { closedir(dir); return -1; }
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]) {
@@ -468,6 +492,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 	if (strcmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
 #endif /* __CYGWIN__ */
 	  *entry = sfv->sfv_list[i];
+	  closedir(dir);
 	  return 0;
 	}
 	i++;
@@ -475,6 +500,8 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       sfv_free(sfv);
     }
   } /* while readdir */
+
+  closedir(dir);
 
   return 1;
 }
