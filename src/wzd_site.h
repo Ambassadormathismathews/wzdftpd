@@ -25,24 +25,36 @@
 #ifndef __WZD_SITE__
 #define __WZD_SITE__
 
-int site_init(wzd_config_t * config);
-void site_cleanup(wzd_config_t * config);
-
 int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context);
 void do_site_help(const char *site_command, wzd_context_t * context);
 
 void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context);
 
 
+int do_site_backend(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_chacl(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_checkperm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_chgrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_chmod(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_free(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context);
 int do_site_invite(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context);
 int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context);
 int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * context);
 int do_site_unlock(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vars(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vars_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vars_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_version(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vfsls(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vfsadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_vfsdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 #endif /* __WZD_SITE__ */

@@ -1446,7 +1446,7 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
 
 int sfv_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
-  if (strcasecmp(token,"SFV")==0) {
+  if (strcasecmp(token,"site_sfv")==0) {
     char buffer[BUFFER_LEN];
     strncpy(buffer,args,BUFFER_LEN-1);
     do_site_sfv(buffer,context);

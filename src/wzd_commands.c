@@ -157,6 +157,14 @@ int commands_add_defaults(void)
 #endif
 
 
+  if (commands_add("site_addip",do_site_addip,NULL,TOK_SITE_ADDIP)) return -1;
+  if (commands_add("site_adduser",do_site_adduser,NULL,TOK_SITE_ADDUSER)) return -1;
+  if (commands_add("site_backend",do_site_backend,NULL,TOK_SITE_BACKEND)) return -1;
+  if (commands_add("site_chacl",do_site_chacl,NULL,TOK_SITE_CHACL)) return -1;
+  if (commands_add("site_change",do_site_change,NULL,TOK_SITE_CHANGE)) return -1;
+  if (commands_add("site_changegrp",do_site_changegrp,NULL,TOK_SITE_CHANGEGRP)) return -1;
+  if (commands_add("site_checkperm",do_site_checkperm,NULL,TOK_SITE_CHECKPERM)) return -1;
+  if (commands_add("site_chgrp",do_site_chgrp,NULL,TOK_SITE_CHGRP)) return -1;
   if (commands_add("site_chmod",do_site_chmod,NULL,TOK_SITE_CHMOD)) return -1;
   if (commands_add("site_chown",do_site_chown,NULL,TOK_SITE_CHOWN)) return -1;
   if (commands_add("site_chpass",do_site_chpass,NULL,TOK_SITE_CHPASS)) return -1;
@@ -184,7 +192,8 @@ int commands_add_defaults(void)
   if (commands_add("site_kill",do_site_kill,NULL,TOK_SITE_KILL)) return -1;
   if (commands_add("site_killpath",do_site_killpath,NULL,TOK_SITE_KILLPATH)) return -1;
   if (commands_add("site_link",do_site_link,NULL,TOK_SITE_LINK)) return -1;
-
+  if (commands_add("site_msg",do_site_msg,NULL,TOK_SITE_MSG)) return -1;
+  if (commands_add("site_perm",do_site_perm,NULL,TOK_SITE_PERM)) return -1;
   if (commands_add("site_purge",do_site_purgeuser,NULL,TOK_SITE_PURGE)) return -1;
   if (commands_add("site_readd",do_site_readduser,NULL,TOK_SITE_READD)) return -1;
   if (commands_add("site_reload",do_site_reload,NULL,TOK_SITE_RELOAD)) return -1;
@@ -195,6 +204,17 @@ int commands_add_defaults(void)
   if (commands_add("site_take",do_site_take,NULL,TOK_SITE_TAKE)) return -1;
   if (commands_add("site_test",do_site_test,NULL,TOK_SITE_TEST)) return -1;
   if (commands_add("site_unlock",do_site_unlock,NULL,TOK_SITE_UNLOCK)) return -1;
+/* user */
+/* users */
+  if (commands_add("site_utime",do_site_utime,NULL,TOK_SITE_UTIME)) return -1;
+  if (commands_add("site_vars",do_site_vars,NULL,TOK_SITE_VARS)) return -1;
+  if (commands_add("site_vars_group",do_site_vars_group,NULL,TOK_SITE_VARS_GROUP)) return -1;
+  if (commands_add("site_vars_user",do_site_vars_user,NULL,TOK_SITE_VARS_USER)) return -1;
+  if (commands_add("site_version",do_site_version,NULL,TOK_SITE_VERSION)) return -1;
+  if (commands_add("site_vfsls",do_site_vfsls,NULL,TOK_SITE_VFSLS)) return -1;
+  if (commands_add("site_vfsadd",do_site_vfsadd,NULL,TOK_SITE_VFSADD)) return -1;
+  if (commands_add("site_vfsdel",do_site_vfsdel,NULL,TOK_SITE_VFSDEL)) return -1;
+  if (commands_add("site_wipe",do_site_wipe,NULL,TOK_SITE_WIPE)) return -1;
 
   return 0;
 }

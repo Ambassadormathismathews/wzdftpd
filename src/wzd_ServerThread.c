@@ -1164,11 +1164,6 @@ void serverMainThreadProc(void *arg)
     out_log(LEVEL_HIGH,"Could not set up default functions\n");
   }
 
-  /****** set up site functions *****/
-  if (site_init(mainConfig)) {
-    out_log(LEVEL_HIGH,"Could not set up SITE functions\n");
-  }
-
 
   if (server_switch_to_config(mainConfig))
   {
@@ -1402,7 +1397,6 @@ void serverMainThreadExit(int retcode)
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
   perm_free_recursive(mainConfig->perm_list);
-  site_cleanup(mainConfig);
   free_messages();
   usercache_fini();
 /*  free(context_list);*/

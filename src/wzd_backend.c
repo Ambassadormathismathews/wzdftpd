@@ -62,8 +62,7 @@
 
 #include "wzd_debug.h"
 
-/* BSD exports symbols in .so files prefixed with a _ !! */
-#ifdef BSD
+#ifdef NEED_UNDERSCORE
 #define	DL_PREFIX "_"
 #else
 #define	DL_PREFIX
@@ -631,12 +630,12 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
   }
   ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
 
-  usercache_invalidate( predicate_name, (void *)name );
-
   if (ret == 0) {
     if (mod_type & _USER_MAX_ULS) _trigger_user_max_ul(user);
     if (mod_type & _USER_MAX_DLS) _trigger_user_max_dl(user);
   }
+
+  usercache_invalidate( predicate_name, (void *)name );
 
   return ret;
 }

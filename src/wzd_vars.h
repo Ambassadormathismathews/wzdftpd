@@ -46,7 +46,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
 /** change varname with data contents size of data is datalength
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+int vars_set(const char *varname, const void *data, unsigned int datalength, wzd_config_t * config);
 
 /** fills data with varname content (from user), max size: datalength
  * @returns 0 if ok, 1 if an error occured
@@ -56,7 +56,7 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
 /** change varname (from user) with data contents size of data is datalength
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+int vars_user_set(const char *username, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config);
 
 /** create a new user
  * @returns 0 if ok, 1 if an error occured
@@ -81,7 +81,7 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
 /** change varname (from group) with data contents size of data is datalength
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_group_set(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config);
+int vars_group_set(const char *groupname, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config);
 
 
 void vars_shm_init(void);

@@ -92,16 +92,6 @@ extern time_t server_start;
 
 #define	BUFFER_LEN	4096
 
-typedef int (*site_fct_t)(char *cl, wzd_context_t *context);
-
-/** @brief Site function definition: name, pointer to function */
-struct wzd_site_fct_t {
-  char *name;
-  site_fct_t fct;
-
-  struct wzd_site_fct_t * next_site_fct;
-};
-
 void do_site_print_file_raw(const char *filename, wzd_context_t *context);
 
 /********************* do_site_test ************************/
@@ -266,60 +256,69 @@ void do_site_help(const char *site_command, wzd_context_t * context)
 /********************* do_site_backend *********************/
 /** backend: close / reload / init / commit
  */
-int do_site_backend(char *command_line, wzd_context_t * context)
+int do_site_backend(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char * ptr;
-  char * command, *name;
+  wzd_string_t * command, *name;
   int ret;
 
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("backend",context);
     return 1;
   }
-  name = strtok_r(NULL," \t\r\n",&ptr);
+  name = str_tok(command_line," \t\r\n");
   if (!name) {
     do_site_help("backend",context);
+    str_deallocate(command);
     return 1;
   }
-  if (strcasecmp(command,"close")==0) {
-    ret = backend_close(name);
+  if (strcasecmp(str_tochar(command),"close")==0) {
+    str_deallocate(command);
+    ret = backend_close(str_tochar(name));
     if (ret) {
       ret = send_message_with_args(501,context,"Could not close backend");
     } else {
       ret = send_message_with_args(200,context,"Backend close successfully");
     }
+    str_deallocate(name);
     return 0;
   } /* close */
-  if (strcasecmp(command,"init")==0) {
-    ret = backend_init(name,0 /* max users */,0 /* max groups */);
+  if (strcasecmp(str_tochar(command),"init")==0) {
+    str_deallocate(command);
+    ret = backend_init(str_tochar(name),0 /* max users */,0 /* max groups */);
     if (ret) {
       ret = send_message_with_args(501,context,"Could not init backend");
     } else {
       ret = send_message_with_args(200,context,"Backend loaded successfully");
     }
+    str_deallocate(name);
     return 0;
   } /* init */
-  if (strcasecmp(command,"reload")==0) {
-    ret = backend_reload(name);
+  if (strcasecmp(str_tochar(command),"reload")==0) {
+    str_deallocate(command);
+    ret = backend_reload(str_tochar(name));
     if (ret) {
       ret = send_message_with_args(501,context,"Could not reload backend ** WARNING you could have NO backend NOW");
     } else {
       ret = send_message_with_args(200,context,"Backend reloaded successfully");
     }
+    str_deallocate(name);
     return 0;
   } /* reload */
-  if (strcasecmp(command,"commit")==0) {
-    ret = backend_commit_changes(name);
+  if (strcasecmp(str_tochar(command),"commit")==0) {
+    str_deallocate(command);
+    ret = backend_commit_changes(str_tochar(name));
     if (ret) {
       ret = send_message_with_args(501,context,"Could not commit backend");
     } else {
       ret = send_message_with_args(200,context,"Backend commited successfully");
     }
+    str_deallocate(name);
     return 0;
   } /* commit */
   do_site_help("backend",context);
+  str_deallocate(command);
+  str_deallocate(name);
   return 0;
 }
 
@@ -327,55 +326,58 @@ int do_site_backend(char *command_line, wzd_context_t * context)
 /** chacl: user mode file1 [file2 ...]
  */
 
-int do_site_chacl(char *command_line, wzd_context_t * context)
+int do_site_chacl(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
-  char * ptr;
-  char * mode, *username, *filename;
+  wzd_string_t * mode, *username, *filename;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t * user;
   unsigned long long_perms;
   char str_perms[64];
   char * endptr;
 
-  ptr = command_line;
-  username = strtok_r(NULL," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help("chacl",context);
     return 1;
   }
   /* check that username exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  user = GetUserByName( str_tochar(username) );
+  str_deallocate(username);
+  if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exists");
     return 1;
   }
-  mode = strtok_r(NULL," \t\r\n",&ptr);
+  mode = str_tok(command_line," \t\r\n");
   if (!mode) {
     do_site_help("chacl",context);
     return 1;
   }
   /* TODO check that mode is ok */
-  if (strlen(mode) > 15) {
+  if (strlen(str_tochar(mode)) > 15) {
     do_site_help("chacl",context);
+    str_deallocate(mode);
     return 1;
   }
-  long_perms = strtoul(mode,&endptr,8);
-  if (endptr != mode) {
+  long_perms = strtoul(str_tochar(mode),&endptr,8);
+  if (endptr != str_tochar(mode)) {
     snprintf(str_perms,63,"%c%c%c",
         (long_perms & 01) ? 'r' : '-',
         (long_perms & 02) ? 'w' : '-',
         (long_perms & 04) ? 'x' : '-'
         );
   } else
-    strncpy(str_perms,mode,63);
+    strncpy(str_perms,str_tochar(mode),63);
+  str_deallocate(mode);
 
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  while ( (filename = str_tok(command_line," \t\r\n")) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,username,0,0,str_perms,(unsigned long)-1,context);
+    if (!checkpath(str_tochar(filename),buffer,context))
+    {
+      _setPerm(buffer,user->username,0,0,str_perms,(unsigned long)-1,context);
+    }
+    str_deallocate(filename);
   }
 
   snprintf(buffer,BUFFER_LEN,"acl successfully set");
@@ -387,40 +389,43 @@ int do_site_chacl(char *command_line, wzd_context_t * context)
 /** chgrp: group file1 [file2 ...]
  */
 
-int do_site_chgrp(char *command_line, wzd_context_t * context)
+int do_site_chgrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
-  char * ptr;
-  char * groupname, *filename;
+  wzd_string_t * groupname, *filename;
   int ret;
   wzd_group_t * group;
 
-  ptr = command_line;
-  groupname = strtok_r(command_line," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help("chgrp",context);
     return 1;
   }
   /* check that groupname exists */
-  if ( !(group=GetGroupByName(groupname)) ) {
+  group=GetGroupByName(str_tochar(groupname));
+  if ( !group ) {
     ret = send_message_with_args(501,context,"Group does not exists");
+    str_deallocate(groupname);
     return 1;
   }
 
   buffer = malloc(WZD_MAX_PATH+1);
 
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) )
+  while ( (filename = str_tok(command_line," \t\r\n")) )
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-    _setPerm(buffer,0,0,groupname,0,(unsigned long)-1,context);
+    if (!checkpath(str_tochar(filename),buffer,context))
+    {
+      _setPerm(buffer,0,0,str_tochar(groupname),0,(unsigned long)-1,context);
+    }
+    str_deallocate(filename);
   }
 
-  snprintf(buffer,WZD_MAX_PATH,"group changed to '%s'",groupname);
+  snprintf(buffer,WZD_MAX_PATH,"group changed to '%s'",str_tochar(groupname));
   ret = send_message_with_args(200,context,buffer);
 
   free(buffer);
+  str_deallocate(groupname);
   return 0;
 }
 
@@ -593,49 +598,58 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 }
 
 /********************* do_site_checkperm *******************/
-int do_site_checkperm(char * commandline, wzd_context_t * context)
+int do_site_checkperm(wzd_string_t *ignored, wzd_string_t * commandline, wzd_context_t * context)
 {
   unsigned long word;
   char * buffer;
-  char *username, *filename, *perms;
-  char *ptr;
-  wzd_user_t userstruct, *userptr;
-  int uid;
+  wzd_string_t *username, *filename, *perms;
+  wzd_user_t *user;
 
-  ptr = commandline;
-
-  username = strtok_r(commandline," \t\r\n",&ptr);
+  username = str_tok(commandline," \t\r\n");
   if (!username) { do_site_help("checkperm",context); return 1; }
-  filename = strtok_r(NULL," \t\r\n",&ptr);
-  if (!filename) { do_site_help("checkperm",context); return 1; }
-  perms = strtok_r(NULL,"\r\n",&ptr);
-  if (!perms) { do_site_help("checkperm",context); return 1; }
+  filename = str_tok(commandline," \t\r\n");
+  if (!filename) {
+    str_deallocate(username);
+    do_site_help("checkperm",context);
+    return 1;
+  }
+  perms = str_tok(commandline,"\r\n");
+  if (!perms) {
+    str_deallocate(username); str_deallocate(filename);
+    do_site_help("checkperm",context);
+    return 1;
+  }
 
-  word = right_text2word(perms);
+  word = right_text2word(str_tochar(perms));
+  str_deallocate(perms);
   if (word == 0) {
+    str_deallocate(username); str_deallocate(filename);
     send_message_with_args(501,context,"Invalid permission");
     return 1;
   }
 
-  if (backend_find_user(username,&userstruct,&uid)) {
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
+    str_deallocate(filename);
     send_message_with_args(501,context,"User does not exist");
     return 1;
   }
-  if (uid == -1) userptr = &userstruct;
-  else userptr = GetUserByID(uid);
 
   buffer = malloc(WZD_MAX_PATH+1);
 
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-  if (checkpath(filename,buffer,context)) {
+  if (checkpath(str_tochar(filename),buffer,context)) {
     send_message_with_args(501,context,"file does not exist");
+    str_deallocate(filename);
     free(buffer);
     return 1;
   }
+  str_deallocate(filename);
 
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
 
-  if (_checkPerm(buffer,word,userptr)==0) {
+  if (_checkPerm(buffer,word,user)==0) {
     wzd_strncpy(buffer,"right ok",WZD_MAX_PATH);
   } else {
     wzd_strncpy(buffer,"refused",WZD_MAX_PATH);
@@ -812,21 +826,14 @@ int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
  *       convert filename
  *       delete
  */
-int do_site_msg(char *command_line, wzd_context_t * context)
+int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
-  char * command, * ptr, * filename;
+  wzd_string_t * command, * filename;
   char msg_file[2048];
   char other_file[2048];
   unsigned int length;
   struct stat s;
-
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
-  if (!command) {
-    do_site_help("msg",context);
-    return 1;
-  }
 
   if (!mainConfig->dir_message) {
     send_message_with_args(501,context,"no dir_message defined in config");
@@ -843,19 +850,28 @@ int do_site_msg(char *command_line, wzd_context_t * context)
     strncpy(msg_file+length,mainConfig->dir_message,2048-length-1);
   }
 
-  if (strcasecmp(command,"show")==0)
+  command = str_tok(command_line," \t\r\n");
+  if (!command) {
+    do_site_help("msg",context);
+    return 1;
+  }
+
+  if (strcasecmp(str_tochar(command),"show")==0)
   {
+    str_deallocate(command);
     do_site_print_file_raw(msg_file,context);
     return 0;
   }
-  else if (strcasecmp(command,"convert")==0)
+  else if (strcasecmp(str_tochar(command),"convert")==0)
   {
-    filename = strtok_r(NULL,"\r\n",&ptr);
+    str_deallocate(command);
+    filename = str_tok(command_line,"\r\n");
     if (!filename) {
       do_site_help("msg",context);
       return 1;
     }
-    strncpy(other_file+length,filename,2048-length-1);
+    strncpy(other_file+length,str_tochar(filename),2048-length-1);
+    str_deallocate(filename);
     if (stat(other_file,&s) || !S_ISREG(s.st_mode))
     {
       send_message_with_args(501,context,"inexistant file, or not a regular file");
@@ -870,64 +886,76 @@ int do_site_msg(char *command_line, wzd_context_t * context)
     send_message_with_args(501,context,"error while renaming file");
     return -1;
   }
-  else if (strcasecmp(command,"delete")==0)
+  else if (strcasecmp(str_tochar(command),"delete")==0)
   {
+    str_deallocate(command);
     unlink(msg_file);
     send_message_with_args(200,context,"message file deleted");
     return 0;
   }
-  else if (strcasecmp(command,"new")==0)
+  else if (strcasecmp(str_tochar(command),"new")==0)
   {
     FILE * fp;
-    char * buf;
+    wzd_string_t * buf;
     unsigned int length;
-    buf = strtok_r(NULL,"\r\n",&ptr);
-    if (!buf) {
-      do_site_help("msg",context);
-      return 1;
-    }
+
+    str_deallocate(command);
     fp = fopen(msg_file,"w");
     if (!fp) {
       send_message_with_args(501,context,"unable to open message file for writing");
       return 1;
     }
-    length = strlen(buf);
-    if (length != fwrite(buf,1,length,fp)) {
+    buf = str_tok(command_line,"\r\n");
+    if (!buf) {
+      fclose(fp);
+      do_site_help("msg",context);
+      return 1;
+    }
+    length = strlen(str_tochar(buf));
+    if (length != fwrite(str_tochar(buf),1,length,fp)) {
       fclose(fp);
       send_message_with_args(501,context,"unable to write message");
+      str_deallocate(buf);
       return 1;
     }
     fclose(fp);
     send_message_with_args(200,context,"message file written");
+    str_deallocate(buf);
     return 0;
   }
-  else if (strcasecmp(command,"append")==0)
+  else if (strcasecmp(str_tochar(command),"append")==0)
   {
     FILE * fp;
-    char * buf;
+    wzd_string_t * buf;
     unsigned int length;
-    buf = strtok_r(NULL,"\r\n",&ptr);
-    if (!buf) {
-      do_site_help("msg",context);
-      return 1;
-    }
+
+    str_deallocate(command);
     fp = fopen(msg_file,"a");
     if (!fp) {
       send_message_with_args(501,context,"unable to open message file for writing");
       return 1;
     }
-    length = strlen(buf);
-    if (length != fwrite(buf,1,length,fp)) {
+    buf = str_tok(command_line,"\r\n");
+    if (!buf) {
+      fclose(fp);
+      do_site_help("msg",context);
+      return 1;
+    }
+    length = strlen(str_tochar(buf));
+    if (length != fwrite(str_tochar(buf),1,length,fp)) {
       fclose(fp);
       send_message_with_args(501,context,"unable to write message");
+      str_deallocate(buf);
       return 1;
     }
     fclose(fp);
     send_message_with_args(200,context,"message file written");
+    str_deallocate(buf);
     return 0;
   }
 
   do_site_help("msg",context);
+  str_deallocate(command);
   return 0;
 }
 
@@ -938,26 +966,25 @@ int do_site_msg(char *command_line, wzd_context_t * context)
  *        change perm_name perms
  *        remove perm_name
  */
-int do_site_perm(char *command_line, wzd_context_t * context)
+int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
-  char * command, * ptr;
-  char * perm_name;
+  wzd_string_t * command, * perm_name, * ptr;
   char perm_buffer[256];
   char buffer[2048];
   wzd_command_perm_t * current;
   int ret;
 
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("perm",context);
     return 1;
   }
-  perm_name = strtok_r(NULL," \t\r\n",&ptr);
+  perm_name = str_tok(command_line," \t\r\n");
 
-  if (strcasecmp(command,"show")==0)
+  if (strcasecmp(str_tochar(command),"show")==0)
   {
+    str_deallocate(command);
     send_message_raw("200-\r\n",context);
     current = mainConfig->perm_list;
     if ( !perm_name ) {
@@ -974,7 +1001,7 @@ int do_site_perm(char *command_line, wzd_context_t * context)
       /* search on perms name */
       int found=0;
       while (current) {
-        if ( !strncasecmp(perm_name,current->command_name,strlen(perm_name)) )
+        if ( !strncasecmp(str_tochar(perm_name),current->command_name,strlen(str_tochar(perm_name))) )
         {
           found=1;
           if ( !perm2str(current,perm_buffer,sizeof(perm_buffer)) )
@@ -987,56 +1014,81 @@ int do_site_perm(char *command_line, wzd_context_t * context)
       }
       if (!found)
         send_message_raw(" permission not found\r\n",context);
+      str_deallocate(perm_name);
     }
     send_message_raw("200 \r\n",context);
     return 0;
   }
-  else if (strcasecmp(command,"change")==0)
+  else if (strcasecmp(str_tochar(command),"change")==0)
   {
-    ptr = strtok_r(NULL,"\r\n",&ptr);
+    str_deallocate(command);
+    ptr = str_tok(command_line,"\r\n");
     if (!perm_name || !ptr) {
       do_site_help("perm",context);
+      str_deallocate(perm_name);
       return 1;
     }
-    ret = perm_is_valid_perm(perm_name);
-    if (ret) { send_message_with_args(501,context,"perm_name is invalid"); return 1; }
-    if ( perm_remove(perm_name, mainConfig) ) {
+    ret = perm_is_valid_perm(str_tochar(perm_name));
+    if (ret) {
+      send_message_with_args(501,context,"perm_name is invalid");
+      str_deallocate(perm_name); str_deallocate(ptr);
+      return 1;
+    }
+    if ( perm_remove(str_tochar(perm_name), mainConfig) ) {
       send_message_with_args(501,context,"error, permission NOT deleted");
+      str_deallocate(perm_name); str_deallocate(ptr);
       return 1;
     }
-    ret = perm_add_perm(perm_name,ptr,mainConfig);
-    if (ret) { send_message_with_args(501,context,"error adding permission"); return 1; }
+    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),mainConfig);
+    str_deallocate(perm_name);
+    str_deallocate(ptr);
+    if (ret) {send_message_with_args(501,context,"error adding permission"); return 1; }
     send_message_with_args(200,context,"command ok, permission changed");
     return -1;
   }
-  else if (strcasecmp(command,"remove")==0)
+  else if (strcasecmp(str_tochar(command),"remove")==0)
   {
+    str_deallocate(command);
     if (!perm_name) {
       do_site_help("perm",context);
       return 1;
     }
-    if ( perm_remove(perm_name, mainConfig) )
+    if ( perm_remove(str_tochar(perm_name), mainConfig) )
       send_message_with_args(501,context,"error, permission NOT deleted");
     else
       send_message_with_args(200,context,"command ok, permission deleted");
+    str_deallocate(perm_name);
     return 0;
   }
-  else if (strcasecmp(command,"add")==0)
+  else if (strcasecmp(str_tochar(command),"add")==0)
   {
-    ptr = strtok_r(NULL,"\r\n",&ptr);
+    str_deallocate(command);
+    ptr = str_tok(command_line,"\r\n");
     if (!perm_name || !ptr) {
       do_site_help("perm",context);
+      str_deallocate(perm_name); str_deallocate(ptr);
       return 1;
     }
-    ret = perm_is_valid_perm(perm_name);
-    if (ret) { send_message_with_args(501,context,"perm_name is invalid"); return 1; }
-    ret = perm_add_perm(perm_name,ptr,mainConfig);
-    if (ret) { send_message_with_args(501,context,"error adding permission"); return 1; }
+    ret = perm_is_valid_perm(str_tochar(perm_name));
+    if (ret) {
+      send_message_with_args(501,context,"perm_name is invalid");
+      str_deallocate(perm_name); str_deallocate(ptr);
+      return 1;
+    }
+    ret = perm_add_perm(str_tochar(perm_name),str_tochar(ptr),mainConfig);
+    if (ret) {
+      send_message_with_args(501,context,"error adding permission");
+      str_deallocate(perm_name); str_deallocate(ptr);
+      return 1;
+    }
     send_message_with_args(200,context,"command ok, permission added");
+    str_deallocate(perm_name); str_deallocate(ptr);
     return 0;
   }
 
   do_site_help("perm",context);
+  str_deallocate(command);
+  str_deallocate(perm_name);
   return 0;
 }
 
@@ -1354,7 +1406,7 @@ void do_site_user(const char *command_line, wzd_context_t * context)
  * change acess time, modification time, modification of status of a file
  */
 
-int do_site_utime(char *command_line, wzd_context_t * context)
+int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 #ifdef HAVE_STRPTIME
   extern char *strptime (__const char *__restrict __s,
@@ -1362,66 +1414,85 @@ int do_site_utime(char *command_line, wzd_context_t * context)
 #endif
   char buffer[BUFFER_LEN];
   char * ptr;
-  char * filename;
-  char * new_atime, * new_mtime, * new_ctime;
+  wzd_string_t * filename;
+  wzd_string_t * new_atime, * new_mtime, * new_ctime;
+  wzd_string_t * timezone;
   struct tm tm_atime, tm_mtime, tm_ctime;
   struct utimbuf utime_buf;
-  char * timezone;
   int ret;
   wzd_user_t * user;
 
   user = GetUserByID(context->userid);
 
-  ptr = command_line;
-  filename = strtok_r(command_line," \t\r\n",&ptr);
+  filename = str_tok(command_line," \t\r\n");
   if (!filename) {
     do_site_help("utime",context);
     return 1; 
   }
-  new_atime = strtok_r(NULL," \t\r\n",&ptr);
+  new_atime = str_tok(command_line," \t\r\n");
   if (!new_atime) {
     do_site_help("utime",context);
+    str_deallocate(filename);
     return 1;
   }
-  new_mtime = strtok_r(NULL," \t\r\n",&ptr);
+  new_mtime = str_tok(command_line," \t\r\n");
   if (!new_mtime) {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_atime);
     return 1;
   }
-  new_ctime = strtok_r(NULL," \t\r\n",&ptr);
+  new_ctime = str_tok(command_line," \t\r\n");
   if (!new_ctime) {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_atime); str_deallocate(new_mtime);
     return 1;
   }
-  timezone = strtok_r(NULL," \t\r\n",&ptr);
+  timezone = str_tok(command_line," \t\r\n");
   if (!timezone) {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_atime); str_deallocate(new_mtime);
+    str_deallocate(new_ctime);
     return 1;
   }
   /* TODO check that timezone is UTC */
-  ptr=strptime(new_atime,"%Y%m%d%H%M%S",&tm_atime);
+  memset(&tm_atime,0,sizeof(struct tm));
+  ptr=strptime(str_tochar(new_atime),"%Y%m%d%H%M%S",&tm_atime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_atime); str_deallocate(new_mtime);
+    str_deallocate(new_ctime); str_deallocate(timezone);
     return 1;
   }
-  ptr=strptime(new_mtime,"%Y%m%d%H%M%S",&tm_mtime);
+  str_deallocate(new_atime);
+  memset(&tm_mtime,0,sizeof(struct tm));
+  ptr=strptime(str_tochar(new_mtime),"%Y%m%d%H%M%S",&tm_mtime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_mtime);
+    str_deallocate(new_ctime); str_deallocate(timezone);
     return 1;
   }
+  str_deallocate(new_mtime);
   /* TODO ctime is useless in *nix systems ... */
-  ptr=strptime(new_ctime,"%Y%m%d%H%M%S",&tm_ctime);
+  memset(&tm_ctime,0,sizeof(struct tm));
+  ptr=strptime(str_tochar(new_ctime),"%Y%m%d%H%M%S",&tm_ctime);
   if (ptr == NULL || *ptr != '\0') {
     do_site_help("utime",context);
+    str_deallocate(filename); str_deallocate(new_ctime); str_deallocate(timezone);
     return 1;
   }
+  str_deallocate(new_ctime);
+  str_deallocate(timezone);
+
   utime_buf.actime = mktime(&tm_atime);
   utime_buf.modtime = mktime(&tm_mtime);
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-  if (checkpath(filename,buffer,context)) { /* path is NOT ok ! */
+  if (checkpath(str_tochar(filename),buffer,context)) { /* path is NOT ok ! */
     ret = send_message_with_args(501,context,"File does not exists");
+    str_deallocate(filename);
     return 1;
   }
+  str_deallocate(filename);
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   ret = _checkPerm(buffer,RIGHT_RNFR,user);  
   if (ret) {
@@ -1437,26 +1508,30 @@ int do_site_utime(char *command_line, wzd_context_t * context)
 
 /********************* do_site_vars *********************/
 
-int do_site_vars(char * command_line, wzd_context_t * context)
+int do_site_vars(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
-  char *ptr, *command, *varname, *value;
+  wzd_string_t *command, *varname, *value;
   char * buffer;
   int ret;
 
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars",context);
     return 1; 
   }
-  ascii_lower(command,strlen(command));
+  str_tolower(command);
 
-  varname = strtok_r(NULL," \t\r\n",&ptr);
-  if (!varname) { do_site_help("vars",context); return 1; }
+  varname = str_tok(command_line," \t\r\n");
+  if (!varname) {
+    do_site_help("vars",context);
+    str_deallocate(command);
+    return 1;
+  }
 
-  if (strcmp(command,"get")==0) {
+  if (strcmp(str_tochar(command),"get")==0) {
+    str_deallocate(command);
     buffer = malloc(1024); /** \todo XXX harcoded value ! */
-    ret = vars_get(varname,buffer,1024,mainConfig);
+    ret = vars_get(str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
@@ -1467,58 +1542,77 @@ int do_site_vars(char * command_line, wzd_context_t * context)
     }
 
     free(buffer);
+    str_deallocate(varname);
     return 0;
   }
-  else if (strcmp(command,"set")==0) {
-    value = strtok_r(NULL," \t\r\n",&ptr);
-    if (!value) { do_site_help("vars",context); return 1; }
+  else if (strcmp(str_tochar(command),"set")==0) {
+    str_deallocate(command);
+    value = str_tok(command_line," \t\r\n");
+    if (!value) {
+      do_site_help("vars",context);
+      str_deallocate(varname);
+      return 1;
+    }
 
-    ret = vars_set(varname,value,strlen(value),mainConfig);
+    ret = vars_set(str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
     else
       send_message_with_args(200,context,"command ok");
+
+    str_deallocate(varname);
+    str_deallocate(value);
     return 0;
   }
 
   send_message_with_args(200,context,"command ok");
+  str_deallocate(command);
+  str_deallocate(varname);
   return 0;
 }
 
 /****************** do_site_vars_group *******************/
 
-int do_site_vars_group(char * command_line, wzd_context_t * context)
+int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
-  char *ptr, *groupname, *command, *varname, *value;
+  wzd_string_t *groupname, *command, *varname, *value;
   char * buffer;
   int ret;
   wzd_group_t * group;
 
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars_group",context);
     return 1; 
   }
-  ascii_lower(command,strlen(command));
+  str_tolower(command);
 
-  groupname = strtok_r(NULL," \t\r\n",&ptr);
+  groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
     do_site_help("vars_group",context);
+    str_deallocate(command);
     return 1; 
   }
-  if ( (group = GetGroupByName(groupname)) == NULL ) {
+  group = GetGroupByName(str_tochar(groupname));
+  str_deallocate(groupname);
+  if ( !group ) {
     send_message_with_args(501,context,"group does not exist");
+    str_deallocate(command);
     return 1; 
   }
 
-  varname = strtok_r(NULL," \t\r\n",&ptr);
-  if (!varname) { do_site_help("vars_group",context); return 1; }
+  varname = str_tok(command_line," \t\r\n");
+  if (!varname) {
+    do_site_help("vars_group",context);
+    str_deallocate(command);
+    return 1;
+  }
 
-  if (strcmp(command,"get")==0) {
+  if (strcmp(str_tochar(command),"get")==0) {
+    str_deallocate(command);
     buffer = malloc(1024); /** \todo XXX harcoded value ! */
-    ret = vars_group_get(groupname,varname,buffer,1024,mainConfig);
+    ret = vars_group_get(group->groupname,str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
@@ -1529,58 +1623,76 @@ int do_site_vars_group(char * command_line, wzd_context_t * context)
     }
 
     free(buffer);
+    str_deallocate(varname);
     return 0;
   }
-  else if (strcmp(command,"set")==0) {
-    value = strtok_r(NULL," \t\r\n",&ptr);
-    if (!value) { do_site_help("vars_group",context); return 1; }
+  else if (strcmp(str_tochar(command),"set")==0) {
+    str_deallocate(command);
+    value = str_tok(command_line," \t\r\n");
+    if (!value) {
+      do_site_help("vars_group",context);
+      str_deallocate(varname);
+      return 1;
+    }
 
-    ret = vars_group_set(groupname,varname,value,strlen(value),mainConfig);
+    ret = vars_group_set(group->groupname,str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
     else
       send_message_with_args(200,context,"command ok");
+    str_deallocate(value);
+    str_deallocate(varname);
     return 0;
   }
 
   send_message_with_args(200,context,"command ok");
+  str_deallocate(command);
+  str_deallocate(varname);
   return 0;
 }
 
 /****************** do_site_vars_user *******************/
 
-int do_site_vars_user(char * command_line, wzd_context_t * context)
+int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
-  char *ptr, *username, *command, *varname, *value;
+  wzd_string_t *username, *command, *varname, *value;
   char * buffer;
   int ret;
   wzd_user_t * user;
 
-  ptr = command_line;
-  command = strtok_r(command_line," \t\r\n",&ptr);
+  command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars_user",context);
     return 1; 
   }
-  ascii_lower(command,strlen(command));
+  str_tolower(command);
 
-  username = strtok_r(NULL," \t\r\n",&ptr);
+  username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help("vars_user",context);
+    str_deallocate(command);
     return 1; 
   }
-  if ( (user = GetUserByName(username)) == NULL ) {
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
     send_message_with_args(501,context,"user does not exist");
+    str_deallocate(command);
     return 1; 
   }
 
-  varname = strtok_r(NULL," \t\r\n",&ptr);
-  if (!varname) { do_site_help("vars_user",context); return 1; }
+  varname = str_tok(command_line," \t\r\n");
+  if (!varname) {
+    do_site_help("vars_user",context);
+    str_deallocate(command);
+    return 1;
+  }
 
-  if (strcmp(command,"get")==0) {
+  if (strcmp(str_tochar(command),"get")==0) {
+    str_deallocate(command);
     buffer = malloc(1024); /** \todo XXX harcoded value ! */
-    ret = vars_user_get(username,varname,buffer,1024,mainConfig);
+    ret = vars_user_get(user->username,str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
@@ -1591,28 +1703,38 @@ int do_site_vars_user(char * command_line, wzd_context_t * context)
     }
 
     free(buffer);
+    str_deallocate(varname);
     return 0;
   }
-  else if (strcmp(command,"set")==0) {
-    value = strtok_r(NULL," \t\r\n",&ptr);
-    if (!value) { do_site_help("vars_user",context); return 1; }
+  else if (strcmp(str_tochar(command),"set")==0) {
+    str_deallocate(command);
+    value = str_tok(command_line," \t\r\n");
+    if (!value) {
+      do_site_help("vars_user",context);
+      str_deallocate(varname);
+      str_deallocate(value);
+      return 1;
+    }
 
-    ret = vars_user_set(username,varname,value,strlen(value),mainConfig);
+    ret = vars_user_set(user->username,str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
     else
       send_message_with_args(200,context,"command ok");
+    str_deallocate(varname);
+    str_deallocate(value);
     return 0;
   }
 
   send_message_with_args(200,context,"command ok");
+  str_deallocate(varname);
   return 0;
 }
 
 /********************* do_site_version *********************/
 
-int do_site_version(char * ignored, wzd_context_t * context)
+int do_site_version(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   char str[256];
   snprintf(str,256,"%s build %s (%s)",
@@ -1625,7 +1747,7 @@ int do_site_version(char * ignored, wzd_context_t * context)
 
 /* XXX : just send last vfs */
 
-int do_site_vfsls(char * ignored, wzd_context_t * context)
+int do_site_vfsls(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   do_site_print_file(mainConfig->site_config.file_vfs,NULL,NULL,context);
 
@@ -1636,7 +1758,7 @@ int do_site_vfsls(char * ignored, wzd_context_t * context)
 /** vfsadd |/home/vfsroot|/physical/path| +O =user
  */
 
-int do_site_vfsadd(char * command_line, wzd_context_t * context)
+int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   char *vpath, *ppath, *target;
 /*  int i;*/
@@ -1647,7 +1769,7 @@ int do_site_vfsadd(char * command_line, wzd_context_t * context)
   unsigned int dstlen, length;
   char buffer[1024];
 
-  strncpy(buffer,command_line,1024);
+  strncpy(buffer,str_tochar(command_line),1024);
 
   /* allocate enough memory */
   length = strlen(buffer);
@@ -1722,12 +1844,12 @@ int do_site_vfsadd(char * command_line, wzd_context_t * context)
 /** vfsdel /home/vfsroot
  */
 
-int do_site_vfsdel(char * command_line, wzd_context_t * context)
+int do_site_vfsdel(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   int ret;
 
-  if (command_line[0]!=0)
-    ret = vfs_remove( &mainConfig->vfs, command_line );
+  if (command_line && strlen(str_tochar(command_line))>0)
+    ret = vfs_remove( &mainConfig->vfs, str_tochar(command_line) );
   else ret = 1;
 
   if (ret==1)
@@ -1735,7 +1857,7 @@ int do_site_vfsdel(char * command_line, wzd_context_t * context)
   else if (ret==2)
   {
     char tmp[80];
-    snprintf( tmp, 80, "vfs %s does not exist", command_line );
+    snprintf( tmp, 80, "vfs %s does not exist", str_tochar(command_line) );
     send_message_with_args(501,context,tmp);
   } else
     send_message_with_args(200,context,"VFSDEL command ok");
@@ -1828,27 +1950,26 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
 /** wipe: [-r] file1 [file2 ...]
  */
 
-int do_site_wipe(char *command_line, wzd_context_t * context)
+int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char buffer[BUFFER_LEN];
-  char * ptr;
-  char * firstarg, *filename;
+  char buffer[WZD_MAX_PATH+1];
+  wzd_string_t * firstarg, *filename;
   int is_recursive;
   int ret;
 /*  wzd_user_t user;*/
 /*  int uid;*/
 /*  struct stat s;*/
 
-  ptr = command_line;
-  firstarg = strtok_r(command_line," \t\r\n",&ptr);
+  firstarg = str_tok(command_line," \t\r\n");
   if (!firstarg) {
     do_site_help("wipe",context);
     return 1;
   }
   /* check if wiping is recursive */
-  if ( strcasecmp(firstarg,"-r")==0 ) {
+  if ( strcasecmp(str_tochar(firstarg),"-r")==0 ) {
+    str_deallocate(firstarg);
     is_recursive=1;
-    filename = strtok_r(NULL," \t\r\n",&ptr);
+    filename = str_tok(command_line," \t\r\n");
     if( !filename) {
       do_site_help("wipe",context);
       return 1;
@@ -1860,152 +1981,22 @@ int do_site_wipe(char *command_line, wzd_context_t * context)
   do
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (checkpath(filename,buffer,context)) continue; /* path is NOT ok ! */
-    /* wipe file | if_recursive dir/file */
-    ret = do_internal_wipe(buffer,context);
-    if (ret) {
-      ret = send_message_with_args(501,context,"WIPE failed");
-      return 1;
+    if (!checkpath(str_tochar(filename),buffer,context))
+    {
+      /* wipe file | if_recursive dir/file */
+      ret = do_internal_wipe(buffer,context);
+      if (ret) {
+        ret = send_message_with_args(501,context,"WIPE failed");
+        str_deallocate(filename);
+        return 1;
+      }
     }
+    str_deallocate(filename);
   }
-  while ( (filename = strtok_r(NULL," \t\r\n",&ptr)) );
+  while ( (filename = str_tok(command_line," \t\r\n")) );
 
   ret = send_message_with_args(200,context,"File(s) wiped");
 
-  return 0;
-}
-
-/********************* site_init ***************************/
-int site_command_add(wzd_site_fct_t **site_list, const char *name, site_fct_t fct)
-{
-  wzd_site_fct_t * new_site, *current;
-
-  new_site = malloc(sizeof(wzd_site_fct_t));
-  if (!new_site) return 1;
-  new_site->name = strdup(name);
-  ascii_lower(new_site->name,strlen(new_site->name));
-  new_site->fct = fct;
-  new_site->next_site_fct = NULL;
-
-  current = *site_list;
-
-  if (!current) {
-    *site_list = new_site;
-    return 0;
-  }
-
-  /* tail insertion */
-  while (current->next_site_fct)
-    current = current->next_site_fct;
-
-  current->next_site_fct = new_site;
-
-  return 0;
-}
-
-void site_cleanup(wzd_config_t * config)
-{
-  wzd_site_fct_t * next, *current;
-
-  current = mainConfig->site_list;
-
-  while (current)
-  {
-    next = current->next_site_fct;
-    free(current->name);
-    free(current);
-    current = next;
-  }
-  mainConfig->site_list = NULL;
-}
-
-site_fct_t site_find(const char *name)
-{
-  wzd_site_fct_t * current;
-
-  current = mainConfig->site_list;
-  while(current)
-  {
-    if (strcasecmp(current->name,name)==0) return current->fct;
-    current = current->next_site_fct;
-  }
-
-  return NULL;
-}
-
-int site_init(wzd_config_t * config)
-{
-  if (site_command_add(&config->site_list,"SITE_ADDIP",&do_site_addip)) return 1;
-  if (site_command_add(&config->site_list,"SITE_ADDUSER",&do_site_adduser)) return 1;
-  if (site_command_add(&config->site_list,"SITE_BACKEND",&do_site_backend)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHACL",&do_site_chacl)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHANGE",&do_site_change)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHANGEGRP",&do_site_changegrp)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHECKPERM",&do_site_checkperm)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHGRP",&do_site_chgrp)) return 1;
-#if 0
-  if (site_command_add(&config->site_list,"SITE_CHMOD",&do_site_chmod)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHOWN",&do_site_chown)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHPASS",&do_site_chpass)) return 1;
-  if (site_command_add(&config->site_list,"SITE_CHRATIO",&do_site_chratio)) return 1;
-  /* do_site_close ? */
-  if (site_command_add(&config->site_list,"SITE_COLOR",&do_site_color)) return 1;
-  if (site_command_add(&config->site_list,"SITE_DELIP",&do_site_delip)) return 1;
-  if (site_command_add(&config->site_list,"SITE_DELUSER",&do_site_deluser)) return 1;
-  if (site_command_add(&config->site_list,"SITE_FLAGS",&do_site_flags)) return 1;
-  if (site_command_add(&config->site_list,"SITE_FREE",&do_site_free)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GINFO",&do_site_ginfo)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GIVE",&do_site_give)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GROUP",&do_site_group)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPADD",&do_site_grpadd)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPADDIP",&do_site_grpaddip)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPCHANGE",&do_site_grpchange)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPDEL",&do_site_grpdel)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPDELIP",&do_site_grpdelip)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPKILL",&do_site_grpkill)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPRATIO",&do_site_grpratio)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GRPREN",&do_site_grpren)) return 1;
-  if (site_command_add(&config->site_list,"SITE_GSINFO",&do_site_gsinfo)) return 1;
-  if (site_command_add(&config->site_list,"SITE_IDLE",&do_site_idle)) return 1;
-  if (site_command_add(&config->site_list,"SITE_INVITE",&do_site_invite)) return 1;
-  if (site_command_add(&config->site_list,"SITE_KICK",&do_site_kick)) return 1;
-  if (site_command_add(&config->site_list,"SITE_KILL",&do_site_kill)) return 1;
-  if (site_command_add(&config->site_list,"SITE_KILLPATH",&do_site_killpath)) return 1;
-  if (site_command_add(&config->site_list,"SITE_LINK",&do_site_link)) return 1;
-#endif
-  if (site_command_add(&config->site_list,"SITE_MSG",&do_site_msg)) return 1;
-  if (site_command_add(&config->site_list,"SITE_PERM",&do_site_perm)) return 1;
-#if 0
-  if (site_command_add(&config->site_list,"SITE_PURGE",&do_site_purgeuser)) return 1;
-  if (site_command_add(&config->site_list,"SITE_READD",&do_site_readduser)) return 1;
-  if (site_command_add(&config->site_list,"SITE_RELOAD",&do_site_reload)) return 1;
-  /* reopen */
-  /* rules */
-  if (site_command_add(&config->site_list,"SITE_RUSAGE",&do_site_rusage)) return 1;
-  /* savecfg */
-  if (site_command_add(&config->site_list,"SITE_SAVECFG",&do_site_savecfg)) return 1;
-  if (site_command_add(&config->site_list,"SITE_SU",&do_site_su)) return 1;
-  /* swho */
-  if (site_command_add(&config->site_list,"SITE_TAGLINE",&do_site_tagline)) return 1;
-  if (site_command_add(&config->site_list,"SITE_TAKE",&do_site_take)) return 1;
-  if (site_command_add(&config->site_list,"SITE_TEST",&do_site_test)) return 1;
-  if (site_command_add(&config->site_list,"SITE_UNLOCK",&do_site_unlock)) return 1;
-  /* user */
-  /* users */
-#endif
-  if (site_command_add(&config->site_list,"SITE_UTIME",&do_site_utime)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VARS",&do_site_vars)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VARS_GROUP",&do_site_vars_group)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VARS_USER",&do_site_vars_user)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VERSION",&do_site_version)) return 1;
-  /* vfs */
-  if (site_command_add(&config->site_list,"SITE_VFSLS",&do_site_vfsls)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VFSADD",&do_site_vfsadd)) return 1;
-  if (site_command_add(&config->site_list,"SITE_VFSDEL",&do_site_vfsdel)) return 1;
-  /* who */
-  if (site_command_add(&config->site_list,"SITE_WIPE",&do_site_wipe)) return 1;
-  /* uptime */
-  /* shutdown */
   return 0;
 }
 
@@ -2014,9 +2005,8 @@ int site_init(wzd_config_t * config)
 int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[4096];
-  wzd_string_t *token, *tok_command;
+  wzd_string_t *token;
   int ret=0;
-  site_fct_t fct;
   wzd_hook_reply_t hook_reply;
   int first_reply;
   const char *s_token;
@@ -2040,6 +2030,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
 
   s_token = str_tochar(command);
 
+#if 0
   fct = site_find(s_token);
 
   if (fct)
@@ -2049,6 +2040,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
     str_deallocate(tok_command);
     return ret;
   }
+#endif
 
 /******************** CLOSE *********************/
   if (strcmp(s_token,"site_close")==0) {
@@ -2129,14 +2121,14 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   FORALL_HOOKS(EVENT_SITE)
     typedef wzd_hook_reply_t (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
     if (hook->hook) {
-      hook_reply = (*(site_hook)hook->hook)(EVENT_SITE,context,s_token,str_tochar(command_line)+strlen(s_token)+1);
+      hook_reply = (*(site_hook)hook->hook)(EVENT_SITE,context,s_token,str_tochar(command_line));
       /** \todo implement and use constants: HANDLED, NEXT, ERROR or something like .. */
       if (hook_reply != EVENT_IGNORED && hook_reply != EVENT_NEXT) break;
     }
     /* custom site commands */
     if (hook->opt && hook->external_command && strcasecmp(hook->opt,s_token)==0) {
       if (first_reply) { send_message_raw("200-\r\n",context); first_reply=0; }
-      ret = hook_call_custom(context, hook, 200, (char*)str_tochar(command_line)+strlen(s_token)+1);
+      ret = hook_call_custom(context, hook, 200, (char*)str_tochar(command_line));
       if (!ret) {
         ret = send_message_with_args(200,context,"SITE command ok");
       } else {

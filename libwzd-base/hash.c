@@ -152,7 +152,9 @@ int chtbl_remove(CHTBL *htab, const void *key)
     if (htab->match(key, entry->key)==0) {
       if (list_rem_next(&htab->table[index], prec, (void*)entry) == 0) {
         htab->size--;
-        free(entry);
+        if (entry->free_key) entry->free_key(entry->key);
+        if (entry->free_element) entry->free_element(entry->data);
+        htab->table[index].destroy(entry);
         return 0;
       }
       return -1;

@@ -34,8 +34,6 @@
 #else /* WZD_USE_PCH */
 #endif /*WZD_USE_PCH */
 
-#include <wchar.h>
-
 #ifdef WIN32
 # include <windows.h>
 #endif
@@ -46,6 +44,10 @@
 #include "wzd_utf8.h"
 
 #include "wzd_debug.h"
+
+#ifdef HAVE_WCHAR_H
+# include <wchar.h>
+#endif
 
 #ifdef HAVE_ICONV
 # include <iconv.h>
@@ -64,11 +66,10 @@ typedef void * iconv_t;
 #define	DL_ARG	RTLD_NOW
 #endif
 
-/* BSD exports symbols in .so files prefixed with a _ !! */
-#ifdef BSD
-#define	DL_PREFIX "_"
+#ifdef NEED_UNDERSCORE
+#define DL_PREFIX "_"
 #else
-#define	DL_PREFIX
+#define DL_PREFIX
 #endif
 
 #define DEFAULT_CODESET "ISO-8859-1"

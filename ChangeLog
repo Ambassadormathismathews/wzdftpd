@@ -1,3 +1,9 @@
+2005-01-07  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: all site commands converted to new format
+	* feature: configure checks if system adds _ to exported symbols
+	* bugfix: include wchar.h only if needed
+
 2005-01-03  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: added pam authentication via libwzd-auth

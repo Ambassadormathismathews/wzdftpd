@@ -470,6 +470,15 @@ int predicate_groupname(wzd_group_t * group, void * arg)
 
 int predicate_groupname(wzd_group_t * group, void * arg);
 
+#ifdef WZD_DBG_UGCACHE
+static void _user_free(wzd_user_t *user)
+{
+  out_err(LEVEL_CRITICAL,"Freeing user %s (%p)\n",user->username,user);
+}
+#else
+#define _user_free wzd_free
+#endif
+
 void usercache_init(void)
 {
   chtbl_init(&index_user_name,128,(hash_function)hash_str,(cmp_function)strcmp,wzd_free);
@@ -506,11 +515,11 @@ wzd_user_t * usercache_add(wzd_user_t * user)
   /* insert entry */
   loop_user = wzd_malloc(sizeof(wzd_user_t));
   memcpy(loop_user,user,sizeof(wzd_user_t));
-  if ((chtbl_insert(&index_user_name, loop_user->username, loop_user, NULL, NULL, wzd_free))==0 &&
+  if ((chtbl_insert(&index_user_name, loop_user->username, loop_user, NULL, NULL, _user_free))==0 &&
        chtbl_insert(&index_user_uid, (void*)loop_user->uid, loop_user, NULL, NULL, NULL)==0)
   {
 #ifdef WZD_DBG_UGCACHE
-    out_err(LEVEL_INFO,"user cache add %s\n",user->username);
+    out_err(LEVEL_INFO,"user cache add %s (%p)\n",user->username,loop_user);
 #endif
     return loop_user;
   }

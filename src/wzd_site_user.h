@@ -25,7 +25,7 @@
 #ifndef __WZD_SITE_USER__
 #define __WZD_SITE_USER__
 
-int do_site_adduser(char *command_line, wzd_context_t * context);
+int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_deluser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context);
@@ -34,17 +34,17 @@ int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
 int do_site_killpath(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_su(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_addip(char *command_line, wzd_context_t * context);
+int do_site_addip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
 int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context);
 
-int do_site_changegrp(char *command_line, wzd_context_t * context);
+int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_change(char *command_line, wzd_context_t * context);
+int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
 int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);

@@ -123,7 +123,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
   return 1;
 }
 
-int vars_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_set(const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
 {
   int i;
   unsigned long ul;
@@ -346,7 +346,7 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
   return backend_mod_user(config->backend.name, username, user, _USER_IP);
 }
 
-int vars_user_set(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_user_set(const char *username, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_user_t * user;
   unsigned long mod_type;
@@ -572,7 +572,7 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
   return 1;
 }
 
-int vars_group_set(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_group_set(const char *groupname, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_group_t * group;
   unsigned long mod_type;

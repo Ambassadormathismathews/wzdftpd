@@ -164,7 +164,7 @@ static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * c
 {
   SV *val;
 
-  if (strcasecmp(token,"perl")==0) {
+  if (strcasecmp(token,"site_perl")==0) {
     if (!my_perl) return 0;
     if (!args || strlen(args)==0) { do_perl_help(context); return EVENT_HANDLED; }
 

@@ -314,6 +314,9 @@
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
 
+/* Need underscore. */
+#undef NEED_UNDERSCORE
+
 /* Name of package */
 #undef PACKAGE
 

@@ -57,13 +57,16 @@
 #include <errno.h>
 #include <fcntl.h>
 
-/* BSD exports symbols in .so files prefixed with a _ !! */
 #ifdef BSD
 #define DL_ARG    DL_LAZY
-#define	DL_PREFIX "_"
 #else
 #define DL_ARG    RTLD_NOW
-#define	DL_PREFIX
+#endif
+
+#ifdef NEED_UNDERSCORE
+#define DL_PREFIX "_"
+#else
+#define DL_PREFIX
 #endif
 
 

@@ -182,7 +182,7 @@ void WZD_MODULE_CLOSE(void)
 
 static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
 {
-  if (strcasecmp(token,"tcl")==0) {
+  if (strcasecmp(token,"site_tcl")==0) {
     if (!args || strlen(args)==0) { do_tcl_help(context); return EVENT_HANDLED; }
     {
       Tcl_Obj * TempObj;
