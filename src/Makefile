@@ -46,8 +46,8 @@ CC=gcc-3.2
 LIBWZD = libwzd.so
 EXEC=wzdFTPd
 COMMON_LIBS += -L. -lwzd -Wl,-rpath,.
-COMMON_CFLAGS += -march=i686 -ffast-math -mmmx -msse -mfpmath=sse
-#COMMON_CFLAGS += -march=i586
+#COMMON_CFLAGS += -march=pentium4 -ffast-math -mmmx -msse -mfpmath=sse
+COMMON_CFLAGS += -march=pentium3
 else
 CC=gcc
 LIBWZD = libwzd.dll
@@ -64,6 +64,11 @@ install: release
 	install --mode=755 $(EXEC) $(LIBWZD) $(DESTDIR); \
 	install --mode=600 wzd.cfg $(DESTDIR); \
 	install --mode=644 file_help.txt file_swho.txt file_user.txt file_rules.txt file_users.txt file_who.txt $(DESTDIR)
+
+installdebug: debug
+	install --mode=755 $(EXEC) $(LIBWZD) $(DESTDIR)-debug; \
+	install --mode=600 wzd.cfg $(DESTDIR)-debug; \
+	install --mode=644 file_help.txt file_swho.txt file_user.txt file_rules.txt file_users.txt file_who.txt $(DESTDIR)-debug
 
 uninstall:
 	rm -f $(DESTDIR)/file_{help,swho,user,rules,users,who}.txt; \
