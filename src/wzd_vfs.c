@@ -796,7 +796,6 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
 
 int killpath(const char *path, wzd_context_t * context)
 {
-  char *realpath;
   char * test_realpath;
   int found = 0;
   wzd_user_t * me, * user;
@@ -804,26 +803,22 @@ int killpath(const char *path, wzd_context_t * context)
 
   if (!path) return E_FILE_NOEXIST;
 
-  realpath = malloc(WZD_MAX_PATH+1);
-  if (checkpath_new(path,realpath,context)) {
-    free(realpath);
-    return E_FILE_NOEXIST;
-  }
-
-  length = strlen(realpath);
+  length = strlen(path);
   test_realpath = malloc(WZD_MAX_PATH+1);
 
   me = GetUserByID(context->userid);
   WZD_ASSERT( me != NULL );
   if (checkpath_new(context->currentpath,test_realpath,context)) {
-    free(realpath); free(test_realpath);
+    free(test_realpath);
     return E_USER_IDONTEXIST;
   }
+#if 0
   /* preliminary check: i can't kill myself */
-  if (strncmp(path,realpath,length)==0) {
-    free(realpath); free(test_realpath);
+  if (strncmp(path,test_realpath,length)==0) {
+    free(test_realpath);
     return E_USER_ICANTSUICIDE;
   }
+#endif
 
   /* kill'em all ! */
   {
@@ -832,8 +827,9 @@ int killpath(const char *path, wzd_context_t * context)
       if (context_list[i].magic == CONTEXT_MAGIC) {
         user = GetUserByID(context_list[i].userid);
         WZD_ASSERT( user != NULL );
+        if (context_list[i].userid == context->userid) { i++; continue; } /* no suicide */
         if (checkpath_new(context_list[i].currentpath,test_realpath,&context_list[i]) == 0) {
-          if (strncmp(realpath,test_realpath,length)==0) {
+          if (strncmp(path,test_realpath,length)==0) {
             found++;
             kill_child_new(context_list[i].pid_child,context);
           }
@@ -843,7 +839,7 @@ int killpath(const char *path, wzd_context_t * context)
     }
   }
 
-  free(realpath); free(test_realpath);
+  free(test_realpath);
 
   if (!found) return E_USER_NOBODY;
 

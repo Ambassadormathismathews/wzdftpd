@@ -477,8 +477,27 @@ static XS(XS_wzd_killpath)
 
   text = SvPV_nolen(ST(0));
 
-  ret = killpath (text,current_context);
-  if ( ret != E_OK ) {
+  if (!strcmp(text,"-r") || !strcmp(text,"--real")) {
+    /* ex: killpath -r c:\real */
+    if (items < 2) XSRETURN_UNDEF;
+
+    /** \todo print error message */
+    if ( ! SvPOK(ST(1)) )
+      XSRETURN_UNDEF;
+
+    text = SvPV_nolen(ST(1));
+
+    ret = killpath (text,current_context);
+  } else {
+    char * realpath;
+    realpath = malloc(WZD_MAX_PATH+1);
+    if ( checkpath(text, realpath, current_context) ) {
+      XSRETURN_UNDEF;
+    }
+    ret = killpath (realpath,current_context);
+    free(realpath);
+  }
+  if ( ret != E_OK && ret != E_USER_NOBODY ) {
     XSRETURN_NO;
   }
 

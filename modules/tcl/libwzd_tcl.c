@@ -412,12 +412,24 @@ static int tcl_killpath(ClientData data, Tcl_Interp *interp, int argc, const cha
 {
   int ret;
 
-  if (argc != 2) return TCL_ERROR;
+  if (argc < 2) return TCL_ERROR;
   if (!current_context) return TCL_ERROR;
 
-  ret = killpath(argv[1], current_context);
+  if (!strcmp(argv[1],"-r") || !strcmp(argv[1],"--real")) {
+    ret = killpath(argv[2], current_context);
+  } else {
+    char * realpath;
+    realpath = malloc(WZD_MAX_PATH+1);
 
-  if ( ret != E_OK ) {
+    if (checkpath_new(argv[2],realpath,current_context)) {
+      free(realpath);
+      return TCL_ERROR;
+    }
+    ret = killpath(realpath, current_context);
+    free(realpath);
+  }
+
+  if ( ret != E_OK && ret != E_USER_NOBODY ) {
     return TCL_ERROR;
   }
 

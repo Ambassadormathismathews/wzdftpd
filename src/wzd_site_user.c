@@ -1336,7 +1336,7 @@ int do_site_kick(char *command_line, wzd_context_t * context)
  */
 int do_site_killpath(char *command_line, wzd_context_t * context)
 {
-  char *path;
+  char *path, *realpath;
   char *ptr;
   int ret;
 
@@ -1347,7 +1347,13 @@ int do_site_killpath(char *command_line, wzd_context_t * context)
     return 0;
   }
 
-  ret = killpath(path,context);
+  realpath = malloc(WZD_MAX_PATH+1);
+  if (checkpath_new(path,realpath,context)) {
+    ret = E_FILE_NOEXIST;
+  } else {
+    ret = killpath(realpath,context);
+  }
+  free(realpath);
 
   switch (ret) {
     case E_FILE_NOEXIST:
