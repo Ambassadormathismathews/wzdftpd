@@ -106,7 +106,29 @@ static unsigned int find_free_uid(unsigned int start)
     if (uid == (unsigned int)-1) return (unsigned int)-1; /* we have too many users ! */
   }
 
-  /* we should never we here */
+  /* we should never be here */
+  return (unsigned int)-1;
+}
+
+static unsigned int find_free_gid(unsigned int start)
+{
+  unsigned int gid = start;
+  unsigned int found;
+  unsigned int gid_is_free = 0;
+  unsigned int i;
+
+  while (!gid_is_free) {
+    found = 0;
+    for (i=0; i<group_count; i++)
+    {
+      if (group_pool[i].gid == gid) { found=1; break; }
+    }
+    if (!found) return gid;
+    gid ++;
+    if (gid == (unsigned int)-1) return (unsigned int)-1; /* we have too many groups ! */
+  }
+
+  /* we should never be here */
   return (unsigned int)-1;
 }
 
@@ -1232,6 +1254,7 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
   } else { /* group not found, add it */
     fprintf(stderr,"Add group %s\n",name);
     memcpy(&group_pool[group_count],group,sizeof(wzd_group_t));
+    group_pool[group_count].gid = find_free_gid(1);
     group_count++;
   } /* if (found) */
 

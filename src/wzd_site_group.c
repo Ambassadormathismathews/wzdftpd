@@ -55,6 +55,8 @@
 #include "wzd_site.h"
 #include "wzd_site_group.h"
 
+#include "wzd_debug.h"
+
 
 /* prototypes */
 void do_site_help(const char *site_command, wzd_context_t * context);
@@ -92,7 +94,7 @@ int do_site_grpadd(char *command_line, wzd_context_t * context)
   /* TODO read backend */
 
   /* check if group already exists */
-  if ( GetGroupIDByName(groupname) ) {
+  if ( GetGroupIDByName(groupname) != -1 ) {
     ret = send_message_with_args(501,context,"Group already exists");
     return 0;
   }
@@ -167,6 +169,7 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
 /*  int users_without_group[HARD_DEF_USER_MAX];*/
 /*  int num_users_without_group=0;*/
   char buffer[256];
+  int * uid_list;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -198,26 +201,30 @@ int do_site_grpdel(char *command_line, wzd_context_t * context)
 
   send_message_raw("200-\r\n",context);
   /* iterate through user list and delete all references to group */
-  for (i=0; i<HARD_DEF_USER_MAX; i++)
-  {
-    user = GetUserByID(i);
-    if (user->username[0]=='\0') continue;
-    if (is_user_in_group(user,gid))
+  uid_list = (int*)backend_get_user(-2);
+  if (uid_list) {
+    for (i=0; uid_list[i] >= 0; i++)
     {
-      /* warn for users with no groups and / or primary group
-       * changed
-       */ 
-      if (user->groups[0] == gid) {
-        snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
-        send_message_raw(buffer,context);
-      }
-      group_remove_user(user,gid);
-      if (user->group_num == 0) {
-        snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
-        send_message_raw(buffer,context);
+      user = GetUserByID(i);
+      if (!user || user->username[0]=='\0') continue;
+      if (is_user_in_group(user,gid))
+      {
+        /* warn for users with no groups and / or primary group
+         * changed
+         */ 
+        if (user->groups[0] == gid) {
+          snprintf(buffer,256,"200-WARNING %s main group is changed !\r\n",user->username);
+          send_message_raw(buffer,context);
+        }
+        group_remove_user(user,gid);
+        if (user->group_num == 0) {
+          snprintf(buffer,256,"200-WARNING %s has no group now !\r\n",user->username);
+          send_message_raw(buffer,context);
+        }
       }
     }
-  }
+    wzd_free(uid_list);
+  } /* if (uid_list) */
   /* TODO XXX FIXME delete users belonging only to this group ? */
 
   ret = send_message_raw("200 Group deleted\r\n",context);
