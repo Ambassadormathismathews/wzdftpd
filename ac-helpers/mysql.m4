@@ -22,7 +22,7 @@ dnl   different --with-mysql switch values, without interference
 dnl   from the cache.
 
 
-AC_DEFUN(WZD_LIB_MYSQL,
+AC_DEFUN([WZD_LIB_MYSQL],
 [
   dnl  Process the `with-mysql' switch. We set the variable `places' to
   dnl  either `search', meaning we should check in a list of typical places,
@@ -170,7 +170,7 @@ dnl   Set the shell variable `wzd_have_mysql' to `yes' if we found
 dnl   an appropriate version installed, or `no' otherwise.
 
 
-AC_DEFUN(WZD_LIB_MYSQL_TRY,
+AC_DEFUN([WZD_LIB_MYSQL_TRY],
   [
     wzd_lib_mysql_try_save_libs="$LIBS"
 

@@ -1,67 +1,42 @@
-.TH sitewho 1 "March 2003"
+.TH sitewho 1 "March 2004" "sitewho (wzdftpd)" "wzdftpd tools"
 .\" Process with
 .\" groff -man -Tascii sitewho.1 
 .\"
 .SH NAME
-sitewho \- show current process information for each FTP session
+sitewho \- show current process information for each FTP session (wzdftpd)
 .SH SYNOPSIS
-.B sitewho
+.B sitewho [OPTION]
 .SH DESCRIPTION
 The
 .BI sitewho
-command shows process information for all active proftpd connections,
-and a count of all connected users off of each server.  Proftpd sesssions
-spawned from inetd are counted separately from those created by a
-master proftpd
-.I standalone
-server.
-.SH OPTIONS
+command shows process information for all active wzdftpd connections,
+and a count of all connected users off of each server..SH OPTIONS
 .TP 12
-.B \-h,\--help
+.B \-h
 Display a short usage description, including all available options.
 .TP
-.BI \-f,\--file " scoreboard\-file"
-Specify the full path to proftpd's run\-time scoreboard file (configured
-via the \fBScoreboardFile\fP directive in
-.I proftpd.conf
-).  If proftpd's
-default directory has been changed via this directive, \fBsitewho\fP
-must either be recompiled, or this option must be used in order to find
-proftpd's scoreboard.
+.BI \-k " shm_key"
+Specify the key used to find shared memory segment (configured
+via the \fBshm_key\fP directive in
+.I wzd.cfg
+).
 .TP
-.BI \-o,\--outform " format"
-Specify an output format.  Currently, two "formats" are supported: \fBcompat\fP
-and \fBoneline\fP.  The \fBcompat\fP format is used for backward compatibility.
-The \fBoneline\fP format causes all of the fields for a session to be displayed
-on a single line, for ease of line-based searches (e.g. grep).
-.TP
-.B \-v,\--verbose
-Reports additional information for each connection, such as the remote
-host and current working directory.
-.BI \-S,\--server " server\-name"
-Specify the ServerName for a specific virtual host.  If used,
-.I sitewho
-will only show session information for the given virtual host.
-.SH FILES
-.PD 0
-.B NONE/bin/sitewho
-.br
-.B NONE/var/run/proftpd/proftpd.scoreboard
 .PD
+.BR
 .SH AUTHORS
 .PP
-ProFTPD is written and maintained by a number of people, full credits
-can be found on
-.BR http://www.proftpd.org/credits.html
+wzdftpd is written and maintained by Pierre Chifflier <chifflier@cpe.fr>,
+and some others contributors, full credits can be found in
+.BR /usr/share/doc/wzdftpd/AUTHORS
 .PD
 .SH SEE ALSO
-.BR inetd(8), ftp(1), proftpd(8), ftpcount(1), ftptop(1), ftpshut(8)
+.BR wzdftpd(1), ftp(1), siteconfig(1), siteuptime(1)
 .PP
-Full documentation on ProFTPD, including configuration and FAQs, is available at
-.BR http://www.proftpd.org/
+Full documentation on wzdftpd, including configuration and FAQs, is available at
+.BR http://www.wzdftpd.net
 .PP 
-For help/support, try the ProFTPD mailing lists, detailed on
-.BR http://www.proftpd.org/lists.html
+For help/support, try the wzdftpd mailing lists, detailed on
+.BR http://sourceforge.net/mail/?group_id=78247
 .PP
 Report bugs at
-.BR http://bugs.proftpd.org/
+.BR http://www.wzdftpd.net/yabbse/index.php

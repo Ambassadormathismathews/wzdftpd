@@ -22,7 +22,7 @@ dnl   from the cache.
 dnl
 dnl   TODO check TCL version
 
-AC_DEFUN(WZD_LIB_TCL,
+AC_DEFUN([WZD_LIB_TCL],
 [
   dnl  Process the 'with-tcl' switch. We set the variable 'places' to
   dnl  either 'search', meaning we should check in a list of typical places,
@@ -164,7 +164,7 @@ dnl
 dnl    Set the shell variable 'wzd_have_tcl' to 'yes' if we found
 dnl    an appropriate version installed, or 'no' otherwise.
 
-AC_DEFUN(WZD_LIB_TCL_TRY,
+AC_DEFUN([WZD_LIB_TCL_TRY],
   [
     wzd_lib_tcl_try_save_libs="$LIBS"
 

@@ -1,3 +1,12 @@
+AC_DEFUN([AC_PATH_PROG_REQUIRE],
+[
+  AC_PATH_PROG($1, $2, no)
+  if test "x$$1" == "xno"; then
+    AC_MSG_ERROR($2 not found)
+  fi
+  AC_SUBST($1)
+])
+
 dnl Available from the GNU Autoconf Macro Archive at:
 dnl http://www.gnu.org/software/ac-archive/htmldoc/acx_pthread.html
 dnl

@@ -1,0 +1,60 @@
+<appendix id="a_ref">
+  <title>References</title>
+
+  <simplesect><title>RFC</title>
+  <itemizedlist mark="opencircle">
+
+  <listitem>
+  <para>959: <ulink url="ftp://ftp.isi.edu/in-notes/rfc959.txt">
+    <citetitle>File Transfer Protocol (FTP)</citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para>2228: <ulink url="ftp://ftp.isi.edu/in-notes/rfc2228.txt">
+    <citetitle>FTP Security Extensions</citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para>2389: <ulink url="ftp://ftp.isi.edu/in-notes/rfc2389.txt">
+    <citetitle>Feature negotiation mechanism for the File Transfer Protocol
+      </citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para>2428: <ulink url="ftp://ftp.isi.edu/in-notes/rfc2428.txt">
+    <citetitle>FTP Extensions for IPv6 and NATs</citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para>2577: <ulink url="ftp://ftp.isi.edu/in-notes/rfc2577.txt">
+    <citetitle>FTP Security Considerations</citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para>2640: <ulink url="ftp://ftp.isi.edu/in-notes/rfc2640.txt">
+    <citetitle>Internationalization of the File Transfer Protocol
+      </citetitle></ulink></para>
+  </listitem>
+
+  </itemizedlist>
+  </simplesect>
+
+
+
+  <simplesect><title>Drafts</title>
+  <itemizedlist mark="opencircle">
+
+  <listitem>
+  <para><ulink url="http://www.ietf.org/internet-drafts/draft-murray-auth-ftp-ssl-13.txt">
+    <citetitle>Securing FTP with TLS</citetitle></ulink></para>
+  </listitem>
+
+  <listitem>
+  <para><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-ftpext-mlst-16.txt">
+    <citetitle>Extensions to FTP</citetitle></ulink></para>
+  </listitem>
+
+  </itemizedlist>
+  </simplesect>
+
+</appendix>

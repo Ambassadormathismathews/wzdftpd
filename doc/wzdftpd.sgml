@@ -14,6 +14,7 @@
 <!ENTITY license SYSTEM "license.sgml">
 <!ENTITY faq SYSTEM "faq.sgml">
 <!ENTITY a_bugs SYSTEM "appendix_bugs.sgml">
+<!ENTITY a_ref SYSTEM "appendix_ref.sgml">
 ]>
 <book>
   <title>wzdftpd Documentation</title>
@@ -30,6 +31,7 @@
 &freebsd_notes;
 &faq;
 &a_bugs;
+&a_ref;
 &license;
 
 <glossary>

@@ -1,5 +1,5 @@
 
-SUBDIRS = ac-helpers src backends modules tools init.d
+SUBDIRS = ac-helpers src backends modules tools init.d doc
 
 EXTRA_DIST = autogen.sh Permissions.ReadMeFirst TLS.ReadMeFirst wzd_tls.cnf
 

@@ -38,8 +38,8 @@
 /* Define to 1 if you have the `gethostbyname' function. */
 #undef HAVE_GETHOSTBYNAME
 
-/* System has the getopt_long function. */
-#undef HAVE_GETOPT
+/* Define to 1 if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
 
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
@@ -145,9 +145,6 @@
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 
-/* Define to 1 if you have the <pthread.h> header file. */
-#undef HAVE_PTHREAD_H
-
 /* Define to 1 if you have the `realloc' function. */
 #undef HAVE_REALLOC
 
@@ -200,7 +197,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* System has the strlcat function. */
+/* Define to 1 if you have the `strlcat' function. */
 #undef HAVE_STRLCAT
 
 /* Define to 1 if you have the `strncasecmp' function. */
@@ -209,13 +206,13 @@
 /* Define to 1 if you have the `strpbrk' function. */
 #undef HAVE_STRPBRK
 
-/* System has the strptime function. */
+/* Define to 1 if you have the `strptime' function. */
 #undef HAVE_STRPTIME
 
 /* Define to 1 if you have the `strrchr' function. */
 #undef HAVE_STRRCHR
 
-/* System has the strtok_r function. */
+/* Define to 1 if you have the `strtok_r' function. */
 #undef HAVE_STRTOK_R
 
 /* Define to 1 if you have the `strtol' function. */
@@ -224,7 +221,7 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
-/* System has the strtoull function. */
+/* Define to 1 if you have the `strtoull' function. */
 #undef HAVE_STRTOULL
 
 /* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
@@ -308,6 +305,9 @@
    slash. */
 #undef LSTAT_FOLLOWS_SLASHED_SYMLINK
 
+/* Name of package */
+#undef PACKAGE
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -344,6 +344,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#undef VERSION
 
 /* Build number. */
 #undef WZD_BUILD_NUM

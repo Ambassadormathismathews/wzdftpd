@@ -27,7 +27,7 @@ dnl   different --with-openssl switch values, without interference
 dnl   from the cache.
 
 
-AC_DEFUN(WZD_LIB_OPENSSL,
+AC_DEFUN([WZD_LIB_OPENSSL],
 [
   openssl_version=$1.$2.$3.$4
   dnl  Process the `with-openssl' switch. We set the variable `places' to
@@ -179,7 +179,7 @@ dnl   find the version.  If the library installed doesn't have this
 dnl   function, then this macro assumes it is too old.
 
 
-AC_DEFUN(WZD_LIB_OPENSSL_TRY,
+AC_DEFUN([WZD_LIB_OPENSSL_TRY],
   [
     wzd_lib_openssl_try_save_libs="$LIBS"
 

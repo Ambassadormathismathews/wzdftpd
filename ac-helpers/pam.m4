@@ -7,7 +7,7 @@ dnl   If we find a useable version, set WZD_PAM_INCLUDES and WZD_PAM_LIBS as
 dnl   appropriate, and set the shell variable 'wzd_have_pam' to
 dnl   'yes'. Otherwise, set 'wzd_have_pam' to 'no'.
 
-AC_DEFUN(WZD_LIB_PAM,
+AC_DEFUN([WZD_LIB_PAM],
 [
   AC_CHECK_HEADERS(pam/pam_appl.h security/pam_appl.h)
 

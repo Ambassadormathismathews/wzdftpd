@@ -2,7 +2,7 @@ dnl   WZD_LIB_UNICODE()
 dnl  
 dnl   Search for unicode functions
 
-AC_DEFUN(WZD_LIB_UNICODE,
+AC_DEFUN([WZD_LIB_UNICODE],
 [
   AC_CHECK_HEADERS(wchar.h)
 

@@ -2,23 +2,19 @@
 # Process this file with autoconf to produce a configure script.
 
 
-# Choose one and only one of the following
-#WZD_MULTIPROCESS=1
-#WZD_MULTITHREAD=1
-
 AC_PREREQ(2.53)
 AC_INIT(wzdftpd, 0.4, pollux@wzdftpd.net)
+AM_INIT_AUTOMAKE
 
 #AC_CANONICAL_HOST
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(wzdftpd,0.4,no-define)
 # AC_CONFIG_SRCDIR([backends/plaintext/libplaintext_main.c])
 AM_CONFIG_HEADER([config.h])
 
-dnl helper macros
+# helper macros
 sinclude(ac-helpers/berkeley-db.m4)
 sinclude(ac-helpers/mysql.m4)
 sinclude(ac-helpers/openssl.m4)
@@ -35,7 +31,7 @@ AH_TEMPLATE([HARD_USERLIMIT],
 
 AC_ARG_VAR(HARD_USERLIMIT,[max number of simultaneous logins allowed])
 if eval "test x$HARD_USERLIMIT = x"; then
-  AC_DEFINE(HARD_USERLIMIT,128)
+  AC_DEFINE_UNQUOTED(HARD_USERLIMIT,128)
   HARD_USERLIMIT=128
 else
   AC_DEFINE_UNQUOTED(HARD_USERLIMIT,$HARD_USERLIMIT)
@@ -68,7 +64,7 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES(unsigned long long,,exit 1)
 AC_CHECK_DECLS([sys_siglist])
-AC_CHECK_HEADERS([pthread.h],,exit 1)
+AC_CHECK_HEADER(pthread.h,,exit 1)
 
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
@@ -86,17 +82,15 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
-AC_CHECK_FUNC(strlcat,[AC_DEFINE(HAVE_STRLCAT)])
-AC_CHECK_FUNC(strptime,[AC_DEFINE(HAVE_STRPTIME)])
-AC_CHECK_FUNC(strtok_r,[AC_DEFINE(HAVE_STRTOK_R)])
-AC_CHECK_FUNC(strtoull,[AC_DEFINE(HAVE_STRTOULL)])
-AC_CHECK_FUNC(getopt_long,[AC_DEFINE(HAVE_GETOPT)])
-AC_CHECK_FUNCS([inet_ntop])
-AC_CHECK_FUNCS([inet_pton])
+AC_CHECK_FUNCS([strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton])
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
 ACX_PTHREAD(,exit 1)
+
+AC_PATH_PROG(JW, jw, no)
+AC_SUBST(JW)
+AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 
 WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_LIB_OPENSSL(0,9,6,2)
@@ -197,16 +191,6 @@ AC_DEFINE_UNQUOTED(WZD_BUILD_OPTS,"$WZD_BUILD_OPTS")
 
 AH_TEMPLATE([WZD_BUILD_OPTS],
             [Build options.])
-AH_TEMPLATE([HAVE_GETOPT],
-            [System has the getopt_long function.])
-AH_TEMPLATE([HAVE_STRLCAT],
-            [System has the strlcat function.])
-AH_TEMPLATE([HAVE_STRPTIME],
-            [System has the strptime function.])
-AH_TEMPLATE([HAVE_STRTOK_R],
-            [System has the strtok_r function.])
-AH_TEMPLATE([HAVE_STRTOULL],
-            [System has the strtoull function.])
 
 AM_CONDITIONAL([HAVE_MYSQL], [test "$wzd_have_mysql" = "yes"])
 AM_CONDITIONAL([HAVE_PAM], [test "$wzd_have_pam" = "yes"])
@@ -267,6 +251,7 @@ AC_CONFIG_FILES([Makefile
                  backends/plaintext/Makefile
                  backends/mysql/Makefile
                  backends/pam/Makefile
+		 doc/Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
                  modules/Makefile

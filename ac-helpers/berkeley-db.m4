@@ -30,7 +30,7 @@ dnl   different --with-berkeley-db switch values, without interference
 dnl   from the cache.
 
 
-AC_DEFUN(WZD_LIB_BERKELEY_DB,
+AC_DEFUN([WZD_LIB_BERKELEY_DB],
 [
   db_version=$1.$2.$3
   dnl  Process the `with-berkeley-db' switch. We set the variable `places' to
@@ -188,7 +188,7 @@ dnl   find the version.  If the library installed doesn't have this
 dnl   function, then this macro assumes it is too old.
 
 
-AC_DEFUN(WZD_LIB_BERKELEY_DB_TRY,
+AC_DEFUN([WZD_LIB_BERKELEY_DB_TRY],
   [
     wzd_lib_berkeley_db_try_save_libs="$LIBS"
 

@@ -24,7 +24,7 @@ dnl   That way, the user can re-run the configure script with
 dnl   different --with-pgsql switch values, without interference
 dnl   from the cache.
 
-AC_DEFUN(WZD_LIB_PGSQL,
+AC_DEFUN([WZD_LIB_PGSQL],
 [
   dnl  Process the 'with-psql' switch. We set the variable 'places' to
   dnl  either 'search', meaning we should check in a list of typical places,
@@ -167,7 +167,7 @@ dnl
 dnl    Set the shell variable 'wzd_have_pgsql' to 'yes' if we found
 dnl    an appropriate version installed, or 'no' otherwise.
 
-AC_DEFUN(WZD_LIB_PGSQL_TRY,
+AC_DEFUN([WZD_LIB_PGSQL_TRY],
   [
     wzd_lib_pgsql_try_save_libs="$LIBS"
 
