@@ -1,0 +1,48 @@
+.TH "WZD-CONFIG" "1" "2003-11-02" "Application" "wzdftpd Client Applications"
+.SH NAME
+wzd-config \- retrieve information about the installed version of wzdftpd
+
+.SH SYNOPSIS
+.sp
+\fBwzd-config\fR \fR{\fR \fB--prefix\fR\fR | \fR\fB--exec-prefix\fR\fR | \fR\fB--data-dir\fR\fR | \fR\fB--libs\fR\fR | \fR\fB--cflags\fR\fR | \fR\fB--version\fR\fR }\fR\fR...\fR
+.SH "DESCRIPTION"
+.PP
+The \fBwzd-config\fR utility prints configuration parameters
+of the currently installed version of wzdftpd. It is
+intended, for example, to be used by software packages that want to interface
+to wzdftpd to facilitate finding the required header files
+and libraries.
+.SH "OPTIONS"
+.PP
+To use \fBwzd-config\fR, supply one or more of the following options:
+.TP
+\fB--prefix\fR
+Print the installation prefix, as specified in configure script.
+.TP
+\fB--exec-prefix\fR
+Print the installation prefix for executables, usually the same as prefix.
+This is where you will find server ($eprefix/sbin) or tools ($eprefix/bin).
+.TP
+\fB--data-dir\fR
+Print installation dir for data, modules and backends.
+.TP
+\fB--libs\fR
+Print the location of object code libraries (use to develop new extensions).
+.TP
+\fB--cflags\fR
+Print the location of include headers (use to develop new extensions).
+.TP
+\fB--version\fR
+Print the version of wzdftpd and exit.
+.PP
+If more than one option (except for \fB--version\fR) is given, the
+information is printed in that order, one item per line.
+.SH "NOTES"
+.PP
+In releases prior to wzdftpd 0.4, before the
+\fBwzd-config\fR came to be, a method for finding the
+equivalent configuration information did not exist.
+.SH "HISTORY"
+.PP
+The \fBwzd-config\fR utility first appeared in
+wzdftpd 0.4.

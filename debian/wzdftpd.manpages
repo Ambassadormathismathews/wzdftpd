@@ -1,4 +1,4 @@
+debian/tmp/usr/share/man/man1/siteconfig.1
+debian/tmp/usr/share/man/man1/siteuptime.1
+debian/tmp/usr/share/man/man1/sitewho.1
 debian/tmp/usr/share/man/man8/wzdftpd.8
-debian/siteconfig.1
-debian/siteuptime.1
-debian/sitewho.1

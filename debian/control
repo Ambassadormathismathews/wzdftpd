@@ -20,8 +20,7 @@ Description: A portable, modular, not user-friendly ftp server
  dynamic ip changes auto-detection, etc.
  .
  It includes several authentication backends, is easily scriptable and provides
- a powerful event-driven system to extend server. More information at
- http://www.wzdftpd.net
+ a powerful event-driven system to extend server.
 
 Package: wzdftpd-back-mysql
 Architecture: any
@@ -30,19 +29,19 @@ Suggests: mysql-server
 Description: MySQL backend for wzdftpd
  This package provides the MySQL backend for wzdftpd.
 
-Package: wzdftpd-mod-perl
-Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
-Description: Perl module for wzdftpd
- This package provides the necessary files to run Perl plugins in wzdftpd,
- in the Perl module.
-
 Package: wzdftpd-mod-tcl
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}
 Description: TCL module for wzdftpd
  This package provides the necessary files to run TCL plugins in wzdftpd,
  in the TCL module.
+
+Package: wzdftpd-mod-perl
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Perl module for wzdftpd
+ This package provides the necessary files to run Perl plugins in wzdftpd,
+ in the Perl module.
 
 Package: wzdftpd-dev
 Architecture: any
