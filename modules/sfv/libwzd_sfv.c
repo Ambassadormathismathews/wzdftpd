@@ -256,7 +256,7 @@ int sfv_check(const char * sfv_file)
       else {
 	sfv.sfv_list[i]->state = SFV_OK;
       }
-#if DEBUG
+#ifdef DEBUG
 out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,crc,sfv.sfv_list[i]->crc);
 #endif
     }
@@ -327,7 +327,9 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       *ptr = '\0';
       sfv_name[i]='\0';
       ret = sfv_read(sfv_name,sfv);
+#ifdef DEBUG
       out_err(LEVEL_CRITICAL,"sfv file: %s\n",entr->d_name);
+#endif
       if (ret == -1 || sfv->sfv_list == NULL) return -1;
       /* sfv file found, check if file is in sfv */
       i = 0;
@@ -471,10 +473,14 @@ int sfv_hook_preupload(unsigned long event_id, const char * username, const char
   ret = sfv_find_sfv(filename,&sfv,&entry);
   switch (ret) {
   case 0:
+#ifdef DEBUG
     out_err(LEVEL_CRITICAL,"sfv_hook_preupload user %s file %s, ret %d crc %08lX\n",username,filename,ret,entry->crc);
+#endif
     break;
   case 1:
+#ifdef DEBUG
     out_err(LEVEL_CRITICAL,"No sfv found or file not present in sfv\n");
+#endif
     break;
   default:
     /* error */
@@ -502,10 +508,14 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   ret = sfv_find_sfv(filename,&sfv,&entry);
   switch (ret) {
   case 0:
+#ifdef DEBUG
     out_err(LEVEL_CRITICAL,"sfv_hook_postupload user %s file %s, crc %08lX OK\n",username,filename,entry->crc);
+#endif
     break;
   case 1:
+#ifdef DEBUG
     out_err(LEVEL_CRITICAL,"No sfv found or file not present in sfv\n");
+#endif
     return 1;
   default:
     /* error */
@@ -541,10 +551,12 @@ int WZD_MODULE_INIT(void)
 {
 /*  printf("WZD_MODULE_INIT\n");*/
 /*  out_err(LEVEL_INFO,"max threads: %d\n",getlib_mainConfig()->max_threads);*/
-  hook_add(&mainConfig->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
-  hook_add(&mainConfig->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
-  hook_add(&mainConfig->hook,EVENT_SITE,(void_fct)&sfv_hook_site);
+  hook_add(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
+  hook_add(&getlib_mainConfig()->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
+  hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&sfv_hook_site);
+#ifdef DEBUG
   out_err(LEVEL_INFO,"module sfv: hooks registered\n");
+#endif
   return 0;
 }
 
