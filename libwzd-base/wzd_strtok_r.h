@@ -22,8 +22,16 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+/*! \addtogroup libwzd_base
+ *  Base functions for wzdftpd
+ *  @{
+ */
+
 #ifndef HAVE_STRTOK_R
 
 char * strtok_r(char *s, const char *delim, char **last);
 
 #endif
+
+/*! @} */
+

@@ -17,7 +17,11 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-/*#include "wzd_all.h"*/
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#endif
+
+#ifndef HAVE_CRYPT
 
 #include "wzd_crypt.h"
 
@@ -168,7 +172,7 @@ perm (a, e, pc, n)
      int n;
 {
   for (; n--; pc++, a++)
-    *a = e[*pc];
+    *a = e[(short)*pc];
 }
 
 static void 
@@ -185,7 +189,7 @@ crypt_main (nachr_l, nachr_r, schl)
   for (i = 0; i < 8; i++)
     {
       for (j = 0, sbval = 0; j < 6; j++)
-        sbval = (sbval << 1) | (nachr_r[*e++] ^ *schl++);
+        sbval = (sbval << 1) | (nachr_r[(short)*e++] ^ *schl++);
       sbval = S_BOX[i][sbval];
       for (tp += 4, j = 4; j--; sbval >>= 1)
         *--tp = sbval & 1;
@@ -194,7 +198,7 @@ crypt_main (nachr_l, nachr_r, schl)
 
   e = PERM;
   for (i = 0; i < BS2; i++)
-    *nachr_l++ ^= tmp[*e++];
+    *nachr_l++ ^= tmp[(short)*e++];
 }
 
 void 
@@ -336,3 +340,5 @@ crypt (const char *pw, const char *salt)
     return des_crypt(pw, salt);
   }
 }
+
+#endif /* HAVE_CRYPT */

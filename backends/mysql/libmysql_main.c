@@ -40,8 +40,8 @@
 #include <mysql.h>
 
 #include <wzd_backend.h>
-#include <wzd_md5.h>
-#include <wzd_md5crypt.h>
+#include <libwzd-auth/wzd_md5.h>
+#include <libwzd-auth/wzd_md5crypt.h>
 #include <wzd_debug.h>
 
 #include "libmysql.h"

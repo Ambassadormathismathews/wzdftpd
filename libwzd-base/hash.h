@@ -31,6 +31,11 @@
 #ifndef __HASH__
 #define __HASH__
 
+/*! \addtogroup libwzd_base
+ *  Base functions for wzdftpd
+ *  @{
+ */
+
 #include "list.h"
 
 typedef struct CHTBL_ {
@@ -69,5 +74,7 @@ int chtbl_lookup(const CHTBL *htab, const void *key, void **data);
 int chtbl_search(const CHTBL *htab, int (*match)(const void *, const void*), const void *arg, void **data);
 
 #define chtbl_size(htab) ((htab)->size)
+
+/*! @} */
 
 #endif /* __HASH__ */

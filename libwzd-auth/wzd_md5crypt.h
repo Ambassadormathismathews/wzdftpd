@@ -22,11 +22,20 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_CRYPT__
-#define __WZD_CRYPT__
+#ifndef __WZD_MD5CRYPT__
+#define __WZD_MD5CRYPT__
 
-void encrypt (char *block, int edflag);
-void setkey (char *key);
-char * crypt (const char *key, const char *salt);
+/*! \addtogroup libwzd_auth
+ *  @{
+ */
 
-#endif /* __WZD_CRYPT__ */
+#define MD5_MAGIC "$1$"
+#define MD5_MAGIC_LEN 3
+
+char * md5_crypt(const char *pw, const char *salt);
+char * md5_hash_r(const char *pw, char * out, size_t len);
+
+/*! @} */
+
+#endif /* __WZD_MD5CRYPT__ */
+

@@ -19,16 +19,10 @@
  *
  */
 
-#include "wzd_all.h"
-
-#ifndef WZD_USE_PCH
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h> /* isspace */
-
-#endif /* WZD_USE_PCH */
 
 #include "wzd_md5.h"
 

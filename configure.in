@@ -63,7 +63,7 @@ AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
-AC_CHECK_FUNCS([strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton])
+AC_CHECK_FUNCS([crypt strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton])
 
 AC_CHECK_HEADERS([sys/vfs.h sys/mount.h])
 
@@ -238,6 +238,7 @@ AC_CONFIG_FILES([Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
 		 libwzd/Makefile
+		 libwzd-auth/Makefile
 		 libwzd-base/Makefile
 		 libwzd-perl/Makefile
 		 libwzd-perl/ext/Makefile.PL

@@ -25,6 +25,11 @@
 #ifndef __LIST__
 #define __LIST__
 
+/*! \addtogroup libwzd_base
+ *  Base functions for wzdftpd
+ *  @{
+ */
+
 typedef struct ListElmt_ {
   void 			* data;
   struct ListElmt_	* next;
@@ -64,5 +69,7 @@ int list_rem_next(List *list, ListElmt *element, void **data);
 #define list_data(element) ((element)->data)
 
 #define list_next(element) ((element)->next)
+
+/*! @} */
 
 #endif /* __LIST__ */

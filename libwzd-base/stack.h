@@ -25,6 +25,11 @@
 #ifndef STACK_H
 #define STACK_H
 
+/*! \addtogroup libwzd_base
+ *  Base functions for wzdftpd
+ *  @{
+ */
+
 #include "list.h"
 
 typedef List Stack;
@@ -41,5 +46,7 @@ int stack_pop(Stack *pile, void **donnee);
         ((pile)->tete == NULL ? NULL : (pile)->tete->donnee)
 
 #define stack_size list_size
+
+/*! @} */
 
 #endif

@@ -1,6 +1,7 @@
 004-12-15  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: new config directive 'tls_certificate_key'
+	* feature: new library libwzd-auth
 
 004-12-13  Pierre Chifflier  <pollux@cpe.fr>
 

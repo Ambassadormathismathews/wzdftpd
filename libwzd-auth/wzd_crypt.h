@@ -22,24 +22,18 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_STRLCAT__
-#define __WZD_STRLCAT__
+#ifndef __WZD_CRYPT__
+#define __WZD_CRYPT__
 
-/*! \addtogroup libwzd_base
- *  Base functions for wzdftpd
+/*! \addtogroup libwzd_auth
  *  @{
  */
 
-#ifndef HAVE_STRLCAT
-
-/** append src to dst, guaranteeing a null terminator.
- * If dst+src is too big, truncate it.
- * Return strlen(old dst)+dstrlen(src).
- */
-size_t strlcat(char *dst, const char *src, size_t size);
-
-#endif
+void encrypt (char *block, int edflag);
+void setkey (char *key);
+char * crypt (const char *key, const char *salt);
 
 /*! @} */
 
-#endif /* __WZD_STRLCAT__ */
+#endif /* __WZD_CRYPT__ */
+

@@ -23,8 +23,6 @@ libwzd_core_la_HEADERS = \
 	wzd_ip.h         \
 	wzd_libmain.h    \
 	wzd_log.h        \
-	wzd_md5crypt.h   \
-	wzd_md5.h        \
 	wzd_messages.h   \
 	wzd_misc.h       \
 	wzd_mod.h        \
@@ -55,8 +53,6 @@ libwzd_core_la_SOURCES = \
 	wzd_ip.c         \
 	wzd_libmain.c    \
 	wzd_log.c        \
-	wzd_md5crypt.c   \
-	wzd_md5.c        \
 	wzd_messages.c   \
 	wzd_misc.c       \
 	wzd_mod.c        \
@@ -72,7 +68,7 @@ libwzd_core_la_SOURCES = \
 
 nodist_libwzd_core_la_SOURCES = wzd_cookie_lex.l
 
-libwzd_core_la_LIBADD = ../libwzd-base/libwzd_base.la
+libwzd_core_la_LIBADD = ../libwzd-base/libwzd_base.la ../libwzd-auth/libwzd_auth.la
 libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info ${LT_VERSION_INFO} -module -no-undefined
 
 sbin_PROGRAMS = wzdftpd
@@ -146,5 +142,3 @@ wzd_shm.lo: wzd_shm.c
 	$(LTCOMPILE) -c -I/usr/include -o $@ `test -f '$<' || echo '$(srcdir)/'`$<
 endif
 
-doxy:
-	doxygen doxygen.cfg

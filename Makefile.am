@@ -4,7 +4,7 @@ if HAVE_PERL
   MAYBE_PERL = libwzd-perl
 endif
 
-SUBDIRS = ac-helpers m4 libwzd-base libwzd src backends modules $(MAYBE_PERL) tools init.d doc man
+SUBDIRS = ac-helpers m4 libwzd-base libwzd-auth libwzd src backends modules $(MAYBE_PERL) tools init.d doc man
 
 bin_SCRIPTS = wzd-config
 
@@ -16,7 +16,7 @@ EXTRA_DIST = bootstrap \
 	TLS.ReadMeFirst wzd_tls.cnf \
 	$(m4macro_DATA)
 
-#check_symlinks:
-#	(cd src && make check_symlinks) || exit 1
+doxy:
+	doxygen doxygen.cfg
 
 

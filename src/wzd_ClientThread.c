@@ -69,7 +69,6 @@
 #include "wzd_vfs.h"
 #include "wzd_crc32.h"
 #include "wzd_file.h"
-#include "wzd_md5.h"
 #include "wzd_ratio.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
@@ -80,6 +79,8 @@
 #include "ls.h"
 #include "wzd_ClientThread.h"
 #include "wzd_ServerThread.h"
+
+#include <libwzd-auth/wzd_md5.h>
 
 #include "wzd_debug.h"
 

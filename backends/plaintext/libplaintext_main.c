@@ -33,14 +33,13 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #include <sys/param.h>
-#ifndef BSD
-#include <crypt.h>
-#endif /* BSD */
 #include <sys/time.h>
 #include <regex.h>
 #else
 #include "../../visual/gnu_regex_dist/regex.h"
 #endif
+
+#include <libwzd-auth/wzd_auth.h>
 
 #include "wzd_backend.h"
 #include "wzd_misc.h"
@@ -1061,7 +1060,6 @@ fprintf(stderr,"User %s not found\n",login);
 int FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   int found;
-  char * cipher;
   ListElmt * elmnt;
   wzd_user_t * loop_user;
 
@@ -1083,11 +1081,7 @@ fprintf(stderr,"User %s not found\n",login);
   }
   /* TODO choose encryption func ? */
   else {
-    /* FIXME - crypt is NOT reentrant */
-    /* XXX - md5 hash in crypt function does NOT work with cygwin */
-    cipher = crypt(pass,loop_user->userpass);
-    found = strcasecmp(cipher,loop_user->userpass);
-/*fprintf(stderr,"%s %s == %s : %d\n",login,cipher,loop_user->userpass,found);*/
+    found = (! checkpass_crypt(pass,loop_user->userpass));
     if (found) {
 /*fprintf(stderr,"Passwords do no match for user %s (received: %s)\n",loop_user->username,pass);*/
       return -1; /* passwords do not match */
@@ -1191,8 +1185,6 @@ int FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   int found;
-  char * cipher;
-  char salt[3];
   ListElmt * elmnt;
   wzd_user_t * loop_user;
   void * data;
@@ -1242,12 +1234,9 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
         strcpy(loop_user->userpass,user->userpass);
       } else {
         /* TODO choose encryption func ? */
-        salt[0] = 'a' + (char)(rand()%26);
-        salt[1] = 'a' + (char)((rand()*72+3)%26);
-        /* FIXME - crypt is NOT reentrant */
-        /* XXX - md5 hash in crypt function does NOT work with cygwin */
-        cipher = crypt(user->userpass, salt);
-        strncpy(loop_user->userpass,cipher,MAX_PASS_LENGTH-1);
+        if (changepass_crypt(user->userpass, loop_user->userpass, MAX_PASS_LENGTH-1)) {
+          return -1;
+        }
       }
     }
     if (mod_type & _USER_ROOTPATH) {
@@ -1287,12 +1276,9 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       strcpy(loop_user->userpass,user->userpass);
     } else {
       /* TODO choose encryption func ? */
-      salt[0] = 'a' + (char)(rand()%26);
-      salt[1] = 'a' + (char)((rand()*72+3)%26);
-      /* FIXME - crypt is NOT reentrant */
-      /* XXX - md5 hash in crypt function does NOT work with cygwin */
-      cipher = crypt(user->userpass, salt);
-      strncpy(loop_user->userpass,cipher,MAX_PASS_LENGTH-1);
+      if (changepass_crypt(user->userpass, loop_user->userpass, MAX_PASS_LENGTH-1)) {
+        return -1;
+      }
     }
     /* find a free uid */
     loop_user->uid = find_free_uid(1);
