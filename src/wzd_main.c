@@ -1,3 +1,27 @@
+/*
+ * wzdftpd - a modular and cool ftp server
+ * Copyright (C) 2002-2003  Pierre Chifflier
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * As a special exemption, Pierre Chifflier
+ * and other respective copyright holders give permission to link this program
+ * with OpenSSL, and distribute the resulting executable, without including
+ * the source code for OpenSSL in the source distribution.
+ */
+
 /* Sanity check */
 #ifdef WZD_MULTIPROCESS
 #ifdef WZD_MULTITHREAD
@@ -164,6 +188,15 @@ int main(int argc, char **argv)
   int forkresult;
   wzd_config_t * config;
 
+  fprintf(stderr,"--------------------------------------\n");
+  fprintf(stderr,"\n");
+  fprintf(stderr,"This is a beta release, in active development\n");
+  fprintf(stderr,"Things may break from version to version\n");
+  fprintf(stderr,"Want stability ? Use a 0.1rc3 version. YOU WERE WARNED!\n");
+  fprintf(stderr,"\n");
+  fprintf(stderr,"--------------------------------------\n");
+  fprintf(stderr,"\n");
+
 #if DEBUG
   stay_foreground = 1;
 #endif
@@ -221,7 +254,7 @@ int main(int argc, char **argv)
   fd = open(mainConfig->logfilename,mainConfig->logfilemode,0640);
   mainConfig->logfile = fdopen(fd,"a");
   
-#if SSL_SUPPORT
+#ifdef SSL_SUPPORT
   ret = tls_init();
   if (ret) {
     out_log(LEVEL_CRITICAL,"TLS subsystem could not be initialized.\n");
