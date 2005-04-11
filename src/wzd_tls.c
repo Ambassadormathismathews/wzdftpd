@@ -979,7 +979,7 @@ int tls_close_data(wzd_context_t * context)
 
 int tls_free(wzd_context_t * context)
 {
-  out_log(LEVEL_HIGH,"tls_free\n");
+  out_log(LEVEL_INFO,"tls_free\n");
   tls_close_data(context);
   if (context->tls.session) {
     gnutls_deinit( *(gnutls_session*)context->tls.session );
