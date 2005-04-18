@@ -3,7 +3,7 @@
 
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.5.1
+Version: 0.5.2
 Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://www.wzdftpd.net
@@ -38,7 +38,7 @@ Group: Development/Libraries/C and C++
 %description mod-perl
 
 This package provides the necessary files to run Perl plugins in wzdftpd,
-in the Perl module.
+and the perl module used to access libwzd, in the Perl module.
 
 This package requires wzdftpd to be installed.
 
@@ -53,6 +53,20 @@ Group: Development/Libraries/C and C++
 
 This package provides the necessary files to run TCL plugins in wzdftpd,
 in the TCL module.
+
+This package requires wzdftpd to be installed.
+
+## MySQL backend package attributes
+
+%package back-mysql
+Summary: MySQL backend for wzdftpd
+Requires: wzdftpd = %{version}
+Group: Development/Libraries/C and C++
+
+%description back-mysql
+
+This package provides the necessary files to store users and groups
+in MySQL for wzdftpd.
 
 This package requires wzdftpd to be installed.
 
@@ -93,6 +107,8 @@ touch $RPM_BUILD_ROOT/var/logs/wzdftpd/xferlog
 
 make install DESTDIR=$RPM_BUILD_ROOT
 %__install -m 755 init.d/wzdftpd $RPM_BUILD_ROOT/etc/init.d/wzdftpd
+%__install -m 755 src/wzd.cfg.sample $RPM_BUILD_ROOT/etc/wzdftpd/wzd.cfg
+%__install -m 755 src/users.sample $RPM_BUILD_ROOT/etc/wzdftpd/users
 
 ## Main package pre and post install scripts
 
@@ -112,7 +128,7 @@ rm -Rf $RPM_BUILD_ROOT
 
 %files
 
-%doc README NEWS COPYING AUTHORS INSTALL TLS.ReadMeFirst ChangeLog
+%doc README NEWS COPYING AUTHORS INSTALL TLS.ReadMeFirst ChangeLog UPGRADING
 /usr/lib/libwzd.a
 /usr/lib/libwzd.la
 /usr/lib/libwzd.so*
@@ -141,25 +157,41 @@ rm -Rf $RPM_BUILD_ROOT
 /usr/bin/siteconfig
 /usr/bin/siteuptime
 /usr/bin/sitewho
+/usr/share/man/man1/site*
+/usr/share/man/man8
 
 ## Perl module package files
 
 %files mod-perl
 /usr/lib/wzdftpd/modules/libwzd_perl.so
+/usr/lib/perl5
+/usr/share/man/man3/wzdftpd.3pm.gz
 
 ## TCL module package files
 
 %files mod-tcl
 /usr/lib/wzdftpd/modules/libwzd_tcl.so
 
+## MySQL backend package files
+
+%files back-mysql
+/usr/lib/wzdftpd/backends/libwzdmysql.so
+
 ## Development package files
 
 %files devel
 /usr/include/wzdftpd/
+/usr/share/man/man1/wzd-config.1.gz
+/usr/bin/wzd-config
+/usr/lib/aclocal
 
 ## Changelog
 
 %changelog
+* Mon Apr 18 2005 Pierre Chifflier <chifflier@cpe.fr>
+- New upstream release
+- Added MySQL backend
+
 * Mon Mar 07 2005 Pierre Chifflier <chifflier@cpe.fr>
 - New upstream release
 
