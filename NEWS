@@ -1,6 +1,11 @@
    NEWS file for wzdftpd
 
-0.5.0: March 07 2005
+0.5.2: April 18 2005
+
+Fixed several problems with mkdir, cwd and custom site commands. Windows
+installer was also improved, and icons were added.
+
+0.5.1: March 07 2005
 
 Fixed problems with configuration (pasv_ip, site_cmd not working, max_ul and
 max_dl not saved for groups). A memory leak has been fixed after client log

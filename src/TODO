@@ -23,7 +23,7 @@
 - override internal site commands (wipe, etc)
 '********'
 - threads management:
-  better use thread_id instead of pid_child in diplays, etc.
+  better use thread_id instead of pid_child in displays, etc.
 '*******'
 - remove race conditions in stat/open
 '********'
