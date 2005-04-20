@@ -1,3 +1,7 @@
+2005-04-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: added postgresql backend
+
 2005-04-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- cvs commit TAG: rel-0-5-2

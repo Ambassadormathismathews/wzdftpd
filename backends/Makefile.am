@@ -8,4 +8,8 @@ if HAVE_PAM
   MAYBE_PAM = pam
 endif
 
-SUBDIRS = plaintext $(MAYBE_MYSQL) $(MAYBE_PAM)
+if HAVE_PGSQL
+  MAYBE_PGSQL = pgsql
+endif
+
+SUBDIRS = plaintext $(MAYBE_MYSQL) $(MAYBE_PAM) $(MAYBE_PGSQL)

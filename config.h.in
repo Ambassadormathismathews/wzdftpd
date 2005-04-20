@@ -154,6 +154,9 @@
 /* Define if using perl */
 #undef HAVE_PERL
 
+/* Define if using pgsql */
+#undef HAVE_PGSQL
+
 /* Define if you have POSIX threads libraries and header files. */
 #undef HAVE_PTHREAD
 

@@ -1,0 +1,8 @@
+*.lo 
+*.o  
+libwzdpgsql.la
+Makefile
+Makefile.in
+cscope.out
+.deps
+.libs
