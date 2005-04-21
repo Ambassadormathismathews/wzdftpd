@@ -16,10 +16,13 @@ ssl_flags="@WZD_SSL_LIBS@"
 ssl_cflags="@WZD_SSL_INCLUDES@"
 pth_libs="@PTHREAD_CFLAGS@ @PTHREAD_LIBS@"
 
+# default for applications
+library=libwzd
+
 usage()
 {
     cat <<EOF
-Usage: $0 [OPTIONS]
+Usage: $0 [OPTIONS] [LIBRARIES]
 Options:
     [--prefix[=DIR]]
     [--exec-prefix[=DIR]]
@@ -27,6 +30,9 @@ Options:
     [--libs]
     [--cflags]
     [--data-dir]
+Libraries:
+    libwzd	wzdftpd application
+    libwzd-core	wzdftpd internal module
 
 EOF
     exit $1
@@ -79,6 +85,12 @@ while test $# -gt 0; do
 	--data-dir)
 	    echo_data_dir=yes
 	    ;;
+	libwzd)
+	    library=libwzd
+	    ;;
+	libwzd-core)
+	    library=libwzd-core
+	    ;;
 	*)
 	    usage 1 1>&2
 	    ;;
@@ -100,10 +112,18 @@ else
     cflags="-I$wzd_include_dir $ssl_cflags"
 fi
 
+if test "$library" = 'libwzd'; then
+    lib_flags="-lwzd"
+fi
+
+if test "$library" = 'libwzd-core'; then
+    lib_flags="-lwzd_core $pth_libs"
+fi
+
 if test "$lib_dir" != "/usr/lib"; then
-    libs="-L$lib_dir -lwzd_core $ssl_flags $pth_libs"
+    libs="-L$lib_dir $lib_flags $ssl_flags"
 else
-    libs="-lwzd_core $ssl_flags $pth_libs"
+    libs="$lib_flags $ssl_flags"
 fi
 
 if test "$echo_cflags" = "yes"; then
