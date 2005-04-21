@@ -44,6 +44,7 @@
 #include "wzd_auth.h"
 #include "wzd_md5crypt.h"
 #include "wzd_pam.h"
+#include "wzd_sha1.h"
 #include "wzd_tls.h"
 
 /* return 1 if password matches */
@@ -70,6 +71,17 @@ int checkpass_md5(const char *pass, const char *encrypted)
   /* FIXME - md5_crypt is NOT reentrant */
   cipher = md5_crypt(pass,encrypted);
   return strcmp(cipher+3 /* skip $1$ */,encrypted)==0;
+}
+
+int checkpass_sha(const char *pass, const char *encrypted)
+{
+  const char * cipher;
+
+  if (!pass || !encrypted) return 0;
+
+  /* FIXME - sha1_hash is NOT reentrant */
+  cipher = sha1_hash(pass);
+  return strcmp(cipher+5 /* skip {SHA} */,encrypted)==0;
 }
 
 int changepass_crypt(const char *pass, char *buffer, size_t len)
@@ -110,6 +122,8 @@ int check_auth(const char *user, const char *data, const char *challenge)
 
   if (strncmp(challenge,AUTH_SIG_MD5,strlen(AUTH_SIG_MD5))==0)
     return checkpass_md5(data,challenge+strlen(AUTH_SIG_MD5));
+  if (strncmp(challenge,AUTH_SIG_SHA,strlen(AUTH_SIG_SHA))==0)
+    return checkpass_sha(data,challenge+strlen(AUTH_SIG_SHA));
 
   if (strncmp(challenge,AUTH_SIG_PAM,strlen(AUTH_SIG_PAM))==0)
     return checkpass_pam(user,data);

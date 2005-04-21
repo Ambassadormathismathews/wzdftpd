@@ -22,38 +22,43 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_AUTH__
-#define __WZD_AUTH__
+#ifndef __WZD_SHA1_H__
+#define __WZD_SHA1_H__
 
 /*! \addtogroup libwzd_auth
- *  Authentication functions for wzdftpd
  *  @{
  */
 
-/* return 1 if password matches */
+#ifdef HAVE_CONFIG_H
+# include "../config.h"
+#endif
 
-int checkpass_crypt(const char *pass, const char *encrypted);
+#include <sys/types.h>
 
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int checkpass(const char*user, const char *pass, const char *challenge);
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
+#endif
 
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int check_auth(const char *user, const char *data, const char *challenge);
+#define SHA1_DIGEST_SIZE        20
+#define SHA1_BLOCK_SIZE         64
+
+typedef uint32_t SHA1_WORD;
+
+struct SHA1_CONTEXT {
+  SHA1_WORD       H[5];
+
+  unsigned char blk[SHA1_BLOCK_SIZE];
+  unsigned blk_ptr;
+};
+
+typedef unsigned char SHA1_DIGEST[20];
 
 
+const char *sha1_hash(const char *);
 
-
-/* return 0, or -1 if error */
-
-int changepass_crypt(const char *pass, char *buffer, size_t len);
-
-
-#define AUTH_SIG_MD5  "$1$"
-#define AUTH_SIG_PAM  "{pam}"
-#define AUTH_SIG_SHA  "{SHA}"
-#define AUTH_SIG_CERT "{cert}"
+void sha1_digest(const void *, unsigned, SHA1_DIGEST);
 
 /*! @} */
 
-#endif /* __WZD_AUTH__ */
+#endif /* __WZD_SHA1_H__ */
 

@@ -22,38 +22,42 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __WZD_AUTH__
-#define __WZD_AUTH__
+#include <string.h>
 
-/*! \addtogroup libwzd_auth
- *  Authentication functions for wzdftpd
- *  @{
- */
+#include "wzd_sha1.h"
 
-/* return 1 if password matches */
+static const char base64tab[]= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-int checkpass_crypt(const char *pass, const char *encrypted);
+const char *sha1_hash(const char *passw)
+{
+  SHA1_DIGEST sha1buf;
+  static char hash_buffer[1+(sizeof(sha1buf)+2)/3*4];
+  int   a=0,b=0,c=0;
+  int   d, e, f, g;
+  unsigned int i, j;
 
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int checkpass(const char*user, const char *pass, const char *challenge);
+  sha1_digest(passw, strlen(passw), sha1buf);
 
-/* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int check_auth(const char *user, const char *data, const char *challenge);
+  j=0;
 
+  for (i=0; i<sizeof(sha1buf); i += 3)
+  {
+    a=sha1buf[i];
+    b= i+1 < sizeof(sha1buf) ? sha1buf[i+1]:0;
+    c= i+2 < sizeof(sha1buf) ? sha1buf[i+2]:0;
 
+    d=base64tab[ a >> 2 ];
+    e=base64tab[ ((a & 3 ) << 4) | (b >> 4)];
+    f=base64tab[ ((b & 15) << 2) | (c >> 6)];
+    g=base64tab[ c & 63 ];
+    if (i + 1 >= sizeof(sha1buf))   f='=';
+    if (i + 2 >= sizeof(sha1buf)) g='=';
+    hash_buffer[j++]=d;
+    hash_buffer[j++]=e;
+    hash_buffer[j++]=f;
+    hash_buffer[j++]=g;
+  }
 
-
-/* return 0, or -1 if error */
-
-int changepass_crypt(const char *pass, char *buffer, size_t len);
-
-
-#define AUTH_SIG_MD5  "$1$"
-#define AUTH_SIG_PAM  "{pam}"
-#define AUTH_SIG_SHA  "{SHA}"
-#define AUTH_SIG_CERT "{cert}"
-
-/*! @} */
-
-#endif /* __WZD_AUTH__ */
-
+  hash_buffer[j]=0;
+  return (hash_buffer);
+}

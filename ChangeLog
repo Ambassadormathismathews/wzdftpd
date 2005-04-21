@@ -1,6 +1,7 @@
-2005-04-20  Pierre Chifflier  <pollux@wzdftpd.net>
+2005-04-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added postgresql backend
+	* feature: added SHA1 support in libwzd-auth
 
 2005-04-18  Pierre Chifflier  <pollux@wzdftpd.net>
 

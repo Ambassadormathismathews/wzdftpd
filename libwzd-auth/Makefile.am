@@ -11,6 +11,7 @@ libwzd_auth_la_HEADERS = \
 	wzd_md5.h \
 	wzd_md5crypt.h \
 	wzd_pam.h \
+	wzd_sha1.h \
 	wzd_tls.h
 
 libwzd_auth_la_SOURCES = \
@@ -19,6 +20,8 @@ libwzd_auth_la_SOURCES = \
 	wzd_md5.c \
 	wzd_md5crypt.c \
 	wzd_pam.c \
+	wzd_sha1.c \
+	wzd_sha1_hash.c \
 	wzd_tls.c
 
 libwzd_auth_la_LDFLAGS = $(WZD_PAM_LIBS) $(WZD_SSL_LIBS)
