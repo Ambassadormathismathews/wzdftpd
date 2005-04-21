@@ -36,6 +36,10 @@
  *  @{
  */
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   int code;
   char **data;
@@ -76,6 +80,9 @@ wzd_reply_t * wzd_send_message(const char *buffer, int length);
  */
 
 
+#ifdef	__cplusplus
+} /* extern "C" */
+#endif
 
 #ifndef WIN32
 
