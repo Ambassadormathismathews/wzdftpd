@@ -87,6 +87,21 @@ Package=<4>
 
 ###############################################################################
 
+Project: "pgsql"=.\BACKENDS\pgsql\pgsql.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd_core
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "plaintext"=.\backends\plaintext\plaintext.dsp - Package Owner=<4>
 
 Package=<5>

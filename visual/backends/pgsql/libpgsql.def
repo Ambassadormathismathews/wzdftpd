@@ -1,0 +1,16 @@
+LIBRARY LIBWZD_PGSQL
+
+EXPORTS
+	wzd_init
+	wzd_fini
+	wzd_validate_login
+	wzd_validate_pass
+	wzd_get_user
+	wzd_get_group
+	wzd_find_user
+	wzd_find_group
+	wzd_mod_user
+	wzd_mod_group
+	wzd_commit_changes
+	wzd_backend_version
+	wzd_backend_name
