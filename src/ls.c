@@ -214,20 +214,19 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
 #ifdef HAVE_UTF8
     if (context->connection_flags & CONNECTION_UTF8)
     {
-      /* use line as a temp buffer */
-      if (local_charset_to_utf8(buffer_name, line, sizeof(line), local_charset()))
-      {
-        out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", buffer_name);
+      /* first, check that line is not already valid UTF-8 */
+      if ( !utf8_valid(buffer_name,strlen(buffer_name)) ) {
+        /* use line as a temp buffer */
+        if (local_charset_to_utf8(buffer_name, line, sizeof(line), local_charset()))
+        {
+          out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", buffer_name);
+        }
+        strncpy(buffer_name, line, sizeof(buffer_name));
       }
-      strncpy(buffer_name, line, sizeof(buffer_name));
     }
 #endif
 
-#ifndef _MSC_VER
-    snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
-#else
-    snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-#endif
+    snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13" PRIu64 " %s %s\r\n",
         (S_ISLNK(st.st_mode) || (file->kind==FILE_LNK))? 'l' : S_ISDIR(st.st_mode) ? 'd' : '-',
         file->permissions & S_IRUSR ? 'r' : '-',
         file->permissions & S_IWUSR ? 'w' : '-',
@@ -368,8 +367,7 @@ int old_list(fd_t sock,wzd_context_t * context,list_type_t format,char *director
               continue;
             }
 
-#ifndef _MSC_VER
-            snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+            snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13" PRIu64 " %s %s\r\n",
                 S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
                 st.st_mode & S_IRUSR ? 'r' : '-',
                 st.st_mode & S_IWUSR ? 'w' : '-',
@@ -386,25 +384,6 @@ int old_list(fd_t sock,wzd_context_t * context,list_type_t format,char *director
                 (u64_t)st.st_size,
                 datestr,
                 ptr);
-#else
-            sprintf(line,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-                S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-                st.st_mode & S_IRUSR ? 'r' : '-',
-                st.st_mode & S_IWUSR ? 'w' : '-',
-                st.st_mode & S_IXUSR ? 'x' : '-',
-                st.st_mode & S_IRGRP ? 'r' : '-',
-                st.st_mode & S_IWGRP ? 'w' : '-',
-                st.st_mode & S_IXGRP ? 'x' : '-',
-                st.st_mode & S_IROTH ? 'r' : '-',
-                st.st_mode & S_IWOTH ? 'w' : '-',
-                st.st_mode & S_IXOTH ? 'x' : '-',
-                (int)st.st_nlink,
-                user->username,
-                "ftp",
-                st.st_size,
-                datestr,
-                ptr);
-#endif
           } /* format = LIST_TYPE_SHORT */
 
 
@@ -532,8 +511,7 @@ int old_list(fd_t sock,wzd_context_t * context,list_type_t format,char *director
 
         owner = (wzd_user_t*)file_getowner( filename, context);
 
-#ifndef _MSC_VER
-        snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13llu %s %s\r\n",
+        snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13" PRIu64 " %s %s\r\n",
             S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
             st.st_mode & S_IRUSR ? 'r' : '-',
             st.st_mode & S_IWUSR ? 'w' : '-',
@@ -550,25 +528,6 @@ int old_list(fd_t sock,wzd_context_t * context,list_type_t format,char *director
             (u64_t)st.st_size,
             datestr,
             buffer_name);
-#else
-        snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13I64u %s %s\r\n",
-            S_ISDIR(st.st_mode) ? 'd' : S_ISLNK(st.st_mode) ? 'l' : '-',
-            st.st_mode & S_IRUSR ? 'r' : '-',
-            st.st_mode & S_IWUSR ? 'w' : '-',
-            st.st_mode & S_IXUSR ? 'x' : '-',
-            st.st_mode & S_IRGRP ? 'r' : '-',
-            st.st_mode & S_IWGRP ? 'w' : '-',
-            st.st_mode & S_IXGRP ? 'x' : '-',
-            st.st_mode & S_IROTH ? 'r' : '-',
-            st.st_mode & S_IWOTH ? 'w' : '-',
-            st.st_mode & S_IXOTH ? 'x' : '-',
-            (int)st.st_nlink,
-            (owner)?owner->username:"unknown",
-            "ftp",
-            st.st_size,
-            datestr,
-            buffer_name);
-#endif
 
 /*        if (!callback(sock,context,line)) break;*/
         if (list_call_wrapper(sock, context, line, buffer, &buffer_len, callback)) break;

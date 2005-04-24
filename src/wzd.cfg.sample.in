@@ -280,6 +280,7 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 -site_rules = *
 -site_rusage = +O
 -site_savecfg = +O
+-site_sections = +O
 -site_sfv = *
 -site_shutdown = +O
 -site_su = +O

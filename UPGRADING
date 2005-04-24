@@ -1,3 +1,8 @@
+0.5.3:
+
+New command 'site sections', add permissions to your .cfg:
+- site_sections = +O
+
 From 0.4.x to 0.5:
 
 The server does no more use shm, so you can remove the 'shm_key' and

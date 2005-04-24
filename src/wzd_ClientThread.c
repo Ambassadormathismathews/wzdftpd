@@ -991,11 +991,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 
   /* Size=... */
   {
-#ifndef WIN32
-    str_sprintf(temp," Size=%llu;",(u64_t)s.st_size);
-#else
-    str_sprintf(temp," Size=%I64u;",(u64_t)s.st_size);
-#endif
+    str_sprintf(temp," Size=%" PRIu64 ";",(u64_t)s.st_size);
     str_append(buffer,str_tochar(temp));
   }
 
@@ -2075,11 +2071,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   file_seek(fd,(fs_off_t)context->resume,SEEK_SET);
 
-#ifndef WIN32
-  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%llu bytes)\n", user->username,param,bytestot);
-#else
-  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%I64u bytes)\n", user->username,param,bytestot);
-#endif
+  out_log(LEVEL_FLOOD,"Download: User %s starts downloading %s (%" PRIu64 " bytes)\n", user->username,param,bytestot);
 
   context->state = STATE_XFER;
   context->current_action.token = TOK_RETR;
@@ -2368,11 +2360,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
 
     if (fs_stat(path,&s)==0) {
-#ifndef WIN32
-      snprintf(buffer,1024,"%llu",(u64_t)s.st_size);
-#else
-      snprintf(buffer,1024,"%I64u",(u64_t)s.st_size);
-#endif
+      snprintf(buffer,1024,"%" PRIu64,(u64_t)s.st_size);
       ret = send_message_with_args(213,context,buffer);
       return E_OK;
     }
@@ -2750,11 +2738,7 @@ int do_rest(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_PARAM_INVALID;
   } else {
     char buf[256];
-#ifndef WIN32
-    snprintf(buf,256,"Restarting at %llu. Send STORE or RETRIEVE.",ull);
-#else
-    snprintf(buf,256,"Restarting at %I64u. Send STORE or RETRIEVE.",ull);
-#endif
+    snprintf(buf,256,"Restarting at %" PRIu64 ". Send STORE or RETRIEVE.",ull);
     ret = send_message_with_args(350,context,buf);
     context->resume = ull;
   }
@@ -3695,6 +3679,9 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 #ifdef HAVE_UTF8
     if (context->connection_flags & CONNECTION_UTF8)
     {
+      /** \bug we should not decode the answer to local charset here .. client
+       * can send pathnames encoded in UTF-8
+       */
       if (str_utf8_to_local(command_buffer, local_charset()))
       {
         /* XXX FIXME error, but use buffer anyway */

@@ -1364,6 +1364,29 @@ int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   return 0;
 }
 
+/********************* do_site_sections ******************/
+/** Print all sections
+ */
+int do_site_sections(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+{
+  wzd_section_t * section;
+  wzd_string_t * buffer = str_allocate();
+
+  /* send header */
+  send_message_raw("200-\r\n",context);
+  send_message_raw(" NAME  MASK  REGEX\r\n",context);
+
+  for (section = mainConfig->section_list; section; section = section->next_section) {
+    str_sprintf(buffer, " %s  %s  %s\r\n", section->sectionname, section->sectionmask, section->sectionre);
+    send_message_raw(str_tochar(buffer), context);
+  }
+
+  send_message_raw("200 \r\n",context);
+  str_deallocate(buffer);
+
+  return 0;
+}
+
 /********************* do_site_unlock **********************/
 /** unlock: file1 [file2 ...]
  */

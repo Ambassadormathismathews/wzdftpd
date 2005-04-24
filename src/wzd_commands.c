@@ -210,6 +210,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_rules",do_site,NULL,TOK_SITE_RULES)) return -1;
   if (commands_add(_ctable,"site_rusage",do_site_rusage,NULL,TOK_SITE_RUSAGE)) return -1;
   if (commands_add(_ctable,"site_savecfg",do_site_savecfg,NULL,TOK_SITE_SAVECFG)) return -1;
+  if (commands_add(_ctable,"site_sections",do_site_sections,NULL,TOK_SITE_SECTIONS)) return -1;
   if (commands_add(_ctable,"site_shutdown",do_site,NULL,TOK_SITE_SHUTDOWN)) return -1;
   if (commands_add(_ctable,"site_su",do_site_su,NULL,TOK_SITE_SU)) return -1;
   if (commands_add(_ctable,"site_swho",do_site,NULL,TOK_SITE_SWHO)) return -1;

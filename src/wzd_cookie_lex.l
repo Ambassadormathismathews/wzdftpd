@@ -1160,11 +1160,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (context)
         /* use 64 bits here */
-#ifndef WIN32
-        snprintf(internalbuffer,IBUFSIZE,"%llu",(context->last_file.name[0]!='\0')?context->last_file.size:0);
-#else
-        snprintf(internalbuffer,IBUFSIZE,"%I64u",(context->last_file.name[0]!='\0')?context->last_file.size:0);
-#endif
+        snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,(context->last_file.name[0]!='\0')?context->last_file.size:0);
       else
         snprintf(internalbuffer,IBUFSIZE,"lastfilesize");
       cookie_ptr = internalbuffer;

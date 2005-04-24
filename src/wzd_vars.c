@@ -221,11 +221,7 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
     return 0;
   }
   if (strcasecmp(varname,"credits")==0) {
-#ifndef WIN32
-    snprintf(data,datalength,"%llu",user->credits);
-#else
-    snprintf(data,datalength,"%I64u",user->credits);
-#endif
+    snprintf(data,datalength,"%" PRIu64,user->credits);
     return 0;
   }
   if (strcasecmp(varname,"name")==0) {

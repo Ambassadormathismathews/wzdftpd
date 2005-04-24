@@ -39,6 +39,10 @@
 # include <stdint.h>
 #endif
 
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+
 
 #if defined(_MSC_VER)
 
@@ -58,6 +62,10 @@
 #define i64_t __int64
 #define i32_t __int32
 #define i16_t __int16
+
+#define __PRI64_PREFIX  "I64"
+
+#define PRIu64  __PRI64_PREFIX "u"
 
 typedef unsigned fd_t;
 

@@ -1,3 +1,9 @@
+2005-04-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: test for UTF-8 before converting blindly in LIST
+	* code: use C99 types to avoid #ifdefs when printing u64
+	* feature: new command SITE SECTIONS
+
 2005-04-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added postgresql backend

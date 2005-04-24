@@ -316,11 +316,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
   ntime = localtime( &timeval );
   (void)strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
   snprintf(buffer,2047,
-#ifndef WIN32
-      "%s %lu %s %llu %s %c %c %c %c %s ftp 1 * %c\n",
-#else
-      "%s %lu %s %I64u %s %c %c %c %c %s ftp 1 * %c\n",
-#endif
+      "%s %lu %s %" PRIu64 " %s %c %c %c %c %s ftp 1 * %c\n",
       datestr,
       (unsigned long)(time(NULL)-context->current_action.tm_start), /* transfer time */
       remote_host?remote_host:"(null)", /* remote-host */

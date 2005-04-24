@@ -5,7 +5,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/libwzd-base $(WZD
 #libexec_LTLIBRARIES = libwzdplaintext.la
 lib_LTLIBRARIES = libwzdmysql.la
 
-EXTRA_DIST = libmysql.h
+EXTRA_DIST = libmysql.h tables.sql dropall.sql
 
 #libwzdmysql_la_HEADERS = libmysql.h
 libwzdmysql_la_SOURCES = libmysql_main.c libmysql_user.c libmysql_group.c
