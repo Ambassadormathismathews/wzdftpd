@@ -39,6 +39,10 @@
 # include <stdint.h>
 #endif
 
+#ifdef WIN32
+# define uint32_t unsigned __int32
+#endif
+
 #define SHA1_DIGEST_SIZE        20
 #define SHA1_BLOCK_SIZE         64
 

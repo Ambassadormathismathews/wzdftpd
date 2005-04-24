@@ -105,6 +105,14 @@ SOURCE="..\..\libwzd-auth\wzd_pam.c"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-auth\wzd_sha1.c"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-auth\wzd_sha1_hash.c"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-auth\wzd_tls.c"
 # End Source File
 # End Group
@@ -130,6 +138,10 @@ SOURCE="..\..\libwzd-auth\wzd_md5crypt.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-auth\wzd_pam.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-auth\wzd_sha1.h"
 # End Source File
 # Begin Source File
 
