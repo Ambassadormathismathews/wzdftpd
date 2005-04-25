@@ -2605,7 +2605,8 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
 #ifdef HAVE_UTF8
       if (context->connection_flags & CONNECTION_UTF8)
 	  {
-        str_local_to_utf8(str,local_charset());
+            if (!str_is_valid_utf8(str))
+              str_local_to_utf8(str,local_charset());
 	  }
 #endif
       ret = send_message_raw(str_tochar(str),context);
@@ -3675,20 +3676,6 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     if (buffer[0]=='\0') continue;
 
     command_buffer = STR(buffer);
-
-#ifdef HAVE_UTF8
-    if (context->connection_flags & CONNECTION_UTF8)
-    {
-      /** \bug we should not decode the answer to local charset here .. client
-       * can send pathnames encoded in UTF-8
-       */
-      if (str_utf8_to_local(command_buffer, local_charset()))
-      {
-        /* XXX FIXME error, but use buffer anyway */
-        out_log(LEVEL_NORMAL,"error converting UTF-8 input '%s'\n", str_tochar(command_buffer));
-      }
-    }
-#endif
 
     str_trim_right(command_buffer);
     wzd_strncpy(context->last_command,str_tochar(command_buffer),HARD_LAST_COMMAND_LENGTH-1);

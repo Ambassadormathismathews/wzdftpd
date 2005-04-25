@@ -501,6 +501,15 @@ int str_local_to_utf8(wzd_string_t *str, const char * charset)
   return 0;
 }
 
+/** \brief test if string is valid utf8
+ * \note
+ * require unicode support
+ */
+int str_is_valid_utf8(wzd_string_t *str)
+{
+  return utf8_valid(str->buffer,str->length);
+}
+
 #else
 int str_utf8_to_local(wzd_string_t *str, const char * charset)
 {
@@ -511,6 +520,12 @@ int str_local_to_utf8(wzd_string_t *str, const char * charset)
 {
   return -1;
 }
+
+int str_is_valid_utf8(wzd_string_t *str)
+{
+  return -1;
+}
+
 #endif /* HAVE_UTF8 */
 
 

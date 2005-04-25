@@ -187,7 +187,8 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 #ifdef HAVE_UTF8
   if (context->connection_flags & CONNECTION_UTF8)
   {
-    str_local_to_utf8(str,local_charset());
+    if (!str_is_valid_utf8(str))
+      str_local_to_utf8(str,local_charset());
   }
 #endif
   va_end (argptr);
