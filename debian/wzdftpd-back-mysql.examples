@@ -1,0 +1,2 @@
+backends/mysql/tables.sql
+backends/mysql/dropall.sql
