@@ -24,82 +24,43 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/** \file wzd_all.h
-  * \brief Include all files from wzdftpd main lib. Can be used for precompilation.
-  */
+#include "wzd_all.h"
 
-#ifdef WZD_USE_PCH
+#ifndef WZD_USE_PCH
 
-#ifndef __WZD_ALL__
-#define __WZD_ALL__
-
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
+#if defined(_MSC_VER) || (defined __CYGWIN__ && defined WINSOCK_SUPPORT)
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <time.h>
-
-#ifdef WIN32
-#define _WIN32_WINNT    0x500
-#include <windows.h>
-
-#include <direct.h>
-#include <io.h>
-#include <winsock2.h>
-#include <process.h> /* _getpid() */
-#endif /* WIN32 */
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include <fcntl.h>
-
-#ifdef BSD
-#define DL_ARG    DL_LAZY
-#else
-#define DL_ARG    RTLD_NOW
-#endif
-
-#ifdef NEED_UNDERSCORE
-#define DL_PREFIX "_"
-#else
-#define DL_PREFIX
-#endif
-
-
+#include <sys/stat.h>
 
 #include "wzd_structs.h"
-
-#include "wzd_backend.h"
-#include "wzd_cache.h"
-#include "wzd_ClientThread.h"
-#include "wzd_dir.h"
-#include "wzd_crontab.h"
-#include "wzd_file.h"
-#include "wzd_fs.h"
-#include "wzd_libmain.h"
 #include "wzd_log.h"
-#include "wzd_messages.h"
-#include "wzd_misc.h"
-#include "wzd_mod.h"
-#include "wzd_perm.h"
-#include "wzd_site.h"
-#include "wzd_site_group.h"
-#include "wzd_site_user.h"
-#include "wzd_socket.h"
-#include "wzd_string.h"
-#include "wzd_utf8.h"
-#include "wzd_vars.h"
-#include "wzd_vfs.h"
 
-
-#include "wzd_debug.h"
-
-#endif /* __WZD_ALL__ */
+#include "wzd_fs.h"
 
 #endif /* WZD_USE_PCH */
+
+/** \brief Create a directory
+ *
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
+int fs_mkdir(const char * pathname, mode_t mode)
+{
+  int ret;
+
+  ret = mkdir(pathname,mode);
+
+  return ret;
+}
 

@@ -5,8 +5,6 @@
 '********'
 - Use custom site commands exactly like standard commands
 '********'
-- #include <inttypes.h> and use PRIu64 for printf() with u64_t ( C99 ! )
-'********'
 - finish MLST
 - implement MLSD
 '********'

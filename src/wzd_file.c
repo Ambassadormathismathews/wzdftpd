@@ -114,6 +114,7 @@ typedef struct
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_file.h"
+#include "wzd_fs.h"
 #include "wzd_cache.h"
 #include "wzd_perm.h"
 
@@ -1413,7 +1414,7 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
 
   ret = _checkPerm(dirname,RIGHT_MKDIR,user);
   if (ret) return -1;
-  ret = mkdir(dirname,0755);
+  ret = fs_mkdir(dirname,0755);
 
   return ret;
 }

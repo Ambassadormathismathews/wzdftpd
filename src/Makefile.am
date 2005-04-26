@@ -23,6 +23,7 @@ libwzd_core_la_HEADERS = \
 	wzd_debug.h      \
 	wzd_dir.h	 \
 	wzd_file.h       \
+	wzd_fs.h         \
 	wzd_hardlimits.h \
 	wzd_ip.h         \
 	wzd_libmain.h    \
@@ -64,6 +65,7 @@ libwzd_core_la_SOURCES = \
 	wzd_debug.c      \
 	wzd_dir.c	 \
 	wzd_file.c       \
+	wzd_fs.c         \
 	wzd_ip.c         \
 	wzd_libmain.c    \
 	wzd_log.c        \
