@@ -153,17 +153,17 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   {
     fs_dir_t * dir;
     char buffer[WZD_MAX_PATH+1];
-	char * name;
+    fs_fileinfo_t * finfo;
 
     ret = checkpath_new(context->currentpath, buffer, context);
 
-	ret = fs_dir_open(buffer,&dir);
+    ret = fs_dir_open(buffer,&dir);
 
-	while (!ret) {
-		ret = fs_dir_read(dir,&name);
-	}
+    while (!ret) {
+      ret = fs_dir_read(dir,&finfo);
+    }
 
-	ret = fs_dir_close(dir);
+    ret = fs_dir_close(dir);
 
     ret = 0;
   }

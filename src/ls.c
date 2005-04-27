@@ -57,6 +57,7 @@
 #include "wzd_log.h"
 
 #include "wzd_file.h"
+#include "wzd_fs.h"
 #include "wzd_dir.h"
 #include "wzd_utf8.h"
 #include "wzd_vfs.h"

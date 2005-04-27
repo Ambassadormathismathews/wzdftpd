@@ -52,6 +52,8 @@
 
 #include "wzd_fs.h"
 
+#include "wzd_debug.h"
+
 #endif /* WZD_USE_PCH */
 
 struct fs_fileinfo_t {
@@ -137,8 +139,8 @@ int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
 
   ret = fs_dir_read(*newdir, NULL);
   if (ret) {
-	  fs_dir_close((*newdir));
-	  return -1;
+    fs_dir_close((*newdir));
+    return -1;
   }
 
   return 0;
@@ -171,11 +173,12 @@ int fs_dir_close(fs_dir_t * dir)
  */
 int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
 {
-  int ret;
   char * filename = NULL; /* UTF-8 ! */
-  size_t sz;
 
 #ifdef WIN32
+  int ret;
+  size_t sz;
+
   if (dir->first == 1) {
     dir->first = 0;
   }
@@ -227,7 +230,7 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
     dt = readdir(dir->handle);
     if (!dt) return -1;
 
-    filename = wzd_strdup(dt->dname);
+    filename = wzd_strdup(dt->d_name);
   }
 #endif
 
