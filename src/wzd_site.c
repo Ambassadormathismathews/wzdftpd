@@ -69,6 +69,7 @@
 #include "wzd_vars.h"
 #include "wzd_vfs.h"
 #include "wzd_file.h"
+#include "wzd_fs.h"
 #include "wzd_dir.h"
 #include "wzd_perm.h"
 #include "wzd_mod.h"
@@ -142,9 +143,29 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
 
 /*  libtest(); ret = 0; */
 
+#if 0
   {
     wzd_user_t *me = GetUserByID(context->userid);
     ret = check_certificate(me->username,me->userpass);
+  }
+#endif
+
+  {
+    fs_dir_t * dir;
+    char buffer[WZD_MAX_PATH+1];
+	char * name;
+
+    ret = checkpath_new(context->currentpath, buffer, context);
+
+	ret = fs_dir_open(buffer,&dir);
+
+	while (!ret) {
+		ret = fs_dir_read(dir,&name);
+	}
+
+	ret = fs_dir_close(dir);
+
+    ret = 0;
   }
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);

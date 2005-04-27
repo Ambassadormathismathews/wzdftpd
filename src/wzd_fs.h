@@ -29,10 +29,48 @@
  * \brief Abstraction layer to functions accessing to the filesystem.
  */
 
+typedef struct fs_dir_t fs_dir_t;
+typedef struct fs_fileinfo_t fs_fileinfo_t;
+typedef struct fs_filestat_t fs_filestat_t;
+
+struct fs_filestat_t {
+  u32_t mode;
+  u64_t size;
+  time_t mtime;
+  time_t ctime;
+  int nlink;
+};
+
 /** \brief Create a directory
  *
  * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_mkdir(const char * pathname, mode_t mode);
+int fs_mkdir(const char * pathname, unsigned long mode);
+
+/** \brief Open a directory
+ *
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
+int fs_dir_open(const char * pathname, fs_dir_t ** newdir);
+
+/** \brief Close a directory
+ */
+int fs_dir_close(fs_dir_t * dir);
+
+/** \brief Read a directory
+ *
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
+int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t ** fileinfo);
+
+/** \brief Get informations on file
+ *
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
+int fs_file_lstat(const char *pathname, fs_filestat_t * s);
+
+
+const char * fs_fileinfo_getname(fs_fileinfo_t * finfo);
 
 #endif /* __WZD_FS__ */

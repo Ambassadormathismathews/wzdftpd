@@ -59,6 +59,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_file.h"
+#include "wzd_fs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_dir.h"
@@ -77,33 +78,19 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   short vfs_pad=0; /* is 1 if name has a trailing '/' */
   char * perm_file_name;
   size_t length;
-  char * ptr, * dir_filename;
+  char * ptr;
+  const char * dir_filename;
   char buffer_file[WZD_MAX_PATH+1];
   int ret;
-  struct statbuf st;
   unsigned short sorted = 0;
   unsigned long watchdog = 0;
 
-#ifndef _MSC_VER
-  DIR * dir;
-  struct dirent * entr;
-#else
-  HANDLE dir;
-  WIN32_FIND_DATA fileData;
-  int finished;
-  char dirfilter[MAX_PATH+1];
-#endif
+  fs_dir_t * dir;
+  fs_fileinfo_t * finfo;
+  fs_filestat_t st;
 
-#ifndef _MSC_VER
-  dir = opendir(name);
-  if (!dir) return NULL;
-#else
-  if (name[strlen(name)-1] != '/')
-    snprintf(dirfilter,sizeof(dirfilter),"%s/*",name);
-  else
-    snprintf(dirfilter,sizeof(dirfilter),"%s*",name);
-  if ((dir = FindFirstFile(dirfilter,&fileData)) == INVALID_HANDLE_VALUE) return NULL;
-#endif
+
+  if ( fs_dir_open(name,&dir) ) return NULL;
 
   if (name[strlen(name)-1] != '/') vfs_pad = 1;
 
@@ -134,14 +121,8 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   insertion_point = &_dir->first_entry;
 
   /* loop on all directory entries and create child structs */
-#ifndef _MSC_VER
-  while ( (entr = readdir(dir)) ) {
-    dir_filename = entr->d_name;
-#else
-  finished = 0;
-  while (!finished) {
-    dir_filename = fileData.cFileName;
-#endif
+  while ( !fs_dir_read(dir,&finfo) ) {
+    dir_filename = fs_fileinfo_getname(finfo);
 
     if (watchdog++ > 65535) {
       out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open\n");
@@ -153,9 +134,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     if (strcmp(dir_filename,".")==0 ||
         strcmp(dir_filename,"..")==0 ||
         is_hidden_file(dir_filename) )
-    {
-      DIR_CONTINUE
-    }
+      continue;
 
     /* search element in list */
     it = perm_list;
@@ -186,14 +165,14 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
       /* if entry is a directory, we must query dir for more infos */
       strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
-      if (fs_lstat(buffer_file,&st)) {
+      if (fs_file_lstat(buffer_file,&st)) {
         /* we have a big problem here ! */
         out_err(LEVEL_HIGH,"lstat(%s) FAILED ! (errno: %d %s)\n",dir_filename,errno,strerror(errno));
         itp = it;
         it = (it)?it->next_file:NULL;
         continue;
       }
-      if (S_ISDIR(st.st_mode)) {
+      if (S_ISDIR(st.mode)) {
         /* if this is a dir, we look inside the directory for infos
          * NULL here is no problem, if will be handled by the next test
          */
@@ -229,9 +208,8 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       insertion_point = &entry->next_file;
     }
 
-    DIR_CONTINUE
   } /* for all directory entries */
-  closedir(dir);
+  fs_dir_close(dir);
 
   /* add vfs entries */
   {

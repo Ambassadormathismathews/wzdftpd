@@ -195,6 +195,10 @@ SOURCE=..\src\wzd_file.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_fs.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_ip.c
 # End Source File
 # Begin Source File
@@ -336,6 +340,10 @@ SOURCE=..\src\wzd_dir.h
 # Begin Source File
 
 SOURCE=..\src\wzd_file.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_fs.h
 # End Source File
 # Begin Source File
 

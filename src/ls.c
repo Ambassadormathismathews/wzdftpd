@@ -111,7 +111,7 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
   char * buffer_ptr;
   size_t length;
   unsigned long watchdog=0;
-  struct statbuf st;
+  fs_filestat_t sta;
 
   if (!directory || strlen(directory)<1) return 0;
 
@@ -168,26 +168,27 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
         break;
     }
 
-    if (fs_lstat(ptr_to_buffer,&st)) {
+/*    if (fs_lstat(ptr_to_buffer,&st)) {*/
+    if (fs_file_lstat(ptr_to_buffer,&sta)) {
       /* destination does not exist */
       out_log(LEVEL_FLOOD, "list: broken file %s -> %s\n", file->filename, ptr_to_buffer);
-      memset(&st, 0, sizeof(st));
-      st.st_mode = S_IFREG;
+      memset(&sta, 0, sizeof(sta));
+      sta.mode = S_IFREG;
     };
 
     /* date */
-    _format_date(st.st_mtime, datestr, sizeof(datestr));
+    _format_date(sta.mtime, datestr, sizeof(datestr));
 
     /* permissions */
 
-    if (!S_ISDIR(st.st_mode) && !S_ISLNK(st.st_mode) &&
-      !S_ISREG(st.st_mode)) {
+    if (!S_ISDIR(sta.mode) && !S_ISLNK(sta.mode) &&
+      !S_ISREG(sta.mode)) {
       /* destination does not exist */
       out_log(LEVEL_FLOOD, "list: strange file %s\n", file->filename);
-      memset(&st, 0, sizeof(st));
+      memset(&sta, 0, sizeof(sta));
     };
 
-    if (S_ISLNK(st.st_mode)) {
+    if (S_ISLNK(sta.mode)) {
       char linkbuf[256];
       int linksize;
       linksize = readlink(ptr_to_buffer,linkbuf,sizeof(linkbuf)-1);
@@ -199,7 +200,7 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
         snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> (INEXISTANT FILE)",file->filename);
     } else if (file->kind == FILE_LNK) {
       /** \bug file->data is an absolute path ... */
-      if (st.st_ctime != 0) {
+      if (sta.ctime != 0) {
         snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> %s",file->filename,(char*)file->data);
       }
       else {
@@ -227,7 +228,7 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
 #endif
 
     snprintf(line,WZD_MAX_PATH+80,"%c%c%c%c%c%c%c%c%c%c %3d %s %s %13" PRIu64 " %s %s\r\n",
-        (S_ISLNK(st.st_mode) || (file->kind==FILE_LNK))? 'l' : S_ISDIR(st.st_mode) ? 'd' : '-',
+        (S_ISLNK(sta.mode) || (file->kind==FILE_LNK))? 'l' : S_ISDIR(sta.mode) ? 'd' : '-',
         file->permissions & S_IRUSR ? 'r' : '-',
         file->permissions & S_IWUSR ? 'w' : '-',
         file->permissions & S_IXUSR ? 'x' : '-',
@@ -237,10 +238,10 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
         file->permissions & S_IROTH ? 'r' : '-',
         file->permissions & S_IWOTH ? 'w' : '-',
         file->permissions & S_IXOTH ? 'x' : '-',
-        (int)st.st_nlink,
+        (int)sta.nlink,
         (file->owner[0] != '\0')?file->owner:"unknown",
         (file->group[0] != '\0')?file->group:"unknown",
-        (u64_t)st.st_size,
+        sta.size,
         datestr,
         buffer_name);
 
