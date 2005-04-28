@@ -187,13 +187,14 @@ section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 ##### CUSTOM SITE COMMANDS
 # Here you can define external site commands.
 #site_cmd = my_free ./free.sh
+# this defines the SITE RULES command, which prints the following file
+site_cmd = rules !@e_sysconfdir@/file_rules.txt
 
 ##### SITE FILES
 sitefile_ginfo	= @e_sysconfdir@/file_ginfo.txt
 sitefile_group	= @e_sysconfdir@/file_group.txt
 sitefile_groups	= @e_sysconfdir@/file_groups.txt
 sitefile_help	= @e_sysconfdir@/file_help.txt
-sitefile_rules	= @e_sysconfdir@/file_rules.txt
 sitefile_swho	= @e_sysconfdir@/file_swho.txt
 sitefile_user	= @e_sysconfdir@/file_user.txt
 sitefile_users	= @e_sysconfdir@/file_users.txt

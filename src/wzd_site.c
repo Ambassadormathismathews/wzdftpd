@@ -2150,11 +2150,6 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
     ret = send_message_with_args(250,context,"SITE: ","server is now opened");
     return 0;
   } else
-/******************* RULES **********************/
-  if (strcmp(s_token,"site_rules")==0) {
-    do_site_print_file(mainConfig->site_config.file_rules,NULL,NULL,context);
-    return 0;
-  } else
 /******************* SWHO ***********************/
   if (strcmp(s_token,"site_swho")==0) {
     do_site_print_file(mainConfig->site_config.file_swho,NULL,NULL,context);
