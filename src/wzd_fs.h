@@ -68,7 +68,18 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t ** fileinfo);
  * pathname must be an absolute path
  * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
+int fs_file_stat(const char *pathname, fs_filestat_t * s);
+
+/** \brief Get informations on file
+ *
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
 int fs_file_lstat(const char *pathname, fs_filestat_t * s);
+
+/** \brief Get informations on file
+ */
+int fs_file_fstat(int fd, fs_filestat_t * s);
 
 
 const char * fs_fileinfo_getname(fs_fileinfo_t * finfo);

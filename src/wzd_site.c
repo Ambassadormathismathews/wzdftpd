@@ -879,7 +879,7 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
   char msg_file[2048];
   char other_file[2048];
   unsigned int length;
-  struct statbuf s;
+  fs_filestat_t s;
 
   if (!mainConfig->dir_message) {
     send_message_with_args(501,context,"no dir_message defined in config");
@@ -918,7 +918,7 @@ int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t
     }
     strncpy(other_file+length,str_tochar(filename),2048-length-1);
     str_deallocate(filename);
-    if (fs_stat(other_file,&s) || !S_ISREG(s.st_mode))
+    if (fs_file_stat(other_file,&s) || !S_ISREG(s.mode))
     {
       send_message_with_args(501,context,"inexistant file, or not a regular file");
       return -1;
@@ -1941,79 +1941,54 @@ int do_site_vfsdel(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
  */
 static int do_internal_wipe(const char *filename, wzd_context_t * context)
 {
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
-#ifndef _MSC_VER
-  DIR * dir;
-  struct dirent * entry;
-#else
-  HANDLE dir;
-  WIN32_FIND_DATA fileData;
-  int finished;
-  char dirfilter[MAX_PATH];
-#endif
-  char *dir_filename;
+  const char *dir_filename;
   char buffer[1024];
   char path[1024];
   char * ptr;
+  fs_dir_t * dir;
+  fs_fileinfo_t * finfo;
 
   split_filename(filename,path,NULL,1024,0);
 
-  if (fs_stat(filename,&s)) return -1;
+  if (fs_file_lstat(filename,&s)) return -1;
 
-  if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+  if (S_ISREG(s.mode) || S_ISLNK(s.mode)) {
     ret = file_remove(filename,context);
     if (ret) return 1;
   }
-  if (S_ISDIR(s.st_mode))
+  if (S_ISDIR(s.mode))
   {
     strncpy(buffer,filename,sizeof(buffer));
     ptr = buffer + strlen(buffer);
     *ptr++ = '/';
-#ifndef _MSC_VER
-    dir = opendir(filename);
-#else
-    snprintf(dirfilter,2048,"%s/*",filename);
-    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
-#endif
 
-#ifndef _MSC_VER
-    while ( (entry=readdir(dir)) )
-    {
-      dir_filename = entry->d_name;
-#else
-    finished = 0;
-    while (!finished)
-    {
-      dir_filename = fileData.cFileName;
-#endif
+    if ( fs_dir_open(filename,&dir) ) return -1;
+
+    while ( !fs_dir_read(dir,&finfo) ) {
+      dir_filename = fs_fileinfo_getname(finfo);
+
       if (strcmp(dir_filename,".")==0 || strcmp(dir_filename,"..")==0)
-        DIR_CONTINUE
-      if (strlen(buffer)+strlen(dir_filename)>=1024) { closedir(dir); return 1; }
+        continue;
+      if (strlen(buffer)+strlen(dir_filename)>=1024) { fs_dir_close(dir); return 1; }
       strncpy(ptr,dir_filename,256);
 
-/*      if (fs_stat(buffer,&s)) { closedir(dir); return -1; }*/
-      if (fs_stat(buffer,&s)==0) {
-        if (S_ISREG(s.st_mode) || S_ISLNK(s.st_mode)) {
+/*      if (fs_file_stat(buffer,&s)) { fs_dir_close(dir); return -1; }*/
+      if (fs_file_lstat(buffer,&s)==0) {
+        if (S_ISREG(s.mode) || S_ISLNK(s.mode)) {
 /*          ret = file_remove(buffer,context);*/
           ret = unlink(buffer);
-          if (ret) { closedir(dir); return 1; }
+          if (ret) { fs_dir_close(dir); return 1; }
         }
-        if (S_ISDIR(s.st_mode)) {
+        if (S_ISDIR(s.mode)) {
           ret = do_internal_wipe(buffer,context);
-          if (ret) { closedir(dir); return 1; }
+          if (ret) { fs_dir_close(dir); return 1; }
         }
       }
-#ifdef _MSC_VER
-      if (!FindNextFile(dir,&fileData))
-      {
-        if (GetLastError() == ERROR_NO_MORE_FILES)
-          finished = 1;
-      }
-#endif
     }
 
-    closedir(dir);
+    fs_dir_close(dir);
     ret = rmdir(filename);
     if (ret) return 1;
   }

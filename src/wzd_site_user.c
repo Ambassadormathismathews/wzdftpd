@@ -56,6 +56,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_fs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
@@ -168,8 +169,8 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   }
   /* check if homedir exist */
   {
-    struct statbuf s;
-    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    fs_filestat_t s;
+    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
       str_deallocate(username); str_deallocate(password); str_deallocate(ip);
       return 0;
@@ -776,8 +777,8 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     }
     /* check if homedir exist */
     {
-      struct statbuf s;
-      if (fs_stat(str_tochar(value),&s) || !S_ISDIR(s.st_mode)) {
+      fs_filestat_t s;
+      if (fs_file_stat(str_tochar(value),&s) || !S_ISDIR(s.mode)) {
         ret = send_message_with_args(501,context,"Homedir does not exist");
         str_deallocate(field); str_deallocate(value);
         return 0;

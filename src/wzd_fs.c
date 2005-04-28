@@ -257,15 +257,17 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
   {
     struct stat st;
 
-    if (!stat(pathname,&st)) {
+    if (!lstat(pathname,&st)) {
       if (s) {
         s->size = (u64_t)st.st_size;
         s->mode = st.st_mode;
         s->mtime = st.st_mtime;
         s->ctime = st.st_ctime;
         s->nlink = st.st_nlink;
+        return 0;
       }
     }
+    return -1;
   }
 #else
   {
@@ -282,6 +284,7 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
     ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
     if (ret <= 0) { free(wbuffer); return -1; }
 
+    ret = -1;
     if (!_wstati64(wbuffer,&st)) {
       if (s) {
         s->size = st.st_size;
@@ -289,12 +292,107 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
         s->mtime = st.st_mtime;
         s->ctime = st.st_ctime;
         s->nlink = st.st_nlink;
+        ret = 0;
       }
     }
     free(wbuffer);
   }
+  return ret;
 #endif
-  return 0;
+}
+
+/** \brief Get informations on file
+ *
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
+ */
+int fs_file_stat(const char *pathname, fs_filestat_t * s)
+{
+#ifndef WIN32
+  {
+    struct stat st;
+
+    if (!stat(pathname,&st)) {
+      if (s) {
+        s->size = (u64_t)st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
+    }
+    return -1;
+  }
+#else
+  {
+    struct _stati64 st;
+    wchar_t * wbuffer;
+    size_t sz;
+    int ret;
+
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
+    if (sz <= 0) return -1;
+
+    wbuffer = malloc(sz * sizeof(wchar_t) + 3);
+
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
+    if (ret <= 0) { free(wbuffer); return -1; }
+
+    ret = -1;
+    if (!_wstati64(wbuffer,&st)) {
+      if (s) {
+        s->size = st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        ret = 0;
+      }
+    }
+    free(wbuffer);
+    return ret;
+  }
+#endif
+}
+
+/** \brief Get informations on file
+ */
+int fs_file_fstat(int fd, fs_filestat_t * s)
+{
+#ifndef WIN32
+  {
+    struct stat st;
+
+    if (!fstat(fd,&st)) {
+      if (s) {
+        s->size = (u64_t)st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
+    }
+    return -1;
+  }
+#else
+  {
+    struct _stati64 st;
+
+    if (!_fstati64(fd,&st)) {
+      if (s) {
+        s->size = st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
+    }
+    return -1;
+  }
+#endif
 }
 
 const char * fs_fileinfo_getname(fs_fileinfo_t * finfo)

@@ -51,6 +51,7 @@
 #include "wzd_libmain.h"
 #include "wzd_misc.h"
 
+#include "wzd_fs.h"
 #include "wzd_vars.h"
 #include "wzd_log.h"
 #include "wzd_mutex.h"
@@ -385,8 +386,8 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   else if (strcmp(varname, "home")==0) {
     /* check if homedir exist */
     {
-      struct statbuf s;
-      if (fs_stat(data,&s) || !S_ISDIR(s.st_mode)) {
+      fs_filestat_t s;
+      if (fs_file_stat(data,&s) || !S_ISDIR(s.mode)) {
         /* Homedir does not exist */
         return 1;
       }
@@ -491,8 +492,8 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
 
   /* check if homedir exist */
   {
-    struct statbuf s;
-    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    fs_filestat_t s;
+    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
       return 3;
     }
   }
@@ -600,8 +601,8 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
   else if (strcmp(varname,"home")==0) {
     /* check if homedir exist */
     {
-      struct statbuf s;
-      if (fs_stat(data,&s) || !S_ISDIR(s.st_mode)) {
+      fs_filestat_t s;
+      if (fs_file_stat(data,&s) || !S_ISDIR(s.mode)) {
         /* Homedir does not exist */
         return 2;
       }
@@ -672,8 +673,8 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
   }
   /* check if homedir exist */
   {
-    struct statbuf s;
-    if (fs_stat(homedir,&s) || !S_ISDIR(s.st_mode)) {
+    fs_filestat_t s;
+    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
       str_deallocate(groupname);
       return 1;

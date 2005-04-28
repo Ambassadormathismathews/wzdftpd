@@ -43,6 +43,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_ratio.h"
+#include "wzd_fs.h"
 #include "wzd_misc.h"
 
 #endif /* WZD_USE_PCH */
@@ -58,7 +59,7 @@ int ratio_check_download(const char *path, wzd_context_t *context)
 {
   wzd_user_t * me;
   u64_t credits;
-  struct statbuf s;
+  fs_filestat_t s;
   u64_t needed=0;
 
   me = GetUserByID(context->userid);
@@ -67,12 +68,12 @@ int ratio_check_download(const char *path, wzd_context_t *context)
   if (!me->ratio) return 0;
   credits = ratio_get_credits(me);
 
-  if (fs_stat(path,&s)) {
+  if (fs_file_stat(path,&s)) {
     /* problem during stat() */
     return -1;
   }
 
-  needed = s.st_size;
+  needed = s.size;
 
   if (needed <= credits)
     return 0;

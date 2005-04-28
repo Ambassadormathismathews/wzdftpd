@@ -68,6 +68,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_fs.h"
 #include "wzd_ip.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -520,7 +521,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 {
   int ret;
   char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH];
-  struct statbuf buf;
+  fs_filestat_t buf;
   wzd_user_t * user;
 
   user = GetUserByID(context->userid);
@@ -554,8 +555,8 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   }
 
 
-  if (!fs_stat(path,&buf)) {
-    if (S_ISDIR(buf.st_mode)) {
+  if (!fs_file_stat(path,&buf)) {
+    if (S_ISDIR(buf.mode)) {
       char buffer[WZD_MAX_PATH], buffer2[WZD_MAX_PATH];
       if (wanted_path[0] == '/') { /* absolute path */
         strncpy(buffer,wanted_path,WZD_MAX_PATH);
@@ -943,7 +944,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 {
   struct wzd_file_t * file_info;
   char *ptr;
-  struct statbuf s;
+  fs_filestat_t s;
   wzd_string_t *temp;
   const char *type;
 
@@ -953,7 +954,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
   if (!ptr) return -1;
   if (ptr+1 != '\0') ptr++;
 
-  if (fs_stat(filename,&s)) return -1;
+  if (fs_file_stat(filename,&s)) return -1;
 
   temp = str_allocate();
 
@@ -977,7 +978,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
         type = "unknown"; break;
     }
   } else {
-    switch (s.st_mode & S_IFMT) {
+    switch (s.mode & S_IFMT) {
       case S_IFREG:
         type = "file"; break;
       case S_IFDIR:
@@ -991,14 +992,14 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 
   /* Size=... */
   {
-    str_sprintf(temp," Size=%" PRIu64 ";",(u64_t)s.st_size);
+    str_sprintf(temp," Size=%" PRIu64 ";",s.size);
     str_append(buffer,str_tochar(temp));
   }
 
   /* Modify=... */
   {
     char tm[32];
-    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
+    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.mtime));
 
     str_sprintf(temp," Modify=%s;",tm);
     str_append(buffer,str_tochar(temp));
@@ -1015,11 +1016,13 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
   }
 #endif
 
+#if 0
   /* Unique=... */
   {
-    str_sprintf(temp," Unique=%llu;",(u64_t)s.st_ino);
+    str_sprintf(temp," Unique=%llu;",(u64_t)s.ino);
     str_append(buffer,str_tochar(temp));
   }
+#endif
 
   /* End, append name */
   str_append(buffer," ");
@@ -1440,7 +1443,7 @@ label_error_mkdir:
 int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
   wzd_user_t * user;
   const char *param;
@@ -1471,8 +1474,8 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  if (fs_lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
-  if (!S_ISDIR(s.st_mode)) {
+  if (fs_file_lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
+  if (!S_ISDIR(s.mode)) {
     ret = send_message_with_args(553,context,"not a directory");
     return E_NOTDIR;
   }
@@ -2307,7 +2310,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], tm[32];
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
 
   if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
@@ -2325,9 +2328,9 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
       return E_FILE_FORBIDDEN;
     }
 
-    if (fs_stat(path,&s)==0) {
+    if (fs_file_stat(path,&s)==0) {
       context->resume = 0L;
-      strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.st_mtime));
+      strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.mtime));
       ret = send_message_with_args(213,context,tm);
       return E_OK;
     }
@@ -2341,7 +2344,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
 
   if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
@@ -2359,8 +2362,8 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     }
 
 
-    if (fs_stat(path,&s)==0) {
-      snprintf(buffer,1024,"%" PRIu64,(u64_t)s.st_size);
+    if (fs_file_stat(path,&s)==0) {
+      snprintf(buffer,1024,"%" PRIu64,s.size);
       ret = send_message_with_args(213,context,buffer);
       return E_OK;
     }
@@ -2480,7 +2483,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
-  struct statbuf s;
+  fs_filestat_t s;
   u64_t file_size;
   wzd_user_t * user, * owner;
 
@@ -2508,17 +2511,17 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  if (fs_lstat(path,&s)) {
+  if (fs_file_lstat(path,&s)) {
     /* non-existent file ? */
     ret = send_message_with_args(501,context,"File does not exist");
     return E_FILE_NOEXIST;
   }
-  if (S_ISDIR(s.st_mode)) {
+  if (S_ISDIR(s.mode)) {
     ret = send_message_with_args(501,context,"This is a directory !");
     return E_ISDIR;
   }
-  if (S_ISREG(s.st_mode))
-    file_size = s.st_size;
+  if (S_ISREG(s.mode))
+    file_size = s.size;
   else
     file_size = 0;
   owner = file_getowner(path,context);
@@ -2859,7 +2862,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char buffer[1024];
   const char * ptr;
   char * ptest;
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
   unsigned long crc = 0;
   unsigned long startpos = 0;
@@ -2918,7 +2921,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
 
 
-    if (fs_stat(path,&s)==0) {
+    if (fs_file_stat(path,&s)==0) {
       ret = calc_crc32(path,&crc,startpos,length);
       snprintf(buffer,1024,"%lX",crc);
 /*      snprintf(buffer,1024,"%d %lX\r\n",250,crc);*/
@@ -2938,7 +2941,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char buffer[1024];
   const char * ptr;
   char * ptest;
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
   unsigned char crc[16];
   unsigned char md5str[33];
@@ -3002,7 +3005,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
 
 
-    if (fs_stat(path,&s)==0) {
+    if (fs_file_stat(path,&s)==0) {
       ret = calc_md5(path,crc,startpos,length);
       for (i=0; i<16; i++)
         snprintf(md5str+i*2,3,"%02x",crc[i]);

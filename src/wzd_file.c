@@ -701,7 +701,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
   char dir[WZD_MAX_PATH+1];
   char stripped_filename[WZD_MAX_PATH+1];
   char *ptr;
-  struct statbuf s;
+  fs_filestat_t s;
 
   if (!filename || filename[0] == '\0')
     return -1;
@@ -723,7 +723,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     }
   }
 
-  if (fs_stat(filename,&s)==-1) {
+  if (fs_file_stat(filename,&s)==-1) {
     if (wanted_right != RIGHT_STOR && wanted_right != RIGHT_MKDIR)
       return -1; /* inexistant ? */
     ptr = strrchr(dir,'/');
@@ -739,7 +739,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t * us
     /* we need to check in parent dir for the same right */
     if (_checkPerm(dir,wanted_right,user)) return -1; /* we do not have the right to modify parent dir */
   } else {
-    if (S_ISDIR(s.st_mode)) { /* isdir */
+    if (S_ISDIR(s.mode)) { /* isdir */
       strcpy(stripped_filename,".");
     } else { /* ! isdir */
       ptr = strrchr(dir,'/');
@@ -791,7 +791,7 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
   char stripped_filename[WZD_MAX_PATH+1];
   char perm_filename[WZD_MAX_PATH+1];
   char *ptr;
-  struct statbuf s;
+  fs_filestat_t s;
   size_t length, neededlength;
   struct wzd_file_t * file_list=NULL, * file_cur;
   int ret;
@@ -801,8 +801,8 @@ int _setPerm(const char *filename, const char *granted_user, const char *owner, 
 
   strncpy(dir,filename,WZD_MAX_PATH);
 
-  if (fs_stat(filename,&s)==-1) return -1; /* inexistant ? */
-  if (S_ISDIR(s.st_mode)) { /* isdir */
+  if (fs_file_stat(filename,&s)==-1) return -1; /* inexistant ? */
+  if (S_ISDIR(s.mode)) { /* isdir */
     strcpy(stripped_filename,".");
   } else { /* ! isdir */
     ptr = strrchr(dir,'/');
@@ -882,7 +882,7 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
   char dst_stripped_filename[BUFFER_LEN];
   char dst_perm_filename[BUFFER_LEN];
   char *ptr;
-  struct statbuf s,s2;
+  fs_filestat_t s,s2;
   size_t length, neededlength;
   struct wzd_file_t * src_file_list=NULL, *dst_file_list=NULL,* file_cur, *file_dst;
   wzd_acl_line_t * acl;
@@ -894,8 +894,8 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
   /* find src perm file name */
   strncpy(dir,oldfilename,BUFFER_LEN);
 
-  if (fs_stat(dir,&s)==-1) return -1; /* inexistant ? */
-  if (S_ISDIR(s.st_mode)) { /* isdir */
+  if (fs_file_stat(dir,&s)==-1) return -1; /* inexistant ? */
+  if (S_ISDIR(s.mode)) { /* isdir */
     /* TODO XXX FIXME Check validity of this assertion ! */
     /* permissions of directory are self contained ! */
     return 0;
@@ -926,14 +926,14 @@ int _movePerm(const char *oldfilename, const char *newfilename, const char *owne
   strncpy(dir,newfilename,BUFFER_LEN);
 
   /* if dst file is a dir and exists, we can't make the operation */
-  if (fs_stat(dir,&s2)==0) { /* file exists ? */
-    if (S_ISDIR(s2.st_mode)) { /* isdir */
+  if (fs_file_stat(dir,&s2)==0) { /* file exists ? */
+    if (S_ISDIR(s2.mode)) { /* isdir */
       return -1;
     }
   }
 
 
-  if (S_ISDIR(s.st_mode)) { /* isdir */
+  if (S_ISDIR(s.mode)) { /* isdir */
     strcpy(dst_stripped_filename,".");
   } else { /* ! isdir */
     ptr = strrchr(dir,'/');
@@ -1201,13 +1201,13 @@ int softlink_create(const char *target, const char *linkname)
   char *ptr;
   struct wzd_file_t * perm_list=NULL, * file_cur;
   int ret;
-  struct statbuf s;
+  fs_filestat_t s;
 
-  if (fs_stat(target,&s)) { /* target does not exist ?! */
+  if (fs_file_stat(target,&s)) { /* target does not exist ?! */
     out_err(LEVEL_FLOOD, "symlink: source does not exist (%s)\n", target);
     return -1;
   }
-  if (fs_stat(linkname,&s) != -1) { /* linkname already exist ?! */
+  if (fs_file_stat(linkname,&s) != -1) { /* linkname already exist ?! */
     out_err(LEVEL_FLOOD, "symlink: destination already exists (%s)\n", linkname);
     return -1;
   }
@@ -1227,7 +1227,7 @@ int softlink_create(const char *target, const char *linkname)
       )
     {
       *ptr = '\0';
-      if (fs_stat(perm_filename,&s)) {
+      if (fs_file_stat(perm_filename,&s)) {
         out_err(LEVEL_FLOOD, "symlink: destination directory does not exist (%s)\n", perm_filename);
         return -1;
       }
@@ -1427,7 +1427,9 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
-  struct statbuf s;
+  fs_filestat_t s;
+  fs_dir_t * dir;
+  fs_fileinfo_t * finfo;
 
   user = GetUserByID(context->userid);
 
@@ -1435,47 +1437,28 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
   if (ret) return -1;
 
   /* is a directory ? */
-  if (fs_stat(dirname,&s)) return -1;
-  if (!S_ISDIR(s.st_mode)) return -1;
+  if (fs_file_stat(dirname,&s)) return -1;
+  if (!S_ISDIR(s.mode)) return -1;
 
   /* is dir empty ? */
   {
-#ifndef _MSC_VER
-    DIR * dir;
-    struct dirent *entr;
-#else
-    HANDLE dir;
-    WIN32_FIND_DATA fileData;
-    int finished;
-    char dirfilter[2048];
-#endif
     char path_perm[2048];
     const char *filename;
 
-#ifndef _MSC_VER
-    if ((dir=opendir(dirname))==NULL) return 0;
-#else
-    snprintf(dirfilter,2048,"%s/*",dirname);
-    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
-#endif
+    if ( fs_dir_open(dirname,&dir) ) return 0;
 
-#ifndef _MSC_VER
-    while ((entr=readdir(dir))!=NULL) {
-      filename = entr->d_name;
-#else
-    finished = 0;
-    while (!finished) {
-      filename = fileData.cFileName;
-#endif
+    while ( !fs_dir_read(dir,&finfo) ) {
+      filename = fs_fileinfo_getname(finfo);
+
       if (strcmp(filename,".")==0 ||
           strcmp(filename,"..")==0 ||
           strcmp(filename,HARD_PERMFILE)==0) /* XXX hide perm file ! */
-        DIR_CONTINUE
-      closedir(dir);
+        continue;
+      fs_dir_close(dir);
       return 1; /* dir not empty */
     }
 
-    closedir(dir);
+    fs_dir_close(dir);
 
     /* remove permission file */
     strcpy(path_perm,dirname); /* path is already ended by / */
@@ -1491,9 +1474,9 @@ fprintf(stderr,"Removing directory '%s'\n",dirname);
 
 #ifndef __CYGWIN__
   {
-    struct statbuf s;
-    fs_lstat(dirname,&s);
-    if (S_ISLNK(s.st_mode))
+    fs_filestat_t s;
+    fs_file_lstat(dirname,&s);
+    if (S_ISLNK(s.mode))
       return unlink(dirname);
   }
 #endif
@@ -1631,9 +1614,9 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   int ret;
   struct wzd_file_t * file_list=NULL, * file_cur;
   size_t neededlength, length;
-  struct statbuf s;
+  fs_filestat_t s;
 
-  if (fs_stat(filename,&s))
+  if (fs_file_stat(filename,&s))
     return NULL;
 
   /* find the dir containing the perms file */
@@ -1641,7 +1624,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   ptr = strrchr(perm_filename,'/');
   if (!ptr || *(ptr+1)=='\0') return NULL;
 
-  if (S_ISDIR(s.st_mode)) { /* isdir */
+  if (S_ISDIR(s.mode)) { /* isdir */
     strcpy(stripped_filename,".");
   } else { /* ! isdir */
     ptr = strrchr(perm_filename,'/');
@@ -1703,7 +1686,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   char * ptr;
   struct wzd_file_t * file_list=NULL, * file_cur, *file;
   size_t neededlength, length;
-  struct statbuf s;
+  fs_filestat_t s;
   int nx=0;
 
   /** \bug no no no, it can be a symlink or a vfs ! */
@@ -1720,8 +1703,8 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   ptr = strrchr(perm_filename,'/');
   if (!ptr || *(ptr+1)=='\0') return NULL;
 
-  if (!fs_lstat(filename,&s)) {
-    if (S_ISDIR(s.st_mode)) { /* isdir */
+  if (!fs_file_lstat(filename,&s)) {
+    if (S_ISDIR(s.mode)) { /* isdir */
       strcpy(stripped_filename,".");
     } else { /* ! isdir */
       ptr = strrchr(perm_filename,'/');
@@ -1736,7 +1719,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
     if (ptr) {
       strcpy(stripped_filename,ptr+1);
       *ptr = 0;
-      if (fs_lstat(perm_filename,&s)) {
+      if (fs_file_lstat(perm_filename,&s)) {
         out_err(LEVEL_FLOOD, "symlink: destination directory does not exist (%s)\n", perm_filename);
         return NULL;
       }
@@ -1909,10 +1892,10 @@ int symlink_create(const char *existing, const char *link)
 int symlink_remove(const char *link)
 {
 #ifndef WIN32
-  struct statbuf s;
+  fs_filestat_t s;
 
-  if (fs_lstat(link,&s)) return E_FILE_NOEXIST;
-  if ( !S_ISLNK(s.st_mode) ) return E_FILE_TYPE;
+  if (fs_file_lstat(link,&s)) return E_FILE_NOEXIST;
+  if ( !S_ISLNK(s.mode) ) return E_FILE_TYPE;
   return unlink(link);
 #else
   return softlink_remove(link);

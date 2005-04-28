@@ -92,6 +92,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_fs.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -344,30 +345,23 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
 /** internal fct, rename files by copying data */
 static int _int_rename(const char * src, const char *dst)
 {
-  struct statbuf s;
+  fs_filestat_t s;
   int ret;
 
-  if (fs_lstat(src,&s)) return -1;
+  if (fs_file_lstat(src,&s)) return -1;
 
-  if (S_ISDIR(s.st_mode)) {
+  if (S_ISDIR(s.mode)) {
     char buf_src[2048];
     char buf_dst[2048];
     unsigned int length_src=2048;
     unsigned int length_dst=2048;
     char * ptr_src, * ptr_dst;
-#ifndef _MSC_VER
-    DIR *dir;
-    struct dirent *entr;
-#else
-    HANDLE dir;
-    WIN32_FIND_DATA fileData;
-    int finished;
-    char dirfilter[2048];
-#endif
     const char *filename;
+    fs_dir_t * dir;
+    fs_fileinfo_t * finfo;
 
-    ret = mkdir(dst,s.st_mode & 0xffff);
-    ret = chmod(dst,s.st_mode & 0xffff);
+    ret = mkdir(dst,s.mode & 0xffff);
+    ret = chmod(dst,s.mode & 0xffff);
     memset(buf_src,0,2048);
     memset(buf_dst,0,2048);
     strncpy(buf_src,src,length_src-1); /* FIXME check ret */
@@ -379,52 +373,28 @@ static int _int_rename(const char * src, const char *dst)
     *ptr_src++ = '/'; /* no need to add '\0', the memset had already filled buffer with 0 */
     *ptr_dst++ = '/';
     /* TODO read dir and recurse function for all entries */
-#ifndef _MSC_VER
-    if ((dir=opendir(src))==NULL) return -1;
-    while ((entr=readdir(dir))!=NULL) {
-      filename = entr->d_name;
-      if (entr->d_name[0]=='.') {
-        if (strcmp(entr->d_name,".")==0 ||
-            strcmp(entr->d_name,"..")==0)
-          continue;
-      }
-#else
-    snprintf(dirfilter,2048,"%s/*",src);
-    if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return 0;
+    if ( fs_dir_open(src,&dir) ) return -1;
 
-    finished = 0;
-    while (!finished)
-    {
-      filename = fileData.cFileName;
+    while ( !fs_dir_read(dir,&finfo) ) {
+      filename = fs_fileinfo_getname(finfo);
+
       if (filename[0]=='.') {
         if (strcmp(filename,".")==0 ||
             strcmp(filename,"..")==0)
-        {
-          if (!FindNextFile(dirfilter,&fileData))
-          {
-            if (GetLastError() == ERROR_NO_MORE_FILES)
-              finished = 1;
-          }
           continue;
-        }
       }
-#endif
+
       strncpy(ptr_src,filename,length_src-1); /* FIXME check ret */
       strncpy(ptr_dst,filename,length_dst-1); /* FIXME check ret */
       ret = _int_rename(buf_src,buf_dst); /* FIXME check ret */
       *ptr_src = '\0';
       *ptr_dst = '\0';
-#ifdef _MSC_VER
-      if (!FindNextFile(dirfilter,&fileData))
-      {
-        if (GetLastError() == ERROR_NO_MORE_FILES)
-          finished = 1;
-      }
-#endif
     }
+
+    fs_dir_close(dir);
     rmdir(src);
   } else
-  if (S_ISLNK(s.st_mode)) {
+  if (S_ISLNK(s.mode)) {
     char buf[WZD_MAX_PATH+1];
     memset(buf,0,sizeof(buf));
     ret = readlink(src,buf,WZD_MAX_PATH);
@@ -432,10 +402,10 @@ static int _int_rename(const char * src, const char *dst)
      * otherwise we need to re-build a path from buf
      */
     ret = symlink(buf,dst);
-    ret = chmod(dst,s.st_mode & 0xffff);
+    ret = chmod(dst,s.mode & 0xffff);
     unlink(src);
   } else
-  if (S_ISREG(s.st_mode)) {
+  if (S_ISREG(s.mode)) {
     char buffer[32768];
     int fd_from, fd_to;
 
@@ -505,16 +475,16 @@ int is_perm_file(const char *filename)
 /** get file last change time */
 time_t get_file_ctime(const char *file)
 {
-  struct statbuf s;
-  if ( fs_stat(file,&s) < 0 ) return (time_t)-1;
-  return s.st_ctime;
+  fs_filestat_t s;
+  if ( fs_file_stat(file,&s) < 0 ) return (time_t)-1;
+  return s.ctime;
 }
 
 time_t lget_file_ctime(int fd)
 {
-  struct statbuf s;
-  if ( fs_fstat(fd,&s) < 0 ) return (time_t)-1;
-  return s.st_ctime;
+  fs_filestat_t s;
+  if ( fs_file_fstat(fd,&s) < 0 ) return (time_t)-1;
+  return s.ctime;
 }
 
 int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_param_t *param_list)

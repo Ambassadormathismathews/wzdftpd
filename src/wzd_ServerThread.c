@@ -71,6 +71,7 @@
 #include "wzd_misc.h"
 #include "wzd_log.h"
 #include "wzd_tls.h"
+#include "wzd_fs.h"
 #include "wzd_init.h"
 #include "wzd_ip.h"
 #include "wzd_libmain.h"
@@ -986,12 +987,12 @@ int server_switch_to_config(wzd_config_t *config)
 
   /** \todo XXX FIXME open log dir */
   if (config->logdir) {
-    struct statbuf s;
-    if (fs_stat(config->logdir,&s)) {
+    fs_filestat_t s;
+    if (fs_file_stat(config->logdir,&s)) {
       out_err(LEVEL_HIGH,"Could not open log dir (%s)\n", config->logdir);
       return 1;
     }
-    if (!S_ISDIR(s.st_mode)) {
+    if (!S_ISDIR(s.mode)) {
       out_err(LEVEL_HIGH,"Log dir (%s) is NOT a directory, I'm confused!\n", config->logdir);
       return 1;
     }

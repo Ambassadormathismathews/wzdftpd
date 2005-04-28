@@ -57,10 +57,11 @@
 #include "wzd_structs.h"
 
 #include "wzd_cache.h"
-#include "wzd_mod.h"
+#include "wzd_fs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
+#include "wzd_mod.h"
 
 #include "wzd_debug.h"
 
@@ -363,7 +364,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
 /*  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));*/
   /* already done by read_token */
   l_command = strlen(buffer);
-  
+
   while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
     buffer[--l_command] = '\0';
   _reply_code = code;
@@ -484,7 +485,7 @@ int module_check(const char *filename)
   void * handle;
   void * ptr;
   char * error;
-  struct statbuf s;
+  fs_filestat_t st;
   int ret;
 
   if (!filename || filename[0]=='\0') return -1;
@@ -502,22 +503,12 @@ int module_check(const char *filename)
     strcpy(path+2,filename);
   }
 
-  ret = fs_lstat(path,&s);
+  ret = fs_file_lstat(path,&st);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat module '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
     return -1;
   }
-
-  /* basic type check */
-#if 0
-#ifdef DEBUG
-  if (S_ISLNK(s.st_mode))
-    out_err(LEVEL_INFO,"%s is a symlink, ok\n",filename);
-  if (S_ISREG(s.st_mode))
-      out_err(LEVEL_INFO,"%s is a regular file, ok\n",filename);
-#endif
-#endif
 
   /* test dlopen */
   handle = dlopen(path,DL_ARG);
@@ -677,7 +668,7 @@ int module_unload(wzd_module_t **module_list, const char *name)
  * update: it seems behaviour improves with linux 2.6.5
  */
 /*      dlclose(current_module->handle);*/
-    
+
       if (previous_module)
         previous_module->next_module = current_module->next_module;
       else
@@ -720,7 +711,7 @@ void module_free(wzd_module_t ** module_list)
 
       dlclose(current_module->handle);
     }
-    
+
     if (current_module->name)
       free(current_module->name);
 #ifdef DEBUG

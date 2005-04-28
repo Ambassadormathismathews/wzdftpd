@@ -4,8 +4,10 @@ Makefile
 Makefile.in
 tags
 test_wzd_action
+test_wzd_cache
 test_wzd_crc32
 test_wzd_ratio
 test_wzd_section
 test_wzd_string
+test_wzd_vfs
 *.lo

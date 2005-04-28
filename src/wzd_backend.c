@@ -57,6 +57,7 @@
 
 #include "wzd_backend.h"
 #include "wzd_cache.h"
+#include "wzd_fs.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
 
@@ -125,7 +126,7 @@ static void backend_clear_struct(wzd_backend_def_t *backend)
 
 int backend_validate(const char *backend, const char *pred, const char *version)
 {
-  struct statbuf st;
+  fs_filestat_t st;
   int ret;
   void * handle;
   char filename[1024];
@@ -157,7 +158,7 @@ int backend_validate(const char *backend, const char *pred, const char *version)
     out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
     return 1;
   }
-  ret = fs_lstat(filename,&st);
+  ret = fs_file_lstat(filename,&st);
   if (ret) {
     out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
