@@ -44,6 +44,8 @@
 
 #include "libmysql.h"
 
+int _user_update_ip(uid_t ref, wzd_user_t * user);
+
 uid_t user_get_ref(const char * name, unsigned int ref);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
@@ -66,7 +68,7 @@ char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, un
   } while (0);
 
 /* if user does not exist, add it */
-int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
+int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   char *query, *mod;
   MYSQL_RES   *res;
@@ -141,6 +143,8 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     /* XXX FIXME stats require a different query: _USER_BYTESUL _USER_BYTESDL */
 
     /* XXX FIXME IP requires some work ... */
+    if (mod_type & _USER_IP)
+      _user_update_ip(ref,user); /** \todo FIXME use return ! */
 
     if (mod_type & _USER_CREDITS)
 #ifndef WIN32
@@ -257,6 +261,80 @@ error_mod_user_free:
   free(query);
 
   return -1;
+}
+
+int _user_update_ip(uid_t ref, wzd_user_t * user)
+{
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  unsigned int i;
+  char ip_list[HARD_IP_PER_USER][MAX_IP_LENGTH];
+  int ret;
+
+  if (!ref) return -1;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT UserIP.ip FROM UserIP WHERE ref=%d", ref);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  for (i=0; i<HARD_IP_PER_USER; i++)
+    ip_list[i][0] = '\0';
+
+  i = 0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (!row || row[0]==NULL) break;
+
+    strncpy(ip_list[i],row[0],MAX_IP_LENGTH);
+    i++;
+    if (i >= HARD_IP_PER_USER) {
+      /** too many ip in db ?! - ignoring others */
+      break;
+    }
+  }
+
+
+  /* compare the two sets of ip */
+  for (i=0; i<HARD_IP_PER_USER; i++) {
+    ret = 1;
+    if (strcmp(user->ip_allowed[i],ip_list[i])!=0) {
+      /* check for injections in ip */
+      if (!wzd_mysql_check_name(ip_list[i]) || !wzd_mysql_check_name(user->ip_allowed[i])) {
+        /* print error message ? */
+        break;
+      }
+      if (user->ip_allowed[i][0]=='\0')
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM UserIP WHERE UserIP.ref=%d AND UserIP.ip='%s'",ref,ip_list[i]);
+      else {
+        if (ip_list[i][0]=='\0')
+          ret = _wzd_run_insert_query(query,512,"INSERT INTO UserIP (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
+        else
+          ret = _wzd_run_update_query(query,512,"UPDATE UserIP SET ip='%' WHERE UserIP.ref=%d AND UserIP.ip='%s'",ip_list[i],ref,user->ip_allowed[i]);
+      }
+    }
+    else
+      ret = 0;
+    if (ret) {
+      /* print error message ? */
+      break;
+    }
+  }
+
+  mysql_free_result(res);
+  free(query);
+
+  return ret;
 }
 
 uid_t user_get_ref(const char * name, unsigned int ref)

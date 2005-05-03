@@ -508,6 +508,39 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
 
   mysql_free_result(res);
 
+  /* Now get IP */
+  group->ip_allowed[0][0] = '\0';
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT GroupIP.ip FROM GroupIP,groups WHERE groups.gid='%d' AND groups.ref=GroupIP.ref", gid);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return group;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return group;
+  }
+
+  i =0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (i >= HARD_IP_PER_GROUP) {
+#ifdef DEBUG
+      fprintf(stderr,"Mysql: too many IP for group %s, dropping others\n",group->groupname);
+#endif
+      break;
+    }
+    wzd_row_get_string(group->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    i++;
+  }
+
+
+  mysql_free_result(res);
+  free(query);
+
   return group;
 }
 
@@ -690,6 +723,52 @@ static gid_t * wzd_mysql_get_group_list(void)
   return gid_list;
 }
 
+int _wzd_run_delete_query(char * query, size_t length, const char * query_format, ...)
+{
+  MYSQL_RES   *res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  res = mysql_store_result(&mysql);
+
+  if (res) mysql_free_result(res);
+
+
+  return 0;
+}
+
+int _wzd_run_insert_query(char * query, size_t length, const char * query_format, ...)
+{
+  MYSQL_RES   *res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  res = mysql_store_result(&mysql);
+
+  if (res) mysql_free_result(res);
+
+
+  return 0;
+}
+
 int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...)
 {
   MYSQL_RES   *res;
@@ -732,8 +811,8 @@ int wzd_backend_init(wzd_backend_t * backend)
   backend->backend_find_user = FCN_FIND_USER;
   backend->backend_find_group = FCN_FIND_GROUP;
 
-  backend->backend_mod_user = FCN_MOD_USER;
-  backend->backend_mod_group = FCN_MOD_GROUP;
+  backend->backend_mod_user = wmysql_mod_user;
+  backend->backend_mod_group = wmysql_mod_group;
 
   backend->backend_chpass = NULL;
   backend->backend_commit_changes = FCN_COMMIT_CHANGES;

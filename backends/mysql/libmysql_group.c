@@ -44,6 +44,8 @@
 
 #include "libmysql.h"
 
+int _group_update_ip(uid_t ref, wzd_group_t * group);
+
 gid_t group_get_ref(const char * name, unsigned int ref);
 
 
@@ -87,7 +89,7 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
     num_fields = mysql_num_fields(res);
     row = mysql_fetch_row(res);
 
-    gid = atoi(row[UCOL_UID]);
+    gid = atoi(row[GCOL_GID]);
 
     mysql_free_result(res);
 
@@ -104,7 +106,7 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
     modified = 1; \
   } while (0);
 
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
+int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
   MYSQL_RES   *res;
@@ -165,6 +167,8 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", group->num_logins, query, query_length, mod, modified);
 
     /* XXX FIXME IP requires some work ... */
+    if (mod_type & _GROUP_IP)
+      _group_update_ip(ref,group); /** \todo FIXME use return ! */
 
     if (mod_type & _GROUP_RATIO)
       APPEND_STRING_TO_QUERY("ratio='%u' ", group->ratio, query, query_length, mod, modified);
@@ -245,6 +249,80 @@ error_mod_group_free:
   return -1;
 
   return -1;
+}
+
+int _group_update_ip(uid_t ref, wzd_group_t * group)
+{
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  unsigned int i;
+  char ip_list[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  int ret;
+
+  if (!ref) return -1;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT GroupIP.ip FROM GroupIP WHERE ref=%d", ref);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  for (i=0; i<HARD_IP_PER_GROUP; i++)
+    ip_list[i][0] = '\0';
+
+  i = 0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (!row || row[0]==NULL) break;
+
+    strncpy(ip_list[i],row[0],MAX_IP_LENGTH);
+    i++;
+    if (i >= HARD_IP_PER_GROUP) {
+      /** too many ip in db ?! - ignoring others */
+      break;
+    }
+  }
+
+
+  /* compare the two sets of ip */
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    ret = 1;
+    if (strcmp(group->ip_allowed[i],ip_list[i])!=0) {
+      /* check for injections in ip */
+      if (!wzd_mysql_check_name(ip_list[i]) || !wzd_mysql_check_name(group->ip_allowed[i])) {
+        /* print error message ? */
+        break;
+      }
+      if (group->ip_allowed[i][0]=='\0')
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM GroupIP WHERE GroupIP.ref=%d AND GroupIP.ip='%s'",ref,ip_list[i]);
+      else {
+        if (ip_list[i][0]=='\0')
+          ret = _wzd_run_insert_query(query,512,"INSERT INTO GroupIP (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
+        else
+          ret = _wzd_run_update_query(query,512,"UPDATE GroupIP SET ip='%' WHERE GroupIP.ref=%d AND GroupIP.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
+      }
+    }
+    else
+      ret = 0;
+    if (ret) {
+      /* print error message ? */
+      break;
+    }
+  }
+
+  mysql_free_result(res);
+  free(query);
+
+  return ret;
 }
 
 

@@ -1,3 +1,7 @@
+2005-05-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: IP not working for mysql backend, problem with groups
+
 2005-04-28  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added functions to access filesystem to work properly with

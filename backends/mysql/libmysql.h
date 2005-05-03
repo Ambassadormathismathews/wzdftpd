@@ -70,6 +70,8 @@ extern MYSQL mysql;
 
 void _wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
 
+int _wzd_run_delete_query(char * query, size_t length, const char * query_format, ...);
+int _wzd_run_insert_query(char * query, size_t length, const char * query_format, ...);
 int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...);
 
 /* basic syntax checking to avoid injections */
@@ -78,7 +80,7 @@ int wzd_mysql_check_name(const char *name);
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
 gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type);
-int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type);
+int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type);
+int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type);
 
 #endif /* __LIBMYSQL__ */
