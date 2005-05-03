@@ -73,6 +73,7 @@ EXPORTS
 	file_write
 	free_file_recursive
 	free_messages
+	fs_file_stat
 	get_bandwidth
 	get_device_info
 	get_system_ip

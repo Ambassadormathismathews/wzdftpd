@@ -296,8 +296,8 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
       }
     }
     free(wbuffer);
-  }
   return ret;
+  }
 #endif
 }
 
