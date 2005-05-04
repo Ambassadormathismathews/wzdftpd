@@ -66,6 +66,13 @@ enum {
   UIPCOL_IP,
 };
 
+enum {
+  SCOL_BYTES_UL=0,
+  SCOL_BYTES_DL,
+  SCOL_FILES_UL,
+  SCOL_FILES_DL,
+};
+
 extern PGconn * pgconn;
 
 void _wzd_pgsql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */

@@ -387,7 +387,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   /* Now get IP */
   user->ip_allowed[0][0] = '\0';
 
-  snprintf(query, 512, "select userip.ip from userip,users where users.uid='%d' AND users.ref=userip.ref", uid);
+  snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid);
 
   res = PQexec(pgconn, query);
 
@@ -410,7 +410,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Groups */
 
-  snprintf(query, 512, "select groups.gid from groups,users,ugr where users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid);
+  snprintf(query, 512, "SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid);
 
   res = PQexec(pgconn, query);
 
@@ -430,8 +430,27 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   }
   user->group_num = i;
 
+  PQclear(res);
+
+  /* Now get Stats */
+
+  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.uref", uid);
+
+  res = PQexec(pgconn, query);
+
+  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+    free(query);
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+
+  wzd_row_get_ullong(&user->stats.bytes_ul_total, res, SCOL_BYTES_UL);
+  wzd_row_get_ullong(&user->stats.bytes_dl_total, res, SCOL_BYTES_DL);
+  wzd_row_get_ulong(&user->stats.files_ul_total, res, SCOL_FILES_UL);
+  wzd_row_get_ulong(&user->stats.files_dl_total, res, SCOL_FILES_DL);
 
   PQclear(res);
+
 
   free(query);
 
@@ -725,7 +744,6 @@ int _wzd_run_delete_query(char * query, size_t length, const char * query_format
   res = PQexec(pgconn, query);
 
   if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
-    free(query);
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
@@ -747,7 +765,6 @@ int _wzd_run_insert_query(char * query, size_t length, const char * query_format
   res = PQexec(pgconn, query);
 
   if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
-    free(query);
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
@@ -769,7 +786,6 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
   res = PQexec(pgconn, query);
 
   if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
-    free(query);
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
