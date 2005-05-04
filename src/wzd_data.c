@@ -213,6 +213,8 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
       data_close(context);
+
+      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESDL | _USER_CREDITS);
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
 
@@ -266,6 +268,8 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
        * of the upload
        */
       user->stats.files_ul_total++;
+
+      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESUL | _USER_CREDITS);
 
       context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;

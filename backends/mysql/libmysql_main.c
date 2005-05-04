@@ -390,7 +390,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   /* Now get IP */
   user->ip_allowed[0][0] = '\0';
 
-  snprintf(query, 512, "select UserIP.ip from UserIP,users where users.uid='%d' AND users.ref=UserIP.ref", uid);
+  snprintf(query, 512, "SELECT UserIP.ip FROM UserIP,users WHERE users.uid='%d' AND users.ref=UserIP.ref", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -418,7 +418,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Groups */
 
-  snprintf(query, 512, "select groups.gid from groups,users,UGR where users.uid='%d' AND users.ref=UGR.uref AND groups.ref=UGR.gref", uid);
+  snprintf(query, 512, "SELECT groups.gid FROM groups,users,UGR WHERE users.uid='%d' AND users.ref=UGR.uref AND groups.ref=UGR.gref", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -442,6 +442,28 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   }
   user->group_num = i;
 
+  mysql_free_result(res);
+
+  /* Now get Stats */
+  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM Stats,users WHERE users.uid=%d AND users.ref=Stats.ref", uid);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+
+  row = mysql_fetch_row(res);
+
+  wzd_row_get_ullong(&user->stats.bytes_ul_total, row, SCOL_BYTES_UL);
+  wzd_row_get_ullong(&user->stats.bytes_dl_total, row, SCOL_BYTES_DL);
+  wzd_row_get_ulong(&user->stats.files_ul_total, row, SCOL_FILES_UL);
+  wzd_row_get_ulong(&user->stats.files_dl_total, row, SCOL_FILES_DL);
 
   mysql_free_result(res);
 
@@ -733,7 +755,6 @@ int _wzd_run_delete_query(char * query, size_t length, const char * query_format
   va_end(argptr);
 
   if (mysql_query(&mysql, query) != 0) {
-    free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
@@ -756,7 +777,6 @@ int _wzd_run_insert_query(char * query, size_t length, const char * query_format
   va_end(argptr);
 
   if (mysql_query(&mysql, query) != 0) {
-    free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
@@ -779,7 +799,6 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
   va_end(argptr);
 
   if (mysql_query(&mysql, query) != 0) {
-    free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }

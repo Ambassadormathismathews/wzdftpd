@@ -45,6 +45,7 @@
 #include "libmysql.h"
 
 int _user_update_ip(uid_t ref, wzd_user_t * user);
+int _user_update_stats(uid_t ref, wzd_user_t * user);
 
 uid_t user_get_ref(const char * name, unsigned int ref);
 
@@ -140,9 +141,9 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", user->num_logins, query, query_length, mod, modified);
 
-    /* XXX FIXME stats require a different query: _USER_BYTESUL _USER_BYTESDL */
+    if ((mod_type & _USER_BYTESDL) || (mod_type & _USER_BYTESUL))
+      _user_update_stats(ref,user); /** \todo FIXME test return ! */
 
-    /* XXX FIXME IP requires some work ... */
     if (mod_type & _USER_IP)
       _user_update_ip(ref,user); /** \todo FIXME use return ! */
 
@@ -334,6 +335,55 @@ int _user_update_ip(uid_t ref, wzd_user_t * user)
   mysql_free_result(res);
   free(query);
 
+  return ret;
+}
+
+int _user_update_stats(uid_t ref, wzd_user_t * user)
+{
+  char *query;
+  MYSQL_RES   *res;
+  int ret;
+  int numrows;
+
+  if (!ref) return -1;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT * FROM Stats WHERE ref=%d", ref);
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  numrows = mysql_num_rows(res);
+  mysql_free_result(res);
+
+  switch (numrows) {
+  case 0:
+    ret = _wzd_run_insert_query(query,512,"INSERT INTO Stats VALUES (%d,%" PRIu64 ",%" PRIu64 ",%lu,%lu)",
+        ref,user->stats.bytes_ul_total,user->stats.bytes_dl_total,
+        user->stats.files_ul_total,user->stats.files_dl_total);
+    break;
+  case 1:
+    ret = _wzd_run_update_query(query,512,"UPDATE Stats SET bytes_ul_total=%" PRIu64 ", bytes_dl_total=%" PRIu64 ",files_ul_total=%lu,files_dl_total=%lu WHERE ref=%d",
+        user->stats.bytes_ul_total,user->stats.bytes_dl_total,
+        user->stats.files_ul_total,user->stats.files_dl_total,
+        ref);
+    break;
+  default:
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  free(query);
   return ret;
 }
 

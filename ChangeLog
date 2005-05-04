@@ -1,6 +1,6 @@
 2005-05-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
-	* bugfix: IP not working for mysql backend, problem with groups
+	* bugfix: IP, stats not working for mysql backend, problem with groups
 	* bugfix: same for pgsql backend
 
 2005-04-28  Pierre Chifflier  <pollux@wzdftpd.net>

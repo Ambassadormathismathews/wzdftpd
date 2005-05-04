@@ -66,6 +66,13 @@ enum {
   UIPCOL_IP,
 };
 
+enum {
+  SCOL_BYTES_UL=0,
+  SCOL_BYTES_DL,
+  SCOL_FILES_UL,
+  SCOL_FILES_DL,
+};
+
 extern MYSQL mysql;
 
 void _wzd_mysql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
