@@ -445,6 +445,7 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   int num_fields;
   wzd_group_t * group;
   unsigned int i;
+  int index;
   PGresult * res;
 
   if (gid == (gid_t)-2) return (wzd_group_t*)wzd_pgsql_get_group_list();
@@ -488,6 +489,27 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   wzd_row_get_uint(&group->max_ul_speed, res, GCOL_MAX_UL_SPEED);
   wzd_row_get_uint(&group->max_dl_speed, res, GCOL_MAX_DL_SPEED);
   wzd_row_get_uint(&group->ratio, res, GCOL_RATIO);
+
+  PQclear(res);
+
+  /* Now get ip */
+  group->ip_allowed[0][0] = '\0';
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid);
+
+  res = PQexec(pgconn, query);
+
+  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+    free(query);
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return group;
+  }
+  free(query);
+
+  for (index=0; index<PQntuples(res); index++) {
+    wzd_row_get_string(group->ip_allowed[index], MAX_IP_LENGTH, res, 0 /* query asks only one column */);
+  }
 
   PQclear(res);
 
@@ -691,6 +713,50 @@ static gid_t * wzd_pgsql_get_group_list(void)
   return gid_list;
 }
 
+int _wzd_run_delete_query(char * query, size_t length, const char * query_format, ...)
+{
+  PGresult * res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  res = PQexec(pgconn, query);
+
+  if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+    free(query);
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  PQclear(res);
+
+  return 0;
+}
+
+int _wzd_run_insert_query(char * query, size_t length, const char * query_format, ...)
+{
+  PGresult * res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  res = PQexec(pgconn, query);
+
+  if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+    free(query);
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  PQclear(res);
+
+  return 0;
+}
+
 int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...)
 {
   PGresult * res;
@@ -732,8 +798,8 @@ int wzd_backend_init(wzd_backend_t * backend)
   backend->backend_find_user = FCN_FIND_USER;
   backend->backend_find_group = FCN_FIND_GROUP;
 
-  backend->backend_mod_user = FCN_MOD_USER;
-  backend->backend_mod_group = FCN_MOD_GROUP;
+  backend->backend_mod_user = wpgsql_mod_user;
+  backend->backend_mod_group = wpgsql_mod_group;
 
   backend->backend_chpass = NULL;
   backend->backend_commit_changes = FCN_COMMIT_CHANGES;

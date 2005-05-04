@@ -44,6 +44,8 @@
 
 #include "libpgsql.h"
 
+int _group_update_ip(uid_t ref, wzd_group_t * group);
+
 gid_t group_get_ref(const char * name, unsigned int ref);
 
 
@@ -82,7 +84,7 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 
     num_fields = PQnfields(res);
 
-    gid = atoi(PQgetvalue(res,0,UCOL_UID));
+    gid = atoi(PQgetvalue(res,0,GCOL_GID));
 
     PQclear(res);
 
@@ -99,7 +101,7 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
     modified = 1; \
   } while (0);
 
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
+int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
   PGresult * res;
@@ -160,6 +162,8 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", group->num_logins, query, query_length, mod, modified);
 
     /* XXX FIXME IP requires some work ... */
+    if (mod_type & _GROUP_IP)
+      _group_update_ip(ref,group);
 
     if (mod_type & _GROUP_RATIO)
       APPEND_STRING_TO_QUERY("ratio='%u' ", group->ratio, query, query_length, mod, modified);
@@ -236,6 +240,73 @@ error_mod_group_free:
   free(query);
 
   return -1;
+}
+
+int _group_update_ip(uid_t ref, wzd_group_t * group)
+{
+  char *query;
+  PGresult * res;
+  unsigned int i;
+  int index;
+  char ip_list[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  int ret;
+
+  if (!ref) return -1;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT groupip.ip FROM groupip WHERE ref=%d", ref);
+
+  res = PQexec(pgconn, query);
+
+  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
+    free(query);
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return 0;
+  }
+
+  for (i=0; i<HARD_IP_PER_GROUP; i++)
+    ip_list[i][0] = '\0';
+
+  i = 0;
+  for (index=0; index<PQntuples(res); index++) {
+    strncpy(ip_list[i],PQgetvalue(res,0,0),MAX_IP_LENGTH);
+    i++;
+    if (i >= HARD_IP_PER_GROUP) {
+      /** too many ip in db ?! - ignoring others */
+      break;
+    }
+  }
+
+  /* compare the two sets of ip */
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    ret = 1;
+    if (strcmp(group->ip_allowed[i],ip_list[i])!=0) {
+      /* check for injections in ip */
+      if (!wzd_pgsql_check_name(ip_list[i]) || !wzd_pgsql_check_name(group->ip_allowed[i])) {
+        /* print error message ? */
+        break;
+      }
+      if (group->ip_allowed[i][0]=='\0')
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,ip_list[i]);
+      else {
+        if (ip_list[i][0]=='\0')
+          ret = _wzd_run_insert_query(query,512,"INSERT INTO GroupIP (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
+        else
+          ret = _wzd_run_update_query(query,512,"UPDATE GroupIP SET ip='%' WHERE GroupIP.ref=%d AND GroupIP.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
+      }
+    }
+    else
+      ret = 0;
+    if (ret) {
+      /* print error message ? */
+      break;
+    }
+  }
+
+  PQclear(res);
+  free(query);
+
+  return 0;
 }
 
 

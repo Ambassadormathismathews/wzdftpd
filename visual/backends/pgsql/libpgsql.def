@@ -9,8 +9,7 @@ EXPORTS
 	wzd_get_group
 	wzd_find_user
 	wzd_find_group
-	wzd_mod_user
-	wzd_mod_group
 	wzd_commit_changes
 	wzd_backend_version
 	wzd_backend_name
+	wzd_backend_init
