@@ -596,7 +596,7 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
     /* try to take argument as a slot number */
     ul = strtoul(str_tochar(ip),&ptr_ul,0);
     if (*ptr_ul=='\0') {
-      if (ul <= 0 || ul >= HARD_IP_PER_USER) {
+      if (ul <= 0 || ul > HARD_IP_PER_USER) {
         ret = send_message_with_args(501,context,"Invalid ip slot number");
         str_deallocate(ip);
         return 0;

@@ -2,6 +2,7 @@
 
 	* bugfix: IP, stats not working for mysql backend, problem with groups
 	* bugfix: same for pgsql backend
+	* bugfix: unable to remove last ip slot for user/group
 
 2005-04-28  Pierre Chifflier  <pollux@wzdftpd.net>
 

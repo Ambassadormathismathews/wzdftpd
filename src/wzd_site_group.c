@@ -504,7 +504,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   /* try to take argument as a slot number */
   ul = strtoul(str_tochar(ip),&ptr,0);
   if (*ptr=='\0') {
-    if (ul <= 0 || ul >= HARD_IP_PER_GROUP) {
+    if (ul <= 0 || ul > HARD_IP_PER_GROUP) {
       ret = send_message_with_args(501,context,"Invalid ip slot number");
       str_deallocate(ip);
       return 0;
