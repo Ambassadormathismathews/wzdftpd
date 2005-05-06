@@ -174,6 +174,8 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
       snprintf(mod, 512, " WHERE groupname='%s'", name);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
+	  res = PQexec(pgconn, query);
+
       if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
         _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
         goto error_mod_group_free;
