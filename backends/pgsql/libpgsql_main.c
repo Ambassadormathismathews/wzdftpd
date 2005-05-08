@@ -434,7 +434,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Stats */
 
-  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.uref", uid);
+  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid);
 
   res = PQexec(pgconn, query);
 

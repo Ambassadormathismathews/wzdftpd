@@ -1,3 +1,7 @@
+2005-05-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: unable to add users in pgsql backend
+
 2005-05-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: IP, stats not working for mysql backend, problem with groups

@@ -6,7 +6,7 @@
 CREATE TABLE groups (
   ref serial PRIMARY KEY,
   groupname varchar(255) UNIQUE NOT NULL,
-  gid integer UNIQUE NOT NULL,
+  gid serial UNIQUE,
   defaultpath varchar(255) NOT NULL,
   tagline varchar(255) DEFAULT NULL,
   groupperms integer default NULL,
@@ -34,7 +34,7 @@ CREATE TABLE users (
   userpass varchar(32) default NULL,
   rootpath varchar(255) NOT NULL,
   tagline varchar(255) default NULL,
-  uid integer UNIQUE NOT NULL,
+  uid serial UNIQUE,
   flags varchar(32) default NULL,
   max_idle_time integer  default NULL,
   max_ul_speed bigint default NULL,
@@ -62,7 +62,7 @@ INSERT INTO users (username,rootpath,uid,perms) VALUES ('anonymous','/tmp',3,cas
 -- Table structure for table `UGR` (User-Group Relations)
 --
 
-CREATE TABLE UGR (
+CREATE TABLE ugr (
   uref integer NOT NULL,
   gref integer NOT NULL,
   PRIMARY KEY(uref,gref)
@@ -75,7 +75,7 @@ ALTER TABLE ONLY ugr ADD CONSTRAINT "$2" FOREIGN KEY (gref) REFERENCES groups(re
 -- Table structure for table `IP` (User/Group IPs)
 --
 
-CREATE TABLE GroupIP (
+CREATE TABLE groupip (
   ref integer NOT NULL,
   ip VARCHAR(255) NOT NULL,
   PRIMARY KEY(ref,ip)
@@ -87,7 +87,7 @@ ALTER TABLE ONLY groupip ADD CONSTRAINT "$1" FOREIGN KEY (ref) REFERENCES groups
 -- Table structure for table `IP` (User/Group IPs)
 --
 
-CREATE TABLE UserIP (
+CREATE TABLE userip (
   ref integer NOT NULL,
   ip VARCHAR(255) NOT NULL,
   PRIMARY KEY(ref,ip)
@@ -117,14 +117,15 @@ ALTER TABLE ONLY stats ADD CONSTRAINT "$1" FOREIGN KEY (ref) REFERENCES users(re
 
 INSERT INTO stats (ref) SELECT users.ref FROM users where uid=1;
 INSERT INTO stats (ref) SELECT users.ref FROM users where uid=2;
+INSERT INTO stats (ref) SELECT users.ref FROM users where uid=3;
 
 --
 -- hmm - moo, moo; I'm trying to insert references into UGR
 --
-INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
+INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
 
 -- insert novel into admin group (he's a good friend !)
-INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=2 AND groups.gid=1;
+INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=2 AND groups.gid=1;
 
 
 --

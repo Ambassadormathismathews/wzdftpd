@@ -200,8 +200,8 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   /* XXX FIXME find a free gid !! */
   group->gid = 155;
 
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',%u,'%s','%s',0x%lx,%u,%u,%lu,%lu,%u)",
-      group->groupname, group->gid,
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',nextval('groups_gid_seq'),'%s','%s',CAST (X'%lx' AS integer),%u,%u,%lu,%lu,%u)",
+      group->groupname,
       group->defaultpath,
       group->tagline,
       group->groupperms,
@@ -229,8 +229,8 @@ error_group_add:
   /* we don't care about the results of the queries */
   ref = group_get_ref(group->groupname,0);
   if (ref) {
-    _wzd_run_update_query(query, 2048, "DELETE FROM GroupIP WHERE ref=%d", ref);
-    _wzd_run_update_query(query, 2048, "DELETE FROM UGR WHERE gref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM groupip WHERE ref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE gref=%d", ref);
   }
   _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", group->groupname);
   free(query);
@@ -292,9 +292,9 @@ int _group_update_ip(uid_t ref, wzd_group_t * group)
         ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,ip_list[i]);
       else {
         if (ip_list[i][0]=='\0')
-          ret = _wzd_run_insert_query(query,512,"INSERT INTO GroupIP (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
+          ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
         else
-          ret = _wzd_run_update_query(query,512,"UPDATE GroupIP SET ip='%' WHERE GroupIP.ref=%d AND GroupIP.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
+          ret = _wzd_run_update_query(query,512,"UPDATE groupip SET ip='%' WHERE groupip.ref=%d AND groupip.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
       }
     }
     else
