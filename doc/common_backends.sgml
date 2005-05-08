@@ -130,4 +130,47 @@ Comment/delete the references to mysql in wzd.cfg
 </sect1>
 
 
+<sect1 id='backend_pgsql'>
+<title>PostgreSQL</title>
+
+<para>
+This backend is very similar to the MySQL one, except that it uses PostgreSQL
+(and thus add constraints to ensure tables integrity). The PostgreSQL backend
+can (and should) be preferred to MySQL when possible, as the design is better
+done and uses the real possibilities of a database, like sequences, constraints,
+etc.
+</para>
+<para>
+You should first create the wzdftpd user.
+<programlisting>
+# su postgres
+$ psql -f createusers.sql template1
+</programlisting>
+You must allow the user wzdftpd to connect using a password:
+edit file <screen>/etc/postgresql/pg_hba.conf</screen> and add
+<programlisting>
+host   wzdftpd     wzdftpd      127.0.0.1         255.255.255.255   md5
+</programlisting>
+Restart the server.
+</para>
+<para>
+Create the initial table structure using the following:
+<programlisting>
+$ psql -Uwzdftpd -f tables.sql wzdftpd
+Password:
+</programlisting>
+Default password is "wzdftpd" (you should change it in file createusers.sql !).
+</para>
+<para>
+To use the PostgreSQL backend, add the following to you config file:
+<programlisting>backend = /path/to/wzdftpd/share/wzdftpd/backends/libwzdpgsql.so
+backend_param_pgsql = login:password@host:base</programlisting>
+</para>
+<para>
+<emphasis>Add comments on schema, constraints, etc.</emphasis>
+<emphasis>Work in progress !</emphasis>
+</para>
+</sect1>
+
+
 </chapter>
