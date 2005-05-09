@@ -123,13 +123,13 @@ void out_log(int level,const char *fmt,...)
       syslog(prior,"%s",buffer);
       va_end (argptr);
 
-    } else
+    } /* syslog */
 #endif /* _MSC_VER */
-    { /* syslog */
 
-      char new_format[1024];
 
 #ifdef DEBUG
+    {
+      char new_format[1024];
       switch (level) {
         case LEVEL_CRITICAL:
           strcpy(msg_begin,CLR_BOLD);
@@ -160,12 +160,10 @@ void out_log(int level,const char *fmt,...)
         default:
           break;
       }
-#endif
 
       snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
     
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-#ifdef DEBUG
       if (mainConfig->logfile) {
         vfprintf(stdout,new_format,argptr);
         fflush(stdout);
@@ -179,14 +177,14 @@ void out_log(int level,const char *fmt,...)
        * vfprintf can modify it (debian-ppc for ex)
        */
       va_end (argptr);
-      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
 #endif
-      if (mainConfig->logfile) {
-        vfprintf(mainConfig->logfile,fmt,argptr);
-        fflush(mainConfig->logfile);
-      }
-      va_end (argptr);
-    } /* syslog */
+      
+    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+    if (mainConfig->logfile) {
+      vfprintf(mainConfig->logfile,fmt,argptr);
+      fflush(mainConfig->logfile);
+    }
+    va_end (argptr);
   } /* > loglevel ? */
 }
 

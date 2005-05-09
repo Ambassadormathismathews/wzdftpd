@@ -402,14 +402,12 @@ int main(int argc, char **argv)
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
-  } else
+  }
 #endif
+  if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
   {
-    if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
-    {
-      out_err(LEVEL_CRITICAL,"Could not open log file.\n");
-      return 1;
-    }
+    out_err(LEVEL_CRITICAL,"Could not open log file.\n");
+    return 1;
   }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)

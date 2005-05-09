@@ -873,6 +873,7 @@ int cfg_read_logfile(void)
 {
   unsigned int token;
   char * filename;
+  char * tmp;
 
   token = yylex();
   if (token!='=') {
@@ -886,10 +887,10 @@ int cfg_read_logfile(void)
   }
 
   tempConfig.logfilename = filename; /* will be freed at server exit */
-  if (chtbl_insert((CHTBL*)tempConfig.htab, "logfile", wzd_strdup(filename), NULL, NULL, wzd_free)) {
-    /** \fixme wzd_strdup(filename) will never be freed .. */
+  if (chtbl_insert((CHTBL*)tempConfig.htab, "logfile", (tmp=wzd_strdup(filename)), NULL, NULL, wzd_free)) {
     out_err(LEVEL_HIGH,"error during insertion: logfile = %s\n",filename);
     tempConfig.logfilename = NULL;
+    wzd_free(tmp);
     wzd_free(filename);
     return 1;
   }
