@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- show speed on APPE
+'********'
 - Use custom site commands exactly like standard commands
 '********'
 - finish MLST

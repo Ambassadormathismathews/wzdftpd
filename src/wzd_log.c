@@ -190,11 +190,9 @@ void out_log(int level,const char *fmt,...)
   } /* > loglevel ? */
 }
 
+#ifdef DEBUG
 void out_err(int level, const char *fmt,...)
 {
-#ifndef _MSC_VER
-  int prior;
-#endif
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];
@@ -205,38 +203,7 @@ void out_err(int level, const char *fmt,...)
 
   if (!mainConfig || level >= mainConfig->loglevel) {
 
-#ifndef _MSC_VER
-/*    if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {*/
-    if (0) {
-      char buffer[1024];
-      switch (level) {
-        case LEVEL_CRITICAL:
-          prior = LOG_ALERT;
-          break;
-        case LEVEL_HIGH:
-          prior = LOG_CRIT;
-          break;
-        case LEVEL_NORMAL:
-          prior = LOG_ERR;
-          break;
-        case LEVEL_INFO:
-          prior = LOG_WARNING;
-          break;
-        case LEVEL_FLOOD:
-          prior = LOG_INFO;
-          break;
-        default:
-          break;
-      }
-
-      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-      vsnprintf(buffer,1023,fmt,argptr);
-      syslog(prior,"%s",buffer);
-      va_end (argptr);
-
-    } else
-#endif /* _MSC_VER */
-    { /* syslog */
+    { /* ! syslog */
 
 
       switch (level) {
@@ -277,6 +244,11 @@ void out_err(int level, const char *fmt,...)
     } /* syslog */
   } /* > loglevel ? */
 }
+#else
+void out_err(int level, const char *fmt,...)
+{
+}
+#endif
 
 int xferlog_open(const char *filename, unsigned int filemode)
 {
