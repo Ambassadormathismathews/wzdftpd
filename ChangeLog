@@ -1,3 +1,10 @@
+2005-05-09  Cyprien Laplace <cyprien33@laposte.net>
+
+	* Added TOK_APPE for crc
+	* Show speed show on APPE
+	* bugfix: minor memory leak in hash table insert
+	* Logfile ans Syslog can be used together
+
 2005-05-08  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: unable to add users in pgsql backend

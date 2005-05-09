@@ -177,6 +177,7 @@ void out_log(int level,const char *fmt,...)
        * vfprintf can modify it (debian-ppc for ex)
        */
       va_end (argptr);
+    }
 #endif
       
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
