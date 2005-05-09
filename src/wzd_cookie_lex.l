@@ -852,7 +852,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           it = list_data(elmnt);
           if (it->magic == CONTEXT_MAGIC)
           {
-            if (strncasecmp(it->last_command,"stor",4)==0)
+            if ((strncasecmp(it->last_command,"stor",4)==0) ||
+                (strncasecmp(it->last_command,"appe",4)==0))
               speed += it->current_ul_limiter.current_speed;
           }
         }
@@ -895,7 +896,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       if (context) {
         unsigned long crc=0;
         if ((context->current_action.token == TOK_RETR ||
-        context->current_action.token == TOK_STOR) &&
+        context->current_action.token == TOK_STOR ||
+        context->current_action.token == TOK_APPE) &&
         (!calc_crc32(context->current_action.arg,&crc,0,(unsigned long)-1)))
         {
           snprintf(internalbuffer,IBUFSIZE,"%lX",crc);
@@ -914,6 +916,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         switch (context->current_action.token) {
         case TOK_RETR:
         case TOK_STOR:
+        case TOK_APPE:
           snprintf(internalbuffer,IBUFSIZE,"%s",context->current_action.arg);
           break;
         case TOK_MKD:
@@ -1142,6 +1145,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         switch (context->last_file.token) {
         case TOK_RETR:
         case TOK_STOR:
+        case TOK_APPE:
           snprintf(internalbuffer,IBUFSIZE,"%s",context->last_file.name);
           break;
         case TOK_MKD:
@@ -1671,7 +1675,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         if (strncasecmp(current_context->last_command,"retr",4)==0)
           snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_dl_limiter.current_speed/1024.f);
         else {
-          if (strncasecmp(current_context->last_command,"stor",4)==0)
+          if ((strncasecmp(current_context->last_command,"stor",4)==0) ||
+              (strncasecmp(current_context->last_command,"appe",4)==0))
           {
             snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_ul_limiter.current_speed/1024.f);
           }
