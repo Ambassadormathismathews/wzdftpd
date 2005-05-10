@@ -1,3 +1,7 @@
+2005-05-10  Cyprien Laplace <cyprien33@laposte.net>
+
+	* bugfix: race condition on client logging and listing connected clients
+
 2005-05-09  Cyprien Laplace <cyprien33@laposte.net>
 
 	* Added TOK_APPE for crc

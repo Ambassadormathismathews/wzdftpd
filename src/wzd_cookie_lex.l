@@ -545,7 +545,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       /* TODO XXX FIXME more checks needed ! */
       if (condition[0] == '+') {
         WZD_ASSERT( (current_user != NULL) );
-        if (current_user->flags && strchr(user->flags,condition[1]))
+        if (current_user && current_user->flags && strchr(user->flags,condition[1]))
           cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
       }
       free(tmpbuf);
@@ -625,18 +625,18 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
             loop_user = GetUserByID(loop_context->userid);
             current_user = loop_user;
             current_context = loop_context;
-            if (loop_user->username[0] != '\0') {
+            if (loop_user && loop_user->username[0] != '\0') {
               /* check if user is hidden */
               if (loop_user->flags && strchr(loop_user->flags,FLAG_HIDDEN)
                   && (me)
                   && !strchr(me->flags,FLAG_SITEOP)
                   && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                 continue;
-              if (out_buffer)
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
-              else
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,0);
             }
+            if (out_buffer)
+              cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+            else
+              cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,0);
           }
         }
         current_user = user;
