@@ -232,7 +232,9 @@ C_VFS    ([0-9]+".")?"vfs"
 <INITIAL>{FOR_BEGIN}	{
   BEGIN(sc_buf);
   if (loop_buffer_ptr >= MAX_LOOP_DEPTH){
-    fprintf(stderr,"Loops nested too deeply\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Loops nested too deeply\n" );
+#endif
     return 0;
   }
   loop_buffer_type[loop_buffer_ptr++] = COOKIE_FOR;
@@ -241,7 +243,9 @@ C_VFS    ([0-9]+".")?"vfs"
 <INITIAL>{IF_BEGIN}	{
   BEGIN(sc_buf);
   if (loop_buffer_ptr >= MAX_LOOP_DEPTH){
-    fprintf(stderr,"Loops nested too deeply\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Loops nested too deeply\n" );
+#endif
     return 0;
   }
   loop_buffer_type[loop_buffer_ptr++] = COOKIE_IF;
@@ -253,7 +257,9 @@ C_VFS    ([0-9]+".")?"vfs"
 
 <sc_buf>{FOR_BEGIN}	{
   if (loop_buffer_ptr >= MAX_LOOP_DEPTH){
-    fprintf(stderr,"Loops nested too deeply\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Loops nested too deeply\n" );
+#endif
     return 0;
   }
   loop_buffer_type[loop_buffer_ptr++] = COOKIE_FOR;
@@ -262,7 +268,9 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_buf>{FOR_END}	{
   --loop_buffer_ptr;
   if (loop_buffer_type[loop_buffer_ptr] != COOKIE_FOR) {
-    fprintf(stderr,"Unexpected %%endfor\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Unexpected %%endfor\n" );
+#endif
     return 0;
   }
   if (loop_buffer_ptr)
@@ -272,7 +280,9 @@ C_VFS    ([0-9]+".")?"vfs"
 }
 <sc_buf>{IF_BEGIN}	{
   if (loop_buffer_ptr >= MAX_LOOP_DEPTH){
-    fprintf(stderr,"Loops nested too deeply\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Loops nested too deeply\n" );
+#endif
     return 0;
   }
   loop_buffer_type[loop_buffer_ptr++] = COOKIE_IF;
@@ -281,7 +291,9 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_buf>{IF_END}	{
   --loop_buffer_ptr;
   if (loop_buffer_type[loop_buffer_ptr] != COOKIE_IF) {
-    fprintf(stderr,"Unexpected %%endif\n");
+#ifdef WZD_DBG_COOKIES
+    out_err(LEVEL_HIGH, "Unexpected %%endif\n" );
+#endif
     return 0;
   }
   if (loop_buffer_ptr)
