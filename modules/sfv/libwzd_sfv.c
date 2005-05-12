@@ -1170,16 +1170,19 @@ int _internal_sfv_check_zip(const char *zip_file, wzd_context_t *context)
       unzipCloseCurrentFile(s);
     }
 
-    
+
     if ((i+1) < gi.number_entry)
     {
       err = unzipGoToNextFile(s);
       if (err != ZIP_OK)
       {
-        unzipClose(s);
-        return 1;
-/*        fprintf(stderr,"error %d with zipfile in unzipGoToNextFile\n",err);*/
-/*        break;*/
+        /* If file was the last, consider it not an error */
+        if (err != ZIP_END_OF_LIST_OF_FILE) {
+          unzipClose(s);
+          return 1;
+/*          fprintf(stderr,"error %d with zipfile in unzipGoToNextFile\n",err);*/
+/*          break;*/
+        }
       }
     }
   }
