@@ -78,6 +78,18 @@ Symlinks can also be manipulated with scripts.
 
 </qandadiv>
 
+<qandadiv><title>Compilation</title>
+
+<qandaentry id='faq_macro_gnutls'>
+<question><para>aclocal (bootstrap) fails with error: ac-helpers/tls.m4:25: warning: macro `AM_PATH_LIBGNUTLS' not found in library</para></question>
+<answer><para>
+Install package libgnutls-dev (or similar, for your distro) OR copy the .m4 files
+from another gnutls-dev install to ac-helper/
+</para></answer>
+</qandaentry>
+
+</qandadiv>
+
 <qandadiv><title>Linux</title>
 
 <qandaentry id='faq_server_uid'>
