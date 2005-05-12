@@ -59,12 +59,71 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 
+#include "wzd_debug.h"
+
 #endif /* WZD_USE_PCH */
+
+struct wzd_log_entry_t {
+  int fd;
+  int syslog;
+};
+
+static struct wzd_log_entry_t _log_channels[MAX_LOG_CHANNELS];
+
+int log_init(void)
+{
+  int i;
+
+  for (i=0; i<MAX_LOG_CHANNELS; i++) {
+    _log_channels[i].fd = -1;
+    _log_channels[i].syslog = 0;
+  }
+
+  return 0;
+}
+
+int log_open(const char * filename, int filemode)
+{
+  int fd;
+
+  fd = open(filename, filemode, 0640);
+  FD_REGISTER(fd,"Log");
+
+  return fd;
+}
+
+void log_close(int fd)
+{
+#ifdef DEBUG
+  if (fd == 1 /* stdout */ || fd == 2 /* stderr */) return;
+#endif
+  if (fd == -1) return;
+
+  FD_UNREGISTER(fd,"Log");
+  close(fd);
+}
+
+void log_fini(void)
+{
+  int i,j,fd;
+
+  for (i=0; i<MAX_LOG_CHANNELS; i++)
+    if (_log_channels[i].fd != -1) {
+      fd = _log_channels[i].fd;
+      for (j=i; j<MAX_LOG_CHANNELS; j++)
+        if (_log_channels[j].fd == fd) _log_channels[j].fd = -1;
+#ifdef DEBUG
+      if (fd == 1 /* stdout */ || fd == 2 /* stderr */) continue;
+#endif
+      FD_UNREGISTER(fd,"Log");
+      close(fd);
+    }
+}
 
 /* NOTE we are forced to open log in lib, because of win32
  * memory management
  */
-int log_open(const char *filename, int filemode)
+int log_open_old(const char *filename, int filemode)
 {
   int fd;
 
@@ -76,11 +135,43 @@ int log_open(const char *filename, int filemode)
   return 0;
 }
 
-void log_close(void)
+void log_close_old(void)
 {
   if (mainConfig->logfile)
     fclose(mainConfig->logfile);
   mainConfig->logfile = NULL;
+}
+
+int log_set(unsigned int level, int fd)
+{
+  unsigned int i, count;
+
+  if (level >= MAX_LOG_CHANNELS) return -1;
+
+  if (_log_channels[level].fd > 0) {
+    count = 0;
+
+    for (i=0; i<MAX_LOG_CHANNELS; i++) {
+      if (_log_channels[i].fd == _log_channels[level].fd)
+        count++;
+    }
+    if (count == 1) {
+      log_close(_log_channels[level].fd);
+    }
+  }
+
+  _log_channels[level].fd = fd;
+
+  return 0;
+}
+
+int log_set_syslog(unsigned int level, int syslog_value)
+{
+  if (level >= MAX_LOG_CHANNELS) return -1;
+
+  _log_channels[level].syslog = syslog_value;
+
+  return 0;
 }
 
 void out_log(int level,const char *fmt,...)
@@ -89,6 +180,97 @@ void out_log(int level,const char *fmt,...)
   va_list argptr;
   char msg_begin[20];
   char msg_end[20];
+  char buffer[4096];
+
+  /* new logging code */
+  if (level >= MAX_LOG_CHANNELS) return;
+
+  if (_log_channels[level].fd > 0 || _log_channels[level].syslog)
+  {
+    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+    vsnprintf(buffer,sizeof(buffer)-1,fmt,argptr);
+    va_end (argptr);
+
+    if (_log_channels[level].fd > 0)
+      write(_log_channels[level].fd, buffer, strlen(buffer));
+
+    if (_log_channels[level].syslog)
+    {
+      int prior;
+
+      switch (level) {
+        case LEVEL_CRITICAL:
+          prior = LOG_ALERT;
+          break;
+        case LEVEL_HIGH:
+          prior = LOG_CRIT;
+          break;
+        case LEVEL_NORMAL:
+          prior = LOG_ERR;
+          break;
+        case LEVEL_INFO:
+          prior = LOG_WARNING;
+          break;
+        case LEVEL_FLOOD:
+          prior = LOG_INFO;
+          break;
+        default:
+          break;
+      }
+
+      syslog(prior,"%s",buffer);
+    }
+  }
+
+#ifdef DEBUG
+  {
+    char new_format[1024];
+
+    msg_begin[0] = '\0';
+    msg_end[0] = '\0';
+
+    switch (level) {
+      case LEVEL_CRITICAL:
+        strcpy(msg_begin,CLR_BOLD);
+        (void)strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
+        strcpy(msg_end,CLR_NOCOLOR);
+        prior = LOG_ALERT;
+        break;
+      case LEVEL_HIGH:
+        strcpy(msg_begin,CLR_RED);
+        strcpy(msg_end,CLR_NOCOLOR);
+        prior = LOG_CRIT;
+        break;
+      case LEVEL_NORMAL:
+        strcpy(msg_begin,CLR_GREEN);
+        strcpy(msg_end,CLR_NOCOLOR);
+        prior = LOG_ERR;
+        break;
+      case LEVEL_INFO:
+        strcpy(msg_begin,CLR_BLUE);
+        strcpy(msg_end,CLR_NOCOLOR);
+        prior = LOG_WARNING;
+        break;
+      case LEVEL_FLOOD:
+        strcpy(msg_begin,CLR_CYAN);
+        strcpy(msg_end,CLR_NOCOLOR);
+        prior = LOG_INFO;
+        break;
+      default:
+        break;
+    }
+
+    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
+    snprintf(new_format,sizeof(new_format)-1,"%s%s%s",msg_begin,fmt,msg_end);
+    vsnprintf(buffer,sizeof(buffer)-1,new_format,argptr);
+    va_end (argptr);
+
+    write(1 /* stderr */, buffer, strlen(buffer));
+  }
+#endif
+
+#if 0
+  /* old logging code */
 
   msg_begin[0] = '\0';
   msg_end[0] = '\0';
@@ -162,7 +344,7 @@ void out_log(int level,const char *fmt,...)
       }
 
       snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
-    
+
       va_start(argptr,fmt); /* note: ansi compatible version of va_start */
       if (mainConfig->logfile) {
         vfprintf(stdout,new_format,argptr);
@@ -179,7 +361,7 @@ void out_log(int level,const char *fmt,...)
       va_end (argptr);
     }
 #endif
-      
+
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
     if (mainConfig->logfile) {
       vfprintf(mainConfig->logfile,fmt,argptr);
@@ -187,6 +369,7 @@ void out_log(int level,const char *fmt,...)
     }
     va_end (argptr);
   } /* > loglevel ? */
+#endif /* 0 */
 }
 
 #ifdef DEBUG
@@ -276,7 +459,7 @@ void out_xferlog(wzd_context_t * context, int is_complete)
   char * username;
 
   if (mainConfig->xferlog_fd == -1) return;
-  
+
   h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),AF_INET);
   if (h==NULL)
     remote_host = inet_ntoa( *((struct in_addr*)context->hostip) );
@@ -314,7 +497,7 @@ void log_message(const char *event, const char *fmt, ...)
   struct tm * ntime;
 
   if (!mainConfig->logfile) return;
-  
+
   va_start(argptr,fmt); /* note: ansi compatible version of va_start */
   vsnprintf(buffer,2047,fmt,argptr);
 

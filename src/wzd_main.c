@@ -344,6 +344,13 @@ int main(int argc, char **argv)
   setlib_server_uid(geteuid());
 #endif
 
+  /* initialize logging facilities */
+  if (log_init()) {
+    fprintf(stderr,"Couldn't init logging facilities, aborting\n");
+    exit(1);
+  }
+
+  /* config file */
   config = NULL;
   config_files[0] = configfile_name;
 
@@ -402,13 +409,17 @@ int main(int argc, char **argv)
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
+  for (i=0; i<MAX_LOG_CHANNELS; i++)
+    log_set_syslog(i,1);
   }
 #endif
-  if (log_open(mainConfig->logfilename,mainConfig->logfilemode))
-  {
+  ret = log_open(mainConfig->logfilename,mainConfig->logfilemode);
+  if (ret < 0) {
     out_err(LEVEL_CRITICAL,"Could not open log file.\n");
     return 1;
   }
+  for (i=0; i<MAX_LOG_CHANNELS; i++)
+    log_set(i,ret);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   ret = tls_init();
@@ -615,7 +626,7 @@ int nt_service_register(void)
 
   CloseServiceHandle(schService);
   CloseServiceHandle(schSCManager);
-  
+
   return 0;
 }
 
@@ -650,7 +661,7 @@ int nt_service_unregister(void)
 
   CloseServiceHandle(schService);
   CloseServiceHandle(schSCManager);
-  
+
   return 0;
 }
 
@@ -742,7 +753,7 @@ int nt_service_start(void)
         }
       }
     }
-    
+
   }
 
   CloseServiceHandle(schService);
@@ -754,7 +765,7 @@ int nt_service_start(void)
   } else {
     fprintf(stderr,"Service not started\n");
   }
- 
+
   return 0;
 }
 
@@ -834,7 +845,7 @@ int nt_service_stop(void)
   } else {
     fprintf(stderr,"Service not stopped\n");
   }
- 
+
   return 0;
 }
 

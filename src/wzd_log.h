@@ -56,8 +56,41 @@
 #define	LEVEL_HIGH	7
 #define	LEVEL_CRITICAL	9
 
-int log_open(const char *filename, int filemode);
-void log_close(void);
+/** \brief Initialize logging facilities
+ *
+ * Init structures used for logging
+ */
+int log_init(void);
+
+/** \brief Open file for logging
+ */
+int log_open(const char * filename, int filemode);
+
+/** \brief Close log file
+ */
+void log_close(int fd);
+
+/** \brief Close all log descriptors
+ */
+void log_fini(void);
+
+int log_open_old(const char *filename, int filemode);
+void log_close_old(void);
+
+/** \brief Redirect log level to file descriptor
+ *
+ * Set file decriptor corresponding to all messages sent to the
+ * log level.
+ *
+ * \note fd must have been returned from log_open()
+ */
+int log_set(unsigned int level, int fd);
+
+/** \brief Use syslog for specified level
+ *
+ * Set value to 0 to disable syslogging level, otherwise us syslog
+ */
+int log_set_syslog(unsigned int level, int syslog_value);
 
 /* Opens file of type xferlog and returns file descriptor if ok */
 int xferlog_open(const char *filename, unsigned int filemode);

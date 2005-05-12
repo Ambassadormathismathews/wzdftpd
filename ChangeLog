@@ -1,3 +1,7 @@
+2005-05-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new logging system, supporting different channels etc.
+
 2005-05-12  Cyprien Laplace <cyprien33@laposte.net>
 
 	* bugfix: usercache invalidation and pointer not updated

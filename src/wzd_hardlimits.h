@@ -67,6 +67,11 @@
 
 #define	HARD_LS_BUFFERSIZE	4096
 
+/* the maximum number of channels for log */
+#define MAX_LOG_CHANNELS 64
+/* the number of reserved channels (with special behaviour) */
+#define RESERVED_LOG_CHANNELS 10
+
 /* do NOT ever change the following ! */  
 #define WZD_BUFFER_LEN	1024
 #define WZD_MAX_PATH 1024

@@ -1317,8 +1317,7 @@ static void free_config(wzd_config_t * config)
     closelog();
 #endif
   }
-  if (mainConfig->logfile)
-    log_close();
+  log_fini();
   if (mainConfig->logfilename)
     wzd_free(mainConfig->logfilename);
   if (mainConfig->config_filename)
@@ -1417,12 +1416,13 @@ void serverMainThreadExit(int retcode)
   chtbl_destroy((CHTBL*)mainConfig->htab);
   wzd_free(mainConfig->htab);
 
-  wzd_debug_fini();
-
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
   server_mutex_set_fini();
+
+  wzd_debug_fini();
+
 #if defined(_MSC_VER)
   WSACleanup();
 #endif
