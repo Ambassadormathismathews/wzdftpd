@@ -1,3 +1,8 @@
+2005-05-12  Cyprien Laplace <cyprien33@laposte.net>
+
+	* bugfix: FEAT must return "REST STREAM" to be compliant with
+	draft-ietf-ftpext-mlst-16.txt
+
 2005-05-10  Cyprien Laplace <cyprien33@laposte.net>
 
 	* bugfix: race condition on client logging and listing connected clients

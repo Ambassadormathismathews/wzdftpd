@@ -34,10 +34,11 @@ void * clientThreadProc(void *arg);
 
 void client_die(wzd_context_t * context);
 
+/* REST STREAM is to be compliant with draft-ietf-ftpext-mlst-16.txt */
 #ifdef TEST_MLSD
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
+#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST STREAM\n PRET\n XCRC\n XMD5\n MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
 #else
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST\n PRET\n XCRC\n XMD5\n"
+#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST STREAM\n PRET\n XCRC\n XMD5\n"
 #endif
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
