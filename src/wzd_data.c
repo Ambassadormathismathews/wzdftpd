@@ -214,7 +214,6 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
       context->state = STATE_COMMAND;
       data_close(context);
 
-      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESDL | _USER_CREDITS);
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
 
@@ -232,6 +231,9 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 #ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
+
+      /* user will be invalidated */
+      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESDL | _USER_CREDITS);
 
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = server_time;
@@ -269,8 +271,6 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
        */
       user->stats.files_ul_total++;
 
-      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESUL | _USER_CREDITS);
-
       context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;
       context->state = STATE_COMMAND;
@@ -292,6 +292,9 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #ifdef DEBUG
       out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
+
+      /* user will be invalidated */
+      backend_mod_user(mainConfig->backend.name, user->username, user, _USER_BYTESUL | _USER_CREDITS);
 
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = server_time;

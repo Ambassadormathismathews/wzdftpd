@@ -3587,6 +3587,7 @@ void * clientThreadProc(void *arg)
   context->idle_time_start = time(NULL);
 
   while (!context->exitclient) {
+    user = GetUserByID(context->userid);
 #ifdef DEBUG
     if (GetMyContext() != context)
     {

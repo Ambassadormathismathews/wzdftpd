@@ -1,5 +1,6 @@
 2005-05-12  Cyprien Laplace <cyprien33@laposte.net>
 
+	* bugfix: usercache invalidation and pointer not updated
 	* bugfix: FEAT must return "REST STREAM" to be compliant with
 	draft-ietf-ftpext-mlst-16.txt
 
