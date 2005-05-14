@@ -118,8 +118,11 @@ EXPORTS
 	local_charset
 	local_charset_to_utf8
 	log_close
+	log_fini
+	log_init
 	log_message
 	log_open
+	log_set
 	loglevel2str
 	md5_crypt
 	md5_hash_r
