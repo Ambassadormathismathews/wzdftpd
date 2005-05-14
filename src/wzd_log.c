@@ -194,6 +194,7 @@ void out_log(int level,const char *fmt,...)
     if (_log_channels[level].fd > 0)
       write(_log_channels[level].fd, buffer, strlen(buffer));
 
+#ifndef _WIN32
     if (_log_channels[level].syslog)
     {
       int prior;
@@ -220,6 +221,7 @@ void out_log(int level,const char *fmt,...)
 
       syslog(prior,"%s",buffer);
     }
+#endif
   }
 
 #ifdef DEBUG
