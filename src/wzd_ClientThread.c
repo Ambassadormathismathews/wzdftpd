@@ -488,7 +488,7 @@ int check_timeout(wzd_context_t * context)
   /* next we check for all groups */
   for (i=0; i<user->group_num; i++) {
     gptr = GetGroupByID(user->groups[i]);
-    if (gptr->max_idle_time > 0) {
+    if (gptr && gptr->max_idle_time > 0) {
       if (delay > (time_t)gptr->max_idle_time) {
         /* TIMEOUT ! */
         send_message_with_args(421,context,"Timeout, closing connection");
