@@ -426,7 +426,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
       break;
     }
     if (wzd_row_get_uint(&j, res, 0 /* query asks only one column */)==0)
-      user->groups[i++] = j;
+      user->groups[i] = j;
   }
   user->group_num = i;
 
