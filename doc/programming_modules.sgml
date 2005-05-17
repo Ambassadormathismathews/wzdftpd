@@ -4,7 +4,13 @@
 <sect1 id='modules_kernel'>
 <title>Kernel-level modules</title>
 
-<para>This section describes how to create a new module in C.</para>
+<para>This section describes how to create a new module in C. These modules
+have complete access to internals, and can completely modify the
+behaviour of the server. However, before trying to create such modules,
+please ensure you understand the <link linkend="modules_kernel_license">
+"License considerations"</link> at the end of this section, and that you agree
+with it.
+</para>
 
 <simplesect id='modules_kernel_internals'>
 <title>Internals</title>
@@ -62,7 +68,19 @@ You need the following to compile and use new modules for wzdftpd:
 <simplesect id='modules_kernel_compilation'>
 <title>Compilation</title>
 
-<para>If you are using auto* tools, just configure and make.</para>
+<para>wzdftpd provides a helper application to retrieve information about
+installed libraries</para>
+<para>To find the compilation flags, use the following command:
+<programlisting>wzd-config --cflags libwzd-core</programlisting>
+</para>
+<para>To find the link flags, use the following command:
+<programlisting>wzd-config --libs libwzd-core</programlisting>
+</para>
+<para>If you are using auto* tools, you can include the provided file
+wzd.m4, which defines the macro
+<programlisting>AM_PATH_WZD([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])</programlisting>
+This macro defines the variables WZD_CFLAGS, WZD_LIBS and WZD_VERSION.
+Just configure and make.</para>
 
 </simplesect>
 

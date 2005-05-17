@@ -5,16 +5,36 @@
 
 <qandadiv><title>General Information</title>
 
+<qandaentry id='faq_chroot'>
+<question><para>Why is server not running in a chroot ? Is it less secure ?</para></question>
+<answer><para>
+Chroot is used to lock up a process inside a directory, and many people
+consider this to be a sufficient security. However, there are many potential
+problems: if your process is running with root privileges, this means it
+can mount the <emphasis>proc</emphasis> or <emphasis>dev</emphasis>
+filesystems, and thus go out of the chroot, or destroy your partitions !
+</para>
+<para>
+The real problem is to give root privileges to a process, not restricting
+these privileges. I personnaly believe that chroot is a bad solution to
+the security problem, a better solution would be to ensure that the FTP
+server will <emphasis>never</emphasis> have root privileges.
+If you want real security, use strong methods like
+SElinux, and do not rely on things like chroot !
+</para>
+<para>
+Additionally, chroot is not portable.
+</para>
+</answer>
+</qandaentry>
+
 <qandaentry id='faq_multipleservers'>
 <question><para>Can I run several servers on the same machine ?</para></question>
 <answer><para>
 Yes ! You will need to have a separate config file for each instance (look the
 -f option), and to specify at least different ports in each config file.
 </para>
-<para>
-Remember wzdftp uses <emphasis>two</emphasis> shared memory zones, so do NOT
-specify consecutive keys.
-</para></answer>
+</answer>
 </qandaentry>
 
 <qandaentry id='faq_tls1'>
