@@ -1419,6 +1419,7 @@ void serverMainThreadExit(int retcode)
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
   free_config(mainConfig);
+  mainConfig = NULL;
   server_mutex_set_fini();
 
   wzd_debug_fini();
