@@ -188,6 +188,9 @@ rm -Rf $RPM_BUILD_ROOT
 ## Changelog
 
 %changelog
+* Mon May 18 2005 Pierre Chifflier <chifflier@cpe.fr>
+- New upstream release
+
 * Mon Apr 18 2005 Pierre Chifflier <chifflier@cpe.fr>
 - New upstream release
 - Added MySQL backend
