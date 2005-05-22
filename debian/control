@@ -2,7 +2,7 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
-Build-Depends: debhelper (>= 4.0.0), libgnutls11-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient-dev, flex, docbook-utils
+Build-Depends: debhelper (>= 4.0.0), libgnutls11-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient12-dev | libmysqlclient-dev, postgresql-dev, flex, docbook-utils
 Standards-Version: 3.6.1
 
 Package: wzdftpd
@@ -30,6 +30,13 @@ Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Suggests: mysql-server
 Description: MySQL backend for wzdftpd
  This package provides the MySQL backend for wzdftpd.
+
+Package: wzdftpd-back-pgsql
+Architecture: any
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Suggests: pgsql-server
+Description: PostgreSQL backend for wzdftpd
+ This package provides the PostgreSQL backend for wzdftpd.
 
 Package: wzdftpd-mod-tcl
 Architecture: any
