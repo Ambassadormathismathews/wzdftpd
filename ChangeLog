@@ -1,4 +1,10 @@
-2005-04-18  Pierre Chifflier  <pollux@wzdftpd.net>
+2005-05-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* First svn commit !
+	* bugfix: rename setkey in wzd_crypt to avoid conflict in NetBSD
+	* bugfix: send error to log if server can't create pid file
+
+2005-05-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- cvs commit TAG: rel-0-5-3
 

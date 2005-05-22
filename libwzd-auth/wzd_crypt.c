@@ -232,7 +232,7 @@ encrypt (char *nachr, int decr)
 }
 
 void 
-setkey (char *schl)
+wzd_setkey (char *schl)
 {
   char tmp1[IS];
   register unsigned int ls = 0x7efc;
@@ -286,7 +286,7 @@ des_crypt (const char *wort, const char *salt)
       k += 8;
     }
 
-  setkey (key);
+  wzd_setkey (key);
   memset (key, 0, BS + 2);
 
   for (k = E, i = 0; i < 2; i++)

@@ -1020,14 +1020,14 @@ int server_switch_to_config(wzd_config_t *config)
 
     size = read(fd,buf,64);
     if (size <= 0) {
-      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+      out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
       close(fd);
       return 1;
     }
     l = strtoul(buf,&ptr,10);
     if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
     {
-      out_err(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+      out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
       close(fd);
       return 1;
     }
@@ -1041,19 +1041,19 @@ int server_switch_to_config(wzd_config_t *config)
     errno = ESRCH;
 #endif
     if (!ret || (ret==-1 && errno==EPERM)) {
-      out_err(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",config->pid_file);
+      out_log(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",config->pid_file);
       return 1;
     }
     if ( !(ret==-1 && errno==ESRCH) ) {
-      out_err(LEVEL_CRITICAL,"Error: pid file: %s\n",config->pid_file);
-      out_err(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
+      out_log(LEVEL_CRITICAL,"Error: pid file: %s\n",config->pid_file);
+      out_log(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
           l, ret, errno, strerror(errno));
-      out_err(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
+      out_log(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
       return 1;
     }
-    out_err(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",config->pid_file);
+    out_log(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",config->pid_file);
     if (unlink(config->pid_file)) {
-      out_err(LEVEL_HIGH,"Could not remove pid_file (%s)\n",config->pid_file);
+      out_log(LEVEL_HIGH,"Could not remove pid_file (%s)\n",config->pid_file);
       return 1;
     }
   }
@@ -1069,7 +1069,7 @@ int server_switch_to_config(wzd_config_t *config)
 #endif
     snprintf(buf,64,"%ld\n",(unsigned long)getpid());
     if (fd==-1) {
-      out_err(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
+      out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
       free_config(config);
       exit(1);
     }
