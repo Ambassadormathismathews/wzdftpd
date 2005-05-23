@@ -166,7 +166,6 @@ EXPORTS
 	server_mutex_set_init
 	server_set_param
 	server_time
-	setkey
 	setlib_contextList
 	setlib_mainConfig
 	setlib_server_gid
@@ -259,6 +258,7 @@ EXPORTS
 	wzd_sem_destroy
 	wzd_sem_lock
 	wzd_sem_unlock
+	wzd_setkey
 	wzd_shm_cleanup
 	wzd_shm_create
 	wzd_shm_free
