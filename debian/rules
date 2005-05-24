@@ -18,6 +18,9 @@ DEB_HOST_GNU_TYPE   ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 
+include /usr/share/dpatch/dpatch.make
+
+
 CFLAGS = -Wall -fno-strict-aliasing
 
 ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
@@ -32,7 +35,7 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-config.status: configure
+config.status: patch-stamp configure
 	dh_testdir
 	# Add here commands to configure the package.
 	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam
@@ -56,7 +59,9 @@ build-indep-stamp:  config.status
 	$(MAKE) -C doc
 	touch build-indep-stamp
 
-clean:
+clean: clean-patched unpatch
+
+clean-patched:
 	dh_testdir
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp #CONFIGURE-STAMP#
@@ -71,8 +76,6 @@ endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-
-
 	dh_clean
 
 install: install-indep install-arch
@@ -168,4 +171,4 @@ binary-arch: build-arch install-arch
 	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
 
 binary: binary-arch
-.PHONY: build clean binary-arch binary install install-arch 
+.PHONY: build clean binary-arch binary install install-arch patch unpatch

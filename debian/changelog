@@ -1,9 +1,10 @@
 wzdftpd (0.5.3-2) unstable; urgency=low
 
-  * Changed build-deps to fix FTBFS on some archs
+  * Changed build-deps to fix FTBFS on some archs (Closes: #310531)
   * Added postgresql backend to debian packages
+  * Backported several bugfixes from svn repository
 
- -- Pierre Chifflier <chifflier@cpe.fr>  Sun, 22 May 2005 18:48:41 +0200
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue, 24 May 2005 18:11:10 +0200
 
 wzdftpd (0.5.3-1) unstable; urgency=low
 
