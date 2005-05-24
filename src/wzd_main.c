@@ -331,7 +331,7 @@ int main(int argc, char **argv)
 #endif
 
     if ((int)forkresult == -1)
-      out_err(LEVEL_CRITICAL,"Could not fork into background\n");
+      fprintf(stderr,"Could not fork into background\n");
     if ((int)forkresult != 0)
       exit(0);
   }
@@ -346,7 +346,7 @@ int main(int argc, char **argv)
 
   /* initialize logging facilities */
   if (log_init()) {
-    fprintf(stderr,"Couldn't init logging facilities, aborting\n");
+    fprintf(stderr,"FATAL: Couldn't init logging facilities, aborting\n");
     exit(1);
   }
 
@@ -359,13 +359,13 @@ int main(int argc, char **argv)
     if (load_config_file(config_files[i],&config)) break;
   }
   if (!config) {
-    fprintf(stderr,"No valid config file found, aborting !\n");
+    fprintf(stderr,"FATAL: No valid config file found, aborting !\n");
     exit(1);
   }
 
 
   if (!config) {
-    out_err(LEVEL_CRITICAL,"Critical error loading config file, aborting\n");
+    out_err(LEVEL_CRITICAL,"FATAL: Critical error loading config file, aborting\n");
     exit(1);
   }
 
@@ -415,7 +415,8 @@ int main(int argc, char **argv)
 #endif
   ret = log_open(mainConfig->logfilename,mainConfig->logfilemode);
   if (ret < 0) {
-    out_err(LEVEL_CRITICAL,"Could not open log file.\n");
+    /* stderr is not closed here, even in release mode */
+    fprintf(stderr,"FATAL: Could not open log file %s\n",mainConfig->logfilename);
     return 1;
   }
   for (i=0; i<MAX_LOG_CHANNELS; i++)

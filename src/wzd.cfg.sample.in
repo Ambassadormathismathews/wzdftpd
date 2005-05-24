@@ -45,8 +45,6 @@ pasv_high_range  = 3000
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
 
-# use ONE of the following:
-
 # log file for server activity
 logfile = @e_localstatedir@/log/@PACKAGE@/wzd.log
 
