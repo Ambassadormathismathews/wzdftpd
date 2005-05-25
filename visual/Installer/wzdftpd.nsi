@@ -15,7 +15,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.5.3"
+  !define VER_DISPLAY "0.5.4-20050525"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -35,6 +35,7 @@
   !define DOT_DOT_DIR "..\"
   !define BACKEND_MYSQL_RELEASE_DIR "..\backends\mysql\release\"
   !define BACKEND_PLAINTEXT_RELEASE_DIR "..\backends\plaintext\release\"
+  !define BACKEND_PGSQL_RELEASE_DIR "..\backends\pgsql\release\"
   !define TOOLS_SITECONFIG_RELEASE_DIR "..\tools\siteconfig\release\"
   !define TOOLS_SITEUPTIME_RELEASE_DIR "..\tools\siteuptime\release\"
   !define TOOLS_SITEWHO_RELEASE_DIR "..\tools\sitewho\release\"
@@ -202,11 +203,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_ENGLISH} "Optional TCL Modules."
   LangString DESC_PerlSec ${LANG_ENGLISH} "Optional Perl Modules."
   LangString DESC_MySQLSec ${LANG_ENGLISH} "Optional MySQL Backend."
+  LangString DESC_pgSQLSec ${LANG_ENGLISH} "Optional PostgreSQL Backend."
   LangString DESC_DevelopSec ${LANG_ENGLISH} "Installs all headers and libraries needed by developers."
   LangString CAPT_MainSec ${LANG_ENGLISH} "Main Program"
   LangString CAPT_TCLSec  ${LANG_ENGLISH} "TCL Modules"
   LangString CAPT_PerlSec ${LANG_ENGLISH} "Perl Modules"  
   LangString CAPT_MySQLSec ${LANG_ENGLISH} "MySQL Backend"
+  LangString CAPT_pgSQLSec ${LANG_ENGLISH} "pgSQL Backend"
   LangString CAPT_DevelopSec ${LANG_ENGLISH} "Developer Module"
   LangString DESC_Link_Finish ${LANG_ENGLISH} "Visit the wzdftpd site for the latest news, FAQs and support"
   LangString DESC_Detail_Print ${LANG_ENGLISH} "Installing Core Files..."
@@ -221,11 +224,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_FRENCH} "Modules TCL facultatifs."
   LangString DESC_PerlSec ${LANG_FRENCH} "Modules Perl facultatifs."
   LangString DESC_MySQLSec ${LANG_FRENCH} "Backend MySQL facultatif."
+  LangString DESC_pgSQLSec ${LANG_FRENCH} "Backend PostgreSQL facultatif."
   LangString DESC_DevelopSec ${LANG_FRENCH} "Installe tous les en-têtes et bibliothèques requis par des développeurs."
   LangString CAPT_MainSec ${LANG_FRENCH} "Programme Principal"
   LangString CAPT_TCLSec  ${LANG_FRENCH} "Modules TCL"
   LangString CAPT_PerlSec ${LANG_FRENCH} "Modules Perl"  
-  LangString CAPT_MySQLSec ${LANG_FRENCH} "Module MySQL"
+  LangString CAPT_MySQLSec ${LANG_FRENCH} "MySQL Backend"
+  LangString CAPT_pgSQLSec ${LANG_FRENCH} "PostgreSQL Backend"
   LangString CAPT_DevelopSec ${LANG_FRENCH} "Module pour Développeur"
   LangString DESC_Link_Finish ${LANG_FRENCH} "Visitez le site de wzdftpd pour les derniers nouvelles, FAQ et aide."
   LangString DESC_Detail_Print ${LANG_FRENCH} "Installation des dossiers Principaux..."
@@ -239,11 +244,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_PORTUGUESEBR} "Módulos TCL opcionais."
   LangString DESC_PerlSec ${LANG_PORTUGUESEBR} "Módulos Perl opcionais."
   LangString DESC_MySQLSec ${LANG_PORTUGUESEBR} "Módulo de autenticação por MySQL."
+  LangString DESC_pgSQLSec ${LANG_PORTUGUESEBR} "Módulo de autenticação por PostgreSQL."
   LangString DESC_DevelopSec ${LANG_PORTUGUESEBR} "Instala os cabeçalhos e bibliotecas necessárias ao desenvolvedor."
   LangString CAPT_MainSec ${LANG_PORTUGUESEBR} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_PORTUGUESEBR} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_PORTUGUESEBR} "Módulos Perl"  
   LangString CAPT_MySQLSec ${LANG_PORTUGUESEBR} "Módulo MySQL"
+  LangString CAPT_pgSQLSec ${LANG_PORTUGUESEBR} "Módulo PostgreSQL"
   LangString CAPT_DevelopSec ${LANG_PORTUGUESEBR} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESEBR} "Visite o site do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESEBR} "Instalação dos arquivos principais..."
@@ -257,11 +264,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_PORTUGUESE} "Módulos TCL opcionais."
   LangString DESC_PerlSec ${LANG_PORTUGUESE} "Módulos Perl opcionais."
   LangString DESC_MySQLSec ${LANG_PORTUGUESE} "Módulo de autenticação por MySQL."
+  LangString DESC_pgSQLSec ${LANG_PORTUGUESE} "Módulo de autenticação por PostgreSQL."
   LangString DESC_DevelopSec ${LANG_PORTUGUESE} "Instala os cabeçalhos e bibliotecas necessárias ao desenvolvedor."
   LangString CAPT_MainSec ${LANG_PORTUGUESE} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_PORTUGUESE} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_PORTUGUESE} "Módulos Perl"  
   LangString CAPT_MySQLSec ${LANG_PORTUGUESE} "Módulo MySQL"
+  LangString CAPT_pgSQLSec ${LANG_PORTUGUESE} "Módulo PostgreSQL"
   LangString CAPT_DevelopSec ${LANG_PORTUGUESE} "Módulo Desenvolvedor"
   LangString DESC_Link_Finish ${LANG_PORTUGUESE} "Visite o sítio do wzdftpd para obter notícias, FAQs e suporte."
   LangString DESC_Detail_Print ${LANG_PORTUGUESE} "Instalação dos ficheiros principais..."
@@ -275,11 +284,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_SPANISH} "Módulos Opcionales del TCL"
   LangString DESC_PerlSec ${LANG_SPANISH} "Módulos Opcionales de Perl."
   LangString DESC_MySQLSec ${LANG_SPANISH} "Módulo de autenticación por MySQL."
+  LangString DESC_pgSQLSec ${LANG_SPANISH} "Módulo de autenticación por PostgreSQL."
   LangString DESC_DevelopSec ${LANG_SPANISH} "Instala todos los títulos y bibliotecas necesitados por los desarrolladores."
   LangString CAPT_MainSec ${LANG_SPANISH} "Programa Principal"
   LangString CAPT_TCLSec  ${LANG_SPANISH} "Módulos TCL"
   LangString CAPT_PerlSec ${LANG_SPANISH} "Módulos Perl"
   LangString CAPT_MySQLSec ${LANG_SPANISH} "Módulo MySQL"
+  LangString CAPT_pgSQLSec ${LANG_SPANISH} "Módulo PostgreSQL"
   LangString CAPT_DevelopSec ${LANG_SPANISH} "Módulo Desarrollador"
   LangString DESC_Link_Finish ${LANG_SPANISH} "Visite el sitio del wzdftpd para las últimas noticias, y obtener ayuda"
   LangString DESC_Detail_Print ${LANG_SPANISH} "Instalando Archivos De Base..."
@@ -293,11 +304,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_GERMAN} "Wahlweise freigestellte TCL-Module."
   LangString DESC_PerlSec ${LANG_GERMAN} "Wahlweise freigestellte Perl-Module."
   LangString DESC_MySQLSec ${LANG_GERMAN} "Wahlweise MySQL Backend."
+  LangString DESC_pgSQLSec ${LANG_GERMAN} "Wahlweise PostgreSQL Backend."
   LangString DESC_DevelopSec ${LANG_GERMAN} "Installiert alle Überschriften und Bibliotheken , die von Entwicklern benötigt werden."
   LangString CAPT_MainSec ${LANG_GERMAN} "HauptProgramm"
   LangString CAPT_TCLSec  ${LANG_GERMAN} "TCL-Module"
   LangString CAPT_PerlSec ${LANG_GERMAN} "TCL-Module"
   LangString CAPT_MySQLSec ${LANG_GERMAN} "MySQL Backend"
+  LangString CAPT_pgSQLSec ${LANG_GERMAN} "PostgreSQL Backend"
   LangString CAPT_DevelopSec ${LANG_GERMAN} "EntwicklerModul"
   LangString DESC_Link_Finish ${LANG_GERMAN} "Besuchen Sie den wzdftpdaufstellungsort für die neuesten Nachrichten, die FAQ und die Unterstützung"
   LangString DESC_Detail_Print ${LANG_GERMAN} "Dateien mit Speicherabzug installieren..."
@@ -311,11 +324,13 @@ Var INI_VALUE
   LangString DESC_TCLSec ${LANG_ITALIAN} "Moduli Facoltativi di TCL."
   LangString DESC_PerlSec ${LANG_ITALIAN} "Moduli Facoltativi Del Perl."
   LangString DESC_MySQLSec ${LANG_ITALIAN} "Moduli Facoltativi Del MySQL Backend."
+  LangString DESC_pgSQLSec ${LANG_ITALIAN} "Moduli Facoltativi Del PostgreSQL Backend."
   LangString DESC_DevelopSec ${LANG_ITALIAN} "Installa tutte le intestazioni e biblioteche necessarie dagli sviluppatori."
   LangString CAPT_MainSec ${LANG_ITALIAN} "Programma Principale"
   LangString CAPT_TCLSec  ${LANG_ITALIAN} "Moduli del TCL."
   LangString CAPT_PerlSec ${LANG_ITALIAN} "Moduli del Perl"
   LangString CAPT_MySQLSec ${LANG_ITALIAN} "Moduli MySQL"
+  LangString CAPT_pgSQLSec ${LANG_ITALIAN} "Moduli PostgreSQL"
   LangString CAPT_DevelopSec ${LANG_ITALIAN} "Modulo Di Sviluppatore"
   LangString DESC_Link_Finish ${LANG_ITALIAN} "Visiti il luogo del wzdftpd per le ultimi notizie, FAQ e supporto"
   LangString DESC_Detail_Print ${LANG_ITALIAN} "Installando Le Lime Di Nucleo..."
@@ -626,6 +641,11 @@ Section /o $(CAPT_MySQLSec) MySQLSec
   File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
 SectionEnd
 
+Section /o $(CAPT_pgSQLSec) pgSQLSec
+  SetOutPath "$INSTDIR\backends"
+  File "${BACKEND_PGSQL_RELEASE_DIR}libwzd_pgsql.dll"
+SectionEnd
+
 Section /o $(CAPT_DevelopSec) DevelopSec
   ;Create the destination folders
   CreateDirectory "$INSTDIR\include\"
@@ -646,6 +666,7 @@ Section /o $(CAPT_DevelopSec) DevelopSec
   File "${SRC_DIR}wzd_debug.h"
   File "${SRC_DIR}wzd_dir.h"
   File "${SRC_DIR}wzd_file.h"
+  File "${SRC_DIR}wzd_fs.h"
   File "${SRC_DIR}wzd_hardlimits.h"
   File "${SRC_DIR}wzd_init.h"
   File "${SRC_DIR}wzd_ip.h"
@@ -679,6 +700,7 @@ Section /o $(CAPT_DevelopSec) DevelopSec
   SetOutPath "$INSTDIR\lib"
   File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.lib"
   File "${BACKEND_PLAINTEXT_RELEASE_DIR}libwzd_plaintext.lib"
+  File "${BACKEND_PGSQL_RELEASE_DIR}libwzd_pgsql.lib"
   File "${LIBWZD_RELEASE_DIR}libwzd.lib"
   File "${LIBWZD-AUTH_RELEASE_DIR}libwzd_auth.lib"
   File "${LIBWZD-BASE_RELEASE_DIR}libwzd_base.lib"
@@ -721,6 +743,7 @@ FunctionEnd
   !insertmacro MUI_DESCRIPTION_TEXT ${TCLSec} $(DESC_TCLSec)
   !insertmacro MUI_DESCRIPTION_TEXT ${PerlSec} $(DESC_PerlSec)
   !insertmacro MUI_DESCRIPTION_TEXT ${MySQLSec} $(DESC_MySQLSec)
+  !insertmacro MUI_DESCRIPTION_TEXT ${pgSQLSec} $(DESC_pgSQLSec)
   !insertmacro MUI_DESCRIPTION_TEXT ${DevelopSec} $(DESC_DevelopSec)
   !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
