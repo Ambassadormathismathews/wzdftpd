@@ -414,7 +414,7 @@ void get_cookie_format(const char *cookie, int * padding)
 int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group,
 wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 {
-  wzd_user_t * me;
+  wzd_user_t * me = NULL;
   char send_buffer[MAX_SEND_BUFFERSIZE];
   char internalbuffer[IBUFSIZE];
   char condition[256];
@@ -434,10 +434,11 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   wzd_context_t * loop_context;
   ListElmt * elmnt;
 
-  if (!context) return -1;
+/*  if (!context) return -1;*/ /* XXX this prevent using the function from cron jobs ! */
   real_context = GetMyContext();
-  if (!real_context) return -1;
-  me = GetUserByID(real_context->userid);
+/*  if (!real_context) return -1;*/ /* XXX this prevent using the function from cron jobs ! */
+  if (real_context)
+    me = GetUserByID(real_context->userid);
 /*  if (!me) return -1;*/
 
   if (me && me->flags && strchr(me->flags,FLAG_COLOR)) use_colors=1;
@@ -538,7 +539,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         out_buffer_ptr += l;
       } else {
         send_buffer[send_buffer_ptr]='\0';
-        send_message_raw(send_buffer,real_context);
+        if (real_context)
+          send_message_raw(send_buffer,real_context);
         send_buffer_ptr=0;
       }
       /* test if() condition */
@@ -610,7 +612,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         out_buffer_ptr += l;
       } else {
         send_buffer[send_buffer_ptr]='\0';
-        send_message_raw(send_buffer,real_context);
+        if (real_context)
+          send_message_raw(send_buffer,real_context);
         send_buffer_ptr=0;
       }
       /* execute for loop */
@@ -796,7 +799,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         other flushes (FOR, etc ?! */
       } else {
         send_buffer[send_buffer_ptr]='\0';
-        send_message_raw(send_buffer,real_context);
+        if (real_context)
+          send_message_raw(send_buffer,real_context);
         send_buffer_ptr=0;
       }
 
@@ -1878,7 +1882,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           out_buffer_len -= l;
         } else {
           send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,real_context);
+          if (real_context)
+            send_message_raw(send_buffer,real_context);
         }
         send_buffer_ptr=0;
       }
@@ -1953,7 +1958,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           out_buffer_len -= l;
         } else {
           send_buffer[send_buffer_ptr]='\0';
-          send_message_raw(send_buffer,real_context);
+          if (real_context)
+            send_message_raw(send_buffer,real_context);
         }
         send_buffer_ptr=0;
       }
@@ -2001,7 +2007,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         out_err(LEVEL_HIGH,"buffer length %d (%d)",strlen(out_buffer),out_buffer_len);
 #endif
     } else {
-      send_message_raw(send_buffer,real_context);
+      if (real_context)
+        send_message_raw(send_buffer,real_context);
     }
     send_buffer_ptr=0;
   }
