@@ -34,7 +34,7 @@ Description: MySQL backend for wzdftpd
 Package: wzdftpd-back-pgsql
 Architecture: any
 Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
-Suggests: pgsql-server
+Suggests: postgresql
 Description: PostgreSQL backend for wzdftpd
  This package provides the PostgreSQL backend for wzdftpd.
 

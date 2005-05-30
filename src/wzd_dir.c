@@ -126,6 +126,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
     if (watchdog++ > 65535) {
       out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open\n");
+      fs_dir_close(dir);
       return NULL;
     }
 

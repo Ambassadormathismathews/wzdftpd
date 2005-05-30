@@ -70,7 +70,7 @@ static int _format_date(time_t time, char * buffer, size_t length);
 
 static int list_match(char *,char *);
 
-int list_call_wrapper(fd_t sock, wzd_context_t *context, char *line, char *buffer, size_t *buffer_len,
+int list_call_wrapper(fd_t sock, wzd_context_t *context, const char *line, char *buffer, size_t *buffer_len,
     int callback(fd_t,wzd_context_t*,char *))
 {
   size_t length;
@@ -254,6 +254,164 @@ int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,ch
   dir_close(dir);
 
   return 1;
+}
+
+
+/* filename must be an ABSOLUTE path */
+int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t * context)
+{
+  struct wzd_file_t * file_info;
+  char *ptr;
+  fs_filestat_t s;
+  wzd_string_t *temp;
+  const char *type;
+
+  if (!filename  || !buffer) return -1;
+
+  ptr = strrchr(filename,'/');
+  if (!ptr) return -1;
+  if (ptr+1 != '\0') ptr++;
+
+  if (fs_file_stat(filename,&s)) return -1;
+
+  temp = str_allocate();
+
+  str_sprintf(buffer," ");
+
+  /* XXX build info */
+  file_info = file_stat(filename,context);
+
+  /* Type=... */
+  if (file_info && file_info->kind != FILE_NOTSET) {
+    switch (file_info->kind) {
+      case FILE_REG:
+        type = "file"; break;
+      case FILE_DIR:
+        type = "dir"; break;
+      case FILE_LNK:
+        type = "OS.unix=slink"; break;
+      case FILE_VFS:
+        type = "OS.wzdftpd=vfs"; break;
+      default:
+        type = "unknown"; break;
+    }
+  } else {
+    switch (s.mode & S_IFMT) {
+      case S_IFREG:
+        type = "file"; break;
+      case S_IFDIR:
+        type = "dir"; break;
+      case S_IFLNK:
+        type = "OS.unix=slink"; break;
+      default:
+        type = "unknown"; break;
+    }
+  }
+  str_sprintf(temp," Type=%s;",type);
+  str_append(buffer,str_tochar(temp));
+
+  /* Size=... */
+  {
+    str_sprintf(temp,"Size=%" PRIu64 ";",s.size);
+    str_append(buffer,str_tochar(temp));
+  }
+
+  /* Modify=... */
+  {
+    char tm[32];
+    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.mtime));
+
+    str_sprintf(temp,"Modify=%s;",tm);
+    str_append(buffer,str_tochar(temp));
+  }
+
+#if 0
+  /* Perm=... */
+  {
+    str_sprintf(temp," Perm=");
+    /* "a" / "c" / "d" / "e" / "f" /
+     * "l" / "m" / "p" / "r" / "w"
+     */
+    str_append(buffer,str_tochar(temp));
+  }
+#endif
+
+#if 0
+  /* Unique=... */
+  {
+    str_sprintf(temp," Unique=%llu;",(u64_t)s.ino);
+    str_append(buffer,str_tochar(temp));
+  }
+#endif
+
+  /* End, append name */
+  str_append(buffer," ");
+  str_append(buffer,ptr);
+
+  free_file_recursive(file_info);
+  str_deallocate(temp);
+
+  return 0;
+}
+
+int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
+    wzd_context_t * context)
+{
+  fs_dir_t * dir;
+  fs_fileinfo_t * finfo;
+  unsigned long watchdog=0;
+  char buffer[WZD_MAX_PATH+1], * ptr_to_buffer;
+  size_t length;
+  wzd_string_t * str;
+  char send_buffer[HARD_LS_BUFFERSIZE];
+  size_t send_buffer_len;
+
+  if (fs_dir_open(dirname, &dir)) return 1;
+
+  /* ensure buffer is / terminated */
+  strncpy(buffer, dirname, sizeof(buffer)-1);
+  ptr_to_buffer = buffer + strlen(buffer) - 1;
+  if (*ptr_to_buffer != '/') {
+    ptr_to_buffer++;
+    *ptr_to_buffer = '/';
+    *(ptr_to_buffer+1) = '\0';
+  }
+  ptr_to_buffer++;
+
+  length = sizeof(buffer) - (ptr_to_buffer - buffer) - 1;
+
+  str = str_allocate();
+  memset(send_buffer,0,HARD_LS_BUFFERSIZE);
+  send_buffer_len = 0;
+
+  while ( !fs_dir_read(dir, &finfo) )
+  {
+    if (watchdog++ > 65535) {
+      out_log(LEVEL_HIGH, "watchdog: detected infinite loop in list()\n");
+
+      break;
+    }
+
+    strncpy(ptr_to_buffer, fs_fileinfo_getname(finfo), length);
+
+    if (mlst_single_file(buffer, str, context)) {
+      out_log(LEVEL_HIGH, "error during mlst_single_file\n");
+
+      break;
+    }
+
+    str_append(str,"\r\n");
+    if (list_call_wrapper(sock, context, str_tochar(str), send_buffer, &send_buffer_len, callback)) break;
+
+
+  }
+  /* flush buffer ! */
+  list_call_wrapper(sock, context, NULL, send_buffer, &send_buffer_len, callback);
+
+  fs_dir_close(dir);
+  str_deallocate(str);
+
+  return 0;
 }
 
 
