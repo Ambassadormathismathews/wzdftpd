@@ -249,7 +249,7 @@ int cronjob_run(wzd_cronjob_t ** crontab)
     *crontab = job->next_cronjob;
     job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
         job->day_of_month, job->month, job->day_of_week);
-#ifdef WZD_BUILD_OPTS
+#ifdef WZD_DBG_CRONTAB
     out_err(LEVEL_CRITICAL,"Next run (%s): %s",job->hook->external_command,ctime(&job->next_run));
 #endif
     _crontab_insert_sorted(job,crontab);

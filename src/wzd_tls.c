@@ -970,6 +970,39 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 int tls_close_data(wzd_context_t * context)
 {
   if (context->tls.data_session) {
+    int ret;
+    int alert;
+
+    do {
+      ret = gnutls_bye(*(gnutls_session*)context->tls.data_session,GNUTLS_SHUT_RDWR);
+      if (ret == 0) break;
+
+      if (gnutls_error_is_fatal(ret)) {
+        out_log(LEVEL_HIGH,"gnutls_bye (data) returned %d (%s)\n",ret,gnutls_strerror(ret));
+        break;
+      }
+      switch(ret) {
+        case GNUTLS_E_INTERRUPTED:
+        case GNUTLS_E_AGAIN:
+
+          /** \todo poll on fd before calling function again */
+          usleep(100);
+
+          continue;
+        case GNUTLS_E_WARNING_ALERT_RECEIVED:
+        case GNUTLS_E_FATAL_ALERT_RECEIVED:
+          alert = gnutls_alert_get (*(gnutls_session*)context->tls.data_session);
+          out_log(LEVEL_INFO,"* Received alert [%d]: %s\n", alert,
+              gnutls_alert_get_name(alert));
+          return -1;
+        default:
+          if (ret < 0) {
+            out_log(LEVEL_HIGH,"* unhandled error (%d)\n",ret);
+            return -1;
+          }
+      }
+    } while (ret);
+
     gnutls_deinit( *(gnutls_session*)context->tls.data_session );
     free ( (gnutls_session*)context->tls.data_session );
   }
@@ -982,6 +1015,39 @@ int tls_free(wzd_context_t * context)
   out_log(LEVEL_INFO,"tls_free\n");
   tls_close_data(context);
   if (context->tls.session) {
+    int ret;
+    int alert;
+
+    do {
+      ret = gnutls_bye(*(gnutls_session*)context->tls.session,GNUTLS_SHUT_RDWR);
+      if (ret == 0) break;
+
+      if (gnutls_error_is_fatal(ret)) {
+        out_log(LEVEL_HIGH,"gnutls_bye (control) returned %d (%s)\n",ret,gnutls_strerror(ret));
+        break;
+      }
+      switch(ret) {
+        case GNUTLS_E_INTERRUPTED:
+        case GNUTLS_E_AGAIN:
+
+          /** \todo poll on fd before calling function again */
+          usleep(100);
+
+          continue;
+        case GNUTLS_E_WARNING_ALERT_RECEIVED:
+        case GNUTLS_E_FATAL_ALERT_RECEIVED:
+          alert = gnutls_alert_get (*(gnutls_session*)context->tls.session);
+          out_log(LEVEL_INFO,"* Received alert [%d]: %s\n", alert,
+              gnutls_alert_get_name(alert));
+          return -1;
+        default:
+          if (ret < 0) {
+            out_log(LEVEL_HIGH,"* unhandled error (%d)\n",ret);
+            return -1;
+          }
+      }
+    } while (ret);
+
     gnutls_deinit( *(gnutls_session*)context->tls.session );
     free ( (gnutls_session*)context->tls.session );
   }
@@ -1008,7 +1074,7 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
     if (ret >= 0) return ret;
 
     if (gnutls_error_is_fatal(ret)) {
-      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d (%s)\n",ret,gnutls_strerror(ret));
+      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d (%s) on %s connection\n",ret,gnutls_strerror(ret),(sock==context->controlfd)?"control":"data");
       return -1;
     }
     switch(ret) {
