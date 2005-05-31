@@ -276,7 +276,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 
   temp = str_allocate();
 
-  str_sprintf(buffer," ");
+  str_sprintf(buffer,"");
 
   /* XXX build info */
   file_info = file_stat(filename,context);
@@ -307,7 +307,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
         type = "unknown"; break;
     }
   }
-  str_sprintf(temp," Type=%s;",type);
+  str_sprintf(temp,"Type=%s;",type);
   str_append(buffer,str_tochar(temp));
 
   /* Size=... */
@@ -365,6 +365,7 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
   wzd_string_t * str;
   char send_buffer[HARD_LS_BUFFERSIZE];
   size_t send_buffer_len;
+  const char * dir_filename;
 
   if (fs_dir_open(dirname, &dir)) return 1;
 
@@ -392,13 +393,34 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
       break;
     }
 
-    strncpy(ptr_to_buffer, fs_fileinfo_getname(finfo), length);
+    dir_filename = fs_fileinfo_getname(finfo);
+
+    if (strcmp(dir_filename,".")==0 ||
+        strcmp(dir_filename,"..")==0 ||
+        is_hidden_file(dir_filename) )
+      continue;
+
+    strncpy(ptr_to_buffer, dir_filename, length);
 
     if (mlst_single_file(buffer, str, context)) {
       out_log(LEVEL_HIGH, "error during mlst_single_file\n");
 
       break;
     }
+
+#ifdef HAVE_UTF8
+    if (context->connection_flags & CONNECTION_UTF8)
+    {
+      /* first, check that line is not already valid UTF-8 */
+      if ( !str_is_valid_utf8(str) ) {
+        /* use line as a temp buffer */
+        if (str_local_to_utf8(str, local_charset()))
+        {
+          out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", str_tochar(str));
+        }
+      }
+    }
+#endif
 
     str_append(str,"\r\n");
     if (list_call_wrapper(sock, context, str_tochar(str), send_buffer, &send_buffer_len, callback)) break;
