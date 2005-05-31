@@ -59,6 +59,7 @@
 #include "wzd_cache.h"
 #include "wzd_fs.h"
 #include "wzd_misc.h"
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 
 #include "wzd_debug.h"
@@ -492,15 +493,19 @@ wzd_user_t * GetUserByID(uid_t id)
   if ( (user = usercache_getbyuid( id )) )
     return user;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
+
   if ( (b = mainConfig->backend.b) && b->backend_get_user)
     user = b->backend_get_user(id);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return NULL;
     }
     user = (*mainConfig->backend.back_get_user)( id );
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
 
   if (!user) return NULL;
   user_return = usercache_add( user );
@@ -521,15 +526,19 @@ out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
   if ( (user = usercache_getbyname( name )) )
     return user;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
+
   if ( (b = mainConfig->backend.b) && b->backend_find_user)
     uid = b->backend_find_user(name,user);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_find_user) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return NULL;
     }
     uid = (*mainConfig->backend.back_find_user)(name,user);
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
 
   if (uid != (uid_t)-1) {
     return GetUserByID( uid );
@@ -664,15 +673,19 @@ int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
   uid_t ret;
   wzd_backend_t * b;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
+
   if ( (b = mainConfig->backend.b) && b->backend_validate_login)
     ret = b->backend_validate_login(name,user);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_login) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return -1;
     }
     ret = (*mainConfig->backend.back_validate_login)(name,user);
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
 
   if (ret != (uid_t)-1) {
     if (user) {
@@ -692,15 +705,19 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
   uid_t ret;
   wzd_backend_t * b;
 
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
+
   if ( (b = mainConfig->backend.b) && b->backend_validate_pass)
     ret = b->backend_validate_pass(name,pass,user);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_validate_pass) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return 1;
     }
     ret = (*mainConfig->backend.back_validate_pass)(name,pass,user);
   }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
 
   if (ret != (uid_t)-1) {
     if (user) {
@@ -763,12 +780,16 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 {
   int ret;
   wzd_backend_t * b;
+  wzd_user_t * new_user;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
   if ( (b = mainConfig->backend.b) && b->backend_mod_user)
     ret = b->backend_mod_user(name,user,mod_type);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_user) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return 1;
     }
     ret = (*mainConfig->backend.back_mod_user)(name,user,mod_type);
@@ -779,8 +800,29 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
     if (mod_type & _USER_MAX_DLS) _trigger_user_max_dl(user);
   }
 
-  usercache_invalidate( predicate_name, (void *)name );
+/*  usercache_invalidate( predicate_name, (void *)name );*/
 
+  if (!ret) { /* modification ok, reload user */
+    if ( (b = mainConfig->backend.b) && b->backend_get_user)
+      new_user = b->backend_get_user(user->uid);
+    else {
+      if (!mainConfig->backend.handle || !mainConfig->backend.back_get_user) {
+        out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+        WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
+        return ret;
+      }
+      new_user = (*mainConfig->backend.back_get_user)( user->uid );
+    }
+    if (new_user) {
+      *user = *new_user;
+      wzd_free(new_user);
+    } else {
+      /* user was deleted */
+      usercache_invalidate( predicate_name, (void *)name );
+    }
+  }
+
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
   return ret;
 }
 
@@ -789,19 +831,44 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
 {
   int ret;
   wzd_backend_t * b;
+  wzd_group_t * new_group;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
   if ( (b = mainConfig->backend.b) && b->backend_mod_group)
     ret = b->backend_mod_group(name,group,mod_type);
   else {
     if (!mainConfig->backend.handle || !mainConfig->backend.back_mod_group) {
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+      WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
       return 1;
     }
     ret = (*mainConfig->backend.back_mod_group)(name,group,mod_type);
   }
 
-  groupcache_invalidate( predicate_groupname, (void *)name );
+/*  groupcache_invalidate( predicate_groupname, (void *)name );*/
 
+  if (!ret) { /* modification ok, reload group */
+    if ( (b = mainConfig->backend.b) && b->backend_get_group)
+      new_group = b->backend_get_group(group->gid);
+    else {
+      if (!mainConfig->backend.handle || !mainConfig->backend.back_get_group) {
+        out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
+        WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
+        return ret;
+      }
+      new_group = (*mainConfig->backend.back_get_group)( group->gid );
+    }
+    if (new_group) {
+      *group = *new_group;
+      wzd_free(new_group);
+    }
+    } else {
+      /* group was deleted */
+      groupcache_invalidate( predicate_groupname, (void *)name );
+  }
+
+  WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
   return ret;
 }
 

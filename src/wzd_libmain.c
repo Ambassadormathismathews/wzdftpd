@@ -58,6 +58,7 @@ unsigned long mutex_set_key[SET_MUTEX_NUM] = {
   0x22005404,
   0x22005405,
   0x22005406,
+  0x22005407,
 };
 
 time_t          server_time;
