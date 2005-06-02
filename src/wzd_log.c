@@ -178,8 +178,6 @@ void out_log(int level,const char *fmt,...)
 {
   int prior=0;
   va_list argptr;
-  char msg_begin[20];
-  char msg_end[20];
   char buffer[4096];
 
   /* new logging code */
@@ -197,8 +195,6 @@ void out_log(int level,const char *fmt,...)
 #ifndef _WIN32
     if (_log_channels[level].syslog)
     {
-      int prior;
-
       switch (level) {
         case LEVEL_CRITICAL:
           prior = LOG_ALERT;
@@ -227,6 +223,8 @@ void out_log(int level,const char *fmt,...)
 #ifdef DEBUG
   {
     char new_format[1024];
+    char msg_begin[20];
+    char msg_end[20];
 
     msg_begin[0] = '\0';
     msg_end[0] = '\0';
