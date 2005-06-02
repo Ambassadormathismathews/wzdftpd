@@ -272,7 +272,7 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
   if (!ptr) return -1;
   if (ptr+1 != '\0') ptr++;
 
-  if (fs_file_stat(filename,&s)) return -1;
+  if (fs_file_lstat(filename,&s)) return -1;
 
   temp = str_allocate();
 
@@ -385,6 +385,8 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
   memset(send_buffer,0,HARD_LS_BUFFERSIZE);
   send_buffer_len = 0;
 
+  /** \todo send info on current dir and parent dir ? */
+
   while ( !fs_dir_read(dir, &finfo) )
   {
     if (watchdog++ > 65535) {
@@ -403,7 +405,7 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
     strncpy(ptr_to_buffer, dir_filename, length);
 
     if (mlst_single_file(buffer, str, context)) {
-      out_log(LEVEL_HIGH, "error during mlst_single_file\n");
+      out_log(LEVEL_HIGH, "error during mlst_single_file (%s)\n", buffer);
 
       break;
     }
