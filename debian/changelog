@@ -1,3 +1,9 @@
+wzdftpd (0.5.3-3) unstable; urgency=low
+
+  * Fixed wrong dependency
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Thu,  2 Jun 2005 13:47:56 +0200
+
 wzdftpd (0.5.3-2) unstable; urgency=low
 
   * Changed build-deps to fix FTBFS on some archs (Closes: #310531)
