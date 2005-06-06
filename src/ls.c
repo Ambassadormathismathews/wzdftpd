@@ -52,6 +52,8 @@
 #include <arpa/inet.h>
 #endif
 
+#include <libwzd-auth/wzd_md5crypt.h>
+
 #include "wzd_structs.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
@@ -287,7 +289,10 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
       case FILE_REG:
         type = "file"; break;
       case FILE_DIR:
-        type = "dir"; break;
+        if (strcmp(ptr,".")==0) type = "cdir";
+        else if (strcmp(ptr,"..")==0) type = "pdir";
+        else type = "dir";
+        break;
       case FILE_LNK:
         type = "OS.unix=slink"; break;
       case FILE_VFS:
@@ -300,7 +305,10 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
       case S_IFREG:
         type = "file"; break;
       case S_IFDIR:
-        type = "dir"; break;
+        if (strcmp(ptr,".")==0) type = "cdir";
+        else if (strcmp(ptr,"..")==0) type = "pdir";
+        else type = "dir";
+        break;
       case S_IFLNK:
         type = "OS.unix=slink"; break;
       default:
@@ -325,24 +333,56 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
     str_append(buffer,str_tochar(temp));
   }
 
-#if 0
   /* Perm=... */
   {
-    str_sprintf(temp," Perm=");
-    /* "a" / "c" / "d" / "e" / "f" /
-     * "l" / "m" / "p" / "r" / "w"
-     */
-    str_append(buffer,str_tochar(temp));
-  }
-#endif
+    unsigned long perms;
 
-#if 0
-  /* Unique=... */
-  {
-    str_sprintf(temp," Unique=%llu;",(u64_t)s.ino);
+    perms = file_getperms(file_info, context);
+
+    str_sprintf(temp,"Perm=");
+    if (file_info && file_info->kind == FILE_REG) {
+      if (perms & RIGHT_STOR) str_append(temp,"a");
+      if (perms & RIGHT_RETR) str_append(temp,"r");
+      if (perms & RIGHT_STOR) str_append(temp,"w");
+    }
+    if (file_info && file_info->kind == FILE_DIR) {
+      if (perms & RIGHT_STOR) str_append(temp,"c");
+      if (perms & RIGHT_CWD) str_append(temp,"e");
+      if (perms & RIGHT_LIST) str_append(temp,"l");
+      if (perms & RIGHT_MKDIR) str_append(temp,"m");
+      if (perms & RIGHT_STOR) str_append(temp,"p");
+    }
+    if (perms & RIGHT_DELE) str_append(temp,"d");
+    if (perms & RIGHT_RNFR) str_append(temp,"f");
+
+    str_append(temp,";");
     str_append(buffer,str_tochar(temp));
   }
-#endif
+
+  /* Unique=... 
+   *
+   * we use MD5 hash as unique value (not completely satisfying, but works !
+   * 
+   * note: MD5 algorithm needs at least (2*sizeof(digest)+1) input data to work,
+   * so we pad input to at least 33 bytes
+   */
+  {
+    char digest[128];
+    char input[128];
+
+    memset(digest,0,sizeof(digest));
+
+    /* we need at least 33 bytes of input */
+    strncpy(input,ptr,sizeof(input));
+    if (strlen(input) < 33) {
+      memset(input+strlen(input),66,33-strlen(input));
+    }
+
+    md5_hash_r(input, digest, strlen(input));
+
+    str_sprintf(temp,"Unique=%s;",digest);
+    str_append(buffer,str_tochar(temp));
+  }
 
   /* End, append name */
   str_append(buffer," ");
@@ -385,7 +425,22 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
   memset(send_buffer,0,HARD_LS_BUFFERSIZE);
   send_buffer_len = 0;
 
-  /** \todo send info on current dir and parent dir ? */
+  /* current dir */
+  {
+    strncpy(ptr_to_buffer, ".", length);
+
+    if (mlst_single_file(buffer, str, context)) {
+      out_log(LEVEL_HIGH, "error during mlst_single_file %s\n", buffer);
+    }
+    str_append(str,"\r\n");
+    if (list_call_wrapper(sock, context, str_tochar(str), send_buffer, &send_buffer_len, callback)) {
+      out_log(LEVEL_HIGH, "error during list_call_wrapper %s\n", str_tochar(str));
+    }
+
+    *ptr_to_buffer = '\0';
+  }
+
+  /** \todo send info on parent dir ? */
 
   while ( !fs_dir_read(dir, &finfo) )
   {

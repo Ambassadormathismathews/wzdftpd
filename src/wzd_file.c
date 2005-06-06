@@ -1679,6 +1679,73 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   return GetUserByName("nobody");
 }
 
+/** \brief Get all permissions on file for specific context
+ *
+ * Permissions are returned as a hex value composed of permissions ORed like
+ * RIGHT_LIST | RIGHT_CWD
+ */
+unsigned long file_getperms(struct wzd_file_t * file, wzd_context_t * context)
+{
+  unsigned long perms = 0;
+  wzd_user_t * user;
+  wzd_acl_line_t * acl_cur;
+  wzd_group_t * group;
+
+  WZD_ASSERT(context != NULL);
+
+  user = GetUserByID(context->userid);
+  if (!user) return RIGHT_NONE;
+
+  if (!file) return _default_perm(0xffffffff,user);
+
+  /* now find corresponding acl */
+  acl_cur = find_acl(user->username,file);
+
+  if (acl_cur) {
+    if (acl_cur->perms[0]=='r') perms |= RIGHT_RETR;
+    if (acl_cur->perms[1]=='w') perms |= RIGHT_STOR | RIGHT_RNFR;
+    if (file->kind == FILE_DIR && acl_cur->perms[2]=='x') perms |= RIGHT_CWD;
+  } else { /* no acl, check 'permissions field */
+    /* owner ? */
+    if (strcmp(user->username,file->owner)==0) {
+      if (file->permissions & 0400) perms |= RIGHT_RETR;
+      if (file->permissions & 0200) perms |= RIGHT_STOR | RIGHT_RNFR;
+      if (file->kind == FILE_DIR && file->permissions & 0100) perms |= RIGHT_CWD;
+    } else {
+      /* same group ? */
+      unsigned int i;
+      unsigned short found=0;
+
+      for (i=0; i<user->group_num; i++) {
+        group = GetGroupByID(user->groups[i]);
+        if (group && strcmp(group->groupname,file->group)==0) {
+          found++;
+          if (file->permissions & 0040) perms |= RIGHT_RETR;
+          if (file->permissions & 0020) perms |= RIGHT_STOR | RIGHT_RNFR;
+          if (file->kind == FILE_DIR && file->permissions & 0010) perms |= RIGHT_CWD;
+        }
+      }
+
+      if (!found) { /* "others" permissions apply */
+        if (file->permissions & 0004) perms |= RIGHT_RETR;
+        if (file->permissions & 0002) perms |= RIGHT_STOR | RIGHT_RNFR;
+        if (file->kind == FILE_DIR && file->permissions & 0001) perms |= RIGHT_CWD;
+      }
+    }
+  }
+
+  /* is a directory ? */
+  if (file->kind == FILE_DIR) {
+    if (perms & RIGHT_RETR) perms |= RIGHT_LIST;
+    if (perms & RIGHT_STOR) perms |= RIGHT_MKDIR;
+  }
+
+  /** \todo RIGHT_DELE is never checked */
+
+  return perms;
+}
+
+
 struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 {
   char perm_filename[WZD_MAX_PATH+1];
@@ -1751,6 +1818,12 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   }
 
   if (!file && nx) return NULL;
+
+  if (file) {
+    if (S_ISDIR(s.mode)) file->kind = FILE_DIR;
+    if (S_ISLNK(s.mode)) file->kind = FILE_LNK;
+    if (S_ISREG(s.mode)) file->kind = FILE_REG;
+  }
 
   return file;
 }

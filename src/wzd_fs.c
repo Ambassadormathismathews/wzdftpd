@@ -150,21 +150,23 @@ int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
  */
 int fs_dir_close(fs_dir_t * dir)
 {
+  int ret = 0;
+
   wzd_free(dir->finfo.name);
 
 #ifdef WIN32
   if (dir->handle != NULL && !FindClose(dir->handle))
-    return -1;
+    ret = -1;
 #else
   if (dir->handle != NULL && !closedir(dir->handle))
-    return -1;
+    ret = -1;
 #endif
   dir->handle = NULL;
   wzd_free(dir->dirname);
 
   wzd_free(dir);
 
-  return 0;
+  return ret;
 }
 
 /** \brief Read a directory

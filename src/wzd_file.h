@@ -79,6 +79,13 @@ fs_off_t file_seek(fd_t fd, fs_off_t offset, int whence);
 
 wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 
+/** \brief Get all permissions on file for specific context
+ *
+ * Permissions are returned as a hex value composed of permissions ORed like
+ * RIGHT_LIST | RIGHT_CWD
+ */
+unsigned long file_getperms(struct wzd_file_t * file, wzd_context_t * context);
+
 /* symlink operations */
 int symlink_create(const char *existing, const char *link);
 int symlink_remove(const char *link);
