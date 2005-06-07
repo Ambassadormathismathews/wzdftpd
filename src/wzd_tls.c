@@ -688,12 +688,14 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #include <fcntl.h>
 
 
-#define DH_BITS 768
+#define DH_BITS 1024
 
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
+#include "wzd_crontab.h"
+#include "wzd_libmain.h"
 #include "wzd_tls.h"
 
 #include "wzd_messages.h"
@@ -714,6 +716,32 @@ static int generate_dh_params(void)
    */
   gnutls_dh_params_init(&dh_params);
   gnutls_dh_params_generate2(dh_params, DH_BITS);
+
+  return 0;
+}
+
+int tls_dh_params_regenerate(void)
+{
+  int ret;
+  gnutls_dh_params new, tmp;
+
+  /* generate a new DH key */
+  ret = gnutls_dh_params_init(&new);
+  if (ret < 0) {
+    out_log(LEVEL_HIGH,"error initializing dh parameters object: %s.\n", gnutls_strerror(ret));
+    return -1;
+  }
+
+  gnutls_dh_params_generate2(new, DH_BITS);
+
+  WZD_MUTEX_LOCK(SET_MUTEX_GLOBAL);
+  tmp = dh_params;
+  dh_params = new;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_GLOBAL);
+
+  gnutls_dh_params_deinit(tmp);
+
+  out_log(LEVEL_INFO,"- Regenerated %d bits Diffie-Hellman key for TLS.\n", DH_BITS);
 
   return 0;
 }

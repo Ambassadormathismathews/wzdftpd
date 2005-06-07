@@ -217,7 +217,9 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_swho",do_site,NULL,TOK_SITE_SWHO)) return -1;
   if (commands_add(_ctable,"site_tagline",do_site_tagline,NULL,TOK_SITE_TAGLINE)) return -1;
   if (commands_add(_ctable,"site_take",do_site_take,NULL,TOK_SITE_TAKE)) return -1;
+#ifdef DEBUG
   if (commands_add(_ctable,"site_test",do_site_test,NULL,TOK_SITE_TEST)) return -1;
+#endif
   if (commands_add(_ctable,"site_unlock",do_site_unlock,NULL,TOK_SITE_UNLOCK)) return -1;
   if (commands_add(_ctable,"site_uptime",do_site,NULL,TOK_SITE_UPTIME)) return -1;
   if (commands_add(_ctable,"site_user",do_site,NULL,TOK_SITE_USER)) return -1;

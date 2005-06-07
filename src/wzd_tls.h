@@ -40,6 +40,10 @@ int tls_auth_data_cont(wzd_context_t * context);
 int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
+#ifdef HAVE_GNUTLS
+int tls_dh_params_regenerate(void);
+#endif
+
 #endif
 
 #endif /* __WZD_TLS__ */

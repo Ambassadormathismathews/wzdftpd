@@ -150,6 +150,7 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   }
 #endif
 
+#if 0
   {
     fs_dir_t * dir;
     char buffer[WZD_MAX_PATH+1];
@@ -167,6 +168,7 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
 
     ret = 0;
   }
+#endif
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 

@@ -1192,6 +1192,13 @@ void serverMainThreadProc(void *arg)
       "*","*","*","*");
   cronjob_add(&crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,
       "*","*","*","*");
+#ifdef HAVE_GNUTLS
+  /* we will regenerate DH parameters each day at 2h35 am */
+  if (cronjob_add(&crontab, tls_dh_params_regenerate, "fn:tls_dh_params_regenerate",
+        "35","2","*","*","*"))
+    out_log(LEVEL_HIGH,"TLS: error adding cron job _dh_params_regenerate\n");
+#endif
+
 
   /********** init modules **********/
   {
