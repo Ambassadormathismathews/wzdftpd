@@ -1432,6 +1432,7 @@ int cfg_read_server_gid(void)
     { /* not a number, try a login */
       struct group * g;
       g = getgrnam(yytext);
+      endgrent();
       if (!g) {
         out_err(LEVEL_HIGH,"server_gid: could not find gid for group %s\n",yytext);
         return 1;
@@ -1477,6 +1478,7 @@ int cfg_read_server_uid(void)
     { /* not a number, try a login */
       struct passwd * p;
       p = getpwnam(yytext);
+      endpwent();
       if (!p) {
         out_err(LEVEL_HIGH,"server_uid: could not find uid for user %s\n",yytext);
         return 1;

@@ -91,11 +91,13 @@ struct wzd_cache_t {
   wzd_internal_cache_t * cache;
 };
 
-wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode);
 
-wzd_internal_cache_t *global_cache=NULL;
+static wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode);
 
-wzd_internal_cache_t * wzd_cache_find(unsigned long hash)
+static wzd_internal_cache_t *global_cache=NULL;
+
+
+static wzd_internal_cache_t * _cache_find(unsigned long hash)
 {
   wzd_internal_cache_t * current_cache = global_cache;
 
@@ -141,7 +143,9 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   if (fs_file_fstat(fd,&s)) { close(fd); return NULL; }
   FD_REGISTER(fd,"Cached file");
 
-  c = wzd_cache_find(hash);
+  WZD_MUTEX_LOCK(SET_MUTEX_CACHE);
+
+  c = _cache_find(hash);
   if (c) {
     close(fd);
     FD_UNREGISTER(fd,"Cached file");
@@ -153,7 +157,8 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 #ifdef WZD_DBG_CACHE
       out_err(LEVEL_HIGH,"Cache REFRESH %s\n",file);
 #endif
-      return wzd_cache_refresh(c,file,flags,mode);
+      /* _cache_refresh will unlock SET_MUTEX_CACHE */
+      return _cache_refresh(c,file,flags,mode);
     }
     /* HIT */
     (void)lseek(c->fd,0,SEEK_SET);
@@ -164,6 +169,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 #ifdef WZD_DBG_CACHE
     out_err(LEVEL_FLOOD,"Cache HIT %s\n",file);
 #endif
+    WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
     return cache;
   }
 
@@ -176,7 +182,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c = malloc(sizeof(wzd_internal_cache_t));
   c->fd = fd;
   c->filename_hash = hash;
-  c->use = 1;
+  c->use = 2;
   c->mtime = s.mtime;
   cache->cache = c;
   cache->current_location = 0;
@@ -201,6 +207,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->next_cache = global_cache;
   global_cache = c;
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
   return cache;
 #else /* ENABLE_CACHE */
 
@@ -237,7 +244,12 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
 #endif /* ENABLE_CACHE */
 }
 
-wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode)
+
+/** \brief refresh file in cache
+ *
+ * MUST be called with SET_MUTEX_CACHE locked !
+ */
+wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode)
 {
 #ifdef ENABLE_CACHE
   wzd_cache_t * cache;
@@ -249,9 +261,16 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
   hash = compute_hashval(file,strlen(file));
 
   fd = fs_open(file,flags,mode);
-  if (fd==-1) return NULL;
+  if (fd==-1) {
+    WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
+    return NULL;
+  }
 
-  if (fs_file_fstat(fd,&s)) { close(fd); return NULL; }
+  if (fs_file_fstat(fd,&s)) {
+    close(fd);
+    WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
+    return NULL;
+  }
   FD_REGISTER(fd,"Cached file");
 
   if (c->fd != -1) { close(c->fd); FD_UNREGISTER(c->fd,"Cached file"); }
@@ -281,6 +300,7 @@ wzd_cache_t* wzd_cache_refresh(wzd_internal_cache_t *c, const char *file, int fl
     c->fd = -1;
   }
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
   return cache;
 
 #else /* ENABLE_CACHE */
@@ -337,13 +357,18 @@ void wzd_cache_update(const char *file)
   hash = compute_hashval(file,strlen(file));
 /*  out_err(LEVEL_FLOOD,"HASH %s: %lu\n",file,hash);*/
 
-  c = wzd_cache_find(hash);
+  WZD_MUTEX_LOCK(SET_MUTEX_CACHE);
+
+  c = _cache_find(hash);
   if (c) {
     /* REFRESH */
     /* need refresh */
 /*    out_err(LEVEL_FLOOD,"cache refresh forced\n");*/
-    (void)wzd_cache_refresh(c,file,O_RDONLY,0600);
+    (void)_cache_refresh(c,file,O_RDONLY,0600);
   }
+
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
+
 #else /* ENABLE_CACHE */
 
   out_err(LEVEL_HIGH,"*** warning *** call to %s\n",__FUNCTION__);
@@ -351,6 +376,11 @@ void wzd_cache_update(const char *file)
 #endif /* ENABLE_CACHE */
 }
 
+
+/** @brief Read data from cached file
+ *
+ * we do not need to lock SET_MUTEX_CACHE as this function is reentrant
+ */
 int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
 {
   int ret;
@@ -410,6 +440,10 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
   return -1;
 }
 
+/** @brief Read a line from cached file
+ *
+ * we do not need to lock SET_MUTEX_CACHE as this function is reentrant
+ */
 char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
 {
   off_t position;
@@ -502,22 +536,29 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
 
 void wzd_cache_close(wzd_cache_t * c)
 {
+  WZD_MUTEX_LOCK(SET_MUTEX_CACHE);
   if (c) {
     c->cache->use--;
     /** \bug XXX FIXME possible leak here if big file, fd is not closed */
     if (c->cache->use == 0) {
-      out_err(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
-      FD_UNREGISTER(c->cache->fd,"Cached file"); }
-      close( c->cache->fd );
+      if (c->cache->fd >= 0) {
+        out_err(LEVEL_FLOOD,"Closing file %d\n",c->cache->fd);
+        FD_UNREGISTER(c->cache->fd,"Cached file");
+        close( c->cache->fd );
+      }
       free( c-> cache );
       c->cache = NULL;
+    }
   }
   free(c);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
 }
 
 void wzd_cache_purge(void)
 {
   wzd_internal_cache_t * cache_current, * cache_next;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_CACHE);
 
   cache_current = global_cache;
   while (cache_current)
@@ -536,6 +577,8 @@ void wzd_cache_purge(void)
     free(cache_current);
     cache_current = cache_next;
   }
+
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
 }
 
 
