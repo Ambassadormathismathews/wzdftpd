@@ -802,6 +802,59 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   return 0;
 }
 
+/** Tests a path system path, checking
+ * for errors and permissions
+ *
+ * \param test_path The path in system-form
+ * 
+ * If the return is 0, then we are SURE the result exists.
+ * If the real path points to a directory, then the it must be / terminated
+ *
+ * Can be used after checkpath_new generates a system path if you wish to
+ * recheck whether the file/dir still or now exists
+ */
+
+int test_path(const char *trial_path, wzd_context_t *context)
+{
+  wzd_user_t * user;
+  unsigned int trial_offset;
+  fs_filestat_t s;
+
+  /* check that we have a valid user, otherwise we can't check permissions */
+  user = GetUserByID(context->userid);
+
+  if (!user) return E_USER_IDONTEXIST;
+
+  if (fs_file_lstat(trial_path,&s)) {
+    /* test failed, file does not exist */
+    return E_FILE_NOEXIST;
+  }
+  else {
+    /* 3 possibilities:
+     *   - regular directory
+     *   - symlink (on filesystem)
+     *   - file
+     */
+    if (S_ISDIR(s.mode) || S_ISLNK(s.mode)) {
+      trial_offset = strlen(trial_path);
+      /* check th */
+      if (trial_path[trial_offset-1] != '/') {
+        return E_WRONGPATH;
+      }
+
+      if (_checkFileForPerm(trial_path,".",RIGHT_CWD,user)) {
+        /* no permissions ! */
+
+        return E_NOPERM;
+      }
+    }
+
+  }
+
+  /* its all good */
+  return 0;
+}
+
 
 int killpath(const char *path, wzd_context_t * context)
 {

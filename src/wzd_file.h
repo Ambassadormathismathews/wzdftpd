@@ -102,7 +102,7 @@ int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *use
 /** dir MUST be / terminated
  * wanted_file MUST be a single file name !
  */
-int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user);
+int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user);
 
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context);
 

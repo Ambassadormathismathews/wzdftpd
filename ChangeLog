@@ -1,3 +1,13 @@
+2005-06-07  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: missing locks in backend functions
+	* bugfix: closed GnuTLS connections properly
+	* bugfix: crontab broken
+	* feature: work on MLST and MLSD
+	* feature: files cache almost restored, now thread-safe
+	* feature: merged patch from Chris Middleton to execute PRE_DOWNLOAD
+	hook earlier, and allow file cookies to work with this hook.
+
 2005-05-22  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* First svn commit !

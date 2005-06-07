@@ -1973,6 +1973,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   const char *param;
+  connection_state_t restorestate;
 
   param = str_tochar(arg);
   user = GetUserByID(context->userid);
@@ -2000,10 +2001,50 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_PARAM_BIG;
   }
 
-  if (checkpath_new(param,path,context)) {
+  /*
+   * Ignore some checkpath_new errorst for the moment, 
+   * test_path will do this after the predownload hook runs 
+   * in case the hook changes something 
+   */
+  ret = checkpath_new(param,path,context);
+
+  if ((ret != 0) && (ret != E_NOPERM) && (ret != E_FILE_NOEXIST))
+  {
     ret = send_message_with_args(501,context,"Invalid file name");
     return E_PARAM_INVALID;
   }
+
+  /* we need to put context into TOK_RETR state before the hook runs
+   * so that any cookie parsing in the hook works correctly
+   */
+  restorestate = context->current_action.token;
+  context->current_action.token = TOK_RETR;
+  strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
+
+
+  FORALL_HOOKS(EVENT_PREDOWNLOAD)
+    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
+    ret = 0;
+    if (hook->hook)
+      ret = (*(xfer_hook)hook->hook)(EVENT_PREDOWNLOAD,user->username,path);
+    if (hook->external_command)
+      ret = hook_call_external(hook,0);
+    if (ret) {
+      out_log(LEVEL_NORMAL, "Download denied by hook (returned %d)\n", ret);
+      ret = send_message_with_args(501,context,"Download denied");
+      context->current_action.token = restorestate;
+      return E_XFER_REJECTED;
+    }
+  END_FORALL_HOOKS
+
+  /* restore the context state in case we exit before downloading*/
+  context->current_action.token = restorestate;
+
+  if (test_path(path,context)) {
+    ret = send_message_with_args(501,context,"Invalid file name");
+    return E_PARAM_INVALID;
+  }
+
 
   /* trailing / ? */
   if (path[strlen(path)-1]=='/')
@@ -2021,19 +2062,6 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_CREDS_INSUFF;
   }
 
-  FORALL_HOOKS(EVENT_PREDOWNLOAD)
-    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
-    ret = 0;
-    if (hook->hook)
-      ret = (*(xfer_hook)hook->hook)(EVENT_PREDOWNLOAD,user->username,path);
-    if (hook->external_command)
-      ret = hook_call_external(hook,0);
-    if (ret) {
-      out_log(LEVEL_NORMAL, "Download denied by hook (returned %d)\n", ret);
-      ret = send_message_with_args(501,context,"Download denied");
-      return E_XFER_REJECTED;
-    }
-  END_FORALL_HOOKS
 
   if ((fd=file_open(path,O_RDONLY,RIGHT_RETR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(550,context,param,"nonexistant file or permission denied");

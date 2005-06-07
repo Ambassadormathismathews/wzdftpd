@@ -29,6 +29,7 @@ char *stripdir(char * dir, char *buf, int maxlen);
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context);
 int checkabspath(const char *wanted_path, char *path, wzd_context_t *context);
 int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context);
+int test_path(const char *trial_path, wzd_context_t *context);
 
 int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context);
 

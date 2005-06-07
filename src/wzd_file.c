@@ -533,7 +533,7 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 /** dir MUST be / terminated
  * wanted_file MUST be a single file name !
  */
-int _checkFileForPerm(char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
+int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
   char perm_filename[WZD_MAX_PATH+1];
   size_t length, neededlength;
