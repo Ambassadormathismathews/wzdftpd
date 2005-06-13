@@ -39,11 +39,14 @@
 #include <wzd_backend.h>
 #include <libwzd-auth/wzd_md5.h>
 #include <libwzd-auth/wzd_md5crypt.h>
+#include <wzd_log.h>
 #include <wzd_debug.h>
 
 #include "libpgsql.h"
 
-#define PGSQL_BACKEND_VERSION   101
+#define PGSQL_BACKEND_VERSION   102
+
+#define PGSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+17)
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(pgsql);
@@ -74,9 +77,10 @@ static gid_t * wzd_pgsql_get_group_list(void);
 
 
 
-void _wzd_pgsql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
+void _wzd_pgsql_error(const char *filename, const char  *func_name, int line)
 {
-  fprintf(stderr, "%s(%s):%d %s\n", filename, func_name, line, PQerrorMessage(pgconn));
+  out_log(PGSQL_LOG_CHANNEL, "%s(%s):%d %s\n", filename, func_name, line, PQerrorMessage(pgconn));
+
 }
 
 static int wzd_parse_arg(const char *arg)
@@ -129,11 +133,13 @@ int FCN_INIT(const char *arg)
   PQclear(res);
 
   if (!res) {
-    fprintf(stderr,"PG: could not connect to database %s on %s\n",db,db_hostname);
-    fprintf(stderr,"PG: please check connections and tables status\n");
+    out_log(PGSQL_LOG_CHANNEL,"PG: could not connect to database %s on %s\n",db,db_hostname);
+    out_log(PGSQL_LOG_CHANNEL,"PG: please check connections and tables status\n");
     PQfinish(pgconn);
     return -1;
   }
+
+  out_log(PGSQL_LOG_CHANNEL,"PG: backend version %d loaded\n",PGSQL_BACKEND_VERSION);
 
   return 0;
 }
@@ -244,8 +250,8 @@ uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
     if (strlen(stored_pass) == 0)
     {
-      fprintf(stderr,"WARNING: empty password field whould not be allowed !\n");
-      fprintf(stderr,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
+      out_log(PGSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
+      out_log(PGSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
       return uid; /* passworldless login */
     }
 
@@ -399,7 +405,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   for (i=0; (int)i<PQntuples(res); i++) {
     if (i >= HARD_IP_PER_USER) {
-      fprintf(stderr,"PGsql: too many IP for user %s, dropping others\n",user->username);
+      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many IP for user %s, dropping others\n",user->username);
       break;
     }
     wzd_row_get_string_offset(user->ip_allowed[i], MAX_IP_LENGTH, res, i, 0 /* query asks only one column */);
@@ -422,7 +428,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   for (i=0; (int)i<PQntuples(res); i++) {
     if (i >= HARD_IP_PER_USER) {
-      fprintf(stderr,"PGsql: too many groups for user %s, dropping others\n",user->username);
+      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many groups for user %s, dropping others\n",user->username);
       break;
     }
     if (wzd_row_get_uint(&j, res, 0 /* query asks only one column */)==0)
@@ -661,7 +667,8 @@ static uid_t * wzd_pgsql_get_user_list(void)
 {
   char *query;
   uid_t * uid_list;
-  int index, i;
+  int index;
+  unsigned int i;
   int num_rows;
   PGresult * res;
 
@@ -698,7 +705,8 @@ static gid_t * wzd_pgsql_get_group_list(void)
 {
   char *query;
   gid_t * gid_list;
-  int index, i;
+  int index;
+  unsigned int i;
   int num_rows;
   PGresult * res;
 
