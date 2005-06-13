@@ -21,7 +21,7 @@ CREATE TABLE groups (
 -- Dumping data for table `groups`
 --
 
-INSERT INTO groups (groupname,gid,defaultpath,tagline) VALUES ('admin',1,'/','admin group');
+INSERT INTO groups (groupname,gid,defaultpath,tagline) VALUES ('admin',nextval('groups_gid_seq'),'/','admin group');
 
 
 --
@@ -52,11 +52,11 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users (username,rootpath,tagline,uid,flags,perms) VALUES ('wzdftpd','/','local admin',1,'OIstH',cast (X'ffffffff' as integer));
+INSERT INTO users (username,rootpath,tagline,uid,flags,perms) VALUES ('wzdftpd','/','local admin',nextval('users_uid_seq'),'OIstH',cast (X'ffffffff' as integer));
 
 INSERT INTO users (username,rootpath,uid,flags,perms) VALUES
-('novel','/usr/home/novel',2,'OIstH',cast (X'ffffffff' as integer));
-INSERT INTO users (username,rootpath,uid,perms) VALUES ('anonymous','/tmp',3,cast (X'ffffffff' as integer));
+('novel','/usr/home/novel',nextval('users_uid_seq'),'OIstH',cast (X'ffffffff' as integer));
+INSERT INTO users (username,rootpath,uid,perms) VALUES ('anonymous','/tmp',nextval('users_uid_seq'),cast (X'ffffffff' as integer));
 
 --
 -- Table structure for table `UGR` (User-Group Relations)

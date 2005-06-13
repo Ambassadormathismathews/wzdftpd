@@ -164,7 +164,10 @@ Default password is "wzdftpd" (you should change it in file createusers.sql !).
 <para>
 To use the PostgreSQL backend, add the following to you config file:
 <programlisting>backend = /path/to/wzdftpd/share/wzdftpd/backends/libwzdpgsql.so
-backend_param_pgsql = login:password@host:base</programlisting>
+backend_param_pgsql = login:password@host:base[:port]</programlisting>
+</para>
+<para>
+The port is optional and will be defaulted to 5432.
 </para>
 <para>
 <emphasis>Add comments on schema, constraints, etc.</emphasis>

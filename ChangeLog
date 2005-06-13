@@ -1,3 +1,9 @@
+2005-06-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: missing tagline in mysql and postgresql backends
+	* bugfix: use sequences to find uid in initial script (postgresql)
+	* feature: support for :port in postgresql backend
+
 2005-06-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: missing locks in backend functions

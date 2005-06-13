@@ -44,9 +44,11 @@
 
 #include "libpgsql.h"
 
-#define PGSQL_BACKEND_VERSION   102
+#define PGSQL_BACKEND_VERSION   103
 
 #define PGSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+17)
+
+#define PGSQL_DEFAULT_PORT      5432
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(pgsql);
@@ -55,6 +57,7 @@ BACKEND_VERSION(PGSQL_BACKEND_VERSION);
 
 PGconn * pgconn = NULL;
 static char *db_user, *db_passwd, *db_hostname, *db;
+static unsigned int db_port;
 
 /*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
 static int wzd_parse_arg(const char *arg);
@@ -85,7 +88,7 @@ void _wzd_pgsql_error(const char *filename, const char  *func_name, int line)
 
 static int wzd_parse_arg(const char *arg)
 {
-  char *ptr;
+  char *ptr, *str_port;
   char * buffer;
 
   if (!arg) return -1;
@@ -101,8 +104,14 @@ static int wzd_parse_arg(const char *arg)
   db_hostname = strtok_r(NULL, ":\n", &ptr);
   if (!db_hostname) { free(buffer); return -1; }
 
-  db = strtok_r(NULL, "\n", &ptr);
+  db = strtok_r(NULL, ":\n", &ptr);
   if (!db) { free(buffer); return -1; }
+
+  str_port = strtok_r(NULL, "\n", &ptr);
+  if (str_port) {
+    db_port = strtoul(str_port,NULL,0);
+  } else
+    db_port = PGSQL_DEFAULT_PORT;
 
   return 0;
 }
@@ -116,16 +125,22 @@ int FCN_INIT(const char *arg)
     return -1;
   }
 
-  pgconn = PQsetdbLogin(db_hostname, /* db_port */ NULL, /* pgoptions */ NULL,
-      /* pgtty */ NULL, db, db_user, db_passwd);
+  {
+    wzd_string_t * str = str_allocate();
 
-  /** \todo XXX FIXME try using CLIENT_SSL for the last arg */
-/*  if (!mysql_real_connect(&mysql, db_hostname, db_user, db_passwd, db, 0, NULL, 0)) {*/
-  if (!pgconn) {
-#if 0
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    mysql_close(&mysql);
-#endif
+    str_sprintf(str,"host=%s port=%u dbname=%s user=%s password=%s",
+        db_hostname, db_port, db, db_user, db_passwd);
+
+    pgconn = PQconnectdb(str_tochar(str));
+
+    str_deallocate(str);
+  }
+
+  if (!pgconn || PQstatus(pgconn)!=CONNECTION_OK) {
+    out_log(PGSQL_LOG_CHANNEL,"PG: could not connect to database %s on %s\n",db,db_hostname);
+    out_log(PGSQL_LOG_CHANNEL,"PG: please check connections and tables status\n");
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    if (pgconn) PQfinish(pgconn);
     return -1;
   }
 
@@ -133,8 +148,9 @@ int FCN_INIT(const char *arg)
   PQclear(res);
 
   if (!res) {
-    out_log(PGSQL_LOG_CHANNEL,"PG: could not connect to database %s on %s\n",db,db_hostname);
+    out_log(PGSQL_LOG_CHANNEL,"PG: could not find expected data in database %s on %s\n",db,db_hostname);
     out_log(PGSQL_LOG_CHANNEL,"PG: please check connections and tables status\n");
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     PQfinish(pgconn);
     return -1;
   }
@@ -376,6 +392,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, res, UCOL_USERNAME);
   wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, res, UCOL_USERPASS);
   wzd_row_get_string(user->rootpath, WZD_MAX_PATH, res, UCOL_ROOTPATH);
+  wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, res, UCOL_TAGLINE);
   wzd_row_get_string(user->flags, MAX_FLAGS_NUM, res, UCOL_FLAGS);
   wzd_row_get_uint((unsigned int*)&user->max_idle_time, res, UCOL_MAX_IDLE_TIME);
   wzd_row_get_uint(&user->max_ul_speed, res, UCOL_MAX_UL_SPEED);
@@ -795,6 +812,7 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
 
   if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    out_log(PGSQL_LOG_CHANNEL,"PG: query was '%s'\n", query);
     return -1;
   }
 

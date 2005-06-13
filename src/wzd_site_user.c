@@ -405,7 +405,6 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
     }
 
     /* commit changes to backend */
-    /* FIXME backend name hardcoded */
     backend_mod_user(mainConfig->backend.name,str_tochar(username),NULL,_USER_ALL);
     str_deallocate(username);
   } else { /* if (username) */
@@ -430,8 +429,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
             }
           }
           /* commit changes to backend */
-          /* FIXME backend name hardcoded */
-          backend_mod_user("plaintext",user->username,NULL,_USER_ALL);
+          backend_mod_user(mainConfig->backend.name,user->username,NULL,_USER_ALL);
         }
       }
       wzd_free (uid_list);
@@ -635,8 +633,7 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   } while (ip);
 
   /* commit to backend */
-  /* FIXME backend name hardcoded */
-  backend_mod_user("plaintext",user->username,user,_USER_IP);
+  backend_mod_user(mainConfig->backend.name,user->username,user,_USER_IP);
   ret = send_message_with_args(200,context,"User ip(s) removed");
   return 0;
 }
@@ -667,12 +664,12 @@ int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t
     *dst_ptr++ = FLAG_COLOR;
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
-    ret = backend_mod_user("plaintext",me->username,me,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backend.name,me->username,me,_USER_FLAGS);
     ret = send_message_with_args(200,context,"color mode ON");
   } else {
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
-    ret = backend_mod_user("plaintext",me->username,me,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backend.name,me->username,me,_USER_FLAGS);
     ret = send_message_with_args(200,context,"color mode OFF");
   }
   return 0;
@@ -932,8 +929,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   i = user->uid;
 
   /* commit to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",user->username,user,mod_type);
+  ret = backend_mod_user(mainConfig->backend.name,user->username,user,mod_type);
 
   /* user has been modified, we have to refresh cache entry */
   user = GetUserByID(i);
@@ -1123,8 +1119,7 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   user.ratio = ratio;
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_RATIO);
+  ret = backend_mod_user(mainConfig->backend.name,str_tochar(username),&user,_USER_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -1204,8 +1199,7 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
       return 0;
     }
     /* commit to backend */
-    /* FIXME backend name hardcoded */
-    ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backend.name,str_tochar(username),&user,_USER_FLAGS);
     if (!ret)
       ret = send_message_with_args(200,context,"Flags changed");
     else
@@ -1250,8 +1244,7 @@ int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     }
     user->max_idle_time = idletime;
     /* commit to backend */
-    /* FIXME backend name hardcoded */
-    backend_mod_user("plaintext",user->username,user,_USER_IDLE);
+    backend_mod_user(mainConfig->backend.name,user->username,user,_USER_IDLE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
@@ -1283,8 +1276,7 @@ int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   if (command_line && strlen(str_tochar(command_line))>0) {
     strncpy(user->tagline,str_tochar(command_line),255);
     /* commit to backend */
-    /* FIXME backend name hardcoded */
-    backend_mod_user("plaintext",user->username,user,_USER_TAGLINE);
+    backend_mod_user(mainConfig->backend.name,user->username,user,_USER_TAGLINE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
@@ -1511,8 +1503,7 @@ int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     me->credits -= kbytes;
 
   /* add it to backend */
-  /* FIXME backend name hardcoded */
-  ret = backend_mod_user("plaintext",str_tochar(username),&user,_USER_CREDITS);
+  ret = backend_mod_user(mainConfig->backend.name,str_tochar(username),&user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");

@@ -55,7 +55,8 @@ AC_DEFUN([WZD_LIB_PGSQL],
   ])
 
   if test "$places" = "search"; then
-    places="std /usr/include/postgresql:/usr/lib /usr/local/sw/include/postgresql:/sw/lib
+    places="std /usr/include/postgresql:/usr/lib /usr/include/postgresql/8.0:/usr/lib
+            /usr/local/sw/include/postgresql:/sw/lib
             /usr/local/include/postgresql:/usr/local/lib"
   fi
   # now 'places' is guaranteed to be a list of place specs we should
