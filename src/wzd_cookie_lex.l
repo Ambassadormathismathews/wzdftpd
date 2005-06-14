@@ -767,7 +767,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
 
       i = wzd_cache_getsize(fp);
       tmpbuf = wzd_malloc(i+1);
-      if (wzd_cache_read(fp, tmpbuf, i) != i) {
+      if (wzd_cache_read(fp, tmpbuf, i) != (int)i) {
 #ifdef WZD_DBG_COOKIES
         out_err(LEVEL_HIGH, "invalid 'include' directive (error reading file)\n");
 #endif

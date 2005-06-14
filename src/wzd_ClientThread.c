@@ -2975,7 +2975,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   fs_filestat_t s;
   int ret;
   unsigned char crc[16];
-  unsigned char md5str[33];
+  char md5str[33];
   unsigned long startpos = 0;
   unsigned long length = (unsigned long)-1;
   unsigned int i;

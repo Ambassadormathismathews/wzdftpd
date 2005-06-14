@@ -104,13 +104,15 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
  */
 fd_t socket_make(const char *ip, unsigned int *port, int nListen)
 {
-  struct sockaddr_in sai = { 0 };
-#if defined(IPV6_SUPPORT)
-  struct sockaddr_in6 sai6 = { 0 };
-#endif
-/*  unsigned int c;*/
   size_t c;
   fd_t sock;
+  struct sockaddr_in sai;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 sai6;
+
+  memset(&sai6, 0, sizeof(struct sockaddr_in6));
+#endif
+  memset(&sai, 0, sizeof(struct sockaddr_in));
 
   if (ip==NULL || strcmp(ip,"*")==0)
 #if defined(IPV6_SUPPORT)

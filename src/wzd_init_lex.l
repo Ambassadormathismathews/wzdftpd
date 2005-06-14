@@ -1223,8 +1223,8 @@ int cfg_read_pasv_ip(void)
   }
 
   {
-    unsigned char * line;
-    unsigned char host_ip[64];
+    char * line;
+    char host_ip[64];
     line = read_until_eol(256);
     if (!line) {
       out_err(LEVEL_HIGH,"line should be 'pasv_ip = ...'\n");
