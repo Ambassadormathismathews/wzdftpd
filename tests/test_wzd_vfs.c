@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
     "/d/toto/../../e", "/e",
     "/dir.", "/dir.",
     "/dir..", "/dir..",
+    "/dir/..", "/",
     NULL, NULL
   };
 

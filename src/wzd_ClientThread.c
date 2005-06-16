@@ -522,7 +522,7 @@ int check_timeout(wzd_context_t * context)
 int do_chdir(const char * wanted_path, wzd_context_t *context)
 {
   int ret;
-  char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH];
+  char allowed[WZD_MAX_PATH],path[WZD_MAX_PATH], * ptr;
   fs_filestat_t buf;
   wzd_user_t * user;
 
@@ -545,7 +545,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   {
     char tmppath[WZD_MAX_PATH];
 
-    strncpy(tmppath,path,WZD_MAX_PATH); /* FIXME slow, and length _MUST_ be tested */
+    wzd_strncpy(tmppath,path,WZD_MAX_PATH); /* length _MUST_ be tested */
     /* remove trailing / */
 #if 0
     ret = _checkPerm(tmppath,RIGHT_CWD,user); /** \bug checkpath_new already checks for RIGHT_CWD */
@@ -575,6 +575,11 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     else return E_NOTDIR;
   }
   else return E_FILE_NOEXIST;
+
+  ptr = stripdir(context->currentpath,path,sizeof(path));
+  if (ptr) {
+    wzd_strncpy(context->currentpath,path,WZD_MAX_PATH-1);
+  }
 
 #ifdef DEBUG
 out_err(LEVEL_INFO,"current path: '%s'\n",context->currentpath);
