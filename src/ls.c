@@ -309,8 +309,10 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
         else if (strcmp(ptr,"..")==0) type = "pdir";
         else type = "dir";
         break;
+#ifndef WIN32
       case S_IFLNK:
         type = "OS.unix=slink"; break;
+#endif
       default:
         type = "unknown"; break;
     }

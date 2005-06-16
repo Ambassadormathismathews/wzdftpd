@@ -81,8 +81,6 @@ typedef size_t ssize_t;
 #define ENOTCONN     WSAENOTCONN
 #define ETIMEDOUT    WSAECONNABORTED
 
-#define in6_addr in_addr6 /* funny ! */
-
 #define F_RDLCK 0 /* Read lock. */
 #define F_WRLCK 1 /* Write lock. */
 #define F_UNLCK 2 /* Remove lock. */
@@ -217,7 +215,6 @@ typedef size_t ssize_t;
 #define vsnprintf	_vsnprintf
 
 #define pid_t		unsigned int
-#define socklen_t	unsigned int
 #define uid_t		unsigned int
 #define gid_t		unsigned int
 
@@ -354,12 +351,19 @@ typedef signed fd_t;
 #define ULONG uint32_t
 #endif
 
+/* definitions for windows 2000 */
+#if defined(WINVER) && (WINVER < 0x0501)
+#define in6_addr in_addr6 /* funny ! */
+
+#define socklen_t	unsigned int
+
 #ifndef IN6_IS_ADDR_V4MAPPED
 #define IN6_IS_ADDR_V4MAPPED(a) \
 	((((const ULONG *)(a))[0] == 0) \
 	&& (((const ULONG *)(a))[1] == 0) \
 	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
 #endif
+#endif /* WINVER */
 
 #ifndef INADDR_NONE
 # define INADDR_NONE ((unsigned long int) 0xffffffff)

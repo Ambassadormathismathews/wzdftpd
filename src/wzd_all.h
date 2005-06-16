@@ -45,6 +45,7 @@
 
 #ifdef WIN32
 #define _WIN32_WINNT    0x500
+#define _WINSOCKAPI_
 #include <windows.h>
 
 #include <direct.h>

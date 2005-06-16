@@ -34,8 +34,10 @@
 
 #ifdef WIN32
 
+#if defined(WINVER) && (WINVER < 0x0501)
 #define        INET_ADDRSTRLEN         16
 #define        INET6_ADDRSTRLEN        46
+#endif
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
