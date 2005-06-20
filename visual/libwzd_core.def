@@ -267,6 +267,10 @@ EXPORTS
 	wzd_shm_write
 	wzd_strdup
 	wzd_strncpy
+	wzd_thread_attr_destroy
+	wzd_thread_attr_init
+	wzd_thread_attr_set_detached
+	wzd_thread_create
 	xferlog_close
 	xferlog_open
 	GetGroupByID

@@ -86,6 +86,7 @@
 #include "wzd_messages.h"
 #include "wzd_section.h"
 #include "wzd_site.h"
+#include "wzd_threads.h"
 #include "wzd_utf8.h"
 #include "wzd_vars.h"
 
@@ -112,7 +113,7 @@ typedef struct {
 } wzd_ident_context_t;
 
 /************ VARS *****************/
-wzd_cronjob_t	* crontab;
+wzd_cronjob_t * crontab;
 
 /*time_t server_start;*/
 
@@ -709,8 +710,11 @@ static void server_ident_remove(wzd_ident_context_t * ident_context)
  */
 static void server_login_accept(wzd_context_t * context)
 {
+  wzd_thread_t thread;
+  wzd_thread_attr_t thread_attr;
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
   unsigned char * userip;
+  int ret;
 
   userip = context->hostip;
 #if !defined(IPV6_SUPPORT)
@@ -721,71 +725,40 @@ static void server_login_accept(wzd_context_t * context)
     out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
 #endif
 
-  /* start child process */
-
-    /* switch to tls mode ? */
+  /* switch to tls mode ? */
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-    if (mainConfig->tls_type == TLS_IMPLICIT) {
-      if (tls_auth("SSL",context)) {
-        close(context->controlfd);
-        FD_UNREGISTER(context->controlfd,"Client socket");
-        out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
-        /* mark context as free */
-        context->magic = 0;
-        return;
-      }
-      context->connection_flags |= CONNECTION_TLS;
+  if (mainConfig->tls_type == TLS_IMPLICIT) {
+    if (tls_auth("SSL",context)) {
+      close(context->controlfd);
+      FD_UNREGISTER(context->controlfd,"Client socket");
+      out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
+      /* mark context as free */
+      context->magic = 0;
+      return;
     }
-    context->ssl.data_mode = TLS_CLEAR;
-#endif
-
-#ifdef WZD_MULTIPROCESS
-    /* for stats */
-    mainConfig->stats.num_childs++;
-
-    context->pid_child = getpid();
-#else /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTITHREAD
-#ifdef _MSC_VER
-    {
-      HANDLE thread;
-      unsigned long threadID;
-
-      thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)clientThreadProc, context, 0, &threadID);
-
-      context->pid_child = (unsigned long)thread;
-    }
-#else /* WIN32 */
-    {
-      int ret;
-      pthread_t thread;
-      pthread_attr_t thread_attr;
-
-      ret = pthread_attr_init(&thread_attr);
-      if (ret) {
-        out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
-        return;
-      }
-      if (pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED)) {
-        out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
-        return;
-      }
-      ret = pthread_create(&thread,&thread_attr,clientThreadProc,context);
-      context->pid_child = (unsigned long)thread;
-      pthread_attr_destroy(&thread_attr); /* not needed anymore */
-    }
-#endif /* _MSC_VER */
-#else /* WZD_MULTITHREAD */
-    clientThreadProc(context);
-#endif /* WZD_MULTITHREAD */
-#endif /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTIPROCESS
-    exit (0);
-  } else { /* parent */
-    FD_UNREGISTER(newsock,"Client socket");
-    socket_close (newsock);
+    context->connection_flags |= CONNECTION_TLS;
   }
+  context->ssl.data_mode = TLS_CLEAR;
 #endif
+
+  /* start new thread */
+
+  ret = wzd_thread_attr_init( & thread_attr );
+  if (ret) {
+    out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
+    return;
+  }
+  if (wzd_thread_attr_set_detached( & thread_attr )) {
+    out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
+    return;
+  }
+  ret = wzd_thread_create(&thread,&thread_attr,clientThreadProc,context);
+  if (ret) {
+    out_err(LEVEL_CRITICAL,"Unable to craete thread\n");
+    return;
+  }
+  context->pid_child = (unsigned long)WZD_THREAD_VOID(&thread);
+  wzd_thread_attr_destroy(&thread_attr); /* not needed anymore */
 }
 
 /*

@@ -23,85 +23,79 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
-
-/** \file wzd_all.h
-  * \brief Include all files from wzdftpd main lib. Can be used for precompilation.
+/** \file wzd_threads.c
+  * \brief Threads implementation
+  * \warning This file contains many platform-dependant code
   */
 
-#ifdef WZD_USE_PCH
+#include "wzd_all.h"
 
-#ifndef __WZD_ALL__
-#define __WZD_ALL__
-
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
+#ifndef WZD_USE_PCH
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <time.h>
+#include <errno.h>
+#include <sys/types.h>
 
 #ifdef WIN32
 #define _WIN32_WINNT    0x500
-#define _WINSOCKAPI_
 #include <windows.h>
-
-#include <direct.h>
-#include <io.h>
-#include <winsock2.h>
-#include <process.h> /* _getpid() */
-#endif /* WIN32 */
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#ifdef BSD
-#define DL_ARG    DL_LAZY
 #else
-#define DL_ARG    RTLD_NOW
+#include <unistd.h>
+#include <pthread.h>
 #endif
-
-#ifdef NEED_UNDERSCORE
-#define DL_PREFIX "_"
-#else
-#define DL_PREFIX
-#endif
-
-
 
 #include "wzd_structs.h"
-
-#include "wzd_backend.h"
-#include "wzd_cache.h"
-#include "wzd_ClientThread.h"
-#include "wzd_dir.h"
-#include "wzd_crontab.h"
-#include "wzd_file.h"
-#include "wzd_fs.h"
-#include "wzd_libmain.h"
 #include "wzd_log.h"
-#include "wzd_messages.h"
-#include "wzd_misc.h"
-#include "wzd_mod.h"
-#include "wzd_perm.h"
-#include "wzd_site.h"
-#include "wzd_site_group.h"
-#include "wzd_site_user.h"
-#include "wzd_socket.h"
-#include "wzd_string.h"
 #include "wzd_threads.h"
-#include "wzd_utf8.h"
-#include "wzd_vars.h"
-#include "wzd_vfs.h"
-
 
 #include "wzd_debug.h"
 
-#endif /* __WZD_ALL__ */
-
+#else /* WZD_USE_PCH */
+#ifdef WIN32
+#define _WIN32_WINNT    0x500
+#include <windows.h>
+#endif
 #endif /* WZD_USE_PCH */
+
+/* thread creation */
+int wzd_thread_create(wzd_thread_t * thread, wzd_thread_attr_t * attr, void * (start_routine)(void *), void * arg)
+{
+#ifndef WIN32
+  return pthread_create( & thread->_t, & attr->_a, start_routine, arg);
+#else
+  unsigned long threadID;
+
+  thread->_t = CreateThread( & attr->_a, 0, start_routine, arg, 0 /* creation flags */, &threadId);
+
+  return (thread->_v == NULL);
+#endif
+}
+
+int wzd_thread_attr_init(wzd_thread_attr_t * attr)
+{
+#ifndef WIN32
+  return pthread_attr_init( & attr->_a );
+#else
+  attr->_v = NULL;
+#endif
+}
+
+int wzd_thread_attr_destroy(wzd_thread_attr_t * attr)
+{
+#ifndef WIN32
+  return pthread_attr_destroy( & attr->_a );
+#else
+  attr->_v = NULL;
+#endif
+}
+
+int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr)
+{
+#ifndef WIN32
+  return pthread_attr_setdetachstate( & attr->_a, PTHREAD_CREATE_DETACHED);
+#else
+#endif
+}
 

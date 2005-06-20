@@ -271,6 +271,10 @@ SOURCE=..\src\wzd_strtoull.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\src\wzd_threads.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\src\wzd_tls.c
 # End Source File
 # Begin Source File
@@ -424,6 +428,10 @@ SOURCE=..\src\wzd_strtoull.h
 # Begin Source File
 
 SOURCE=..\src\wzd_structs.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\src\wzd_threads.h
 # End Source File
 # Begin Source File
 
