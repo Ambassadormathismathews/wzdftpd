@@ -67,7 +67,7 @@ int wzd_thread_create(wzd_thread_t * thread, wzd_thread_attr_t * attr, void * (s
 #else
   unsigned long threadID;
 
-  thread->_t = CreateThread( & attr->_a, 0, start_routine, arg, 0 /* creation flags */, &threadId);
+  thread->_t = CreateThread( NULL /* not supported yet */, 0, (LPTHREAD_START_ROUTINE)start_routine, arg, 0 /* creation flags */, &threadID);
 
   return (thread->_v == NULL);
 #endif
@@ -79,6 +79,7 @@ int wzd_thread_attr_init(wzd_thread_attr_t * attr)
   return pthread_attr_init( & attr->_a );
 #else
   attr->_v = NULL;
+  return 0;
 #endif
 }
 
@@ -88,6 +89,7 @@ int wzd_thread_attr_destroy(wzd_thread_attr_t * attr)
   return pthread_attr_destroy( & attr->_a );
 #else
   attr->_v = NULL;
+  return 0;
 #endif
 }
 
@@ -96,6 +98,7 @@ int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr)
 #ifndef WIN32
   return pthread_attr_setdetachstate( & attr->_a, PTHREAD_CREATE_DETACHED);
 #else
+  return 0;
 #endif
 }
 

@@ -51,7 +51,7 @@ union wzd_thread_attr_t {
 #ifndef WIN32
   pthread_attr_t _a;
 #else
-  HANDLE _t;
+  HANDLE _a;
 #endif
   void * _v;
 };
