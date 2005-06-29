@@ -119,6 +119,7 @@ EXPORTS
 	local_charset_to_utf8
 	log_close
 	log_fini
+	log_get
 	log_init
 	log_message
 	log_open

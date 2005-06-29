@@ -39,6 +39,10 @@ wzd_user_t * user_allocate_new(void);
 wzd_group_t * group_allocate_new(void);
 
 
+#define ERRLOG(s) plaintext_log((s),__FILE__,__FUNCTION__,__LINE__)
+
+void plaintext_log(const char * error, const char * filename, const char * func_name, int line);
+
 extern char * USERS_FILE;
 
 extern List user_list;

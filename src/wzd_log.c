@@ -87,7 +87,8 @@ int log_open(const char * filename, int filemode)
   int fd;
 
   fd = open(filename, filemode, 0640);
-  FD_REGISTER(fd,"Log");
+  if (fd)
+    FD_REGISTER(fd,"Log");
 
   return fd;
 }
@@ -140,6 +141,18 @@ void log_close_old(void)
   if (mainConfig->logfile)
     fclose(mainConfig->logfile);
   mainConfig->logfile = NULL;
+}
+
+/** \brief Get file descriptor asociated to log level
+ *
+ * Get file decriptor corresponding to all messages sent to the
+ * log level.
+ */
+int log_get(unsigned int level)
+{
+  if (level >= MAX_LOG_CHANNELS) return -1;
+
+  return _log_channels[level].fd;
 }
 
 int log_set(unsigned int level, int fd)

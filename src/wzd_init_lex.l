@@ -1,3 +1,4 @@
+#line 1 "wzd_init_lex.l"
 /* vi:ai:et:ts=8 sw=2
  */
 /*
@@ -23,7 +24,7 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
-
+ 
 /* used to include files */
 %x incl
 
@@ -93,6 +94,7 @@ typedef enum {
   CFG_LOGDIR,
   CFG_LOGFILE,
   CFG_LOGLEVEL,
+  CFG_LOG_CHANNEL,
   CFG_LOG_PRE_CHECK,
   CFG_LOG_PRE_IP_ALLOW,
   CFG_LOG_PRE_IP_DENY,
@@ -220,6 +222,8 @@ unsigned int cfg_is_keyword(char *word)
   if (!strcmp(word,"hide_dotted_files")) return CFG_HIDE_DOTTED_FILES;
   if (!strcmp(word,"internal_sfv_checker")) return CFG_INTERNAL_SFV;
   if (!strcmp(word,"ip")) return CFG_IP;
+  if (!strncmp(word,"log_channel_",strlen("log_channel_")))
+    return CFG_LOG_CHANNEL;
   if (!strcmp(word,"logfile")) return CFG_LOGFILE;
   if (!strcmp(word,"loglevel")) return CFG_LOGLEVEL;
   if (!strcmp(word,"login_pre_ip_allowed")) return CFG_LOG_PRE_IP_ALLOW;
@@ -864,6 +868,47 @@ int cfg_read_ip(void)
   }
 
   return 0;
+}
+
+/* LOG_CHANNEL
+*/
+int cfg_read_log_channel(const char *str_level)
+{
+  unsigned int token;
+  unsigned int level;
+  char * ptr;
+  char * param;
+  int ret;
+  fd_t fd;
+
+  token = yylex();
+  if (token!='=') {
+    out_err(LEVEL_HIGH,"line should be 'log_channel_<number> = ...'\n");
+    return 1;
+  }
+
+  level = (unsigned int)strtoul(str_level,&ptr,10);
+  if (!ptr || *ptr != '\0') {
+    out_err(LEVEL_HIGH,"log channel number is invalid !\n");
+  }
+
+  if( !(param=read_until_eol(256)) || strlen(param)==0 ) {
+    /* disable log channel */
+    ret = log_set(level,-1);
+    return 0;
+  }
+
+  /** \todo add code for syslog */
+  /** \todo we cannot set to the standard log file ... it is not yet opened ! */
+  ret = 1;
+
+  fd = log_open(param,O_WRONLY | O_CREAT);
+  if (fd) {
+    ret = log_set(level,fd);
+  }
+
+  wzd_free (param);
+  return ret;
 }
 
 /* LOGFILE
@@ -1909,6 +1954,18 @@ wzd_config_t * readConfigFile(const char *fileName)
       break;
     case CFG_IP:
       ret = cfg_read_ip();
+      break;
+    case CFG_LOG_CHANNEL:
+      {
+        char *buf;
+        if (strlen(yytext)<=strlen("log_channel_") || strlen(yytext)>=256) {
+          out_err(LEVEL_HIGH,"token too long\n");
+          continue;
+        }
+        buf = wzd_strdup(yytext+strlen("log_channel_"));
+        ret = cfg_read_log_channel(buf);
+        wzd_free(buf);
+      }
       break;
     case CFG_LOGFILE:
       ret = cfg_read_logfile();

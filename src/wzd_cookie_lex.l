@@ -1,3 +1,4 @@
+#line 1 "wzd_cookie_lex.l"
 /* vi:ai:et:ts=8 sw=2
  */
 /*

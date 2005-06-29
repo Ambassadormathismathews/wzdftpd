@@ -294,6 +294,21 @@ mainly for server with multiples interfaces).
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_log_channel'><term>log_channel_... (default: use logfile or syslog)</term>
+<listitem>
+<para>Change log file associated to a specific channel. The first 10 channels are reserved
+for standard log levels (from debug messages to critical errors), others can be used
+by backends or modules. To know the level associated to a module please consult the
+corresponding docs.
+<screen>log_channel_21 = /var/log/wzdftpd/plaintext.log</screen>
+</para>
+<para>
+To disable a channel, just leave empty the file name field:
+<programlisting>log_channel_21 =</programlisting>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_logdir'><term>logdir (default: do not use log directory)</term>
 <listitem>
 <para>Location of a directory where the server will put various log files.

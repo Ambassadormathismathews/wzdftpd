@@ -1,3 +1,8 @@
+2005-06-29  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new logging system based on channels
+	* feature: new config directive: log_channels_...
+
 2005-06-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: missing tagline in mysql and postgresql backends

@@ -805,7 +805,8 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
 /** Tests a path system path, checking
  * for errors and permissions
  *
- * \param test_path The path in system-form
+ * \param trial_path The path in system-form
+ * \param context The user context
  * 
  * If the return is 0, then we are SURE the result exists.
  * If the real path points to a directory, then the it must be / terminated

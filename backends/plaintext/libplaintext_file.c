@@ -119,7 +119,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
 {
   unsigned int j;
   wzd_group_t * loop_group;
-  char buffer[4096];
+  char buffer[4096], errbuf[1024];
 
   fprintf(file,"name=%s\n",user->username);
   fprintf(file,"pass=%s\n",user->userpass);
@@ -131,9 +131,8 @@ int write_single_user(FILE * file, const wzd_user_t * user)
     loop_group = plaintext_get_group_from_gid(user->groups[0]);
     if (!loop_group) {
       /* FIXME warn user */
-#ifdef DEBUG
-      fprintf(stderr,"Invalid MAIN group %u for user %s\n",user->groups[0],user->username);
-#endif
+      snprintf(errbuf,sizeof(errbuf),"Invalid MAIN group %u for user %s\n",user->groups[0],user->username);
+      ERRLOG(errbuf);
     } else {
       strcpy(buffer,loop_group->groupname);
       for (j=1; j<user->group_num; j++) {
@@ -141,9 +140,8 @@ int write_single_user(FILE * file, const wzd_user_t * user)
         loop_group = plaintext_get_group_from_gid(user->groups[j]);
         if (!loop_group) {
           /* FIXME warn user */
-#ifdef DEBUG
-          fprintf(stderr,"Invalid group %u for user %s\n",user->groups[j],user->username);
-#endif
+          snprintf(errbuf,sizeof(errbuf),"Invalid MAIN group %u for user %s\n",user->groups[j],user->username);
+          ERRLOG(errbuf);
         } else {
           strcat(buffer,loop_group->groupname);
         }
@@ -163,15 +161,11 @@ int write_single_user(FILE * file, const wzd_user_t * user)
     fprintf(file,"max_ul_speed=%u\n",user->max_ul_speed);
   if (user->max_dl_speed)
     fprintf(file,"max_dl_speed=%u\n",user->max_dl_speed);
-#ifndef WIN32
-  fprintf(file,"credits=%llu\n",user->credits);
-  fprintf(file,"bytes_ul_total=%llu\n",user->stats.bytes_ul_total);
-  fprintf(file,"bytes_dl_total=%llu\n",user->stats.bytes_dl_total);
-#else
-  fprintf(file,"credits=%I64u\n",user->credits);
-  fprintf(file,"bytes_ul_total=%I64u\n",user->stats.bytes_ul_total);
-  fprintf(file,"bytes_dl_total=%I64u\n",user->stats.bytes_dl_total);
-#endif
+
+  fprintf(file,"credits=%" PRIu64 "\n",user->credits);
+  fprintf(file,"bytes_ul_total=%" PRIu64 "\n",user->stats.bytes_ul_total);
+  fprintf(file,"bytes_dl_total=%" PRIu64 "\n",user->stats.bytes_dl_total);
+
   if (user->stats.files_ul_total)
     fprintf(file,"files_ul_total=%lu\n",user->stats.files_ul_total);
   if (user->stats.files_dl_total)
@@ -237,6 +231,7 @@ int write_user_file(void)
   FILE *file, *fileold;
   unsigned int i,j;
   char buffer[4096];
+  char errbuf[1024];
   const char * const file_header[] = {
     "# general considerations:",
     "#",
@@ -263,7 +258,7 @@ int write_user_file(void)
   {
     loop_user = list_data(elmnt);
     if (!loop_user) {
-      fprintf(stderr,"plaintext: EMPTY node in user list !!!\n");
+      ERRLOG("plaintext: EMPTY node in user list !!!\n");
     }
     j = loop_user->username[0];
   }
@@ -279,12 +274,14 @@ int write_user_file(void)
   /* FIXME i need to get a mutex here ? */
   file = fopen(filename,"r");
   if (!file) {
-    fprintf(stderr,"Could not open file %s !\n",filename);
+    snprintf(errbuf,sizeof(errbuf),"Could not open file %s !\n",filename);
+    ERRLOG(errbuf);
     return -1;
   }
   fileold = fopen(filenameold,"w+");
   if (!fileold) {
-    fprintf(stderr,"Could not open file %s !\n",filenameold);
+    snprintf(errbuf,sizeof(errbuf),"Could not open file %s !\n",filenameold);
+    ERRLOG(errbuf);
     return -1;
   }
 
@@ -293,7 +290,11 @@ int write_user_file(void)
     while ( (i=fread(buffer,1,4096,file)) > 0 )
     {
       j = fwrite(buffer,1,i,fileold);
-      if (!j) { fprintf(stderr,"ERROR writing to %s\n",filenameold); return -1; }
+      if (!j) {
+        snprintf(errbuf,sizeof(errbuf),"ERROR writing to %s\n",filenameold);
+        ERRLOG(errbuf);
+        return -1;
+      }
     }
   }
   fclose(fileold);
@@ -305,13 +306,13 @@ int write_user_file(void)
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
   if (sigprocmask(SIG_BLOCK,&mask,NULL)<0) {
-    fprintf(stderr,"Unable to block SIGINT with sigprocmask\n");
+    ERRLOG("Unable to block SIGINT with sigprocmask\n");
   }
 #endif
 
   file = freopen(filename,"w+",file);
   if (!file) {
-    fprintf(stderr,"ERROR: unable to reopen users file (%s:%d)\n",__FILE__,__LINE__);
+    ERRLOG("unable to reopen users file (%s:%d)\n");
     return -1;
   }
   fseek(file,SEEK_SET,0);
@@ -328,7 +329,7 @@ int write_user_file(void)
   for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt))
   {
     if (!(loop_group = list_data(elmnt))) {
-      fprintf(stderr,"plaintext: EMPTY NODE IN GROUP LIST !\n");
+      ERRLOG("EMPTY NODE IN GROUP LIST !\n");
       continue;
     }
     if (loop_group->groupname[0]=='\0') continue;
@@ -346,7 +347,7 @@ int write_user_file(void)
   for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt))
   {
     if (!(loop_user = list_data(elmnt))) {
-      fprintf(stderr,"plaintext: EMPTY NODE IN USER LIST !\n");
+      ERRLOG("EMPTY NODE IN USER LIST !\n");
       continue;
     }
     if (loop_user->username[0]=='\0') continue;
@@ -368,7 +369,7 @@ int write_user_file(void)
   /* unblock signals - if a SIGINT is pending, it should be harmless now */
 #ifndef _MSC_VER
   if (sigprocmask(SIG_UNBLOCK,&mask,NULL)<0) {
-    fprintf(stderr,"Unable to unblock SIGINT with sigprocmask\n");
+    ERRLOG("Unable to unblock SIGINT with sigprocmask\n");
   }
 #endif
 
@@ -412,6 +413,7 @@ int read_section_groups(FILE * file_user, char * line)
 {
   char c;
   char *token, *ptr;
+  char errbuf[1024];
   unsigned int directive;
   int err;
   long num;
@@ -445,7 +447,7 @@ fprintf(stderr,"Entering section GROUPS\n");
       if (!token) continue;
       token = strtok(NULL," \t\n");
       if (!token) {
-        fprintf(stderr,"privgroup should be followed by the group name !\n");
+        ERRLOG("privgroup should be followed by the group name !\n");
         continue;
       }
 #if 0
@@ -456,7 +458,8 @@ fprintf(stderr,"Defining new private group %s\n",token);
 	group_pool = realloc(group_pool,group_count+256);
       }*/
       if (++group_count >= group_count_max) {
-        fprintf(stderr,"Too many groups: %d\n",group_count);
+        snprintf(errbuf,sizeof(errbuf),"Too many groups: %d\n",group_count);
+        ERRLOG(errbuf);
         continue;
       }
       group_new = group_allocate_new();
@@ -469,7 +472,8 @@ fprintf(stderr,"Defining new private group %s\n",token);
     case D_NONE:
       err = regexec(&reg_line,line,3,regmatch,0);
       if (err) {
-fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line);
+        snprintf(errbuf,sizeof(errbuf),"Line '%s' does not respect config line format - ignoring\n",line);
+        ERRLOG(errbuf);
         continue;
       }
       memcpy(varname,line+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
@@ -483,7 +487,8 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
         if (!group_count) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid gid %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid gid %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->gid = num;
@@ -492,7 +497,8 @@ fprintf(stderr,"Invalid gid %s\n",value);
         if (!group_count) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_idle_time %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid max_idle_time %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->max_idle_time = num;
@@ -501,7 +507,8 @@ fprintf(stderr,"Invalid max_idle_time %s\n",value);
         if (!group_count) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid num_logins %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid num_logins %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->num_logins = (unsigned short)num;
@@ -517,7 +524,8 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
         if (!group_count) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-          fprintf(stderr,"Invalid ratio %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid ratio %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->ratio = num;
@@ -526,7 +534,8 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
         if (!group_count || !group_new) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid max_dl_speed %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->max_dl_speed = num;
@@ -535,7 +544,8 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
         if (!group_count || !group_new) break;
         num = strtol(value, &ptr, 0);
         if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_ul_speed %s\n",value);
+          snprintf(errbuf,sizeof(errbuf),"Invalid max_ul_speed %s\n",value);
+          ERRLOG(errbuf);
           continue;
         }
         group_new->max_ul_speed = num;
@@ -545,7 +555,7 @@ fprintf(stderr,"Invalid max_ul_speed %s\n",value);
       } /* tagline */
       break;
     default:
-fprintf(stderr,"Houston, we have a problem\n");
+      ERRLOG("Houston, we have a problem (invalid varname)\n");
       break;
     }
   }
@@ -560,6 +570,7 @@ int read_section_users(FILE * file_user, char * line)
   unsigned long u_num;
   u64_t ul_num;
   char *ptr;
+  char errbuf[1024];
   wzd_user_t * user_new = NULL;
 
 #if 0
@@ -581,7 +592,8 @@ fprintf(stderr,"Entering section USERS\n");
 
     err = regexec(&reg_line,line,3,regmatch,0);
     if (err) {
-fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line);
+      snprintf(errbuf,sizeof(errbuf),"Line '%s' does not respect config line format - ignoring\n",line);
+      ERRLOG(errbuf);
       continue;
     }
     memcpy(varname,line+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
@@ -595,7 +607,8 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       list_ins_next(&user_list, list_tail(&user_list), user_new);
 
       if (++user_count >= user_count_max) {
-        fprintf(stderr,"Too many users defined %d\n",user_count);
+        snprintf(errbuf,sizeof(errbuf),"Too many users defined %d\n",user_count);
+        ERRLOG(errbuf);
         continue;
       }
       strncpy(user_new->username,value,HARD_USERNAME_LENGTH-1);
@@ -624,7 +637,8 @@ fprintf(stderr,"Line '%s' does not respect config line format - ignoring\n",line
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid uid %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid uid %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->uid = num;
@@ -665,7 +679,8 @@ fprintf(stderr,"Invalid uid %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_ul_speed %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid max_ul_speed %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->max_ul_speed = num;
@@ -674,7 +689,8 @@ fprintf(stderr,"Invalid max_ul_speed %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid last_login %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid last_login %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->last_login = num;
@@ -683,7 +699,8 @@ fprintf(stderr,"Invalid last_login %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_dl_speed %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid max_dl_speed %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->max_dl_speed = num;
@@ -692,7 +709,8 @@ fprintf(stderr,"Invalid max_dl_speed %s\n",value);
       if (!user_count || !user_new) break;
       ul_num = strtoull(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid bytes_ul_total %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->stats.bytes_ul_total = ul_num;
@@ -701,7 +719,8 @@ fprintf(stderr,"Invalid bytes_ul_total %s\n",value);
       if (!user_count || !user_new) break;
       ul_num = strtoull(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->stats.bytes_dl_total = ul_num;
@@ -710,7 +729,8 @@ fprintf(stderr,"Invalid bytes_dl_total %s\n",value);
       if (!user_count || !user_new) break;
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid files_dl_total %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid files_dl_total %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->stats.files_dl_total = u_num;
@@ -719,7 +739,8 @@ fprintf(stderr,"Invalid files_dl_total %s\n",value);
       if (!user_count || !user_new) break;
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid files_ul_total %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid files_ul_total %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->stats.files_ul_total = u_num;
@@ -728,7 +749,8 @@ fprintf(stderr,"Invalid files_ul_total %s\n",value);
       if (!user_count || !user_new) break;
       ul_num = strtoull(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid credits %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->credits = ul_num;
@@ -738,7 +760,8 @@ fprintf(stderr,"Invalid credits %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid num_logins %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid number %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->num_logins = (unsigned short)num;
@@ -747,7 +770,8 @@ fprintf(stderr,"Invalid num_logins %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid ratio %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid ratio %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->ratio = num;
@@ -756,7 +780,8 @@ fprintf(stderr,"Invalid ratio %s\n",value);
       if (!user_count || !user_new) break;
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid user_slots %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid user_slots %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->user_slots = (unsigned short)u_num;
@@ -765,7 +790,8 @@ fprintf(stderr,"Invalid user_slots %s\n",value);
       if (!user_count || !user_new) break;
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
-fprintf(stderr,"Invalid leech_slots %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid leech_slots %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->leech_slots = (unsigned short)u_num;
@@ -774,7 +800,8 @@ fprintf(stderr,"Invalid leech_slots %s\n",value);
       if (!user_count || !user_new) break;
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
-fprintf(stderr,"Invalid max_idle_time %s\n",value);
+        snprintf(errbuf,sizeof(errbuf),"Invalid max_idle_time %s\n",value);
+        ERRLOG(errbuf);
         continue;
       }
       user_new->max_idle_time = num;
@@ -794,26 +821,26 @@ int read_files(const char *filename)
   int ret;
   wzd_user_t * user;
   wzd_group_t * group;
+  char errbuf[1024];
 
   if (!filename || strlen(filename)>=256) return -1;
   strncpy(USERS_FILE,filename,256);
   file_user = fopen(USERS_FILE,"r");
 
   if (file_user == NULL) {
-    fprintf(stderr,"********************************************\n");
-    fprintf(stderr,"\n");
-    fprintf(stderr,"This is backend plaintext speaking:\n");
-    fprintf(stderr,"Could not open file %s\n",USERS_FILE);
-    fprintf(stderr,"die die die !\n");
-    fprintf(stderr,"\n");
-    fprintf(stderr,"********************************************\n");
+    ERRLOG("********************************************\n");
+    ERRLOG("\n");
+    ERRLOG("This is backend plaintext speaking:\n");
+    ERRLOG("Could not open file"); ERRLOG(USERS_FILE);
+    ERRLOG("\ndie die die !\n");
+    ERRLOG("\n");
+    ERRLOG("********************************************\n");
     return -1;
   }
 
   line = malloc(MAX_LINE);
   if (!line) {
-    fprintf(stderr,"Could not malloc %d bytes (%s:%d)\n",
-        MAX_LINE,__FILE__,__LINE__);
+    ERRLOG("Could not malloc !\n");
     return -1;
   }
 
@@ -866,14 +893,16 @@ int read_files(const char *filename)
       else if (strcasecmp("GROUPS",token)==0) ret = read_section_groups(file_user,line);
       else if (strcasecmp("HOSTS",token)==0) ret = read_section_hosts(file_user,line);
       else {
-fprintf(stderr,"Unkown section %s\n",token);
+        snprintf(errbuf,sizeof(errbuf),"Unkown section %s\n",token);
+        ERRLOG(errbuf);
         regfree(&reg_line);
         return 1;
       }
       continue;
     } /* line begins by [ */
     else { /* directive without section */
-fprintf(stderr,"directive without section in line '%s'\n",line);
+      snprintf(errbuf,sizeof(errbuf),"directive without section in line '%s'\n",line);
+      ERRLOG(errbuf);
       regfree(&reg_line);
       return 1;
     }

@@ -665,7 +665,7 @@ static uid_t * wzd_mysql_get_user_list(void)
   MYSQL_RES   *res;
   MYSQL_ROW    row;
   uid_t * uid_list;
-  unsigned int index, i;
+  unsigned int index, i=0;
   my_ulonglong num_rows;
 
   query = malloc(512);
@@ -708,7 +708,7 @@ static gid_t * wzd_mysql_get_group_list(void)
   MYSQL_RES   *res;
   MYSQL_ROW    row;
   gid_t * gid_list;
-  unsigned int index, i;
+  unsigned int index, i=0;
   my_ulonglong num_rows;
 
   query = malloc(512);

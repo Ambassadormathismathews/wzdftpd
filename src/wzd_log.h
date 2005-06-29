@@ -77,6 +77,13 @@ void log_fini(void);
 int log_open_old(const char *filename, int filemode);
 void log_close_old(void);
 
+/** \brief Get file descriptor asociated to log level
+ *
+ * Get file decriptor corresponding to all messages sent to the
+ * log level.
+ */
+int log_get(unsigned int level);
+
 /** \brief Redirect log level to file descriptor
  *
  * Set file decriptor corresponding to all messages sent to the

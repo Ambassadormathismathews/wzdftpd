@@ -42,15 +42,19 @@
 #include <libwzd-auth/wzd_auth.h>
 
 #include "wzd_backend.h"
+#include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_debug.h"
 
 #include "libplaintext_file.h"
+#include "libplaintext_main.h"
 
 #define	MAX_LINE		1024
 
 
-#define PLAINTEXT_BACKEND_VERSION 142
+#define PLAINTEXT_BACKEND_VERSION 143
+
+#define PLAINTEXT_LOG_CHANNEL (RESERVED_LOG_CHANNELS+11)
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(plaintext);
@@ -72,6 +76,11 @@ unsigned int group_count, group_count_max=0;
 
 gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
 
+
+void plaintext_log(const char * error, const char * filename, const char * func_name, int line)
+{
+  out_log(PLAINTEXT_LOG_CHANNEL, "%s(%s):%d %s",filename,func_name,line,error);
+}
 
 
 static uid_t find_free_uid(uid_t start)
@@ -206,13 +215,14 @@ int FCN_INIT(const char *arg)
   ret = read_files( (const char *)arg);
 
   /* TODO check user definitions (no missing fields, etc) */
+  ERRLOG("Backend plaintext initialized\n");
 
   return ret;
 }
 
 int FCN_FINI(void)
 {
-/*  fprintf(stderr,"Backend plaintext unloading\n");*/
+  ERRLOG("Backend plaintext unloading\n");
   list_destroy(&user_list);
   list_destroy(&group_list);
 
@@ -255,7 +265,7 @@ uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
   if (!found) {
 #ifdef DEBUG
-fprintf(stderr,"User %s not found\n",login);
+out_err(LEVEL_HIGH," plaintext: User %s not found\n",login);
 #endif
     return (uid_t)-1;
   }

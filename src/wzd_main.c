@@ -419,8 +419,13 @@ int main(int argc, char **argv)
     fprintf(stderr,"FATAL: Could not open log file %s\n",mainConfig->logfilename);
     return 1;
   }
-  for (i=0; i<MAX_LOG_CHANNELS; i++)
-    log_set(i,ret);
+  /** \todo this should be removed (as well as log_get() function) and replace
+   * with a proper init code
+   */
+  for (i=0; i<MAX_LOG_CHANNELS; i++) {
+    if (log_get(i) == -1)
+      log_set(i,ret);
+  }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   ret = tls_init();
