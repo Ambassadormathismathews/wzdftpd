@@ -1,3 +1,18 @@
+wzdftpd (0.5.3-5) unstable; urgency=low
+
+  * Updated Standard Version to 3.6.2
+  * Fixed wrong dependency
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Thu, 23 Jun 2005 10:01:59 +0200
+
+wzdftpd (0.5.3-4) unstable; urgency=high
+
+  * urgency=high because it fixes a RC bug
+  * Hopefully fixed FTBFS (Closes: #315132)
+  * Fixed warning during compilation (Closes: #315113)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue, 21 Jun 2005 21:53:38 +0200
+
 wzdftpd (0.5.3-3) unstable; urgency=low
 
   * Fixed wrong dependency
