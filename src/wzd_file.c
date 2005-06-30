@@ -37,7 +37,7 @@
 
 #endif /* WZD_USE_PCH */
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <io.h>
 #include <direct.h> /* _mkdir */
@@ -1346,7 +1346,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   if (ret)
     return -1;
 
-#ifdef _MSC_VER
+#ifdef WIN32
   mode |= _O_BINARY;
 #endif
 
@@ -1836,7 +1836,7 @@ int file_lock(fd_t fd, short lock_mode)
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Locking file %d\n",fd);
 #endif
-#ifndef _MSC_VER
+#ifndef WIN32
   struct flock lck;
   lck.l_type = lock_mode;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1857,7 +1857,7 @@ int file_unlock(fd_t fd)
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Unlocking file %d\n",fd);
 #endif
-#ifndef _MSC_VER
+#ifndef WIN32
   struct flock lck;
   lck.l_type = F_UNLCK;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1878,7 +1878,7 @@ int file_islocked(fd_t fd, short lock_mode)
 #ifdef WZD_DBG_LOCK
 fprintf(stderr,"Testing lock for file %d\n",fd);
 #endif
-#ifndef _MSC_VER
+#ifndef WIN32
   struct flock lck;
   lck.l_type = lock_mode;
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
@@ -1911,7 +1911,7 @@ fprintf(stderr,"Forcing unlock file %s\n",file);
   fd = open(file,O_RDWR);
   if (fd < 0) return -1;
 
-#ifndef _MSC_VER
+#ifndef WIN32
   {
     struct flock lck;
     lck.l_type = F_UNLCK;

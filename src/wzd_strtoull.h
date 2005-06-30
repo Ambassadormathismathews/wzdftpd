@@ -25,9 +25,11 @@
 #ifndef __WZD_STRTOULL__
 #define __WZD_STRTOULL__
 
+#ifdef _MSC_VER
 #define HAVE_STRTOULL 0 /* FIXME VISUAL */
 
 #define i64_t	__int64 /* FIXME VISUAL */
+#endif
 
 #if (!HAVE_STRTOULL )
 

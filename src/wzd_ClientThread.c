@@ -63,7 +63,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #include <unistd.h>
 #include <pthread.h>
 #endif
@@ -3534,14 +3534,14 @@ void * clientThreadProc(void *arg)
   context->last_file.token = TOK_UNKNOWN;
   context->data_buffer = wzd_malloc(mainConfig->data_buffer_length);
 
-#ifdef _MSC_VER
+#ifdef WIN32
   context->thread_id = GetCurrentThreadId();
 #else
   context->thread_id = pthread_self();
 #endif
 
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
-#ifndef _MSC_VER
+#ifndef WIN32
 #ifdef WZD_MULTITHREAD
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
   pthread_cleanup_push((void (*) (void *))client_die, (void *) context);
@@ -3792,7 +3792,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
   free(buffer);
 
 #ifdef WZD_MULTITHREAD
-#ifndef _MSC_VER
+#ifndef WIN32
   pthread_cleanup_pop(1); /* 1 means the cleanup fct is executed !*/
 #else
   client_die(context);

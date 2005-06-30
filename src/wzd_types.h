@@ -50,11 +50,79 @@
 #define uid_t		unsigned int
 #define gid_t		unsigned int
 
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#define ECONNREFUSED WSAECONNREFUSED
+#define EINPROGRESS  WSAEINPROGRESS
+#define ENOTCONN     WSAENOTCONN
+#define ETIMEDOUT    WSAECONNABORTED
+
 #define SIGHUP  1 /* re-read configuration */
 
 #ifndef RTLD_NOW
 # define RTLD_NOW 2
 #endif
+
+#define F_RDLCK 0 /* Read lock. */
+#define F_WRLCK 1 /* Write lock. */
+#define F_UNLCK 2 /* Remove lock. */
+
+#ifndef S_IRGRP
+#   ifdef S_IRUSR
+#       define S_IRGRP (S_IRUSR>>3)
+#       define S_IWGRP (S_IWUSR>>3)
+#       define S_IXGRP (S_IXUSR>>3)
+#   else
+#       define S_IRGRP 0040
+#       define S_IWGRP 0020
+#       define S_IXGRP 0010
+#   endif
+#endif
+
+#ifndef S_IROTH
+#   ifdef S_IRUSR
+#       define S_IROTH (S_IRUSR>>6)
+#       define S_IWOTH (S_IWUSR>>6)
+#       define S_IXOTH (S_IXUSR>>6)
+#   else
+#       define S_IROTH 0040
+#       define S_IWOTH 0020
+#       define S_IXOTH 0010
+#   endif
+#endif
+
+#define mkdir(filename,mode) mkdir(filename)
+
+#include <sys/timeb.h>
+
+/*********************** VERSION **************************/
+
+#if defined (_MSC_VER)
+# define WZD_BUILD_OPTS "visual"
+#else
+# define WZD_BUILD_OPTS "mingw"
+#endif
+
+/* Version */
+#define  WZD_VERSION_NUM "0.5.3 " WZD_BUILD_OPTS
+#define  WZD_BUILD_NUM __DATE__
+
+#ifdef WZD_MULTIPROCESS
+#define WZD_MP  " mp "
+#else /* WZD_MULTIPROCESS */
+#ifdef WZD_MULTITHREAD
+#define WZD_MP  " mt "
+#else
+#define WZD_MP  " up "
+#endif /* WZD_MULTITHREAD */
+#endif /* WZD_MULTIPROCESS */
+
+#define WZD_VERSION_STR "wzdftpd i386-pc-windows " WZD_MP WZD_VERSION_NUM
+
+#define WZD_DEFAULT_CONF "wzd-win32.cfg"
+
+
+
+
 
 #endif /* WIN32 */
 
@@ -86,19 +154,7 @@ typedef unsigned fd_t;
 
 typedef size_t ssize_t;
 
-#include <sys/timeb.h>
-
 #define inline __inline
-
-#define EAFNOSUPPORT WSAEAFNOSUPPORT
-#define ECONNREFUSED WSAECONNREFUSED
-#define EINPROGRESS  WSAEINPROGRESS
-#define ENOTCONN     WSAENOTCONN
-#define ETIMEDOUT    WSAECONNABORTED
-
-#define F_RDLCK 0 /* Read lock. */
-#define F_WRLCK 1 /* Write lock. */
-#define F_UNLCK 2 /* Remove lock. */
 
 #define LOG_EMERG	0
 #define LOG_ALERT	1
@@ -137,30 +193,6 @@ typedef size_t ssize_t;
 #	define S_IRUSR 0400
 #	define S_IWUSR 0200
 #	define S_IXUSR 0100
-#   endif
-#endif
-
-#ifndef S_IRGRP
-#   ifdef S_IRUSR
-#       define S_IRGRP (S_IRUSR>>3)
-#       define S_IWGRP (S_IWUSR>>3)
-#       define S_IXGRP (S_IXUSR>>3)
-#   else
-#       define S_IRGRP 0040
-#       define S_IWGRP 0020
-#       define S_IXGRP 0010
-#   endif
-#endif
-
-#ifndef S_IROTH
-#   ifdef S_IRUSR
-#       define S_IROTH (S_IRUSR>>6)
-#       define S_IWOTH (S_IWUSR>>6)
-#       define S_IXOTH (S_IXUSR>>6)
-#   else
-#       define S_IROTH 0040
-#       define S_IWOTH 0020
-#       define S_IXOTH 0010
 #   endif
 #endif
 
@@ -207,7 +239,7 @@ typedef size_t ssize_t;
 #endif
 
 #ifndef mkdir
-#   define mkdir(filename,mode)	_mkdir(filename)
+#   define mkdir(filename)	_mkdir(filename)
 #   define closedir	FindClose
 #endif
 
@@ -227,27 +259,6 @@ typedef size_t ssize_t;
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
 
-
-/*********************** VERSION **************************/
-
-/* Version */
-#define  WZD_VERSION_NUM "0.5.3 visual"
-#define  WZD_BUILD_NUM __DATE__
-#define  WZD_BUILD_OPTS  "visual"
-
-#ifdef WZD_MULTIPROCESS
-#define WZD_MP  " mp "
-#else /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTITHREAD
-#define WZD_MP  " mt "
-#else
-#define WZD_MP  " up "
-#endif /* WZD_MULTITHREAD */
-#endif /* WZD_MULTIPROCESS */
-
-#define WZD_VERSION_STR "wzdftpd i386-pc-windows-visual " WZD_MP WZD_VERSION_NUM
-
-#define WZD_DEFAULT_CONF "wzd-win32.cfg"
 
 #include <libwzd-auth/wzd_crypt.h>
 #include <libwzd-auth/wzd_md5crypt.h>
@@ -361,7 +372,7 @@ typedef signed fd_t;
 #endif
 
 /* definitions for windows 2000 */
-#if defined(WINVER) && (WINVER < 0x0501)
+#if defined(_MSC_VER) && defined(WINVER) && (WINVER < 0x0501)
 #define in6_addr in_addr6 /* funny ! */
 
 #define socklen_t	unsigned int

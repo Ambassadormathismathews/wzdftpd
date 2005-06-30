@@ -256,7 +256,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 
   return 0;
 #endif
-#if BSD || defined(_MSC_VER) || defined(__sun__)
+#if BSD || defined(WIN32) || defined(__sun__)
   return -1;
 #else
 /*  struct in_addr *ina = void_in;*/
@@ -732,14 +732,14 @@ unsigned long get_bandwidth(unsigned long *dl, unsigned long *ul)
 wzd_bw_limiter * limiter_new(int maxspeed)
 {
   wzd_bw_limiter *l_new;
-#ifndef _MSC_VER
+#ifndef WIN32
   struct timezone tz;
 #endif
 
   l_new = malloc(sizeof(wzd_bw_limiter));
   l_new->maxspeed = maxspeed;
   l_new->bytes_transfered = 0;
-#ifndef _MSC_VER
+#ifndef WIN32
   gettimeofday(&(l_new->current_time),&tz);
 #else
   _ftime(&(l_new->current_time));
@@ -772,7 +772,7 @@ wzd_mutex_unlock(mutex);
    * and determine how much time to wait */
 /*  if ( (l->bytes_transfered >= l->maxspeed) || force_check )
   {*/
-#ifndef _MSC_VER
+#ifndef WIN32
     gettimeofday( &tv, &tz );
     elapsed = (tv.tv_sec - l->current_time.tv_sec) * 1000000;
     elapsed += (tv.tv_usec - l->current_time.tv_usec);
@@ -1022,7 +1022,7 @@ int kill_child(unsigned long pid, wzd_context_t * context)
   }
   if (!found) return -1;
 
-#ifdef _MSC_VER
+#ifdef WIN32
   /* \todo XXX FIXME remove/fix test !! */
   loop_context->exitclient = 1;
 /*  ret = TerminateThread((HANDLE)pid,0);*/
@@ -1103,7 +1103,7 @@ void * GetMyContext(void)
   ListElmt * elmnt;
   wzd_context_t * context=NULL;
 
-#ifdef _MSC_VER
+#ifdef WIN32
   unsigned long thread_id;
 
   thread_id = (unsigned long)GetCurrentThreadId();
@@ -1115,7 +1115,7 @@ void * GetMyContext(void)
       return context;
     }
   }
-#else /* _MSC_VER */
+#else /* WIN32 */
   pthread_t thread_id;
 
   thread_id = pthread_self();
@@ -1128,7 +1128,7 @@ void * GetMyContext(void)
         return context;
     }
   }
-#endif /* _MSC_VER */
+#endif /* WIN32 */
 
   return NULL;
 }
