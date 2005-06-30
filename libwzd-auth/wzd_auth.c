@@ -32,7 +32,7 @@
 # include <sys/param.h>
 #endif
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #include <unistd.h>
 #ifndef BSD
 #include <crypt.h>
