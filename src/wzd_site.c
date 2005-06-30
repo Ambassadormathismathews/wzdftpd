@@ -1257,7 +1257,7 @@ int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
 
 int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context)
 {
-#ifndef _MSC_VER
+#ifndef WIN32
   int ret=0;
   char buffer[256];
   struct rusage ru;

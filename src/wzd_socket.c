@@ -282,7 +282,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
     return -1;
   }
 
-#if defined(_MSC_VER)
+#if defined(WIN32)
   {
     unsigned long noBlock=1;
     ioctlsocket(sock,FIONBIO,&noBlock);
@@ -489,7 +489,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   {
 
 /* set non-blocking mode */
-#if defined(_MSC_VER)
+#if defined(WIN32)
     {
       unsigned long noBlock=1;
       ret = ioctlsocket(sock,FIONBIO,&noBlock);
@@ -498,7 +498,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
     fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
 
-#if defined(_MSC_VER)
+#if defined(WIN32)
 
 
     ret = connect(sock, sai, len);
@@ -578,7 +578,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       return -1;
     }
   }
-#else /* _MSC_VER */
+#else /* WIN32 */
 
   ret = connect(sock, sai, len);
   if (ret >= 0) return sock;
@@ -597,7 +597,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
       }
       break;
     } while (1);
-#endif /* _MSC_VER */
+#endif /* WIN32 */
 
   } /* if (timeout) */
 
@@ -618,7 +618,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 /* Returns the local/remote port for the socket. */
 int get_sock_port(int sock, int local)
 {
-#if !defined(_MSC_VER) && !defined(__sun__)
+#if !defined(WIN32) && !defined(__sun__)
   struct sockaddr_storage from;
   char strport[NI_MAXSERV];
 #else
@@ -641,7 +641,7 @@ int get_sock_port(int sock, int local)
     }
   }
 
-#if !defined(_MSC_VER) && !defined(__sun__)
+#if !defined(WIN32) && !defined(__sun__)
   /* Work around Linux IPv6 weirdness */
   if (from.ss_family == AF_INET6)
     fromlen = sizeof(struct sockaddr_in6);

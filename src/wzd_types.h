@@ -50,6 +50,12 @@
 #define uid_t		unsigned int
 #define gid_t		unsigned int
 
+#define SIGHUP  1 /* re-read configuration */
+
+#ifndef RTLD_NOW
+# define RTLD_NOW 2
+#endif
+
 #endif /* WIN32 */
 
 /* visual specific definitions */
@@ -102,8 +108,6 @@ typedef size_t ssize_t;
 #define LOG_NOTICE	5
 #define LOG_INFO	6
 #define LOG_DEBUG	7
-
-#define SIGHUP  1 /* re-read configuration */
 
 #define __S_ISTYPE(mode,mask) (((mode) & _S_IFMT) == (mask))
 
