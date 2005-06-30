@@ -43,7 +43,16 @@
 # include <inttypes.h>
 #endif
 
+/* win32-common definitions */
+#if defined (WIN32)
 
+#define pid_t		unsigned int
+#define uid_t		unsigned int
+#define gid_t		unsigned int
+
+#endif /* WIN32 */
+
+/* visual specific definitions */
 #if defined(_MSC_VER)
 
 /* windows have wchar.h */
@@ -213,10 +222,6 @@ typedef size_t ssize_t;
 
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
-
-#define pid_t		unsigned int
-#define uid_t		unsigned int
-#define gid_t		unsigned int
 
 
 /*********************** VERSION **************************/
