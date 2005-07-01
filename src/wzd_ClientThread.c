@@ -1334,8 +1334,19 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   if (ret != E_FILE_NOEXIST) goto label_error_mkdir;
 
 #if DEBUG
-  if (ret || errno)
+  if (ret || errno) {
     out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
+    switch (ret) {
+    case E_USER_IDONTEXIST: out_log(LEVEL_HIGH,"mkdir: user does not exist !\n"); break;
+    case E_PARAM_NULL: out_log(LEVEL_HIGH,"mkdir: no input parameter\n"); break;
+    case E_PARAM_BIG: out_log(LEVEL_HIGH,"mkdir: parameter too long\n"); break;
+    case E_WRONGPATH: out_log(LEVEL_HIGH,"mkdir: wrong path\n"); break;
+    case E_FILE_NOEXIST: break; /* not an error ! */
+    case E_NOPERM: out_log(LEVEL_HIGH,"mkdir: no permission\n"); break;
+    default:
+      break;
+    }
+  }
   else
     out_err(LEVEL_FLOOD,"Making directory '%s' (%d)\n",buffer,ret);
 #endif
@@ -1396,8 +1407,9 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   ret = file_mkdir(buffer,0755,context); /* TODO umask ? - should have a variable here */
 
   if (ret) {
-    out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
-    ret = E_PARAM_INVALID; goto label_error_mkdir;
+    if (ret != E_NOPERM)
+      out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
+    goto label_error_mkdir; /* keep current ret value for later use */
   } else {
     const char *groupname=NULL;
     if (user->group_num > 0) {
@@ -1440,7 +1452,10 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   return E_OK;
 
 label_error_mkdir:
-  snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s'",(param)?param:"(NULL)");
+  if (ret == E_NOPERM)
+    snprintf(buffer,WZD_MAX_PATH-1,"could not create dir: permission denied");
+  else
+    snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s' (%d)",(param)?param:"(NULL)",ret);
   send_message_with_args(553,context,buffer);
   wzd_free(buffer);
   wzd_free(path);

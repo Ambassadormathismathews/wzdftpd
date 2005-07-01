@@ -81,6 +81,8 @@ typedef enum {
 
   E_MKDIR_PARSE,	/**< directory name parsing gives errors */
   E_MKDIR_PATHFILTER,	/**< dirname rejected by pathfilter */
+
+  E_COMMAND_FAILED,     /**< system command failed, check errno */
 } wzd_errno_t;
 
 /*********************** RIGHTS ***************************/

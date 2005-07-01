@@ -1413,10 +1413,10 @@ int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context)
   user = GetUserByID(context->userid);
 
   ret = _checkPerm(dirname,RIGHT_MKDIR,user);
-  if (ret) return -1;
+  if (ret) return E_NOPERM;
   ret = fs_mkdir(dirname,0755);
 
-  return ret;
+  return (ret) ? E_COMMAND_FAILED : E_OK;
 }
 
 /** @brief remove directory.
