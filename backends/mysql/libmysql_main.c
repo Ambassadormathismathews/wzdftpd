@@ -391,7 +391,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   /* Now get IP */
   user->ip_allowed[0][0] = '\0';
 
-  snprintf(query, 512, "SELECT UserIP.ip FROM UserIP,users WHERE users.uid='%d' AND users.ref=UserIP.ref", uid);
+  snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -419,7 +419,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Groups */
 
-  snprintf(query, 512, "SELECT groups.gid FROM groups,users,UGR WHERE users.uid='%d' AND users.ref=UGR.uref AND groups.ref=UGR.gref", uid);
+  snprintf(query, 512, "SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -445,8 +445,8 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   mysql_free_result(res);
 
-  /* Now get Stats */
-  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM Stats,users WHERE users.uid=%d AND users.ref=Stats.ref", uid);
+  /* Now get stats */
+  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -535,7 +535,7 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   group->ip_allowed[0][0] = '\0';
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT GroupIP.ip FROM GroupIP,groups WHERE groups.gid='%d' AND groups.ref=GroupIP.ref", gid);
+  snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);

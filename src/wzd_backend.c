@@ -802,7 +802,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 
 /*  usercache_invalidate( predicate_name, (void *)name );*/
 
-  if (!ret) { /* modification ok, reload user */
+  if (!ret && user) { /* modification ok, reload user */
     if ( (b = mainConfig->backend.b) && b->backend_get_user)
       new_user = b->backend_get_user(user->uid);
     else {
@@ -848,7 +848,7 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
 
 /*  groupcache_invalidate( predicate_groupname, (void *)name );*/
 
-  if (!ret) { /* modification ok, reload group */
+  if (!ret && group) { /* modification ok, reload group */
     if ( (b = mainConfig->backend.b) && b->backend_get_group)
       new_group = b->backend_get_group(group->gid);
     else {

@@ -47,6 +47,8 @@
 int _user_update_ip(uid_t ref, wzd_user_t * user);
 int _user_update_stats(uid_t ref, wzd_user_t * user);
 
+static uid_t _mysql_get_next_uid();
+
 uid_t user_get_ref(const char * name, unsigned int ref);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
@@ -83,9 +85,9 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
     /* we don't care about the results of the queries */
     ref = user_get_ref(name, 0);
     if (ref) {
-      _wzd_run_update_query(query, 2048, "DELETE FROM Stats WHERE ref=%d", ref);
-      _wzd_run_update_query(query, 2048, "DELETE FROM UserIP WHERE ref=%d", ref);
-      _wzd_run_update_query(query, 2048, "DELETE FROM UGR WHERE uref=%d", ref);
+      _wzd_run_update_query(query, 2048, "DELETE FROM stats WHERE ref=%d", ref);
+      _wzd_run_update_query(query, 2048, "DELETE FROM userip WHERE ref=%d", ref);
+      _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE uref=%d", ref);
     }
     _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", name);
     free(query);
@@ -187,14 +189,15 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
   /* create new user */
 
   /* Part 1, User */
-  query = malloc(2048);
   mod = NULL;
 
-  /* XXX FIXME find a free uid !! */
-  user->uid = 154;
+  /* find a free uid */
+  user->uid = _mysql_get_next_uid();
+  if (user->uid == (uid_t)-1) return -1;
 
-#ifndef WIN32
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%llu)",
+  query = malloc(2048);
+
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
       user->username, user->userpass,
       user->rootpath,
       user->uid,
@@ -204,39 +207,27 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       user->userperms, user->credits
       ))
     goto error_user_add;
-#else
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%I64u)",
-      user->username, user->userpass,
-      user->rootpath,
-      user->uid,
-      user->flags,
-      (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
-      user->num_logins, user->ratio, user->user_slots, user->leech_slots,
-      user->userperms, user->credits
-      ))
-    goto error_user_add;
-#endif
 
   ref = user_get_ref(user->username,0);
   if (!ref) goto error_user_add;
 
-  /* Part 2, UGR */
-  /* INSERT into UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=154 AND groups.gid=1; */
+  /* Part 2, ugr */
+  /* INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=154 AND groups.gid=1; */
   for ( i=0; i<user->group_num; i++ )
-    if (_wzd_run_update_query(query, 2048, "INSERT INTO UGR (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.ref=%u AND groups.gid=%u",
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.ref=%u AND groups.gid=%u",
           ref, user->groups[i]))
       goto error_user_add;
 
   /* Part 3, IP */
   for ( i=0; i<HARD_IP_PER_USER; i++ )
     if (user->ip_allowed[i][0] != '\0') {
-      if (_wzd_run_update_query(query, 2048, "INSERT INTO UserIP (ref,ip) VALUES (%u,'%s')",
+      if (_wzd_run_update_query(query, 2048, "INSERT INTO userip (ref,ip) VALUES (%u,'%s')",
             ref, user->ip_allowed[i]))
         goto error_user_add;
     }
 
   /* Part 4, stats */
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO Stats (ref) VALUES (%u)",
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO stats (ref) VALUES (%u)",
         ref))
     goto error_user_add;
 
@@ -248,9 +239,9 @@ error_user_add:
   /* we don't care about the results of the queries */
   ref = user_get_ref(user->username,0);
   if (ref) {
-    _wzd_run_update_query(query, 2048, "DELETE FROM Stats WHERE ref=%d", ref);
-    _wzd_run_update_query(query, 2048, "DELETE FROM UserIP WHERE ref=%d", ref);
-    _wzd_run_update_query(query, 2048, "DELETE FROM UGR WHERE uref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM stats WHERE ref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM userip WHERE ref=%d", ref);
+    _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE uref=%d", ref);
   }
   _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", user->username);
   free(query);
@@ -276,7 +267,7 @@ int _user_update_ip(uid_t ref, wzd_user_t * user)
   if (!ref) return -1;
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT UserIP.ip FROM UserIP WHERE ref=%d", ref);
+  snprintf(query, 512, "SELECT userip.ip FROM userip WHERE ref=%d", ref);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -316,12 +307,12 @@ int _user_update_ip(uid_t ref, wzd_user_t * user)
         break;
       }
       if (user->ip_allowed[i][0]=='\0')
-        ret = _wzd_run_delete_query(query,512,"DELETE FROM UserIP WHERE UserIP.ref=%d AND UserIP.ip='%s'",ref,ip_list[i]);
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM userip WHERE userip.ref=%d AND userip.ip='%s'",ref,ip_list[i]);
       else {
         if (ip_list[i][0]=='\0')
-          ret = _wzd_run_insert_query(query,512,"INSERT INTO UserIP (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
+          ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
         else
-          ret = _wzd_run_update_query(query,512,"UPDATE UserIP SET ip='%' WHERE UserIP.ref=%d AND UserIP.ip='%s'",ip_list[i],ref,user->ip_allowed[i]);
+          ret = _wzd_run_update_query(query,512,"UPDATE userip SET ip='%' WHERE userip.ref=%d AND userip.ip='%s'",ip_list[i],ref,user->ip_allowed[i]);
       }
     }
     else
@@ -348,7 +339,7 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
   if (!ref) return -1;
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM Stats WHERE ref=%d", ref);
+  snprintf(query, 512, "SELECT * FROM stats WHERE ref=%d", ref);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -367,12 +358,12 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
 
   switch (numrows) {
   case 0:
-    ret = _wzd_run_insert_query(query,512,"INSERT INTO Stats VALUES (%d,%" PRIu64 ",%" PRIu64 ",%lu,%lu)",
+    ret = _wzd_run_insert_query(query,512,"INSERT INTO stats VALUES (%d,%" PRIu64 ",%" PRIu64 ",%lu,%lu)",
         ref,user->stats.bytes_ul_total,user->stats.bytes_dl_total,
         user->stats.files_ul_total,user->stats.files_dl_total);
     break;
   case 1:
-    ret = _wzd_run_update_query(query,512,"UPDATE Stats SET bytes_ul_total=%" PRIu64 ", bytes_dl_total=%" PRIu64 ",files_ul_total=%lu,files_dl_total=%lu WHERE ref=%d",
+    ret = _wzd_run_update_query(query,512,"UPDATE stats SET bytes_ul_total=%" PRIu64 ", bytes_dl_total=%" PRIu64 ",files_ul_total=%lu,files_dl_total=%lu WHERE ref=%d",
         user->stats.bytes_ul_total,user->stats.bytes_dl_total,
         user->stats.files_ul_total,user->stats.files_dl_total,
         ref);
@@ -426,6 +417,63 @@ uid_t user_get_ref(const char * name, unsigned int ref)
   }
 
   mysql_free_result(res);
+  free(query);
+
+  return uid;
+}
+
+static uid_t _mysql_get_next_uid()
+{
+  uid_t uid=-1;
+  char *query;
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  unsigned long ul;
+  char *ptr;
+
+  query = malloc(512);
+  snprintf(query, 512, "SELECT LAST_INSERT_ID(uid+1) FROM users");
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  mysql_free_result(res);
+
+
+  snprintf(query, 512, "SELECT LAST_INSERT_ID()");
+
+  if (mysql_query(&mysql, query) != 0) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    free(query);
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  if ( (row = mysql_fetch_row(res)) ) {
+    if (row && row[0]!=NULL) {
+      ul = strtoul(row[0], &ptr, 0);
+      if (ptr && *ptr == '\0') {
+        uid = (uid_t)ul;
+      }
+    }
+  }
+
+  mysql_free_result(res);
+
   free(query);
 
   return uid;

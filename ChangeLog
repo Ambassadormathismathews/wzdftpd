@@ -1,3 +1,10 @@
+2005-07-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: site purge causing crash
+	* bugfix: workaround uid and gid problem in mysql backend
+	* feature: all tables renamed to lowercase (mysql) - see
+	backends/mysql/UPGRADING for upgrade method
+
 2005-06-29  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new logging system based on channels
