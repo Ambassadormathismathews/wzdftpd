@@ -66,6 +66,21 @@
 #define F_WRLCK 1 /* Write lock. */
 #define F_UNLCK 2 /* Remove lock. */
 
+#define __S_ISTYPE(mode,mask) (((mode) & _S_IFMT) == (mask))
+
+#ifndef S_ISDIR
+#   define S_ISDIR(mode) (__S_ISTYPE((mode), _S_IFDIR))
+#endif
+#ifndef S_ISDIR
+#   define S_ISDIR(mode) 
+#endif
+#ifndef S_ISLNK
+#   define S_ISLNK(mode) (0)
+#endif
+#ifndef S_ISREG
+#   define S_ISREG(mode) __S_ISTYPE((mode), _S_IFREG)
+#endif
+
 #ifndef S_IRGRP
 #   ifdef S_IRUSR
 #       define S_IRGRP (S_IRUSR>>3)
@@ -92,7 +107,42 @@
 
 #define mkdir(filename,mode) mkdir(filename)
 
+#define dlopen(filename,dummy)	LoadLibrary(filename)
+#define dlclose(handle)			FreeLibrary(handle)
+#define dlsym(handle,symbol)	GetProcAddress(handle,symbol)
+#define dlerror()				"Not supported on win32"
+
+#define readlink(path,buf,bufsiz)	(-1)
+#define symlink(oldpath,newpath)	(-1)
+
 #include <sys/timeb.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <time.h>
+
+#ifndef __GNUC__
+#define EPOCHFILETIME (116444736000000000i64)
+#else
+#define EPOCHFILETIME (116444736000000000LL)
+#endif
+
+#ifndef _TIMEVAL_DEFINED /* also in winsock[2].h */
+#define _TIMEVAL_DEFINED
+struct timeval {
+    long tv_sec;        /* seconds */
+    long tv_usec;  /* microseconds */
+};
+#endif
+
+struct timezone {
+    int tz_minuteswest; /* minutes W of Greenwich */
+    int tz_dsttime;     /* type of dst correction */
+};
+
+
+/* defined in wzd_misc.c */
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 /*********************** VERSION **************************/
 
@@ -165,21 +215,6 @@ typedef size_t ssize_t;
 #define LOG_INFO	6
 #define LOG_DEBUG	7
 
-#define __S_ISTYPE(mode,mask) (((mode) & _S_IFMT) == (mask))
-
-#ifndef S_ISDIR
-#   define S_ISDIR(mode) (__S_ISTYPE((mode), _S_IFDIR))
-#endif
-#ifndef S_ISDIR
-#   define S_ISDIR(mode) 
-#endif
-#ifndef S_ISLNK
-#   define S_ISLNK(mode) (0)
-#endif
-#ifndef S_ISREG
-#   define S_ISREG(mode) __S_ISTYPE((mode), _S_IFREG)
-#endif
-
 #define S_IREAD  _S_IREAD
 #define S_IWRITE _S_IWRITE
 #define S_IEXEC  _S_IEXEC
@@ -224,11 +259,6 @@ typedef size_t ssize_t;
 #  define chmod	_chmod
 #endif
 
-#define dlopen(filename,dummy)	LoadLibrary(filename)
-#define dlclose(handle)			FreeLibrary(handle)
-#define dlsym(handle,symbol)	GetProcAddress(handle,symbol)
-#define dlerror()				"Not supported on win32"
-
 #define getcwd	_getcwd
 
 /* FIXME this will surely have some effects ... */
@@ -250,9 +280,6 @@ typedef size_t ssize_t;
 #define popen	_popen
 #define pclose	_pclose
 
-#define readlink(path,buf,bufsiz)	(-1)
-#define symlink(oldpath,newpath)	(-1)
-
 #define strcasecmp	stricmp
 #define strncasecmp	strnicmp
 
@@ -266,60 +293,6 @@ typedef size_t ssize_t;
 #include "wzd_strtoull.h"
 
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <time.h>
-
-#ifndef __GNUC__
-#define EPOCHFILETIME (116444736000000000i64)
-#else
-#define EPOCHFILETIME (116444736000000000LL)
-#endif
-
-#if !defined(_WINSOCK2API_) && !defined(_WINSOCKAPI_)
-struct timeval {
-    long tv_sec;        /* seconds */
-    long tv_usec;  /* microseconds */
-};
-#endif
-
-struct timezone {
-    int tz_minuteswest; /* minutes W of Greenwich */
-    int tz_dsttime;     /* type of dst correction */
-};
-
-__inline int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-    FILETIME        ft;
-    LARGE_INTEGER   li;
-    __int64         t;
-    static int      tzflag;
-
-    if (tv)
-    {
-        GetSystemTimeAsFileTime(&ft);
-        li.LowPart  = ft.dwLowDateTime;
-        li.HighPart = ft.dwHighDateTime;
-        t  = li.QuadPart;       /* In 100-nanosecond intervals */
-        t -= EPOCHFILETIME;     /* Offset to the Epoch time */
-        t /= 10;                /* In microseconds */
-        tv->tv_sec  = (long)(t / 1000000);
-        tv->tv_usec = (long)(t % 1000000);
-    }
-
-    if (tz)
-    {
-        if (!tzflag)
-        {
-            _tzset();
-            tzflag++;
-        }
-        tz->tz_minuteswest = _timezone / 60;
-        tz->tz_dsttime = _daylight;
-    }
-
-    return 0;
-}
 
 const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 

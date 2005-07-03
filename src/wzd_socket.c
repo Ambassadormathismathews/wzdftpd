@@ -124,7 +124,7 @@ fd_t socket_make(const char *ip, unsigned int *port, int nListen)
   {
     struct hostent* host_info;
     // try to decode dotted quad notation
-#if defined(_MSC_VER) || defined(__sun__)
+#if defined(WIN32) || defined(__sun__)
     if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
 #else
     if(!inet_aton(ip, &sai.sin_addr))
@@ -301,7 +301,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 #endif /* 0 */
 
 #if !defined(IPV6_SUPPORT)
-#ifndef _MSC_VER
+#ifndef WIN32
   bcopy((const char*)&from.sin_addr.s_addr, (char*)remote_host, sizeof(unsigned long));
 #else
   /* FIXME VISUAL memory zones must NOT overlap ! */
@@ -309,7 +309,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 #endif  /* _MSC_VER */
   *remote_port = ntohs(from.sin_port);
 #else
-#ifndef _MSC_VER
+#ifndef WIN32
   bcopy((const char*)&from.sin6_addr.s6_addr, (char*)remote_host, 16);
   *remote_port = ntohs(from.sin6_port);
 #else

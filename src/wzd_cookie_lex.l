@@ -33,7 +33,7 @@
 #define        INET6_ADDRSTRLEN        46
 #endif
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #ifdef __CYGWIN__
 #include <w32api/ws2tcpip.h>
