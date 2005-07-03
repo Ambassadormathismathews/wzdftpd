@@ -127,12 +127,14 @@
 #define EPOCHFILETIME (116444736000000000LL)
 #endif
 
+#if !defined(_WINSOCK2API_) && !defined(_WINSOCKAPI_)
 #ifndef _TIMEVAL_DEFINED /* also in winsock[2].h */
 #define _TIMEVAL_DEFINED
 struct timeval {
     long tv_sec;        /* seconds */
     long tv_usec;  /* microseconds */
 };
+#endif
 #endif
 
 struct timezone {
