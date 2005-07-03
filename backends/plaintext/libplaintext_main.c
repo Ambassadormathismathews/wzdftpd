@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/time.h>

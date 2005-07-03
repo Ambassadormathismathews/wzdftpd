@@ -29,7 +29,7 @@
 %x incl
 
 %{
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #include <io.h>
 #else
@@ -333,7 +333,7 @@ int set_default_options(void)
   strcpy(tempConfig.logfilename,"wzd.log");*/
   tempConfig.logfilename = NULL;
 
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(_MSC_VER)
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32)
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND;
 #else /* ! BSD */
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;

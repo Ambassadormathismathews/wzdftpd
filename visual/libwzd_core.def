@@ -40,6 +40,7 @@ EXPORTS
 	commands_fini
 	commands_init
 	commands_set_permission
+	context_list
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
@@ -125,6 +126,7 @@ EXPORTS
 	log_open
 	log_set
 	loglevel2str
+	mainConfig
 	md5_crypt
 	md5_hash_r
 	module_add

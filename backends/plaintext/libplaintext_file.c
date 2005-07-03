@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -302,7 +302,7 @@ int write_user_file(void)
   /* from this point we block signals, to avoid being interrupted when
    * file is not fully written.
    */
-#ifndef _MSC_VER
+#ifndef WIN32
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
   if (sigprocmask(SIG_BLOCK,&mask,NULL)<0) {
@@ -367,7 +367,7 @@ int write_user_file(void)
   fclose(file);
 
   /* unblock signals - if a SIGINT is pending, it should be harmless now */
-#ifndef _MSC_VER
+#ifndef WIN32
   if (sigprocmask(SIG_UNBLOCK,&mask,NULL)<0) {
     ERRLOG("Unable to unblock SIGINT with sigprocmask\n");
   }

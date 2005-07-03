@@ -47,7 +47,7 @@
 #include <fcntl.h>
 #include <signal.h>
 
-#ifndef _MSC_VER
+#ifndef WIN32
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -820,7 +820,7 @@ fprintf(stderr,"Received signal %d\n",signum);
 
 uid_t get_server_uid(void)
 {
-#ifndef _MSC_VER
+#ifndef WIN32
   return getuid();
 #else
   return GetCurrentProcessId();
@@ -1006,7 +1006,7 @@ int server_switch_to_config(wzd_config_t *config)
     }
     close(fd);
     /* check no process is running with this pid */
-#ifndef _MSC_VER
+#ifndef WIN32
     ret = kill(l,0);
 #else
 /*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
@@ -1074,7 +1074,7 @@ void serverMainThreadProc(void *arg)
   int nCode;
 #endif
 
-#ifndef _MSC_VER
+#ifndef WIN32
   /* catch broken pipe ! */
 #ifdef __SVR4
   sigignore(SIGPIPE);
@@ -1085,7 +1085,7 @@ void serverMainThreadProc(void *arg)
 
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
-#ifndef _MSC_VER
+#ifndef WIN32
 /*  signal(SIGKILL,interrupt);*/ /* SIGKILL signal is uncatchable */
 
   signal(SIGHUP,server_restart);
@@ -1293,7 +1293,7 @@ static void free_config(wzd_config_t * config)
     wzd_free(mainConfig->xferlog_name);
   if (mainConfig->logdir) wzd_free(mainConfig->logdir);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
-#ifndef _MSC_VER
+#ifndef WIN32
     closelog();
 #endif
   }

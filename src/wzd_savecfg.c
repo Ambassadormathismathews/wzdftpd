@@ -30,7 +30,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #else
 #include <unistd.h>
@@ -43,7 +43,6 @@
 #include <arpa/inet.h>
 #endif
 
-#include "wzd_debug.h"
 #include "wzd_structs.h"
 
 #include "wzd_savecfg.h"
@@ -57,6 +56,7 @@
 #include "wzd_backend.h"
 #include "wzd_ServerThread.h"
 
+#include "wzd_debug.h"
 
 
 static void save_header (FILE *file)

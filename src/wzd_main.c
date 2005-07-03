@@ -44,7 +44,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 
 #include "../visual/gnu_regex_dist/regex.h"
@@ -82,7 +82,7 @@
 
 #include "wzd_debug.h"
 
-#ifdef _MSC_VER
+#ifdef WIN32
 int nt_service_register(void);
 int nt_service_unregister(void);
 int nt_service_start(void);
@@ -99,7 +99,7 @@ SERVICE_STATUS_HANDLE       service_status_handle;
 
 typedef enum {
   CMD_NONE=0,
-#ifdef _MSC_VER
+#ifdef WIN32
   CMD_SRV_REGISTER,
   CMD_SRV_UNREGISTER,
   CMD_SRV_START,
@@ -143,7 +143,7 @@ void display_usage(void)
   fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s                          - Stay in foreground \n");
-#ifdef _MSC_VER
+#ifdef WIN32
   fprintf(stderr," -si                         - Register service \n");
   fprintf(stderr," -sd                         - Unregister service \n");
   fprintf(stderr," -ss                         - Start service (must be registered) \n");
@@ -164,7 +164,7 @@ static wzd_config_t * load_config_file(const char *name, wzd_config_t ** config)
 
 int main_parse_args(int argc, char **argv)
 {
-#ifndef _MSC_VER
+#ifndef WIN32
   int opt;
 
 
@@ -210,7 +210,7 @@ int main_parse_args(int argc, char **argv)
       return 1;
     }
   }
-#else /* _MSC_VER */
+#else /* WIN32 */
   if (argc > 1) {
     int optindex=1;
     while (optindex < argc) {
@@ -271,7 +271,7 @@ int main_parse_args(int argc, char **argv)
       break;
     }
   }
-#endif /* _MSC_VER */
+#endif /* WIN32 */
   return 0;
 }
 
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
     if (ret) {
       return 0;
     }
-#ifdef _MSC_VER
+#ifdef WIN32
     switch (start_command) {
       case CMD_SRV_UNREGISTER:
         nt_service_unregister();
@@ -324,7 +324,7 @@ int main(int argc, char **argv)
   }
 
   if (!stay_foreground) {
-#ifndef _MSC_VER
+#ifndef WIN32
     forkresult = fork();
 #else
     forkresult = 0;
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
   switch (start_command) {
     case CMD_NONE:
       break;
-#ifdef _MSC_VER
+#ifdef WIN32
     case CMD_SRV_REGISTER:
       mainConfig = config;
       nt_service_register();
@@ -437,7 +437,7 @@ int main(int argc, char **argv)
 
   utf8_detect(mainConfig);
 
-#if defined(DEBUG) || !defined(_MSC_VER)
+#if defined(DEBUG) || !defined(WIN32)
   ret = runMainThread(argc,argv);
 #else
   if (nt_is_service())
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
   return ret;
 }
 
-#ifdef _MSC_VER
+#ifdef WIN32
 
 VOID MyServiceStart(DWORD argc, LPSTR *argv)
 {
@@ -862,4 +862,4 @@ void SvcDebugOut(LPSTR string, DWORD status)
   OutputDebugStringA(buffer);
 }
 
-#endif /* _MSC_VER */
+#endif /* WIN32 */
