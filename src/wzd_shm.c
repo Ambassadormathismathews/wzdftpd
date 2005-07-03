@@ -42,7 +42,7 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <windows.h>
 #else
 #include <unistd.h>

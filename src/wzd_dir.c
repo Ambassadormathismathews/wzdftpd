@@ -39,7 +39,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <io.h>
 #include <direct.h> /* _mkdir */

@@ -25,7 +25,7 @@
 #include "../config.h"
 #endif
 
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
 #include "wzd_types.h"
 #else

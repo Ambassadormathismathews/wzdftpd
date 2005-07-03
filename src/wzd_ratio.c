@@ -28,7 +28,7 @@
 
 #ifndef WZD_USE_PCH
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #else
 #include <sys/types.h>

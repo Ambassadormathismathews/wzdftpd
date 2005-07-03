@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include "../visual/gnu_regex_dist/regex.h"
 #else

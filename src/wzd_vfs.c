@@ -36,7 +36,7 @@
 
 #include <sys/types.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <direct.h> /* _getcwd */
 #else

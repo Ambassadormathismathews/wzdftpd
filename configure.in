@@ -65,7 +65,15 @@ AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_CHECK_TYPES(unsigned long long,,exit 1)
 AC_CHECK_DECLS([sys_siglist])
-AC_CHECK_HEADER(pthread.h,,exit 1)
+AC_CHECK_HEADER(pthread.h)
+
+AC_CHECK_HEADER(winsock2.h)
+
+case "$host" in
+  *-cygwin*)
+    LIBS="${LIBS} -lwsock32" 
+    ;;
+esac
 
 # Checks for library functions.
 AC_FUNC_CLOSEDIR_VOID
@@ -84,9 +92,12 @@ AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
 AC_CHECK_HEADERS([execinfo.h])
 AC_CHECK_FUNCS([backtrace])
-AC_CHECK_FUNCS([getcwd gethostbyaddr gethostbyname gettimeofday inet_ntoa memmove memset mkdir realloc regcomp rmdir select socket statfs strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
+
+AC_CHECK_FUNCS([gethostbyaddr gethostbyname gettimeofday inet_ntoa regcomp select socket statfs])
 AC_CHECK_FUNCS([crypt strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton statvfs])
 AC_CHECK_FUNCS(getaddrinfo getnameinfo)
+
+AC_CHECK_FUNCS([getcwd memmove memset mkdir realloc rmdir strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
 
 AC_CHECK_HEADERS([sys/param.h sys/stafs.h sys/statvfs.h sys/vfs.h])
 
@@ -98,7 +109,8 @@ AC_CHECK_HEADERS(sys/mount.h, [], [],
 
 AC_CHECK_LIB(dl, dlopen,DL_FLAGS="-ldl",)
 AC_CHECK_LIB(crypt, crypt,CRYPT_FLAGS="-lcrypt",)
-ACX_PTHREAD(,exit 1)
+ACX_PTHREAD(,have_pthreads=no)
+# ACX_PTHREAD(,exit 1)
 
 AC_CHECK_FUNCS([crypt])
 

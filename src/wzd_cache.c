@@ -28,7 +28,7 @@
 
 #ifndef WZD_USE_PCH
 
-#if defined(_MSC_VER) || (defined  __CYGWIN__ && defined WINSOCK_SUPPORT)
+#if defined(WIN32) || (defined  __CYGWIN__ && defined WINSOCK_SUPPORT)
 #include <winsock2.h>
 #else
 #include <sys/types.h>

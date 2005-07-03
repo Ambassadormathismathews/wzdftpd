@@ -146,15 +146,19 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 
 /*********************** VERSION **************************/
 
+#ifndef WZD_BUILD_OPTS
 #if defined (_MSC_VER)
 # define WZD_BUILD_OPTS "visual"
 #else
 # define WZD_BUILD_OPTS "mingw"
 #endif
+#endif
 
 /* Version */
 #define  WZD_VERSION_NUM "0.5.3 " WZD_BUILD_OPTS
+#ifndef WZD_BUILD_NUM
 #define  WZD_BUILD_NUM __DATE__
+#endif
 
 #ifdef WZD_MULTIPROCESS
 #define WZD_MP  " mp "
@@ -166,9 +170,13 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif /* WZD_MULTITHREAD */
 #endif /* WZD_MULTIPROCESS */
 
+#ifndef WZD_VERSION_STR
 #define WZD_VERSION_STR "wzdftpd i386-pc-windows " WZD_MP WZD_VERSION_NUM
+#endif
 
+#ifndef WZD_DEFAULT_CONF
 #define WZD_DEFAULT_CONF "wzd-win32.cfg"
+#endif
 
 
 

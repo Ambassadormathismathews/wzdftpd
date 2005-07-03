@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <process.h> /* _getpid() */
 #include <direct.h> /* _rmdir() */

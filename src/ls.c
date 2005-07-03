@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #else
 #include <unistd.h>

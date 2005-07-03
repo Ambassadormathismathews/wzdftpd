@@ -24,7 +24,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#if defined(_MSC_VER)
+#if defined(WIN32)
 #include <winsock2.h>
 #else
 
@@ -35,7 +35,7 @@
 
 #include <netdb.h>
 
-#endif /* _MSC_VER */
+#endif /* WIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
