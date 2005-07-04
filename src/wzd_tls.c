@@ -999,8 +999,16 @@ int tls_close_data(wzd_context_t * context)
 {
   if (context->tls.data_session) {
     int ret;
+#if 0
     int alert;
+#endif
 
+    ret = gnutls_bye(*(gnutls_session*)context->tls.data_session,GNUTLS_SHUT_RDWR);
+    gnutls_deinit( *(gnutls_session*)context->tls.data_session );
+    free ( (gnutls_session*)context->tls.data_session );
+
+    /* removed because it causes an infinite loop when the client is SmartFTP */
+#if 0
     do {
       ret = gnutls_bye(*(gnutls_session*)context->tls.data_session,GNUTLS_SHUT_RDWR);
       if (ret == 0) break;
@@ -1033,6 +1041,7 @@ int tls_close_data(wzd_context_t * context)
 
     gnutls_deinit( *(gnutls_session*)context->tls.data_session );
     free ( (gnutls_session*)context->tls.data_session );
+#endif
   }
   context->tls.data_session = NULL;
   return 0;

@@ -1,3 +1,7 @@
+2005-07-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: infinite loop on date_close with some clients
+
 2005-07-02  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: site purge causing crash
