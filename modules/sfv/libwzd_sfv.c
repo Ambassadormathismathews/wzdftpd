@@ -357,7 +357,11 @@ int sfv_create(const char * sfv_file)
     count_entries++;
 	DIR_CONTINUE
   } /* while ((entr=readdir(dir))!=NULL) */
+#ifndef WIN32
   closedir(dir);
+#else
+  FindClose(dir);
+#endif
   sfv.comments[count_comments] = NULL;
   sfv.sfv_list[count_entries] = NULL;
 
@@ -380,7 +384,11 @@ int sfv_create(const char * sfv_file)
       ret = strlen(buffer);
       if ( write(fd_sfv,buffer,ret) != ret ) {
 	out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
+#ifndef WIN32
         closedir(dir);
+#else
+        FindClose(dir);
+#endif
        	return -1;
       }
       i++;
@@ -534,7 +542,14 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 #ifdef DEBUG
       out_err(LEVEL_CRITICAL,"sfv file: %s\n",entr->d_name);
 #endif
-      if (ret == -1 || sfv->sfv_list == NULL) { closedir(dir); return -1; }
+      if (ret == -1 || sfv->sfv_list == NULL) {
+#ifndef WIN32
+        closedir(dir);
+#else
+        FindClose(dir);
+#endif
+		  return -1;
+	  }
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]) {
@@ -544,7 +559,11 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 	if (strcmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
 #endif /* WIN32 */
 	  *entry = sfv->sfv_list[i];
-	  closedir(dir);
+#ifndef WIN32
+      closedir(dir);
+#else
+      FindClose(dir);
+#endif
 	  return 0;
 	}
 	i++;
@@ -554,7 +573,11 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 	DIR_CONTINUE
   } /* while readdir */
 
+#ifndef WIN32
   closedir(dir);
+#else
+  FindClose(dir);
+#endif
 
   return 1;
 }
@@ -983,7 +1006,11 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	}
 #endif
     }
+#ifndef WIN32
     closedir(d);
+#else
+    FindClose(d);
+#endif
 
     percent = _sfv_get_release_percent(dir, sfv);
     if (percent >= 100.f) { /* complete */
@@ -1026,7 +1053,14 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	}
 	strncpy(buffer+len,context->last_command+5,2048-len);
 	ptr = strrchr(buffer,'/');
-	if (!ptr) { closedir(d); return; }
+	if (!ptr) {
+#ifndef WIN32
+      closedir(d);
+#else
+      FindClose(d);
+#endif
+	  return;
+	}
 	*ptr='\0';
 	if (user->group_num>0) {
 	  wzd_group_t * group;
