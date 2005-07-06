@@ -1,6 +1,7 @@
-2005-07-04  Pierre Chifflier  <pollux@wzdftpd.net>
+2005-07-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: infinite loop on date_close with some clients
+	* bugfix: block signals when creating modules
 
 2005-07-02  Pierre Chifflier  <pollux@wzdftpd.net>
 

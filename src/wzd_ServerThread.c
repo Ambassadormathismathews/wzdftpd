@@ -754,7 +754,7 @@ static void server_login_accept(wzd_context_t * context)
   }
   ret = wzd_thread_create(&thread,&thread_attr,clientThreadProc,context);
   if (ret) {
-    out_err(LEVEL_CRITICAL,"Unable to craete thread\n");
+    out_err(LEVEL_CRITICAL,"Unable to create thread\n");
     return;
   }
   context->pid_child = (unsigned long)WZD_THREAD_VOID(&thread);
@@ -1095,7 +1095,19 @@ void serverMainThreadProc(void *arg)
   signal(SIGSYS,interrupt);
 #endif /* SIGSYS */
 
-#if defined(POSIX) && ! defined(BSD) /* NO, winblows is NOT posix ! */
+#ifndef WIN32
+  {
+    /* block signals so that other threads possibly created later (for ex.
+     * in modules) do not receive signals like SIGINT
+     */
+    sigset_t oldmask, newmask;
+    sigfillset(&newmask);
+    ret = pthread_sigmask(SIG_BLOCK,&newmask,&oldmask);
+    WZD_ASSERT_VOID( ret == 0 );
+  }
+#endif
+
+#if defined(POSIX) && ! defined(BSD) /* NO, windows is NOT posix ! */
   /* set fork() limit */
   {
     struct rlimit rlim;
@@ -1188,6 +1200,16 @@ void serverMainThreadProc(void *arg)
   close(0);
   close(1);
   close(2);
+#endif
+
+#ifndef WIN32
+  {
+    /* restore signals so we can be stopped with SIGINT or restarted with SIGHUP */
+    sigset_t oldmask, newmask;
+    sigfillset(&newmask);
+    ret = pthread_sigmask(SIG_UNBLOCK,&newmask,&oldmask);
+    WZD_ASSERT_VOID( ret == 0 );
+  }
 #endif
 
   out_log(LEVEL_INFO,"Process %d ok\n",getpid());
