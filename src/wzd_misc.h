@@ -25,7 +25,9 @@
 #ifndef __WZD_MISC__
 #define __WZD_MISC__
 
-#ifndef WIN32
+#ifdef WIN32
+#include <winsock2.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

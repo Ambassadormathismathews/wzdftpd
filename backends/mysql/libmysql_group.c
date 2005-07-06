@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 # include <windows.h>
 #else
 # include <unistd.h>

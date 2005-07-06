@@ -27,10 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 # include <windows.h>
 # define inline __inline
-#else /* !_MSC_VER */
+#else /* !WIN32 */
 #include <unistd.h>
 #endif
 
