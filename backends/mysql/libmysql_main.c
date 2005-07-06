@@ -28,6 +28,7 @@
 #include <string.h>
 
 #ifdef WIN32
+# include <winsock2.h>
 # include <windows.h>
 # define inline __inline
 #else /* !WIN32 */

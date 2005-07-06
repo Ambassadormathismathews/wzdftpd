@@ -46,6 +46,8 @@
 /* win32-common definitions */
 #if defined (WIN32)
 
+# include <winsock2.h>
+
 #define pid_t		unsigned int
 #define uid_t		unsigned int
 #define gid_t		unsigned int

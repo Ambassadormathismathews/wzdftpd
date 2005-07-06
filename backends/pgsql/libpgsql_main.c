@@ -28,6 +28,7 @@
 #include <string.h>
 
 #ifdef _MSC_VER
+# include <winsock2.h>
 # include <windows.h>
 # define inline __inline
 #else /* !_MSC_VER */
