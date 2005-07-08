@@ -15,7 +15,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.5.4-20050525"
+  !define VER_DISPLAY "0.5.4"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -639,6 +639,9 @@ SectionEnd
 Section /o $(CAPT_MySQLSec) MySQLSec
   SetOutPath "$INSTDIR\backends"
   File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
+
+  SetOutPath "$INSTDIR"
+  File /oname=UPGRADING-MYSQL "${SRC_DIR}\backends\mysql\UPGRADING"
 SectionEnd
 
 Section /o $(CAPT_pgSQLSec) pgSQLSec

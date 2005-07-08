@@ -1,3 +1,9 @@
+wzdftpd (0.5.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Fri,  9 Jul 2005 10:24:17 +0200
+
 wzdftpd (0.5.3-5) unstable; urgency=low
 
   * Updated Standard Version to 3.6.2

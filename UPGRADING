@@ -1,3 +1,8 @@
+0.5.4:
+
+MySQL backend: all tables renamed to lowercase. See UPGRADING file in
+backends/mysql directory for upgrade instructions.
+
 0.5.3:
 
 New command 'site sections', add permissions to your .cfg:
