@@ -1253,6 +1253,8 @@ printf("path before: '%s'\n",cmd);
     return E_PARAM_INVALID;
   }
 
+  REMOVE_TRAILING_SLASH(path);
+
 /*#ifdef DEBUG
 printf("path: '%s'\n",path);
 #endif*/
