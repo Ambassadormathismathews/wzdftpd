@@ -159,7 +159,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
 /* Version */
-#define  WZD_VERSION_NUM "0.5.3 " WZD_BUILD_OPTS
+#define  WZD_VERSION_NUM "0.5.4 " WZD_BUILD_OPTS
 #ifndef WZD_BUILD_NUM
 #define  WZD_BUILD_NUM __DATE__
 #endif

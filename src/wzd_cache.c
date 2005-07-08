@@ -91,10 +91,10 @@ struct wzd_cache_t {
   wzd_internal_cache_t * cache;
 };
 
-
-static wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode);
-
 static wzd_internal_cache_t *global_cache=NULL;
+
+#ifdef ENABLE_CACHE
+static wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags, unsigned int mode);
 
 
 static wzd_internal_cache_t * _cache_find(unsigned long hash)
@@ -109,6 +109,7 @@ static wzd_internal_cache_t * _cache_find(unsigned long hash)
 
   return NULL;
 }
+#endif /* ENABLE_CACHE */
 
 u64_t wzd_cache_getsize(wzd_cache_t *c)
 {

@@ -98,10 +98,10 @@ ssl_check_exit_1:
 int check_certificate(const char *user, const char *data)
 {
   wzd_context_t * context;
-  int status=0;
+  unsigned int status=0;
   int ret=0;
   const gnutls_datum *cert_list;
-  int cert_list_size;
+  unsigned int cert_list_size;
   gnutls_x509_crt cert;
   gnutls_session *session;
   size_t name_size;
