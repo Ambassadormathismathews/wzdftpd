@@ -641,7 +641,7 @@ Section /o $(CAPT_MySQLSec) MySQLSec
   File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.dll"
 
   SetOutPath "$INSTDIR"
-  File /oname=UPGRADING-MYSQL "${SRC_DIR}\backends\mysql\UPGRADING"
+  File /oname=UPGRADING-MYSQL "${ROOT_DIR}\backends\mysql\UPGRADING"
 SectionEnd
 
 Section /o $(CAPT_pgSQLSec) pgSQLSec
