@@ -1,3 +1,8 @@
+2005-07-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* First release since migration to svn
+	* --- svn commit TAG: rel-0-5-4
+
 2005-07-06  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: infinite loop on date_close with some clients
