@@ -35,6 +35,11 @@
 
 #include <netdb.h>
 
+/** \todo XXX FIXME remove this line and use correct types !!!!
+ * this is used to convert char* to struct in6_addr
+ */
+#define PORCUS_CAST(x) ( ((struct in6_addr*)(x)) )
+
 #endif /* WIN32 */
 
 #include <stdio.h>
@@ -427,7 +432,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
 #else
   inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
-  if (IN6_IS_ADDR_V4MAPPED(userip))
+  if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
     out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
 #endif
 
@@ -721,7 +726,7 @@ static void server_login_accept(wzd_context_t * context)
   inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
 #else
   inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
-  if (IN6_IS_ADDR_V4MAPPED(userip))
+  if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
     out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
 #endif
 

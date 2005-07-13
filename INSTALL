@@ -16,6 +16,9 @@ Windows:
 * visual c++
 * if you want ssl support, openssl-devel headers and libs
 
+MacOS X:
+* gcc
+
 Solaris:
 * gcc, flex, binutils from sunfreeware
 * the library name containing gethostbyname (see man)
@@ -26,7 +29,7 @@ All paths are relative to rep wzdftpd (root)
 
 1) Generate configure script (if compiling from CVS):
 ./boostrap
-If you're FreeBSD user, read notes below.
+If you're FreeBSD or MacOS X user, read notes below.
 
 2) Configure
 ./configure [args]
@@ -49,7 +52,7 @@ The _MINIMUM_ installation is composed of:
 
 You can add modules
 
-Building CVS version on FreeBSD:
+Building SVN version on FreeBSD:
 It's known that there are some troubles with aclocal on FreeBSD 5.2.1 (and 
 may be other versions). The solution is to run aclocal with 
 "-I /usr/local/share/aclocal/" arg. If you have troubles with the mpatrol 
@@ -64,3 +67,7 @@ AUTOCONF=autoconf259
 AUTOHEADER=autoheader259
 AUTOMAKE=automake18
 LIBTOOLIZE=libtoolize14
+
+Building SVN version on MacOS X:
+you bootstrap.local file should contain the following
+LIBTOOLIZE=glibtoolize

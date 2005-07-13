@@ -47,10 +47,6 @@
 #include <stdio.h>
 #include <string.h>
 
-/* speed up compilation */
-#define SSL     void
-#define SSL_CTX void
-
 #include "wzd_structs.h"
 
 #ifdef HAVE_ZLIB

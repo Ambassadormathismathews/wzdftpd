@@ -52,6 +52,11 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
+/** \todo XXX FIXME remove this line and use correct types !!!!
+ * this is used to convert char* to struct in6_addr
+ */
+#define PORCUS_CAST(x) ( ((struct in6_addr*)(x)) )
+
 #endif /* WIN32 */
 
 #include <stdio.h>
@@ -1630,14 +1635,14 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 
   if (mainConfig->pasv_ip[0] == 0) {
 #if defined(IPV6_SUPPORT)
-      if (IN6_IS_ADDR_V4MAPPED(myip))
+      if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(myip)) )
         memcpy(pasv_bind_ip,myip+12,4);
       else
 #endif /* IPV6_SUPPORT */
         memcpy(pasv_bind_ip,myip,4);
   } else {
 #if defined(IPV6_SUPPORT)
-    if (IN6_IS_ADDR_V4MAPPED(context->hostip))
+    if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(context->hostip)))
       offset = 12;
 #endif
     /* do NOT send pasv_ip if used from private network */
@@ -1647,7 +1652,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
       (context->hostip[offset+0] == 127 && context->hostip[offset+1] == 0 && context->hostip[offset+2] == 0 && context->hostip[offset+3] == 1))
     {
 #if defined(IPV6_SUPPORT)
-      if (IN6_IS_ADDR_V4MAPPED(myip))
+      if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(myip)))
         memcpy(pasv_bind_ip,myip+12,4);
       else
 #endif /* IPV6_SUPPORT */
@@ -1655,7 +1660,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
     }
     else
 #if defined(IPV6_SUPPORT)
-      if (IN6_IS_ADDR_V4MAPPED(mainConfig->pasv_ip))
+      if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(mainConfig->pasv_ip)))
         memcpy(pasv_bind_ip,mainConfig->pasv_ip+12,4);
       else
 #endif /* IPV6_SUPPORT */

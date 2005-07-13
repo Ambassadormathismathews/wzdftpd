@@ -47,7 +47,7 @@
 #endif
 
 
-#ifdef BSD
+#if defined(BSD) && !(defined(__MACH__) && defined(__APPLE__))
 #define	DL_ARG	DL_LAZY
 #else
 #define	DL_ARG	RTLD_NOW

@@ -1,3 +1,9 @@
+2005-07-13  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: MacOS X support !
+	* feature: added libgnutls.m4 file to distributed files,
+	so you don't need libgnutls-dev to run bootstrap
+
 2005-07-09  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* First release since migration to svn
