@@ -448,7 +448,7 @@ void out_err(int level, const char *fmt,...)
 int xferlog_open(const char *filename, unsigned int filemode)
 {
   int fd;
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32)
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32) || defined(__APPLE__)
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, filemode);
 #else /* ! BSD */
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND | O_SYNC, filemode);

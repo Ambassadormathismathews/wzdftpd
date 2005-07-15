@@ -71,3 +71,12 @@ LIBTOOLIZE=libtoolize14
 Building SVN version on MacOS X:
 you bootstrap.local file should contain the following
 LIBTOOLIZE=glibtoolize
+
+If you get errors like:
+ar cru .libs/libwzd_base.a .libs/hash.o .libs/list.o .libs/stack.o .libs/wzd_strlcat.o .libs/wzd_strtok_r.o~ranlib
+.libs/libwzd_base.a
+ar: .libs/wzd_strtok_r.o~ranlib: No such file or directory
+make[2]: *** [libwzd_base.la] Error 1
+Then update the .m4 file from your distribution:
+cp /usr/share/aclocal/libtool.m4 m4/
+and re-run ./bootstrap

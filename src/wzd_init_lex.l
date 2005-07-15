@@ -333,7 +333,7 @@ int set_default_options(void)
   strcpy(tempConfig.logfilename,"wzd.log");*/
   tempConfig.logfilename = NULL;
 
-#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32)
+#if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32) || defined(__APPLE__)
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND;
 #else /* ! BSD */
   tempConfig.logfilemode = O_CREAT | O_WRONLY | O_APPEND | O_SYNC;
