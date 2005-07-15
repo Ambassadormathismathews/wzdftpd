@@ -37,11 +37,13 @@
 
 #include <libpq-fe.h>
 
-#include <wzd_backend.h>
 #include <libwzd-auth/wzd_md5.h>
 #include <libwzd-auth/wzd_md5crypt.h>
-#include <wzd_log.h>
-#include <wzd_debug.h>
+
+#include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_log.h>
+
+#include <libwzd-core/wzd_debug.h>
 
 #include "libpgsql.h"
 

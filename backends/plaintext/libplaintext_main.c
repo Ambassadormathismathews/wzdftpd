@@ -41,10 +41,10 @@
 
 #include <libwzd-auth/wzd_auth.h>
 
-#include "wzd_backend.h"
-#include "wzd_log.h"
-#include "wzd_misc.h"
-#include "wzd_debug.h"
+#include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_debug.h>
 
 #include "libplaintext_file.h"
 #include "libplaintext_main.h"

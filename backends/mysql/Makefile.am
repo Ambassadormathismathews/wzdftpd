@@ -1,6 +1,6 @@
 libdir = ${pkgdatadir}/backends
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src -I$(top_srcdir)/libwzd-base $(WZD_MYSQL_INCLUDES) $(WZD_SSL_INCLUDES)
+INCLUDES = -I$(top_srcdir) $(WZD_MYSQL_INCLUDES) $(WZD_SSL_INCLUDES)
 
 #libexec_LTLIBRARIES = libwzdplaintext.la
 lib_LTLIBRARIES = libwzdmysql.la

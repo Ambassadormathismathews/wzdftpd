@@ -30,9 +30,9 @@
 
 #include <string.h>
 
-#include <src/wzd_structs.h> /* struct wzd_context_t */
-#include <src/wzd_log.h> /* out_log */
-#include <src/wzd_misc.h> /* GetMyContext */
+#include <libwzd-core/wzd_structs.h> /* struct wzd_context_t */
+#include <libwzd-core/wzd_log.h> /* out_log */
+#include <libwzd-core/wzd_misc.h> /* GetMyContext */
 
 #if defined(HAVE_OPENSSL)
 

@@ -1,7 +1,7 @@
 #include <string.h> /* memset */
 
-#include <wzd_structs.h>
-#include <wzd_string.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_string.h>
 
 #include "test_common.h"
 

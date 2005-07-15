@@ -1,7 +1,7 @@
 #include <string.h> /* memset */
 
-#include <wzd_structs.h>
-#include <wzd_action.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_action.h>
 
 extern void set_action(wzd_context_t * context, unsigned int token, const char *arg);
 

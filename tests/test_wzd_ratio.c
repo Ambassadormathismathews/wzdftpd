@@ -1,8 +1,8 @@
 #include <string.h> /* memset */
 
-#include <wzd_structs.h>
-#include <wzd_cache.h>
-#include <wzd_ratio.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_cache.h>
+#include <libwzd-core/wzd_ratio.h>
 
 #include "test_common.h"
 

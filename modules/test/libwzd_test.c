@@ -31,12 +31,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-/*#include <wzd.h>*/
-#include <wzd_structs.h>
-#include <wzd_log.h>
-#include <wzd_misc.h>
-#include <wzd_libmain.h>
-#include <wzd_mod.h> /* essential to define WZD_MODULE_INIT */
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_libmain.h>
+#include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
 
 /***** EVENT HOOKS *****/
 static int my_event_hook(unsigned long event_id, wzd_context_t * context, const char *p1, const char *p2);

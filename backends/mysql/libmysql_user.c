@@ -36,12 +36,12 @@
 
 #include <mysql.h>
 
-#include <wzd_backend.h>
-#include <wzd_strlcat.h>
+#include <libwzd-base/wzd_strlcat.h>
 
-#include <wzd_misc.h> /* win_normalize */
+#include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_misc.h> /* win_normalize */
 
-#include <wzd_debug.h>
+#include <libwzd-core/wzd_debug.h>
 
 #include "libmysql.h"
 

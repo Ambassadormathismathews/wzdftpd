@@ -66,17 +66,17 @@
 #include <tcl.h>
 
 /*#include <wzd.h>*/
-#include "wzd_structs.h"
-#include "wzd_log.h"
-#include "wzd_misc.h"
-#include "wzd_file.h" /* file_mkdir, file_stat */
-#include "wzd_libmain.h"
-#include "wzd_messages.h"
-#include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
-#include "wzd_vfs.h" /* checkpath_new */
-#include "wzd_vars.h" /* needed to access variables */
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_file.h> /* file_mkdir, file_stat */
+#include <libwzd-core/wzd_libmain.h>
+#include <libwzd-core/wzd_messages.h>
+#include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
+#include <libwzd-core/wzd_vfs.h> /* checkpath_new */
+#include <libwzd-core/wzd_vars.h> /* needed to access variables */
 
-#include "wzd_debug.h"
+#include <libwzd-core/wzd_debug.h>
 
 /***** Private vars ****/
 static Tcl_Interp * interp=NULL;

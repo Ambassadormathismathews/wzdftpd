@@ -41,8 +41,8 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include "wzd_backend.h"
-#include "wzd_debug.h"
+#include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_debug.h>
 
 #define	HARD_DEF_USER_MAX	64
 #define	HARD_DEF_GROUP_MAX	64

@@ -3,10 +3,10 @@
 
 #include <fcntl.h> /* O_RDONLY */
 
-#include <wzd_structs.h>
-#include <wzd_cache.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_cache.h>
 
-#include <wzd_debug.h>
+#include <libwzd-core/wzd_debug.h>
 
 #define C1 0x12345678
 #define C2 0x9abcdef0

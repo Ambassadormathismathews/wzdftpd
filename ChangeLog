@@ -1,3 +1,7 @@
+2005-07-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: split directory src/ into libwzd-core/ and wzdftpd/
+
 2005-07-13  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: MacOS X support !

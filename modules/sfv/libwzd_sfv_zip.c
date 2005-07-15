@@ -47,7 +47,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "wzd_structs.h"
+#include <libwzd-core/wzd_structs.h>
 
 #ifdef HAVE_ZLIB
 

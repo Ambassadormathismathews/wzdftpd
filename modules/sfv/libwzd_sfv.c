@@ -50,17 +50,17 @@
 #include <errno.h>
 
 /*#include "wzd.h"*/
-#include "wzd_structs.h"
-#include "wzd_log.h"
-#include "wzd_misc.h"
-#include "wzd_libmain.h"
-#include "wzd_messages.h"
-#include "wzd_mod.h" /* essential to define WZD_MODULE_INIT */
-#include "wzd_cache.h"
-#include "wzd_crc32.h"
-#include "wzd_vfs.h" /* checkabspath */
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_libmain.h>
+#include <libwzd-core/wzd_messages.h>
+#include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
+#include <libwzd-core/wzd_cache.h>
+#include <libwzd-core/wzd_crc32.h>
+#include <libwzd-core/wzd_vfs.h> /* checkabspath */
 
-#include "wzd_debug.h"
+#include <libwzd-core/wzd_debug.h>
 
 #include "libwzd_sfv.h"
 #include "libwzd_sfv_zip.h"

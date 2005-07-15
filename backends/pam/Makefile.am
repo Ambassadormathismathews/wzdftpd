@@ -1,6 +1,6 @@
 libdir = ${pkgdatadir}/backends
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/src $(WZD_PAM_INCLUDES) $(WZD_SSL_INCLUDES)
+INCLUDES = -I$(top_srcdir) $(WZD_PAM_INCLUDES) $(WZD_SSL_INCLUDES)
 
 lib_LTLIBRARIES = libwzdpam.la
 

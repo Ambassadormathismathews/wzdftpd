@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h> /* memset */
 
-#include <wzd_structs.h>
-#include <wzd_crc32.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_crc32.h>
 
 #define C1 0x12345678
 #define C2 0x9abcdef0

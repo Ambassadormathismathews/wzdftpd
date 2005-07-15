@@ -1,9 +1,9 @@
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset */
 
-#include <wzd_structs.h>
-#include <wzd_libmain.h>
-#include <wzd_utf8.h>
+#include <libwzd-core/wzd_structs.h>
+#include <libwzd-core/wzd_libmain.h>
+#include <libwzd-core/wzd_utf8.h>
 
 
 void fake_mainConfig(void)
