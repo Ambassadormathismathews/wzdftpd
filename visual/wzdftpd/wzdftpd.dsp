@@ -37,12 +37,12 @@ RSC=rc.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Release"
+# PROP Output_Dir "../Release"
 # PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /I "../" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /c
+# ADD CPP /nologo /MT /W3 /GX /O2 /I "../../" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
 # ADD RSC /l 0x40c /d "NDEBUG"
@@ -51,7 +51,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 Release/libwzd_core.lib wsock32.lib kernel32.lib user32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
+# ADD LINK32 ../Release/libwzd_core.lib wsock32.lib kernel32.lib user32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
 # SUBTRACT LINK32 /debug
 
 !ELSEIF  "$(CFG)" == "wzdftpd - Win32 Debug"
@@ -63,12 +63,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
+# PROP Output_Dir "../Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../" /D "DEBUG" /D "_DEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /GZ /c
+# ADD CPP /nologo /W3 /Gm /GX /ZI /Od /I "../../" /D "DEBUG" /D "_DEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "HAVE_UTF8" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /FD /GZ /c
 # SUBTRACT CPP /Fr /YX
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
 # ADD RSC /l 0x40c /d "_DEBUG"
@@ -77,7 +77,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 Debug/libwzd_core.lib kernel32.lib user32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
+# ADD LINK32 ../Debug/libwzd_core.lib kernel32.lib user32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
 
 !ENDIF 
 
@@ -90,33 +90,24 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\src\wzd_init_lex.c
+SOURCE=..\..\wzdftpd\wzd_init_lex.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_init_lex.l
+SOURCE=..\..\wzdftpd\wzd_init_lex.l
 
 !IF  "$(CFG)" == "wzdftpd - Win32 Release"
 
-# Begin Custom Build
-InputDir=\Users\Ze\wzdftpd\wzdftpd-HEAD\src
-InputPath=..\src\wzd_init_lex.l
-InputName=wzd_init_lex
-
-"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	.\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
-
-# End Custom Build
-
 !ELSEIF  "$(CFG)" == "wzdftpd - Win32 Debug"
 
+# PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\Users\Ze\wzdftpd\wzdftpd-HEAD\src
-InputPath=..\src\wzd_init_lex.l
+InputDir=\HOMEDIR\svn\wzdftpd
+InputPath=..\..\wzdftpd\wzd_init_lex.l
 InputName=wzd_init_lex
 
 "$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	.\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
+	..\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
 
 # End Custom Build
 
@@ -125,15 +116,15 @@ InputName=wzd_init_lex
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_main.c
+SOURCE=..\..\wzdftpd\wzd_main.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_savecfg.c
+SOURCE=..\..\wzdftpd\wzd_savecfg.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_ServerThread.c
+SOURCE=..\..\wzdftpd\wzd_ServerThread.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -141,19 +132,19 @@ SOURCE=..\src\wzd_ServerThread.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\src\wzd_init.h
+SOURCE=..\..\wzdftpd\wzd_init.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_opts.h
+SOURCE=..\..\wzdftpd\wzd_opts.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_savecfg.h
+SOURCE=..\..\wzdftpd\wzd_savecfg.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\src\wzd_ServerThread.h
+SOURCE=..\..\wzdftpd\wzd_ServerThread.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
@@ -164,17 +155,5 @@ SOURCE=..\src\wzd_ServerThread.h
 SOURCE=.\wzdftpd.res
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=.\gnu_regex_dist\gnu_regex.lib
-# End Source File
-# Begin Source File
-
-SOURCE=.\openssl\lib\ssleay32.lib
-# End Source File
-# Begin Source File
-
-SOURCE=.\openssl\lib\libeay32.lib
-# End Source File
 # End Target
 # End Project
