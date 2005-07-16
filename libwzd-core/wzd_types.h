@@ -43,6 +43,8 @@
 # include <inttypes.h>
 #endif
 
+#include "arch/bsd.h"
+
 /* win32-common definitions */
 #if defined (WIN32)
 
