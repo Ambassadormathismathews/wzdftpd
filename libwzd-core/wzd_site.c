@@ -1478,7 +1478,7 @@ void do_site_user(const char *command_line, wzd_context_t * context)
 
 /********************* do_site_utime ***********************/
 /** utime filename YYYYMMDDhhmmss YYYYMMDDhhmmss YYYYMMDDhhmmss UTC
- * change acess time, modification time, modification of status of a file
+ * change access time, modification time, modification of status of a file
  */
 
 int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)

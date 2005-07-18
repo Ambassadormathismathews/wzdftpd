@@ -44,6 +44,8 @@
 #else
 #include <unistd.h>
 #include <pthread.h>
+
+#include <signal.h>
 #endif
 
 #include "wzd_structs.h"
@@ -63,7 +65,29 @@
 int wzd_thread_create(wzd_thread_t * thread, wzd_thread_attr_t * attr, void * (start_routine)(void *), void * arg)
 {
 #ifndef WIN32
-  return pthread_create( & thread->_t, & attr->_a, start_routine, arg);
+  int ret;
+
+  {
+    /* block signals so that other threads possibly created later (for ex.
+     * in modules) do not receive signals like SIGINT
+     */
+    sigset_t oldmask, newmask;
+    sigfillset(&newmask);
+    ret = pthread_sigmask(SIG_BLOCK,&newmask,&oldmask);
+    WZD_ASSERT( ret == 0 );
+  }
+
+  ret =  pthread_create( & thread->_t, & attr->_a, start_routine, arg);
+
+  {
+    /* restore signals so we can be stopped with SIGINT or restarted with SIGHUP */
+    sigset_t oldmask, newmask;
+    sigfillset(&newmask);
+    ret = pthread_sigmask(SIG_UNBLOCK,&newmask,&oldmask);
+    WZD_ASSERT( ret == 0 );
+  }
+
+  return ret;
 #else
   unsigned long threadID;
 
