@@ -353,11 +353,6 @@ typedef signed fd_t;
 #define CURRENT_AF AF_INET
 #endif
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
-#undef IN6_IS_ADDR_V4MAPPED
-#define ULONG uint32_t
-#endif
-
 /* definitions for windows 2000 */
 #if defined(_MSC_VER) && defined(WINVER) && (WINVER < 0x0501)
 #define in6_addr in_addr6 /* funny ! */

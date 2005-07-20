@@ -28,9 +28,15 @@
 #ifndef __ARCH_BSD__
 #define __ARCH_BSD__
 
-
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
-#endif
+#undef IN6_IS_ADDR_V4MAPPED
+#define ULONG uint32_t
 
+/* that's required for some old BSDs, e.g. FreeBSD 4.x */
+#if !defined(PRIu64)
+#define		PRIu64		"llu"
+#endif /* PRIu64 */
+
+#endif
 
 #endif /* __ARCH_BSD__ */
