@@ -20,6 +20,10 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 include /usr/share/dpatch/dpatch.make
 
+ifndef DESTDIR
+DESTDIR=..
+endif
+
 
 CFLAGS = -Wall -fno-strict-aliasing
 
@@ -161,7 +165,7 @@ binary-common:
 	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-mod-perl.substvars
 	dh_gencontrol
 	dh_md5sums
-	dh_builddeb
+	dh_builddeb --destdir=$(DESTDIR)
 # Build architecture independant packages using the common target.
 binary-indep: build-indep install-indep
 	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common

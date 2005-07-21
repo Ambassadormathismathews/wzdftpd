@@ -36,4 +36,9 @@ make install
 
 make dist
 
+if [ -x /usr/bin/fakeroot ]; then
+  fakeroot debian/rules clean
+  fakeroot debian/rules DESTDIR=$HOME/package-root/debian binary
+fi
+
 exit 0
