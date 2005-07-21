@@ -16,7 +16,7 @@ AC_DEFUN([WZD_LIB_PAM],
   AC_ARG_WITH(pam,
     [  --with-pam              Enable PAM support ],
     [
-      if test "x$withval" != "xno" ; then
+      if test "x$withval" != "x" -o "x$withval" != "xno" ; then
         if test "x$ac_cv_header_security_pam_appl_h" != "xyes" && \
           test "x$ac_cv_header_pam_pam_appl_h" != "xyes" ; then
             AC_MSG_ERROR([PAM headers not found])

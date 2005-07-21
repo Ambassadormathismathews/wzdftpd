@@ -110,8 +110,8 @@ install-arch:
 	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/doc/wzdftpd/html;\
 
 	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
-	install -m 644 src/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
-	install -m 644 src/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	install -m 644 wzdftpd/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	install -m 644 wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
 
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/files ;\
 	mv debian/tmp/etc/wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
