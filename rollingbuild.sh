@@ -37,6 +37,8 @@ make install
 rm -f $NAME-*.tar.gz
 make dist
 
+cp $NAME-*.tar.gz $HOME/package-root/tar/
+
 if [ -x /usr/bin/rpmbuild ]; then
   rpmbuild -ta --clean $NAME-*.tar.gz
 fi
