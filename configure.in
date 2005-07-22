@@ -297,6 +297,7 @@ AC_CONFIG_FILES([Makefile
                  modules/sfv/Makefile
                  modules/tcl/Makefile
                  modules/test/Makefile
+                 redhat/Makefile
                  tests/Makefile
                  tools/Makefile
                  tools/siteconfig/Makefile

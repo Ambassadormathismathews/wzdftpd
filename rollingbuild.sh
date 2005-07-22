@@ -34,7 +34,12 @@ fi
 
 make install
 
+rm -f $NAME-*.tar.gz
 make dist
+
+if [ -x /usr/bin/rpmbuild ]; then
+  rpmbuild -ta --clean $NAME-*.tar.gz
+fi
 
 if [ -x /usr/bin/fakeroot ]; then
   fakeroot debian/rules clean

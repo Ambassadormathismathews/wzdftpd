@@ -1,3 +1,7 @@
+2005-07-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: add rpm spec file to distribution
+
 2005-07-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: block signals when creating child threads to avoid multiple
