@@ -68,9 +68,13 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <utime.h>
+
 #ifndef WIN32
 #include <unistd.h>
 #include <pthread.h>
+
+
 #endif
 
 #include "wzd_structs.h"
@@ -167,6 +171,7 @@ int identify_token(char *token)
       case STRTOINT('x','c','r','c'): return TOK_XCRC;
       case STRTOINT('x','m','d','5'): return TOK_XMD5;
       case STRTOINT('o','p','t','s'): return TOK_OPTS;
+      case STRTOINT('m','o','d','a'): return TOK_MODA;
 /*      default:
         return TOK_UNKNOWN;*/
     }
@@ -2396,6 +2401,128 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   }
   ret = send_message_with_args(501,context,"File inexistant or no access ?");
   return E_FILE_NOEXIST;
+}
+
+/*************** do_size *****************************/
+int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+#ifdef HAVE_STRPTIME
+  extern char *strptime (__const char *__restrict __s,
+    __const char *__restrict __fmt, struct tm *__tp);
+#endif
+  int ret, command_ok=0;
+  char * facts, * fact, * value, * ptr;
+  struct tm tm_atime, tm_mtime;
+  struct utimbuf utime_buf = {0, 0};
+  char * filename;
+  char path[WZD_MAX_PATH];
+
+  if (!param) {
+    ret = send_message_with_args(501,context,"Invalid syntax");
+    return E_PARAM_INVALID;
+  }
+
+  facts = strdup(str_tochar(param));
+  filename = strstr(facts,"; ");
+  if (!filename) {
+    free(facts);
+    ret = send_message_with_args(501,context,"Invalid syntax");
+    return E_PARAM_INVALID;
+  }
+  filename++; /* skip ';' */
+  *filename++ = '\0';
+
+  if (checkpath_new(filename,path,context)) {
+    free(facts);
+    ret = send_message_with_args(501,context,"Invalid filename");
+    return E_PARAM_INVALID;
+  }
+  if (path[strlen(path)-1]=='/')
+    path[strlen(path)-1]='\0';
+
+  /** \todo XXX open file to avoid race conditions */
+
+  fact = strtok_r(facts,"=",&ptr);
+  if (!fact) {
+    free(facts);
+    ret = send_message_with_args(501,context,"Invalid syntax");
+    return E_PARAM_INVALID;
+  }
+
+  while (fact) {
+    value = strtok_r(NULL,";",&ptr);
+    if (!value) {
+      free(facts);
+      ret = send_message_with_args(501,context,"Invalid syntax");
+      return E_PARAM_INVALID;
+    }
+
+    /* test 'fact' and make action */
+    /** \todo XXX it would be a good idea to make 'atomic' modifications, or to lock file ! */
+
+/**** accessed *******/
+    if (strcmp(fact,"accessed")==0) {
+      memset(&tm_atime,0,sizeof(struct tm));
+      ptr=strptime(value,"%Y%m%d%H%M%S",&tm_atime);
+      if (ptr == NULL || *ptr != '\0') {
+        snprintf(path,WZD_MAX_PATH,"Invalid value for fact '%s', aborting",fact);
+        ret = send_message_with_args(501,context,path);
+        return E_PARAM_INVALID;
+      }
+
+      utime_buf.actime = mktime(&tm_atime);
+      ret = utime(path,&utime_buf);
+
+      if (ret) {
+        snprintf(path,WZD_MAX_PATH,"Error in fact %s: '%s', aborting",fact,value);
+        free(facts);
+        ret = send_message_with_args(501,context,path);
+        return E_PARAM_INVALID;
+      }
+      command_ok++;
+
+    } else
+/**** modify *******/
+    if (strcmp(fact,"modify")==0) {
+      memset(&tm_mtime,0,sizeof(struct tm));
+      ptr=strptime(value,"%Y%m%d%H%M%S",&tm_mtime);
+      if (ptr == NULL || *ptr != '\0') {
+        snprintf(path,WZD_MAX_PATH,"Invalid value for fact '%s', aborting",fact);
+        ret = send_message_with_args(501,context,path);
+        return E_PARAM_INVALID;
+      }
+
+      utime_buf.modtime = mktime(&tm_mtime);
+      ret = utime(path,&utime_buf);
+
+      if (ret) {
+        snprintf(path,WZD_MAX_PATH,"Error in fact %s: '%s', aborting",fact,value);
+        free(facts);
+        ret = send_message_with_args(501,context,path);
+        return E_PARAM_INVALID;
+      }
+      command_ok++;
+
+    } else
+/**** unknown *******/
+    {
+      snprintf(path,WZD_MAX_PATH,"Unsupported fact '%s', aborting",fact);
+      free(facts);
+      ret = send_message_with_args(501,context,path);
+      return E_PARAM_INVALID;
+    }
+
+    fact = strtok_r(NULL,"=",&ptr);
+  }
+
+  free(facts);
+
+  if (command_ok)
+    ret = send_message_with_args(200,context,"Command okay");
+  else
+    ret = send_message_with_args(501,context,"Not yet implemented");
+
+  return E_PARAM_INVALID;
 }
 
 /*************** do_size *****************************/

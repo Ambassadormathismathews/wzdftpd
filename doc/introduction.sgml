@@ -63,6 +63,7 @@ user database and permissions.
 <listitem><para>Powerfull event system</para></listitem>
 <listitem><para>Job scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
+<listitem><para>Support for UTF-8: unicode filenames</para></listitem>
 <listitem><para>SSL/TLS support</para></listitem>
 <listitem><para>IPv6 support (experimental)</para></listitem>
 <listitem><para>win32: can auto-register as a service, unregister, start/stop</para></listitem>

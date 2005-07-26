@@ -34,26 +34,35 @@ void * clientThreadProc(void *arg);
 
 void client_die(wzd_context_t * context);
 
-/* REST STREAM is to be compliant with draft-ietf-ftpext-mlst-16.txt */
+#define FEAT_COMMON " NON-FREE FTPD SUCKS\n" \
+  " MDTM\n" \
+  " SIZE\n" \
+  " SITE\n" \
+  " REST STREAM\n" \
+  " PRET\n" \
+  " XCRC\n" \
+  " XMD5\n" \
+  " MODA modify*;accessed*;\n"
+
 #ifdef TEST_MLSD
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST STREAM\n PRET\n XCRC\n XMD5\n MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
+#define FEAT_MLST  " MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
 #else
-#define GLOBAL_FEATURES  " NON-FREE FTPD SUCKS\n MDTM\n SIZE\n SITE\n REST STREAM\n PRET\n XCRC\n XMD5\n"
+#define FEAT_MLST
 #endif
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-#define TEMP_FEAT  GLOBAL_FEATURES " AUTH TLS\n PBSZ\n PROT\n SSCN\n CPSV\n"
+#define FEAT_TLS  " AUTH TLS\n PBSZ\n PROT\n SSCN\n CPSV\n"
 #else
-#define TEMP_FEAT GLOBAL_FEATURES
+#define FEAT_TLS
 #endif
 
 #ifdef HAVE_UTF8
-#define TEMP_FEAT2  TEMP_FEAT" UTF8\n"
+#define FEAT_UTF8 " UTF8\n"
 #else
-#define TEMP_FEAT2 TEMP_FEAT
+#define FEAT_UTF8
 #endif
 
-#define SUPPORTED_FEATURES (TEMP_FEAT2 "End")
+#define SUPPORTED_FEATURES (FEAT_COMMON FEAT_MLST FEAT_TLS FEAT_UTF8 "End")
 
 
 
@@ -87,5 +96,7 @@ int do_quit(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_help(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+
+int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
 #endif /* __WZD_CLIENT_THREAD__ */

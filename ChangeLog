@@ -1,3 +1,8 @@
+2005-07-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: added new experimental MODA command
+	* feature: enable utf8 in autobuilder
+
 2005-07-22  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: add rpm spec file to distribution

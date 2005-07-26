@@ -163,6 +163,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"cpsv",do_pasv,NULL,TOK_CPSV)) return -1;
   if (commands_add(_ctable,"sscn",do_sscn,NULL,TOK_SSCN)) return -1;
 #endif
+  if (commands_add(_ctable,"moda",do_moda,NULL,TOK_MODA)) return -1;
 
 
   if (commands_add(_ctable,"site_addip",do_site_addip,NULL,TOK_SITE_ADDIP)) return -1;

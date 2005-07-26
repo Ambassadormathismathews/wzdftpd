@@ -360,12 +360,14 @@ typedef signed fd_t;
 #define socklen_t	unsigned int
 #endif /* WINVER */
 
+#ifndef WIN32
 #ifndef IN6_IS_ADDR_V4MAPPED
 #define IN6_IS_ADDR_V4MAPPED(a) \
 	((((const ULONG *)(a))[0] == 0) \
 	&& (((const ULONG *)(a))[1] == 0) \
 	&& (((const ULONG *)(a))[2] == htonl (0xffff)))
 #endif /* IN6_IS_ADDR_V4MAPPED */
+#endif /* WIN32 */
 
 #ifndef INADDR_NONE
 # define INADDR_NONE ((unsigned long int) 0xffffffff)

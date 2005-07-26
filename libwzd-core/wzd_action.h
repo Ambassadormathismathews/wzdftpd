@@ -78,6 +78,8 @@ typedef enum {
   TOK_MLST,
   TOK_MLSD,
 
+  TOK_MODA,
+
   TOK_SITE_ADDIP=64,
   TOK_SITE_ADDUSER,
   TOK_SITE_BACKEND,

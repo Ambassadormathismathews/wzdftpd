@@ -21,7 +21,7 @@ export PATH
 ./bootstrap || exit 1
 
 # Configure the build
-./configure --prefix=$AUTO_BUILD_ROOT
+./configure --enable-utf8 --prefix=$AUTO_BUILD_ROOT
 
 # Make
 make
