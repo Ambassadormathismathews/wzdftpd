@@ -1133,7 +1133,7 @@ void * GetMyContext(void)
 }
 
 #ifdef WIN32
-int gettimeofday(struct timeval *tv, struct timezone *tz)
+int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     FILETIME        ft;
     LARGE_INTEGER   li;

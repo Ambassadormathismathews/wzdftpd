@@ -31,7 +31,10 @@
 
 void encrypt (char *block, int edflag);
 void wzd_setkey (char *key);
+
+#ifndef crypt
 char * crypt (const char *key, const char *salt);
+#endif
 
 /*! @} */
 

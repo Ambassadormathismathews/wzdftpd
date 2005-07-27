@@ -354,7 +354,7 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
     return -1;
   }
 
-  numrows = mysql_num_rows(res);
+  numrows = (unsigned int)mysql_num_rows(res);
   mysql_free_result(res);
 
   switch (numrows) {

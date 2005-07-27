@@ -124,6 +124,7 @@ const char * getMessage(int code, int *must_free)
   const char * ptr;
   char * file_buffer;
   unsigned long filesize, size;
+  u64_t sz64;
 
   if (code < 0 || code > HARD_MSG_LIMIT)
     return DEFAULT_MSG;
@@ -134,7 +135,14 @@ const char * getMessage(int code, int *must_free)
     wzd_cache_t * fp;
     fp = wzd_cache_open(ptr+1,O_RDONLY,0644);
     if (!fp) return DEFAULT_MSG;
-    filesize = wzd_cache_getsize(fp);
+    sz64 = wzd_cache_getsize(fp);
+	if (sz64 > INT_MAX) {
+      out_log(LEVEL_HIGH,"%s:%d couldn't allocate " PRIu64 " bytes for message %d\n",__FILE__,__LINE__,code);
+	  wzd_cache_close(fp);
+	  *must_free = 0;
+	  return NULL;
+	}
+	filesize = (unsigned int) sz64;
     file_buffer = wzd_malloc(filesize+1);
     if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize ) {
       wzd_free(file_buffer);

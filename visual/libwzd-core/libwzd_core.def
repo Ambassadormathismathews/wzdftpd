@@ -239,6 +239,7 @@ EXPORTS
 	vfs_replace
 	vfs_replace_cookies
 	win_normalize
+	win32_gettimeofday
 	wzd_cache_close
 	wzd_cache_gets
 	wzd_cache_getsize

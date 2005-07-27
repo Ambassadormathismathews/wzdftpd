@@ -1,3 +1,7 @@
+2005-07-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* code: moved arch-specific code to arch/win32.h
+
 2005-07-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added new experimental MODA command

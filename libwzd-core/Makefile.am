@@ -11,6 +11,7 @@ libwzd_core_ladir = ${e_prefix}/include/wzdftpd
 
 libwzd_core_la_HEADERS = \
 	arch/bsd.h       \
+	arch/win32.h     \
 	ls.h             \
 	wzd_action.h     \
 	wzd_all.h        \

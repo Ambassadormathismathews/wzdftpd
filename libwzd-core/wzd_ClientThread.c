@@ -34,14 +34,10 @@
 
 #ifdef WIN32
 
-#if defined(WINVER) && (WINVER < 0x0501)
-#define        INET_ADDRSTRLEN         16
-#define        INET6_ADDRSTRLEN        46
-#endif
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <io.h>
+#include <sys/utime.h>
 
 #else
 
@@ -68,7 +64,9 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include <utime.h>
+#ifdef HAVE_UTIME_H
+# include <utime.h>
+#endif
 
 #ifndef WIN32
 #include <unistd.h>

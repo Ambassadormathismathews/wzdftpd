@@ -738,6 +738,7 @@ static int _hook_print_file(const char *filename, wzd_context_t *context)
   wzd_cache_t * fp;
   char * file_buffer;
   unsigned int size, filesize;
+  u64_t sz64;
   wzd_user_t * user = GetUserByID(context->userid);
   wzd_group_t * group = GetGroupByID(user->groups[0]);
 
@@ -746,7 +747,13 @@ static int _hook_print_file(const char *filename, wzd_context_t *context)
     send_message_raw("200-Inexistant file\r\n",context);
     return -1;
   }
-  filesize = wzd_cache_getsize(fp);
+  sz64 = wzd_cache_getsize(fp);
+  if (sz64 > INT_MAX) {
+    out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
+	wzd_cache_close(fp);
+	return -1;
+  }
+  filesize = (unsigned int)sz64;
   file_buffer = malloc(filesize+1);
   if ( (size=(unsigned int)wzd_cache_read(fp,file_buffer,filesize))!=filesize )
   {

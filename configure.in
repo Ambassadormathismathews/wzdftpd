@@ -90,7 +90,7 @@ AC_FUNC_STRFTIME
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 dnl AC_FUNC_WAIT3
-AC_CHECK_HEADERS([execinfo.h])
+AC_CHECK_HEADERS([execinfo.h utime.h])
 AC_CHECK_FUNCS([backtrace])
 
 AC_CHECK_FUNCS([gethostbyaddr gethostbyname gettimeofday inet_ntoa regcomp select socket statfs])

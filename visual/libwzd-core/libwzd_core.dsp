@@ -102,6 +102,10 @@ SOURCE="..\..\libwzd-core\inet_pton.c"
 # End Source File
 # Begin Source File
 
+SOURCE=.\libwzd_core.def
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-core\ls.c"
 # End Source File
 # Begin Source File
@@ -143,7 +147,7 @@ SOURCE="..\..\libwzd-core\wzd_cookie_lex.l"
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
 InputDir=\HOMEDIR\svn\libwzd-core
-InputPath=..\..\libwzd-core\wzd_cookie_lex.l
+InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
 "$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
@@ -442,6 +446,18 @@ SOURCE="..\..\libwzd-core\wzd_vfs.h"
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# End Group
+# Begin Group "arch"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\arch\bsd.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\arch\win32.h"
+# End Source File
 # End Group
 # Begin Source File
 

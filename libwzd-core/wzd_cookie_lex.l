@@ -28,12 +28,7 @@
 %x sc_cook
 
 %{
-#ifdef WIN32
-#define        INET_ADDRSTRLEN         16
-#define        INET6_ADDRSTRLEN        46
-#endif
-
-#if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(WIN32)
 #include <winsock2.h>
 #ifdef __CYGWIN__
 #include <w32api/ws2tcpip.h>
@@ -736,6 +731,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       char filename[256];
       char c;
       unsigned int i=0;
+	  u64_t size;
 
       c = input();
       if (c != '(')
@@ -766,7 +762,13 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         break; /* invalid file name */
       }
 
-      i = wzd_cache_getsize(fp);
+      size = wzd_cache_getsize(fp);
+	  if (size > INT_MAX) {
+	    out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",size);
+		wzd_cache_close(fp);
+		break;
+	  }
+	  i = (unsigned int)size;
       tmpbuf = wzd_malloc(i+1);
       if (wzd_cache_read(fp, tmpbuf, i) != (int)i) {
 #ifdef WZD_DBG_COOKIES
@@ -1231,6 +1233,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       char buffer[IBUFSIZE];
       int length;
       unsigned int size;
+	  u64_t sz64;
 
       if (!mainConfig->dir_message) {
         cookie_ptr = internalbuffer;
@@ -1253,7 +1256,15 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           cookie_length = 0;
           break;
         }
-        size = wzd_cache_getsize(file);
+        sz64 = wzd_cache_getsize(file);
+        if (sz64 > INT_MAX) {
+	      out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",size);
+		  wzd_cache_close(file);
+		  cookie_ptr = NULL;
+		  cookie_length = 0;
+		  break;
+	    }
+	    size = (unsigned int)sz64;
         if (size >= out_buffer_len) { /* is it a good condition ? */
 #ifdef WZD_DBG_COOKIES
           out_err(LEVEL_HIGH,"buffer truncated !");

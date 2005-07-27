@@ -1151,18 +1151,27 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   wzd_cache_t * fp;
   char * file_buffer;
   unsigned int size, filesize;
+  u64_t sz64;
   fp = wzd_cache_open(filename,O_RDONLY,0644);
   if (!fp) {
     send_message_with_args(501,context,"Inexistant file");
     return;
   }
-  filesize = wzd_cache_getsize(fp);
+  sz64 = wzd_cache_getsize(fp);
+  if (sz64 > INT_MAX) {
+    out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
+	wzd_cache_close(fp);
+	send_message_with_args(501,context,"Internal error (see log)");
+	return;
+  }
+  filesize = (unsigned int)sz64;
   file_buffer = malloc(filesize+1);
   if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize )
   {
     fprintf(stderr,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
     free(file_buffer);
     wzd_cache_close(fp);
+	send_message_with_args(501,context,"Internal error (see log)");
     return;
   }
   file_buffer[filesize]='\0';
