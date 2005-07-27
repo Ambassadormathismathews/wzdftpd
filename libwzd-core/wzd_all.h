@@ -103,5 +103,11 @@
 
 #endif /* __WZD_ALL__ */
 
+#else /* WZD_USE_PCH */
+
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #endif /* WZD_USE_PCH */
 
