@@ -1,3 +1,9 @@
+2005-08-04  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: address comparison function matching wrong strings
+	* bugfix: use or freed memory in address comparison function
+	* feature: added test file for wzd_ip.c
+
 2005-07-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* code: moved arch-specific code to arch/win32.h

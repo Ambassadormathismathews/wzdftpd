@@ -7,6 +7,7 @@ test_programs = \
 	test_wzd_action \
 	test_wzd_cache \
 	test_wzd_crc32 \
+	test_wzd_ip \
 	test_wzd_ratio \
 	test_wzd_section \
 	test_wzd_string \

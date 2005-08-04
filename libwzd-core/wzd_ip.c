@@ -55,6 +55,8 @@
 #include "wzd_misc.h"
 #include "wzd_socket.h"
 
+#include "wzd_debug.h"
+
 #endif /* WZD_USE_PCH */
 
 
@@ -62,6 +64,11 @@
  *
  * ip1 must be a numeric ip
  * ip2 can be composed of wildcards
+ *
+ * \note
+ * The * wildcard will stop at the first match:
+ *   1*0 will match 15.0 whereas 1*0 will not match 10.0
+ *
  * \return 1 if identical
  */
 int ip_compare(const char * ip, const char * pattern)
@@ -179,11 +186,11 @@ int ip_compare(const char * ip, const char * pattern)
     aiHint.ai_flags = AI_CANONNAME;
     retval = getaddrinfo(ip, NULL, &aiHint, &aiList);
     if (retval) return 0;
-    memcpy(buffer1, aiList->ai_addr, aiList->ai_addrlen);
+    wzd_strncpy(buffer1, aiList->ai_canonname, sizeof(buffer1));
 
     freeaddrinfo(aiList);
 
-    if (my_str_compare(aiList->ai_canonname,pattern)==1)
+    if (my_str_compare(buffer1,pattern)==1)
       return 1;
   }
 #endif /* IPV6_SUPPORT */
