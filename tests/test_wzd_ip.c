@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     { "192.168.*1",    0 },
     { "*",             1 },
     { NULL, 2 } };
+#ifdef IPV6_SUPPORT
   const char * ip2 = "3dde:70ef:3223:0:0:0:0:ffff";
   struct test_ip_t test_ip2[] = {
     { "3dde:70ef:3223:0:0:0:0:ffff",  1 },
@@ -40,6 +41,7 @@ int main(int argc, char *argv[])
     { "192.168.*",                    0 },
     { "*",                            1 },
     { NULL, 2 } };
+#endif
   unsigned int i;
 
 
@@ -53,6 +55,7 @@ int main(int argc, char *argv[])
     }
     i++;
   }
+#ifdef IPV6_SUPPORT
   i=0;
   while (test_ip2[i].pattern != NULL) {
     if (ip_compare(ip2,test_ip2[i].pattern) != test_ip2[i].result) {
@@ -61,6 +64,7 @@ int main(int argc, char *argv[])
     }
     i++;
   }
+#endif
 
   /* ip_add */
   /* ip_inlist */
