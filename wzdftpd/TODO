@@ -3,6 +3,10 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- provide a way to use MD5/SHA when changing passwords
+'********'
+- add config file parser
+'********'
 - Use custom site commands exactly like standard commands
 '********'
 - finish MLST

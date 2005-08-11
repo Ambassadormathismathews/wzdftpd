@@ -430,6 +430,7 @@ wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
   wzd_context_t * loop_context;
   ListElmt * elmnt;
 
+if (!buffer) return -1;
 /*  if (!context) return -1;*/ /* XXX this prevent using the function from cron jobs ! */
   real_context = GetMyContext();
 /*  if (!real_context) return -1;*/ /* XXX this prevent using the function from cron jobs ! */

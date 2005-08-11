@@ -1118,6 +1118,8 @@ void * GetMyContext(void)
 #else /* WIN32 */
   pthread_t thread_id;
 
+  if (!context_list) return NULL;
+
   thread_id = pthread_self();
   /* TODO search context list and cleanup context */
   for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))

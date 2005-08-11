@@ -5,7 +5,7 @@ version=2
 
 # This the format for an FTP site:
 # Full-site-with-pattern  [Version  [Action]]
-opts=pasv ftp://umn.dl.sourceforge.net/pub/sourceforge/w/wz/wzdftpd/wzdftpd-(.*)\.tar\.gz \
+opts=pasv http://heanet.dl.sourceforge.net/sourceforge/wzdftpd/wzdftpd-(.*)\.tar\.gz \
   debian  uupdate
 
 # This can be used if you want to override the PASV setting
