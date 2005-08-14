@@ -1,3 +1,9 @@
+2005-08-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: added initial implementation for config file helper
+	* feature: added more functions to wzd_string_t
+	* doc: updated inline documentation
+
 2005-08-04  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: address comparison function matching wrong strings

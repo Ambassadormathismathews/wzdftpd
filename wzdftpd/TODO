@@ -6,6 +6,11 @@
 - provide a way to use MD5/SHA when changing passwords
 '********'
 - add config file parser
+    - function config_to_data() / OK
+    - write functions / OK
+    - functions to parse values
+    - remove functions
+    - multi-lines ?
 '********'
 - Use custom site commands exactly like standard commands
 '********'

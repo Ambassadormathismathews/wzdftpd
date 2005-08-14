@@ -554,7 +554,8 @@ void server_clear_param(wzd_param_t **plist)
   }
 }
 
-/** Checks server status */
+/** \brief Checks server status
+ */
 int server_diagnose(void)
 {
   if (!mainConfig) return -1;
@@ -600,7 +601,9 @@ char * safe_vsnprintf(const char *format, va_list ap)
   return buffer;
 }
 
-/** if code is negative, the last line will NOT be formatted as the end
+/** \brief Formats the message if multiline, e.g 220-hello\\r\\n220 End
+ *
+ * if code is negative, the last line will NOT be formatted as the end
  * of a normal ftp reply
  */
 wzd_string_t * v_format_message(wzd_context_t * context, int code, va_list argptr)
@@ -810,7 +813,8 @@ void limiter_free(wzd_bw_limiter *l)
     free(l);
 }
 
-/** print_file : read file, replace cookies and prints it
+/** \brief Read file, replace cookies and send it to client
+ *
  * header (200-) MUST have been sent, and end (200 ) is NOT sent)
  */
 int print_file(const char *filename, int code, void * void_context)
@@ -939,12 +943,14 @@ void ascii_lower(char * s, unsigned int length)
   }
 }
 
-/** \brief read next token
- * \return a pointer to the next token, or NULL if not found, or if there is \
+/** \brief Read next token from input string.
+ * \return a pointer to the next token, or NULL if not found, or if there is
  * only whitespaces, or if quotes are unbalanced
+ *
  * Read next token separated by a whitespace, except if string begins
  * with a ' or ", in this case it searches the matching character.
- * Note: input string is modified as a \0 is written.
+ *
+ * \note input string is modified as a \\0 is written.
  */
 char * read_token(char *s, char **endptr)
 {

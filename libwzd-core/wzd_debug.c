@@ -40,6 +40,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#define __USE_GNU  /* avoid warning for strndup */
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -122,6 +123,12 @@ void * wzd_realloc(void * ptr, size_t size)
   return (void*)realloc(ptr, size);
 }
 
+/** Copy memory area. The memory areas may overlap. */
+void * wzd_memmove(void * dst, const void * src, size_t size)
+{
+  return memmove(dst,src,size);
+}
+
 /* Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr)
 {
@@ -132,6 +139,12 @@ void wzd_free(void *ptr)
 char * wzd_strdup(const char *s)
 {
   return strdup(s);
+}
+
+/** Copy with allocation */
+char * wzd_strndup(const char *s, size_t n)
+{
+  return strndup(s,n);
 }
 
 /** same as strncpy, but write only one zero at end of string */

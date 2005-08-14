@@ -23,6 +23,10 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/*! \addtogroup wzdftpd
+ *  @{
+ */
+
 
 #if defined(WIN32)
 #include <winsock2.h>
@@ -803,7 +807,10 @@ lbl_ident_timeout_check_loop:
   }
 }
 
-/** IMPERATIVE STOP REQUEST - exit */
+/** \brief Server interruption handler
+ *
+ * Called when receiving SIGINT. Commit backend and exit immediatly.
+ */
 void interrupt(int signum)
 {
   int ret;
@@ -1069,6 +1076,11 @@ int server_switch_to_config(wzd_config_t *config)
 /*********************** SERVER MAIN THREAD *****************************/
 /************************************************************************/
 
+/** \brief Server side main loop
+ *
+ * Initialize config and modules, and run the main loop: check for incoming
+ * connections / ident connections, run cron jobs
+ */
 void serverMainThreadProc(void *arg)
 {
   int ret;
@@ -1450,3 +1462,6 @@ void serverMainThreadExit(int retcode)
 
   exit (retcode);
 }
+
+/*! @} */
+

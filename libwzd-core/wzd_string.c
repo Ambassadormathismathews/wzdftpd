@@ -117,6 +117,14 @@ unsigned int str_checklength(const wzd_string_t *str, size_t min, size_t max)
   return 1;
 }
 
+/** Get the length of the given string, or -1 if error
+ */
+size_t str_length(const wzd_string_t *str)
+{
+  if (!str || !str->buffer) return -1;
+  return str->length;
+}
+
 wzd_string_t * str_dup(const wzd_string_t *src)
 {
   wzd_string_t * dst;
@@ -188,6 +196,22 @@ wzd_string_t * str_append(wzd_string_t * str, const char *tail)
   if (str->buffer) {
     memcpy(str->buffer + str->length, tail, length);
     str->length += length;
+    str->buffer[str->length] = '\0';
+  }
+
+  return str;
+}
+
+/** \brief append character \a c to string pointed to by str
+ */
+wzd_string_t * str_append_c(wzd_string_t * str, const char c)
+{
+  if (!str) return NULL;
+
+  _str_set_min_size(str,str->length + 2);
+  if (str->buffer) {
+    str->buffer[str->length] = c;
+    str->length ++;
     str->buffer[str->length] = '\0';
   }
 
@@ -269,6 +293,31 @@ wzd_string_t * str_trim_right(wzd_string_t *str)
     str->buffer[len] = '\0';
     str->length--;
   }
+  return str;
+}
+
+/** \brief Removes \a len characters from a wzd_string_t, starting at position \a pos.
+ *
+ * The rest of the wzd_string_t is shifted down to fill the gap.
+ */
+wzd_string_t * str_erase(wzd_string_t * str, size_t pos, int len)
+{
+  if (!str || !str->buffer) return NULL;
+  if (pos > str->length) return NULL;
+
+  if (len < 0)
+    len = str->length - pos;
+  else {
+    if (pos + len > str->length) return NULL;
+
+    if (pos + len < str->length)
+      wzd_memmove (str->buffer + pos, str->buffer + pos + len, str->length - (pos + len));
+  }
+
+  str->length -= len;
+  
+  str->buffer[str->length] = 0;
+
   return str;
 }
 
@@ -436,6 +485,67 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   return result;
 }
 
+/** \brief Append formatted output to string
+ */
+int str_append_printf(wzd_string_t *str, const char *format, ...)
+{
+  va_list argptr;
+  int result;
+  char * buffer = NULL;
+  size_t length = 0;
+
+  if (!str) return -1;
+  if (!format) return -1;
+
+  if (!str->buffer)
+    _str_set_min_size(str,str->length + strlen(format)+1);
+
+  va_start(argptr,format); /* note: ansi compatible version of va_start */
+
+  result = vsnprintf(buffer, 0, format, argptr);
+#ifndef WIN32
+  if (result < 0) return result;
+  result++;
+  if ((unsigned int)result >= length)
+  {
+    buffer = wzd_malloc( result + 1 );
+    va_end(argptr);
+    va_start(argptr,format); /* note: ansi compatible version of va_start */
+    result = vsnprintf(buffer, result, format, argptr);
+  }
+  length = result;
+#else /* WIN32 */
+  /* windows is crap, once again
+   * vsnprintf does not return the number that should be been allocated,
+   * it always return -1 if the buffer is not large enough
+   */
+   while (result < 0)
+   {
+     if (length >= 1024000) {
+       return -1;
+     }
+     wzd_free(buffer);
+     result = result + (result >> 2) + 20;
+     buffer = wzd_malloc(result);
+     va_end(argptr);
+     va_start(argptr,format); /* note: ansi compatible version of va_start */
+     result = vsnprintf(buffer, result-1, format, argptr);
+   }
+   length = result;
+   if ((u32_t)result == length) {
+    _str_set_min_size(str, result+1);
+    buffer[length] = '\0';
+   }
+#endif
+
+  va_end (argptr);
+
+  str_append(str, buffer);
+  if (buffer) wzd_free(buffer);
+
+  return str->length;
+}
+
 #ifdef HAVE_UTF8
 /** \brief Convert utf8 string to other charset
  * \note
@@ -534,9 +644,26 @@ int str_is_valid_utf8(wzd_string_t *str)
 
 static inline void _str_set_min_size(wzd_string_t *str, size_t length)
 {
+  void * ptr;
+
   if (str) {
     if (length > str->allocated) {
-      str->buffer = wzd_realloc(str->buffer,length);
+      /* allocate a bit more than requested */
+      if (length < 200) length += 20;
+      else length = (length * 1.3);
+
+      if (!str->buffer) {
+        str->buffer = wzd_malloc(length);
+      } else {
+        if ( (ptr = wzd_realloc(str->buffer,length)) ) {
+          str->buffer = ptr;
+        } else {
+          ptr = wzd_malloc(length);
+          memcpy(ptr,str->buffer,str->length);
+          wzd_free(str->buffer);
+          str->buffer = ptr;
+        }
+      }
       str->allocated = length;
     }
   }

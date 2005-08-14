@@ -46,6 +46,9 @@ const char * str_tochar(const wzd_string_t *str);
  */
 unsigned int str_checklength(const wzd_string_t *str, size_t min, size_t max);
 
+/** Get the length of the given string, or -1 if error
+ */
+size_t str_length(const wzd_string_t *str);
 
 
 /** \brief returns a pointer to a new string which is a duplicate of the string src.
@@ -61,6 +64,10 @@ wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src);
  */
 wzd_string_t * str_append(wzd_string_t * str, const char *tail);
 
+/** \brief append character \a c to string pointed to by str
+ */
+wzd_string_t * str_append_c(wzd_string_t * str, const char c);
+
 /** \brief prepend 'head' to string pointed to by str
  */
 wzd_string_t * str_prepend(wzd_string_t * str, const char *head);
@@ -70,6 +77,12 @@ wzd_string_t * str_prepend(wzd_string_t * str, const char *head);
 wzd_string_t * str_trim(wzd_string_t * str);
 wzd_string_t * str_trim_left(wzd_string_t *str);
 wzd_string_t * str_trim_right(wzd_string_t *str);
+
+/** \brief Removes \a len characters from a wzd_string_t, starting at position \a pos.
+ *
+ * The rest of the wzd_string_t is shifted down to fill the gap.
+ */
+wzd_string_t * str_erase(wzd_string_t * str, size_t pos, int len);
 
 /** \brief Convert string to lower case
  * \note
@@ -96,6 +109,10 @@ wzd_string_t * str_read_token(wzd_string_t *str);
  * and write output to str.
  */
 int str_sprintf(wzd_string_t *str, const char *format, ...);
+
+/** \brief Append formatted output to string
+ */
+int str_append_printf(wzd_string_t *str, const char *format, ...);
 
 /** \brief Convert utf8 string to other charset
  * \note

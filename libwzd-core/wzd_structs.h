@@ -414,7 +414,7 @@ typedef enum {
 /** @brief Client-specific data
  */
 typedef struct _context_t {
-  unsigned long	magic;
+  unsigned long	magic;  /**< \brief magic number, used to test structure integrity */
 
   unsigned char	hostip[16];
   char          ident[MAX_IDENT_LENGTH];
@@ -423,7 +423,7 @@ typedef struct _context_t {
   fd_t          controlfd;
   fd_t          datafd;
   data_mode_t   datamode;
-  net_family_t  datafamily;
+  net_family_t  datafamily; /**< \brief IPv4 or IPv6 */
   unsigned long	pid_child;
   unsigned long	thread_id;
   int           portsock;
@@ -435,7 +435,7 @@ typedef struct _context_t {
   u64_t         resume;
   unsigned long	connection_flags;
   char          currentpath[WZD_MAX_PATH];
-  unsigned int	userid;
+  u32_t 	userid;
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
   struct last_file_t	last_file;
@@ -449,7 +449,7 @@ typedef struct _context_t {
   time_t	idle_time_data_start;
   wzd_ssl_t   	ssl;
   wzd_tls_t   	tls;
-  tls_role_t    tls_role;
+  tls_role_t    tls_role; /**< \brief TLS role: server or client */
 } wzd_context_t;
 
 /********************** COMMANDS **************************/

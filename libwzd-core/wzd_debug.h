@@ -50,11 +50,17 @@ void * wzd_malloc(size_t size);
 /** Memory reallocation */
 void * wzd_realloc(void * ptr, size_t size);
 
+/** Copy memory area. The memory areas may overlap. */
+void * wzd_memmove(void * dst, const void * src, size_t size);
+
 /** Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr);
 
 /** Copy with allocation */
 char * wzd_strdup(const char *s);
+
+/** Copy with allocation */
+char * wzd_strndup(const char *s, size_t n);
 
 /** same as strncpy, but write only one zero at end of string */
 char * wzd_strncpy(char *dst, const char *src, size_t n);

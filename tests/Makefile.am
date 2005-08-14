@@ -6,6 +6,7 @@ LDADD = @DL_FLAGS@ ../libwzd-core/libwzd_core.la
 test_programs = \
 	test_wzd_action \
 	test_wzd_cache \
+	test_wzd_configfile \
 	test_wzd_cookies \
 	test_wzd_crc32 \
 	test_wzd_ip \

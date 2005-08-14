@@ -26,6 +26,10 @@
 /** \file wzd_main.c
   * \brief Startup code: check args, load config file and start main thread.
   */
+/*! \addtogroup wzdftpd
+ *  \brief Main executable group
+ *  @{
+ */
 
 /* Sanity check */
 #ifdef WZD_MULTIPROCESS
@@ -132,7 +136,6 @@ void display_usage(void)
 #if DEBUG
   fprintf(stderr," -b, --background            - Force background \n");
 #endif
-  fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s, --force-foreground      - Stay in foreground \n");
   fprintf(stderr," -V, --version               - Show version \n");
@@ -141,7 +144,6 @@ void display_usage(void)
 #if DEBUG
   fprintf(stderr," -b                          - Force background \n");
 #endif
-  fprintf(stderr," -d,                         - Delete IPC if present (Linux only) \n");
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s                          - Stay in foreground \n");
 #ifdef WIN32
@@ -862,5 +864,7 @@ void SvcDebugOut(LPSTR string, DWORD status)
   snprintf(buffer,1024,string,status);
   OutputDebugStringA(buffer);
 }
+
+/*! @} */
 
 #endif /* WIN32 */
