@@ -1,3 +1,9 @@
+2005-08-15  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new string functions: strnlen, strndup replacement
+	* feature: updated win32 project (removed c++ exception handling,
+	fixed release custom build), removed some warnings 
+
 2005-08-14  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added initial implementation for config file helper

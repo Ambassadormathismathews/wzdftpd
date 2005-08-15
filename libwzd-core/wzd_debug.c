@@ -141,10 +141,19 @@ char * wzd_strdup(const char *s)
   return strdup(s);
 }
 
-/** Copy with allocation */
+/** Copy with allocation, at most \n bytes */
 char * wzd_strndup(const char *s, size_t n)
 {
+#ifdef HAVE_STRNDUP
   return strndup(s,n);
+#else
+  size_t len = wzd_strnlen(s, n);
+  char * new = wzd_malloc (len + 1);
+
+  new[len] = '\0';
+
+  return memcpy(new, s, len);
+#endif
 }
 
 /** same as strncpy, but write only one zero at end of string */
@@ -160,6 +169,13 @@ char * wzd_strncpy(char *dst, const char *src, size_t n)
     } while (--n != 0);
   }
   return dst;
+}
+
+/** Find the length of \a s , but scan at most \a n characters. */
+size_t wzd_strnlen (const char *s, size_t n)
+{
+  const char *end = memchr (s, '\0', n);
+  return end ? end - s : n;
 }
 
 #ifdef DEBUG

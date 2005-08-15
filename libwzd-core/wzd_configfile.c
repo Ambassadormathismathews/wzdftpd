@@ -210,7 +210,7 @@ int config_get_boolean(wzd_configfile_t * file, const char * groupname, const ch
 {
   char * value;
 
-  errcode = CF_OK;
+  if (errcode) *errcode = CF_OK;
 
   value = config_get_value(file,groupname,key);
   if (!value) {
@@ -251,7 +251,7 @@ int config_get_integer(wzd_configfile_t * file, const char * groupname, const ch
   long longv;
   int intv;
 
-  errcode = CF_OK;
+  if (errcode) *errcode = CF_OK;
 
   value = config_get_value(file,groupname,key);
   if (!value) {

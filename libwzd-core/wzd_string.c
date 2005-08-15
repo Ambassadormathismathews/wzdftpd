@@ -650,7 +650,7 @@ static inline void _str_set_min_size(wzd_string_t *str, size_t length)
     if (length > str->allocated) {
       /* allocate a bit more than requested */
       if (length < 200) length += 20;
-      else length = (length * 1.3);
+      else length = (size_t)(length * 1.3);
 
       if (!str->buffer) {
         str->buffer = wzd_malloc(length);

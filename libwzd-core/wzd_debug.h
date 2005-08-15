@@ -59,11 +59,14 @@ void wzd_free(void *ptr);
 /** Copy with allocation */
 char * wzd_strdup(const char *s);
 
-/** Copy with allocation */
+/** Copy with allocation, at most \a n bytes */
 char * wzd_strndup(const char *s, size_t n);
 
 /** same as strncpy, but write only one zero at end of string */
 char * wzd_strncpy(char *dst, const char *src, size_t n);
+
+/** Find the length of \a s , but scan at most \a n characters. */
+size_t wzd_strnlen (const char *s, size_t n);
 
 /** init all debug functions */
 void wzd_debug_init(void);

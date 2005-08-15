@@ -271,6 +271,8 @@ EXPORTS
 	wzd_shm_write
 	wzd_strdup
 	wzd_strncpy
+	wzd_strndup
+	wzd_strnlen
 	wzd_thread_attr_destroy
 	wzd_thread_attr_init
 	wzd_thread_attr_set_detached
