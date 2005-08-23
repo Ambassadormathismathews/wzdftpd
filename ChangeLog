@@ -1,3 +1,9 @@
+2005-08-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: support for comments in config_file_t
+	* feature: doubly-linked list implementation
+	* bugfix: correct initialization of List
+
 2005-08-15  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new string functions: strnlen, strndup replacement

@@ -22,60 +22,60 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __LIST__
-#define __LIST__
+#ifndef __DLIST__
+#define __DLIST__
 
 /*! \addtogroup libwzd_base
- *  Base functions for wzdftpd
  *  @{
  */
 
-typedef struct ListElmt_ {
+typedef struct DListElmt_ {
   void 			* data;
-  struct ListElmt_	* next;
-} ListElmt;
+  struct DListElmt_	* prev;
+  struct DListElmt_	* next;
+} DListElmt;
 
-typedef struct List_ {
+typedef struct DList_ {
   int		size;
 
   int		(*test)(const void *val1, const void *val2);
   void		(*destroy)(void *data);
 
-  ListElmt	*head;
-  ListElmt	*tail;
-} List;
+  DListElmt	*head;
+  DListElmt	*tail;
+} DList;
 
 /* INTERFACE */
-void list_init(List *list, void (*destroy)(void *data));
+void dlist_init(DList *list, void (*destroy)(void *data));
 
-void list_destroy(List *list);
+void dlist_destroy(DList *list);
 
-int list_ins_next(List *list, ListElmt *element, const void *data);
+int dlist_ins_next(DList *list, DListElmt *element, const void *data);
 
-/** \brief Sorted insertion
- *
- * Use List#test to insert data
- */
-int list_ins_sorted(List *list, const void *data);
+int dlist_ins_prev(DList *list, DListElmt *element, const void *data);
 
-int list_rem_next(List *list, ListElmt *element, void **data);
+int dlist_remove(DList *list, DListElmt *element, void **data);
 
-#define list_size(list)	((list)->size)
+DListElmt * dlist_lookup_node(DList *list, void *data);
 
-#define list_head(list)	((list)->head)
+#define dlist_size(list)	((list)->size)
 
-#define list_tail(list)	((list)->tail)
+#define dlist_head(list)	((list)->head)
 
-#define list_is_head(list,element) \
+#define dlist_tail(list)	((list)->tail)
+
+#define dlist_is_head(list,element) \
 		((element) == (list)->head ? 1 : 0)
 
-#define list_is_tail(list,element) \
+#define dlist_is_tail(list,element) \
 		((element) == (list)->tail ? 1 : 0)
 
-#define list_data(element) ((element)->data)
+#define dlist_data(element) ((element)->data)
 
-#define list_next(element) ((element)->next)
+#define dlist_next(element) ((element)->next)
+
+#define dlist_prev(element) ((element)->prev)
 
 /*! @} */
 
-#endif /* __LIST__ */
+#endif /* __DLIST__ */

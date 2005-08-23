@@ -98,7 +98,7 @@ int config_set_integer(wzd_configfile_t * file, const char * groupname, const ch
  * If both \a key and \a groupname are NULL, then \a comment will be written
  * above the first group in the file.
  */
-int config_set_comment(wzd_configfile_t * file, const char * groupname, const char * key, const char * value);
+int config_set_comment(wzd_configfile_t * file, const char * groupname, const char * key, const char * comment);
 
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
  *

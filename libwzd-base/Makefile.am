@@ -7,12 +7,14 @@ noinst_HEADERS = \
 	wzd_strtok_r.h
 
 libwzd_base_la_HEADERS = \
+	dlist.h \
 	hash.h \
 	list.h \
 	stack.h \
 	wzd_strlcat.h
 
 libwzd_base_la_SOURCES = \
+	dlist.c \
 	hash.c \
 	list.c \
 	stack.c \

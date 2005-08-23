@@ -865,6 +865,6 @@ void SvcDebugOut(LPSTR string, DWORD status)
   OutputDebugStringA(buffer);
 }
 
-/*! @} */
-
 #endif /* WIN32 */
+
+/*! @} */

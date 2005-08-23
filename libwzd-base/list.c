@@ -57,7 +57,7 @@ void list_destroy(List *list)
     }
   }
 
-  memset(list,0,sizeof(list));
+  memset(list,0,sizeof(List));
 }
 
 int list_ins_next(List *list, ListElmt *element, const void *data)

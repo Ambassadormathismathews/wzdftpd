@@ -48,7 +48,7 @@
 #include "wzd_string.h"
 #include "wzd_configfile.h"
 
-#include "libwzd-base/list.h"
+#include "libwzd-base/dlist.h"
 
 #include "wzd_debug.h"
 
@@ -72,7 +72,7 @@ struct _wzd_configfile_group_t {
 
   wzd_configfile_keyvalue_t * comment; /* comment at top */
 
-  List * values;
+  DList * values;
 };
 
 struct _wzd_configfile_keyvalue_t {
@@ -80,11 +80,17 @@ struct _wzd_configfile_keyvalue_t {
   char * value;
 };
 
+static void _configfile_group_init(wzd_configfile_group_t * group);
 static void _configfile_group_free(wzd_configfile_group_t * group);
+#if 0
+static void _configfile_keyvalue_init(wzd_configfile_keyvalue_t * kv);
+#endif
 static void _configfile_keyvalue_free(wzd_configfile_keyvalue_t * kv);
 
 static void config_init(wzd_configfile_t * config);
 static void config_clear(wzd_configfile_t * config);
+
+static int _config_cmp_keyvalue(const char *k1, const wzd_configfile_keyvalue_t *k2);
 
 static int config_line_is_comment(const char * line);
 static int config_line_is_group(const char * line);
@@ -101,6 +107,10 @@ static wzd_configfile_keyvalue_t * config_lookup_keyvalue(wzd_configfile_t * con
 
 static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key, const char * value);
 static int config_add_group(wzd_configfile_t * config, const char * groupname);
+
+static int config_set_key_comment(wzd_configfile_t * config, const char * groupname, const char * key, const char * comment);
+static int config_set_group_comment(wzd_configfile_t * config, const char * groupname, const char * comment);
+static int config_set_top_comment(wzd_configfile_t * config, const char * comment);
 
 
 
@@ -301,13 +311,16 @@ int config_set_integer(wzd_configfile_t * file, const char * groupname, const ch
  * If both \a key and \a groupname are NULL, then \a comment will be written
  * above the first group in the file.
  */
-int config_set_comment(wzd_configfile_t * file, const char * groupname, const char * key, const char * value)
+int config_set_comment(wzd_configfile_t * file, const char * groupname, const char * key, const char * comment)
 {
   if (!file) return CF_ERROR_INVALID_ARGS;
 
-  /** \todo FIXME implement me */
-
-  return CF_OK;
+  if (groupname && key)
+    return config_set_key_comment(file, groupname, key, comment);
+  else if (groupname)
+    return config_set_group_comment(file, groupname, comment);
+  else
+    return config_set_top_comment(file, comment);
 }
 
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
@@ -348,7 +361,8 @@ int config_load_from_data (wzd_configfile_t * config, const char * data, size_t 
 wzd_string_t * config_to_data (wzd_configfile_t * config, size_t * length)
 {
   wzd_string_t * data_string;
-  ListElmt * elmnt, * el;
+  ListElmt * elmnt;
+  DListElmt * el;
   wzd_configfile_group_t * group;
   wzd_configfile_keyvalue_t * kv;
 
@@ -364,9 +378,11 @@ wzd_string_t * config_to_data (wzd_configfile_t * config, size_t * length)
     if (group->name != NULL)
       str_append_printf (data_string, "[%s]\n", group->name);
 
-    for (el = list_head (group->values); el != NULL; el = list_next(el))
+    if (!group->values) continue;
+
+    for (el = dlist_head (group->values); el != NULL; el = dlist_next(el))
     {
-      kv = list_data(el);
+      kv = dlist_data(el);
 
       if (kv->key != NULL)
         str_append_printf (data_string, "%s=%s\n", kv->key, kv->value);
@@ -383,14 +399,33 @@ wzd_string_t * config_to_data (wzd_configfile_t * config, size_t * length)
 
 /***************** static functions *****************/
 
+static void _configfile_group_init(wzd_configfile_group_t * group)
+{
+  WZD_ASSERT_VOID(group != NULL);
+  group->name = NULL;
+  group->comment = NULL;
+  group->values = wzd_malloc(sizeof(List));
+  dlist_init(group->values,(void (*)(void*))_configfile_keyvalue_free);
+  group->values->test = (int (*)(const void*,const void*))_config_cmp_keyvalue;
+}
+
 static void _configfile_group_free(wzd_configfile_group_t * group)
 {
   WZD_ASSERT_VOID(group != NULL);
   wzd_free(group->name);
-  list_destroy(group->values);
+  dlist_destroy(group->values);
   wzd_free(group->values);
   wzd_free(group);
 }
+
+#if 0
+static void _configfile_keyvalue_init(wzd_configfile_keyvalue_t * kv)
+{
+  WZD_ASSERT_VOID(kv != NULL);
+  kv->key = NULL;
+  kv->value = NULL;
+}
+#endif
 
 static void _configfile_keyvalue_free(wzd_configfile_keyvalue_t * kv)
 {
@@ -402,11 +437,16 @@ static void _configfile_keyvalue_free(wzd_configfile_keyvalue_t * kv)
 
 static void config_init(wzd_configfile_t * config)
 {
+  wzd_configfile_group_t * group;
+
   if (!config) return;
   config->groups = wzd_malloc(sizeof(List));
   list_init(config->groups,(void (*)(void *))_configfile_group_free);
+  group = wzd_malloc(sizeof(wzd_configfile_group_t));
+  _configfile_group_init(group);
+  list_ins_next(config->groups,NULL,group);
   config->parse_buffer = str_allocate();
-  config->current_group = NULL;
+  config->current_group = group;
 }
 
 static void config_clear(wzd_configfile_t * config)
@@ -415,6 +455,14 @@ static void config_clear(wzd_configfile_t * config)
   list_destroy(config->groups);
   wzd_free(config->groups);
   str_deallocate(config->parse_buffer);
+}
+
+static int _config_cmp_keyvalue(const char *k1, const wzd_configfile_keyvalue_t *k2)
+{
+  WZD_ASSERT(k2 != NULL);
+  if (k1 == NULL || k2->key == NULL) return (!(k1 == k2->key));
+
+  return strcmp(k1,k2->key);
 }
 
 static int config_line_is_comment(const char * line)
@@ -532,7 +580,7 @@ static int config_parse_comment(wzd_configfile_t * config, const char * line, si
   kv->key = NULL;
   kv->value = wzd_strndup(line,length);
 
-  list_ins_next(config->current_group->values,list_tail(config->current_group->values),kv);
+  dlist_ins_next(config->current_group->values,dlist_tail(config->current_group->values),kv);
 
   return CF_OK;
 }
@@ -621,14 +669,14 @@ static wzd_configfile_group_t * config_lookup_group(wzd_configfile_t * config, c
 
 static wzd_configfile_keyvalue_t * config_lookup_keyvalue(wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key)
 {
-  ListElmt * elmnt;
+  DListElmt * elmnt;
   wzd_configfile_keyvalue_t * kv = NULL;
 
   if (!config || !group || !key) return NULL;
 
   /** \todo this should be replaced by a direct lookup in a hash table */
-  for (elmnt = list_head(group->values); elmnt; elmnt = list_next(elmnt)) {
-    kv = list_data(elmnt);
+  for (elmnt = dlist_head(group->values); elmnt; elmnt = dlist_next(elmnt)) {
+    kv = dlist_data(elmnt);
     if (kv && kv->key && strcmp(kv->key,key)==0) break;
     kv = NULL;
   }
@@ -647,7 +695,7 @@ static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * gr
   kv->value = wzd_strdup(value);
 
   /** \todo FIXME what if key already exist ? */
-  list_ins_next(group->values,list_tail(group->values),kv);
+  dlist_ins_next(group->values,dlist_tail(group->values),kv);
 
   return CF_OK;
 }
@@ -659,14 +707,114 @@ static int config_add_group(wzd_configfile_t * config, const char * groupname)
   if (!config) return CF_ERROR_INVALID_ARGS;
 
   group = wzd_malloc(sizeof(wzd_configfile_group_t));
+  _configfile_group_init(group);
   group->name = wzd_strdup(groupname);
-  group->comment = NULL;
-  group->values = wzd_malloc(sizeof(List));
-  list_init(group->values,(void (*)(void*))_configfile_keyvalue_free),
   list_ins_next(config->groups,list_tail(config->groups),group);
 
   config->current_group = group;
 
   return CF_OK;
+}
+
+static int config_set_key_comment(wzd_configfile_t * config, const char * groupname, const char * key, const char * comment)
+{
+  wzd_configfile_group_t * group;
+  wzd_configfile_keyvalue_t * kv;
+  DListElmt * element, * tmp, * current_node;
+
+  if (!config || !groupname) return CF_ERROR_INVALID_ARGS;
+
+  group = config_lookup_group(config,groupname);
+  if (!group) return CF_ERROR_GROUP_NOT_FOUND;
+
+  /* find the key the comments are supposed to be associated with */
+  element = dlist_lookup_node(group->values,(void*)key);
+  if (!element) return CF_ERROR_NOT_FOUND;
+
+  /* free existing comments for that key */
+  tmp = element->prev;
+  while (tmp) {
+    kv = dlist_data(tmp);
+    
+    if (kv->key) break;
+
+    current_node = tmp;
+    tmp = tmp->prev;
+    dlist_remove(group->values,current_node,(void**)&kv);
+    _configfile_keyvalue_free(kv);
+  }
+
+  if (comment == NULL) return CF_OK;
+
+  /* add our comment */
+  kv = wzd_malloc(sizeof(wzd_configfile_group_t));
+  kv->key = NULL;
+  kv->value = wzd_strdup(comment);
+
+  dlist_ins_prev(group->values,element,kv);
+
+
+  return CF_ERROR_PARSE;
+}
+
+static int config_set_group_comment(wzd_configfile_t * config, const char * groupname, const char * comment)
+{
+  wzd_configfile_group_t * group;
+
+  if (!config || !groupname) return CF_ERROR_INVALID_ARGS;
+
+  group = config_lookup_group(config,groupname);
+  if (!group) return CF_ERROR_GROUP_NOT_FOUND;
+
+  /* remove any existing comment */
+  if (group->comment) {
+    _configfile_keyvalue_free(group->comment);
+    group->comment = NULL;
+  }
+
+  if (!comment) return CF_OK;
+
+  if (config_line_is_comment(comment)) {
+    group->comment = wzd_malloc(sizeof(wzd_configfile_group_t));
+    group->comment->key = NULL;
+    group->comment->value = wzd_strdup(comment);
+
+    return CF_OK;
+  }
+
+  return CF_ERROR_PARSE;
+}
+
+static int config_set_top_comment(wzd_configfile_t * config, const char * comment)
+{
+  ListElmt * elmnt;
+  wzd_configfile_group_t * group;
+  wzd_configfile_keyvalue_t * kv;
+
+  if (!config->groups) return CF_ERROR_INVALID_ARGS;
+
+  elmnt = list_head(config->groups);
+  group = list_data(elmnt);
+  /* the last group is for comments only */
+  if (!group || group->name) return CF_ERROR_INVALID_ARGS;
+
+  WZD_ASSERT(group->values != NULL);
+
+  while (dlist_size(group->values)>0) {
+    dlist_remove(group->values,dlist_tail(group->values),(void**)&kv);
+    _configfile_keyvalue_free(kv);
+  }
+
+  if (config_line_is_comment(comment)) {
+    kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));
+    kv->key = NULL;
+    kv->value = wzd_strdup(comment);
+
+    dlist_ins_next(group->values,NULL,kv);
+
+    return CF_OK;
+  }
+
+  return CF_ERROR_PARSE;
 }
 

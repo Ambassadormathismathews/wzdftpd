@@ -37,6 +37,15 @@ int main(int argc, char *argv[])
   config_set_integer(file, "GLOBAL", "key_int", 666);
   config_get_integer(file, "GLOBAL", "key_int", NULL);
 
+  config_set_comment(file, NULL, NULL, "# top comment");
+  config_set_comment(file, NULL, NULL, "# top comment 2");
+
+  config_set_comment(file, "GLOBAL", NULL, "# group comment");
+  config_set_comment(file, "GLOBAL", NULL, "# group comment 2");
+
+  config_set_comment(file, "GLOBAL", "key_int", "# key comment");
+  config_set_comment(file, "GLOBAL", "key_int", "# key_int comment 2");
+
   str = config_to_data(file, NULL);
 
   if (str) printf("%s\n",str_tochar(str));
