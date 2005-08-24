@@ -32,6 +32,8 @@
 # include <sys/param.h>
 #endif
 
+#include <time.h>
+
 #ifndef WIN32
 #include <unistd.h>
 #ifndef BSD
@@ -43,9 +45,12 @@
 
 #include "wzd_auth.h"
 #include "wzd_md5crypt.h"
+#include "wzd_md5.h"
 #include "wzd_pam.h"
 #include "wzd_sha1.h"
 #include "wzd_tls.h"
+
+static void _pass_get_random(char *buffer, size_t len);
 
 /* return 1 if password matches */
 
@@ -101,6 +106,40 @@ int changepass_crypt(const char *pass, char *buffer, size_t len)
   return 0;
 }
 
+/** \brief Encrypt password using MD5 and store it into buffer
+ */
+int changepass_md5(const char *pass, char *buffer, size_t len)
+{
+  const char * cipher;
+  char randbuffer[16];
+
+  if (!pass || !buffer || len<=0) return -1;
+
+  _pass_get_random(randbuffer,sizeof(randbuffer));
+
+  /* FIXME - md5_crypt is NOT reentrant */
+  cipher = md5_crypt(pass,randbuffer);
+  strncpy(buffer,cipher,len);
+
+  return 0;
+}
+
+/** \brief Encrypt password using SHA and store it into buffer
+ */
+int changepass_sha(const char *pass, char *buffer, size_t len)
+{
+  const char * cipher;
+
+  if (!pass || !buffer || len<=0) return -1;
+
+  /* FIXME - sha1_hash is NOT reentrant */
+  cipher = sha1_hash(pass);
+  strncpy(buffer,cipher,len);
+
+  return 0;
+}
+
+
 /* first chars of challenge indicate the password form (crypt, md5, etc.) */
 int checkpass(const char *user, const char *pass, const char *challenge)
 {
@@ -136,4 +175,47 @@ int check_auth(const char *user, const char *data, const char *challenge)
   return 0;
 }
 
+/** \brief Change password when possible.
+ *
+ * The first characters of \a pass are used to determine the method. If
+ * \a buffer is not \a NULL, it is used to write the correct password
+ * string into the \a userpass field of wzd_user_t .
+ *
+ * \return 0 if ok
+ */
+int changepass(const char *user, const char *pass, char *buffer, size_t len)
+{
+  if (!user) return -1;
 
+  if (strncmp(pass,AUTH_SIG_MD5,strlen(AUTH_SIG_MD5))==0)
+    return changepass_md5(pass+strlen(AUTH_SIG_MD5),buffer,len);
+  if (strncmp(pass,AUTH_SIG_SHA,strlen(AUTH_SIG_SHA))==0)
+    return changepass_sha(pass+strlen(AUTH_SIG_SHA),buffer,len);
+
+  /* in doubt, use crypt() */
+  return changepass_crypt(pass,buffer,len);
+
+  return -1;
+}
+
+
+
+static void _pass_get_random(char *buffer, size_t len)
+{
+#ifdef HAVE_DEVRANDOM
+  /** \todo Implement me */
+#else
+  struct {
+    time_t tv;
+  } s;
+  MD5_DIGEST d;
+  int i;
+
+  time(&s.tv);
+
+  md5_digest(&s, sizeof(s), d);
+
+  for (i=0; i<8; i++)
+    buffer[i]=((unsigned char *)d)[i] ^ 0x35;
+#endif
+}

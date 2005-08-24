@@ -31,7 +31,7 @@ typedef struct _wzd_ip_t wzd_ip_t;
  */
 wzd_ip_t * ip_create(void);
 
-/** \brief Frees a \wzd_ip_t struct
+/** \brief Frees a \a wzd_ip_t struct
  */
 void ip_free(wzd_ip_t * ip);
 

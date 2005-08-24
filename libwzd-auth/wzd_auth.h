@@ -35,7 +35,7 @@
 int checkpass_crypt(const char *pass, const char *encrypted);
 
 /* first chars of challenge indicate the password form (crypt, md5, etc.) */
-int checkpass(const char*user, const char *pass, const char *challenge);
+int checkpass(const char *user, const char *pass, const char *challenge);
 
 /* first chars of challenge indicate the password form (crypt, md5, etc.) */
 int check_auth(const char *user, const char *data, const char *challenge);
@@ -46,6 +46,20 @@ int check_auth(const char *user, const char *data, const char *challenge);
 /* return 0, or -1 if error */
 
 int changepass_crypt(const char *pass, char *buffer, size_t len);
+
+/** \brief Encrypt password using SHA and store it into buffer
+ */
+int changepass_sha(const char *pass, char *buffer, size_t len);
+
+/** \brief Change password when possible.
+ *
+ * The first characters of \a pass are used to determine the method. If
+ * \a buffer is not \a NULL, it is used to write the correct password
+ * string into the \a userpass field of wzd_user_t .
+ *
+ * \return 0 if ok
+ */
+int changepass(const char *user, const char *pass, char *buffer, size_t len);
 
 
 #define AUTH_SIG_MD5  "$1$"

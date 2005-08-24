@@ -1,6 +1,8 @@
 2005-08-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
-	* some changes to have compatibility with intel c compiler (tested with v9.0.025)
+	* feature: some changes to have compatibility with intel c compiler
+	(tested with v9.0.025)
+	* feature: initial support to change passwords with different methods
 
 2005-08-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
