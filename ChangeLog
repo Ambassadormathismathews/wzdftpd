@@ -1,3 +1,7 @@
+2005-08-24  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* some changes to have compatibility with intel c compiler (tested with v9.0.025)
+
 2005-08-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: support for comments in config_file_t
