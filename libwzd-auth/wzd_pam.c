@@ -28,10 +28,13 @@
 # include "../config.h"
 #endif
 
-#ifdef HAVE_PAM
-
 #include <stdio.h>
 #include <string.h>
+
+#include <errno.h>
+#include <sys/types.h>
+
+#ifdef HAVE_PAM
 
 #ifdef HAVE_PAM_PAM_APPL_H
 # include <pam/pam_appl.h>
@@ -41,9 +44,6 @@
 #endif
 
 #include <security/pam_misc.h>
-
-#include <errno.h>
-#include <sys/types.h>
 
 #include "wzd_auth.h"
 
