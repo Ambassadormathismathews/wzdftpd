@@ -3,6 +3,7 @@
 	* feature: some changes to have compatibility with intel c compiler
 	(tested with v9.0.025)
 	* feature: initial support to change passwords with different methods
+	* bugfix: fixed errors in sha and pam authentication
 
 2005-08-23  Pierre Chifflier  <pollux@wzdftpd.net>
 

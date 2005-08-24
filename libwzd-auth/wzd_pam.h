@@ -32,6 +32,8 @@
 /* return 1 if password matches */
 int checkpass_pam(const char *user, const char *pass);
 
+int changepass_pam(const char *user, const char *pass, char *buffer, size_t len);
+
 /*! @} */
 
 #endif /* __WZD_PAM__ */

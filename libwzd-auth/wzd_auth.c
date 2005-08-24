@@ -86,7 +86,7 @@ int checkpass_sha(const char *pass, const char *encrypted)
 
   /* FIXME - sha1_hash is NOT reentrant */
   cipher = sha1_hash(pass);
-  return strcmp(cipher+5 /* skip {SHA} */,encrypted)==0;
+  return strcmp(cipher,encrypted)==0;
 }
 
 int changepass_crypt(const char *pass, char *buffer, size_t len)
@@ -132,9 +132,12 @@ int changepass_sha(const char *pass, char *buffer, size_t len)
 
   if (!pass || !buffer || len<=0) return -1;
 
+  if (len < strlen(AUTH_SIG_SHA) + SHA1_DIGEST_SIZE) return -1;
+  strncpy(buffer,AUTH_SIG_SHA,len);
+
   /* FIXME - sha1_hash is NOT reentrant */
   cipher = sha1_hash(pass);
-  strncpy(buffer,cipher,len);
+  strncpy(buffer+strlen(AUTH_SIG_SHA),cipher,len);
 
   return 0;
 }
@@ -192,6 +195,11 @@ int changepass(const char *user, const char *pass, char *buffer, size_t len)
   if (strncmp(pass,AUTH_SIG_SHA,strlen(AUTH_SIG_SHA))==0)
     return changepass_sha(pass+strlen(AUTH_SIG_SHA),buffer,len);
 
+  if (strncmp(pass,AUTH_SIG_PAM,strlen(AUTH_SIG_PAM))==0)
+    return changepass_pam(user,pass+strlen(AUTH_SIG_PAM),buffer,len);
+  if (strncmp(pass,AUTH_SIG_CERT,strlen(AUTH_SIG_CERT))==0)
+    return changepass_cert(pass+strlen(AUTH_SIG_CERT),buffer,len);
+
   /* in doubt, use crypt() */
   return changepass_crypt(pass,buffer,len);
 
@@ -216,6 +224,6 @@ static void _pass_get_random(char *buffer, size_t len)
   md5_digest(&s, sizeof(s), d);
 
   for (i=0; i<8; i++)
-    buffer[i]=((unsigned char *)d)[i] ^ 0x35;
+    buffer[i]=itoa64[((unsigned char *)d)[i]];
 #endif
 }

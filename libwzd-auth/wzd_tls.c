@@ -30,6 +30,8 @@
 
 #include <string.h>
 
+#include "wzd_auth.h"
+
 #include <libwzd-core/wzd_structs.h> /* struct wzd_context_t */
 #include <libwzd-core/wzd_log.h> /* out_log */
 #include <libwzd-core/wzd_misc.h> /* GetMyContext */
@@ -85,6 +87,17 @@ ssl_check_exit_2:
 ssl_check_exit_1:
   X509_free(client_cert);
   return status;
+}
+
+int changepass_cert(const char *pass, char *buffer, size_t len)
+{
+  if (!pass || !buffer || len<=0) return -1;
+
+  if (len < strlen(AUTH_SIG_CERT)) return -1;
+
+  strncpy(buffer,AUTH_SIG_CERT,len);
+
+  return 0;
 }
 
 #elif defined(HAVE_GNUTLS)
@@ -179,11 +192,27 @@ int check_certificate(const char *user, const char *data)
   return 0;
 }
 
+int changepass_cert(const char *pass, char *buffer, size_t len)
+{
+  if (!pass || !buffer || len<=0) return -1;
+
+  if (len < strlen(AUTH_SIG_CERT)) return -1;
+
+  strncpy(buffer,AUTH_SIG_CERT,len);
+
+  return 0;
+}
+
 #else
 
 int check_certificate(const char *user, const char *data)
 {
-  return 0;
+  return -1;
+}
+
+int changepass_cert(const char *pass, char *buffer, size_t len)
+{
+  return -1;
 }
 
 #endif /* HAVE_OPENSSL || HAVE_GNUTLS */

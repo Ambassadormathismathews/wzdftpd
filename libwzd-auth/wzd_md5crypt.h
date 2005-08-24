@@ -35,6 +35,7 @@
 char * md5_crypt(const char *pw, const char *salt);
 char * md5_hash_r(const char *pw, char * out, size_t len);
 
+extern unsigned char itoa64[];
 /*! @} */
 
 #endif /* __WZD_MD5CRYPT__ */

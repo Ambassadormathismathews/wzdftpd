@@ -12,7 +12,7 @@
 
 typedef struct MD5Context MD5_CTX;
 
-static unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
+unsigned char itoa64[] =/* 0 ... 63 => ascii - 64 */
   "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 

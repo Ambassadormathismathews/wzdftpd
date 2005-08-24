@@ -363,6 +363,7 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
     /* basic verification: trying to commit on self ? then ok */
     if (loop_user == user) {
+      /** \todo possible problem: change password !!! */
       return 0;
     }
     if (mod_type & _USER_USERNAME) strcpy(loop_user->username,user->username);
@@ -373,9 +374,11 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
         strcpy(loop_user->userpass,user->userpass);
       } else {
         /* TODO choose encryption func ? */
-        if (changepass_crypt(user->userpass, loop_user->userpass, MAX_PASS_LENGTH-1)) {
+        if (changepass(loop_user->username,user->userpass, loop_user->userpass, MAX_PASS_LENGTH-1)) {
+          memset(user->userpass,0,MAX_PASS_LENGTH);
           return -1;
         }
+        memset(user->userpass,0,MAX_PASS_LENGTH);
       }
     }
     if (mod_type & _USER_ROOTPATH) {

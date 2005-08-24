@@ -35,6 +35,8 @@
 /* return 1 if certificate is validated */
 int check_certificate(const char *user, const char *data);
 
+int changepass_cert(const char *pass, char *buffer, size_t len);
+
 /*! @} */
 
 #endif /* __WZD_TLS__ */
