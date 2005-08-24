@@ -123,6 +123,9 @@ configure packages for you:
 <listitem><para>MySQL development headers and libraries</para>
 <para>Required only if you want to compile the MySQL backend.
 </para></listitem>
+<listitem><para>PostgreSQL development headers and libraries</para>
+<para>Required only if you want to compile the PostgreSQL backend.
+</para></listitem>
 </itemizedlist>
 </para>
 

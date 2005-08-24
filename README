@@ -41,15 +41,6 @@ MODULES:
 
 Troubleshooting:
 
-* SHM (linux)
-  If (this should never happend ;-) the daemon crashes and the shared memory is not freed, you'll have
-  to delete share memory by hand, 3 solutions
-    + run 'wzdftpd -d'
-    + become the samer user as the daemon runs, and run: ipcrm shm `ipcs -m | grep 0x1331c0d3 |  awk '{print $2}'`
-      ->> replace 0x1331c0d3 with your key if you changed in wzd.cfg <<-
-    + become root and do the same thing
-    ± reboot the machine :)
-
 * LOGIN
   Q: Sometimes login seems to freeze, and some time later all seems to go normal
   A: This is probably to a DNS lookup - it can be very long if you specified many

@@ -2,7 +2,11 @@
 <title>Authentication</title>
 
 <para>
-wzdftpd supports several authentication methods, and all of them are common to all backends.
+wzdftpd supports several authentication methods, and all of them are common to
+all backends. Some methods involves storing encrypted data on the server (crypt,
+md5, sha), some rely on another authentication layer (pam), and some use
+strongest authentication methods (certificates, and in the future kerberos
+and/or radius and/or SASL).
 </para>
 
 <para>
@@ -46,6 +50,29 @@ the encrypted password itself.
 <para>
 The MD5 format is used in the "shadow" file, for exemple. So you can just copy and paste
 the encrypted password and it will work.
+</para>
+
+</sect1>
+
+<sect1 id='auth_sha'>
+<title>SHA</title>
+
+<para>
+The SHA (Secure Hash Algorithm) is a family of cryptographic hash functions. The
+used function in wzdftpd is SHA-1, which is the commonly used function in SSL,
+TLS, etc. SHA-1 is considered to be the successor to MD5.
+</para>
+
+<para>
+To use the SHA-1 format, the password is stored with the special prefix "{SHA}".
+</para>
+
+<para>
+Recently (feb and aug 2005), two attacks were published to find collisions in
+SHA-1. This means that an attack is possible with a low complexity, compared to
+a brute force attack. However, this does not mean that this algorithm can be
+broken easily, only that finding a collision for SHA-1 is within reach of
+massive distributed Internet search (are you that famous ?)
 </para>
 
 </sect1>

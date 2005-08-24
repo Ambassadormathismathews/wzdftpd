@@ -51,6 +51,11 @@ other than root is allowed to authenticate with pam).
 <para>
 Users/Groups definitions are stored in a mysql database.
 </para>
+
+<para>
+The default logging channel for the postgresql backend is <emphasis>26</emphasis>.
+</para>
+
 <para>
 Here are some instructions how to use MySQL as a backend for users/groups.
 </para>
@@ -113,6 +118,7 @@ Start wzdftpd and use as normal.
 </para></listitem>
 </itemizedlist>
 </para>
+
 </simplesect>
 
 <simplesect>
@@ -130,6 +136,32 @@ Comment/delete the references to mysql in wzd.cfg
 </para>
 </simplesect>
 
+<simplesect>
+<title>Schema and Constraints</title>
+<para>
+The main tables are <emphasis>users</emphasis> and <emphasis>groups</emphasis>.
+They are related with a n:n relation, implemented using the
+<emphasis>ugr</emphasis> table (user-group relations).
+</para>
+<para>
+Other tables are linked using 1:n relations to materialize the fact that one
+user or group can have several associated IP adresses. Users have
+<emphasis>userip</emphasis>, groups have <emphasis>groupip</emphasis>.
+</para>
+<para>
+Finally, stats for users are implemented in a separate table,
+<emphasis>stats</emphasis>, with a 1:1 relation (users have only one stat line).
+</para>
+<para>
+As MySQL does not yet support constraints (nor sequences), data integrity is not
+assured in case of problems. If a modification is interrupted; or if you connect
+several servers to the same database, wzdftpd cannot guaranty the safety of your
+data. That's why the PostgreSQL backend is preferable in most situations (that
+does not mean the MySQL backend has problems, nor that the PostgreSQL backend is
+perfect, only that PostgreSQL is potentially less subject to problems).
+</para>
+</simplesect>
+
 
 </sect1>
 
@@ -144,6 +176,13 @@ can (and should) be preferred to MySQL when possible, as the design is better
 done and uses the real possibilities of a database, like sequences, constraints,
 etc.
 </para>
+
+<para>
+The default logging channel for the postgresql backend is <emphasis>27</emphasis>.
+</para>
+
+<simplesect>
+<title>Installation</title>
 <para>
 You should first create the wzdftpd user.
 <programlisting>
@@ -173,15 +212,40 @@ backend_param_pgsql = login:password@host:base[:port]</programlisting>
 <para>
 The port is optional and will be defaulted to 5432.
 </para>
+</simplesect>
 
+<simplesect>
+<title>Schema and Constraints</title>
 <para>
-The default logging channel for the postgresql backend is <emphasis>27</emphasis>.
+The main tables are <emphasis>users</emphasis> and <emphasis>groups</emphasis>.
+They are related with a n:n relation, implemented using the
+<emphasis>ugr</emphasis> table (user-group relations).
 </para>
-
 <para>
-<emphasis>Add comments on schema, constraints, etc.</emphasis>
+Other tables are linked using 1:n relations to materialize the fact that one
+user or group can have several associated IP adresses. Users have
+<emphasis>userip</emphasis>, groups have <emphasis>groupip</emphasis>.
+</para>
+<para>
+Finally, stats for users are implemented in a separate table,
+<emphasis>stats</emphasis>, with a 1:1 relation (users have only one stat line).
+</para>
+<para>
+To ensure integrity of the data, some constraints are enforced: unicity
+constraints, to avoid having several objects with same id, and references
+constraints, to ensure that a relation referencing an user is associated with an
+existing user (and that you can't delete an object which is referenced
+elsewhere).
+</para>
+</simplesect>
+
+<simplesect>
+<title>TODO</title>
+<para>
 <emphasis>Work in progress !</emphasis>
 </para>
+</simplesect>
+
 </sect1>
 
 

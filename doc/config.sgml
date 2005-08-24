@@ -189,6 +189,35 @@ cookie name will be written as is: '%username' will return 'username'
 
 </simplesect>
 
+<simplesect id='log_channels'>
+<title>Logging Channels</title>
+
+<para>Since version 0.5.4, wzdftpd uses the idea of
+<emphasis>channels</emphasis> to redirect logs. Each line logged is associated
+with a unique number (the channel), and each channel is associated to a
+configuration: do not log, log to a file and/or to syslog.
+</para>
+<para>
+There are 10 predefined channels, reserved for standard server logs. They are
+organized in order of importance: the lowest number corresponds to debug, the
+highest to critical error messages. The <link
+linkend='cfg_loglevel'>loglevel</link> config directive is used to select only
+interesting levels: if <emphasis>loglevel</emphasis> is set to
+<emphasis>normal</emphasis>, only messages with at least this level will be
+logged.
+</para>
+
+<para>
+Other log channels are used differently: their value is not used to control
+verbosity, but only as a selector: you can choose to redirect messages to the
+standard log, or to redirect messages concerning a specific level to a different
+log file, etc. (this can also be done for standard channels). The <link
+linkend='cfg_log_channel'>log_channel</link>config directive is used to change
+destination of channels.
+</para>
+
+</simplesect>
+
 </sect1>
 
 <sect1 id='directives_ref'>
@@ -331,10 +360,15 @@ use_syslog</link>)
 <para>Controls the verbosity of the server in the log file.
 <screen>loglevel = high</screen>
 </para>
-<para>This means only messages with a level <emphasis>greater or equal than
-</emphasis> 'high' will be logged</para>
+<para>This means only messages important or critical error messages will be
+logged (and as this is higher than 'normal', many normal messages will be
+ignored). To the contrary, if you set loglevel to 'lowest', you will get ALL
+messages (even debug).
+</para>
 <para>level can be one of (in order): lowest, flood, info, normal, high,
 critical</para>
+<para>See also: <link linkend='log_channels'>Log Channels</link> for more
+details.</para>
 </listitem>
 </varlistentry>
 
