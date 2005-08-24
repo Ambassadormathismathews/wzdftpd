@@ -355,7 +355,7 @@ static void save_tlsoptions (FILE *file)
 
 static void save_iprestrictions (FILE *file)
 {
-  wzd_ip_t * current;
+  wzd_ip_list_t * current;
   
   if (file==NULL) return;
 

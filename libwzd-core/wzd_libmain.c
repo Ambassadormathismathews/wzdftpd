@@ -216,6 +216,7 @@ void server_restart(int signum)
   out_log(LEVEL_CRITICAL, " ** server_restart:  Not yet implemented\n");
 }
 
+/** \brief remove a context from the list */
 int context_remove(List * context_list, wzd_context_t * context)
 {
   ListElmt * elmnt;
@@ -227,7 +228,7 @@ int context_remove(List * context_list, wzd_context_t * context)
   if (context == context_list->head->data)
   {
     list_rem_next(context_list, NULL, &data);
-    wzd_free(context);
+    context_free(context);
     wzd_mutex_unlock(server_mutex);
     return 0;
   }
@@ -237,7 +238,7 @@ int context_remove(List * context_list, wzd_context_t * context)
     if ( list_next(elmnt) && context == list_next(elmnt)->data )
     {
       list_rem_next(context_list, elmnt, &data);
-      wzd_free(context);
+      context_free(context);
       wzd_mutex_unlock(server_mutex);
       return 0;
     }
@@ -246,3 +247,14 @@ int context_remove(List * context_list, wzd_context_t * context)
 
   return -1;
 }
+
+/** \brief Frees a context
+ */
+void context_free(wzd_context_t * context)
+{
+  WZD_ASSERT_VOID(context != NULL);
+
+  ip_free(context->peer_ip);
+  wzd_free(context);
+}
+

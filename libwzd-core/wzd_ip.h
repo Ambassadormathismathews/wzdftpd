@@ -25,13 +25,23 @@
 #ifndef __WZD_IP_H__
 #define __WZD_IP_H__
 
+typedef struct _wzd_ip_t wzd_ip_t;
+
+/** \brief Allocate and initialize a new \a wzd_ip_t struct
+ */
+wzd_ip_t * ip_create(void);
+
+/** \brief Frees a \wzd_ip_t struct
+ */
+void ip_free(wzd_ip_t * ip);
+
 /* IP comparison */
 int ip_compare(const char * src, const char *dst);
 
 /* IP allowing */
-int ip_add(wzd_ip_t **list, const char *newip);
-int ip_inlist(wzd_ip_t *list, const char *ip);
-void ip_free(wzd_ip_t *list);
+int ip_add(wzd_ip_list_t **list, const char *newip);
+int ip_inlist(wzd_ip_list_t *list, const char *ip);
+void ip_list_free(wzd_ip_list_t *list);
 
 int user_ip_add(wzd_user_t * user, const char *newip);
 int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);

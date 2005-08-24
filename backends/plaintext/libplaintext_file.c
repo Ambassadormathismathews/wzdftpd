@@ -75,7 +75,7 @@ static unsigned int find_directive(const char *name)
 }
 
 /* IP allowing */
-static int user_ip_add(wzd_user_t * user, const char *newip)
+static int __user_ip_add(wzd_user_t * user, const char *newip)
 {
   int i;
 
@@ -95,7 +95,7 @@ static int user_ip_add(wzd_user_t * user, const char *newip)
   return 1; /* full */
 }
 
-static int group_ip_add(wzd_group_t * group, const char *newip)
+static int __group_ip_add(wzd_group_t * group, const char *newip)
 {
   int i;
 
@@ -515,7 +515,7 @@ fprintf(stderr,"Defining new private group %s\n",token);
       } /* else if (strcmp("num_logins",... */
 
       else if (strcmp("ip_allowed",varname)==0) {
-        group_ip_add(group_new,value);
+        __group_ip_add(group_new,value);
       } /* ip_allowed */
       else if (strcmp("default_home",varname)==0) {
         strncpy(group_new->defaultpath,value,WZD_MAX_PATH);
@@ -808,7 +808,7 @@ fprintf(stderr,"Entering section USERS\n");
     } /* max_idle_time */
     else if (strcmp("ip_allowed",varname)==0) {
       if (!user_new) continue;
-      user_ip_add(user_new,value);
+      __user_ip_add(user_new,value);
     } /* ip_allowed */
   }
   return 0;

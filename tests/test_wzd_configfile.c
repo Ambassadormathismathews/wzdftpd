@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
   wzd_string_t * str;
   unsigned long c2 = C2;
   const char * data = "[GLOBAL]\n"
+    "# comment 1\n"
     "key1 = value1";
 
   file = config_new();

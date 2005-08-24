@@ -175,7 +175,7 @@ char * wzd_strncpy(char *dst, const char *src, size_t n)
 size_t wzd_strnlen (const char *s, size_t n)
 {
   const char *end = memchr (s, '\0', n);
-  return end ? end - s : n;
+  return end ? (size_t)(end - s) : n;
 }
 
 #ifdef DEBUG

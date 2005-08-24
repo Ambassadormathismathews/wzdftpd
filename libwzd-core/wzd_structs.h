@@ -141,10 +141,10 @@ typedef struct {
 typedef struct wzd_site_fct_t wzd_site_fct_t;
 
 /********************* IP CHECKING ************************/
-typedef struct _wzd_ip_t {
+typedef struct _wzd_ip_list_t {
   char  * regexp;
-  struct _wzd_ip_t * next_ip;
-} wzd_ip_t;
+  struct _wzd_ip_list_t * next_ip;
+} wzd_ip_list_t;
 
 /************************ VFS *****************************/
 typedef struct _wzd_vfs_t {
@@ -343,6 +343,10 @@ typedef struct _wzd_param_t {
   struct _wzd_param_t	* next_param;
 } wzd_param_t;
 
+/*************************** IP **************************/
+
+#include "wzd_ip.h"
+
 /*************************** TLS **************************/
 
 #ifndef HAVE_OPENSSL
@@ -417,6 +421,7 @@ typedef struct _context_t {
   unsigned long	magic;  /**< \brief magic number, used to test structure integrity */
 
   unsigned char	hostip[16];
+  wzd_ip_t      * peer_ip;
   char          ident[MAX_IDENT_LENGTH];
   connection_state_t state;
   unsigned char	exitclient;
@@ -503,8 +508,8 @@ typedef struct {
   u32_t         pasv_high_range;
   unsigned char	pasv_ip[16];
   int		login_pre_ip_check;
-  wzd_ip_t	*login_pre_ip_allowed;
-  wzd_ip_t	*login_pre_ip_denied;
+  wzd_ip_list_t	*login_pre_ip_allowed;
+  wzd_ip_list_t	*login_pre_ip_denied;
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;

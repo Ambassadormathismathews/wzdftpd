@@ -59,6 +59,34 @@
 
 #endif /* WZD_USE_PCH */
 
+#define MAX_NUMERIC_IP_LEN 64
+
+struct _wzd_ip_t {
+  net_family_t family;
+
+  char raw[MAX_NUMERIC_IP_LEN];
+};
+
+/** \brief Allocate and initialize a new \a wzd_ip_t struct
+ */
+wzd_ip_t * ip_create(void)
+{
+  wzd_ip_t * ip;
+
+  ip = wzd_malloc(sizeof(wzd_ip_t));
+  memset(ip,0,sizeof(wzd_ip_t));
+
+  return ip;
+}
+
+/** \brief Frees a \wzd_ip_t struct
+ */
+void ip_free(wzd_ip_t * ip)
+{
+  WZD_ASSERT_VOID(ip != NULL);
+  wzd_free(ip);
+}
+
 
 /** \brief IP comparison
  *
@@ -200,9 +228,9 @@ int ip_compare(const char * ip, const char * pattern)
 
 
 /** IP allowing */
-int ip_add(wzd_ip_t **list, const char *newip)
+int ip_add(wzd_ip_list_t **list, const char *newip)
 {
-  wzd_ip_t * new_ip_t, *insert_point;
+  wzd_ip_list_t * new_ip_t, *insert_point;
 
   /* of course this should never happen :) */
   if (list == NULL) return -1;
@@ -210,7 +238,7 @@ int ip_add(wzd_ip_t **list, const char *newip)
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
-  new_ip_t = malloc(sizeof(wzd_ip_t));
+  new_ip_t = malloc(sizeof(wzd_ip_list_t));
   new_ip_t->regexp = malloc(strlen(newip)+1);
   strncpy(new_ip_t->regexp,newip,strlen(newip)+1);
   new_ip_t->next_ip = NULL;
@@ -229,9 +257,9 @@ int ip_add(wzd_ip_t **list, const char *newip)
   return 0;
 }
 
-int ip_inlist(wzd_ip_t *list, const char *ip)
+int ip_inlist(wzd_ip_list_t *list, const char *ip)
 {
-  wzd_ip_t * current_ip;
+  wzd_ip_list_t * current_ip;
   const char * ptr_ip;
   char * ptr_test;
 
@@ -249,9 +277,9 @@ int ip_inlist(wzd_ip_t *list, const char *ip)
   return 0;
 }
 
-void ip_free(wzd_ip_t *list)
+void ip_list_free(wzd_ip_list_t *list)
 {
-  wzd_ip_t * current, *next;
+  wzd_ip_list_t * current, *next;
 
   if (!list) return;
   current = list;

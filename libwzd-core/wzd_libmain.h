@@ -76,4 +76,8 @@ void libtest(void);
 /** \brief remove a context from the list */
 int context_remove(List * context_list, wzd_context_t * context);
 
+/** \brief Frees a context
+ */
+void context_free(wzd_context_t * context);
+
 #endif /* __WZD_LIBMAIN__ */

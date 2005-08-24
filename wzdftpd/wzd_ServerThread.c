@@ -156,38 +156,20 @@ static void server_login_accept(wzd_context_t * context);
 
 static void context_init(wzd_context_t * context)
 {
-  context->magic = 0;
-  memset(context->hostip,0,4);
+  memset(context,0,sizeof(wzd_context_t));
   context->controlfd = -1;
   context->datafd = -1;
-  context->portsock = 0;
   context->pasvsock = -1;
-  context->dataport=0;
-  context->resume = 0;
   context->userid = (unsigned int)-1;
   context->thread_id = (unsigned long)-1;
-  context->pid_child = 0;
   context->state = STATE_UNKNOWN;
   context->datamode = DATA_PORT;
   context->current_action.current_file = -1;
   context->current_action.token = TOK_UNKNOWN;
   memset(&context->last_file,0,sizeof(context->last_file));
-  context->connection_flags = 0;
-  context->data_buffer = NULL;
-/*  context->current_limiter = NULL;*/
-  context->current_ul_limiter.maxspeed = 0;
-  context->current_ul_limiter.bytes_transfered = 0;
-  context->current_dl_limiter.maxspeed = 0;
-  context->current_dl_limiter.bytes_transfered = 0;
-  memset(context->ident, 0, MAX_IDENT_LENGTH);
-#ifdef HAVE_OPENSSL
-  context->ssl.obj = NULL;
-  context->ssl.data_ssl = NULL;
-#endif
-#ifdef HAVE_GNUTLS
-  context->tls.session = NULL;
-  context->tls.data_session = NULL;
-#endif
+
+  context->peer_ip = ip_create();
+
   context->tls_role = TLS_SERVER_MODE;
   context->read_fct = (read_fct_t)clear_read;
   context->write_fct = (write_fct_t)clear_write;
@@ -474,6 +456,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
     FD_UNREGISTER(newsock,"Client socket");
     return 3;
   }
+  /** \todo XXX FIXME context_index is WRONG !! */
   context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
   /* don't forget init is done before */
@@ -938,11 +921,11 @@ int server_switch_to_config(wzd_config_t *config)
 
   context_list = wzd_malloc(sizeof(List));
 
-  list_init(context_list, wzd_free);
+  list_init(context_list, (void (*)(void*))context_free);
 
 #ifdef WIN32
   /* cygwin sux ... shared library variables are NOT set correctly
-   * on dlopenín'
+   * on dlopenin'
    * remember me to slap the one who told me to make this prog portable ... oops
    * it's me °_°
    */
@@ -1323,9 +1306,9 @@ static void free_config(wzd_config_t * config)
 /*  limiter_free(mainConfig->limiter_ul);
   limiter_free(mainConfig->limiter_dl);*/
 
-  ip_free(mainConfig->login_pre_ip_allowed);
+  ip_list_free(mainConfig->login_pre_ip_allowed);
 
-  ip_free(mainConfig->login_pre_ip_denied);
+  ip_list_free(mainConfig->login_pre_ip_denied);
 
   if (mainConfig->xferlog_fd >= 0)
     xferlog_close(mainConfig->xferlog_fd);
@@ -1420,7 +1403,6 @@ void serverMainThreadExit(int retcode)
   vfs_free(&mainConfig->vfs);
   free_messages();
   usercache_fini();
-/*  free(context_list);*/
   /* FIXME should not be done here */
   if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);

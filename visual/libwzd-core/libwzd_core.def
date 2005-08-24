@@ -40,6 +40,7 @@ EXPORTS
 	commands_fini
 	commands_init
 	commands_set_permission
+	context_free
 	context_list
 	cookie_parse_buffer
 	cronjob_add
