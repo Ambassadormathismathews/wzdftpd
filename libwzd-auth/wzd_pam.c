@@ -212,8 +212,13 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 /* return 1 if password matches */
 int checkpass_pam(const char *user, const char *pass)
 {
-  return 0;
+  return -1;
 }
 
+/* return 0 if ok */
+int changepass_pam(const char *user, const char *pass, char *buffer, size_t len)
+{
+  return -1;
+}
 
 #endif /* HAVE_PAM */
