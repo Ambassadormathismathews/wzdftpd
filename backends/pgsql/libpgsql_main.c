@@ -37,8 +37,7 @@
 
 #include <libpq-fe.h>
 
-#include <libwzd-auth/wzd_md5.h>
-#include <libwzd-auth/wzd_md5crypt.h>
+#include <libwzd-auth/wzd_auth.h>
 
 #include <libwzd-core/wzd_backend.h>
 #include <libwzd-core/wzd_log.h>
@@ -216,9 +215,7 @@ uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   char *query;
-  char * cipher;
   uid_t uid;
-  char buffer[128];
   PGresult * res;
 
   if (!wzd_pgsql_check_name(login)) return (uid_t)-1;
@@ -277,11 +274,9 @@ uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
     if (strcmp(stored_pass,"%")==0)
       return uid; /* passworldless login */
 
-    cipher = (char*)md5_hash_r(pass, buffer, sizeof(buffer));
-    if (!cipher) return (uid_t)-1;
-
-    if (strncasecmp(cipher,stored_pass,32))
-      return (uid_t)-1;
+    if (check_auth(login, pass, stored_pass)==1)
+      return uid;
+    return (uid_t)-1;
 
   } /* else // user does not exist in table
     return -1;*/

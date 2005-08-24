@@ -37,15 +37,18 @@
 
 #include <mysql.h>
 
-#include <libwzd-auth/wzd_md5.h>
-#include <libwzd-auth/wzd_md5crypt.h>
+#include <libwzd-auth/wzd_auth.h>
 
 #include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_log.h>
+
 #include <libwzd-core/wzd_debug.h>
 
 #include "libmysql.h"
 
-#define MYSQL_BACKEND_VERSION   121
+#define MYSQL_BACKEND_VERSION   122
+
+#define MYSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+16)
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(mysql);
@@ -76,7 +79,7 @@ static gid_t * wzd_mysql_get_group_list(void);
 
 void _wzd_mysql_error(const char *filename, const char  *func_name, int line)/*, const char *error)*/
 {
-  fprintf(stderr, "%s(%s):%d %s\n", filename, func_name, line, mysql_error(&mysql));
+  out_log(MYSQL_LOG_CHANNEL, "%s(%s):%d %s\n", filename, func_name, line, mysql_error(&mysql));
 }
 
 static int wzd_parse_arg(const char *arg)
@@ -180,9 +183,7 @@ uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
   char *query;
-  char * cipher;
   uid_t uid;
-  char buffer[128];
 
   if (!wzd_mysql_check_name(login)) return (uid_t)-1;
 
@@ -238,19 +239,17 @@ uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
     if (strlen(stored_pass) == 0)
     {
-      fprintf(stderr,"WARNING: empty password field whould not be allowed !\n");
-      fprintf(stderr,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
+      out_log(MYSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
+      out_log(MYSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
       return uid; /* passworldless login */
     }
 
     if (strcmp(stored_pass,"%")==0)
       return uid; /* passworldless login */
 
-    cipher = (char*)md5_hash_r(pass, buffer, sizeof(buffer));
-    if (!cipher) return (uid_t)-1;
-
-    if (strncasecmp(cipher,stored_pass,32))
-      return (uid_t)-1;
+    if (check_auth(login, pass, stored_pass)==1)
+      return uid;
+    return (uid_t)-1;
 
   } /* else // user does not exist in table
     return -1;*/
@@ -409,7 +408,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   i =0;
   while ( (row = mysql_fetch_row(res)) ) {
     if (i >= HARD_IP_PER_USER) {
-      fprintf(stderr,"Mysql: too many IP for user %s, dropping others\n",user->username);
+      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many IP for user %s, dropping others\n",user->username);
       break;
     }
     wzd_row_get_string(user->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
@@ -437,7 +436,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   i =0;
   while ( (row = mysql_fetch_row(res)) ) {
     if (i >= HARD_IP_PER_USER) {
-      fprintf(stderr,"Mysql: too many groups for user %s, dropping others\n",user->username);
+      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many groups for user %s, dropping others\n",user->username);
       break;
     }
     if (wzd_row_get_uint(&j, row, 0 /* query asks only one column */)==0)
@@ -553,9 +552,7 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   i =0;
   while ( (row = mysql_fetch_row(res)) ) {
     if (i >= HARD_IP_PER_GROUP) {
-#ifdef DEBUG
-      fprintf(stderr,"Mysql: too many IP for group %s, dropping others\n",group->groupname);
-#endif
+      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many IP for group %s, dropping others\n",group->groupname);
       break;
     }
     wzd_row_get_string(group->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);

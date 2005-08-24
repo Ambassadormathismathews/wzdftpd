@@ -36,6 +36,8 @@
 
 #include <mysql.h>
 
+#include <libwzd-auth/wzd_auth.h>
+
 #include <libwzd-base/wzd_strlcat.h>
 
 #include <libwzd-core/wzd_backend.h>
@@ -110,8 +112,14 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
 
     if (mod_type & _USER_USERPASS) {
-      if (!wzd_mysql_check_name(user->userpass)) goto error_mod_user_free;
-      APPEND_STRING_TO_QUERY("userpass=MD5('%s') ", user->userpass, query, query_length, mod, modified);
+      char passbuffer[MAX_PASS_LENGTH];
+
+      if (changepass(user->username,user->userpass, passbuffer, MAX_PASS_LENGTH-1)) {
+          memset(user->userpass,0,MAX_PASS_LENGTH);
+          goto error_mod_user_free;
+        }
+      memset(user->userpass,0,MAX_PASS_LENGTH);
+      APPEND_STRING_TO_QUERY("userpass='%s' ", passbuffer, query, query_length, mod, modified);
     }
 
     if (mod_type & _USER_ROOTPATH) {
@@ -198,16 +206,26 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 
   query = malloc(2048);
 
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s',MD5('%s'),'%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
-      user->username, user->userpass,
-      user->rootpath,
-      user->uid,
-      user->flags,
-      (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
-      user->num_logins, user->ratio, user->user_slots, user->leech_slots,
-      user->userperms, user->credits
-      ))
-    goto error_user_add;
+  {
+    char passbuffer[MAX_PASS_LENGTH];
+
+    if (changepass(user->username,user->userpass, passbuffer, MAX_PASS_LENGTH-1)) {
+      memset(user->userpass,0,MAX_PASS_LENGTH);
+      goto error_user_add;
+    }
+    memset(user->userpass,0,MAX_PASS_LENGTH);
+
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
+          user->username, passbuffer,
+          user->rootpath,
+          user->uid,
+          user->flags,
+          (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
+          user->num_logins, user->ratio, user->user_slots, user->leech_slots,
+          user->userperms, user->credits
+          ))
+      goto error_user_add;
+  }
 
   ref = user_get_ref(user->username,0);
   if (!ref) goto error_user_add;

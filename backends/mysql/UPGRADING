@@ -1,3 +1,7 @@
+0.5.4 to 0.6.0
+
+ALTER TABLE users MODIFY userpass varchar(48);
+
 0.5.x to 0.5.4
 
 -- uid and gid should be unique

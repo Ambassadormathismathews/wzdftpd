@@ -43,7 +43,7 @@ INSERT INTO groups (groupname,gid,defaultpath,tagline) VALUES ('admin',1,'/','ad
 CREATE TABLE users (
   ref INT(5) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username TINYTEXT NOT NULL,
-  userpass varchar(32) default NULL,
+  userpass varchar(48) default NULL,
   rootpath TINYTEXT NOT NULL,
   tagline TINYTEXT default NULL,
   uid int(10) unsigned NOT NULL UNIQUE,

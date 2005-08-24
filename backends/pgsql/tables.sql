@@ -31,7 +31,7 @@ INSERT INTO groups (groupname,gid,defaultpath,tagline) VALUES ('admin',nextval('
 CREATE TABLE users (
   ref serial PRIMARY KEY,
   username varchar(255) NOT NULL,
-  userpass varchar(32) default NULL,
+  userpass varchar(48) default NULL,
   rootpath varchar(255) NOT NULL,
   tagline varchar(255) default NULL,
   uid serial UNIQUE,

@@ -4,7 +4,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/libwzd-base $(WZD_PGSQL_INCLUDES) $(W
 
 lib_LTLIBRARIES = libwzdpgsql.la
 
-EXTRA_DIST = libpgsql.h createusers.sql dropall.sql tables.sql
+EXTRA_DIST = libpgsql.h createusers.sql dropall.sql tables.sql UPGRADING
 
 libwzdpgsql_la_LIBADD = ../../libwzd-core/libwzd_core.la
 
