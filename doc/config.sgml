@@ -1,3 +1,5 @@
+<!-- vi:tw=80
+  -->
 <chapter id='config_file'>
 <title>Config file directives</title>
 
@@ -143,6 +145,38 @@ authorized for the group is authorized for each group member.</para>
 
 <para>This short exemple should demonstrate how setting group values is important,
 as you can use group values when you create users.</para>
+
+</simplesect>
+
+<simplesect id='passwords'>
+<title>Passwords</title>
+
+<para>Since version 0.6.0, authentication is managed by a dedicated component,
+which supports several authentication methods, including: passwords,
+certificates, and third-party modules (like PAM).
+</para>
+
+<para>Each method is associated to a prefix, fox exemple: {SHA} for SHA-1
+encryption, {cert} for certificates, etc. The method is specified when changing
+a password by writing it just before the password. For exemple,
+<programlisting>site chpass username {SHA}newpass
+</programlisting>
+will change password for user <emphasis>username</emphasis>, set it to
+<emphasis>newpass</emphasis>, and store it encrypted in SHA-1 format.
+</para>
+
+<para>If the selected method does not use passwords (like certificates), just
+specify the prefix:
+<programlisting>site chpass username {cert}</programlisting>
+</para>
+
+<para>If no authentication method is specified, then the default is to store the
+password encrypted in <emphasis>crypt</emphasis> format.
+</para>
+
+<para>See <link linkend='authentication'>authentication chapter</link> for
+details on availables methods and implementation.
+</para>
 
 </simplesect>
 

@@ -1,3 +1,5 @@
+<!-- vi:tw=80
+  -->
 <chapter id='authentication'>
 <title>Authentication</title>
 
@@ -10,8 +12,9 @@ and/or radius and/or SASL).
 </para>
 
 <para>
-This section explains which methods wzdftpd can use. For the moment, you cannot easily
-change auth method from SITE commands, but this will be implemented soon.
+This section explains which methods wzdftpd can use. The method is specified
+when changin a password, see <link linkend='site_chpass'>site chpass</link>
+command and <link linkend='passwords'>"passwords" chapter</link> for details.
 </para>
 
 <sect1 id='auth_crypt'>
@@ -89,6 +92,20 @@ to the PAM subsystem by sending the login and password.
 To use the PAM method, set the password to "{pam}"
 </para>
 
+<para>To change a password, you have to specify the old password (this is needed
+by PAM). Write the old password and the new password separated by a | (pipe)
+character.
+<programlisting>site chpass user {pam}oldpass|newpass
+</programlisting>
+</para>
+
+<caution>
+<para>When changing a password using the pam method, be advised that pam will
+handle the password change, and that this will probably also mean changing it on
+the system.
+</para>
+</caution>
+
 </sect1>
 
 <sect1 id='auth_cert'>
@@ -98,6 +115,16 @@ To use the PAM method, set the password to "{pam}"
 If the client is configurated to send a client certificate, the server can verify it
 (you have to add the certificate authority in the config file, or the certificates
 will be declared invalid).
+</para>
+
+<para>This is generally used when you have deployed a PKI (Public Key
+Infrastructure), and/or a CA (Certificate Authority).
+</para>
+
+<para>wzdftpd checks if the client certificate is validated
+(<emphasis>i.e</emphasis>, if the certificate has been signed by the server's
+certificate authority), and then checks that the <emphasis>CN</emphasis> field
+of the certificate is equal to the login name.
 </para>
 
 </sect1>

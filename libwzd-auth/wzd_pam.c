@@ -100,6 +100,12 @@ int changepass_pam(const char *user, const char *pass, char *buffer, size_t len)
 
   if (!user || !pass || !buffer || len<=0) return -1;
 
+  if (*pass == '\0') {
+    /* just use pam authentication, do no change pass */
+    strncpy(buffer,AUTH_SIG_PAM,len);
+    return 0;
+  }
+
   PAM_conversation.appdata_ptr = &convdata;
 
   oldpass = strdup(pass);

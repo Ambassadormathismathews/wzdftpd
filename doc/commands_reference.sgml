@@ -1,3 +1,5 @@
+<!-- vi:tw=80
+  -->
 <chapter id='command_ref'>
 <title>Commands Reference</title>
 
@@ -203,10 +205,16 @@ site chpass [&lt;user&gt;] &lt;password&gt;
 <para>Change user password.</para>
 <screen>ex: site chpass toto newpassword</screen>
 <para>This will change the password to 'newpassword' for the user 'toto'.</para>
+<para><screen>site chpass toto {cert}</screen>
+will use certificates authentication (the password specified when logging is ignored).
+</para>
 <para>% denotes any password</para>
 <para>If you are a gadmin, you can only change users from your group.</para>
 <para>If no user name is specified, it changes your own password.</para>
 <screen>ex: site chpass newpassword</screen>
+<para>See also: chapter on <link linkend='authentication'>authentication</link>
+for details.
+</para>
 </listitem>
 </varlistentry>
 
