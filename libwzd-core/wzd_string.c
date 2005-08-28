@@ -33,6 +33,8 @@
 
 #include <ctype.h> /* isspace */
 
+#include "libwzd-base/list.h"
+
 #include "wzd_string.h"
 
 #include "wzd_structs.h"
@@ -79,6 +81,21 @@ void str_deallocate(wzd_string_t *st)
 #endif
     wzd_free(st);
   }
+}
+
+/** \brief Deallocates a NULL-terminated string list
+ */
+void str_deallocate_array(wzd_string_t **array)
+{
+  wzd_string_t ** iterator = array;
+
+  if (!iterator) return;
+
+  while ( (*iterator) ) {
+    str_deallocate(*iterator);
+    iterator++;
+  }
+  wzd_free(array);
 }
 
 wzd_string_t * str_fromchar(const char *str)
@@ -544,6 +561,66 @@ int str_append_printf(wzd_string_t *str, const char *format, ...)
   if (buffer) wzd_free(buffer);
 
   return str->length;
+}
+
+/** \brief Split \a str into a maximum of \a max_tokens pieces, separated by \a sep.
+ *
+ * If \a max_tokens is reached, the remainder of \a str is appended to the last token.
+ *
+ * \return a NULL-terminated string array, or NULL. The array must be freed using
+ * str_deallocate_array().
+ */
+wzd_string_t ** str_split(wzd_string_t * str, const char * sep, int max_tokens)
+{
+  List string_list;
+  ListElmt * elmnt;
+  const char *remainder = NULL;
+  char * s;
+  wzd_string_t * token;
+  wzd_string_t ** str_array;
+  unsigned int i;
+
+  if (!str || !sep || sep[0]=='\0') return NULL;
+
+  if (max_tokens < 1) max_tokens = (unsigned int)-1;
+
+  list_init(&string_list,NULL);
+
+  remainder = str->buffer;
+  s = strstr(remainder, sep);
+  if (s) {
+    size_t len;
+    size_t delimiter_len = strlen(sep);
+
+    while (--max_tokens && s) {
+      len = s - remainder;
+      token = str_allocate();
+      _str_set_min_size(token, len + 1);
+      strncpy(token->buffer, remainder, len);
+      token->buffer[len] = '\0';
+      token->length = len;
+
+      list_ins_next(&string_list, list_tail(&string_list), token);
+
+      remainder = s + delimiter_len;
+
+      s = strstr(remainder, sep);
+    }
+  }
+
+  if (remainder && remainder[0] != '\0')
+    list_ins_next(&string_list, list_tail(&string_list), STR(remainder));
+
+  str_array = wzd_malloc( (list_size(&string_list)+1) * sizeof(wzd_string_t*) );
+  i = 0;
+  for (elmnt = list_head(&string_list); elmnt; elmnt = list_next(elmnt)) {
+    str_array[i++] = list_data(elmnt);
+  }
+  str_array[i] = NULL;
+
+  list_destroy(&string_list);
+
+  return str_array;
 }
 
 #ifdef HAVE_UTF8

@@ -46,6 +46,7 @@
 #include "wzd_log.h"
 
 #include "wzd_string.h"
+#include "wzd_utf8.h"
 #include "wzd_configfile.h"
 
 #include "libwzd-base/dlist.h"
@@ -53,6 +54,9 @@
 #include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
+
+
+#define VALUE_LIST_SEPARATOR    ","
 
 typedef struct _wzd_configfile_group_t wzd_configfile_group_t;
 
@@ -213,6 +217,106 @@ int config_set_value(wzd_configfile_t * file, const char * groupname, const char
   return CF_OK;
 }
  
+/** \brief Returns the value associated with \a key under \a groupname as a string.
+ * \return the value, else \a errcode is set to nonzero.
+ */
+wzd_string_t * config_get_string(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode)
+{
+  char * value;
+  wzd_string_t * str_value = NULL;
+
+  if (!file || !groupname || !key) return NULL;
+  if (errcode) *errcode = CF_OK;
+
+  value = config_get_value(file,groupname,key);
+  if (!value) {
+    if (errcode) *errcode = CF_ERROR_NOT_FOUND;
+    return NULL;
+  }
+
+#ifdef HAVE_UTF8
+  if (!utf8_valid(value,strlen(value))) {
+    if (errcode) *errcode = CF_ERROR_INVALID_ENCODING;
+    return NULL;
+  }
+#endif
+
+  str_value = STR(value);
+
+  return str_value;
+}
+
+/** \brief Associates a new string value with \a key under \a groupname.
+ *
+ * If \a key cannot be found then it is created.
+ */
+int config_set_string(wzd_configfile_t * file, const char * groupname, const char * key, wzd_string_t * value)
+{
+  if (!file || !groupname || !key) return CF_ERROR_INVALID_ARGS;
+
+  return config_set_value(file, groupname, key, str_tochar(value));
+}
+
+/** \brief Returns the value associated with \a key under \a groupname as a string.
+ * \return a NULL-terminated string array,, or NULL and set \a errcode to nonzero.
+ * The array should be freed using str_deallocate_array()
+ */
+wzd_string_t ** config_get_string_list(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode)
+{
+  char * value;
+  wzd_string_t * str_value;
+  wzd_string_t ** array = NULL;
+
+  if (!file || !groupname || !key) return NULL;
+  if (errcode) *errcode = CF_OK;
+
+  value = config_get_value(file,groupname,key);
+  if (!value) {
+    if (errcode) *errcode = CF_ERROR_NOT_FOUND;
+    return NULL;
+  }
+
+#ifdef HAVE_UTF8
+  if (!utf8_valid(value,strlen(value))) {
+    if (errcode) *errcode = CF_ERROR_INVALID_ENCODING;
+    return NULL;
+  }
+#endif
+
+  str_value = STR(value);
+
+  array = str_split(str_value,VALUE_LIST_SEPARATOR,0);
+
+  str_deallocate(str_value);
+
+  return array;
+}
+
+/** \brief Associates a list of string values with \a key under \a groupname.
+ *
+ * If \a key cannot be found then it is created.
+ */
+int config_set_string_list(wzd_configfile_t * file, const char * groupname, const char * key, wzd_string_t ** value, size_t length)
+{
+  wzd_string_t * str;
+  size_t i;
+  int ret;
+
+  if (!file || !groupname || !key) return CF_ERROR_INVALID_ARGS;
+
+  str = str_allocate();
+  for (i=0; value[i] != NULL && i < length; i++) {
+    str_append(str, str_tochar(value[i]));
+    str_append(str, VALUE_LIST_SEPARATOR);
+  }
+
+  ret = config_set_value(file, groupname, key, str_tochar(str));
+
+  str_deallocate(str);
+
+  return ret;
+}
+
 /** \brief Returns the value associated with \a key under \a groupname as a boolean.
  * \return the value, else \a errcode is set to nonzero.
  */
@@ -413,6 +517,7 @@ static void _configfile_group_free(wzd_configfile_group_t * group)
 {
   WZD_ASSERT_VOID(group != NULL);
   wzd_free(group->name);
+  if (group->comment) _configfile_keyvalue_free(group->comment);
   dlist_destroy(group->values);
   wzd_free(group->values);
   wzd_free(group);

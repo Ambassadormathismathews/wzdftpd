@@ -282,13 +282,13 @@ int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const
  *
  * \return 1 if input string is valid UTF-8, else 0
  */
-int utf8_valid(const unsigned char *buf, unsigned int len)
+int utf8_valid(const char *buf, size_t len)
 {
-  const unsigned char *endbuf = buf + len;
+  const unsigned char *endbuf = (unsigned char*)buf + len;
   unsigned char byte2mask=0x00, c;
   int trailing=0; // trailing (continuation) bytes to follow
 
-  while (buf != endbuf)
+  while ((unsigned char*)buf != endbuf)
   {
     c = *buf++;
     if (trailing)

@@ -30,6 +30,9 @@ typedef struct wzd_string_t wzd_string_t;
 wzd_string_t * str_allocate(void);
 void str_deallocate(wzd_string_t *st);
 
+/** \brief Deallocates a NULL-terminated string list
+ */
+void str_deallocate_array(wzd_string_t **array);
 
 /** returns a pointer to a new string which is a duplicate of the string str.
  */
@@ -113,6 +116,15 @@ int str_sprintf(wzd_string_t *str, const char *format, ...);
 /** \brief Append formatted output to string
  */
 int str_append_printf(wzd_string_t *str, const char *format, ...);
+
+/** \brief Split \a str into a maximum of \a max_tokens pieces, separated by \a sep.
+ *
+ * If \a max_tokens is reached, the remainder of \a str is appended to the last token.
+ *
+ * \return a NULL-terminated string array, or NULL. The array must be freed using
+ * str_deallocate_array().
+ */
+wzd_string_t ** str_split(wzd_string_t * str, const char * sep, int max_tokens);
 
 /** \brief Convert utf8 string to other charset
  * \note

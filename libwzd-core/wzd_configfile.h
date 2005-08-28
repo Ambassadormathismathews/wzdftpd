@@ -38,6 +38,7 @@ typedef enum {
   CF_ERROR_NO_CURRENT_GROUP = -3,
   CF_ERROR_PARSE = -4,
   CF_ERROR_NOT_FOUND = -5,
+  CF_ERROR_INVALID_ENCODING = -6,
 } cf_error_t;
 
 /** \brief Creates a new empty wzd_configfile_t object.
@@ -69,6 +70,29 @@ char * config_get_value(wzd_configfile_t * file, const char * groupname, const c
  * created.
  */
 int config_set_value(wzd_configfile_t * file, const char * groupname, const char * key, const char * value);
+
+/** \brief Returns the value associated with \a key under \a groupname as a string.
+ * \return the value, else \a errcode is set to nonzero.
+ */
+wzd_string_t * config_get_string(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode);
+
+/** \brief Associates a new string value with \a key under \a groupname.
+ *
+ * If \a key cannot be found then it is created.
+ */
+int config_set_string(wzd_configfile_t * file, const char * groupname, const char * key, wzd_string_t * value);
+
+/** \brief Returns the value associated with \a key under \a groupname as a string.
+ * \return a NULL-terminated string array,, or NULL and set \a errcode to nonzero.
+ * The array should be freed using str_deallocate_array()
+ */
+wzd_string_t ** config_get_string_list(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode);
+
+/** \brief Associates a list of string values with \a key under \a groupname.
+ *
+ * If \a key cannot be found then it is created.
+ */
+int config_set_string_list(wzd_configfile_t * file, const char * groupname, const char * key, wzd_string_t ** value, size_t length);
 
 /** \brief Returns the value associated with \a key under \a groupname as a boolean.
  * \return the value, else \a errcode is set to nonzero.

@@ -53,6 +53,6 @@ int utf8_to_local_charset(const char *src_utf8, char *dst, size_t max_len, const
  *
  * \return 1 if input string is valid UTF-8, else 0
  */
-int utf8_valid(const unsigned char *buf, unsigned int len);
+int utf8_valid(const char *buf, size_t len);
 
 #endif /* __WZD_UTF8__ */

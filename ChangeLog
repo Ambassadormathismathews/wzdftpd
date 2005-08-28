@@ -1,3 +1,7 @@
+2005-08-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: support for strings and string lists in config_file_t
+
 2005-08-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: some changes to have compatibility with intel c compiler
