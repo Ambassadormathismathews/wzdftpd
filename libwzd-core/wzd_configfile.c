@@ -95,6 +95,7 @@ static void config_init(wzd_configfile_t * config);
 static void config_clear(wzd_configfile_t * config);
 
 static int _config_cmp_keyvalue(const char *k1, const wzd_configfile_keyvalue_t *k2);
+static int _config_cmp_groupname(const char *k1, const wzd_configfile_group_t *k2);
 
 static int config_line_is_comment(const char * line);
 static int config_line_is_group(const char * line);
@@ -309,6 +310,8 @@ int config_set_string_list(wzd_configfile_t * file, const char * groupname, cons
     str_append(str, str_tochar(value[i]));
     str_append(str, VALUE_LIST_SEPARATOR);
   }
+  /* removes the last separator */
+  str_erase(str, str_length(str)-strlen(VALUE_LIST_SEPARATOR), -1);
 
   ret = config_set_value(file, groupname, key, str_tochar(str));
 
@@ -425,6 +428,79 @@ int config_set_comment(wzd_configfile_t * file, const char * groupname, const ch
     return config_set_group_comment(file, groupname, comment);
   else
     return config_set_top_comment(file, comment);
+}
+
+/** \brief Removes a comment above \a key from \a groupname
+ *
+ * If \a key is \a NULL then the comment above \a groupname is removed.
+ * If both \a key and \a groupname are \a NULL, then the comment before the
+ * first group is removed.
+ */
+int config_remove_comment(wzd_configfile_t * file, const char * groupname, const char * key)
+{
+  if (!file) return CF_ERROR_INVALID_ARGS;
+
+  if (groupname && key)
+    return config_set_key_comment(file, groupname, key, NULL);
+  else if (groupname)
+    return config_set_group_comment(file, groupname, NULL);
+  else
+    return config_set_top_comment(file, NULL);
+}
+
+/** \brief Removes a \a key in \a groupname from the key file.
+ */
+int config_remove_key(wzd_configfile_t * file, const char * groupname, const char * key)
+{
+  wzd_configfile_group_t * group;
+  wzd_configfile_keyvalue_t * kv;
+  DListElmt * element;
+
+  if (!file || !groupname || !key) return CF_ERROR_INVALID_ARGS;
+
+  group = config_lookup_group(file,groupname);
+  if (!group) {
+    return CF_ERROR_GROUP_NOT_FOUND;
+  }
+
+  /* find the key the comments are supposed to be associated with */
+  element = dlist_lookup_node(group->values,(void*)key);
+  if (!element) {
+    return CF_ERROR_NOT_FOUND;
+  } else {
+    dlist_remove(group->values,element,(void**)&kv);
+    _configfile_keyvalue_free(kv);
+  }
+
+  return CF_OK;
+}
+
+/** \brief Removes a \a groupname (and all associated keys and comments) from the key file.
+ */
+int config_remove_group(wzd_configfile_t * file, const char * groupname)
+{
+  ListElmt * element;
+  wzd_configfile_group_t * group;
+
+  if (!file || !groupname) return CF_ERROR_INVALID_ARGS;
+
+  element = list_lookup_node(file->groups, (void*)groupname);
+  if (!element) return CF_ERROR_GROUP_NOT_FOUND;
+
+  if (list_data(element) == file->current_group) {
+    if (list_head(file->groups) != element)
+      file->current_group = list_data(list_head(file->groups));
+    else
+      file->current_group = NULL;
+  }
+
+  list_remove(file->groups, element, (void**)&group);
+
+  if (group) {
+    _configfile_group_free(group);
+  }
+
+  return CF_OK;
 }
 
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
@@ -550,6 +626,7 @@ static void config_init(wzd_configfile_t * config)
   group = wzd_malloc(sizeof(wzd_configfile_group_t));
   _configfile_group_init(group);
   list_ins_next(config->groups,NULL,group);
+  config->groups->test = (int (*)(const void*,const void*))_config_cmp_groupname;
   config->parse_buffer = str_allocate();
   config->current_group = group;
 }
@@ -568,6 +645,14 @@ static int _config_cmp_keyvalue(const char *k1, const wzd_configfile_keyvalue_t 
   if (k1 == NULL || k2->key == NULL) return (!(k1 == k2->key));
 
   return strcmp(k1,k2->key);
+}
+
+static int _config_cmp_groupname(const char *k1, const wzd_configfile_group_t *k2)
+{
+  WZD_ASSERT(k2 != NULL);
+  if (k1 == NULL || k2->name == NULL) return (!(k1 == k2->name));
+
+  return strcmp(k1,k2->name);
 }
 
 static int config_line_is_comment(const char * line)
@@ -909,6 +994,9 @@ static int config_set_top_comment(wzd_configfile_t * config, const char * commen
     dlist_remove(group->values,dlist_tail(group->values),(void**)&kv);
     _configfile_keyvalue_free(kv);
   }
+
+  if (!comment)
+    return CF_OK;
 
   if (config_line_is_comment(comment)) {
     kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));

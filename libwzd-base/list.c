@@ -129,6 +129,69 @@ int list_rem_next(List *list, ListElmt *element, void **data)
   return 0;
 }
 
+/** \brief Removes \a element from list.
+ */
+int list_remove(List *list, ListElmt *element, void **data)
+{
+  ListElmt	* old_elmt, * it;
+
+  /* checks for empty list */
+  if (list_size(list) == 0)
+    return -1;
+
+  if (element == NULL) return -1;
+
+  it = list->head;
+  if (it == element) {
+    /* head element suppressed */
+    old_elmt = list->head;
+    list->head = it->next;
+
+    if (list_size(list)==1)
+      list->tail = NULL;
+  } else {
+    for (it=list->head; it; it=list_next(it)) {
+      if (list_next(it) && element == list_next(it)) {
+        return list_rem_next(list, it, data);
+      }
+    }
+  }
+
+  /* frees memory used by element */
+  free (old_elmt);
+
+  /* adjusts size */
+  list->size--;
+
+  return 0;
+}
+
+/** \brief Find list node associated to \a data
+ */
+ListElmt * list_lookup_node(List *list, void *data)
+{
+  ListElmt * element = NULL, * it;
+
+  if (!list || list_size(list)==0) return NULL;
+/*  if (!list->test) return NULL;*/
+
+  for (it = list->head; it; it = list_next(it)) {
+    if (list->test) {
+      if (list->test(data,it->data)==0) {
+        element = it;
+        break;
+      }
+    } else { /* ! list->test */
+      if (data == it->data) {
+        element = it;
+        break;
+      }
+    }
+  }
+
+  return element;
+}
+
 int list_ins_sorted(List *list, const void *data)
 {
   ListElmt	*element;

@@ -124,6 +124,22 @@ int config_set_integer(wzd_configfile_t * file, const char * groupname, const ch
  */
 int config_set_comment(wzd_configfile_t * file, const char * groupname, const char * key, const char * comment);
 
+/** \brief Removes a comment above \a key from \a groupname
+ *
+ * If \a key is \a NULL then the comment above \a groupname is removed.
+ * If both \a key and \a groupname are \a NULL, then the comment before the
+ * first group is removed.
+ */
+int config_remove_comment(wzd_configfile_t * file, const char * groupname, const char * key);
+
+/** \brief Removes a \a key in \a groupname from the key file.
+ */
+int config_remove_key(wzd_configfile_t * file, const char * groupname, const char * key);
+
+/** \brief Removes a \a groupname (and all associated keys and comments) from the key file.
+ */
+int config_remove_group(wzd_configfile_t * file, const char * groupname);
+
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
  *
  * If the object cannot be created then the return value is non-zero.

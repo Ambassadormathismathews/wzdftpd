@@ -60,6 +60,14 @@ int list_ins_sorted(List *list, const void *data);
 
 int list_rem_next(List *list, ListElmt *element, void **data);
 
+/** \brief Removes \a element from list.
+ */
+int list_remove(List *list, ListElmt *element, void **data);
+
+/** \brief Find list node associated to \a data
+ */
+ListElmt * list_lookup_node(List *list, void *data);
+
 #define list_size(list)	((list)->size)
 
 #define list_head(list)	((list)->head)

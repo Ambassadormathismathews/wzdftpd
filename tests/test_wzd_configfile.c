@@ -73,6 +73,18 @@ int main(int argc, char *argv[])
   config_set_comment(file, "GLOBAL", "key_int", "# key comment");
   config_set_comment(file, "GLOBAL", "key_int", "# key_int comment 2");
 
+  config_set_value(file, "GLOBAL", "key_removed", "should not be here");
+  config_remove_key(file, "GLOBAL", "key_removed");
+
+#if 0
+  config_remove_comment(file, NULL, NULL);
+  config_remove_comment(file, "GLOBAL", NULL);
+  config_remove_comment(file, "GLOBAL", "key1");
+#endif
+
+  config_set_value(file, "GROUP2", "keyr", "should not be here");
+  config_remove_group(file, "GROUP2");
+
   str = config_to_data(file, NULL);
 
   if (str) printf("%s\n",str_tochar(str));

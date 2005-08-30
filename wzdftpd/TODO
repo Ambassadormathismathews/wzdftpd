@@ -6,16 +6,14 @@
 - add config file parser
     - function config_to_data() / OK
     - write functions / OK
-    - functions to parse values
-    - remove functions
+    - functions to parse values / OK
+    - remove functions / OK
     - multi-lines ?
 '********'
 - Use custom site commands exactly like standard commands
 '********'
 - finish MLST
 - implement MLSD
-'********'
-- use generic list definition when possible
 '********'
 - redhat/wzdftpd.spec: replace -mcpu= by -march=
 '********'
