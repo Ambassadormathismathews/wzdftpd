@@ -4,6 +4,7 @@
 	* feature: load config_file_t from file or file descriptor
 	* bugfix: events not logged (NEWDIR, DELDIR etc.)
 	* bugfix: small doc update to validate xml parser
+	* bugfix: readd command not working immediatly (problems in cache)
 
 2005-08-27  Pierre Chifflier  <pollux@wzdftpd.net>
 

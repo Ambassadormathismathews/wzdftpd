@@ -729,8 +729,10 @@ void usercache_invalidate( predicate_user_t p, void * arg )
 
   user = usercache_search( p, arg );
 
-  if (user) chtbl_remove(&index_user_uid, (void*)user->uid);
-  if (user) chtbl_remove(&index_user_name, user->username);
+  if (user) {
+    chtbl_remove(&index_user_uid, (void*)user->uid);
+    chtbl_remove(&index_user_name, user->username);
+  }
 }
 
 

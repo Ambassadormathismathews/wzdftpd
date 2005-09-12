@@ -814,6 +814,8 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
       new_user = (*mainConfig->backend.back_get_user)( user->uid );
     }
     if (new_user) {
+      wzd_user_t * _tmp_user = usercache_getbyuid( user->uid );
+      if (_tmp_user) *_tmp_user = *new_user;
       *user = *new_user;
       wzd_free(new_user);
     } else {
@@ -860,6 +862,8 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
       new_group = (*mainConfig->backend.back_get_group)( group->gid );
     }
     if (new_group) {
+      wzd_group_t * _tmp_group = groupcache_getbygid( group->gid );
+      if (_tmp_group) *_tmp_group = *new_group;
       *group = *new_group;
       wzd_free(new_group);
     }
