@@ -122,7 +122,7 @@ server_uid directive in the config file.
 <screen>chown ftp users users.OLD</screen>
 <para>
 When running the server with root privileges, you can specify a server_uid line
-in the config file to drop root privileges after binding to port < 1024.
+in the config file to drop root privileges after binding to port &lt; 1024.
 Note that this server does not need root privileges to run, it is designed to
 work in restricted user-mode (this is REALLY more secure !).
 </para></answer>

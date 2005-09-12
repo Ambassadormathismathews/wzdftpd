@@ -24,7 +24,7 @@ of the ip.
 </para>
 <screen>ip = ident@host.domain.com</screen>
 <para><emphasis>IMPORTANT: This option is DIFFERENT from other ftpd's</emphasis>
-. Instead of specifying '*@ip'¸ just write the ip (wzdftpd understands the fact you
+. Instead of specifying '*@ip', just write the ip (wzdftpd understands the fact you
 don't give any ident as an implicit authorization for all idents).
 </para>
 

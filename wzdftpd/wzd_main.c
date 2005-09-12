@@ -78,6 +78,7 @@
 #include <libwzd-core/wzd_misc.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_tls.h>
+#include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_utf8.h>
 
@@ -285,6 +286,7 @@ int main(int argc, char **argv)
   int ret, i;
   pid_t forkresult;
   wzd_config_t * config;
+  wzd_configfile_t * cf;
 
   wzd_debug_init();
 
@@ -402,6 +404,23 @@ int main(int argc, char **argv)
 
   mainConfig = wzd_malloc(sizeof(wzd_config_t));
 
+#if DEBUG
+  /** \todo XXX this is a test ! */
+  cf = config_new();
+  ret = config_set_value(cf, "[GLOBAL]", "key", "value");
+  ret = config_load_from_file (cf, config->config_filename, CF_FILE_MERGE_MULTIPLE);
+  fprintf(stderr,"  config_filename(%p,%s,0) -> %d\n",
+      cf, config->config_filename,ret);
+  {
+    wzd_string_t * str;
+    str = config_to_data(cf, NULL);
+
+    if (str) printf("%s\n",str_tochar(str));
+    str_deallocate(str);
+  }
+  config_free(cf);
+  /** \todo XXX end of test ! */
+#endif
 
   setlib_mainConfig(mainConfig);
   memcpy(mainConfig,config,sizeof(wzd_config_t));

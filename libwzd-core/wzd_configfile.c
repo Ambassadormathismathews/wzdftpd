@@ -40,6 +40,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#include <fcntl.h> /* O_RDONLY */
+
 #include <ctype.h> /* isspace */
 
 #include "wzd_structs.h"
@@ -503,6 +505,76 @@ int config_remove_group(wzd_configfile_t * file, const char * groupname)
   return CF_OK;
 }
 
+/** Loads a key file from disk into an empty wzd_configfile_t structure.
+ *
+ * If the object cannot be created then the return value is non-zero.
+ */
+int config_load_from_file (wzd_configfile_t * config, const char * file, unsigned long flags)
+{
+  int fd;
+  int ret;
+
+  if (!config || !file) return CF_ERROR_INVALID_ARGS;
+
+  fd = open(file, O_RDONLY, 0);
+  if (fd < 0)
+    return CF_ERROR_FILE;
+
+  ret = config_load_from_fd(config, fd, flags);
+
+  close(fd);
+  return ret;
+}
+
+/** Loads a key file from an opened file descriptor into an empty
+ * wzd_configfile_t structure.
+ *
+ * If the object cannot be created then the return value is non-zero.
+ */
+int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags)
+{
+  char read_buf[4096];
+  int bytes_read;
+  int ret;
+  struct stat stat_buf;
+
+  if (!config || fd < 0) return CF_ERROR_INVALID_ARGS;
+
+  if (fstat(fd, &stat_buf) < 0)
+    return CF_ERROR_FILE;
+
+  if (!S_ISREG(stat_buf.st_mode))
+    return CF_ERROR_FILE;
+
+  if (stat_buf.st_size == 0)
+    return CF_ERROR_PARSE;
+
+  config->flags = flags;
+
+  do {
+    bytes_read = read(fd, read_buf, sizeof(read_buf));
+
+    if (bytes_read == 0) /* EOF */
+      break;
+
+    if (bytes_read < 0) {
+      if (errno == EINTR || errno == EAGAIN)
+        continue;
+
+      return CF_ERROR_PARSE;
+    }
+
+    ret = config_parse_data(config, read_buf, bytes_read);
+  } while (ret == CF_OK);
+
+  if (ret != CF_OK)
+    return ret;
+
+  config_parse_flush_buffer (config);
+
+  return ret;
+}
+
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
  *
  * If the object cannot be created then the return value is non-zero.
@@ -532,7 +604,7 @@ int config_load_from_data (wzd_configfile_t * config, const char * data, size_t 
   if (ret) return ret;
 
   config_parse_flush_buffer (config);
-  
+
   return ret;
 }
 
@@ -565,7 +637,7 @@ wzd_string_t * config_to_data (wzd_configfile_t * config, size_t * length)
       kv = dlist_data(el);
 
       if (kv->key != NULL)
-        str_append_printf (data_string, "%s=%s\n", kv->key, kv->value);
+        str_append_printf (data_string, "%s = %s\n", kv->key, kv->value);
       else
         str_append_printf (data_string, "%s\n", kv->value);
     }
@@ -629,6 +701,7 @@ static void config_init(wzd_configfile_t * config)
   config->groups->test = (int (*)(const void*,const void*))_config_cmp_groupname;
   config->parse_buffer = str_allocate();
   config->current_group = group;
+  config->flags = CF_FILE_NONE;
 }
 
 static void config_clear(wzd_configfile_t * config)
@@ -803,7 +876,7 @@ static int config_parse_keyvalue(wzd_configfile_t * config, const char * line, s
   int ret;
 
   if (!config || !line) return CF_ERROR_INVALID_ARGS;
-  if (!config->current_group) return CF_ERROR_NO_CURRENT_GROUP;
+  if (!config->current_group || !config->current_group->name) return CF_ERROR_NO_CURRENT_GROUP;
 
   key_end = value_start = strchr (line, '=');
   if (key_end == NULL) return CF_ERROR_PARSE;
@@ -880,11 +953,32 @@ static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * gr
 
   if (!config || !group) return CF_ERROR_INVALID_ARGS;
 
+  if (strstr(value, VALUE_LIST_SEPARATOR)) return CF_ERROR_PARSE;
+
+  if ( (kv = config_lookup_keyvalue(config, group, key)) != NULL)
+  {
+    if (config->flags & CF_FILE_MERGE_MULTIPLE) {
+      wzd_string_t * str;
+
+      str = STR(kv->value);
+      str_append_printf(str, "%s %s", VALUE_LIST_SEPARATOR, value);
+      wzd_free(kv->value);
+      kv->value = wzd_strdup( str_tochar(str) );
+      str_deallocate(str);
+
+      return CF_OK;
+    }
+#if DEBUG
+    fprintf(stderr,"*** key collision *** %s/%s: old [%s] / new [%s]\n",
+        group->name, key, kv->value, value);
+#endif
+    return CF_ERROR_KEY_ALREADY_EXISTS;
+  }
+
   kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));
   kv->key = wzd_strdup(key);
   kv->value = wzd_strdup(value);
 
-  /** \todo FIXME what if key already exist ? */
   dlist_ins_next(group->values,dlist_tail(group->values),kv);
 
   return CF_OK;

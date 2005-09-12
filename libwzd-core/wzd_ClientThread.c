@@ -1344,7 +1344,8 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 #if DEBUG
   if (ret || errno) {
-    out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
+    if (ret != E_FILE_NOEXIST)
+      out_err(LEVEL_FLOOD,"Making directory '%s' (%d, %s %d %d)\n",buffer,ret,strerror(errno),errno,ENOENT);
     switch (ret) {
     case E_USER_IDONTEXIST: out_log(LEVEL_HIGH,"mkdir: user does not exist !\n"); break;
     case E_PARAM_NULL: out_log(LEVEL_HIGH,"mkdir: no input parameter\n"); break;

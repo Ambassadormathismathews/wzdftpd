@@ -39,7 +39,14 @@ typedef enum {
   CF_ERROR_PARSE = -4,
   CF_ERROR_NOT_FOUND = -5,
   CF_ERROR_INVALID_ENCODING = -6,
+  CF_ERROR_FILE = -7,
+  CF_ERROR_KEY_ALREADY_EXISTS = -8,
 } cf_error_t;
+
+typedef enum {
+  CF_FILE_NONE           = 0,
+  CF_FILE_MERGE_MULTIPLE = 1 << 0,
+} cf_flags_t;
 
 /** \brief Creates a new empty wzd_configfile_t object.
  */
@@ -139,6 +146,19 @@ int config_remove_key(wzd_configfile_t * file, const char * groupname, const cha
 /** \brief Removes a \a groupname (and all associated keys and comments) from the key file.
  */
 int config_remove_group(wzd_configfile_t * file, const char * groupname);
+
+/** Loads a key file from disk into an empty wzd_configfile_t structure.
+ *
+ * If the object cannot be created then the return value is non-zero.
+ */
+int config_load_from_file (wzd_configfile_t * config, const char * file, unsigned long flags);
+
+/** Loads a key file from an opened file descriptor into an empty
+ * wzd_configfile_t structure.
+ *
+ * If the object cannot be created then the return value is non-zero.
+ */
+int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags);
 
 /** Loads a key file from memory into an empty wzd_configfile_t structure.
  *

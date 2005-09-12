@@ -509,21 +509,18 @@ void log_message(const char *event, const char *fmt, ...)
   time_t timeval;
   struct tm * ntime;
 
-  if (!mainConfig->logfile) return;
-
   va_start(argptr,fmt); /* note: ansi compatible version of va_start */
   vsnprintf(buffer,2047,fmt,argptr);
+  va_end (argptr);
 
   timeval = time(NULL);
   ntime = localtime( &timeval );
   (void)strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
-  fprintf(mainConfig->logfile,"%s %s: %s\n",
+  out_log(LEVEL_NORMAL,"%s %s: %s\n",
       datestr,
       event,
       buffer
       );
-  fflush(mainConfig->logfile);
-  va_end (argptr);
 }
 
 int str2loglevel(const char *s)
