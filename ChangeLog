@@ -1,3 +1,8 @@
+2005-09-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: fixed windows version of str_append_printf
+	* feature: updated windows version
+
 2005-09-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: support options in config_file_t

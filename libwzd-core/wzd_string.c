@@ -519,8 +519,8 @@ int str_append_printf(wzd_string_t *str, const char *format, ...)
 
   va_start(argptr,format); /* note: ansi compatible version of va_start */
 
-  result = vsnprintf(buffer, 0, format, argptr);
 #ifndef WIN32
+  result = vsnprintf(buffer, 0, format, argptr);
   if (result < 0) return result;
   result++;
   if ((unsigned int)result >= length)
@@ -536,23 +536,26 @@ int str_append_printf(wzd_string_t *str, const char *format, ...)
    * vsnprintf does not return the number that should be been allocated,
    * it always return -1 if the buffer is not large enough
    */
-   while (result < 0)
-   {
-     if (length >= 1024000) {
-       return -1;
-     }
-     wzd_free(buffer);
-     result = result + (result >> 2) + 20;
-     buffer = wzd_malloc(result);
-     va_end(argptr);
-     va_start(argptr,format); /* note: ansi compatible version of va_start */
-     result = vsnprintf(buffer, result-1, format, argptr);
-   }
-   length = result;
-   if ((u32_t)result == length) {
-    _str_set_min_size(str, result+1);
-    buffer[length] = '\0';
-   }
+  length = strlen(format)+1;
+  buffer = wzd_malloc(length);
+  result = vsnprintf(buffer, length, format, argptr);
+  while (result < 0)
+  {
+    if (length >= 1024000) {
+      return -1;
+    }
+    wzd_free(buffer);
+    length = length + (length >> 2) + 20;
+    buffer = wzd_malloc(length);
+    va_end(argptr);
+    va_start(argptr,format); /* note: ansi compatible version of va_start */
+    result = vsnprintf(buffer, length-1, format, argptr);
+  }
+  length = result;
+  if ((u32_t)result == length) {
+   _str_set_min_size(str, result+1);
+   buffer[length] = '\0';
+  }
 #endif
 
   va_end (argptr);

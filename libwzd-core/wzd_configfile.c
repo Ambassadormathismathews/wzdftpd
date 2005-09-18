@@ -58,6 +58,10 @@
 #endif /* WZD_USE_PCH */
 
 
+#include "libwzd-base/dlist.h"
+
+
+
 #define VALUE_LIST_SEPARATOR    ","
 
 typedef struct _wzd_configfile_group_t wzd_configfile_group_t;

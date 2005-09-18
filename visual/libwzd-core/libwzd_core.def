@@ -22,7 +22,10 @@ EXPORTS
 	bytes_to_unit
 	calc_crc32
 	calc_md5
+	changepass
+	changepass_crypt
 	charset_detect_local
+	check_auth
 	checkabspath
 	checkpath
 	checkpath_new
@@ -40,6 +43,11 @@ EXPORTS
 	commands_fini
 	commands_init
 	commands_set_permission
+	config_free
+	config_load_from_file
+	config_new
+	config_set_value
+	config_to_data
 	context_free
 	context_list
 	cookie_parse_buffer
@@ -102,8 +110,10 @@ EXPORTS
 	inet_pton
 	init_default_messages
 	ip_add
+	ip_create
 	ip_free
 	ip_inlist
+	ip_list_free
 	is_hidden_file
 	is_perm_file
 	is_user_in_group
