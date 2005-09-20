@@ -55,4 +55,4 @@ clean-local:
 
 endif
 
-EXTRA_DIST = $(DOC_MAIN_XML_FILE) $(DOC_XML_FILES)$ $(DEV_MAIN_XML_FILE) $(DEV_XML_FILES) $(HTML_DEPS) $(EXAMPLES) fix_css.sh add_header_footer.pl wzd_custom.dsl
+EXTRA_DIST = $(DOC_MAIN_XML_FILE) $(DOC_XML_FILES) $(DEV_MAIN_XML_FILE) $(DEV_XML_FILES) $(HTML_DEPS) $(EXAMPLES) fix_css.sh add_header_footer.pl wzd_custom.dsl
