@@ -20,7 +20,11 @@
 <!ENTITY zip_simple_perl SYSTEM "zip_simple.pl">
 ]>
 <book>
+<bookinfo>
   <title>wzdftpd Documentation</title>
+  <author><firstname>Pierre</firstname><surname>Chifflier</surname></author>
+  <copyright><year>2005</year><holder>Pierre Chifflier</holder></copyright>
+</bookinfo>
 
 &introduction;
 &config;

@@ -1,0 +1,78 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "docbook/dtd/4.2/docbookx.dtd" [
+<!-- check file with: nsgmls -sv /usr/share/xml/declaration/xml.dcl wzdftpd-dev.xml -->
+<!-- compile file with: jw -d wzd_custom.dsl#html -o wzdftpd-dev -b html wzdftpd-dev.xml -->
+<!ENTITY architecture SYSTEM "dev-architecture.xml">
+<!ENTITY memory SYSTEM "dev-memory.xml">
+
+<!ENTITY license SYSTEM "license.sgml">
+]>
+
+<book>
+<bookinfo>
+  <title>wzdftpd: developper's guide</title>
+  <author><firstname>Pierre</firstname><surname>Chifflier</surname></author>
+  <copyright><year>2005</year><holder>Pierre Chifflier</holder></copyright>
+</bookinfo>
+
+<preface id='introduction'><title>Introduction</title>
+<para>
+...
+</para>
+</preface>
+
+&architecture;
+&memory;
+
+<chapter id='backends'><title>Backends</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='authentication'><title>Authentication</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='messages'><title>Sending messages</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='logs'><title>Log files</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='config'><title>Configuration and server variables</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='permissions'><title>Permissions</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='modules'><title>Modules</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='generic'><title>Generic functions</title>
+<para>Strings, lists, shared memory, files</para>
+<para>To be done</para>
+</chapter>
+
+<chapter id='ipaddress'><title>IP adresses: IPv4 and IPv6</title>
+<para>Managing ip addresses, IPv6 support, etc.</para>
+<para>To be done</para>
+</chapter>
+
+<chapter id='security'><title>Security</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='tests'><title>Tests</title>
+<para>Unit tests</para>
+<para>To be done</para>
+</chapter>
+
+
+&license;
+
+</book>

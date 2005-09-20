@@ -1,0 +1,50 @@
+<chapter id='memory'><title>Memory management</title>
+
+<section>
+  <title>Portability</title>
+
+<para>
+  As wzdftpd must be compiled on several platforms, memory allocation functions
+must be used carefully. The problem is that wzdftpd uses several shared
+libraries, and that some objects must be allocated inside a shared library and
+then used (and freed) in another.
+</para>
+<para>
+  Some platforms (like windows) allocates a separate heap for each shared
+library, causing segmentation faults if object is freed in another library,
+since the object was allocated on another heap.
+</para>
+<para>
+  A solution would have been to add extra code on these systems to make shared
+libs use the same heap, but it would have been neither easy not portable.
+Additionaly, this would make creating new plugins quite hard and error-prompt.
+</para>
+<para>
+  The solution we choosed is to add wrappers around standard memory allocation
+functions, like <literal>malloc</literal> or <literal>free</literal>. This has
+several benefits:
+ <itemizedlist>
+  <listitem><para>The wrapper can also contain an implementation for functions
+not present on some platforms, like <literal>strlcat</literal></para>
+  </listitem>
+  <listitem><para>This allows use to debug memory allocations easily by tracking
+only one function</para>
+  </listitem>
+  <listitem><para>This allows use to change the memory allocation strategy
+(using pre-allocation, memory chunks etc.)</para>
+  </listitem>
+  <listitem><para>We are sure of the API and  the portability of the functions
+used</para>
+  </listitem>
+</itemizedlist>
+</para>
+<para>
+  However, it is clear that using wrappers can slow down code, and confuse tools
+like <literal>valgrind</literal>.
+</para>
+
+<para>To be done</para>
+
+</section>
+</chapter>
+

@@ -1,3 +1,7 @@
+2005-09-20  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: starting to write developper docs
+
 2005-09-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: fixed windows version of str_append_printf

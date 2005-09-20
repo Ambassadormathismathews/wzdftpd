@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- use mysql_config
+'********'
 - add config file parser
     - function config_to_data() / OK
     - write functions / OK

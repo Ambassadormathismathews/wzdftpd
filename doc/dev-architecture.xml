@@ -1,0 +1,71 @@
+<chapter id='architecture'><title>Server architecture</title>
+
+<section id='project_hierarchy'>
+ <title>Project Hierarchy</title>
+
+<para>The project is divided into 5 main parts:
+<itemizedlist mark='opencircle'>
+<listitem><para>The executable (<literal>wzdftpd</literal>), which is the
+smallest part;</para></listitem>
+<listitem><para>The main library (<literal>libwzd-core</literal>), which
+contains the essential functions;</para></listitem>
+<listitem><para>Backends (in <literal>backends/</literal> subdirectory).
+Backends are loadable modules in charge of managing users and groups. The server
+must have at least one backend
+<footnote><para>For now, wzdftpd supports only one
+backend</para></footnote>
+. Backends can be added/removed/reloaded at runtime
+<footnote><para>Highly experimental</para></footnote>
+;</para></listitem>
+<listitem><para>Modules (in <literal>modules/</literal> subdirectory).
+Modules are optional shared libraries used to extend to server. They can be
+loaded or unloaded at runtime.</para></listitem>
+<listitem><para><literal>libwzd</literal>, a library used by other programs
+to communicate with a wzdftpd server. <literal>libwzd</literal> provides a
+standard and easy API to access the server variables from a remote location, and
+in a secure way. A perl backend is also provided
+(<literal>libwzd-perl</literal>).</para></listitem>
+</itemizedlist>
+</para>
+<para>The executable is only used to read the config file and start the main
+thread from <literal>libwzd-core</literal>. This allows different interfaces to
+the server: the current implementation is done as a daemon (process with no
+interaction with the keyboard, and without any output except logs), but it could
+be done as a graphical interface by re-implementing this part.
+</para>
+<para>The main library is also divided in 3 parts:
+<itemizedlist>
+<listitem><para><literal>libwzd-base</literal>: base functions which can be used
+in all projects (linked lists, hash tables, etc.)</para></listitem>
+<listitem><para><literal>libwzd-auth</literal>: authentication functions: common
+encryption methods for passwords (MD5, SHA-1), interfaces to other
+authentication systems like PAM, and stronger authentication methods like
+certificates, PGP keys, kerberos etc.</para></listitem>
+<listitem><para><literal>libwzd-core</literal>: the real library, using
+functions for the two precedent. Contains generic functions to handle backends,
+modules, users and groups, etc. However, it is not a self-sufficient library:
+users and groups management is delegated to a backend.</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+
+<section id='logical_modules'>
+  <title>Logical Modules</title>
+
+<para>
+  <!-- FIXME images does not work with pdf !! -->
+  <!--mediaobject>
+  <imageobject>
+    <imagedata fileref="images/archi.eps" format="EPS" />
+  </imageobject>
+  <imageobject>
+    <imagedata fileref="images/archi.png" format="PNG" />
+  </imageobject>
+  </mediaobject-->
+</para>
+<para>To be done</para>
+</section>
+
+</chapter>
+
