@@ -783,16 +783,16 @@ static int config_parse_data(wzd_configfile_t * config, const char * data, size_
   for (i = 0; i < length; i++) {
     if (data[i] == '\n')
     {
+      if (i > 0 && str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\r')
+        str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
+	    
       /* if the line is ended with a \ then delete the last char and continue with next line
        */
-      if (i > 0 && data[i - 1] == '\\') {
+      if (i > 0 && str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\\') {
         str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
         continue;
       }
 
-      if (i > 0 && data[i - 1] == '\r')
-        str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
-	    
       /* When a newline is encountered flush the parse buffer so that the
        * line can be parsed.  Note that completely blank lines won't show
        * up in the parse buffer, so they get parsed directly.
