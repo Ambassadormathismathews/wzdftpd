@@ -185,6 +185,9 @@ include		BEGIN(incl);
 			BEGIN(INITIAL);
 		}
 
+"["{ID}"]"	{ /* compatibility: ignore id */
+			out_err(LEVEL_INFO,"config: Ignoring %s (compatibility)\n",yytext);
+		}
 {IP_NUM}	return CFG_IP_NUM;
 {IP_STR}	return CFG_IP_STR;
 {ID}		{ unsigned int tok=cfg_is_keyword(yytext); return tok?tok:CFG_ID; }

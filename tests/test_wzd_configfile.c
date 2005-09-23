@@ -21,10 +21,14 @@ int main(int argc, char *argv[])
   wzd_configfile_t * file;
   wzd_string_t * str;
   wzd_string_t ** str_array;
+  unsigned int i;
   unsigned long c2 = C2;
   const char * data = "[GLOBAL]\n"
     "# comment 1\n"
-    "key1 = value1";
+    "key1 = value1\n"
+    "multikey = v1, \\\n"
+    "  v2\n";
+  const char * multikey_ref[] = { "v1", "v2" };
 
   file = config_new();
 
@@ -34,6 +38,16 @@ int main(int argc, char *argv[])
   config_set_value(file, "GLOBAL", "key1", "new_value1");
 
   config_set_value(file, "GLOBAL", "key2", "value2");
+
+  str_array = config_get_string_list(file, "GLOBAL", "multikey", NULL);
+  for (i=0; str_array[i]; i++) {
+    if (strcmp(multikey_ref[i],str_tochar(str_array[i]))) {
+      fprintf(stderr, "error in key 'multikey' at index %d: read [%s] instead of [%s]\n",
+	  i,str_tochar(str_array[i]),multikey_ref[i]);
+      return -1;
+    }
+  }
+  str_deallocate_array(str_array);
 
   str = STR("value_str");
   config_set_string(file, "GLOBAL", "key_str", str);

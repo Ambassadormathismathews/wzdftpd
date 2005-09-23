@@ -1,3 +1,7 @@
+2005-09-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: keys on multiple lines in config_file_t
+
 2005-09-20  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: starting to write developper docs

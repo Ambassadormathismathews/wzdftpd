@@ -41,11 +41,15 @@ typedef enum {
   CF_ERROR_INVALID_ENCODING = -6,
   CF_ERROR_FILE = -7,
   CF_ERROR_KEY_ALREADY_EXISTS = -8,
+
+  CF_ERROR_NEED_MORE_DATA = -20,
 } cf_error_t;
 
 typedef enum {
   CF_FILE_NONE           = 0,
   CF_FILE_MERGE_MULTIPLE = 1 << 0,
+
+  CF_FILE_DEBUG = 1 << 7,
 } cf_flags_t;
 
 /** \brief Creates a new empty wzd_configfile_t object.

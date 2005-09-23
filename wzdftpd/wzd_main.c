@@ -361,6 +361,16 @@ int main(int argc, char **argv)
 
   for (i=0; config_files[i]; i++)
   {
+    /* try new config file format first */
+    cf = config_new();
+    ret = config_load_from_file (cf, config_files[i], 0);
+    if (ret) {
+      out_err(LEVEL_INFO,"config: NEW format found\n");
+      /** \todo FIXME now we need to store config values in wzd_config_t */
+    }
+    config_free(cf);
+/*    if (!ret) break;*/ /** \todo FIXME enable this line when config is really loaded */
+    /* old config loader */
     if (load_config_file(config_files[i],&config)) break;
   }
   if (!config) {
@@ -405,6 +415,7 @@ int main(int argc, char **argv)
   mainConfig = wzd_malloc(sizeof(wzd_config_t));
 
 #if DEBUG
+#if 0
   /** \todo XXX this is a test ! */
   cf = config_new();
   ret = config_set_value(cf, "[GLOBAL]", "key", "value");
@@ -420,6 +431,7 @@ int main(int argc, char **argv)
   }
   config_free(cf);
   /** \todo XXX end of test ! */
+#endif /* 0 */
 #endif
 
   setlib_mainConfig(mainConfig);

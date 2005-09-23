@@ -51,8 +51,6 @@
 #include "wzd_utf8.h"
 #include "wzd_configfile.h"
 
-#include "libwzd-base/dlist.h"
-
 #include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
@@ -273,6 +271,7 @@ wzd_string_t ** config_get_string_list(wzd_configfile_t * file, const char * gro
   char * value;
   wzd_string_t * str_value;
   wzd_string_t ** array = NULL;
+  unsigned int i;
 
   if (!file || !groupname || !key) return NULL;
   if (errcode) *errcode = CF_OK;
@@ -295,6 +294,13 @@ wzd_string_t ** config_get_string_list(wzd_configfile_t * file, const char * gro
   array = str_split(str_value,VALUE_LIST_SEPARATOR,0);
 
   str_deallocate(str_value);
+
+  /* remove leading spaces */
+  if (array) {
+    for (i=0; array[i]; i++) {
+      str_trim_left(array[i]);
+    }
+  }
 
   return array;
 }
@@ -568,6 +574,7 @@ int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags)
       return CF_ERROR_PARSE;
     }
 
+    /** \bug FIXME what happens if the last line is truncated ! */
     ret = config_parse_data(config, read_buf, bytes_read);
   } while (ret == CF_OK);
 
@@ -776,6 +783,13 @@ static int config_parse_data(wzd_configfile_t * config, const char * data, size_
   for (i = 0; i < length; i++) {
     if (data[i] == '\n')
     {
+      /* if the line is ended with a \ then delete the last char and continue with next line
+       */
+      if (i > 0 && data[i - 1] == '\\') {
+        str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
+        continue;
+      }
+
       if (i > 0 && data[i - 1] == '\r')
         str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
 	    
@@ -802,9 +816,23 @@ static int config_parse_flush_buffer(wzd_configfile_t * config)
 
   if (!config) return CF_ERROR_INVALID_ARGS;
 
+#if DEBUG
+  if ((config->flags & CF_FILE_DEBUG)) {
+    fprintf(stderr,"flushing buffer : [ %s ]\n",str_tochar(config->parse_buffer));
+  }
+#endif
+
   if (str_length(config->parse_buffer) > 0) {
     ret = config_parse_line (config, str_tochar(config->parse_buffer), str_length(config->parse_buffer));
     str_erase (config->parse_buffer, 0, -1);
+
+#if DEBUG
+  if ((config->flags & CF_FILE_DEBUG)) {
+    if (ret) {
+      fprintf(stderr,"ERROR: config_parse_line returned %d !\n",ret);
+    }
+  }
+#endif
 
     if (ret) return ret;
   }
@@ -956,8 +984,6 @@ static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * gr
   wzd_configfile_keyvalue_t * kv;
 
   if (!config || !group) return CF_ERROR_INVALID_ARGS;
-
-  if (strstr(value, VALUE_LIST_SEPARATOR)) return CF_ERROR_PARSE;
 
   if ( (kv = config_lookup_keyvalue(config, group, key)) != NULL)
   {
