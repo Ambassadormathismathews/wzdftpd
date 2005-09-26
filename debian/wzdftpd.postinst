@@ -75,7 +75,7 @@ if [ -f $CONF ]; then
 	else
 	  echo "pid_file = $PID_DIR/wzdftpd.pid" >> $CONF
 	fi
-	if (id ftp &>/dev/null) ; then
+	if (id ftp >/dev/null 2>/dev/null) ; then
 	  chown ftp $PID_DIR
 	fi
 fi
