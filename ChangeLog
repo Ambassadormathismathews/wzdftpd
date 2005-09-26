@@ -1,3 +1,7 @@
+2005-09-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* SECURITY: fix insecure use of popen() in wzd_mod.c
+
 2005-09-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: keys on multiple lines in config_file_t

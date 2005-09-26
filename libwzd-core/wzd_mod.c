@@ -102,6 +102,7 @@ typedef struct _protocol_handler_t {
 } protocol_handler_t;
 
 static int _hook_print_file(const char *filename, wzd_context_t *context);
+void _cleanup_shell_command(char * buffer, size_t length);
 
 static protocol_handler_t * proto_handler_list=NULL;
 static unsigned int _reply_code;
@@ -378,6 +379,8 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
   {
     *(buffer+l_command++) = ' ';
     (void)wzd_strncpy(buffer + l_command, buffer_args, sizeof(buffer) - l_command - 1);
+    /* SECURITY filter buffer for shell special characters ! */
+    _cleanup_shell_command(buffer,sizeof(buffer));
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -438,6 +441,8 @@ int hook_call_external(wzd_hook_t *hook, unsigned int code)
   else
   {
 /*    *(buffer+l_command++) = ' ';*/
+    /* SECURITY filter buffer for shell special characters ! */
+    _cleanup_shell_command(buffer,sizeof(buffer));
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
       return 1;
@@ -733,6 +738,8 @@ unsigned int hook_get_current_reply_code(void)
 }
 
 
+/*************** STATIC ****************/
+
 static int _hook_print_file(const char *filename, wzd_context_t *context)
 {
   wzd_cache_t * fp;
@@ -772,3 +779,24 @@ static int _hook_print_file(const char *filename, wzd_context_t *context)
 
   return 0;
 }
+
+void _cleanup_shell_command(char * buffer, size_t length)
+{
+  const char * specials = "$\\|;!`()'\"#.,:*?{}[]&<>-~";
+  size_t i,j;
+  char * buf2;
+
+  buf2 = wzd_malloc(length);
+
+  for (i=0,j=0; buffer[i]!='\0' && i<length && j<length; i++,j++) {
+    if (strchr(specials,buffer[i]) != NULL) {
+      if (j+1 >= length) { buf2[j]='\0'; break; }
+      buf2[j++] = '\\';
+    }
+    buf2[j] = buffer[i];
+  }
+
+  wzd_strncpy(buffer,buf2,length);
+  wzd_free(buf2);
+}
+
