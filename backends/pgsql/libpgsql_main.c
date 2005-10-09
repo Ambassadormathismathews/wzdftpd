@@ -124,6 +124,7 @@ int FCN_INIT(const char *arg)
   PGresult   *res;
 
   if ((wzd_parse_arg(arg)) != 0) {
+    out_log(PGSQL_LOG_CHANNEL, "%s(%s):%d could not parse arguments\n", __FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
 

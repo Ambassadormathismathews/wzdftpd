@@ -215,7 +215,8 @@ int FCN_INIT(const char *arg)
   ret = read_files( (const char *)arg);
 
   /* TODO check user definitions (no missing fields, etc) */
-  ERRLOG("Backend plaintext initialized\n");
+  if (!ret)
+    ERRLOG("Backend plaintext initialized\n");
 
   return ret;
 }

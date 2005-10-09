@@ -823,7 +823,12 @@ int read_files(const char *filename)
   wzd_group_t * group;
   char errbuf[1024];
 
-  if (!filename || strlen(filename)>=256) return -1;
+  if (!filename || strlen(filename)>=256) {
+    ERRLOG("You MUST provide a parameter for the users file\n");
+    ERRLOG("Add  param = /path/to/users  in [plaintext] section in your config file\n");
+    ERRLOG("See Documentation for help\n");
+    return -1;
+  }
   strncpy(USERS_FILE,filename,256);
   file_user = fopen(USERS_FILE,"r");
 

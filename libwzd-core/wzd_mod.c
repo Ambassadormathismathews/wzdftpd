@@ -383,6 +383,7 @@ int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int cod
     _cleanup_shell_command(buffer,sizeof(buffer));
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
+      out_log(LEVEL_INFO,"Failed command: '%s'\n",buffer);
       return 1;
     }
     while (fgets(buffer,1023,command_output) != NULL)
@@ -445,6 +446,7 @@ int hook_call_external(wzd_hook_t *hook, unsigned int code)
     _cleanup_shell_command(buffer,sizeof(buffer));
     if ( (command_output = popen(buffer,"r")) == NULL ) {
       out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
+      out_log(LEVEL_INFO,"Failed command: '%s'\n",buffer);
       return 1;
     }
     while (fgets(buffer,1023,command_output) != NULL)
