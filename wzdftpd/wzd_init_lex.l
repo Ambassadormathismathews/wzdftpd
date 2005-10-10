@@ -1909,7 +1909,6 @@ wzd_config_t * readConfigFile(const char *fileName)
     return NULL;
   }
 
-  init_default_messages();
   set_default_options();
 
   while ( (token=yylex()) )

@@ -79,6 +79,7 @@
 #include "wzd_cache.h"
 #include "wzd_ClientThread.h"
 #include "wzd_configfile.h"
+#include "wzd_configloader.h"
 #include "wzd_dir.h"
 #include "wzd_crontab.h"
 #include "wzd_file.h"

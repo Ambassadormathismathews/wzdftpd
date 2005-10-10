@@ -978,7 +978,10 @@ int server_switch_to_config(wzd_config_t *config)
   }
 
 
-  if (!config->pid_file) return -1;
+  if (!config->pid_file) {
+    out_err(LEVEL_HIGH,"ERROR: no pid_file found !\n");
+    return -1;
+  }
   fd = open(config->pid_file, O_RDONLY, 0644);
   if (fd != -1)
   {
@@ -1162,6 +1165,7 @@ void serverMainThreadProc(void *arg)
 
   if (server_switch_to_config(mainConfig))
   {
+    out_log(LEVEL_CRITICAL,"ERROR: couldn't switch to config, aborting !\n");
     serverMainThreadExit(-1);
   }
 
@@ -1415,7 +1419,7 @@ void serverMainThreadExit(int retcode)
 
   context_list = NULL;
 
-  chtbl_destroy((CHTBL*)mainConfig->htab);
+  if (mainConfig->htab) chtbl_destroy((CHTBL*)mainConfig->htab);
   wzd_free(mainConfig->htab);
 
   /* free(mainConfig); */

@@ -332,7 +332,7 @@ wzd_string_t * str_erase(wzd_string_t * str, size_t pos, int len)
   }
 
   str->length -= len;
-  
+
   str->buffer[str->length] = 0;
 
   return str;

@@ -60,6 +60,14 @@ wzd_configfile_t * config_new(void);
  */
 void config_free(wzd_configfile_t * file);
 
+/** \brief Returns the list of groups contained in \a file
+ */
+wzd_string_t ** config_get_groups(const wzd_configfile_t * file);
+
+/** \brief Returns the list of keys contained in \a group
+ */
+wzd_string_t ** config_get_keys(const wzd_configfile_t * file, const char * groupname, int * errcode);
+
 /** \brief Looks whether the config file has the group \a groupname.
  * \return 1 if \a groupname is part of \a file
  */
@@ -73,7 +81,7 @@ int config_has_key(wzd_configfile_t * file, const char * groupname, const char *
 /** \brief Returns the value associated with \a key under \a groupname.
  * \return the value, or NULL if the key is not found
  */
-char * config_get_value(wzd_configfile_t * file, const char * groupname, const char * key);
+char * config_get_value(const wzd_configfile_t * file, const char * groupname, const char * key);
 
 /** \brief Associates a new value with \a key under \a groupname.
  *
@@ -85,7 +93,7 @@ int config_set_value(wzd_configfile_t * file, const char * groupname, const char
 /** \brief Returns the value associated with \a key under \a groupname as a string.
  * \return the value, else \a errcode is set to nonzero.
  */
-wzd_string_t * config_get_string(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode);
+wzd_string_t * config_get_string(const wzd_configfile_t * file, const char * groupname, const char * key, int * errcode);
 
 /** \brief Associates a new string value with \a key under \a groupname.
  *

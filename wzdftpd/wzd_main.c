@@ -77,8 +77,10 @@
 
 #include <libwzd-core/wzd_misc.h>
 #include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_tls.h>
 #include <libwzd-core/wzd_configfile.h>
+#include <libwzd-core/wzd_configloader.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_utf8.h>
 
@@ -355,6 +357,9 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  /* default server messages */
+  init_default_messages();
+
   /* config file */
   config = NULL;
   config_files[0] = configfile_name;
@@ -364,9 +369,16 @@ int main(int argc, char **argv)
     /* try new config file format first */
     cf = config_new();
     ret = config_load_from_file (cf, config_files[i], 0);
-    if (ret) {
+    if (!ret) {
+      int err;
+
       out_err(LEVEL_INFO,"config: NEW format found\n");
-      /** \todo FIXME now we need to store config values in wzd_config_t */
+
+      config = cfg_store(cf,&err);
+      if (config) {
+        /* cf will NOT be freed at this point, it is stored into config */
+        break;
+      }
     }
     config_free(cf);
 /*    if (!ret) break;*/ /** \todo FIXME enable this line when config is really loaded */

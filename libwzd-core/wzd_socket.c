@@ -114,7 +114,7 @@ fd_t socket_make(const char *ip, unsigned int *port, int nListen)
 #endif
   memset(&sai, 0, sizeof(struct sockaddr_in));
 
-  if (ip==NULL || strcmp(ip,"*")==0)
+  if (ip==NULL || *ip=='\0' || strcmp(ip,"*")==0)
 #if defined(IPV6_SUPPORT)
     memset(&sai6.sin6_addr,0,16);
 #else

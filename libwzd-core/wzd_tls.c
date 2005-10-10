@@ -694,6 +694,7 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
+#include "wzd_configfile.h"
 #include "wzd_crontab.h"
 #include "wzd_libmain.h"
 #include "wzd_tls.h"
@@ -754,15 +755,26 @@ int tls_init(void)
   char * tls_certificate;
   char * tls_certificate_key;
   char * tls_ca_file=NULL, * tls_ca_path=NULL;
+  wzd_string_t * str;
 
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
-  {
-    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
-    return 1;
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate)) {
+      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+      return 1;
+    }
+    /* ignore errors */
+    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
+    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
+    if (!str) {
+      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+      return 1;
+    }
+    /** \bug FIXME memory leak here !! */
+    tls_certificate = strdup(str_tochar(str));
+    str_deallocate(str);
   }
-  /* ignore errors */
-  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
-  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
 
   /* The order matters.
    */
@@ -780,10 +792,21 @@ int tls_init(void)
   gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
       GNUTLS_X509_FMT_PEM);
 */
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
-  {
-    /* if no key provided, try using the same certificate */
-    tls_certificate_key = tls_certificate;
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key)) {
+      /* if no key provided, try using the same certificate */
+      tls_certificate_key = tls_certificate;
+    }
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_certificate_key = strdup(str_tochar(str));
+      str_deallocate(str);
+    } else {
+      /* if no key provided, try using the same certificate */
+      tls_certificate_key = tls_certificate;
+    }
   }
 
   gnutls_certificate_set_x509_key_file(x509_cred,

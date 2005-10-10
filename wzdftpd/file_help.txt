@@ -62,7 +62,7 @@
 | site msg       | (show/delete/convert/new/append)                          |
 | site purge     | purge deleted user                                        |
 |                |   site purge [user]                                       |
-| site readduser | readd a deleted user                                      |
+| site readd     | readd a deleted user                                      |
 | site reload    | reloads server config                                     |
 | site shutdown  | shutdown the server remotely                              |
 | site version   | show server version                                       |

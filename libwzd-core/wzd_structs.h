@@ -83,6 +83,9 @@ typedef enum {
   E_MKDIR_PATHFILTER,	/**< dirname rejected by pathfilter */
 
   E_COMMAND_FAILED,     /**< system command failed, check errno */
+
+
+  E_NOMEM,              /**< could not allocate memory */
 } wzd_errno_t;
 
 /*********************** RIGHTS ***************************/
@@ -528,6 +531,7 @@ typedef struct {
   wzd_site_config_t	site_config;
 
   struct CHTBL * htab;
+  struct _wzd_configfile_t * cfg_file;
 } wzd_config_t;
 
 WZDIMPORT extern wzd_config_t *	mainConfig;

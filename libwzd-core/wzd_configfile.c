@@ -111,8 +111,8 @@ static int config_parse_comment(wzd_configfile_t * config, const char * line, si
 static int config_parse_group(wzd_configfile_t * config, const char * line, size_t length);
 static int config_parse_keyvalue(wzd_configfile_t * config, const char * line, size_t length);
 
-static wzd_configfile_group_t * config_lookup_group(wzd_configfile_t * config, const char *groupname);
-static wzd_configfile_keyvalue_t * config_lookup_keyvalue(wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key);
+static wzd_configfile_group_t * config_lookup_group(const wzd_configfile_t * config, const char *groupname);
+static wzd_configfile_keyvalue_t * config_lookup_keyvalue(const wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key);
 
 static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key, const char * value);
 static int config_add_group(wzd_configfile_t * config, const char * groupname);
@@ -143,6 +143,59 @@ void config_free(wzd_configfile_t * file)
 
   config_clear(file);
   wzd_free(file);
+}
+
+/** \brief Returns the list of groups contained in \a file
+ */
+wzd_string_t ** config_get_groups(const wzd_configfile_t * file)
+{
+  wzd_string_t ** array;
+  ListElmt * elmnt;
+  wzd_configfile_group_t * group = NULL;
+  int i = 0;
+
+  if (!file) return NULL;
+
+  array = wzd_malloc(sizeof(*array) * (list_size(file->groups)+1));
+
+  for (elmnt = list_head(file->groups); elmnt; elmnt = list_next(elmnt)) {
+    group = list_data(elmnt);
+    array[i++] = STR(group->name);
+  }
+
+  array[i] = NULL;
+
+  return array;
+}
+
+/** \brief Returns the list of keys contained in \a group
+ */
+wzd_string_t ** config_get_keys(const wzd_configfile_t * file, const char * groupname, int * errcode)
+{
+  wzd_string_t ** array;
+  DListElmt * elmnt;
+  wzd_configfile_group_t * group;
+  wzd_configfile_keyvalue_t * kv;
+  int i = 0;
+
+  if (!file || !groupname) return 0;
+
+  group = config_lookup_group(file,groupname);
+  if (!group) {
+    if (errcode) *errcode = CF_ERROR_GROUP_NOT_FOUND;
+    return NULL;
+  }
+
+  array = wzd_malloc(sizeof(*array) * (dlist_size(group->values)+1));
+
+  for (elmnt = dlist_head(group->values); elmnt; elmnt = dlist_next(elmnt)) {
+    kv = list_data(elmnt);
+    array[i++] = STR(kv->key);
+  }
+
+  array[i] = NULL;
+
+  return array;
 }
 
 /** \brief Looks whether the config file has the group \a groupname.
@@ -176,7 +229,7 @@ int config_has_key(wzd_configfile_t * file, const char * groupname, const char *
 /** \brief Returns the value associated with \a key under \a groupname.
  * \return the value, or NULL if the key is not found
  */
-char * config_get_value(wzd_configfile_t * file, const char * groupname, const char * key)
+char * config_get_value(const wzd_configfile_t * file, const char * groupname, const char * key)
 {
   wzd_configfile_group_t * group;
   wzd_configfile_keyvalue_t * kv;
@@ -225,7 +278,7 @@ int config_set_value(wzd_configfile_t * file, const char * groupname, const char
 /** \brief Returns the value associated with \a key under \a groupname as a string.
  * \return the value, else \a errcode is set to nonzero.
  */
-wzd_string_t * config_get_string(wzd_configfile_t * file, const char * groupname, const char * key, int * errcode)
+wzd_string_t * config_get_string(const wzd_configfile_t * file, const char * groupname, const char * key, int * errcode)
 {
   char * value;
   wzd_string_t * str_value = NULL;
@@ -946,7 +999,7 @@ static int config_parse_keyvalue(wzd_configfile_t * config, const char * line, s
   return ret;
 }
 
-static wzd_configfile_group_t * config_lookup_group(wzd_configfile_t * config, const char *groupname)
+static wzd_configfile_group_t * config_lookup_group(const wzd_configfile_t * config, const char *groupname)
 {
   ListElmt * elmnt;
   wzd_configfile_group_t * group = NULL;
@@ -962,7 +1015,7 @@ static wzd_configfile_group_t * config_lookup_group(wzd_configfile_t * config, c
   return group;
 }
 
-static wzd_configfile_keyvalue_t * config_lookup_keyvalue(wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key)
+static wzd_configfile_keyvalue_t * config_lookup_keyvalue(const wzd_configfile_t * config, wzd_configfile_group_t * group, const char * key)
 {
   DListElmt * elmnt;
   wzd_configfile_keyvalue_t * kv = NULL;

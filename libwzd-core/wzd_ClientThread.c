@@ -3428,7 +3428,8 @@ static int do_login_loop(wzd_context_t * context)
 #endif
   int command;
 
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "reject_unknown_users", (void**)&ptr) == 0)
+  if (mainConfig->htab &&
+      chtbl_lookup((CHTBL*)mainConfig->htab, "reject_unknown_users", (void**)&ptr) == 0)
   {
     if (ptr && strcmp(ptr,"0")==0)
       reject_nonexistant = 0;

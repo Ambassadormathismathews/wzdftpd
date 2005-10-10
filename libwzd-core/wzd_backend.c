@@ -57,6 +57,7 @@
 
 #include "wzd_backend.h"
 #include "wzd_cache.h"
+#include "wzd_configfile.h"
 #include "wzd_fs.h"
 #include "wzd_misc.h"
 #include "wzd_libmain.h"
@@ -325,6 +326,15 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
       }
 
       if (b->backend_init) {
+        wzd_string_t * str;
+        /* LOGFILE */
+        str = config_get_string(mainConfig->cfg_file, mainConfig->backend.name, "param", NULL);
+        if (str) {
+          wzd_free(mainConfig->backend.param);
+          mainConfig->backend.param = wzd_strdup(str_tochar(str));
+          str_deallocate(str);
+        }
+
         ret = (b->backend_init)(mainConfig->backend.param);
         if (ret) { /* backend says NO */
           backend_clear_struct(&mainConfig->backend);
