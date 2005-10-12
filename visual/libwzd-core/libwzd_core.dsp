@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MT /W3 /GX- /O2 /I "../../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /YX"wzd_all.h" /FD /c
+# ADD CPP /nologo /MT /W3 /O2 /I "../../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "NDEBUG" /D "WZD_MULTITHREAD" /D "HAVE_OPENSSL" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /YX"wzd_all.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "NDEBUG"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /Yu"stdafx.h" /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX- /ZI /Od /I "../../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "HAVE_OPENSSL" /D "WZD_MULTITHREAD" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /YX"wzd_all.h" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "../../" /D "WZD_USE_PCH" /D "HAVE_UTF8" /D "HAVE_OPENSSL" /D "WZD_MULTITHREAD" /D "DEBUG" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "LIBWZD_EXPORTS" /YX"wzd_all.h" /FD /GZ /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x40c /d "_DEBUG"
@@ -134,6 +134,10 @@ SOURCE="..\..\libwzd-core\wzd_configfile.c"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-core\wzd_configloader.c"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-core\wzd_cookie_lex.c"
 # End Source File
 # Begin Source File
@@ -144,7 +148,7 @@ SOURCE="..\..\libwzd-core\wzd_cookie_lex.l"
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\HOMEDIR\svn\libwzd-core
+InputDir=\HOMEDIR\wzdftpd\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
@@ -157,7 +161,7 @@ InputName=wzd_cookie_lex
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\HOMEDIR\svn\libwzd-core
+InputDir=\HOMEDIR\wzdftpd\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
@@ -324,6 +328,10 @@ SOURCE="..\..\libwzd-core\wzd_commands.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_configfile.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_configloader.h"
 # End Source File
 # Begin Source File
 

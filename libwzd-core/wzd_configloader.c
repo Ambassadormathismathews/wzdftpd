@@ -147,7 +147,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   /* LOGLEVEL */
   str = config_get_string(file, "GLOBAL", "loglevel", NULL);
   if (str) {
-    ul = str2loglevel(str_tochar(str));
+    i = str2loglevel(str_tochar(str));
     if( i==-1 ) {
       out_err(LEVEL_HIGH,"valid levels are lowest, flood, info, normal, high, critical\n");
       cfg_free(cfg);

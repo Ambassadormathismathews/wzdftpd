@@ -22,6 +22,7 @@ EXPORTS
 	bytes_to_unit
 	calc_crc32
 	calc_md5
+	cfg_store
 	changepass
 	changepass_crypt
 	charset_detect_local
