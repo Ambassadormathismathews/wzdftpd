@@ -40,6 +40,17 @@ int ip_compare(const char * src, const char *dst);
 
 /* IP allowing */
 int ip_add(wzd_ip_list_t **list, const char *newip);
+
+/** \brief Add a new ip to be checked when user logs in
+ */
+int ip_add_check(wzd_ip_list_t **list, const char *newip, int is_allowed);
+
+/** \brief Check if ip is allowed by list.
+ *
+ * \returns: 1 if allowed, 0 if denied, -1 on error
+ */
+int ip_list_check(wzd_ip_list_t *list, const char *ip);
+
 int ip_inlist(wzd_ip_list_t *list, const char *ip);
 void ip_list_free(wzd_ip_list_t *list);
 

@@ -1,3 +1,7 @@
+2005-10-17  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: pre_ip_check support in new config format
+
 2005-10-11  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: use mysql_config to detect mysql headers and libs

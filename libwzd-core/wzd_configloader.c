@@ -56,6 +56,7 @@
 
 #endif /* WZD_USE_PCH */
 
+static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config);
 
 
@@ -196,12 +197,48 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   }
 
 
+  _cfg_parse_pre_ip(file, cfg);
+
   _cfg_parse_commands(file, cfg);
 
   return cfg;
 }
 
 /******************* STATIC ******************/
+
+static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i, value;
+  int err;
+  char * address, * check;
+  
+  array = config_get_keys(file,"pre_ip_check",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    address = (char*)str_tochar(array[i]);
+    if (!address) continue;
+    check = config_get_value(file, "pre_ip_check", address);
+    if (!check) continue;
+
+    if (strcasecmp(check,"allow")==0 || strcmp(check,"1")==0) value = 1;
+    else if (strcasecmp(check,"deny")==0 || strcmp(check,"0")==0) value = 0;
+    else {
+      out_err(LEVEL_HIGH,"ERROR while parsing pre_ip %s: must be allow or deny\n",address);
+      continue;
+    }
+
+    err = ip_add_check(&config->login_pre_ip_checks,address,value);
+    if (err) {
+      /* print error message but continue parsing */
+      out_err(LEVEL_HIGH,"ERROR while parsing pre_ip %s\n",address);
+    }
+
+  }
+
+  str_deallocate_array(array);
+}
 
 static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config)
 {

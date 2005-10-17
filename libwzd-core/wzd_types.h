@@ -56,6 +56,8 @@
 #define WZDIMPORT
 
 /* unsigned int, 64 bits: u64_t */
+#define i8_t  int8_t
+#define u8_t  uint8_t
 #define i16_t int16_t
 #define u16_t uint16_t
 #define i32_t int32_t

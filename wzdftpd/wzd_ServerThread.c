@@ -202,7 +202,7 @@ void reset_stats(wzd_server_stat_t * stats)
   stats->num_childs = 0;
 }
 
-/** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list */
+/** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list or on error */
 static int global_check_ip_allowed(unsigned char *userip)
 {
   char ip[INET6_ADDRSTRLEN];
@@ -212,17 +212,8 @@ static int global_check_ip_allowed(unsigned char *userip)
 #else
   inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
 #endif
-  switch (mainConfig->login_pre_ip_check) {
-  case 1: /* order allow, deny */
-    if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
-    if (ip_inlist(mainConfig->login_pre_ip_denied,ip)==1) return 0;
-    break;
-  case 2: /* order deny, allow */
-    if (ip_inlist(mainConfig->login_pre_ip_denied,ip)==1) return 0;
-    if (ip_inlist(mainConfig->login_pre_ip_allowed,ip)==1) return 1;
-    break;
-  }
-  return -1;
+
+  return ip_list_check(mainConfig->login_pre_ip_checks,ip);
 }
 
 void server_rebind(const unsigned char *new_ip, unsigned int new_port)
@@ -402,7 +393,6 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   fd_t newsock, fd_ident;
   unsigned short ident_port = 113;
   wzd_context_t * context;
-  int context_index;
   wzd_ident_context_t * ident_context;
 
   newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
@@ -420,13 +410,11 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 #else
   inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
   if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
-    out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
+    out_log(LEVEL_INFO,"IP is IPv4 compatible\n");
 #endif
 
   /* Here we check IP BEFORE starting session */
-  /* do this iff login_pre_ip_check is enabled */
-  if (mainConfig->login_pre_ip_check &&
-        global_check_ip_allowed(userip)<=0) { /* IP was rejected */
+  if (global_check_ip_allowed(userip)<=0) { /* IP was rejected */
     /* close socket without warning ! */
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
@@ -456,8 +444,6 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
     FD_UNREGISTER(newsock,"Client socket");
     return 3;
   }
-  /** \todo XXX FIXME context_index is WRONG !! */
-  context_index = ( (unsigned long)context-(unsigned long)context_list ) / sizeof(wzd_context_t);
 
   /* don't forget init is done before */
 /*  context->magic = CONTEXT_MAGIC;*/  /* magic is set inside lock, it makes no sense here */

@@ -90,9 +90,7 @@ struct _wzd_configfile_keyvalue_t {
 
 static void _configfile_group_init(wzd_configfile_group_t * group);
 static void _configfile_group_free(wzd_configfile_group_t * group);
-#if 0
-static void _configfile_keyvalue_init(wzd_configfile_keyvalue_t * kv);
-#endif
+static wzd_configfile_keyvalue_t * _configfile_keyvalue_calloc(void);
 static void _configfile_keyvalue_free(wzd_configfile_keyvalue_t * kv);
 
 static void config_init(wzd_configfile_t * config);
@@ -735,14 +733,17 @@ static void _configfile_group_free(wzd_configfile_group_t * group)
   wzd_free(group);
 }
 
-#if 0
-static void _configfile_keyvalue_init(wzd_configfile_keyvalue_t * kv)
+static wzd_configfile_keyvalue_t * _configfile_keyvalue_calloc(void)
 {
-  WZD_ASSERT_VOID(kv != NULL);
+  wzd_configfile_keyvalue_t * kv;
+
+  kv = wzd_malloc(sizeof(*kv));
+  WZD_ASSERT_RETURN(kv != NULL, NULL);
   kv->key = NULL;
   kv->value = NULL;
+
+  return kv;
 }
-#endif
 
 static void _configfile_keyvalue_free(wzd_configfile_keyvalue_t * kv)
 {
@@ -836,12 +837,14 @@ static int config_parse_data(wzd_configfile_t * config, const char * data, size_
   for (i = 0; i < length; i++) {
     if (data[i] == '\n')
     {
-      if (i > 0 && str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\r')
+      if (i > 0 && str_length(config->parse_buffer) > 0 &&
+          str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\r')
         str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
 	    
       /* if the line is ended with a \ then delete the last char and continue with next line
        */
-      if (i > 0 && str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\\') {
+      if (i > 0 && str_length(config->parse_buffer) > 0 &&
+          str_tochar(config->parse_buffer)[str_length(config->parse_buffer) - 1] == '\\') {
         str_erase (config->parse_buffer, str_length(config->parse_buffer) - 1, 1);
         continue;
       }
@@ -924,8 +927,7 @@ static int config_parse_comment(wzd_configfile_t * config, const char * line, si
   if (!config || !line) return CF_ERROR_INVALID_ARGS;
   if (!config->current_group) return CF_ERROR_NO_CURRENT_GROUP;
 
-  kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));
-  kv->key = NULL;
+  kv = _configfile_keyvalue_calloc();
   kv->value = wzd_strndup(line,length);
 
   dlist_ins_next(config->current_group->values,dlist_tail(config->current_group->values),kv);
@@ -1058,7 +1060,7 @@ static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * gr
     return CF_ERROR_KEY_ALREADY_EXISTS;
   }
 
-  kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));
+  kv = _configfile_keyvalue_calloc();
   kv->key = wzd_strdup(key);
   kv->value = wzd_strdup(value);
 
@@ -1114,8 +1116,7 @@ static int config_set_key_comment(wzd_configfile_t * config, const char * groupn
   if (comment == NULL) return CF_OK;
 
   /* add our comment */
-  kv = wzd_malloc(sizeof(wzd_configfile_group_t));
-  kv->key = NULL;
+  kv = _configfile_keyvalue_calloc();
   kv->value = wzd_strdup(comment);
 
   dlist_ins_prev(group->values,element,kv);
@@ -1176,8 +1177,7 @@ static int config_set_top_comment(wzd_configfile_t * config, const char * commen
     return CF_OK;
 
   if (config_line_is_comment(comment)) {
-    kv = wzd_malloc(sizeof(wzd_configfile_keyvalue_t));
-    kv->key = NULL;
+    kv = _configfile_keyvalue_calloc();
     kv->value = wzd_strdup(comment);
 
     dlist_ins_next(group->values,NULL,kv);

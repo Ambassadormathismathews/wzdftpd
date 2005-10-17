@@ -1,3 +1,4 @@
+[GLOBAL]
 # This is the main config file
 # lines begining with a # are ignored, as empty lines
 # all lines must be of the form:
@@ -136,7 +137,7 @@ login_pre_ip_check = 0
 #login_pre_ip_allowed = xxx.xxx.org
 #login_pre_ip_allowed = xxx
 login_pre_ip_allowed = localhost
-login_pre_ip_allowed = *.xxx.fr
+#login_pre_ip_allowed = *.xxx.fr
 #login_pre_ip_denied = *
 
 ##### VFS
@@ -304,3 +305,6 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 # REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
 #-site_my_free = *
 #-site_test = =pollux
+
+[plaintext]
+backend_param_plaintext = @e_sysconfdir@/users

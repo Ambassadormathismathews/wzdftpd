@@ -29,11 +29,13 @@
 
 #define WZD_ASSERT_VOID(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return ; }
 #define WZD_ASSERT(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return -1; }
+#define WZD_ASSERT_RETURN(x,r) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return (r); }
 
 #else
 
 #define WZD_ASSERT_VOID(x)
 #define WZD_ASSERT(x)
+#define WZD_ASSERT_RETURN(x,y)
 
 #endif
 

@@ -211,9 +211,11 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 #define u64_t unsigned __int64
 #define u32_t unsigned __int32
 #define u16_t unsigned __int16
+#define u8_t  unsigned __int8
 #define i64_t __int64
 #define i32_t __int32
 #define i16_t __int16
+#define i8_t  __int8
 
 #define __PRI64_PREFIX  "I64"
 

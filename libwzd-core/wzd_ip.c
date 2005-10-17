@@ -73,8 +73,8 @@ wzd_ip_t * ip_create(void)
 {
   wzd_ip_t * ip;
 
-  ip = wzd_malloc(sizeof(wzd_ip_t));
-  memset(ip,0,sizeof(wzd_ip_t));
+  ip = wzd_malloc(sizeof(*ip));
+  memset(ip,0,sizeof(*ip));
 
   return ip;
 }
@@ -239,8 +239,7 @@ int ip_add(wzd_ip_list_t **list, const char *newip)
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
   new_ip_t = malloc(sizeof(wzd_ip_list_t));
-  new_ip_t->regexp = malloc(strlen(newip)+1);
-  strncpy(new_ip_t->regexp,newip,strlen(newip)+1);
+  new_ip_t->regexp = wzd_strndup(newip,MAX_IP_LENGTH);
   new_ip_t->next_ip = NULL;
 
   /* tail insertion, be aware that order is important */
@@ -255,6 +254,60 @@ int ip_add(wzd_ip_list_t **list, const char *newip)
   }
 
   return 0;
+}
+
+/** \brief Add a new ip to be checked when user logs in
+ */
+int ip_add_check(wzd_ip_list_t **list, const char *newip, int is_allowed)
+{
+  wzd_ip_list_t * new_ip_t, *insert_point;
+
+  WZD_ASSERT( list != NULL );
+
+  if (strlen(newip) < 1) return -1;
+  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
+
+  new_ip_t = malloc(sizeof(*new_ip_t));
+  new_ip_t->regexp = wzd_strndup(newip,MAX_IP_LENGTH);
+  new_ip_t->is_allowed = (is_allowed) ? 1 : 0;
+  new_ip_t->next_ip = NULL;
+
+  /* tail insertion, be aware that order is important */
+  insert_point = *list;
+  if (insert_point == NULL) {
+    *list = new_ip_t;
+  } else {
+    while (insert_point->next_ip != NULL)
+      insert_point = insert_point->next_ip;
+
+    insert_point->next_ip = new_ip_t;
+  }
+
+  return 0;
+}
+
+/** \brief Check if ip is allowed by list.
+ *
+ * \returns: 1 if allowed, 0 if denied, -1 on error
+ */
+int ip_list_check(wzd_ip_list_t *list, const char *ip)
+{
+  wzd_ip_list_t * current_ip;
+  const char * ptr_ip;
+  char * ptr_test;
+
+  current_ip = list;
+  while (current_ip) {
+    ptr_ip = ip;
+    ptr_test = current_ip->regexp;
+    if (*ptr_test == '\0') return -1; /* ip has length 0 ! */
+
+    if (ip_compare(ptr_ip,ptr_test)==1) return current_ip->is_allowed;
+
+    current_ip = current_ip->next_ip;
+  } /* while current_ip */
+
+  return 1; /** \bug FIXME XXX set a default value to return */
 }
 
 int ip_inlist(wzd_ip_list_t *list, const char *ip)
