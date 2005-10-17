@@ -20,12 +20,14 @@ AC_DEFUN([WZD_LIB_MYSQL],
     WZD_MYSQL_INCLUDES=
     WZD_MYSQL_LIBS=""
     AC_MSG_RESULT(no)
-     ifelse([$2], , :, [$2])
+    wzd_have_mysql=no
+    ifelse([$2], , :, [$2])
   else
     WZD_MYSQL_INCLUDES=`$MYSQL_CONFIG $mysqlconf_args --cflags | sed -e "s/'//g"`
     WZD_MYSQL_LIBS=`$MYSQL_CONFIG $mysqlconf_args --libs | sed -e "s/'//g"`
     AC_MSG_RESULT(yes)
     AC_DEFINE(HAVE_MYSQL, 1, [Define if using mysql])
+    wzd_have_mysql=yes
     ifelse([$1], , :, [$1])
   fi
   AC_SUBST(WZD_MYSQL_INCLUDES)
