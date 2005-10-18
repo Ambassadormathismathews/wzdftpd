@@ -65,6 +65,7 @@
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_configfile.h> /* server configuration */
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_file.h> /* file_mkdir, file_stat */
@@ -148,12 +149,22 @@ int WZD_MODULE_INIT(void)
     return -1;
 
   {
-    char * logdir;
+    char * logdir = NULL;
     int ret;
 
     ret = -1;
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0)
-    {
+    if (mainConfig->htab) {
+      chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0;
+    } else { /* new config format */
+      wzd_string_t * str;
+      str = config_get_string(mainConfig->cfg_file, "GLOBAL", "logdir", NULL);
+      if (str) {
+        /** \bug FIXME memory leak here !! */
+        logdir = strdup(str_tochar(str));
+        str_deallocate(str);
+      }
+    }
+    if (logdir) {
       int fd;
 	  const char * filename;
 
@@ -163,7 +174,7 @@ int WZD_MODULE_INIT(void)
 #ifndef WIN32
       fd = open(filename,O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
 #else
-	  /* activeperl redefines open(), and this causes a segfault here ! */
+      /* activeperl redefines open(), and this causes a segfault here ! */
       fd = _open(filename,O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
 #endif
       if (fd >= 0) {

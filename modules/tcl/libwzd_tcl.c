@@ -69,6 +69,7 @@
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_configfile.h> /* server configuration */
 #include <libwzd-core/wzd_file.h> /* file_mkdir, file_stat */
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_messages.h>
@@ -123,6 +124,7 @@ static Tcl_ChannelType channel_type =
   NULL,   /* flush */
   NULL,   /* handler */
   NULL,   /* wideseek */
+  NULL
 };
 
 /***** EVENT HOOKS *****/
@@ -195,7 +197,17 @@ int WZD_MODULE_INIT(void)
     int ret;
 
     ret = -1;
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir)== 0)
+    if (mainConfig->htab) {
+      chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir);
+    } else { /* new config format */
+      wzd_string_t * str;
+      str = config_get_string(mainConfig->cfg_file, "GLOBAL", "logdir", NULL);
+      if (str) {
+        /** \bug FIXME memory leak here !! */
+        logdir = strdup(str_tochar(str));
+        str_deallocate(str);
+      }
+    }
     {
       int fd;
 
