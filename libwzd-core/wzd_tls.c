@@ -170,15 +170,26 @@ int tls_init(void)
   char * tls_certificate;
   char * tls_certificate_key;
   char * tls_ca_file=NULL, * tls_ca_path=NULL;
+  wzd_string_t * str;
 
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate))
-  {
-    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
-    return 1;
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate)) {
+      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+      return 1;
+    }
+    /* ignore errors */
+    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
+    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
+    if (!str) {
+      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+      return 1;
+    }
+    /** \bug FIXME memory leak here !! */
+    tls_certificate = strdup(str_tochar(str));
+    str_deallocate(str);
   }
-  /* ignore errors */
-  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
-  chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
 
   ERR_load_ERR_strings();
   SSL_load_error_strings();	/* readable error messages */
@@ -212,10 +223,22 @@ int tls_init(void)
   }
 
   /* set private key file - usually the same */
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
-  {
-    /* if no key provided, try using the same certificate */
-    tls_certificate_key = tls_certificate;
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
+    {
+      /* if no key provided, try using the same certificate */
+      tls_certificate_key = tls_certificate;
+    }
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_certificate_key = strdup(str_tochar(str));
+      str_deallocate(str);
+    } else {
+      /* if no key provided, try using the same certificate */
+      tls_certificate_key = tls_certificate;
+    }
   }
 
   status = SSL_CTX_use_PrivateKey_file(tls_ctx, tls_certificate_key, X509_FILETYPE_PEM);
@@ -393,6 +416,7 @@ int tls_auth (const char *type, wzd_context_t * context)
 {
   int ret;
   char * tls_cipher_list;
+  wzd_string_t * str;
 
 #if 0
   if (!type || type[0]==0) return 1;
@@ -407,9 +431,20 @@ int tls_auth (const char *type, wzd_context_t * context)
   }
 #endif
 
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
-  {
-    tls_cipher_list = "ALL";
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
+    {
+      tls_cipher_list = "ALL";
+    }
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_cipher_list = strdup(str_tochar(str));
+      str_deallocate(str);
+    } else {
+      tls_cipher_list = "ALL";
+    }
   }
 
   context->ssl.obj = SSL_new(mainConfig->tls_ctx);
@@ -545,6 +580,7 @@ int tls_auth_cont(wzd_context_t * context)
 int tls_init_datamode(int sock, wzd_context_t * context)
 {
   char * tls_cipher_list;
+  wzd_string_t * str;
 
   if (!context->ssl.data_ssl) {
     context->ssl.data_ssl = SSL_new(mainConfig->tls_ctx);
@@ -559,9 +595,20 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     return 1;
   }
 
-  if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
-  {
-    tls_cipher_list = "ALL";
+  if (mainConfig->htab) {
+    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
+    {
+      tls_cipher_list = "ALL";
+    }
+  } else { /* new config format */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_cipher_list = strdup(str_tochar(str));
+      str_deallocate(str);
+    } else {
+      tls_cipher_list = "ALL";
+    }
   }
 
   SSL_set_cipher_list(context->ssl.data_ssl, tls_cipher_list);

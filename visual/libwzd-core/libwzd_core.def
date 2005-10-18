@@ -114,6 +114,7 @@ EXPORTS
 	ip_create
 	ip_free
 	ip_inlist
+	ip_list_check
 	ip_list_free
 	is_hidden_file
 	is_perm_file
