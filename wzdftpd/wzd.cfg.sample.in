@@ -156,12 +156,6 @@ login_pre_ip_allowed = localhost
 #vfs = |/home/pollux/K|/tmp|
 
 ##### MODULES
-# modules are dynamic libraries
-# order *IS* important
-#module = @e_datadir@/@PACKAGE@/modules/libwzd_test.so
-#module = @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so
-#module = @e_datadir@/@PACKAGE@/modules/libwzd_tcl.so
-#module = @e_datadir@/@PACKAGE@/modules/libwzd_perl.so
 
 param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]
 param_sfv_del_progressmeter = \[.*] - ...% Complete - \[WzD]
@@ -306,5 +300,14 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 #-site_my_free = *
 #-site_test = =pollux
 
+[modules]
+# modules are dynamic libraries
+# order *IS* important
+@e_datadir@/@PACKAGE@/modules/libwzd_test.so = deny
+@e_datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
+@e_datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
+@e_datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
+
 [plaintext]
 backend_param_plaintext = @e_sysconfdir@/users
+

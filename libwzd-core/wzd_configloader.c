@@ -51,6 +51,7 @@
 #include "wzd_configloader.h"
 
 #include "wzd_misc.h"
+#include "wzd_mod.h"
 
 #include "wzd_debug.h"
 
@@ -58,6 +59,7 @@
 
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config);
 
 
 
@@ -200,6 +202,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   _cfg_parse_pre_ip(file, cfg);
 
   _cfg_parse_commands(file, cfg);
+  _cfg_parse_modules(file, cfg);
 
   return cfg;
 }
@@ -261,6 +264,43 @@ static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * co
     if (err) {
       /* print error message but continue parsing */
       out_err(LEVEL_HIGH,"ERROR while parsing permission %s\n",permission_name);
+    }
+
+    str_deallocate(permission);
+  }
+
+  str_deallocate_array(array);
+}
+
+static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * module_name;
+  wzd_string_t * permission;
+  
+  array = config_get_keys(file,"modules",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    module_name = (char*)str_tochar(array[i]);
+    if (!module_name) continue;
+    permission = config_get_string(file, "modules", module_name, NULL);
+
+    if (strcasecmp(str_tochar(permission),"allow")==0 || strcmp(str_tochar(permission),"1")==0) {
+      if (module_check(module_name)) {
+        out_err(LEVEL_HIGH,"ERROR module name [%s] is invalid\n",module_name);
+        str_deallocate(permission);
+        continue;
+      }
+      err = module_add(&config->module, module_name);
+      if (err) {
+        /* print error message but continue parsing */
+        out_err(LEVEL_HIGH,"ERROR while parsing module %s\n",module_name);
+      }
+    } else {
+      out_log(LEVEL_INFO,"not loading module %s, not enabled in config\n",module_name);
     }
 
     str_deallocate(permission);
