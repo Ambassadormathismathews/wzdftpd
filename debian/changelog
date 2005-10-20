@@ -1,8 +1,9 @@
-wzdftpd (0.5.4-2) unstable; urgency=low
+wzdftpd (0.5.5-1) unstable; urgency=high
 
-  * Updated watch file
+  * New upstream release
+  * urgency=high because upstream bugfix is critical
 
- -- Pierre Chifflier <chifflier@cpe.fr>  Sun,  7 Aug 2005 22:57:47 +0200
+ -- Pierre Chifflier <chifflier@cpe.fr>  Mon, 26 Sep 2005 15:01:26 +0200
 
 wzdftpd (0.5.4-1) unstable; urgency=low
 
