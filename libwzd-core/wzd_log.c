@@ -192,9 +192,17 @@ void out_log(int level,const char *fmt,...)
   int prior=0;
   va_list argptr;
   char buffer[4096];
+  char datestr[128];
+  time_t timeval;
+  struct tm * ntime;
 
   /* new logging code */
   if (level >= MAX_LOG_CHANNELS) return;
+
+  /* create timestamp */
+  timeval = time(NULL);
+  ntime = localtime( &timeval );
+  (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M:%S ",ntime);
 
   if (_log_channels[level].fd > 0 || _log_channels[level].syslog)
   {
@@ -202,8 +210,10 @@ void out_log(int level,const char *fmt,...)
     vsnprintf(buffer,sizeof(buffer)-1,fmt,argptr);
     va_end (argptr);
 
-    if (_log_channels[level].fd > 0)
+    if (_log_channels[level].fd > 0) {
+      write(_log_channels[level].fd, datestr, strlen(datestr));
       write(_log_channels[level].fd, buffer, strlen(buffer));
+    }
 
 #ifndef _WIN32
     if (_log_channels[level].syslog)
@@ -236,7 +246,7 @@ void out_log(int level,const char *fmt,...)
 #ifdef DEBUG
   {
     char new_format[1024];
-    char msg_begin[20];
+    char msg_begin[120];
     char msg_end[20];
 
     msg_begin[0] = '\0';
@@ -273,6 +283,9 @@ void out_log(int level,const char *fmt,...)
         break;
     }
 
+    /* add timestamp */
+    strlcat(msg_begin,datestr,sizeof(msg_begin));
+
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
     snprintf(new_format,sizeof(new_format)-1,"%s%s%s",msg_begin,fmt,msg_end);
     vsnprintf(buffer,sizeof(buffer)-1,new_format,argptr);
@@ -281,117 +294,18 @@ void out_log(int level,const char *fmt,...)
     write(1 /* stderr */, buffer, strlen(buffer));
   }
 #endif
-
-#if 0
-  /* old logging code */
-
-  msg_begin[0] = '\0';
-  msg_end[0] = '\0';
-
-  if (level >= mainConfig->loglevel) {
-
-#ifndef _MSC_VER
-    if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
-      char buffer[1024];
-      switch (level) {
-        case LEVEL_CRITICAL:
-          prior = LOG_ALERT;
-          break;
-        case LEVEL_HIGH:
-          prior = LOG_CRIT;
-          break;
-        case LEVEL_NORMAL:
-          prior = LOG_ERR;
-          break;
-        case LEVEL_INFO:
-          prior = LOG_WARNING;
-          break;
-        case LEVEL_FLOOD:
-          prior = LOG_INFO;
-          break;
-        default:
-          break;
-      }
-
-      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-      vsnprintf(buffer,1023,fmt,argptr);
-      syslog(prior,"%s",buffer);
-      va_end (argptr);
-
-    } /* syslog */
-#endif /* _MSC_VER */
-
-
-#ifdef DEBUG
-    {
-      char new_format[1024];
-      switch (level) {
-        case LEVEL_CRITICAL:
-          strcpy(msg_begin,CLR_BOLD);
-          (void)strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
-          strcpy(msg_end,CLR_NOCOLOR);
-          prior = LOG_ALERT;
-          break;
-        case LEVEL_HIGH:
-          strcpy(msg_begin,CLR_RED);
-          strcpy(msg_end,CLR_NOCOLOR);
-          prior = LOG_CRIT;
-          break;
-        case LEVEL_NORMAL:
-          strcpy(msg_begin,CLR_GREEN);
-          strcpy(msg_end,CLR_NOCOLOR);
-          prior = LOG_ERR;
-          break;
-        case LEVEL_INFO:
-          strcpy(msg_begin,CLR_BLUE);
-          strcpy(msg_end,CLR_NOCOLOR);
-          prior = LOG_WARNING;
-          break;
-        case LEVEL_FLOOD:
-          strcpy(msg_begin,CLR_CYAN);
-          strcpy(msg_end,CLR_NOCOLOR);
-          prior = LOG_INFO;
-          break;
-        default:
-          break;
-      }
-
-      snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
-
-      va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-      if (mainConfig->logfile) {
-        vfprintf(stdout,new_format,argptr);
-        fflush(stdout);
-/*        vfprintf(mainConfig->logfile,fmt,argptr);
-          fflush(mainConfig->logfile);*/
-      } else { /* security - will be used iff log is not opened at this time */
-        vfprintf(stderr,new_format,argptr);
-        fflush(stderr);
-      }
-      /* we have to re-set argptr, on certain implementations
-       * vfprintf can modify it (debian-ppc for ex)
-       */
-      va_end (argptr);
-    }
-#endif
-
-    va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-    if (mainConfig->logfile) {
-      vfprintf(mainConfig->logfile,fmt,argptr);
-      fflush(mainConfig->logfile);
-    }
-    va_end (argptr);
-  } /* > loglevel ? */
-#endif /* 0 */
 }
 
 #ifdef DEBUG
 void out_err(int level, const char *fmt,...)
 {
   va_list argptr;
-  char msg_begin[20];
+  char msg_begin[120];
   char msg_end[20];
   char new_format[1024];
+  char datestr[128];
+  time_t timeval;
+  struct tm * ntime;
 
   msg_begin[0] = '\0';
   msg_end[0] = '\0';
@@ -426,6 +340,12 @@ void out_err(int level, const char *fmt,...)
         default:
           break;
       }
+
+      /* add timestamp */
+      timeval = time(NULL);
+      ntime = localtime( &timeval );
+      (void)strftime(datestr,sizeof(datestr),"%b %d %H:%M:%S ",ntime);
+      strlcat(msg_begin,datestr,sizeof(msg_begin));
 
       snprintf(new_format,1023,"%s%s%s",msg_begin,fmt,msg_end);
 
