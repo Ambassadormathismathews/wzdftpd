@@ -45,6 +45,7 @@ EXPORTS
 	commands_init
 	commands_set_permission
 	config_free
+	config_get_string
 	config_load_from_file
 	config_new
 	config_set_value

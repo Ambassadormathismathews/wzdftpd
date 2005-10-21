@@ -124,7 +124,6 @@ static Tcl_ChannelType channel_type =
   NULL,   /* flush */
   NULL,   /* handler */
   NULL,   /* wideseek */
-  NULL
 };
 
 /***** EVENT HOOKS *****/
