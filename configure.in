@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.5.4, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.6.0, pollux@wzdftpd.net)
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
@@ -191,17 +191,21 @@ AC_ARG_ENABLE(ipv6, [  --enable-ipv6           enable ipv6 support (EXPERIMENTAL
 
 AC_MSG_CHECKING(whether to build utf8 support)
 
-AC_ARG_ENABLE(utf8, [  --enable-utf8           enable utf8 support (EXPERIMENTAL)],
-    if eval "test x$enable_utf8 = xyes"; then
+wzd_have_utf8=no
+AC_ARG_ENABLE(utf8, [  --disable-utf8          disable utf8 support],
+    if eval "test x$enable_utf8 = xno"; then
+      AC_MSG_RESULT(no)
+    else
       AC_MSG_RESULT(yes)
       WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}utf8"
-    else
-      AC_MSG_RESULT(no)
+      wzd_have_utf8=yes
     fi,
-    AC_MSG_RESULT(no)
-)
+    AC_MSG_RESULT(yes)
+    WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}utf8"
+    wzd_have_utf8=yes
+    )
 
-if eval "test x$enable_utf8 = xyes"; then
+if eval "test x$wzd_have_utf8 = xyes"; then
   AM_ICONV
   WZD_LIB_UNICODE
   AC_DEFINE(HAVE_UTF8, 1, [Define if using utf8])
@@ -324,7 +328,7 @@ Here is a short summary of what I've found on your system :
        IPv6:   $enable_ipv6
        SSL:    $wzd_lib_openssl
        GnuTLS: $wzd_have_gnutls
-       UTF-8:  $enable_utf8
+       UTF-8:  $wzd_have_utf8
 
   backends:
        MySQL:  $wzd_have_mysql
