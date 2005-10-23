@@ -1760,7 +1760,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   unsigned int tcp_port;
   struct in_addr addr4;
   struct in6_addr addr6;
-  char * param;
+  char * param, * orig_param;
 
   if (context->pasvsock != (fd_t)-1) {
     socket_close(context->pasvsock);
@@ -1773,13 +1773,13 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-  param = strdup(str_tochar(arg));
+  orig_param = param = strdup(str_tochar(arg));
 
   sep = *param++;
   net_prt = *param++;
   if ( (*param++) != sep || (net_prt != '1' && net_prt != '2') ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    free(param);
+    free(orig_param);
     return E_PARAM_INVALID;
   }
 
@@ -1787,7 +1787,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   while (*param && (*param) != sep ) param++;
   if ( !*param ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    free(param);
+    free(orig_param);
     return E_PARAM_INVALID;
   }
 
@@ -1798,7 +1798,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   while (*param && (*param) != sep ) param++;
   if ( !*param || *param != sep ) {
     ret = send_message_with_args(501,context,"Invalid argument");
-    free(param);
+    free(orig_param);
     return E_PARAM_INVALID;
   }
 
@@ -1807,7 +1807,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   tcp_port = strtoul(s_tcp_port,&ptr,0);
   if (*ptr) {
     ret = send_message_with_args(501,context,"Invalid port");
-    free(param);
+    free(orig_param);
     return E_PARAM_INVALID;
   }
 
@@ -1817,23 +1817,23 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     if ( (ret=inet_pton(AF_INET,net_addr,&addr4)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
-      free(param);
+      free(orig_param);
       return E_PARAM_INVALID;
     }
-    memcpy(context->dataip,(const char *)addr4.s_addr,4);
+    memcpy(context->dataip,(const char *)&addr4.s_addr,4);
     break;
   case WZD_INET6:
     if ( (ret=inet_pton(AF_INET6,net_addr,&addr6)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
-      free(param);
+      free(orig_param);
       return E_PARAM_INVALID;
     }
     memcpy(context->dataip,addr6.s6_addr,16);
     break;
   default:
     ret = send_message_with_args(501,context,"Invalid protocol");
-    free(param);
+    free(orig_param);
     return E_PARAM_INVALID;
   }
 
