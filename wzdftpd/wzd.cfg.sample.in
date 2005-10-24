@@ -162,16 +162,6 @@ param_sfv_del_progressmeter = \[.*] - ...% Complete - \[WzD]
 param_sfv_incomplete_indicator = ../(incomplete)-%0
 param_sfv_other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
 
-##### SECTIONS
-# sections are used to define local server properties
-# format: section = name path path_filter
-#   path is a regexp to specify to specify where the section is
-#   path_filter is a filter to restrict dir names when using mkdir
-# the simplest section is: ALL /* *
-# order *IS* important (first matching section is taken)
-#   that means the more generic section should be the last
-section = ALL /* ^([]\[A-Za-z0-9_.'() \t+-])*$
-
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands
 # order *IS* important
@@ -311,4 +301,14 @@ site_vfsdel = +O
 
 [plaintext]
 backend_param_plaintext = @e_sysconfdir@/users
+
+[sections]
+# sections are used to define local server properties
+# format: name = path path_filter
+#   path is a regexp (man regex) to specify to specify where the section is
+#   path_filter is a filter to restrict dir names when using mkdir
+# the simplest section is: ALL = /* .*
+# order *IS* important (first matching section is taken)
+#   that means the more generic section should be the last
+ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 

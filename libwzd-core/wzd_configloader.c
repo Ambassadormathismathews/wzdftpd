@@ -52,6 +52,7 @@
 
 #include "wzd_misc.h"
 #include "wzd_mod.h"
+#include "wzd_section.h"
 
 #include "wzd_debug.h"
 
@@ -60,6 +61,7 @@
 static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * config);
 
 
@@ -204,6 +206,8 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   _cfg_parse_sitefiles(file, cfg);
 
+  _cfg_parse_sections(file, cfg);
+
   _cfg_parse_commands(file, cfg);
   _cfg_parse_modules(file, cfg);
 
@@ -307,6 +311,38 @@ static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * con
     }
 
     str_deallocate(permission);
+  }
+
+  str_deallocate_array(array);
+}
+
+static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * section_name;
+  wzd_string_t * section, * section_mask;
+  
+  array = config_get_keys(file,"sections",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    section_name = (char*)str_tochar(array[i]);
+    if (!section_name) continue;
+    section = config_get_string(file, "sections", section_name, NULL);
+
+    section_mask = str_read_token(section);
+    if (section_mask) {
+      /* section now contains the filter used to create new directories/files */
+      if (section_add(&config->section_list,section_name,str_tochar(section_mask),str_tochar(section))) {
+        out_log(LEVEL_HIGH,"ERROR: error when adding section %s, check section mask and filter\n",section_name);
+      }
+      str_deallocate(section_mask);
+    } else {
+      out_log(LEVEL_HIGH,"ERROR: incorrect section definition for %s, missing section_mask\n",section_name);
+    }
+    str_deallocate(section);
   }
 
   str_deallocate_array(array);
