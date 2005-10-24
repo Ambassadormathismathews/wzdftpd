@@ -255,7 +255,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
 
   return 0;
 #endif
-#if BSD || defined(WIN32) || defined(__sun__)
+#if defined(WIN32) || defined(__sun__)
   return -1;
 #else
 /*  struct in_addr *ina = void_in;*/
@@ -276,7 +276,7 @@ int get_system_ip(const char * itface, struct in_addr * ina)
     return -1;
   }
 
-  memcpy(ina,ifr.ifr_hwaddr.sa_data+2,4);
+  memcpy(ina,ifr.ifr_addr.sa_data+2,4);
   out_log(LEVEL_FLOOD,"IP: %s\n",inet_ntoa(*ina));
 
   close(s);
