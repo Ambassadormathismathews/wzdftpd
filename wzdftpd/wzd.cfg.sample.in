@@ -221,84 +221,85 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 # maximum recursion is 16 (too big IMHO)
 #include permissions.cfg
 
+
 ##### PERMISSIONS
-# Permissions lines begin by -
-# permissions can be of form: -group =user +flag or *
+# you must add prefixes before permissions: -group =user +flag or *
 # you can use negations : !*
 # REMEMBER that the FIRST corresponding rule is applied, so order is important (never put * first !)
-# ex: -site_who = =admin -group1 +F =toto
-#-delete = -admin
--site_addip = +O +G
--site_adduser = +O +G
--site_backend = +O
--site_chacl = +O
--site_change = +O +G
--site_changegrp = +O +G
--site_checkperm = +O
--site_chgrp = +O
--site_chmod = +O
--site_chown = +O
--site_chpass = *
--site_chratio = +O +G
--site_close = +O
--site_color = !=guest *
--site_delip = +O +G
--site_deluser = +O +G
--site_flags = -admin
--site_free = *
--site_ginfo = +O +G
--site_give = *
--site_group = +O
--site_groups = +O
--site_grpadd = +O
--site_grpaddip = +O
--site_grpchange = +O
--site_grpdel = +O
--site_grpdelip = +O
--site_grpkill = +O
--site_grpratio = +O
--site_grpren = +O
--site_gsinfo = +O +G
--site_help = *
--site_idle = *
--site_invite = !=guest *
--site_kick = +O
--site_kill = +O
--site_link = +O
--site_msg = +O
--site_perm = +O
--site_purge = +O +G
--site_readd = +O +G
--site_reload = +O
--site_reopen = +O
--site_rules = *
--site_rusage = +O
--site_savecfg = +O
--site_sections = +O
--site_sfv = *
--site_shutdown = +O
--site_su = +O
--site_swho = +O
--site_tagline = !=guest *
--site_take = +O
--site_unlock = +O
--site_uptime = *
--site_user = +O +G
--site_users = -admin
--site_utime = *
--site_vars = +O
--site_vars_group = +O
--site_vars_user = +O
--site_version = +O
--site_who = !=guest *
--site_wipe = +O
--site_vfsls = +O
--site_vfsadd = +O
--site_vfsdel = +O
+# ex: site_who = =admin -group1 +F =toto
+# delete = -admin
+[perms]
+site_addip = +O +G
+site_adduser = +O +G
+site_backend = +O
+site_chacl = +O
+site_change = +O +G
+site_changegrp = +O +G
+site_checkperm = +O
+site_chgrp = +O
+site_chmod = +O
+site_chown = +O
+site_chpass = *
+site_chratio = +O +G
+site_close = +O
+site_color = !=guest *
+site_delip = +O +G
+site_deluser = +O +G
+site_flags = -admin
+site_free = *
+site_ginfo = +O +G
+site_give = *
+site_group = +O
+site_groups = +O
+site_grpadd = +O
+site_grpaddip = +O
+site_grpchange = +O
+site_grpdel = +O
+site_grpdelip = +O
+site_grpkill = +O
+site_grpratio = +O
+site_grpren = +O
+site_gsinfo = +O +G
+site_help = *
+site_idle = *
+site_invite = !=guest *
+site_kick = +O
+site_kill = +O
+site_link = +O
+site_msg = +O
+site_perm = +O
+site_purge = +O +G
+site_readd = +O +G
+site_reload = +O
+site_reopen = +O
+site_rules = *
+site_rusage = +O
+site_savecfg = +O
+site_sections = +O
+site_sfv = *
+site_shutdown = +O
+site_su = +O
+site_swho = +O
+site_tagline = !=guest *
+site_take = +O
+site_unlock = +O
+site_uptime = *
+site_user = +O +G
+site_users = -admin
+site_utime = *
+site_vars = +O
+site_vars_group = +O
+site_vars_user = +O
+site_version = +O
+site_who = !=guest *
+site_wipe = +O
+site_vfsls = +O
+site_vfsadd = +O
+site_vfsdel = +O
 
 # REMOVE ME OR YOU DON'T KNOW WHAT WILL HAPPEN !
-#-site_my_free = *
-#-site_test = =pollux
+#site_my_free = *
+#site_test = =pollux
 
 [modules]
 # modules are dynamic libraries
