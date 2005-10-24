@@ -175,7 +175,7 @@ int send_message(int code, wzd_context_t * context)
 #ifdef DEBUG
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,str_tochar(str),strlen(str_tochar(str)),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
 
   str_deallocate(str);
 

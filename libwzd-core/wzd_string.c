@@ -388,8 +388,9 @@ wzd_string_t * str_tok(wzd_string_t *str, const char *delim)
 }
 
 /** \brief str_read next token
- * \return a pointer to the next token, or NULL if not found, or if there is \
+ * \return a pointer to the next token, or NULL if not found, or if there is
  * only whitespaces, or if quotes are unbalanced
+ *
  * Read next token separated by a whitespace, except if string begins
  * with a ' or ", in this case it searches the matching character.
  * Note: input string is modified as a \\0 is written.

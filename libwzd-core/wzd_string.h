@@ -100,8 +100,9 @@ wzd_string_t * str_tolower(wzd_string_t *str);
 wzd_string_t * str_tok(wzd_string_t *str, const char *delim);
 
 /** \brief str_read next token
- * \return a pointer to the next token, or NULL if not found, or if there is \
+ * \return a pointer to the next token, or NULL if not found, or if there is
  * only whitespaces, or if quotes are unbalanced
+ *
  * Read next token separated by a whitespace, except if string begins
  * with a ' or ", in this case it searches the matching character.
  * Note: input string is modified as a \0 is written.
@@ -143,9 +144,6 @@ int str_local_to_utf8(wzd_string_t *str, const char * charset);
  * require unicode support
  */
 int str_is_valid_utf8(wzd_string_t *str);
-
-
-/******* XXX to be implemented XXX **********/
 
 #endif /* __WZD_STRING__ */
 

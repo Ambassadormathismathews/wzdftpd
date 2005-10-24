@@ -1019,6 +1019,7 @@ static int subcmp(const char * string, const char * substring)
  *        add perm_name perms
  *        change perm_name perms
  *        remove perm_name
+ * XXX FIXME sort perms before sending !
  */
 int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
