@@ -191,6 +191,8 @@ int tls_init(void)
     str_deallocate(str);
   }
 
+  out_log(LEVEL_INFO,"Initializing TLS (this can take a while).\n");
+
   ERR_load_ERR_strings();
   SSL_load_error_strings();	/* readable error messages */
   SSL_library_init();		/* initialize library */
@@ -822,6 +824,8 @@ int tls_init(void)
     tls_certificate = strdup(str_tochar(str));
     str_deallocate(str);
   }
+
+  out_log(LEVEL_INFO,"Initializing TLS (this can take a while).\n");
 
   /* The order matters.
    */

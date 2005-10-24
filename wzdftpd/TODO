@@ -3,7 +3,10 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- main exe: add a 'configtest' option
+- add options to
+    - disable colors when logging
+    - disable timestamps
+    - set log level in command args
 '********'
 - backends: write a 'debug' backend to trace/audit all backend calls
 '********'

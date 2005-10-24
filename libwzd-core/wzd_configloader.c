@@ -270,7 +270,7 @@ static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * co
     err = commands_set_permission(config->commands_list, permission_name, str_tochar(permission));
     if (err) {
       /* print error message but continue parsing */
-      out_err(LEVEL_HIGH,"ERROR while parsing permission %s\n",permission_name);
+      out_err(LEVEL_HIGH,"ERROR while parsing permission %s, ignoring\n",permission_name);
     }
 
     str_deallocate(permission);

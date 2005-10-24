@@ -1,6 +1,7 @@
 2005-10-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added support for sections in new config format
+	* feature: added option to test config file in executable
 
 2005-10-23  Pierre Chifflier  <pollux@wzdftpd.net>
 

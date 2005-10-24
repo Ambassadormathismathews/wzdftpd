@@ -113,6 +113,7 @@ typedef enum {
   CMD_SRV_START,
   CMD_SRV_STOP,
 #endif
+  CMD_TEST_CONFIG,
 } wzd_arg_command_t;
 
 char configfile_name[256];
@@ -141,6 +142,7 @@ void display_usage(void)
 #endif
   fprintf(stderr," -f <file>                   - Load alternative config file \n");
   fprintf(stderr," -s, --force-foreground      - Stay in foreground \n");
+  fprintf(stderr," -t, --configtest            - Test configuration file\n");
   fprintf(stderr," -V, --version               - Show version \n");
 #else /* HAVE_GETOPT_LONG */
   fprintf(stderr," -h                          - Display this text \n");
@@ -182,15 +184,16 @@ int main_parse_args(int argc, char **argv)
     { "config-file", required_argument, NULL, 'f' },
     { "help", no_argument, NULL, 'h' },
     { "force-foreground", no_argument, NULL, 's' },
+    { "configtest", no_argument, NULL, 't' },
     { "version", no_argument, NULL, 'V' },
     { NULL, 0, NULL, 0 } /* sentinel */
   };
 
   /* please keep options ordered ! */
 /*  while ((opt=getopt(argc, argv, "hbdf:sV")) != -1) {*/
-  while ((opt=getopt_long(argc, argv, "hbf:sV", long_options, (int *)0)) != -1)
+  while ((opt=getopt_long(argc, argv, "hbf:stV", long_options, (int *)0)) != -1)
 #else /* HAVE_GETOPT_LONG */
-  while ((opt=getopt(argc, argv, "hbf:sV")) != -1)
+  while ((opt=getopt(argc, argv, "hbf:stV")) != -1)
 #endif /* HAVE_GETOPT_LONG */
   {
     switch((char)opt) {
@@ -209,6 +212,9 @@ int main_parse_args(int argc, char **argv)
       return 1;
     case 's':
       stay_foreground = 1;
+      break;
+    case 't':
+      start_command = CMD_TEST_CONFIG;
       break;
     case 'V':
       fprintf(stderr,"%s build %s (%s)\n",
@@ -274,6 +280,11 @@ int main_parse_args(int argc, char **argv)
         optindex++;
         continue;
       }
+      if (!strcmp(argv[optindex],"-t")) {
+        start_command = CMD_TEST_CONFIG;
+        optindex++;
+        continue;
+      }
       break;
     }
   }
@@ -313,10 +324,13 @@ int main(int argc, char **argv)
   if (argc > 1) {
     ret = main_parse_args(argc,argv);
     if (ret) {
+      out_err(LEVEL_CRITICAL,"Error while parsing args, aborting\n");
       return 0;
     }
-#ifdef WIN32
+    config_files[0] = configfile_name;
+
     switch (start_command) {
+#ifdef WIN32
       case CMD_SRV_UNREGISTER:
         nt_service_unregister();
         exit (0);
@@ -326,8 +340,40 @@ int main(int argc, char **argv)
       case CMD_SRV_STOP:
         nt_service_stop();
         exit (0);
-    }
 #endif
+      case CMD_TEST_CONFIG:
+        {
+          const char * test_config = NULL;
+          /* try new config file format first */
+          cf = config_new();
+          for (i=0; config_files[i]; i++) {
+            if (config_files[i][0]!='\0') { test_config = config_files[i]; break; }
+          }
+          if (test_config == NULL) {
+            out_err(LEVEL_CRITICAL,"Could not find ANY config file !\n");
+            out_err(LEVEL_CRITICAL,"Try restarting with command -f <config>\n");
+            exit (1);
+          }
+          out_err(LEVEL_NORMAL,"Testing configuration file %s\n",test_config);
+          ret = config_load_from_file (cf, test_config, 0);
+          if (!ret) {
+            int err;
+
+            out_err(LEVEL_FLOOD,"config: NEW format found\n");
+
+            config = cfg_store(cf,&err);
+            if (config) {
+              out_err(LEVEL_NORMAL,"*** Configuration test OK ***\n");
+              exit (0);
+            }
+          }
+          out_err(LEVEL_CRITICAL,"ERROR: could NOT load config file %s\n",test_config);
+          config_free(cf);
+        }
+        exit (-1);
+      default:
+        break;
+    }
   }
 
   if (!stay_foreground) {
@@ -362,7 +408,6 @@ int main(int argc, char **argv)
 
   /* config file */
   config = NULL;
-  config_files[0] = configfile_name;
 
   for (i=0; config_files[i]; i++)
   {
@@ -421,6 +466,8 @@ int main(int argc, char **argv)
       nt_service_stop();
       exit (0);
 #endif
+    default:
+      break;
   }
 
 
