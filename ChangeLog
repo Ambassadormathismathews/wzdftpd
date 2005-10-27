@@ -1,3 +1,7 @@
+2005-10-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: permissions not sorted on keyword search (thanks to dindinx)
+
 2005-10-24  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added support for sections in new config format
