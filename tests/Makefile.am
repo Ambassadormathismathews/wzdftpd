@@ -9,6 +9,7 @@ test_programs = \
 	test_wzd_configfile \
 	test_wzd_cookies \
 	test_wzd_crc32 \
+	test_wzd_crontab \
 	test_wzd_ip \
 	test_wzd_ratio \
 	test_wzd_section \
