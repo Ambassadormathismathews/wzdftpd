@@ -39,8 +39,8 @@ struct wzd_cronjob_t {
 
 
 int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
-    char * minutes, char * hours, char * day_of_month,
-    char * month, char * day_of_week);
+    const char * minutes, const char * hours, const char * day_of_month,
+    const char * month, const char * day_of_week);
 
 void cronjob_free(wzd_cronjob_t ** crontab);
 

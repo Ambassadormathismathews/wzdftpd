@@ -74,8 +74,8 @@ static int _crontab_insert_sorted(wzd_cronjob_t * job, wzd_cronjob_t ** crontab)
 }
 
 static time_t cronjob_find_next_exec_date(time_t start,
-    char * minutes, char * hours, char * day_of_month,
-    char * month, char * day_of_week)
+    const char * minutes, const char * hours, const char * day_of_month,
+    const char * month, const char * day_of_week)
 {
   time_t t = start;
   struct tm * ltm;
@@ -179,8 +179,8 @@ static time_t cronjob_find_next_exec_date(time_t start,
 }
 
 int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
-    char * minutes, char * hours, char * day_of_month,
-    char * month, char * day_of_week)
+    const char * minutes, const char * hours, const char * day_of_month,
+    const char * month, const char * day_of_week)
 {
   wzd_cronjob_t *new;
   time_t now;
