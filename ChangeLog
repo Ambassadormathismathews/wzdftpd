@@ -1,3 +1,7 @@
+2005-10-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: cookie %spacefree not always working
+
 2005-10-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: permissions not sorted on keyword search (thanks to dindinx)

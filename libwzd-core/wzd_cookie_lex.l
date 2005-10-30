@@ -1308,7 +1308,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       char unit_blocks, unit_free;
       int ret;
 
-      if (checkpath(".",dev_buffer,context)) {
+      if (checkpath_new(".",dev_buffer,context)) {
         snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
       } else {
         ret = get_device_info(dev_buffer,&l_type, &l_bsize, &l_blocks, &l_free);
@@ -1330,7 +1330,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       char unit_blocks, unit_free;
       int ret;
 
-      if (checkpath(".",dev_buffer,context)) {
+      if (checkpath_new(".",dev_buffer,context)) {
         snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
       } else {
         ret = get_device_info(dev_buffer,&l_type, &l_bsize, &l_blocks, &l_free);
@@ -1633,7 +1633,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         if ( me && 
           ((user && strcmp(me->username,user->username)==0) ||
           (me->flags && strchr(me->flags,FLAG_SEE_HOME))) ) {
-          if (checkpath(context->currentpath,dev_buffer,context)) {
+          if (checkpath_new(context->currentpath,dev_buffer,context)) {
             snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
           } else {
             strncpy(internalbuffer,dev_buffer,IBUFSIZE);
