@@ -90,6 +90,7 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_perm.h"
+#include "wzd_section.h"
 #include "wzd_site.h"
 #include "wzd_site_group.h"
 #include "wzd_site_user.h"
