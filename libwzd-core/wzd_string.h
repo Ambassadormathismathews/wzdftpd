@@ -63,7 +63,7 @@ wzd_string_t * str_dup(const wzd_string_t *src);
  */
 wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src);
 
-/** \brief append 'tail' to string pointed to by str
+/** \brief append \a tail to string pointed to by \a str
  */
 wzd_string_t * str_append(wzd_string_t * str, const char *tail);
 

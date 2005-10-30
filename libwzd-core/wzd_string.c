@@ -197,8 +197,7 @@ wzd_string_t * str_copy(wzd_string_t *dst, const wzd_string_t *src)
   return dst;
 }
 
-/* str_append
- * append 'tail' to string pointed to by str
+/** \brief append \a tail to string pointed to by \a str
  */
 wzd_string_t * str_append(wzd_string_t * str, const char *tail)
 {
@@ -211,9 +210,8 @@ wzd_string_t * str_append(wzd_string_t * str, const char *tail)
 
   _str_set_min_size(str,str->length + length + 1);
   if (str->buffer) {
-    memcpy(str->buffer + str->length, tail, length);
+    strlcat(str->buffer,tail,str->length+length+1);
     str->length += length;
-    str->buffer[str->length] = '\0';
   }
 
   return str;
@@ -247,7 +245,9 @@ wzd_string_t * str_prepend(wzd_string_t * str, const char *head)
 
   length = strlen(head);
 
-  buf = wzd_malloc(str->length + length + 1);
+  if (length + str->length >= str->allocated)
+    str->allocated = length + str->length + 1;
+  buf = wzd_malloc(str->allocated);
   wzd_strncpy(buf, head, length);
   if (str->buffer) {
     memcpy(buf + length, str->buffer, str->length);
