@@ -534,6 +534,8 @@ typedef struct {
 
   struct CHTBL * htab;
   struct _wzd_configfile_t * cfg_file;
+
+  struct wzd_cronjob_t * crontab;
 } wzd_config_t;
 
 WZDIMPORT extern wzd_config_t *	mainConfig;

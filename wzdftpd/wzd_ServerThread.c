@@ -122,12 +122,6 @@ typedef struct {
   wzd_context_t * context;
 } wzd_ident_context_t;
 
-/************ VARS *****************/
-wzd_cronjob_t * crontab;
-
-/*time_t server_start;*/
-
-
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
@@ -1164,13 +1158,13 @@ void serverMainThreadProc(void *arg)
 
 
   /********** set up crontab ********/
-  cronjob_add(&crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
+  cronjob_add(&mainConfig->crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
       "*","*","*","*");
-  cronjob_add(&crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,
+  cronjob_add(&mainConfig->crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,
       "*","*","*","*");
 #ifdef HAVE_GNUTLS
   /* we will regenerate DH parameters each day at 2h35 am */
-  if (cronjob_add(&crontab, tls_dh_params_regenerate, "fn:tls_dh_params_regenerate",
+  if (cronjob_add(&mainConfig->crontab, tls_dh_params_regenerate, "fn:tls_dh_params_regenerate",
         "35","2","*","*","*"))
     out_log(LEVEL_HIGH,"TLS: error adding cron job _dh_params_regenerate\n");
 #endif
@@ -1277,7 +1271,7 @@ void serverMainThreadProc(void *arg)
     }
 
     /* check cron jobs */
-    cronjob_run(&crontab);
+    cronjob_run(&mainConfig->crontab);
 
   } /* while (!serverstop) */
 
@@ -1388,7 +1382,7 @@ void serverMainThreadExit(int retcode)
   hook_free_protocols();
   module_free(&mainConfig->module);
   backend_close(mainConfig->backend.name);
-  cronjob_free(&crontab);
+  cronjob_free(&mainConfig->crontab);
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
   free_messages();

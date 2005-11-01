@@ -137,8 +137,6 @@ int include_stack_ptr=0;
 
 wzd_config_t tempConfig;
 
-extern wzd_cronjob_t * crontab;
-
 %}
 
 DIGIT	[0-9]
@@ -579,7 +577,7 @@ int cfg_read_cronjob(void)
   while (*end && (*end==' ' || *end=='\t')) end++;
 
 /*  return cronjob_add(&crontab,NULL,end,l);*/
-  return cronjob_add(&crontab,NULL,end,min,hour,day,month,day_of_week);
+  return cronjob_add(&tempConfig.crontab,NULL,end,min,hour,day,month,day_of_week);
 }
 
 /* CSCRIPT (string)

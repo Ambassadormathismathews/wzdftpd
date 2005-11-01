@@ -184,17 +184,6 @@ sitefile_users	= @e_sysconfdir@/file_users.txt
 sitefile_who	= @e_sysconfdir@/file_who.txt
 sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 
-##### CRON JOBS
-# cronjobs are commands to execute periodically
-# syntax: cronjob = minute hour day_of_month month day_of_week command
-# each field is an integer, of *
-# syntax is similar to *nix 'crontab' command (man 5 crontab), except
-#  ranges are not supported (for now)
-# command should be an absolute path (with args if needed)
-# NOTE: if command produce output, it will be logged with level LEVEL_INFO
-# the following command will be run the 2 of each month, at 05:00 am
-#cronjob = 5 * 2 * * /bin/cleanup.sh
-
 ##### CUSTOM MESSAGES
 # You can modify custom ftp replies here
 # Define message like that if on one line:
@@ -311,4 +300,16 @@ backend_param_plaintext = @e_sysconfdir@/users
 # order *IS* important (first matching section is taken)
 #   that means the more generic section should be the last
 ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
+
+[cron]
+# cronjobs are commands to execute periodically
+# syntax: name = minute hour day_of_month month day_of_week command
+# the name is ignored, but must be unique
+# each field is an integer, of *
+# syntax is similar to *nix 'crontab' command (man 5 crontab), except
+#  ranges are not supported (for now)
+# command should be an absolute path (with args if needed)
+# NOTE: if command produce output, it will be logged with level LEVEL_INFO
+# the following command will be run the 2 of each month, at 05:00 am
+#cron1 = 5 * 2 * * /bin/cleanup.sh
 

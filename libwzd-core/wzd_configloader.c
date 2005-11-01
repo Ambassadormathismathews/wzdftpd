@@ -49,6 +49,7 @@
 #include "wzd_utf8.h"
 #include "wzd_configfile.h"
 #include "wzd_configloader.h"
+#include "wzd_crontab.h"
 
 #include "wzd_misc.h"
 #include "wzd_mod.h"
@@ -59,6 +60,7 @@
 #endif /* WZD_USE_PCH */
 
 static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config);
@@ -211,6 +213,8 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   _cfg_parse_commands(file, cfg);
   _cfg_parse_modules(file, cfg);
 
+  _cfg_parse_crontab(file, cfg);
+
   return cfg;
 }
 
@@ -274,6 +278,50 @@ static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * co
     }
 
     str_deallocate(permission);
+  }
+
+  str_deallocate_array(array);
+}
+
+static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * cron_name;
+  wzd_string_t * cron_value;
+  wzd_string_t * min, * hour, * day, * month, * day_of_week;
+  
+  array = config_get_keys(file,"cron",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    cron_name = (char*)str_tochar(array[i]);
+    if (!cron_name) continue;
+    cron_value = config_get_string(file, "cron", cron_name, NULL);
+
+    min = str_tok(cron_value," \t");
+    hour = str_tok(cron_value," \t");
+    day = str_tok(cron_value," \t");
+    month = str_tok(cron_value," \t");
+    day_of_week = str_tok(cron_value," \t");
+
+    if (min && hour && day && month && day_of_week) {
+
+      if (cronjob_add(&config->crontab,NULL,str_tochar(cron_value),
+            str_tochar(min),str_tochar(hour),str_tochar(day),
+            str_tochar(month),str_tochar(day_of_week))) {
+        out_log(LEVEL_HIGH,"ERROR while adding cron entry [cron] : %s\n",cron_name);
+      } else {
+        out_log(LEVEL_INFO,"Added cron entry : %s\n",cron_name);
+      }
+
+    } else {
+      out_log(LEVEL_HIGH,"ERROR Invalid cron entry found at entry [cron] : %s\n",cron_name);
+    }
+    str_deallocate(min); str_deallocate(hour); str_deallocate(day);
+    str_deallocate(month); str_deallocate(day_of_week);
+    str_deallocate(cron_value);
   }
 
   str_deallocate_array(array);

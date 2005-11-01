@@ -558,7 +558,6 @@ static void save_sitefile (FILE *file)
 static void save_cronjobs (FILE *file)
 {
   wzd_cronjob_t * current;
-  extern wzd_cronjob_t * crontab;
   
   if (file==NULL) return;
   fprintf( file, "##### CRON JOBS\n");
@@ -572,7 +571,7 @@ static void save_cronjobs (FILE *file)
   fprintf( file, "# the following command will be run the 2 of each month, at 05:00 am\n");
   fprintf( file, "#cronjob = 5 * 2 * * /bin/cleanup.sh\n");
   
-  current = crontab;
+  current = mainConfig->crontab;
   while (current) {
     if ( current->hook && ! current->hook->hook ) {
       fprintf( file, "cronjob = %s %s %s %s %s %s\n",
