@@ -94,10 +94,10 @@ AC_CHECK_HEADERS([execinfo.h utime.h])
 AC_CHECK_FUNCS([backtrace])
 
 AC_CHECK_FUNCS([gethostbyaddr gethostbyname gettimeofday inet_ntoa regcomp select socket statfs])
-AC_CHECK_FUNCS([crypt strlcat strptime strtok_r strtoull getopt_long inet_ntop inet_pton statvfs])
+AC_CHECK_FUNCS([crypt strlcat strndup strptime strtok_r strtoull getopt_long inet_ntop inet_pton statvfs])
 AC_CHECK_FUNCS(getaddrinfo getnameinfo)
 
-AC_CHECK_FUNCS([getcwd memmove memset mkdir realloc rmdir strcasecmp strchr strdup strndup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
+AC_CHECK_FUNCS([getcwd memmove memset mkdir realloc rmdir strcasecmp strchr strdup strerror strncasecmp strpbrk strrchr strtol strtoul utime],,exit 1)
 
 AC_CHECK_HEADERS([sys/param.h sys/stafs.h sys/statvfs.h sys/vfs.h])
 

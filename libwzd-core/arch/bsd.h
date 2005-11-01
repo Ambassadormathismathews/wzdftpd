@@ -39,4 +39,11 @@
 
 #endif
 
+/* netbsd and the c99 .. not for now ! */
+#ifdef __NetBSD__
+#ifndef INT_MAX
+# define INT_MAX 2147483647
+#endif
+#endif
+
 #endif /* __ARCH_BSD__ */

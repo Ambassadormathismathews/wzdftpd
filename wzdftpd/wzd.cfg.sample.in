@@ -68,7 +68,7 @@ max_threads = 32
 # backend name SHOULD NEVER contains spaces !
 #backend = plaintext > 123
 backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 124
-backend_param_plaintext = @e_sysconfdir@/users
+#backend_param_plaintext = @e_sysconfdir@/users
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
 #backend_param_mysql = login:password@host:base
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
@@ -289,7 +289,7 @@ site_vfsdel = +O
 @e_datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
 
 [plaintext]
-backend_param_plaintext = @e_sysconfdir@/users
+param = @e_sysconfdir@/users
 
 [sections]
 # sections are used to define local server properties
