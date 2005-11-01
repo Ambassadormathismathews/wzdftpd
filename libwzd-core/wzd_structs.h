@@ -474,6 +474,7 @@ typedef struct wzd_backend_t wzd_backend_t;
 #define CFG_OPT_DENY_ACCESS_FILES_UPLOADED  0x00000001
 #define CFG_OPT_HIDE_DOTTED_FILES           0x00000002
 #define CFG_OPT_USE_SYSLOG                  0x00000010
+#define CFG_OPT_DISABLE_TLS                 0x00000100
 #define CFG_OPT_UTF8_CAPABLE                0x00001000
 
 

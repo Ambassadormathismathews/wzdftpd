@@ -1,6 +1,7 @@
 2005-11-01  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: added support for crontab in new config format
+	* feature: added option to disable TLS (even if compiled)
 
 2005-10-30  Pierre Chifflier  <pollux@wzdftpd.net>
 

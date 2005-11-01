@@ -3557,6 +3557,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = send_message_with_args(421,context,"Invalid token in AUTH command\n");
         return 1;
       }
+      if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+        ret = send_message_with_args(502,context,"TLS Disabled by config");
+        break;
+  }
       if (strcasecmp(token,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
         context->ssl.data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
       else

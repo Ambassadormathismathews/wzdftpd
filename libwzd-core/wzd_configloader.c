@@ -141,6 +141,15 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   cfg_init(cfg);
   cfg->cfg_file = file;
 
+  /* DISABLE_TLS */
+  str = config_get_string(file, "GLOBAL", "disable_tls", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_TLS);
+    }
+    str_deallocate(str);
+  }
+
   /* LOGFILE */
   str = config_get_string(file, "GLOBAL", "logfile", NULL);
   if (str) {

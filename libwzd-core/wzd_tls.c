@@ -51,6 +51,7 @@
 
 #include "wzd_tls.h"
 
+#include "wzd_configfile.h"
 #include "wzd_messages.h"
 
 #include "wzd_debug.h"
@@ -172,6 +173,11 @@ int tls_init(void)
   char * tls_ca_file=NULL, * tls_ca_path=NULL;
   wzd_string_t * str;
 
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    out_log(LEVEL_INFO,"TLS Disabled by config\n");
+    return 0;
+  }
+
   if (mainConfig->htab) {
     if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate)) {
       out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
@@ -287,6 +293,10 @@ int tls_init(void)
 
 int tls_exit(void)
 {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    return 0;
+  }
+
   SSL_CTX_free(mainConfig->tls_ctx);
   return 0;
 }
@@ -694,9 +704,9 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
 int tls_close_data(wzd_context_t * context)
 {
   if (context->ssl.data_ssl) {
+    if (SSL_shutdown(context->ssl.data_ssl)==0)
+      SSL_shutdown(context->ssl.data_ssl);
     SSL_free(context->ssl.data_ssl);
-/*    if (SSL_shutdown(context->ssl.data_ssl)==0)
-      SSL_shutdown(context->ssl.data_ssl);*/
   }
   context->ssl.data_ssl = NULL;
 
@@ -708,12 +718,14 @@ int tls_close_data(wzd_context_t * context)
 int tls_free(wzd_context_t * context)
 {
   if (context->ssl.data_ssl) {
+    if (SSL_shutdown(context->ssl.data_ssl)==0)
+      SSL_shutdown(context->ssl.data_ssl);
     SSL_free(context->ssl.data_ssl);
-/*    if (SSL_shutdown(context->ssl.data_ssl)==0)
-      SSL_shutdown(context->ssl.data_ssl);*/
   }
   context->ssl.data_ssl = NULL;
   if (context->ssl.obj) {
+    if (SSL_shutdown(context->ssl.obj)==0)
+      SSL_shutdown(context->ssl.obj);
     SSL_free(context->ssl.obj);
   }
   context->ssl.obj = NULL;
@@ -806,6 +818,11 @@ int tls_init(void)
   char * tls_ca_file=NULL, * tls_ca_path=NULL;
   wzd_string_t * str;
 
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    out_log(LEVEL_INFO,"TLS Disabled by config\n");
+    return 0;
+  }
+
   if (mainConfig->htab) {
     if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate)) {
       out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
@@ -876,6 +893,10 @@ int tls_init(void)
 
 int tls_exit(void)
 {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    return 0;
+  }
+
   gnutls_certificate_free_credentials(x509_cred);
   gnutls_global_deinit();
 
@@ -1071,6 +1092,10 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 
 int tls_close_data(wzd_context_t * context)
 {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    return 0;
+  }
+
   if (context->tls.data_session) {
     int ret;
 #if 0
@@ -1123,6 +1148,10 @@ int tls_close_data(wzd_context_t * context)
 
 int tls_free(wzd_context_t * context)
 {
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    return 0;
+  }
+
   tls_close_data(context);
   if (context->tls.session) {
     int ret;
