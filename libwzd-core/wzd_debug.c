@@ -81,6 +81,8 @@ int fd_register(int fd, const char *desc, const char *file, unsigned int line, c
 int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function);
 void fd_dump(void);
 
+size_t wzd_strnlen (const char *s, size_t n);
+
 /** init all debug functions */
 void wzd_debug_init(void)
 {

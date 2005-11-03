@@ -40,7 +40,7 @@
 #endif
 
 /* netbsd and the c99 .. not for now ! */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 #ifndef INT_MAX
 # define INT_MAX 2147483647
 #endif
