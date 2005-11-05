@@ -46,8 +46,6 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
-#include <limits.h> /* ULONG_MAX */
-
 #include <pthread.h>
 #endif
 
