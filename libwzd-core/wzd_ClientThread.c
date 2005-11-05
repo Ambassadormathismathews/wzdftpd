@@ -556,7 +556,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
     /* remove trailing / */
 #if 0
     ret = _checkPerm(tmppath,RIGHT_CWD,user); /** \bug checkpath_new already checks for RIGHT_CWD */
-  
+
     if (ret) { /* no access */
       return E_NOPERM;
     }
@@ -2034,9 +2034,9 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
 
   /*
-   * Ignore some checkpath_new errorst for the moment, 
-   * test_path will do this after the predownload hook runs 
-   * in case the hook changes something 
+   * Ignore some checkpath_new errorst for the moment,
+   * test_path will do this after the predownload hook runs
+   * in case the hook changes something
    */
   ret = checkpath_new(param,path,context);
 
@@ -3346,7 +3346,7 @@ int do_help(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   return E_OK;
 }
-  
+
 /*************** do_user_ip **************************/
 
 int do_user_ip(const char *username, wzd_context_t * context)

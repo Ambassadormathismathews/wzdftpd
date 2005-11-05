@@ -133,7 +133,7 @@ int list_rem_next(List *list, ListElmt *element, void **data)
  */
 int list_remove(List *list, ListElmt *element, void **data)
 {
-  ListElmt	* old_elmt, * it;
+  ListElmt	* old_elmt=NULL, * it;
 
   /* checks for empty list */
   if (list_size(list) == 0)

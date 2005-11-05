@@ -77,7 +77,7 @@ int wzd_parse_args(int argc, const char **argv)
   int i;
   int found;
   int option_is_long;
-  const char * optarg;
+  const char * optarg=NULL;
 
   struct option_t {
     char * long_option;

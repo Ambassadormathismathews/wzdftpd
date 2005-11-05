@@ -364,11 +364,11 @@ typedef struct _wzd_param_t {
 
 typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
 
-typedef enum { TLS_SERVER_MODE=0, TLS_CLIENT_MODE } tls_role_t; 
+typedef enum { TLS_SERVER_MODE=0, TLS_CLIENT_MODE } tls_role_t;
 
-typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t; 
+typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t;
 
-typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t; 
+typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t;
 
 typedef enum {
   WZD_INET4=1,

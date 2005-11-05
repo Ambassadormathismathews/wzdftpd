@@ -257,27 +257,22 @@ void out_log(int level,const char *fmt,...)
         strcpy(msg_begin,CLR_BOLD);
         (void)strlcat(msg_begin,CLR_RED,sizeof(msg_begin));
         strcpy(msg_end,CLR_NOCOLOR);
-        prior = LOG_ALERT;
         break;
       case LEVEL_HIGH:
         strcpy(msg_begin,CLR_RED);
         strcpy(msg_end,CLR_NOCOLOR);
-        prior = LOG_CRIT;
         break;
       case LEVEL_NORMAL:
         strcpy(msg_begin,CLR_GREEN);
         strcpy(msg_end,CLR_NOCOLOR);
-        prior = LOG_ERR;
         break;
       case LEVEL_INFO:
         strcpy(msg_begin,CLR_BLUE);
         strcpy(msg_end,CLR_NOCOLOR);
-        prior = LOG_WARNING;
         break;
       case LEVEL_FLOOD:
         strcpy(msg_begin,CLR_CYAN);
         strcpy(msg_end,CLR_NOCOLOR);
-        prior = LOG_INFO;
         break;
       default:
         break;
