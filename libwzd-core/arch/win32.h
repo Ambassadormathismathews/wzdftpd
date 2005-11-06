@@ -69,7 +69,7 @@
 #   define S_ISDIR(mode) (__S_ISTYPE((mode), _S_IFDIR))
 #endif
 #ifndef S_ISDIR
-#   define S_ISDIR(mode) 
+#   define S_ISDIR(mode)
 #endif
 #ifndef S_ISLNK
 #   define S_ISLNK(mode) (0)
@@ -252,30 +252,6 @@ typedef size_t ssize_t;
 #   endif
 #endif
 
-#define DIR_CONTINUE \
-	  { \
-		if (!FindNextFile(dir,&fileData)) \
-		{ \
-		  if (GetLastError() == ERROR_NO_MORE_FILES) \
-		    finished = 1; \
-		} \
-        continue; \
-      }
-
-#define DIRCMP	strcasecmp
-#define DIRNCMP	strncasecmp
-#define DIRNORM(s,l,low) win_normalize(s,l,low)
-
-/** remove trailing / */
-#define REMOVE_TRAILING_SLASH(str) \
-  do { \
-    size_t _length = strlen((str)); \
-    if (_length>1 && (str)[_length-1]=='/') \
-      if (_length != 3) /* root of a logical dir */ \
-        (str)[_length-1] = '\0'; \
-  } while (0)
-
-
 #ifndef chmod
 #  define chmod	_chmod
 #endif
@@ -319,6 +295,28 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 
 #endif /* _MSC_VER */
 
+#define DIR_CONTINUE \
+	  { \
+		if (!FindNextFile(dir,&fileData)) \
+		{ \
+		  if (GetLastError() == ERROR_NO_MORE_FILES) \
+		    finished = 1; \
+		} \
+        continue; \
+      }
+
+#define DIRCMP	strcasecmp
+#define DIRNCMP	strncasecmp
+#define DIRNORM(s,l,low) win_normalize(s,l,low)
+
+/** remove trailing / */
+#define REMOVE_TRAILING_SLASH(str) \
+  do { \
+    size_t _length = strlen((str)); \
+    if (_length>1 && (str)[_length-1]=='/') \
+      if (_length != 3) /* root of a logical dir */ \
+        (str)[_length-1] = '\0'; \
+  } while (0)
 
 
 #endif /* WIN32 */

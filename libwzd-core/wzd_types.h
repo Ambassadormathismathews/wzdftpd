@@ -74,6 +74,10 @@ typedef signed fd_t;
 
 #include <sys/time.h> /* struct timeval */
 
+#endif /* _MSC_VER */
+
+#ifndef WIN32
+
 #define DIR_CONTINUE continue;
 
 #define DIRCMP	strcmp
@@ -89,7 +93,7 @@ typedef signed fd_t;
       (str)[_length-1] = '\0'; \
   } while(0)
 
-#endif /* _MSC_VER */
+#endif /* WIN32 */
 
 
 #ifdef IPV6_SUPPORT

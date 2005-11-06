@@ -29,7 +29,7 @@
 #include <string.h>
 #include <ctype.h> /* isdigit */
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <direct.h>
 #include <io.h>
@@ -284,7 +284,7 @@ int sfv_create(const char * sfv_file)
   int i;
   unsigned long crc;
   struct stat s;
-#ifndef _MSC_VER
+#ifndef WIN32
   DIR *dir;
   struct dirent *entr;
 #else
@@ -308,14 +308,14 @@ int sfv_create(const char * sfv_file)
   *(++ptr) = '\0';
 
   strcpy(filename,directory);
-#ifndef _MSC_VER
+#ifndef WIN32
   if ((dir=opendir(directory))==NULL) return -1;
 #else
   _snprintf(dirfilter,2048,"%s/*",directory);
   if ((dir = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return -1;
 #endif
 
-#ifndef _MSC_VER
+#ifndef WIN32
   while ((entr=readdir(dir))!=NULL) {
     dir_filename = entr->d_name;
 #else
@@ -468,7 +468,7 @@ out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,c
  */
 int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 {
-#ifndef _MSC_VER
+#ifndef WIN32
   DIR *dir;
   struct dirent *entr;
 #else
@@ -493,7 +493,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
   strncpy(stripped_filename,ptr+1,1023);
   if (strlen(stripped_filename)<=0) return -1;
 
-#ifndef _MSC_VER
+#ifndef WIN32
   if ( (dir=opendir(sfv_dir)) == NULL ) return -1;
 #else
   _snprintf(dirfilter,2048,"%s/*",sfv_dir);
@@ -502,7 +502,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 
   sfv_init(sfv);
 
-#ifndef _MSC_VER
+#ifndef WIN32
   while ( (entr=readdir(dir)) != NULL ) {
     dir_filename = entr->d_name;
 #else
@@ -527,7 +527,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 	sfv_name[i] = *ptr;
 	i++;
 	ptr++;
-      }	
+      }
       sfv_name[i++] = '/';
       ptr = dir_filename;
       while (*ptr) {
@@ -535,7 +535,7 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 	sfv_name[i] = *ptr;
 	i++;
 	ptr++;
-      }	
+      }
       *ptr = '\0';
       sfv_name[i]='\0';
       ret = sfv_read(sfv_name,sfv);
@@ -773,7 +773,7 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 			from = to = reverse = 0;
 			instr++;
 			m = instr;
-			if ( *instr == '-' ) {  
+			if ( *instr == '-' ) {
 				reverse = 1;
 				instr++;
 				}
@@ -785,7 +785,7 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 
 			if ( *instr == '-' ) {
 				instr++;
-				for ( ; isdigit(*instr) ; instr++ ) { 
+				for ( ; isdigit(*instr) ; instr++ ) {
 					to *= 10;
 					to += *instr - 48;
 					}
@@ -817,7 +817,7 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 			from = to = reverse = 0;
 			instr++;
 			m = instr;
-			if ( *instr == '-' ) {  
+			if ( *instr == '-' ) {
 				reverse = 1;
 				instr++;
 				}
@@ -829,7 +829,7 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
 
 			if ( *instr == '-' ) {
 				instr++;
-				for ( ; isdigit(*instr) ; instr++ ) { 
+				for ( ; isdigit(*instr) ; instr++ ) {
 					to *= 10;
 					to += *instr - 48;
 					}
@@ -938,11 +938,11 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
   len = (ptr-filename)+1; /* +1 because we want the / */
   strncpy(dir,filename,len);
   dir[len]='\0';
-  
+
   regcomp( &preg, del_progressmeter, REG_NEWLINE|REG_EXTENDED );
   {
     char buffer[512];
-#ifndef _MSC_VER
+#ifndef WIN32
     DIR *d;
     struct dirent *entr;
 #else
@@ -955,13 +955,13 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
     float percent;
 
     /* Removes previous progressmeter */
-#ifndef _MSC_VER
+#ifndef WIN32
     if ( (d=opendir(dir))==NULL ) return;
 #else
     snprintf(dirfilter,2048,"%s/*",dir);
     if ((d = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return;
 #endif
-#ifndef _MSC_VER
+#ifndef WIN32
     while ((entr=readdir(d))!=NULL) {
       dir_filename = entr->d_name;
 #else
@@ -971,7 +971,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 #endif
       if (dir_filename[0]=='.')
 	  {
-#ifdef _MSC_VER
+#ifdef WIN32
         if (!FindNextFile(d,&fileData))
 		{
 	      if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -985,7 +985,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	/* security check */
 	if (len+strlen(dir_filename)>510)
 	  {
-#ifdef _MSC_VER
+#ifdef WIN32
         if (!FindNextFile(d,&fileData))
 		{
 	      if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -998,7 +998,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	rmdir (dir);
 	dir[len]='\0';
       }
-#ifdef _MSC_VER
+#ifdef WIN32
     if (!FindNextFile(d,&fileData))
 	{
       if (GetLastError() == ERROR_NO_MORE_FILES)
@@ -1095,7 +1095,7 @@ float _sfv_get_release_percent(const char *dir, wzd_sfv_file sfv)
   struct stat s;
 
   if (sfv.sfv_list == NULL) return 0;
-  
+
   strncpy(buffer,dir,511);
   len = strlen(buffer);
   if (buffer[len-1] != '/') { buffer[len-1]='/'; len++; }
@@ -1390,7 +1390,7 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
        ret = send_message_with_args(501,context,"Critical error occured");
     }
   }
-  
+
   sfv_free(&sfv);
 }
 

@@ -37,7 +37,7 @@
 
 #include <stdio.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <direct.h>
 #include <io.h>
@@ -57,6 +57,11 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#ifdef __MINGW32__
+# define _INTPTR_T_DEFINED
+# define _UINTPTR_T_DEFINED
+# undef fileno
+#endif
 
 #include <EXTERN.h>
 #include <perl.h>
@@ -230,7 +235,7 @@ static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * c
     if (!args || strlen(args)==0) { do_perl_help(context); return EVENT_HANDLED; }
 
     if (_perl_set_slave(context)) return EVENT_ERROR;
-      
+
     /* send reply header */
     send_message_raw("200-\r\n",context);
 
@@ -267,7 +272,7 @@ static int perl_hook_logout(unsigned long event_id, wzd_context_t * context, con
       perl_free(_slaves[i].interp);
       _slaves[i].context = NULL;
       _slaves[i].is_allocated = 1;
-      
+
       break;
     }
   }
@@ -358,7 +363,7 @@ static PerlInterpreter * perl_init(void)
 "  return 0;\n"
 "}\n"
   };
-  
+
   char * perl_args[] = { "", "-e", "0", "-w" };
   PerlInterpreter * interp = NULL;
 
@@ -490,7 +495,7 @@ static int _perl_set_slave(void *context)
       _slaves[i].interp = perl_clone(my_perl,0);
 #endif
       /* see perlapi (1) for more info, this flag is needed for win32 */
-      
+
       PERL_SET_CONTEXT(_slaves[i].interp);
 #else /* USE_ITHREADS */
       _slaves[i].is_allocated = 1;
@@ -1252,10 +1257,9 @@ static XS(XS_wzd_vfs)
   }
   else
     ret = 1;
-  
+
   if (!ret)
     XSRETURN_YES;
   else
     XSRETURN_NO;
 }
-

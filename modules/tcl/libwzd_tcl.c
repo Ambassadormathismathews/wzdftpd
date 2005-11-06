@@ -41,7 +41,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _MSC_VER
+#ifdef WIN32
 #include <winsock2.h>
 #include <direct.h>
 #include <io.h>
