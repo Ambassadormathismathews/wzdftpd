@@ -4,7 +4,7 @@
 
 '********'
 - add options to
-    - disable TLS
+    - disable TLS / Ok
     - disable colors when logging
     - disable timestamps
     - set log level in command args

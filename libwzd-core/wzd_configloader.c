@@ -192,6 +192,24 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     cfg->port = ul;
   }
 
+  /* TLS MODE */
+  str = config_get_string(file, "GLOBAL", "tls_mode", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"explicit")==0) {
+      cfg->tls_type = TLS_EXPLICIT;
+    }
+    else if (strcasecmp(str_tochar(str),"explicit_strict")==0) {
+      cfg->tls_type = TLS_STRICT_EXPLICIT;
+    }
+    else if (strcasecmp(str_tochar(str),"implicit")==0) {
+      cfg->tls_type = TLS_IMPLICIT;
+    }
+    else {
+      out_err(LEVEL_CRITICAL,"Invalid TLS mode !\n");
+    }
+    str_deallocate(str);
+  }
+
   /* BACKEND */
   str = config_get_string(file, "GLOBAL", "backend", NULL);
   if (str) {
