@@ -42,6 +42,11 @@
 
 #include <ctype.h> /* isspace */
 
+#ifndef WIN32
+#include <grp.h>	/* getgrnam() */
+#include <pwd.h>	/* getpwnam() */
+#endif
+
 #include "wzd_structs.h"
 #include "wzd_log.h"
 
@@ -51,9 +56,11 @@
 #include "wzd_configloader.h"
 #include "wzd_crontab.h"
 
+#include "wzd_libmain.h"
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_section.h"
+#include "wzd_socket.h"
 #include "wzd_site.h"
 
 #include "wzd_debug.h"
@@ -134,6 +141,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 {
   wzd_config_t * cfg;
   wzd_string_t * str, * ptr;
+  char * p;
   unsigned long ul;
   int ret;
   int i;
@@ -143,6 +151,26 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   cfg_init(cfg);
   cfg->cfg_file = file;
+
+  /* DATA_BUFFER_LENGTH */
+  str = config_get_string(file, "GLOBAL", "data_buffer_length", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->data_buffer_length = ul;
+    else
+      out_log(LEVEL_HIGH,"ERROR invalid value for data_buffer_length\n");
+    str_deallocate(str);
+  }
+
+  /* DENY_ACCESS_FILES_UPLOADED */
+  str = config_get_string(file, "GLOBAL", "deny_access_files_uploaded", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
+    }
+    str_deallocate(str);
+  }
 
   /* DIR_MESSAGE */
   str = config_get_string(file, "GLOBAL", "dir_message", NULL);
@@ -167,6 +195,17 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     str_deallocate(str);
   }
 
+  /* HIDE_DOTTED_FILES */
+  str = config_get_string(file, "GLOBAL", "hide_dotted_files", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_HIDE_DOTTED_FILES);
+    }
+    str_deallocate(str);
+  }
+
+  /* IP XXX to be implemented */
+
   /* LOGFILE */
   str = config_get_string(file, "GLOBAL", "logfile", NULL);
   if (str) {
@@ -190,6 +229,67 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     cfg->loglevel = i;
   }
 
+  /* MAX_DL_SPEED */
+  str = config_get_string(file, "GLOBAL", "max_dl_speed", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->global_dl_limiter.maxspeed = ul;
+    str_deallocate(str);
+  }
+
+  /* MAX_THREADS */
+  str = config_get_string(file, "GLOBAL", "max_threads", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0') {
+      if (ul > 1 && ul < 2000) /** XXX hardlimit */
+        cfg->max_threads = ul;
+      else
+        out_log(LEVEL_HIGH,"ERROR max_threads must be between 1 and 2000\n");
+    }
+    str_deallocate(str);
+  }
+
+  /* MAX_UL_SPEED */
+  str = config_get_string(file, "GLOBAL", "max_ul_speed", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->global_ul_limiter.maxspeed = ul;
+    str_deallocate(str);
+  }
+
+  /* PASV_IP */
+  str = config_get_string(file, "GLOBAL", "pasv_ip", NULL);
+  if (str) {
+    char host_ip[64];
+    if (!socket_getipbyname(str_tochar(str), host_ip, sizeof(host_ip))) {
+      memcpy(cfg->pasv_ip,host_ip,4); /** \bug pasv_ip does not support IPv6 ! */
+    } else {
+      out_log(LEVEL_HIGH,"ERROR Could NOT resolve ip %s (pasv_ip)\n",str_tochar(str));
+    }
+    str_deallocate(str);
+  }
+
+  /* PASV_LOW_RANGE */
+  str = config_get_string(file, "GLOBAL", "pasv_low_range", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->pasv_low_range = ul;
+    str_deallocate(str);
+  }
+
+  /* PASV_HIGH_RANGE */
+  str = config_get_string(file, "GLOBAL", "pasv_high_range", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->pasv_high_range = ul;
+    str_deallocate(str);
+  }
+
   /* PID_FILE */
   str = config_get_string(file, "GLOBAL", "pid_file", NULL);
   if (str) {
@@ -207,6 +307,51 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
       return NULL;
     }
     cfg->port = ul;
+    str_deallocate(str);
+  }
+
+  /* SERVER_GID */
+  str = config_get_string(file, "GLOBAL", "server_gid", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0') { /* numeric id */
+      setlib_server_gid(ul);
+    }
+#ifndef WIN32
+    else { /* not a number, try a group name */
+      struct group * g;
+      g = getgrnam(str_tochar(str));
+      endgrent();
+      if (g) {
+        setlib_server_gid(g->gr_gid);
+      } else {
+        out_err(LEVEL_HIGH,"server_gid: could not find gid for group %s\n",str_tochar(str));
+      }
+    }
+#endif
+    str_deallocate(str);
+  }
+
+  /* SERVER_UID */
+  str = config_get_string(file, "GLOBAL", "server_uid", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0') { /* numeric id */
+      setlib_server_uid(ul);
+    }
+#ifndef WIN32
+    else { /* not a number, try a user name */
+      struct passwd * p;
+      p = getpwnam(str_tochar(str));
+      endpwent();
+      if (p) {
+        setlib_server_uid(p->pw_gid);
+      } else {
+        out_err(LEVEL_HIGH,"server_uid: could not find uid for user %s\n",str_tochar(str));
+      }
+    }
+#endif
+    str_deallocate(str);
   }
 
   /* TLS MODE */
@@ -224,6 +369,24 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     else {
       out_err(LEVEL_CRITICAL,"Invalid TLS mode !\n");
     }
+    str_deallocate(str);
+  }
+
+  /* UMASK */
+  str = config_get_string(file, "GLOBAL", "umask", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,8);
+    if (p && *p == '\0')
+      cfg->umask = ul;
+    else
+      out_log(LEVEL_HIGH,"ERROR invalid value for umask\n");
+    str_deallocate(str);
+  }
+
+  /* XFERLOG */
+  str = config_get_string(file, "GLOBAL", "xferlog", NULL);
+  if (str) {
+    cfg->xferlog_name = strdup(str_tochar(str));
     str_deallocate(str);
   }
 
