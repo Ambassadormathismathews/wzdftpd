@@ -1346,13 +1346,20 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   if (ret)
     return -1;
 
+  /* is a directory ? */
+  {
+    fs_filestat_t s;
+    if (fs_file_stat(filename,&s)) return -1;
+    if (S_ISDIR(s.mode)) return -1;
+  }
+
 #ifdef WIN32
   mode |= _O_BINARY;
 #endif
 
   fd = fs_open(filename,mode,0666);
   if (fd == -1) {
-    fprintf(stderr,"Can't open %s,errno %d : %s\n",filename,errno,strerror(errno));
+    out_log(LEVEL_INFO,"Can't open %s,errno %d : %s\n",filename,errno,strerror(errno));
     return -1;
   }
 
