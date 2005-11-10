@@ -552,7 +552,7 @@ int module_check(const char *filename)
     typedef void (*myfct)(void);
     myfct f;
     f = (myfct)dlsym(handle,DL_PREFIX "moduletest");
-    fprintf(stderr,"main prog mainConfig: %lx\n",(unsigned long)getlib_mainConfig()->logfile);
+    out_err(LEVEL_HIGH,"main prog mainConfig: %lx\n",(unsigned long)getlib_mainConfig()->logfile);
     if (f)
       f();
     else
@@ -792,11 +792,12 @@ void _cleanup_shell_command(char * buffer, size_t length)
 
   for (i=0,j=0; buffer[i]!='\0' && i<length && j<length; i++,j++) {
     if (strchr(specials,buffer[i]) != NULL) {
-      if (j+1 >= length) { buf2[j]='\0'; break; }
+      if (j+1 >= length) break;
       buf2[j++] = '\\';
     }
     buf2[j] = buffer[i];
   }
+  buf2[j] = '\0';
 
   wzd_strncpy(buffer,buf2,length);
   wzd_free(buf2);
