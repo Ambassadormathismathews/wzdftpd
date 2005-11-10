@@ -313,3 +313,13 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 # the following command will be run the 2 of each month, at 05:00 am
 #cron1 = 5 * 2 * * /bin/cleanup.sh
 
+# order *IS* important (the name of the event is ignored)
+[events]
+#event1 = MKDIR /bin/df
+
+# Here you can define external site commands.
+[custom_commands]
+#my_free = ./free.sh
+# this defines the SITE RULES command, which prints the following file
+site_rules = !@e_sysconfdir@/file_rules.txt
+

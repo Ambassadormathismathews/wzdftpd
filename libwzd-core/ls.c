@@ -502,28 +502,16 @@ static int guess_star(char *str,char *mask) {
   /* pump from here !!! */
   unsigned int i=0;
 
-#ifdef DEBUG
-  /*  fprintf(stderr,"Entered guess_star(%s,%s).\n",str,mask);*/
-#endif
-
   if (mask[0]==0) return 1;
 
   for (;i<strlen(str);i++)
     if (list_match(str+i,mask)) return 1;
-
-#ifdef DEBUG
-  /*  fprintf(stderr,"Left guess_star().\n");*/
-#endif
 
   return 0;
 }
 
 static int list_match(char *str,char *mask) {
   int i=0;
-
-#ifdef DEBUG
-  /*  fprintf(stderr,"Entered list_match(%s,%s).\n",str,mask);*/
-#endif
 
   /* character per character matching */
   do {
@@ -538,31 +526,9 @@ static int list_match(char *str,char *mask) {
 
   } while (mask[++i]!=0);
 
-#ifdef DEBUG
-  /*  fprintf(stderr,"Left list_match().\n");*/
-#endif
-
   if (str[i]==0) return 1;
   else return 0;
 }
-
-#ifdef TEST
-int cb(char *str) {
-  OUT(str);
-  return 1;
-}
-
-int main(int argc,char **argv) {
-  if (argc==3) {
-    list(FORMAT_LONG,argv[1],argv[2],cb);
-    return 0;
-  } else {
-    fprintf(stderr,"Need exactly 2 parameters!\n");
-    fprintf(stderr,"Syntax: ls directory mask\n");
-    return -1;
-  }
-}
-#endif
 
 /* kind of strftime, but not locale-dependant
  * ctime returns a string like:

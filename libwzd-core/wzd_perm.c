@@ -45,6 +45,7 @@
 #include "wzd_structs.h"
 
 #include "wzd_perm.h"
+#include "wzd_log.h"
 #include "wzd_misc.h"
 
 #include "wzd_debug.h"
@@ -384,13 +385,13 @@ int perm_add_perm(const char *permname, const char *permline, wzd_command_perm_t
     default:
       /* incorrect format */
 #ifdef DEBUG
-fprintf(stderr,"Incorrect permission format: %s: %s\n",permname,token);
+out_err(LEVEL_HIGH,"Incorrect permission format: %s: %s\n",permname,token);
 #endif
       continue;
     }
     if (negate)
       *(--token)='!';
-    if (token < dyn_buffer) fprintf(stderr,"token < dyn_buffer !! %s:%d\n",__FILE__,__LINE__);
+    if (token < dyn_buffer) out_err(LEVEL_HIGH,"token < dyn_buffer !! %s:%d\n",__FILE__,__LINE__);
     /* add entry */
     perm_entry = perm_find_create_entry(token,command_perm);
     perm_entry->cp = cp;

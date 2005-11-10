@@ -1169,7 +1169,7 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   file_buffer = malloc(filesize+1);
   if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize )
   {
-    fprintf(stderr,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
+    out_err(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
     free(file_buffer);
     wzd_cache_close(fp);
 	send_message_with_args(501,context,"Internal error (see log)");
@@ -2080,7 +2080,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   /* check general site permission */
 #ifdef DEBUG
   if (strlen(str_tochar(command))>255) {
-    fprintf(stderr,"*** WARNING *** permissions name too long > 255 - truncated : '%s'\n",str_tochar(command));
+    out_err(LEVEL_HIGH,"*** WARNING *** permissions name too long > 255 - truncated : '%s'\n",str_tochar(command));
   }
 #endif
 

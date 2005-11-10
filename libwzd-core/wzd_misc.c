@@ -431,7 +431,7 @@ int safe_rename(const char *src, const char *dst)
   ret = rename(src,dst);
   if (ret == -1 && errno == EXDEV)
   {
-    fprintf(stderr,"Cross device move\n");
+    out_err(LEVEL_INFO,"Cross device move\n");
     ret = _int_rename(src,dst);
   }
 
@@ -791,8 +791,8 @@ wzd_mutex_unlock(mutex);
   if (l->maxspeed == 0 || bw_rate <= l->maxspeed) {
     return;
   }
-/*fprintf(stderr,"received: %d\n",l->bytes_transfered);*/
-/*fprintf(stderr,"speed: %d max:%d\n",bw_rate,l->maxspeed);*/
+/*out_err(LEVEL_INFO,"received: %d\n",l->bytes_transfered);*/
+/*out_err(LEVEL_INFO,"speed: %d max:%d\n",bw_rate,l->maxspeed);*/
 /*  rate_ratio = (double)bw_rate / (double)l->maxspeed;*/
 /*  pause_time = (rate_ratio - (double)1)*elapsed;*/
   pause_time = (bw_rate-l->maxspeed) * (elapsed / l->maxspeed);

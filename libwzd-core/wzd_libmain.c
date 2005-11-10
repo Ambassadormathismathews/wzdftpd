@@ -127,7 +127,7 @@ void server_restart(int signum)
   int sock;
   int rebind=0;
 
-  fprintf(stderr,"Sighup received\n");
+  out_err(LEVEL_HIGH,"Sighup received\n");
 
   /* 1- Re-read config file, abort if error */
   config = readConfigFile(mainConfig->config_filename);

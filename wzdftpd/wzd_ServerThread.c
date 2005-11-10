@@ -1296,23 +1296,18 @@ static void free_config(wzd_config_t * config)
 
   if (mainConfig->xferlog_fd >= 0)
     xferlog_close(mainConfig->xferlog_fd);
-  if (mainConfig->xferlog_name)
-    wzd_free(mainConfig->xferlog_name);
-  if (mainConfig->logdir) wzd_free(mainConfig->logdir);
+  wzd_free(mainConfig->xferlog_name);
+  wzd_free(mainConfig->logdir);
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
 #ifndef WIN32
     closelog();
 #endif
   }
   log_fini();
-  if (mainConfig->logfilename)
-    wzd_free(mainConfig->logfilename);
-  if (mainConfig->config_filename)
-    wzd_free(mainConfig->config_filename);
-  if (mainConfig->pid_file)
-    wzd_free(mainConfig->pid_file);
-  if (mainConfig->dir_message)
-    wzd_free(mainConfig->dir_message);
+  wzd_free(mainConfig->logfilename);
+  wzd_free(mainConfig->config_filename);
+  wzd_free(mainConfig->pid_file);
+  wzd_free(mainConfig->dir_message);
 
   wzd_free(mainConfig->site_config.file_ginfo);
   mainConfig->site_config.file_ginfo = NULL;

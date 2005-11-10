@@ -300,7 +300,7 @@ void dump_backtrace(void)
     if ((ptr=backtrace_symbols(bt,25))) {
       for (i=0; i<size; i++) {
         if (ptr[i])
-          fprintf(stderr,"frame %d: %s\n",i,ptr[i]);
+          out_err(LEVEL_HIGH,"frame %d: %s\n",i,ptr[i]);
       }
     }
   }

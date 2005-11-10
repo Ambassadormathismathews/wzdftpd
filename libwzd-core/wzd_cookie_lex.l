@@ -24,6 +24,10 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
+/** \file wzd_cookie_lex.l
+ * \brief Cookie parser
+ * \bug Flex is NOT reentrant by default
+ */
 %x sc_buf
 %x sc_cook
 

@@ -557,8 +557,8 @@ int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long w
   strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
 /*
-fprintf(stderr,"%s:%d\n",__FILE__,__LINE__);
-fprintf(stderr,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_file);
+out_err(LEVEL_HIGH,"%s:%d\n",__FILE__,__LINE__);
+out_err(LEVEL_HIGH,"dir %s filename %s wanted file %s\n",dir,perm_filename,wanted_file);
 */
 
   ret = readPermFile(perm_filename,&file_list);
@@ -1372,14 +1372,14 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
     if ( mode & O_WRONLY ) {
       if (is_locked) {
         close(fd);
-/*        fprintf(stderr,"Can't open %s in write mode, locked !\n",filename);*/
+/*        out_err(LEVEL_HIGH,"Can't open %s in write mode, locked !\n",filename);*/
         return -1;
       }
       file_lock(fd,F_WRLCK);
     }
     else {
       if (is_locked) {
-/*	fprintf(stderr,"%s is locked, trying to read\n",filename);*/
+/*	out_err(LEVEL_HIGH,"%s is locked, trying to read\n",filename);*/
         if ( CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED) ) {
           close(fd);
           return -1;
@@ -1476,7 +1476,7 @@ int file_rmdir(const char *dirname, wzd_context_t * context)
   }
 
 #ifdef DEBUG
-fprintf(stderr,"Removing directory '%s'\n",dirname);
+out_err(LEVEL_HIGH,"Removing directory '%s'\n",dirname);
 #endif
 
 #ifndef __CYGWIN__
@@ -1518,7 +1518,7 @@ int file_rename(const char *old_filename, const char *new_filename, wzd_context_
   ret = safe_rename(old_filename,new_filename);
   if (ret==-1) {
 #ifdef DEBUG
-fprintf(stderr,"rename error %d (%s)\n", errno, strerror(errno));
+out_err(LEVEL_HIGH,"rename error %d (%s)\n", errno, strerror(errno));
 #endif
     return 1;
   }
@@ -1603,7 +1603,7 @@ int file_remove(const char *filename, wzd_context_t * context)
   ret = unlink(filename);
   if (ret==-1) {
 #ifdef DEBUG
-fprintf(stderr,"remove error %d (%s)\n", errno, strerror(errno));
+out_err(LEVEL_HIGH,"remove error %d (%s)\n", errno, strerror(errno));
 #endif
     WZD_MUTEX_UNLOCK(SET_MUTEX_PERMISSION);
     return 1;
@@ -1841,7 +1841,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 int file_lock(fd_t fd, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
-fprintf(stderr,"Locking file %d\n",fd);
+out_err(LEVEL_HIGH,"Locking file %d\n",fd);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -1862,7 +1862,7 @@ fprintf(stderr,"Locking file %d\n",fd);
 int file_unlock(fd_t fd)
 {
 #ifdef WZD_DBG_LOCK
-fprintf(stderr,"Unlocking file %d\n",fd);
+out_err(LEVEL_HIGH,"Unlocking file %d\n",fd);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -1883,7 +1883,7 @@ fprintf(stderr,"Unlocking file %d\n",fd);
 int file_islocked(fd_t fd, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
-fprintf(stderr,"Testing lock for file %d\n",fd);
+out_err(LEVEL_HIGH,"Testing lock for file %d\n",fd);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -1912,7 +1912,7 @@ int file_force_unlock(const char *file)
 {
   int fd;
 #ifdef WZD_DBG_LOCK
-fprintf(stderr,"Forcing unlock file %s\n",file);
+out_err(LEVEL_HIGH,"Forcing unlock file %s\n",file);
 #endif
 
   fd = open(file,O_RDWR);

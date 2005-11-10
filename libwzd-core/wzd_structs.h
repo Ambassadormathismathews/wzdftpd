@@ -435,7 +435,7 @@ typedef struct _context_t {
   net_family_t  datafamily; /**< \brief IPv4 or IPv6 */
   unsigned long	pid_child;
   unsigned long	thread_id;
-  int           portsock;
+/*  int           portsock;*/
   fd_t          pasvsock;
   read_fct_t    read_fct;
   write_fct_t   write_fct;
@@ -504,10 +504,10 @@ typedef struct {
   char *        logdir;
   unsigned int  umask;
   char *	dir_message;
-  unsigned int	mainSocket;
+  fd_t          mainSocket;
   fd_t		controlfd; /**< external control: named pipe, unix socket, or socket */
-  unsigned char	ip[MAX_IP_LENGTH];
-  unsigned char	dynamic_ip[MAX_IP_LENGTH];
+  char          ip[MAX_IP_LENGTH];
+  char          dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;
   u32_t         pasv_low_range;
   u32_t         pasv_high_range;

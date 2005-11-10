@@ -112,7 +112,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
   switch (action) {
   case TOK_RETR:
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
-      fprintf(stderr,"Trying to set invalid datafd (%d) %s:%d\n",
+      out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
     }
     FD_SET(context->datafd,fdw);
@@ -121,7 +121,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
     break;
   case TOK_STOR:
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
-      fprintf(stderr,"Trying to set invalid datafd (%d) %s:%d\n",
+      out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
     }
     FD_SET(context->datafd,fdr);

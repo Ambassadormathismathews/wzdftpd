@@ -54,14 +54,17 @@
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_section.h"
+#include "wzd_site.h"
 
 #include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
 
-static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_permissions(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * config);
@@ -141,12 +144,26 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   cfg_init(cfg);
   cfg->cfg_file = file;
 
+  /* DIR_MESSAGE */
+  str = config_get_string(file, "GLOBAL", "dir_message", NULL);
+  if (str) {
+    cfg->dir_message = strdup(str_tochar(str));
+    str_deallocate(str);
+  }
+
   /* DISABLE_TLS */
   str = config_get_string(file, "GLOBAL", "disable_tls", NULL);
   if (str) {
     if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
       CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_TLS);
     }
+    str_deallocate(str);
+  }
+
+  /* DYNAMIC_IP */
+  str = config_get_string(file, "GLOBAL", "dynamic_ip", NULL);
+  if (str) {
+    strncpy(cfg->dynamic_ip,str_tochar(str),MAX_IP_LENGTH);
     str_deallocate(str);
   }
 
@@ -237,8 +254,11 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   _cfg_parse_sections(file, cfg);
 
-  _cfg_parse_commands(file, cfg);
+  /* custom commands must be added before permissions */
+  _cfg_parse_custom_commands(file, cfg);
+  _cfg_parse_events(file, cfg);
   _cfg_parse_modules(file, cfg);
+  _cfg_parse_permissions(file, cfg);
 
   _cfg_parse_crontab(file, cfg);
 
@@ -276,35 +296,6 @@ static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * conf
       out_err(LEVEL_HIGH,"ERROR while parsing pre_ip %s\n",address);
     }
 
-  }
-
-  str_deallocate_array(array);
-}
-
-static void _cfg_parse_commands(const wzd_configfile_t * file, wzd_config_t * config)
-{
-  wzd_string_t ** array;
-  int i;
-  int err;
-  char * permission_name;
-  wzd_string_t * permission;
-  
-  array = config_get_keys(file,"perms",&err);
-  if (!array) return;
-
-  for (i=0; array[i] != NULL; i++) {
-    permission_name = (char*)str_tochar(array[i]);
-    if (!permission_name) continue;
-    ascii_lower(permission_name,strlen(permission_name));
-    permission = config_get_string(file, "perms", permission_name, NULL);
-
-    err = commands_set_permission(config->commands_list, permission_name, str_tochar(permission));
-    if (err) {
-      /* print error message but continue parsing */
-      out_err(LEVEL_HIGH,"ERROR while parsing permission %s, ignoring\n",permission_name);
-    }
-
-    str_deallocate(permission);
   }
 
   str_deallocate_array(array);
@@ -354,6 +345,92 @@ static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * con
   str_deallocate_array(array);
 }
 
+static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * command_name;
+  wzd_string_t * value;
+  
+  array = config_get_keys(file,"custom_commands",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    command_name = (char*)str_tochar(array[i]);
+    if (!command_name) continue;
+    value = config_get_string(file, "custom_commands", command_name, NULL);
+
+    /** \bug the following does NOT work if the command is not a SITE command */
+
+    if (commands_add(config->commands_list,command_name,do_sitecmd,NULL,TOK_SITE_CUSTOM)) {
+      out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",command_name);
+      str_deallocate(value);
+      continue;
+    }
+
+    /* default permission */
+    if (commands_set_permission(config->commands_list,command_name,"*")) {
+      out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",command_name);
+      str_deallocate(value);
+      /** \bug XXX remove command from   config->commands_list */
+      continue;
+    }
+
+    if (hook_add_custom_command(&config->hook,command_name,str_tochar(value))) {
+      out_log(LEVEL_HIGH,"ERROR adding hook for custom command %s\n",command_name);
+      str_deallocate(value);
+      /** \bug XXX remove command from   config->commands_list */
+      /** \bug XXX remove permission from   config->commands_list */
+      continue;
+    }
+
+    out_log(LEVEL_INFO,"Added custom command %s : %s\n",command_name,str_tochar(value));
+
+    str_deallocate(value);
+  }
+
+  str_deallocate_array(array);
+}
+
+static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * event_name;
+  wzd_string_t * event, * value;
+  unsigned long eventmask;
+  
+  array = config_get_keys(file,"events",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    event_name = (char*)str_tochar(array[i]);
+    if (!event_name) continue;
+    value = config_get_string(file, "events", event_name, NULL);
+    event = str_tok(value," \t");
+
+    if (event && value) {
+      eventmask = str2event(str_tochar(event));
+      if (eventmask) {
+        if (!hook_add_external(&config->hook,eventmask,str_tochar(value))) {
+          out_log(LEVEL_INFO,"Added event %s : %s\n",str_tochar(event),str_tochar(value));
+        } else {
+          out_log(LEVEL_HIGH,"ERROR while adding event: %s\n",event_name);
+        }
+      }
+    } else {
+      out_log(LEVEL_HIGH,"ERROR incorrect syntax for event: %s\n",event_name);
+    }
+
+    str_deallocate(event);
+    str_deallocate(value);
+  }
+
+  str_deallocate_array(array);
+}
+
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config)
 {
   wzd_string_t ** array;
@@ -383,6 +460,35 @@ static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * con
       }
     } else {
       out_log(LEVEL_INFO,"not loading module %s, not enabled in config\n",module_name);
+    }
+
+    str_deallocate(permission);
+  }
+
+  str_deallocate_array(array);
+}
+
+static void _cfg_parse_permissions(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * permission_name;
+  wzd_string_t * permission;
+  
+  array = config_get_keys(file,"perms",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    permission_name = (char*)str_tochar(array[i]);
+    if (!permission_name) continue;
+    ascii_lower(permission_name,strlen(permission_name));
+    permission = config_get_string(file, "perms", permission_name, NULL);
+
+    err = commands_set_permission(config->commands_list, permission_name, str_tochar(permission));
+    if (err) {
+      /* print error message but continue parsing */
+      out_err(LEVEL_HIGH,"ERROR while parsing permission %s, ignoring\n",permission_name);
     }
 
     str_deallocate(permission);

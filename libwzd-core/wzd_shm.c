@@ -160,13 +160,13 @@ wzd_shm_t * wzd_shm_create(unsigned long key, unsigned int size, int flags)
   shm->handle = CreateFileMapping(INVALID_HANDLE_VALUE,NULL,
     PAGE_READWRITE, 0, size, name);
   if (shm->handle == NULL) {
-fprintf(stderr,"Could not create file mapping\n");
+out_err(LEVEL_HIGH,"Could not create file mapping\n");
     return NULL;
   }
   shm->datazone = MapViewOfFile(shm->handle,FILE_MAP_ALL_ACCESS,
     0, 0, 0);
   if (shm->datazone == NULL) {
-fprintf(stderr,"Could not get file mapping view\n");
+out_err(LEVEL_HIGH,"Could not get file mapping view\n");
     CloseHandle(shm->handle);
     return NULL;
   }
@@ -188,13 +188,13 @@ wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
   sprintf(name,"%lu",key);
   shm->handle = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,name);
   if (shm->handle == NULL) {
-fprintf(stderr,"Could not open file mapping\n");
+out_err(LEVEL_HIGH,"Could not open file mapping\n");
     return NULL;
   }
   shm->datazone = MapViewOfFile(shm->handle,FILE_MAP_ALL_ACCESS,
     0, 0, 0);
   if (shm->datazone == NULL) {
-fprintf(stderr,"Could not get file mapping view\n");
+out_err(LEVEL_HIGH,"Could not get file mapping view\n");
     CloseHandle(shm->handle);
     return NULL;
   }
@@ -308,12 +308,12 @@ wzd_shm_t * wzd_shm_create(unsigned long key, unsigned int size, int flags)
 
   if (shm->shmid == -1) {
     if (errno == EEXIST) {
-fprintf(stderr,"CRITICAL: shm exists with selected shm_key 0x%lx - check your config file\n",key);
+out_err(LEVEL_HIGH,"CRITICAL: shm exists with selected shm_key 0x%lx - check your config file\n",key);
     /* try to delete ipc ? */
 /*      shm->shmid = shmget((key_t)key,size,0600);
       if (shm->shmid != -1) shmctl(shm->shmid,IPC_RMID,NULL);*/
     } else {
-fprintf(stderr,"CRITICAL: could not shmget, key %lu, size %d - errno is %d (%s)\n",
+out_err(LEVEL_HIGH,"CRITICAL: could not shmget, key %lu, size %d - errno is %d (%s)\n",
     key,size,errno,strerror(errno));
     }
     if (have_set_uid) setreuid(-1,0); /* become root again */
@@ -322,7 +322,7 @@ fprintf(stderr,"CRITICAL: could not shmget, key %lu, size %d - errno is %d (%s)\
 
   shm->datazone = shmat(shm->shmid,NULL,0);
   if (shm->datazone == (void*)-1) {
-fprintf(stderr,"CRITICAL: could not shmat, key %lu, size %d - errno is %d (%s)\n",
+out_err(LEVEL_HIGH,"CRITICAL: could not shmat, key %lu, size %d - errno is %d (%s)\n",
     key,size,errno,strerror(errno));
     if (have_set_uid) setreuid(-1,0); /* become root again */
     shmctl(shm->shmid,IPC_RMID,NULL);
@@ -335,7 +335,7 @@ fprintf(stderr,"CRITICAL: could not shmat, key %lu, size %d - errno is %d (%s)\n
 #else
   if (shm->semid == -1) {
 #endif
-fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
     if (have_set_uid) setreuid(-1,0); /* become root again */
     shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);
@@ -379,7 +379,7 @@ wzd_shm_t * wzd_shm_get(unsigned long key, int flags)
 
   shm->datazone = shmat(shm->shmid,NULL,0);
   if (shm->datazone == (void*)-1) {
-fprintf(stderr,"CRITICAL: could not shmat, key %lu - errno is %d (%s)\n",
+out_err(LEVEL_HIGH,"CRITICAL: could not shmat, key %lu - errno is %d (%s)\n",
     key,errno,strerror(errno));
 #if 0
     if (have_set_uid) setreuid(-1,0); /* become root again */
@@ -398,7 +398,7 @@ fprintf(stderr,"CRITICAL: could not shmat, key %lu - errno is %d (%s)\n",
   shm->semid = semget(key,1,0);
   if (shm->semid == -1) {
 #endif
-fprintf(stderr,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not semget, key %lu - errno is %d (%s)\n",key,errno,strerror(errno));
 #if 0
     if (have_set_uid) setreuid(-1,0); /* become root again */
 #endif
@@ -429,7 +429,7 @@ int wzd_shm_read(wzd_shm_t * shm, void * data, int size, int offset)
   if (semop(shm->semid,&s,1)<0) {
 #endif
   if (wzd_sem_lock(shm->semid,1)) {
-fprintf(stderr,"CRITICAL: could not set sem value,  %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not set sem value,  %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
 /*    shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);*/
     return 1;
@@ -446,7 +446,7 @@ fprintf(stderr,"CRITICAL: could not set sem value,  %ld - errno is %d (%s)\n",(u
   if (semop(shm->semid,&s,1)<0) {
 #endif
   if (wzd_sem_unlock(shm->semid,1)) {
-fprintf(stderr,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
 /*    shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);*/
     return 1;
@@ -470,7 +470,7 @@ int wzd_shm_write(wzd_shm_t * shm, void * data, int size, int offset)
   if (semop(shm->semid,&s,1)<0) {
 #endif
   if (wzd_sem_lock(shm->semid,1)) {
-fprintf(stderr,"CRITICAL: could not set sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not set sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
 /*    shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);*/
     return 1;
@@ -487,7 +487,7 @@ fprintf(stderr,"CRITICAL: could not set sem value, sem %ld - errno is %d (%s)\n"
   if (semop(shm->semid,&s,1)<0) {
 #endif
   if (wzd_sem_unlock(shm->semid,1)) {
-fprintf(stderr,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
+out_err(LEVEL_HIGH,"CRITICAL: could not restore sem value, sem %ld - errno is %d (%s)\n",(unsigned long)shm->semid,errno,strerror(errno));
 /*    shmdt(shm->datazone);
     shmctl(shm->shmid,IPC_RMID,NULL);*/
     return 1;

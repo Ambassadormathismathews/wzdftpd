@@ -1328,12 +1328,12 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if (param[0] != '/') {
     strcpy(cmd,".");
-    if (checkpath(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
+    if (checkpath_new(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
     strlcat(path,param,WZD_MAX_PATH);
   } else {
     wzd_strncpy(cmd,param,WZD_MAX_PATH);
-    if (checkpath(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
+    if (checkpath_new(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
@@ -3799,7 +3799,7 @@ void * clientThreadProc(void *arg)
     /* set control fd */
 #ifdef DEBUG
     if (sockfd == (fd_t)-1 || !fd_is_valid(sockfd)) {
-      fprintf(stderr,"Trying to set invalid sockfd (%d) %s:%d\n",
+      out_err(LEVEL_CRITICAL,"Trying to set invalid sockfd (%d) %s:%d\n",
           sockfd,__FILE__,__LINE__);
       context->exitclient=1;
       break;

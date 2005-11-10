@@ -874,7 +874,7 @@ static int config_parse_flush_buffer(wzd_configfile_t * config)
 
 #if DEBUG
   if ((config->flags & CF_FILE_DEBUG)) {
-    fprintf(stderr,"flushing buffer : [ %s ]\n",str_tochar(config->parse_buffer));
+    out_err(LEVEL_INFO,"flushing buffer : [ %s ]\n",str_tochar(config->parse_buffer));
   }
 #endif
 
@@ -885,7 +885,7 @@ static int config_parse_flush_buffer(wzd_configfile_t * config)
 #if DEBUG
   if ((config->flags & CF_FILE_DEBUG)) {
     if (ret) {
-      fprintf(stderr,"ERROR: config_parse_line returned %d !\n",ret);
+      out_err(LEVEL_INFO,"ERROR: config_parse_line returned %d !\n",ret);
     }
   }
 #endif
@@ -1054,7 +1054,7 @@ static int config_add_key(wzd_configfile_t * config, wzd_configfile_group_t * gr
       return CF_OK;
     }
 #if DEBUG
-    fprintf(stderr,"*** key collision *** %s/%s: old [%s] / new [%s]\n",
+    out_err(LEVEL_HIGH,"*** key collision *** %s/%s: old [%s] / new [%s]\n",
         group->name, key, kv->value, value);
 #endif
     return CF_ERROR_KEY_ALREADY_EXISTS;
