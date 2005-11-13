@@ -1051,7 +1051,7 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 	  buffer[len++]='/';
 	  buffer[len]='\0';
 	}
-	strncpy(buffer+len,context->last_command+5,2048-len);
+	strncpy(buffer+len,context->current_action.arg,2048-len);
 	ptr = strrchr(buffer,'/');
 	if (!ptr) {
 #ifndef WIN32
