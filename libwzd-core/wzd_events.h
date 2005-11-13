@@ -38,7 +38,7 @@ typedef struct wzd_event_t wzd_event_t;
 typedef struct wzd_event_manager_t wzd_event_manager_t;
 
 
-typedef int (*event_function_t)();
+typedef int (*event_function_t)(const char * args);
 
 struct wzd_event_t {
   u32_t id;

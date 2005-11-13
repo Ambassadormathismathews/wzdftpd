@@ -92,22 +92,13 @@ struct event_entry_t event_tab[] = {
   { 0, NULL },
 };
 
-typedef int (*fcn_handler)(const char*, const char *);
-
-typedef struct _protocol_handler_t {
-  char *sig;
-  unsigned int siglen;
-  fcn_handler handler;
-  struct _protocol_handler_t * next_proto;
-} protocol_handler_t;
-
 static int _hook_print_file(const char *filename, wzd_context_t *context);
 void _cleanup_shell_command(char * buffer, size_t length);
 
 static protocol_handler_t * proto_handler_list=NULL;
 static unsigned int _reply_code;
 
-int hook_add_protocol(const char *signature, unsigned int sig_len, int (*handler)(const char *, const char *))
+int hook_add_protocol(const char *signature, unsigned int sig_len, fcn_handler handler)
 {
   protocol_handler_t * proto;
 
