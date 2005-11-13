@@ -1,4 +1,4 @@
-EXTRA_DIST = file_crc.txt test_common.h
+EXTRA_DIST = file_crc.txt test_common.h test_template.c
 
 INCLUDES = -I$(top_srcdir)
 LDADD = @DL_FLAGS@ ../libwzd-core/libwzd_core.la
@@ -10,10 +10,12 @@ test_programs = \
 	test_wzd_cookies \
 	test_wzd_crc32 \
 	test_wzd_crontab \
+	test_wzd_events \
 	test_wzd_ip \
 	test_wzd_ratio \
 	test_wzd_section \
 	test_wzd_string \
+	test_wzd_structs \
 	test_wzd_threads \
 	test_wzd_vfs
 
