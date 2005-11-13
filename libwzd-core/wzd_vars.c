@@ -51,6 +51,7 @@
 #include "wzd_libmain.h"
 #include "wzd_misc.h"
 
+#include "wzd_configfile.h"
 #include "wzd_fs.h"
 #include "wzd_vars.h"
 #include "wzd_log.h"
@@ -81,11 +82,20 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
   }
   if (strcmp(varname,"loglevel")==0) {
     char * level;
-    if (!(chtbl_lookup((CHTBL*)config->htab, "loglevel", (void**)&level))) {
+    wzd_string_t * str;
+
+    str = config_get_string(config->cfg_file, "GLOBAL", "loglevel", NULL);
+    if (str) {
+      snprintf(data,datalength,"%s",str_tochar(str));
+      str_deallocate(str);
+      return 0;
+    }
+    if (config->htab && !(chtbl_lookup((CHTBL*)config->htab, "loglevel", (void**)&level))) {
       snprintf(data,datalength,"%s",level);
       return 0;
     }
-    return 1;
+    snprintf(data,datalength,"%s",loglevel2str(config->loglevel));
+    return 0;
   }
   if (strcasecmp(varname,"max_dl")==0) {
     snprintf(data,datalength,"%u",config->global_dl_limiter.maxspeed);
@@ -123,6 +133,10 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
   return 1;
 }
 
+/** \brief Change value of server variable
+ *
+ * \todo we should change the value in config->cfg_file
+ */
 int vars_set(const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
 {
   int i;
