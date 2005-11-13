@@ -1,11 +1,23 @@
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset */
+#include <pthread.h>
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_utf8.h>
 
+#include <libwzd-core/wzd_cache.h>
+
+#include <libwzd-core/wzd_debug.h>
+
+#include "test_common.h"
+
+void fake_write_function(fd_t fd, const char * msg, size_t msg_len, unsigned int timeout, wzd_context_t * context);
+
+
 wzd_user_t * f_user = NULL;
+wzd_group_t * f_group = NULL;
+wzd_context_t * f_context = NULL;
 
 void fake_mainConfig(void)
 {
@@ -31,6 +43,7 @@ void fake_user(void)
   wzd_user_t * user;
 
   if (!mainConfig) fake_mainConfig();
+  if (!f_group) fake_group();
   user = malloc(sizeof(wzd_user_t));
   memset(user, 0, sizeof(wzd_user_t));
 
@@ -38,13 +51,77 @@ void fake_user(void)
   user->uid = 666;
   strcpy(user->flags,"5"); /* 5 = color */
 
+  user->groups[0] = f_group->gid;
+  user->group_num = 1;
+
   f_user = user;
+}
+
+void fake_group(void)
+{
+  wzd_group_t * group;
+
+  if (!mainConfig) fake_mainConfig();
+  group = malloc(sizeof(wzd_group_t));
+  memset(group, 0, sizeof(wzd_group_t));
+
+  strcpy(group->groupname,"test_group");
+  group->gid = 333;
+
+  f_group = group;
+}
+
+void fake_context(void)
+{
+  wzd_context_t * context;
+
+  if (!mainConfig) fake_mainConfig();
+  if (!f_user) fake_user();
+  if (!f_group) fake_group();
+
+  wzd_debug_init();
+
+  usercache_init();
+  groupcache_add(f_group);
+  usercache_add(f_user);
+
+  context = malloc(sizeof(wzd_context_t));
+  memset(context, 0, sizeof(wzd_context_t));
+
+  context->magic = CONTEXT_MAGIC;
+  context->userid = f_user->uid;
+  context->write_fct = (write_fct_t)fake_write_function;
+  context->thread_id = pthread_self();
+
+  f_context = context;
+
+  context_list = malloc(sizeof(List));
+  list_init(context_list,NULL);
+
+  list_ins_next(context_list, list_tail(context_list), f_context);
 }
 
 void fake_exit(void)
 {
+  if (f_context) {
+    list_destroy(context_list);
+    free(context_list);
+    usercache_fini();
+    free(f_context);
+    f_context = NULL;
+
+    wzd_debug_fini();
+  }
+  free(f_user); f_user = NULL;
+  free(f_group); f_group = NULL;
   if (mainConfig) {
     free(mainConfig);
     mainConfig = NULL;
   }
 }
+
+void fake_write_function(fd_t fd, const char * msg, size_t msg_len, unsigned int timeout, wzd_context_t * context)
+{
+/*  printf("client out: [%s]\n",msg);*/
+}
+

@@ -24,5 +24,6 @@ check_PROGRAMS = $(test_programs)
 TESTS = $(test_programs)
 
 test_wzd_cookies_SOURCES = test_wzd_cookies.c test_common.c
+test_wzd_events_SOURCES = test_wzd_events.c test_common.c
 test_wzd_ratio_SOURCES = test_wzd_ratio.c test_common.c
 test_wzd_string_SOURCES = test_wzd_string.c test_common.c
