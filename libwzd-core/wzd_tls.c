@@ -717,12 +717,7 @@ int tls_close_data(wzd_context_t * context)
 
 int tls_free(wzd_context_t * context)
 {
-  if (context->ssl.data_ssl) {
-    if (SSL_shutdown(context->ssl.data_ssl)==0)
-      SSL_shutdown(context->ssl.data_ssl);
-    SSL_free(context->ssl.data_ssl);
-  }
-  context->ssl.data_ssl = NULL;
+  tls_close_data(context);
   if (context->ssl.obj) {
     if (SSL_shutdown(context->ssl.obj)==0)
       SSL_shutdown(context->ssl.obj);
@@ -766,6 +761,8 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
 /*************** tls_init ****************************/
 
+/* These are global */
+static gnutls_certificate_credentials x509_cred;
 static gnutls_dh_params dh_params;
 
 static int generate_dh_params(void)
@@ -799,6 +796,9 @@ int tls_dh_params_regenerate(void)
   WZD_MUTEX_LOCK(SET_MUTEX_GLOBAL);
   tmp = dh_params;
   dh_params = new;
+
+  gnutls_certificate_set_dh_params(x509_cred, dh_params);
+
   WZD_MUTEX_UNLOCK(SET_MUTEX_GLOBAL);
 
   gnutls_dh_params_deinit(tmp);
@@ -807,9 +807,6 @@ int tls_dh_params_regenerate(void)
 
   return 0;
 }
-
-/* These are global */
-static gnutls_certificate_credentials x509_cred;
 
 int tls_init(void)
 {
@@ -1156,6 +1153,7 @@ int tls_free(wzd_context_t * context)
   if (context->tls.session) {
     int ret;
     int alert;
+    int count=0;
 
     do {
       ret = gnutls_bye(*(gnutls_session*)context->tls.session,GNUTLS_SHUT_RDWR);
@@ -1168,6 +1166,11 @@ int tls_free(wzd_context_t * context)
       switch(ret) {
         case GNUTLS_E_INTERRUPTED:
         case GNUTLS_E_AGAIN:
+          if (++count > 10) {
+            out_log(LEVEL_INFO,"WARNING I had to forcibly close the TLS connection (too many errors %s : %d)\n",gnutls_strerror(ret),ret);
+            ret = 0;
+            break;
+          }
 
           /** \todo poll on fd before calling function again */
           usleep(100);
