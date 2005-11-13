@@ -1,6 +1,7 @@
 2005-11-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: error while re-generating GnuTLS parameters after one day
+	* feature: reduced memory usage
 
 2005-11-10  Pierre Chifflier  <pollux@wzdftpd.net>
 

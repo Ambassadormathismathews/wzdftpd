@@ -715,10 +715,10 @@ unsigned long get_bandwidth(unsigned long *dl, unsigned long *ul)
     if (context && context->magic == CONTEXT_MAGIC) {
       id = context->userid;
       user = GetUserByID(id);
-      if (strncasecmp(context->last_command,"retr",4)==0) {
+      if (context->current_action.token==TOK_RETR) {
         dl_bandwidth += (unsigned long)context->current_dl_limiter.current_speed;
       }
-      if (strncasecmp(context->last_command,"stor",4)==0) {
+      if (context->current_action.token==TOK_STOR) {
         ul_bandwidth += (unsigned long)context->current_ul_limiter.current_speed;
       }
     } /* if CONTEXT_MAGIC */

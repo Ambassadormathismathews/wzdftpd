@@ -386,7 +386,7 @@ char *stripdir(char * dir, char *buf, int maxlen)
   ldots = 0;
   *out  = 0;
 
-#ifndef _MSC_VER
+#ifndef WIN32
   if (*in != '/')
 #else
   if (*in != '/' && *(in+1) != ':')

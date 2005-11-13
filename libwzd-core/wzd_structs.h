@@ -25,9 +25,20 @@
 #ifndef __WZD_STRUCTS__
 #define __WZD_STRUCTS__
 
+/** \file wzd_structs.h
+ * \brief Essential structures
+ *
+ * \addtogroup libwzd_core
+ * @{
+ */
+
 #include "wzd_hardlimits.h"
 
 #include "wzd_types.h"
+
+/****************** PRE DECLARATIONS **********************/
+
+typedef struct wzd_backend_t wzd_backend_t;
 
 /*********************** ERRORS ***************************/
 
@@ -407,6 +418,8 @@ typedef enum {
 typedef int (*read_fct_t)(fd_t,char*,size_t,int,unsigned int,void *);
 typedef int (*write_fct_t)(fd_t,const char*,size_t,int,unsigned int,void *);
 
+typedef struct wzd_context_t wzd_context_t;
+
 #include "wzd_action.h"
 
 /** @brief Connection state
@@ -421,7 +434,7 @@ typedef enum {
 
 /** @brief Client-specific data
  */
-typedef struct _context_t {
+struct wzd_context_t {
   unsigned long	magic;  /**< \brief magic number, used to test structure integrity */
 
   unsigned char	hostip[16];
@@ -448,7 +461,6 @@ typedef struct _context_t {
   xfer_t        current_xfer_type;
   wzd_action_t	current_action;
   struct last_file_t	last_file;
-  char		last_command[HARD_LAST_COMMAND_LENGTH];
   char          * data_buffer;
 /*  wzd_bw_limiter * current_limiter;*/
   wzd_bw_limiter current_ul_limiter;
@@ -459,7 +471,7 @@ typedef struct _context_t {
   wzd_ssl_t   	ssl;
   wzd_tls_t   	tls;
   tls_role_t    tls_role; /**< \brief TLS role: server or client */
-} wzd_context_t;
+};
 
 /********************** COMMANDS **************************/
 
@@ -467,7 +479,6 @@ typedef struct _context_t {
 
 /************************ MAIN CONFIG *********************/
 
-typedef struct wzd_backend_t wzd_backend_t;
 #include "wzd_backend.h"
 
 /* macros used with options */
@@ -544,10 +555,13 @@ WZDIMPORT extern List * context_list;
 
 /************************ LIST ****************************/
 
-#define	LIST_TYPE_SHORT		0x0001
-#define	LIST_TYPE_LONG		0x0010
-#define	LIST_SHOW_HIDDEN	0x0100
-typedef unsigned long list_type_t;
+enum list_type_t {
+  LIST_TYPE_NONE   = 0,
+  LIST_TYPE_SHORT  = 1 << 0,
+  LIST_TYPE_LONG   = 1 << 1,
+  LIST_SHOW_HIDDEN = 1 << 2,
+};
 
+/** @} */
 
 #endif /* __WZD_STRUCTS__ */

@@ -847,7 +847,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           it = list_data(elmnt);
           if (it->magic == CONTEXT_MAGIC)
           {
-            if (strncasecmp(it->last_command,"retr",4)==0)
+            if (it->current_action.token==TOK_RETR)
               speed += it->current_dl_limiter.current_speed;
           }
         }
@@ -876,8 +876,8 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           it = list_data(elmnt);
           if (it->magic == CONTEXT_MAGIC)
           {
-            if ((strncasecmp(it->last_command,"stor",4)==0) ||
-                (strncasecmp(it->last_command,"appe",4)==0))
+            if ((it->current_action.token==TOK_STOR) ||
+                (it->current_action.token==TOK_APPE))
               speed += it->current_ul_limiter.current_speed;
           }
         }
@@ -1528,7 +1528,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-        snprintf(internalbuffer,IBUFSIZE,"%s",current_context->last_command);
+        snprintf(internalbuffer,IBUFSIZE,"%s",str_tochar(current_context->current_action.command));
         if (strncasecmp(internalbuffer,"site",4)==0)
         {
           strcpy(internalbuffer,"SITE command");
@@ -1705,11 +1705,11 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
-        if (strncasecmp(current_context->last_command,"retr",4)==0)
+        if (current_context->current_action.token==TOK_RETR)
           snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_dl_limiter.current_speed/1024.f);
         else {
-          if ((strncasecmp(current_context->last_command,"stor",4)==0) ||
-              (strncasecmp(current_context->last_command,"appe",4)==0))
+          if ((current_context->current_action.token==TOK_STOR) ||
+              (current_context->current_action.token==TOK_APPE))
           {
             snprintf(internalbuffer,IBUFSIZE,"%.1f kB/s",current_context->current_ul_limiter.current_speed/1024.f);
           }

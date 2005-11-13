@@ -25,6 +25,13 @@
 #ifndef __WZD_ACTION__
 #define __WZD_ACTION__
 
+/** \file wzd_action.h
+ * \brief Store last action from client
+ *
+ * \addtogroup libwzd_core
+ * @{
+ */
+
 typedef enum {
   TOK_UNKNOWN=0,
   TOK_HELP,
@@ -162,8 +169,11 @@ struct last_file_t {
     unsigned int token;
 };
 
-typedef struct {
+typedef struct wzd_action_t wzd_action_t;
+
+struct wzd_action_t {
   unsigned int	token;
+  wzd_string_t  * command;
   char		arg[HARD_LAST_COMMAND_LENGTH];
 
   fd_t		current_file;
@@ -171,7 +181,11 @@ typedef struct {
 
   time_t	tm_start;
   struct timeval tv_start;
-} wzd_action_t;
+};
+
+void set_action(wzd_context_t * context, const char *command);
+
+/** @} */
 
 #endif /* __WZD_ACTION__ */
 

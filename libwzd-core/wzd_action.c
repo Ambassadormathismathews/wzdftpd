@@ -35,13 +35,18 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_debug.h"
+
 #endif /* WZD_USE_PCH */
 
-void set_action(wzd_context_t * context, unsigned int token, const char *arg)
+void set_action(wzd_context_t * context, const char *command)
 {
-  if (!context) return;
+  WZD_ASSERT_VOID( context != NULL );
 
-  context->current_action.token = token;
-  strncpy(context->current_action.arg,arg,HARD_LAST_COMMAND_LENGTH);
-  context->current_action.tm_start = time(NULL);
+  if (context->current_action.command)
+    str_store(context->current_action.command, command);
+  else
+    context->current_action.command = STR(command);
+
+  /*context->current_action.tm_start = time(NULL);*/
 }

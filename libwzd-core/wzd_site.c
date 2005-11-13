@@ -169,6 +169,10 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   }
 #endif
 
+#ifdef HAVE_GNUTLS
+  ret = tls_dh_params_regenerate();
+#endif
+  
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
   ret = send_message_with_args(200,context,"TEST command ok");
@@ -2172,6 +2176,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   else if (strcmp(s_token,"site_shutdown")==0) {
     mainConfig->serverstop = 1;
     ret = send_message_with_args(250,context,"SITE: ","server will shutdown after you logout");
+    context->exitclient = 1;
     return 0;
   }
 #endif /* WZD_MULTIPROCESS */

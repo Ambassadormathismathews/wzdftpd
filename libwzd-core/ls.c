@@ -99,7 +99,7 @@ int list_call_wrapper(fd_t sock, wzd_context_t *context, const char *line, char 
 
 
 
-int list(fd_t sock,wzd_context_t * context,list_type_t format,char *directory,char *mask,
+int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directory,char *mask,
 	 int callback(fd_t,wzd_context_t*,char *))
 {
   struct wzd_dir_t * dir;

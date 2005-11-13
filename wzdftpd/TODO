@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- implement events / in progress
+'********'
 - add options to
     - disable TLS / Ok
     - disable colors when logging

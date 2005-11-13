@@ -53,6 +53,9 @@ unsigned int str_checklength(const wzd_string_t *str, size_t min, size_t max);
  */
 size_t str_length(const wzd_string_t *str);
 
+/** \brief Store a copy of the argument into \a str
+ */
+wzd_string_t * str_store(wzd_string_t * str, const char * s);
 
 /** \brief returns a pointer to a new string which is a duplicate of the string src.
  */

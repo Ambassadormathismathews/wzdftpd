@@ -368,18 +368,6 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
       ret = (*(login_hook)hook->hook)(EVENT_LOGOUT, context, GetUserByID(context->userid)->username);
   END_FORALL_HOOKS
 
-#ifdef DEBUG
-/*  if (context->current_limiter) {
-out_err(LEVEL_HIGH,"clientThread: limiter is NOT null at exit\n");
-  }*/
-#endif
-
-/*  limiter_free(context->current_limiter);*/
-
-    if (context->data_buffer) {
-      wzd_free(context->data_buffer);
-      context->data_buffer = NULL;
-    }
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
   /* close existing pasv connections */
@@ -788,7 +776,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char * cmask;
   const char * param;
   wzd_user_t * user;
-  list_type_t listtype;
+  enum list_type_t listtype;
 
   user = GetUserByID(context->userid);
 
@@ -1167,7 +1155,7 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char * cmask;
   const char *param;
   wzd_user_t * user;
-  list_type_t listtype;
+  enum list_type_t listtype;
   ssl_data_t old_data_mode;
 
   user = GetUserByID(context->userid);
@@ -3461,7 +3449,7 @@ static int do_login_loop(wzd_context_t * context)
       size_t length = strlen(buffer);
       while (length > 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
         buffer[length-- -1] = '\0';
-      strncpy(context->last_command,buffer,HARD_LAST_COMMAND_LENGTH-1);
+      set_action(context,buffer);
     }
 
 #ifdef DEBUG
@@ -3872,7 +3860,8 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     command_buffer = STR(buffer);
 
     str_trim_right(command_buffer);
-    wzd_strncpy(context->last_command,str_tochar(command_buffer),HARD_LAST_COMMAND_LENGTH-1);
+
+    set_action(context,str_tochar(command_buffer));
 
 /*    context->idle_time_start = time(NULL);*/
 #ifdef DEBUG

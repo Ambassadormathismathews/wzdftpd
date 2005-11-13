@@ -142,6 +142,20 @@ size_t str_length(const wzd_string_t *str)
   return str->length;
 }
 
+wzd_string_t * str_store(wzd_string_t * str, const char * s)
+{
+  size_t length;
+
+  if (!str) return NULL;
+
+  length = strlen(s);
+  _str_set_min_size(str,length+1);
+
+  wzd_strncpy(str->buffer, s, length);
+
+  return str;
+}
+
 wzd_string_t * str_dup(const wzd_string_t *src)
 {
   wzd_string_t * dst;

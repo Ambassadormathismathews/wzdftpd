@@ -112,7 +112,7 @@ void reset_stats(wzd_server_stat_t * stats);
 
 int check_server_dynamic_ip(void);
 int commit_backend(void);
-void server_rebind(const unsigned char *new_ip, unsigned int new_port);
+void server_rebind(const char *new_ip, unsigned int new_port);
 
 int server_switch_to_config(wzd_config_t *config);
 
@@ -210,10 +210,10 @@ static int global_check_ip_allowed(unsigned char *userip)
   return ip_list_check(mainConfig->login_pre_ip_checks,ip);
 }
 
-void server_rebind(const unsigned char *new_ip, unsigned int new_port)
+void server_rebind(const char *new_ip, unsigned int new_port)
 {
   fd_t sock;
-  const unsigned char *ip = (new_ip) ? new_ip : mainConfig->ip;
+  const char *ip = (new_ip) ? new_ip : mainConfig->ip;
 
   /* create socket iff different ports ?! */
   sock = mainConfig->mainSocket;
@@ -318,7 +318,7 @@ int check_server_dynamic_ip(void)
       out_log(LEVEL_HIGH,"Rebinding main server ! (from %hhu.%hhu.%hhu.%hhu to %hhu.%hhu.%hhu.%hhu)\n",
           str_ip_current[0],str_ip_current[1],str_ip_current[2],str_ip_current[3],
           str_ip_config[0],str_ip_config[1],str_ip_config[2],str_ip_config[3]);
-      server_rebind((const unsigned char *)inet_ntoa(sa_config.sin_addr),mainConfig->port);
+      server_rebind(inet_ntoa(sa_config.sin_addr),mainConfig->port);
     }
   }
 
@@ -1349,6 +1349,7 @@ void serverMainThreadExit(int retcode)
   }
 #ifdef WZD_MULTITHREAD
   /* kill all childs threads */
+  out_log(LEVEL_INFO,"Sending EXIT signal to child threads\n");
   if (context_list)
   {
     ListElmt * elmnt;
@@ -1360,6 +1361,34 @@ void serverMainThreadExit(int retcode)
     }
   }
 #endif
+  out_log(LEVEL_INFO,"Waiting for the last child to exit\n");
+  {
+    unsigned int child_count;
+    int ok = 0;
+    int loop_count=0;
+
+    while (!ok) {
+      ListElmt * elmnt;
+      wzd_context_t * loop_context;
+      child_count = 0;
+      for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+      {
+        loop_context = list_data(elmnt);
+        if (loop_context->magic == CONTEXT_MAGIC) child_count++;
+      }
+      if (child_count == 0) { ok=1; break; }
+      out_log(LEVEL_FLOOD,"Found %d child threads, waiting ..\n",child_count);
+#ifndef WIN32
+      usleep(300000);
+#else
+      Sleep(300);
+#endif
+      if (++loop_count > 10) { /* maximum wait time: ~ 3s */
+        out_log(LEVEL_INFO,"Still %d childs .. exiting anyway\n",child_count);
+        break;
+      }
+    }
+  }
   /* we need to wait for child threads to be effectively dead */
 #ifndef _MSC_VER
   sleep(1);

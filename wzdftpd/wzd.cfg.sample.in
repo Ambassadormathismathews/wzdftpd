@@ -140,21 +140,6 @@ login_pre_ip_allowed = localhost
 #login_pre_ip_allowed = *.xxx.fr
 #login_pre_ip_denied = *
 
-##### VFS
-# first char is delimiter
-# format is e.g vfs = |/home/vfsroot|/physical/path|
-# if delimiter is |
-# for windows you can either write
-#    vfs = |/home/pollux/K|/cygdrive/k|
-# or
-#    vfs = |/home/pollux/K|k:|
-# you can add permissions at end of line to restrict vfs for some user, group,
-# flags or anything allowed by permissions syntax (see PERMISSIONS at end of
-# this file for more details)
-#   vfs = |/home/pollux/K|k:| +O =user
-#vfs = |/home/pollux/vfs|/etc|
-#vfs = |/home/pollux/K|/tmp|
-
 ##### MODULES
 
 param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]
@@ -183,17 +168,6 @@ sitefile_user	= @e_sysconfdir@/file_user.txt
 sitefile_users	= @e_sysconfdir@/file_users.txt
 sitefile_who	= @e_sysconfdir@/file_who.txt
 sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
-
-##### CUSTOM MESSAGES
-# You can modify custom ftp replies here
-# Define message like that if on one line:
-#   message_<num> = My custom message
-# You can also use files to include messages:
-#   message_num = +/path/to/file
-# I STRONGLY recommend to leave messages 227 (pasv reply), 257 (pwd) untouched
-# most interesting messages are:
-#  220 (banner), 230 (welcome message), 221 (logout)
-#message_220 = pollux ftp server ready
 
 ##### INCLUSIONS
 # You can include other files
@@ -322,4 +296,30 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 #my_free = ./free.sh
 # this defines the SITE RULES command, which prints the following file
 site_rules = !@e_sysconfdir@/file_rules.txt
+
+# first char is delimiter
+# format is e.g name = |/home/vfsroot|/physical/path|
+# if delimiter is |
+# for windows you can either write
+#    vfs = |/home/pollux/K|/cygdrive/k|
+# or
+#    vfs = |/home/pollux/K|k:|
+# you can add permissions at end of line to restrict vfs for some user, group,
+# flags or anything allowed by permissions syntax (see PERMISSIONS at end of
+# this file for more details)
+#   vfs = |/home/pollux/K|k:| +O =user
+[vfs]
+#vfs1 = |/home/pollux/vfs|/etc|
+#vfs2 = |/home/pollux/K|/tmp|
+
+# You can modify custom ftp replies here
+# Define message like that if on one line:
+#   <message_num> = My custom message
+# You can also use files to include messages:
+#   message_num = +/path/to/file
+# I STRONGLY recommend to leave messages 227 (pasv reply), 257 (pwd) untouched
+# most interesting messages are:
+#  220 (banner), 230 (welcome message), 221 (logout)
+[messages]
+#220 = my ftp server ready
 
