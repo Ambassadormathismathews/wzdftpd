@@ -25,6 +25,17 @@
 #ifndef __WZD_FILE__
 #define __WZD_FILE__
 
+/** \file wzd_file.h
+ * \brief Files and directories functions
+ *
+ * Permissions are stored in a file present in each directory on the server.
+ * This allows portable function, and features like symbolic links on
+ * systems which does not have links (like windows).
+ *
+ * \addtogroup libwzd_core
+ * @{
+ */
+
 /* WARNING !!! filename MUST be ABSOLUTE path !!! */
 
 typedef enum {
@@ -41,7 +52,7 @@ typedef struct _wzd_acl_rule_t {
   struct _wzd_acl_rule_t * next_acl; /* linked list */
 } wzd_acl_line_t;
 
-/** @brief File: name, owner, permissions, etc. */
+/** \brief File: name, owner, permissions, etc. */
 struct wzd_file_t {
   /** \todo replace with (char*) */
   char	filename[256];
@@ -57,10 +68,8 @@ struct wzd_file_t {
 };
 
 
-/*FILE * file_open(const char *filename, const char *mode, unsigned long wanted_right, wzd_context_t * context);*/
 int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context);
 
-/*void file_close(FILE *fp, wzd_context_t * context);*/
 void file_close(int fd, wzd_context_t * context);
 
 /* wrappers just to keep things in same memory zones */
@@ -79,11 +88,7 @@ fs_off_t file_seek(fd_t fd, fs_off_t offset, int whence);
 
 wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 
-/** \brief Get all permissions on file for specific context
- *
- * Permissions are returned as a hex value composed of permissions ORed like
- * RIGHT_LIST | RIGHT_CWD
- */
+/** \brief Get all permissions on file for specific context */
 unsigned long file_getperms(struct wzd_file_t * file, wzd_context_t * context);
 
 /* symlink operations */
@@ -99,23 +104,17 @@ int file_force_unlock(const char *file);
 /* low-level func */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);
 
-/** dir MUST be / terminated
- * wanted_file MUST be a single file name !
- */
 int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user);
 
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context);
 
 /** \brief Read the permission file and build linked list of files.
- * \todo should be "atomic"
  */
 int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles);
 
 void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
 
-/** Copy a wzd_file_t object and all its data.
- * Please not that one field is changed: next_file is set to NULL to
- * avoid side effects.
+/** \brief Copy a wzd_file_t object and all its data.
  */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
 
@@ -123,20 +122,10 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
  */
 void free_file_recursive(struct wzd_file_t * file);
 
-/** \brief get file status
- *
- * This function return information about the specified file. You do not need any
- * special right on the file, but you need search rights on any directory on the
- * path to the file.
- *
- * If filename is a symbolic link, the destination is stat-ed, not the link itself.
- *
- * Caller MUST free memory using \ref free_file_recursive
- *
- * \return struct, or NULL if nothing known, -1 if error or non-existant
- */
+/** \brief Get file status */
 struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context);
 
+/** @} */
 
 #endif /* __WZD_FILE__ */
 

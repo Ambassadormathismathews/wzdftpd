@@ -37,6 +37,17 @@
 
 #endif /* WZD_USE_PCH */
 
+/** \file wzd_file.c
+ * \brief Files and directories functions
+ *
+ * Permissions are stored in a file present in each directory on the server.
+ * This allows portable function, and features like symbolic links on
+ * systems which does not have links (like windows).
+ *
+ * \addtogroup libwzd_core
+ * @{
+ */
+
 #ifdef WIN32
 #include <winsock2.h>
 #include <io.h>
@@ -304,6 +315,9 @@ static struct wzd_file_t * add_new_file(const char *name, const char *owner, con
   return new_file;
 }
 
+/* Please not that one field is changed: next_file is set to NULL to
+ * avoid side effects.
+ */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
 {
   struct wzd_file_t * new_file=NULL;
@@ -1391,10 +1405,8 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   return fd;
 }
 
-/*void file_close(FILE *fp, wzd_context_t * context)*/
 void file_close(int fd, wzd_context_t * context)
 {
-/*  fclose(fp);*/
   close(fd);
 }
 
@@ -1491,7 +1503,8 @@ out_err(LEVEL_HIGH,"Removing directory '%s'\n",dirname);
 
 }
 
-/** RENAME
+/** \brief Change the name or location of a file
+ *
  * old_filename and new_filename must be ABSOLUTE paths
  */
 int file_rename(const char *old_filename, const char *new_filename, wzd_context_t * context)
@@ -1686,9 +1699,7 @@ wzd_user_t * file_getowner(const char *filename, wzd_context_t * context)
   return GetUserByName("nobody");
 }
 
-/** \brief Get all permissions on file for specific context
- *
- * Permissions are returned as a hex value composed of permissions ORed like
+/** Permissions are returned as a hex value composed of permissions ORed like
  * RIGHT_LIST | RIGHT_CWD
  */
 unsigned long file_getperms(struct wzd_file_t * file, wzd_context_t * context)
@@ -1753,6 +1764,16 @@ unsigned long file_getperms(struct wzd_file_t * file, wzd_context_t * context)
 }
 
 
+/** This function return information about the specified file. You do not need any
+ * special right on the file, but you need search rights on any directory on the
+ * path to the file.
+ *
+ * If filename is a symbolic link, the destination is stat-ed, not the link itself.
+ *
+ * Caller MUST free memory using \ref free_file_recursive
+ *
+ * \return struct, or NULL if nothing known, -1 if error or non-existant
+ */
 struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 {
   char perm_filename[WZD_MAX_PATH+1];
@@ -1982,3 +2003,6 @@ int symlink_remove(const char *link)
 /*  return RemoveJunctionPoint(link);*/
 #endif
 }
+
+/** @} */
+

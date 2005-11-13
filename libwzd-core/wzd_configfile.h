@@ -27,6 +27,9 @@
 
 /** \file wzd_configfile.h
  * \brief Simple config file parser (.ini like)
+ *
+ * \addtogroup libwzd_core
+ * @{
  */
 
 typedef struct _wzd_configfile_t wzd_configfile_t;
@@ -159,27 +162,29 @@ int config_remove_key(wzd_configfile_t * file, const char * groupname, const cha
  */
 int config_remove_group(wzd_configfile_t * file, const char * groupname);
 
-/** Loads a key file from disk into an empty wzd_configfile_t structure.
+/** \brief Loads a key file from disk into an empty wzd_configfile_t structure.
  *
  * If the object cannot be created then the return value is non-zero.
  */
 int config_load_from_file (wzd_configfile_t * config, const char * file, unsigned long flags);
 
-/** Loads a key file from an opened file descriptor into an empty
+/** \brief Loads a key file from an opened file descriptor into an empty
  * wzd_configfile_t structure.
  *
  * If the object cannot be created then the return value is non-zero.
  */
 int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags);
 
-/** Loads a key file from memory into an empty wzd_configfile_t structure.
+/** \brief Loads a key file from memory into an empty wzd_configfile_t structure.
  *
  * If the object cannot be created then the return value is non-zero.
  */
 int config_load_from_data (wzd_configfile_t * config, const char * data, size_t length, unsigned long flags);
 
-/** outputs \a config as a wzd_string_t.
+/** \brief Outputs \a config as a wzd_string_t.
  */
 wzd_string_t * config_to_data (wzd_configfile_t * config, size_t * length);
+
+/** @} */
 
 #endif /* __WZD_CONFIGFILE__ */
