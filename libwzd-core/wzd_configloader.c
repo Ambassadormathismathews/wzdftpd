@@ -350,7 +350,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
       p = getpwnam(str_tochar(str));
       endpwent();
       if (p) {
-        setlib_server_uid(p->pw_gid);
+        setlib_server_uid(p->pw_uid);
       } else {
         out_err(LEVEL_HIGH,"server_uid: could not find uid for user %s\n",str_tochar(str));
       }
