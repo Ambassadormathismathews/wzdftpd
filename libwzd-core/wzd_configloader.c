@@ -57,11 +57,13 @@
 #include "wzd_crontab.h"
 
 #include "wzd_libmain.h"
+#include "wzd_messages.h"
 #include "wzd_misc.h"
 #include "wzd_mod.h"
 #include "wzd_section.h"
 #include "wzd_socket.h"
 #include "wzd_site.h"
+#include "wzd_vfs.h"
 
 #include "wzd_debug.h"
 
@@ -70,11 +72,13 @@
 static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_messages(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_permissions(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * config);
+static void _cfg_parse_vfs(const wzd_configfile_t * file, wzd_config_t * config);
 
 
 
@@ -227,6 +231,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
       return NULL;
     }
     cfg->loglevel = i;
+    str_deallocate(str);
   }
 
   /* MAX_DL_SPEED */
@@ -415,7 +420,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   _cfg_parse_sitefiles(file, cfg);
 
+  _cfg_parse_messages(file, cfg);
   _cfg_parse_sections(file, cfg);
+  _cfg_parse_vfs(file, cfg);
 
   /* custom commands must be added before permissions */
   _cfg_parse_custom_commands(file, cfg);
@@ -594,6 +601,39 @@ static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * conf
   str_deallocate_array(array);
 }
 
+static void _cfg_parse_messages(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * key_name, * p;
+  wzd_string_t * value;
+  char * message;
+  unsigned long ul;
+  
+  array = config_get_keys(file,"messages",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    key_name = (char*)str_tochar(array[i]);
+    if (!key_name) continue;
+    value = config_get_string(file, "messages", key_name, NULL);
+    if (!value) continue;
+
+    ul = strtoul(key_name,&p,0);
+    if (p && *p == '\0' && ul < HARD_MSG_LIMIT) {
+      /* memory will be freed at server exit */
+      message = wzd_strdup(str_tochar(value));
+      setMessage(message,(int)ul);
+    } else
+      out_log(LEVEL_HIGH,"ERROR invalid value for message number (key %s)\n",key_name);
+
+    str_deallocate(value);
+  }
+
+  str_deallocate_array(array);
+}
+
 static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * config)
 {
   wzd_string_t ** array;
@@ -731,5 +771,56 @@ static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * c
   filename = config_get_string(file, "GLOBAL", "sitefile_vfs", NULL);
   if (filename) { config->site_config.file_vfs = wzd_strdup(str_tochar(filename)); }
   str_deallocate(filename);
+}
+
+static void _cfg_parse_vfs(const wzd_configfile_t * file, wzd_config_t * config)
+{
+  wzd_string_t ** array;
+  int i;
+  int err;
+  char * key_name;
+  wzd_string_t * value, * physical_path, * virtual_path, * permissions;
+  char delimiter[2];
+  
+  array = config_get_keys(file,"vfs",&err);
+  if (!array) return;
+
+  for (i=0; array[i] != NULL; i++) {
+    key_name = (char*)str_tochar(array[i]);
+    if (!key_name) continue;
+    value = config_get_string(file, "vfs", key_name, NULL);
+    if (!value) continue;
+
+    delimiter[0] = str_tochar(value)[0];
+    delimiter[1] = '\0';
+    str_erase(value, 0, 1);
+
+    virtual_path = str_tok(value,delimiter);
+    physical_path = str_tok(value,delimiter);
+    permissions = str_tok(value,delimiter);
+    if (permissions) str_trim_left(permissions);
+
+    if (physical_path && virtual_path) {
+      if (permissions)
+        err = vfs_add_restricted(&config->vfs,str_tochar(virtual_path),str_tochar(physical_path),str_tochar(permissions));
+      else
+        err = vfs_add(&config->vfs,str_tochar(virtual_path),str_tochar(physical_path));
+      if (!err) {
+        out_log(LEVEL_INFO,"Added vfs %s => %s\n",str_tochar(physical_path),str_tochar(virtual_path));
+      } else {
+        out_log(LEVEL_HIGH,"ERROR while adding vfs %s\n",key_name);
+        out_log(LEVEL_HIGH,"Please check destination exists and you have correct permissions\n");
+      }
+    } else {
+      out_log(LEVEL_HIGH,"ERROR incorrect syntax for vfs %s\n",key_name);
+    }
+
+    str_deallocate(permissions);
+    str_deallocate(virtual_path);
+    str_deallocate(physical_path);
+    str_deallocate(value);
+  }
+
+  str_deallocate_array(array);
 }
 
