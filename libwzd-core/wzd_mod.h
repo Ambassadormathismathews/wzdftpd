@@ -29,7 +29,7 @@ typedef enum {
   EVENT_IGNORED=0,
   EVENT_NEXT,       /**< pass event to next handler */
   EVENT_HANDLED,
-  EVENT_ERROR
+  EVENT_ERR
 } wzd_hook_reply_t;
 
 /* free hook list */

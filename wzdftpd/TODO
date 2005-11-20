@@ -4,6 +4,8 @@
 
 '********'
 - implement events / in progress
+    - modify command_add() to support custom commands / site commands
+    - replace do_sitecmd
 '********'
 - add options to
     - disable TLS / Ok

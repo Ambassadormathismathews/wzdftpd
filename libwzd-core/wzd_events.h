@@ -37,8 +37,17 @@
 typedef struct wzd_event_t wzd_event_t;
 typedef struct wzd_event_manager_t wzd_event_manager_t;
 
+typedef enum event_reply_t event_reply_t;
 
-typedef int (*event_function_t)(const char * args);
+enum event_reply_t {
+  EVENT_OK    = 0,   /**< standard reply, continue processing events */
+  EVENT_BREAK = 1,   /**< event is ok, but stop processing events */
+  EVENT_DENY  = 2,   /**< event is ok, but stop processing events and refuse commands */
+
+  EVENT_ERROR = 255, /**< error while processing event */
+};
+
+typedef event_reply_t (*event_function_t)(const char * args);
 
 struct wzd_event_t {
   u32_t id;
@@ -66,7 +75,7 @@ void event_mgr_free(wzd_event_manager_t * mgr);
 int event_connect_function(wzd_event_manager_t * mgr, u32_t event_id, event_function_t callback, wzd_string_t * params);
 int event_connect_external(wzd_event_manager_t * mgr, u32_t event_id, wzd_string_t * external_command, wzd_string_t * params);
 
-void event_send(wzd_event_manager_t * mgr, u32_t event_id, wzd_string_t * params, wzd_context_t * context);
+int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_code, wzd_string_t * params, wzd_context_t * context);
 
 /** @} */
 

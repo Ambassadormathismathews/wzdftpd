@@ -17,10 +17,10 @@
 #define EVENT_ID_TEST3  (1<<3)
 #define EVENT_ID_TEST4  (1<<4)
 
-int callback1(const char * args)
+event_reply_t callback1(const char * args)
 {
   printf("callback1 [args: %s]\n",args);
-  return 0;
+  return EVENT_OK;
 }
 
 int main(int argc, char *argv[])
@@ -49,13 +49,13 @@ int main(int argc, char *argv[])
   str_deallocate(command_name);
 
   event_args = STR("toto");
-  event_send(mgr, EVENT_ID_TEST1,  event_args, f_context);
-  event_send(mgr, EVENT_ID_TEST2,  event_args, f_context);
+  event_send(mgr, EVENT_ID_TEST1,  200, event_args, f_context);
+  event_send(mgr, EVENT_ID_TEST2,  200, event_args, f_context);
   str_store(event_args,"; touch /tmp/toto");
-  event_send(mgr, EVENT_ID_TEST2,  event_args, f_context);
-  event_send(mgr, EVENT_ID_TEST12, NULL, f_context);
-  event_send(mgr, EVENT_ID_TEST3,  NULL, f_context);
-  event_send(mgr, EVENT_ID_TEST4,  NULL, f_context);
+  event_send(mgr, EVENT_ID_TEST2,  200, event_args, f_context);
+  event_send(mgr, EVENT_ID_TEST12, 200, NULL, f_context);
+  event_send(mgr, EVENT_ID_TEST3,  200, NULL, f_context);
+  event_send(mgr, EVENT_ID_TEST4,  200, NULL, f_context);
   str_deallocate(event_args);
 
   event_mgr_free(mgr);

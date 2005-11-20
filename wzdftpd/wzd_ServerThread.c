@@ -89,6 +89,8 @@
 #include <libwzd-core/wzd_socket.h>
 #include <libwzd-core/wzd_mod.h>
 #include <libwzd-core/wzd_cache.h>
+#include <libwzd-core/wzd_configfile.h>
+#include <libwzd-core/wzd_configloader.h>
 #include <libwzd-core/wzd_crontab.h>
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_section.h>
@@ -1285,6 +1287,7 @@ void serverMainThreadProc(void *arg)
   serverMainThreadExit(0);
 }
 
+/** \deprecated ! use \ref cfg_free */
 static void free_config(wzd_config_t * config)
 {
 /*  limiter_free(mainConfig->limiter_ul);
@@ -1296,14 +1299,12 @@ static void free_config(wzd_config_t * config)
 
   if (mainConfig->xferlog_fd >= 0)
     xferlog_close(mainConfig->xferlog_fd);
-  wzd_free(mainConfig->xferlog_name);
-  wzd_free(mainConfig->logdir);
+
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
 #ifndef WIN32
     closelog();
 #endif
   }
-  log_fini();
   wzd_free(mainConfig->logfilename);
   wzd_free(mainConfig->config_filename);
   wzd_free(mainConfig->pid_file);
@@ -1391,9 +1392,9 @@ void serverMainThreadExit(int retcode)
   }
   /* we need to wait for child threads to be effectively dead */
 #ifndef _MSC_VER
-  sleep(1);
+  usleep(300000);
 #else
-  Sleep(1000);
+  Sleep(300);
 #endif
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   tls_exit();
@@ -1411,24 +1412,21 @@ void serverMainThreadExit(int retcode)
   vfs_free(&mainConfig->vfs);
   free_messages();
   usercache_fini();
-  /* FIXME should not be done here */
-  if (mainConfig->backend.param) wzd_free(mainConfig->backend.param);
+
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (server_mutex) wzd_mutex_destroy(server_mutex);
 
-  commands_fini(mainConfig->commands_list);
   list_destroy(&server_ident_list);
   list_destroy(context_list);
   wzd_free(context_list);
 
   context_list = NULL;
 
-  if (mainConfig->htab) chtbl_destroy((CHTBL*)mainConfig->htab);
-  wzd_free(mainConfig->htab);
+  log_fini();
 
   /* free(mainConfig); */
   unlink(mainConfig->pid_file);
-  free_config(mainConfig);
+  cfg_free(mainConfig);
   mainConfig = NULL;
   server_mutex_set_fini();
 

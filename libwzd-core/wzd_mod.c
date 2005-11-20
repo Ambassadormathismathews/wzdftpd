@@ -93,7 +93,7 @@ struct event_entry_t event_tab[] = {
 };
 
 static int _hook_print_file(const char *filename, wzd_context_t *context);
-void _cleanup_shell_command(char * buffer, size_t length);
+extern void _cleanup_shell_command(char * buffer, size_t length);
 
 static protocol_handler_t * proto_handler_list=NULL;
 static unsigned int _reply_code;
@@ -771,26 +771,5 @@ static int _hook_print_file(const char *filename, wzd_context_t *context)
   free(file_buffer);
 
   return 0;
-}
-
-void _cleanup_shell_command(char * buffer, size_t length)
-{
-  const char * specials = "$\\|;!`()'\"#.,:*?{}[]&<>-~";
-  size_t i,j;
-  char * buf2;
-
-  buf2 = wzd_malloc(length);
-
-  for (i=0,j=0; buffer[i]!='\0' && i<length && j<length; i++,j++) {
-    if (strchr(specials,buffer[i]) != NULL) {
-      if (j+1 >= length) break;
-      buf2[j++] = '\\';
-    }
-    buf2[j] = buffer[i];
-  }
-  buf2[j] = '\0';
-
-  wzd_strncpy(buffer,buf2,length);
-  wzd_free(buf2);
 }
 

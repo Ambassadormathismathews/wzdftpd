@@ -234,7 +234,7 @@ static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * c
     if (!my_perl) return 0;
     if (!args || strlen(args)==0) { do_perl_help(context); return EVENT_HANDLED; }
 
-    if (_perl_set_slave(context)) return EVENT_ERROR;
+    if (_perl_set_slave(context)) return EVENT_ERR;
 
     /* send reply header */
     send_message_raw("200-\r\n",context);

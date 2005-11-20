@@ -55,7 +55,7 @@
 #include "wzd_configfile.h"
 #include "wzd_configloader.h"
 #include "wzd_crontab.h"
-
+#include "wzd_events.h"
 #include "wzd_libmain.h"
 #include "wzd_messages.h"
 #include "wzd_misc.h"
@@ -125,6 +125,9 @@ void cfg_init(wzd_config_t * cfg)
 #else
   cfg->tls_type = TLS_NOTYPE;
 #endif
+
+  cfg->event_mgr = wzd_malloc(sizeof(wzd_event_manager_t));
+  event_mgr_init(cfg->event_mgr);
 }
 
 /** \brief Frees a wzd_config_t (using wzd_free() )
@@ -133,8 +136,36 @@ void cfg_free(wzd_config_t * cfg)
 {
   WZD_ASSERT_VOID(cfg != NULL);
 
+  if (cfg->htab) chtbl_destroy((CHTBL*)cfg->htab);
+  wzd_free(cfg->htab);
+
+  wzd_free(cfg->logfilename);
+  wzd_free(cfg->config_filename);
+  wzd_free(cfg->pid_file);
+  wzd_free(cfg->dir_message);
+  wzd_free(cfg->xferlog_name);
+  wzd_free(cfg->logdir);
+  wzd_free(cfg->backend.name);
+
+  wzd_free(mainConfig->site_config.file_ginfo);
+  wzd_free(mainConfig->site_config.file_group);
+  wzd_free(mainConfig->site_config.file_groups);
+  wzd_free(mainConfig->site_config.file_help);
+  wzd_free(mainConfig->site_config.file_rules);
+  wzd_free(mainConfig->site_config.file_swho);
+  wzd_free(mainConfig->site_config.file_user);
+  wzd_free(mainConfig->site_config.file_users);
+  wzd_free(mainConfig->site_config.file_vfs);
+  wzd_free(mainConfig->site_config.file_who);
+
+  event_mgr_free(cfg->event_mgr);
+  wzd_free(cfg->event_mgr);
+
   commands_fini(cfg->commands_list);
 
+  config_free(cfg->cfg_file);
+
+  memset(cfg, 0, sizeof(wzd_config_t));
   wzd_free(cfg);
 }
 
@@ -150,7 +181,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   int ret;
   int i;
 
-  cfg = wzd_malloc(sizeof(*cfg));
+  cfg = wzd_malloc(sizeof(wzd_config_t));
   if (!cfg) { if (error) *error = E_NOMEM; return NULL; }
 
   cfg_init(cfg);
@@ -584,8 +615,12 @@ static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * conf
     if (event && value) {
       eventmask = str2event(str_tochar(event));
       if (eventmask) {
-        if (!hook_add_external(&config->hook,eventmask,str_tochar(value))) {
-          out_log(LEVEL_INFO,"Added event %s : %s\n",str_tochar(event),str_tochar(value));
+        wzd_string_t * command;
+        /* split parameters */
+        command = str_read_token(value);
+        if (event_connect_external(config->event_mgr, eventmask, command, value)==0) {
+/*        if (!hook_add_external(&config->hook,eventmask,str_tochar(value))) {*/
+          out_log(LEVEL_INFO,"Added event %s : [%s] [%s]\n",str_tochar(event),str_tochar(command),str_tochar(value));
         } else {
           out_log(LEVEL_HIGH,"ERROR while adding event: %s\n",event_name);
         }

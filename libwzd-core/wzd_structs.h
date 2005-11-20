@@ -40,6 +40,8 @@
 
 typedef struct wzd_backend_t wzd_backend_t;
 
+typedef struct wzd_config_t wzd_config_t;
+
 /*********************** ERRORS ***************************/
 
 typedef enum {
@@ -303,24 +305,29 @@ typedef struct _wzd_module_t {
 
 /* see also event_tab[] in wzd_mod.c */
 
-#define	EVENT_LOGIN		0x00000001
-#define	EVENT_LOGOUT		0x00000002
+enum event_id_t {
+  EVENT_NONE          = 0x00000000,
 
-#define	EVENT_PREUPLOAD		0x00000010
-#define	EVENT_POSTUPLOAD	0x00000020
-#define	EVENT_PREDOWNLOAD	0x00000040
-#define	EVENT_POSTDOWNLOAD	0x00000080
+  EVENT_LOGIN         = 0x00000001,
+  EVENT_LOGOUT        = 0x00000002,
 
-#define	EVENT_PREMKDIR		0x00000100
-#define	EVENT_MKDIR		0x00000200
-#define	EVENT_PRERMDIR		0x00000400
-#define	EVENT_RMDIR		0x00000800
+  EVENT_PREUPLOAD     = 0x00000010,
+  EVENT_POSTUPLOAD    = 0x00000020,
+  EVENT_PREDOWNLOAD   = 0x00000040,
+  EVENT_POSTDOWNLOAD  = 0x00000080,
 
-#define	EVENT_PREDELE 		0x00004000
-#define	EVENT_DELE 		0x00008000
+  EVENT_PREMKDIR      = 0x00000100,
+  EVENT_MKDIR         = 0x00000200,
+  EVENT_PRERMDIR      = 0x00000400,
+  EVENT_RMDIR         = 0x00000800,
 
-#define	EVENT_SITE		0x00010000
-#define	EVENT_CRONTAB		0x00100000
+  EVENT_PREDELE       = 0x00004000,
+  EVENT_DELE          = 0x00008000,
+
+  EVENT_SITE          = 0x00010000,
+  EVENT_CRONTAB       = 0x00100000,
+
+};
 
 /************************ SECTIONS ************************/
 
@@ -493,12 +500,11 @@ struct wzd_context_t {
 #define CFG_SET_OPTION(c,opt)   (c)->server_opts |= (opt)
 #define CFG_GET_OPTION(c,opt)   ( (c)->server_opts & (opt) )
 
-
 /** @brief Server config
  *
  * Contains all variables specific to a server instance.
  */
-typedef struct {
+struct wzd_config_t {
   char *	pid_file;
   char *	config_filename;
   time_t	server_start;
@@ -548,7 +554,9 @@ typedef struct {
   struct _wzd_configfile_t * cfg_file;
 
   struct wzd_cronjob_t * crontab;
-} wzd_config_t;
+
+  struct wzd_event_manager_t * event_mgr;
+};
 
 WZDIMPORT extern wzd_config_t *	mainConfig;
 WZDIMPORT extern List * context_list;

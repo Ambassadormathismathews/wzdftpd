@@ -59,6 +59,7 @@
 #include "wzd_misc.h"
 #include "wzd_ClientThread.h"
 #include "wzd_messages.h"
+#include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_libmain.h"
 #include "wzd_mod.h"
@@ -218,14 +219,12 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 
       /* send message header */
       send_message_raw("226- command ok\r\n",context);
-      FORALL_HOOKS(EVENT_POSTDOWNLOAD)
-        typedef int (*login_hook)(unsigned long, const char*, const char *);
-        if (hook->hook)
-          ret = (*(login_hook)hook->hook)(EVENT_POSTDOWNLOAD,user->username,context->current_action.arg);
-        else
-          ret = hook_call_external(hook,226);
-      END_FORALL_HOOKS
-
+      {
+        wzd_string_t * event_args = str_allocate();
+        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+        event_send(mainConfig->event_mgr, EVENT_POSTDOWNLOAD, 226, event_args, context);
+        str_deallocate(event_args);
+      }
       ret = send_message(226,context);
 #ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
@@ -279,14 +278,12 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 
       /* send message header */
       send_message_raw("226- command ok\r\n",context);
-      FORALL_HOOKS(EVENT_POSTUPLOAD)
-        typedef int (*pul_hook)(unsigned long, const char*, const char *);
-        if (hook->hook)
-          ret = (*(pul_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-        else
-          ret = hook_call_external(hook,226);
-      END_FORALL_HOOKS
-
+      {
+        wzd_string_t * event_args = str_allocate();
+        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+        event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 226, event_args, context);
+        str_deallocate(event_args);
+      }
       ret = send_message(226,context);
 #ifdef DEBUG
       out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);

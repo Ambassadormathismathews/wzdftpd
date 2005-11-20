@@ -86,6 +86,7 @@
 #include "wzd_messages.h"
 #include "wzd_vfs.h"
 #include "wzd_crc32.h"
+#include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_libmain.h"
 #include "wzd_perm.h"
@@ -344,8 +345,6 @@ unsigned char * getmyip(int sock)
  */
 void client_die(wzd_context_t * context)
 {
-  int ret;
-
   if (context->magic != CONTEXT_MAGIC) {
 #ifdef DEBUG
 out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
@@ -362,11 +361,11 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
     context->current_action.current_file = -1;
   }
 
-  FORALL_HOOKS(EVENT_LOGOUT)
-    typedef int (*login_hook)(unsigned long, wzd_context_t*, const char*);
-    if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_LOGOUT, context, GetUserByID(context->userid)->username);
-  END_FORALL_HOOKS
+  {
+    wzd_string_t * event_args = STR(GetUserByID(context->userid)->username);
+    event_send(mainConfig->event_mgr, EVENT_LOGOUT, 0, event_args, context);
+    str_deallocate(event_args);
+  }
 
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
@@ -436,12 +435,14 @@ int check_timeout(wzd_context_t * context)
       /* send events here allow sfv checker to mark file as bad if
        * partially uploaded
        */
-      FORALL_HOOKS(EVENT_POSTUPLOAD)
-        typedef int (*upload_hook)(unsigned long, const char*, const char *);
-        if (hook->hook)
-          ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-      END_FORALL_HOOKS
+      {
+        wzd_string_t * event_args = str_allocate();
+        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+        event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context);
+        str_deallocate(event_args);
+      }
       file_close(context->current_action.current_file,context);
+      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
       context->current_action.current_file = -1;
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
@@ -1417,13 +1418,11 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
     /* send message header */
     send_message_raw("257- command ok\r\n",context);
-    FORALL_HOOKS(EVENT_MKDIR)
-      typedef int (*mkdir_hook)(unsigned long, const char*);
-      if (hook->hook)
-        ret = (*(mkdir_hook)hook->hook)(EVENT_MKDIR,buffer);
-      if (hook->external_command)
-        ret = hook_call_external(hook,257);
-    END_FORALL_HOOKS
+    {
+      wzd_string_t * event_args = STR(buffer);
+      event_send(mainConfig->event_mgr, EVENT_MKDIR, 257, event_args, context);
+      str_deallocate(event_args);
+    }
     ret = send_message_with_args(257,context,param,"created");
 
     if (param[0] != '/') {
@@ -1522,13 +1521,11 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 
     /* send message header */
     send_message_raw("258- command ok\r\n",context);
-    FORALL_HOOKS(EVENT_RMDIR)
-      typedef int (*rmdir_hook)(unsigned long, const char*);
-      if (hook->hook)
-        ret = (*(rmdir_hook)hook->hook)(EVENT_RMDIR,buffer);
-      if (hook->external_command)
-        ret = hook_call_external(hook,258);
-    END_FORALL_HOOKS
+    {
+      wzd_string_t * event_args = STR(buffer);
+      event_send(mainConfig->event_mgr, EVENT_RMDIR, 258, event_args, context);
+      str_deallocate(event_args);
+    }
     ret = send_message_with_args(258,context,param,"removed");
 
     if (param[0] != '/') {
@@ -2042,20 +2039,19 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
 
 
-  FORALL_HOOKS(EVENT_PREDOWNLOAD)
-    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
-    ret = 0;
-    if (hook->hook)
-      ret = (*(xfer_hook)hook->hook)(EVENT_PREDOWNLOAD,user->username,path);
-    if (hook->external_command)
-      ret = hook_call_external(hook,0);
-    if (ret) {
-      out_log(LEVEL_NORMAL, "Download denied by hook (returned %d)\n", ret);
-      ret = send_message_with_args(501,context,"Download denied");
-      context->current_action.token = restorestate;
-      return E_XFER_REJECTED;
-    }
-  END_FORALL_HOOKS
+  {
+    wzd_string_t * event_args = str_allocate();
+    str_sprintf(event_args,"%s %s",user->username,path);
+    ret = event_send(mainConfig->event_mgr, EVENT_PREDOWNLOAD, 0, event_args, context);
+    str_deallocate(event_args);
+  }
+
+  if (ret != EVENT_OK && ret != EVENT_BREAK) {
+    out_log(LEVEL_NORMAL, "Download denied by hook (returned %d)\n", ret);
+    ret = send_message_with_args(501,context,"Download denied");
+    context->current_action.token = restorestate;
+    return E_XFER_REJECTED;
+  }
 
   /* restore the context state in case we exit before downloading*/
   context->current_action.token = restorestate;
@@ -2246,19 +2242,18 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_FILE_FORBIDDEN;
   }
 
-  FORALL_HOOKS(EVENT_PREUPLOAD)
-    typedef int (*xfer_hook)(unsigned long, const char*, const char *);
-    ret = 0;
-    if (hook->hook)
-      ret = (*(xfer_hook)hook->hook)(EVENT_PREUPLOAD,user->username,path);
-    if (hook->external_command)
-      ret = hook_call_external(hook,0);
-    if (ret) {
-      out_log(LEVEL_NORMAL, "Upload denied by hook (returned %d)\n", ret);
-      ret = send_message_with_args(501,context,"Upload denied");
-      return E_XFER_REJECTED;
-    }
-  END_FORALL_HOOKS
+  {
+    wzd_string_t * event_args = str_allocate();
+    str_sprintf(event_args,"%s %s",user->username,path);
+    ret = event_send(mainConfig->event_mgr, EVENT_PREUPLOAD, 0, event_args, context);
+    str_deallocate(event_args);
+  }
+
+  if (ret != EVENT_OK && ret != EVENT_BREAK) {
+    out_log(LEVEL_NORMAL, "Upload denied by hook (returned %d)\n", ret);
+    ret = send_message_with_args(501,context,"Upload denied");
+    return E_XFER_REJECTED;
+  }
 
 
   /* overwrite protection */
@@ -2583,11 +2578,12 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
         /* send events here allow sfv checker to mark file as bad if
          * partially uploaded
          */
-        FORALL_HOOKS(EVENT_POSTUPLOAD)
-          typedef int (*upload_hook)(unsigned long, const char*, const char *);
-          if (hook->hook)
-            ret = (*(upload_hook)hook->hook)(EVENT_POSTUPLOAD,user->username,context->current_action.arg);
-        END_FORALL_HOOKS
+        {
+          wzd_string_t * event_args = str_allocate();
+          str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+          ret = event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context);
+          str_deallocate(event_args);
+        }
       }
     }
     context->current_action.current_file = -1;
@@ -2729,13 +2725,11 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   if (!ret) {
     send_message_raw("250- command ok\r\n",context);
-    FORALL_HOOKS(EVENT_DELE)
-      typedef int (*dele_hook)(unsigned long, const char*);
-      if (hook->hook)
-        ret = (*(dele_hook)hook->hook)(EVENT_DELE,path);
-      if (hook->external_command)
-        ret = hook_call_external(hook,250);
-    END_FORALL_HOOKS
+    {
+      wzd_string_t * event_args = STR(path);
+      event_send(mainConfig->event_mgr, EVENT_DELE, 250, event_args, context);
+      str_deallocate(event_args);
+    }
     ret = send_message_with_args(250,context,"DELE"," command successfull");
 
     context->idle_time_start = time(NULL);
@@ -3746,13 +3740,11 @@ void * clientThreadProc(void *arg)
 
   /* user+pass ok */
   send_message_raw("230-command ok\r\n",context);
-  FORALL_HOOKS(EVENT_LOGIN)
-    typedef int (*login_hook)(unsigned long, const char*);
-    if (hook->hook)
-      ret = (*(login_hook)hook->hook)(EVENT_LOGIN,user->username);
-    if (hook->external_command)
-      ret = hook_call_external(hook,230);
-  END_FORALL_HOOKS
+  {
+    wzd_string_t * event_args = STR(user->username);
+    event_send(mainConfig->event_mgr, EVENT_LOGIN, 230, event_args, context);
+    str_deallocate(event_args);
+  }
   ret = send_message(230,context);
 
   /* update last login time */

@@ -293,7 +293,7 @@ static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * co
       int ret;
 
       slave = _tcl_getslave(interp, context);
-      if (!slave) return EVENT_ERROR;
+      if (!slave) return EVENT_ERR;
 
       /* send reply header */
       send_message_raw("200-\r\n",context);

@@ -68,12 +68,14 @@
 #include "wzd_site_user.h"
 #include "wzd_vars.h"
 #include "wzd_vfs.h"
+#include "wzd_cache.h"
+#include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_fs.h"
 #include "wzd_dir.h"
-#include "wzd_perm.h"
 #include "wzd_mod.h"
-#include "wzd_cache.h"
+#include "wzd_perm.h"
+#include "wzd_tls.h"
 
 #include <libwzd-auth/wzd_tls.h> /* XXX test only */
 
@@ -2191,6 +2193,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   hook_reply = EVENT_IGNORED;
   first_reply = 1;
 
+#if 0
   FORALL_HOOKS(EVENT_SITE)
     typedef wzd_hook_reply_t (*site_hook)(unsigned long, wzd_context_t *, const char*,const char *);
     if (hook->hook) {
@@ -2210,9 +2213,10 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
       return 0; /* there can be only one site command ! */
     }
   END_FORALL_HOOKS
+#endif /* 0 */
 
   switch (hook_reply) {
-  case EVENT_ERROR:
+  case EVENT_ERR:
     /* we do not know how to reply .. trying 200 */
     out_log(LEVEL_INFO, "Someone reported errors for site command %s\n", s_token);
     ret = send_message_with_args(200,context,"SITE command failed");
@@ -2273,7 +2277,7 @@ int do_sitecmd(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t 
   END_FORALL_HOOKS
 
   switch (hook_reply) {
-  case EVENT_ERROR:
+  case EVENT_ERR:
     /* we do not know how to reply .. trying 200 */
     out_log(LEVEL_INFO, "Someone reported errors for site command %s\n", s_token);
     ret = send_message_with_args(200,context,"SITE command failed");
