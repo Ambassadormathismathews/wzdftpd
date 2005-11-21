@@ -449,6 +449,12 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 
   memcpy(context->hostip,userip,16);
 
+  /* check if ident lookups are disabled */
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_IDENT)) {
+    server_login_accept(context);
+    return 0;
+  }
+
   /* try to open ident connection */
   /** \todo TODO XXX FIXME remove this hardcoded WZD_INET4 and use connection type */
 #if defined(IPV6_SUPPORT)

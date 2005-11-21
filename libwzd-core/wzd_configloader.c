@@ -214,6 +214,15 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     str_deallocate(str);
   }
 
+  /* DISABLE_IDENT */
+  str = config_get_string(file, "GLOBAL", "disable_ident", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_IDENT);
+    }
+    str_deallocate(str);
+  }
+
   /* DISABLE_TLS */
   str = config_get_string(file, "GLOBAL", "disable_tls", NULL);
   if (str) {

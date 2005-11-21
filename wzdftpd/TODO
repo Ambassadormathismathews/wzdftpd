@@ -9,6 +9,7 @@
 '********'
 - add options to
     - disable TLS / Ok
+    - disable ident lookups
     - disable colors when logging
     - disable timestamps
     - set log level in command args
