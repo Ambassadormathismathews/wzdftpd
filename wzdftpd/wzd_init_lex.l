@@ -1620,7 +1620,7 @@ int cfg_read_sitecmd(void)
     return 1;
   }
 
-  if (commands_add(tempConfig.commands_list,sitecmdname,do_sitecmd,NULL,TOK_SITE_CUSTOM)) {
+  if (commands_add(tempConfig.commands_list,sitecmdname,do_sitecmd,NULL,TOK_CUSTOM)) {
     out_err(LEVEL_HIGH,"error adding custom site command\n");
     wzd_free(sitecmdname);
     wzd_free(command);

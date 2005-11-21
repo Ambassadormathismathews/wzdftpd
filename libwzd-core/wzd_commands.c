@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <libwzd-base/hash.h>
+
 #include "wzd_structs.h"
 #include "wzd_misc.h"
 #include "wzd_perm.h"
@@ -40,7 +42,7 @@
 #include "wzd_site_user.h"
 #include "wzd_ClientThread.h"
 
-#include <libwzd-base/hash.h>
+#include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
 
@@ -48,6 +50,7 @@ static void _command_free(wzd_command_t *command)
 {
   if (!command) return;
   free(command->name);
+  str_deallocate(command->external_command);
   perm_free_recursive(command->perms);
   free(command);
 }
@@ -98,6 +101,7 @@ int commands_add(CHTBL * _ctable,
     com->id = id;
     com->command = command;
     com->help_function = help;
+    com->external_command = NULL;
 
     com->perms = NULL;
 
@@ -106,6 +110,63 @@ int commands_add(CHTBL * _ctable,
       return 0;
     }
 
+    free(com->name);
+    free(com);
+    return -1;
+  }
+
+  return 0;
+}
+
+int commands_add_external(CHTBL * _ctable,
+    const char *name,
+    const wzd_string_t *external_command)
+{
+  wzd_command_t * com;
+
+  if (!_ctable) return -1;
+  if (!name || !external_command) return -1;
+
+  if (chtbl_lookup(_ctable, name, (void**)&com) == 0) { /* already found, replace command */
+    free(com->name);
+    str_deallocate(com->external_command);
+
+    com->name = strdup(name);
+    ascii_lower(com->name,strlen(com->name));
+    com->id = TOK_CUSTOM;
+    com->external_command = str_dup(external_command);
+
+    com->command = NULL;
+    com->help_function = NULL;
+
+    if ((chtbl_change(_ctable, com->name, com)==0))
+    {
+      return 0;
+    }
+
+    str_deallocate(com->external_command);
+    free(com->name);
+    free(com);
+    return -1;
+  } else {
+    /* new entry */
+    com = malloc(sizeof(wzd_command_t));
+    com->name = strdup(name);
+    ascii_lower(com->name,strlen(com->name));
+    com->id = TOK_CUSTOM;
+    com->external_command = str_dup(external_command);
+
+    com->command = NULL;
+    com->help_function = NULL;
+
+    com->perms = NULL;
+
+    if ((chtbl_insert(_ctable, com->name, com, NULL, NULL, (void(*)(void*))_command_free))==0)
+    {
+      return 0;
+    }
+
+    str_deallocate(com->external_command);
     free(com->name);
     free(com);
     return -1;

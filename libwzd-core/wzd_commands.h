@@ -36,6 +36,8 @@ typedef struct {
   wzd_function_command_t command;
   wzd_function_command_t help_function;
 
+  wzd_string_t * external_command;
+
   struct wzd_command_perm_t * perms;
 } wzd_command_t;
 
@@ -47,6 +49,10 @@ int commands_add(CHTBL * _ctable,
     wzd_function_command_t command,
     wzd_function_command_t help,
     u32_t id);
+
+int commands_add_external(CHTBL * _ctable,
+    const char *name,
+    const wzd_string_t *external_command);
 
 int commands_add_defaults(CHTBL * _ctable);
 

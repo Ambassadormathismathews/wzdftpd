@@ -3907,7 +3907,31 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         str_deallocate(command_buffer);
         continue;
       }
-      ret = (*(command->command))(token,command_buffer,context);
+      if (command->command)
+        ret = (*(command->command))(token,command_buffer,context);
+      else { /* external command */
+        wzd_popen_t * p;
+        out_log(LEVEL_FLOOD,"DEBUG call external command [%s]\n",str_tochar(command->external_command));
+        p = my_popen(str_tochar(command->external_command));
+        if (p) {
+          FILE * file;
+          file = fdopen(p->fdr,"r");
+          /** \todo we don't know if the custom command will reply according
+           * to the RFC protocol, so we force the correct first and last lines
+           */
+          send_message_raw("200-\r\n",context);
+          while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
+          {
+            send_message_raw(buffer,context);
+          }
+          send_message_raw("200 Command OK\r\n",context);
+          fclose(file);
+          ret = my_pclose(p);
+        } else { /* !p */
+          out_log(LEVEL_NORMAL,"ERROR failed to popen command '%s'\n",str_tochar(command->external_command));
+          ret = send_message_with_args(501,context,"Command execution failed");
+        }
+      }
       str_deallocate(token);
       str_deallocate(command_buffer);
       continue;

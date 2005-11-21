@@ -564,7 +564,8 @@ static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config
 
     /** \bug the following does NOT work if the command is not a SITE command */
 
-    if (commands_add(config->commands_list,command_name,do_sitecmd,NULL,TOK_SITE_CUSTOM)) {
+    /* add custom command */
+    if (commands_add_external(config->commands_list,command_name,value)) {
       out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",command_name);
       str_deallocate(value);
       continue;
@@ -575,14 +576,6 @@ static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config
       out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",command_name);
       str_deallocate(value);
       /** \bug XXX remove command from   config->commands_list */
-      continue;
-    }
-
-    if (hook_add_custom_command(&config->hook,command_name,str_tochar(value))) {
-      out_log(LEVEL_HIGH,"ERROR adding hook for custom command %s\n",command_name);
-      str_deallocate(value);
-      /** \bug XXX remove command from   config->commands_list */
-      /** \bug XXX remove permission from   config->commands_list */
       continue;
     }
 

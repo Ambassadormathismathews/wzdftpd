@@ -88,15 +88,6 @@ static event_reply_t _event_exec(const char * commandline, wzd_context_t * conte
 
 void _cleanup_shell_command(char * buffer, size_t length);
 
-typedef struct wzd_popen_t wzd_popen_t;
-
-struct wzd_popen_t {
-  int child_pid;
-  int fdr;
-};
-
-wzd_popen_t * my_popen(const char * command);
-event_reply_t my_pclose(wzd_popen_t * p);
 int my_spawn_nowait(const char * command);
 
 void event_mgr_init(wzd_event_manager_t * mgr)
