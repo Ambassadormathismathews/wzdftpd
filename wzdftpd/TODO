@@ -4,12 +4,12 @@
 
 '********'
 - implement events / in progress
-    - modify command_add() to support custom commands / site commands
+    - modify command_add() to support custom commands / site commands / OK
     - replace do_sitecmd
 '********'
 - add options to
-    - disable TLS / Ok
-    - disable ident lookups
+    - disable TLS / OK
+    - disable ident lookups / OK
     - disable colors when logging
     - disable timestamps
     - set log level in command args

@@ -124,11 +124,15 @@ static Tcl_ChannelType channel_type =
   NULL,   /* flush */
   NULL,   /* handler */
   NULL,   /* wideseek */
+#ifdef TCL_CHANNEL_VERSION_4
+  NULL,   /* threadActionProc */
+#endif
 };
 
 /***** EVENT HOOKS *****/
-static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
 static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
+
+static int do_site_tcl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context);
 
 /***** PROTO HOOKS *****/
 static int tcl_hook_protocol(const char *file, const char *args);
@@ -229,14 +233,15 @@ int WZD_MODULE_INIT(void)
   /* replace stdout and stderr */
   ch1 = Tcl_CreateChannel(&channel_type, "wzdout", WZDOUT, TCL_WRITABLE);
   ch2 = Tcl_CreateChannel(&channel_type, "wzderr", WZDERR, TCL_WRITABLE);
-  Tcl_SetStdChannel(ch1, TCL_STDOUT);
-  Tcl_SetStdChannel(ch2, TCL_STDERR);
 
   Tcl_SetChannelOption(interp, ch1, "-buffering", "line");
   Tcl_SetChannelOption(interp, ch2, "-buffering", "line");
 
-  Tcl_RegisterChannel(interp, ch1);
-  Tcl_RegisterChannel(interp, ch2);
+  Tcl_SetStdChannel(ch1, TCL_STDOUT);
+  Tcl_SetStdChannel(ch2, TCL_STDERR);
+
+/*  Tcl_RegisterChannel(interp, ch1);
+  Tcl_RegisterChannel(interp, ch2);*/
 
   /** It's a bit stupid to modify things here, because modifications (like changing
    * standard channels) are NOT inherited by slaves.
@@ -258,16 +263,36 @@ int WZD_MODULE_INIT(void)
   Tcl_CreateCommand(interp,"vars_shm",tcl_vars_shm,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vars_user",tcl_vars_user,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
   Tcl_CreateCommand(interp,"vfs",tcl_vfs,(ClientData)NULL,(Tcl_CmdDeleteProc*)NULL);
-  hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&tcl_hook_site);
+
+  {
+    const char * command_name = "site_tcl";
+    /* add custom command */
+    if (commands_add(getlib_mainConfig()->commands_list,command_name,do_site_tcl,NULL,TOK_CUSTOM)) {
+      out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",command_name);
+    }
+
+    /* default permission XXX hardcoded */
+    if (commands_set_permission(getlib_mainConfig()->commands_list,command_name,"+O")) {
+      out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",command_name);
+      /** \bug XXX remove command from   config->commands_list */
+    }
+  }
+
   hook_add(&getlib_mainConfig()->hook,EVENT_LOGOUT,(void_fct)&tcl_hook_logout);
   hook_add_protocol("tcl:",4,&tcl_hook_protocol);
   out_log(LEVEL_INFO,"TCL module loaded\n");
   return 0;
 }
 
+/** \bug XXX Tcl_DeleteInterp() seems to trigger some badness in channels
+ * (error is: FlushChannel: damaged channel list)
+ * so we temporarily disable it ...
+ */
 void WZD_MODULE_CLOSE(void)
 {
-  Tcl_DeleteInterp(interp);
+/*  if (!Tcl_InterpDeleted(interp))
+    Tcl_DeleteInterp(interp);*/
+/*  Tcl_Release(interp);*/
   interp = NULL;
 /*  Tcl_Exit(0);*/
   Tcl_Finalize();
@@ -280,46 +305,46 @@ void WZD_MODULE_CLOSE(void)
 
 
 
-static wzd_hook_reply_t tcl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
+static int do_site_tcl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context)
 {
-  if (strcasecmp(token,"site_tcl")==0) {
-    if (!args || strlen(args)==0) { do_tcl_help(context); return EVENT_HANDLED; }
-    {
-      Tcl_Obj * TempObj;
-      Tcl_Interp * slave = NULL;
-      const char *s;
-      char * errorinfo;
-      wzd_user_t * user;
-      int ret;
+  if (!param || str_length(param)==0) { do_tcl_help(context); return EVENT_HANDLED; }
+  {
+    Tcl_Obj * TempObj;
+    Tcl_Interp * slave = NULL;
+    const char *s;
+    char * errorinfo;
+    wzd_user_t * user;
+    int ret;
 
-      slave = _tcl_getslave(interp, context);
-      if (!slave) return EVENT_ERR;
-
-      /* send reply header */
-      send_message_raw("200-\r\n",context);
-
-      current_context = context;
-      user = GetUserByID(context->userid);
-      Tcl_SetVar(slave,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
-      Tcl_SetVar(slave,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
-      Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
-      TempObj = Tcl_NewStringObj(args,-1);
-      ret = Tcl_EvalObj(slave, TempObj);
-      /* XXX FIXME should we call Tcl_DecrRefCount() ? */
-      current_context = NULL;
-      s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
-      if (!s || *s!='1') {
-        if (ret != TCL_OK) {
-          errorinfo = (char *) Tcl_GetVar(interp, "errorInfo", 0);
-          out_err(LEVEL_HIGH,"TCL error: %s\n",errorinfo);
-          send_message_with_args(200,context,"Error in TCL command");
-        } else
-          send_message_with_args(200,context,"TCL command ok");
-      }
+    slave = _tcl_getslave(interp, context);
+    if (!slave) {
+      send_message_with_args(501,context,"TCL: could not set slave");
+      return -1;
     }
-    return EVENT_HANDLED;
+
+    /* send reply header */
+    send_message_raw("200-\r\n",context);
+
+    current_context = context;
+    user = GetUserByID(context->userid);
+    Tcl_SetVar(slave,TCL_HAS_REPLIED,"0",TCL_GLOBAL_ONLY);
+    Tcl_SetVar(slave,TCL_REPLY_CODE,"200",TCL_GLOBAL_ONLY);
+    Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
+    TempObj = Tcl_NewStringObj(str_tochar(param),-1);
+    ret = Tcl_EvalObj(slave, TempObj);
+    /* XXX FIXME should we call Tcl_DecrRefCount() ? */
+    current_context = NULL;
+    s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
+    if (!s || *s!='1') {
+      if (ret != TCL_OK) {
+        errorinfo = (char *) Tcl_GetVar(interp, "errorInfo", 0);
+        out_err(LEVEL_HIGH,"TCL error: %s\n",errorinfo);
+        send_message_with_args(200,context,"Error in TCL command");
+      } else
+        send_message_with_args(200,context,"TCL command ok");
+    }
   }
-  return EVENT_IGNORED;
+  return 0;
 }
 
 static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, const char *username)
@@ -331,7 +356,9 @@ static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, cons
 
   if ( (slave = Tcl_GetSlave(interp, buffer)) )
   {
-    Tcl_DeleteInterp(slave);
+    if (!Tcl_InterpDeleted(slave))
+      Tcl_DeleteInterp(slave);
+    Tcl_Release(slave);
   }
 
   return 0;
@@ -475,7 +502,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
   if ( (slave = Tcl_CreateSlave(interp, buffer, 0)) ) {
     int ret;
 
-    static Tcl_Channel ch1, ch2; /** \bug why static ?! */
+    Tcl_Channel ch1, ch2; /** \bug why static ?! */
     /* replace stdout and stderr */
     ch1 = Tcl_CreateChannel(&channel_type, "wzdout", WZDOUT, TCL_WRITABLE);
     ch2 = Tcl_CreateChannel(&channel_type, "wzderr", WZDERR, TCL_WRITABLE);

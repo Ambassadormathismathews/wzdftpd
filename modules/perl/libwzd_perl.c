@@ -105,8 +105,9 @@ static int execute_perl( SV *function, const char *args);
 static void xs_init(pTHX);
 
 /***** EVENT HOOKS *****/
-static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args);
 static int perl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
+
+static int do_site_perl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context);
 
 /***** PROTO HOOKS *****/
 static int perl_hook_protocol(const char *file, const char *args);
@@ -143,7 +144,7 @@ static struct _slave_t _slaves[MAX_SLAVES];
 
 /***********************/
 MODULE_NAME(perl);
-MODULE_VERSION(102);
+MODULE_VERSION(103);
 
 /***********************/
 /* WZD_MODULE_INIT     */
@@ -205,7 +206,20 @@ int WZD_MODULE_INIT(void)
   }
   memset(_slaves, 0, MAX_SLAVES*sizeof(struct _slave_t));
 
-  hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&perl_hook_site);
+  {
+    const char * command_name = "site_perl";
+    /* add custom command */
+    if (commands_add(getlib_mainConfig()->commands_list,command_name,do_site_perl,NULL,TOK_CUSTOM)) {
+      out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",command_name);
+    }
+
+    /* default permission XXX hardcoded */
+    if (commands_set_permission(getlib_mainConfig()->commands_list,command_name,"+O")) {
+      out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",command_name);
+      /** \bug XXX remove command from   config->commands_list */
+    }
+  }
+
   hook_add(&getlib_mainConfig()->hook,EVENT_LOGOUT,(void_fct)&perl_hook_logout);
   hook_add_protocol("perl:",5,&perl_hook_protocol);
   out_log(LEVEL_INFO,"PERL module loaded\n");
@@ -225,37 +239,37 @@ void WZD_MODULE_CLOSE(void)
 }
 
 
-
-static wzd_hook_reply_t perl_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
+static int do_site_perl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context)
 {
   SV *val;
 
-  if (strcasecmp(token,"site_perl")==0) {
-    if (!my_perl) return 0;
-    if (!args || strlen(args)==0) { do_perl_help(context); return EVENT_HANDLED; }
+  if (!my_perl) return 0;
+  if (!param || str_length(param)==0) { do_perl_help(context); return -1; }
 
-    if (_perl_set_slave(context)) return EVENT_ERR;
-
-    /* send reply header */
-    send_message_raw("200-\r\n",context);
-
-    /* exec string */
-    val = eval_pv(args, FALSE);
-
-    if (SvTRUE(val))
-      send_message_with_args(200,context,"PERL command ok");
-    else {
-      /* log error */
-      if (perl_fd_errlog >= 0) {
-        wzd_string_t * str = str_allocate();
-        str_sprintf(str,"Error in %s: %s\n",args,SvPV_nolen(ERRSV));
-        write(perl_fd_errlog,str_tochar(str),strlen(str_tochar(str)));
-      }
-      send_message_with_args(200,context,"PERL command reported errors");
-    }
-    return EVENT_HANDLED;
+  if (_perl_set_slave(context)) {
+    send_message_with_args(501,context,"Perl: could not set slave");
+    return -1;
   }
-  return EVENT_IGNORED;
+
+  /* send reply header */
+  send_message_raw("200-\r\n",context);
+
+  /* exec string */
+  val = eval_pv(str_tochar(param), FALSE);
+
+  if (SvTRUE(val))
+    send_message_with_args(200,context,"PERL command ok");
+  else {
+    /* log error */
+    if (perl_fd_errlog >= 0) {
+      wzd_string_t * str = str_allocate();
+      str_sprintf(str,"Error in %s: %s\n",str_tochar(param),SvPV_nolen(ERRSV));
+      write(perl_fd_errlog,str_tochar(str),strlen(str_tochar(str)));
+    }
+    send_message_with_args(200,context,"PERL command reported errors");
+  }
+
+  return 0;
 }
 
 /** \bug this code is not reentrant, be carefull with _perl_set_slave ! */
