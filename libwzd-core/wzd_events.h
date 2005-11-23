@@ -47,6 +47,8 @@ enum event_reply_t {
   EVENT_ERROR = 255, /**< error while processing event */
 };
 
+#ifndef WIN32
+
 typedef struct wzd_popen_t wzd_popen_t;
 
 struct wzd_popen_t {
@@ -56,6 +58,8 @@ struct wzd_popen_t {
 
 wzd_popen_t * my_popen(const char * command);
 event_reply_t my_pclose(wzd_popen_t * p);
+
+#endif /* WIN32 */
 
 typedef event_reply_t (*event_function_t)(const char * args);
 

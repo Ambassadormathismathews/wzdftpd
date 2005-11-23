@@ -39,6 +39,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <dirent.h>
+#include <sys/wait.h>
 #endif
 
 #include <stdio.h>
@@ -46,7 +47,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <errno.h>
 
 #include "wzd_structs.h"
@@ -287,6 +287,7 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
   return EVENT_OK;
 }
 
+#ifndef WIN32
 static event_reply_t _event_exec(const char * commandline, wzd_context_t * context)
 {
 #if 0
@@ -313,7 +314,7 @@ static event_reply_t _event_exec(const char * commandline, wzd_context_t * conte
   p = my_popen(commandline);
   if (!p) {
 /*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
-    out_log(LEVEL_INFO,"Failed command: '%s'\n",buffer);
+    out_log(LEVEL_INFO,"Failed command: '%s'\n",commandline);
     return EVENT_ERROR;
   }
   file = fdopen(p->fdr,"r");
@@ -326,6 +327,37 @@ static event_reply_t _event_exec(const char * commandline, wzd_context_t * conte
 
   return ret;
 }
+
+#else /* WIN32 */
+
+static event_reply_t _event_exec(const char * commandline, wzd_context_t * context)
+{
+  FILE * file;
+  char buffer[1024];
+  char * clean_command;
+  int ret = EVENT_OK;
+
+  clean_command = strdup(commandline);
+  _cleanup_shell_command(clean_command,strlen(clean_command));
+
+  file = _popen(clean_command,"r");
+  if (file == NULL) {
+/*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
+    out_log(LEVEL_INFO,"Failed command: '%s'\n",clean_command);
+	free(clean_command);
+    return EVENT_ERROR;
+  }
+  while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
+  {
+    send_message_raw(buffer,context);
+  }
+  _pclose(file);
+  free(clean_command);
+
+  return ret;
+}
+
+#endif /* WIN32 */
 
 void _cleanup_shell_command(char * buffer, size_t length)
 {
@@ -347,6 +379,8 @@ void _cleanup_shell_command(char * buffer, size_t length)
   wzd_strncpy(buffer,buf2,length);
   wzd_free(buf2);
 }
+
+#ifndef WIN32
 
 wzd_popen_t * my_popen(const char * command)
 {
@@ -457,6 +491,8 @@ int my_spawn_nowait(const char * command)
 
   return ret;
 }
+
+#endif /* WIN32 */
 
 /** @} */
 

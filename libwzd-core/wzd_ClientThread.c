@@ -3910,6 +3910,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
       if (command->command)
         ret = (*(command->command))(token,command_buffer,context);
       else { /* external command */
+#ifndef WIN32
         wzd_popen_t * p;
         out_log(LEVEL_FLOOD,"DEBUG call external command [%s]\n",str_tochar(command->external_command));
         p = my_popen(str_tochar(command->external_command));
@@ -3931,6 +3932,33 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
           out_log(LEVEL_NORMAL,"ERROR failed to popen command '%s'\n",str_tochar(command->external_command));
           ret = send_message_with_args(501,context,"Command execution failed");
         }
+#else /* WIN32 */
+		FILE * file;
+		char * clean_command;
+		extern void _cleanup_shell_command(char * buffer, size_t length);
+		clean_command = strdup(str_tochar(command->external_command));
+		_cleanup_shell_command(clean_command,strlen(clean_command));
+
+		out_log(LEVEL_FLOOD,"DEBUG call external command [%s]\n",clean_command);
+		file = _popen(clean_command,"r");
+		if (file) {
+          /** \todo we don't know if the custom command will reply according
+           * to the RFC protocol, so we force the correct first and last lines
+           */
+          send_message_raw("200-\r\n",context);
+          while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
+          {
+            send_message_raw(buffer,context);
+          }
+          send_message_raw("200 Command OK\r\n",context);
+          _pclose(file);
+		  ret = 0;
+        } else { /* !p */
+          out_log(LEVEL_NORMAL,"ERROR failed to popen command '%s'\n",clean_command);
+          ret = send_message_with_args(501,context,"Command execution failed");
+        }
+		free(clean_command);
+#endif /* WIN32 */
       }
       str_deallocate(token);
       str_deallocate(command_buffer);
