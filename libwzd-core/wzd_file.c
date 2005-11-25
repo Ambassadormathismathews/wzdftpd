@@ -1363,8 +1363,9 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   /* is a directory ? */
   {
     fs_filestat_t s;
-    if (fs_file_stat(filename,&s)) return -1;
-    if (S_ISDIR(s.mode)) return -1;
+    if (fs_file_stat(filename,&s) == 0) {
+      if (S_ISDIR(s.mode)) return -1;
+    }
   }
 
 #ifdef WIN32
