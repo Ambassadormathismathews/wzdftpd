@@ -104,7 +104,7 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
  */
 fd_t socket_make(const char *ip, unsigned int *port, int nListen)
 {
-  size_t c;
+  socklen_t c;
   fd_t sock;
   struct sockaddr_in sai;
 #if defined(IPV6_SUPPORT)
@@ -269,7 +269,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   size_t len = sizeof(struct sockaddr_in);
 #else
   struct sockaddr_in6 from;
-  size_t len = sizeof(struct sockaddr_in6);
+  socklen_t len = sizeof(struct sockaddr_in6);
 #endif
 #if 0
   int i=0;
@@ -310,11 +310,11 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   *remote_port = ntohs(from.sin_port);
 #else
 #ifndef WIN32
-  bcopy((const char*)&from.sin6_addr.s6_addr, (char*)remote_host, 16);
+  bcopy((const char*)from.sin6_addr.s6_addr, (char*)remote_host, 16);
   *remote_port = ntohs(from.sin6_port);
 #else
   /* FIXME VISUAL memory zones must NOT overlap ! */
-  memcpy((char*)remote_host, (const char*)&from.sin6_addr.s6_addr, 16);
+  memcpy((char*)remote_host, (const char*)from.sin6_addr.s6_addr, 16);
 #endif /* _MSC_VER */
 #endif /* IPV6_SUPPORT */
 
@@ -384,7 +384,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 sai6;
 #endif
-  size_t len = sizeof(struct sockaddr_in);
+  socklen_t len = sizeof(struct sockaddr_in);
   int ret;
   int on=1;
 #ifdef WIN32
@@ -624,7 +624,7 @@ int get_sock_port(int sock, int local)
 #else
   struct sockaddr_in from;
 #endif
-  size_t fromlen;
+  socklen_t fromlen;
 
   /* Get IP address of client. */
   fromlen = sizeof(from);
