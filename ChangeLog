@@ -1,3 +1,7 @@
+2005-11-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: avoid segfault when exiting if no backend
+
 2005-11-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: add option to disable ident lookups

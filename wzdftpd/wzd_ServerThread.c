@@ -1374,25 +1374,27 @@ void serverMainThreadExit(int retcode)
     int ok = 0;
     int loop_count=0;
 
-    while (!ok) {
-      ListElmt * elmnt;
-      wzd_context_t * loop_context;
-      child_count = 0;
-      for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
-      {
-        loop_context = list_data(elmnt);
-        if (loop_context->magic == CONTEXT_MAGIC) child_count++;
-      }
-      if (child_count == 0) { ok=1; break; }
-      out_log(LEVEL_FLOOD,"Found %d child threads, waiting ..\n",child_count);
+    if (context_list) {
+      while (!ok) {
+        ListElmt * elmnt;
+        wzd_context_t * loop_context;
+        child_count = 0;
+        for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+        {
+          loop_context = list_data(elmnt);
+          if (loop_context->magic == CONTEXT_MAGIC) child_count++;
+        }
+        if (child_count == 0) { ok=1; break; }
+        out_log(LEVEL_FLOOD,"Found %d child threads, waiting ..\n",child_count);
 #ifndef WIN32
-      usleep(300000);
+        usleep(300000);
 #else
-      Sleep(300);
+        Sleep(300);
 #endif
-      if (++loop_count > 10) { /* maximum wait time: ~ 3s */
-        out_log(LEVEL_INFO,"Still %d childs .. exiting anyway\n",child_count);
-        break;
+        if (++loop_count > 10) { /* maximum wait time: ~ 3s */
+          out_log(LEVEL_INFO,"Still %d childs .. exiting anyway\n",child_count);
+          break;
+        }
       }
     }
   }
