@@ -1942,6 +1942,8 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_NO_DATA_CTX;
   }
 
+  FD_REGISTER(context->pasvsock,"Client PASV socket");
+
   myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
 
 #if !defined(IPV6_SUPPORT)
