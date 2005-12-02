@@ -84,11 +84,13 @@ void init_default_messages(void)
   msg_tab[227] = strdup("Entering Passive Mode (%hhu,%hhu,%hhu,%hhu,%hu,%hu)"); /* DON'T TOUCH ! */
   msg_tab[230] = strdup("User logged in, proceed.");
   msg_tab[234] = strdup("AUTH command OK. Initializing %s mode"); /* SSL init */
+  msg_tab[235] = strdup("%s%s");
   msg_tab[250] = strdup("%s%s");
 /*  msg_tab[257] = strdup("\"%s\" %s");*/
   msg_tab[258] = strdup("\"%s\" %s");
 
   msg_tab[331] = strdup("User %s okay, need password.");
+  msg_tab[334] = strdup("%s%s");
   msg_tab[350] = strdup("%s"); /* "Restarting at %ld. Send STORE or RETRIEVE.", or "OK, send RNTO" */
 
   msg_tab[421] = strdup("%s"); /* Service not available, closing control connection. */
@@ -102,6 +104,7 @@ void init_default_messages(void)
   msg_tab[502] = strdup("Command not implemented.");
   msg_tab[503] = strdup("%s");
   msg_tab[530] = strdup("%s"); /* Not logged in." */
+  msg_tab[535] = strdup("%s"); /* Not logged in." */
   msg_tab[550] = strdup("%s: %s");
   msg_tab[553] = strdup("Requested action not taken: %s");
 }

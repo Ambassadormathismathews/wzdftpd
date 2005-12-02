@@ -44,6 +44,7 @@
 #endif
 
 #include "wzd_auth.h"
+#include "wzd_krb5.h"
 #include "wzd_md5crypt.h"
 #include "wzd_md5.h"
 #include "wzd_pam.h"
@@ -171,6 +172,9 @@ int check_auth(const char *user, const char *data, const char *challenge)
     return checkpass_pam(user,data);
   if (strncmp(challenge,AUTH_SIG_CERT,strlen(AUTH_SIG_CERT))==0)
     return check_certificate(user,challenge+strlen(AUTH_SIG_CERT));
+
+  if (strncmp(challenge,AUTH_SIG_KRB,strlen(AUTH_SIG_KRB))==0)
+    return check_krb5(user,challenge+strlen(AUTH_SIG_KRB));
 
   /* in doubt, check for crypt() */
   return checkpass_crypt(data,challenge);

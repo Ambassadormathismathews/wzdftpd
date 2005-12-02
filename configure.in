@@ -122,6 +122,7 @@ AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 
 dnl WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_TLS
+WZD_LIB_KRB5
 WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
@@ -225,6 +226,7 @@ AC_DEFINE_UNQUOTED(WZD_BUILD_OPTS,"$WZD_BUILD_OPTS")
 AH_TEMPLATE([WZD_BUILD_OPTS],
             [Build options.])
 
+AM_CONDITIONAL([HAVE_KRB5], [test "$wzd_have_krb5" = "yes"])
 AM_CONDITIONAL([HAVE_MYSQL], [test "$wzd_have_mysql" = "yes"])
 AM_CONDITIONAL([HAVE_PAM], [test "$wzd_have_pam" = "yes"])
 AM_CONDITIONAL([HAVE_PERL], [test "$wzd_have_perl" = "yes"])
@@ -329,6 +331,7 @@ Here is a short summary of what I've found on your system :
        SSL:    $wzd_lib_openssl
        GnuTLS: $wzd_have_gnutls
        UTF-8:  $wzd_have_utf8
+       Kerberos:  $wzd_have_krb5
 
   backends:
        MySQL:  $wzd_have_mysql

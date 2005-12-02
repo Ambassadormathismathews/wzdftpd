@@ -66,6 +66,7 @@ int changepass(const char *user, const char *pass, char *buffer, size_t len);
 #define AUTH_SIG_PAM  "{pam}"
 #define AUTH_SIG_SHA  "{SHA}"
 #define AUTH_SIG_CERT "{cert}"
+#define AUTH_SIG_KRB  "{kerberos}"
 
 /*! @} */
 

@@ -100,6 +100,8 @@
 #include "ls.h"
 #include "wzd_ClientThread.h"
 
+#include <libwzd-auth/wzd_base64.h>
+#include <libwzd-auth/wzd_krb5.h>
 #include <libwzd-auth/wzd_md5.h>
 
 #include "wzd_debug.h"
@@ -171,6 +173,7 @@ int identify_token(char *token)
       case STRTOINT('x','m','d','5'): return TOK_XMD5;
       case STRTOINT('o','p','t','s'): return TOK_OPTS;
       case STRTOINT('m','o','d','a'): return TOK_MODA;
+      case STRTOINT('a','d','a','t'): return TOK_ADAT;
 /*      default:
         return TOK_UNKNOWN;*/
     }
@@ -3402,6 +3405,102 @@ int check_tls_forced(wzd_context_t * context)
   return E_OK;
 }
 
+#if defined (HAVE_KRB5)
+static int do_login_gssapi(wzd_context_t * context)
+{
+  char buffer[BUFFER_LEN];
+  char * ptr;
+  char * token;
+  char * base64data;
+  int command;
+  int ret;
+  auth_gssapi_data_t gssapi_data;
+
+  /** \todo initialize GSSAPI */
+  ret = auth_gssapi_init(&gssapi_data);
+  if (ret) {
+    ret = send_message_with_args(550,context,"GSSAPI","Initialisation failed");
+    return 1;
+  }
+
+  ret = send_message_with_args(334, context, "waiting for ", "ADAT");
+ 
+  while (1) {
+    /* wait response */
+    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
+
+    if (ret == 0) {
+      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
+      return 1;
+    }
+    if (ret==-1) {
+      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->controlfd);
+      return 1;
+    }
+
+    /* this replace the memset (bzero ?) some lines before */
+    buffer[ret] = '\0';
+
+    if (buffer[0]=='\0') continue;
+
+    {
+      size_t length = strlen(buffer);
+      while (length > 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
+        buffer[length-- -1] = '\0';
+      set_action(context,buffer);
+    }
+
+#ifdef DEBUG
+out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
+#endif
+
+    /* strtok_r: to be reentrant ! */
+    ptr = buffer;
+    token = strtok_r(buffer," \t\r\n",&ptr);
+    command = identify_token(token);
+
+    switch (command) {
+    case TOK_HELP:
+        send_message_with_args(530,context,"Login with USER and PASS");
+        break;
+    case TOK_ADAT:
+        {
+          char * ptr_out = NULL;
+          size_t length_out;
+
+          base64data = strtok_r(NULL," \t\r\n",&ptr);
+          out_log(LEVEL_FLOOD,"DEBUG: received ADAT [%s]\n",base64data);
+          ret = auth_gssapi_accept_sec_context(gssapi_data, base64data, strlen(base64data), &ptr_out, &length_out);
+          switch (ret) {
+            case 1:
+              ret = send_message_with_args(334, context, "ADAT=", ptr_out);
+              break;
+            case 0:
+              ret = send_message_with_args(235,context,"ADAT=", ptr_out);
+              break;
+            default:
+              ret = send_message_with_args(535,context,"GSSAPI authentication failed");
+              return 1;
+          }
+#if 0
+          length_in = base64_encode((u_int8_t*)ptr_out,length_out,(u_int8_t*)buffer2);
+          ret = send_message_with_args(334, context, "ADAT=", buffer2);
+          send_message_with_args(530,context,"I don't know yet how to play with ADAT");
+#endif
+        }
+        break;
+    default:
+      out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
+      ret = send_message_with_args(530,context,"Invalid login sequence");
+      return 1;
+    } /* switch (command) */
+
+  } /* while (1) */
+
+  return 1; /* error */
+}
+#endif /* HAVE_KRB5 */
+
 /*************** do_login_loop ***********************/
 
 static int do_login_loop(wzd_context_t * context)
@@ -3547,10 +3646,16 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = send_message_with_args(421,context,"Invalid token in AUTH command\n");
         return 1;
       }
+#if defined (HAVE_KRB5)
+      if (strcasecmp(token,"GSSAPI")==0) {
+        ret = do_login_gssapi(context);
+        return ret;
+      }
+#endif
       if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
         ret = send_message_with_args(502,context,"TLS Disabled by config");
         break;
-  }
+      }
       if (strcasecmp(token,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
         context->ssl.data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
       else
