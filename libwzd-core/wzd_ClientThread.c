@@ -362,9 +362,14 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
   }
 
   {
-    wzd_string_t * event_args = STR(GetUserByID(context->userid)->username);
-    event_send(mainConfig->event_mgr, EVENT_LOGOUT, 0, event_args, context);
-    str_deallocate(event_args);
+    wzd_user_t * user = GetUserByID(context->userid);
+    wzd_string_t * event_args = NULL;
+
+    if (user) {
+      event_args = STR(user->username);
+      event_send(mainConfig->event_mgr, EVENT_LOGOUT, 0, event_args, context);
+      str_deallocate(event_args);
+    }
   }
 
 

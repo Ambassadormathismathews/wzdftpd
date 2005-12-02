@@ -685,6 +685,7 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
         default:
           out_log(LEVEL_HIGH,"tls_auth_data_cont: error accepting: %s\n",
             (char*)ERR_error_string(sslerr,NULL));
+          tls_close_data(context);
           return 1;
       }
       r = select(fd+1, &fd_r, &fd_w, NULL, &tv);
@@ -693,6 +694,7 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
 
   if (r == 0) {
     out_err(LEVEL_CRITICAL,"tls_auth_data_cont failed\n");
+    tls_close_data(context);
     return -1;
   }
 

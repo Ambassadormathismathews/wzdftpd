@@ -1,3 +1,8 @@
+2005-12-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: avoid segfault when login fails for inexistant user
+	* bugfix: close SSL data connection when connection fails
+
 2005-11-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: avoid segfault when exiting if no backend
