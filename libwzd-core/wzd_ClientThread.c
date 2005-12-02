@@ -1327,7 +1327,8 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     strlcat(path,param,WZD_MAX_PATH);
   } else {
     wzd_strncpy(cmd,param,WZD_MAX_PATH);
-    if (checkpath_new(cmd,path,context)) { ret = E_WRONGPATH; goto label_error_mkdir; }
+    ret = checkpath_new(cmd,path,context);
+    if (ret != E_FILE_NOEXIST) { ret = E_WRONGPATH; goto label_error_mkdir; }
     if (path[strlen(path)-1]!='/') strcat(path,"/");
 /*    if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';*/
   }
