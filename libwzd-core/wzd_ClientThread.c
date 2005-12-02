@@ -1838,7 +1838,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   free(param);
   ret = send_message_with_args(200,context,"Command okay");
 #else /* defined(IPV6_SUPPORT) */
-  send_message(202,context);
+  send_message(502,context);
 #endif
   return E_OK;
 }
@@ -4077,7 +4077,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
       str_deallocate(command_buffer);
       continue;
     } else {
-      ret = send_message(202,context);
+      ret = send_message(502,context);
     }
 
     str_deallocate(token);

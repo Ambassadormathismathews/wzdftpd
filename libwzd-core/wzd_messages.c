@@ -69,7 +69,6 @@ void init_default_messages(void)
   msg_tab[150] = strdup("Status OK, about to open data connection.");
 
   msg_tab[200] = strdup("%s"); /* Command okay */
-  msg_tab[202] = strdup("Command not implemented.");
   msg_tab[211] = strdup("%s");
   msg_tab[213] = strdup("%s"); /* mdtm */
   msg_tab[214] = strdup("The following commands can be used:\n"
