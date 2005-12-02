@@ -1620,7 +1620,7 @@ int cfg_read_sitecmd(void)
     return 1;
   }
 
-  if (commands_add(tempConfig.commands_list,sitecmdname,do_sitecmd,NULL,TOK_CUSTOM)) {
+  if (commands_add_external(tempConfig.commands_list,sitecmdname,STR(command))) {
     out_err(LEVEL_HIGH,"error adding custom site command\n");
     wzd_free(sitecmdname);
     wzd_free(command);
@@ -1635,11 +1635,6 @@ int cfg_read_sitecmd(void)
     return 1;
   }
 
-  if (hook_add_custom_command(&tempConfig.hook,sitecmdname,command)) {
-    wzd_free(sitecmdname);
-    wzd_free(command);
-    return 1;
-  }
   wzd_free(sitecmdname);
   wzd_free(command);
   return 0;
