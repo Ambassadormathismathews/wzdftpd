@@ -1489,9 +1489,10 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       get_cookie_format(yytext,&padding);
       if (current_context)
       {
+        int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
         /* check FLAG_SEE_IP for self */
         if (me && me->flags && strchr(me->flags,FLAG_SEE_IP)) {
-          inet_ntop(CURRENT_AF,current_context->hostip,internalbuffer,sizeof(internalbuffer));
+          inet_ntop(af,current_context->hostip,internalbuffer,sizeof(internalbuffer));
         } else { /* not allowed to see */
           snprintf(internalbuffer,IBUFSIZE,"xxx.xxx.xxx.xxx");
         }

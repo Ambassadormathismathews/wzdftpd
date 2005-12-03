@@ -1,3 +1,8 @@
+2005-12-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: support for multiple addresses/ports binds. This also
+	allows to have both IPv4 and IPv6 sockets on *BSD (Closes: #0035)
+
 2005-12-02  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: avoid segfault when login fails for inexistant user

@@ -162,7 +162,7 @@ int ip_compare(const char * ip, const char * pattern)
       ip += strlen("::ffff:");
 
     memset(&aiHint,0,sizeof(struct addrinfo));
-    aiHint.ai_family = PF_UNSPEC;
+    aiHint.ai_family = AF_UNSPEC;
     aiHint.ai_socktype = SOCK_STREAM;
     aiHint.ai_protocol = IPPROTO_TCP;
     memset(buffer1,0,sizeof(struct in6_addr));

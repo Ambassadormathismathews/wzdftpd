@@ -389,8 +389,9 @@ typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } t
 typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t;
 
 typedef enum {
-  WZD_INET4=1,
-  WZD_INET6=2
+  WZD_INET_NONE = 0,
+  WZD_INET4     = 2,  /* AF_INET */
+  WZD_INET6     = 10, /* AF_INET6 */
 } net_family_t;
 
 /** @brief SSL connection objects */
@@ -444,6 +445,7 @@ typedef enum {
 struct wzd_context_t {
   unsigned long	magic;  /**< \brief magic number, used to test structure integrity */
 
+  net_family_t  family; /**< \brief IPv4 or IPv6 */
   unsigned char	hostip[16];
   wzd_ip_t      * peer_ip;
   char          ident[MAX_IDENT_LENGTH];
@@ -455,7 +457,7 @@ struct wzd_context_t {
   net_family_t  datafamily; /**< \brief IPv4 or IPv6 */
   unsigned long	pid_child;
   unsigned long	thread_id;
-/*  int           portsock;*/
+
   fd_t          pasvsock;
   read_fct_t    read_fct;
   write_fct_t   write_fct;
@@ -522,7 +524,6 @@ struct wzd_config_t {
   char *        logdir;
   unsigned int  umask;
   char *	dir_message;
-  fd_t          mainSocket;
   fd_t		controlfd; /**< external control: named pipe, unix socket, or socket */
   char          ip[MAX_IP_LENGTH];
   char          dynamic_ip[MAX_IP_LENGTH];

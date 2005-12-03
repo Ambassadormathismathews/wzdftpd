@@ -25,10 +25,10 @@
 #ifndef __WZD_SOCKET__
 #define __WZD_SOCKET__
 
-fd_t socket_make(const char *ip, unsigned int *port, int nListen);
+fd_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t family);
 int socket_close(fd_t sock);
 
-int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port);
+int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *family);
 
 int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, fd_t fd, unsigned int timeout);
 

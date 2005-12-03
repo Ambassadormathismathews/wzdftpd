@@ -305,6 +305,9 @@ int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned i
 
 /*************** getmyip *****************************/
 
+/** \todo getmyip will NOT work correctly, since it depends on the socket type
+ * see  socket_accept() for how to find family
+ */
 unsigned char * getmyip(int sock)
 {
 #if !defined(IPV6_SUPPORT)
@@ -474,8 +477,9 @@ int check_timeout(wzd_context_t * context)
       send_message_with_args(421,context,"Timeout, closing connection");
       {
         char inet_str[256];
+        int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
         inet_str[0] = '\0';
-        inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+        inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
         log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
             user->username,
             inet_str,
@@ -500,8 +504,9 @@ int check_timeout(wzd_context_t * context)
         send_message_with_args(421,context,"Timeout, closing connection");
         {
           char inet_str[256];
+          int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
           inet_str[0] = '\0';
-          inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
+          inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
           log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
               user->username,
               inet_str,
@@ -633,7 +638,7 @@ int waitaccept(wzd_context_t * context)
     }
   } while (!FD_ISSET(sock,&fds));
 
-  sock = socket_accept(context->pasvsock, remote_host, &remote_port);
+  sock = socket_accept(context->pasvsock, remote_host, &remote_port, &context->family);
   if (sock == (fd_t)-1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
@@ -2877,13 +2882,14 @@ int do_quit(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
+    int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
 
     user = GetUserByID(context->userid);
 
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';
-    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),af);
     if (h==NULL)
       remote_host = inet_str;
     else
@@ -3354,11 +3360,14 @@ int do_user_ip(const char *username, wzd_context_t * context)
 
   if (!user) return E_USER_IDONTEXIST;
 
-#if !defined(IPV6_SUPPORT)
-  inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
-#else
-  inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
+#if defined(IPV6_SUPPORT)
+  if (context->family == WZD_INET6) {
+    inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
+  } else
 #endif
+  {
+    inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
+  }
   if (user_ip_inlist(user,ip,context->ident)==1)
     return E_OK;
 
@@ -3804,11 +3813,12 @@ void * clientThreadProc(void *arg)
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
+    int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
 
     if (user && user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';
-    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),af);
     if (h==NULL)
       remote_host = inet_str;
     else
@@ -3834,10 +3844,11 @@ void * clientThreadProc(void *arg)
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
+    int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
     if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
     inet_str[0] = '\0';
-    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),af);
     if (h==NULL)
       remote_host = inet_str;
     else

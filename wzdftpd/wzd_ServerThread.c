@@ -124,6 +124,12 @@ typedef struct {
   wzd_context_t * context;
 } wzd_ident_context_t;
 
+typedef struct {
+  unsigned short dynamic;
+  char *         ip;
+  fd_t           sock;
+} server_ip_t;
+
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
@@ -136,6 +142,7 @@ int runMainThread(int argc, char **argv)
 
 static void free_config(wzd_config_t * config);
 
+static List server_ip_list;
 static List server_ident_list;
 static int server_add_ident_candidate(fd_t socket_accept_fd);
 static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
@@ -147,6 +154,10 @@ static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
 static void server_login_accept(wzd_context_t * context);
+
+static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
+static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
+static void server_ip_free(void * p);
 
 
 
@@ -191,6 +202,18 @@ static wzd_context_t * context_find_free(List * context_list)
   return context;
 }
 
+static void server_ip_free(void * p)
+{
+  server_ip_t * s = p;
+  if (s->sock >= 0) {
+    /** \todo shutdown SSL ? */
+    socket_close(s->sock);
+    FD_UNREGISTER(s->sock,"Server listening socket");
+  }
+  wzd_free( s->ip );
+  memset(s, 0, sizeof(*s));
+  wzd_free( s );
+}
 
 void reset_stats(wzd_server_stat_t * stats)
 {
@@ -214,6 +237,8 @@ static int global_check_ip_allowed(unsigned char *userip)
 
 void server_rebind(const char *new_ip, unsigned int new_port)
 {
+  out_log(LEVEL_HIGH,"ERROR server_rebind: not implemented yet\n");
+#if 0
   fd_t sock;
   const char *ip = (new_ip) ? new_ip : mainConfig->ip;
 
@@ -221,7 +246,7 @@ void server_rebind(const char *new_ip, unsigned int new_port)
   sock = mainConfig->mainSocket;
   socket_close(sock);
 
-  sock = mainConfig->mainSocket = socket_make((const char *)ip,&new_port,mainConfig->max_threads);
+  sock = mainConfig->mainSocket = socket_make((const char *)ip,&new_port,mainConfig->max_threads,WZD_INET_NONE);
   if (sock == (fd_t)-1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
           __FILE__, __LINE__);
@@ -236,12 +261,16 @@ void server_rebind(const char *new_ip, unsigned int new_port)
     }
   }
   out_log(LEVEL_CRITICAL,"New file descriptor %d\n",mainConfig->mainSocket);
+#endif
 }
 
 /* checks if dynamic ip has changed, and rebind main socket if true
  */
 int check_server_dynamic_ip(void)
 {
+  out_log(LEVEL_HIGH,"ERROR server_rebind: not implemented yet\n");
+  return -1;
+#if 0
   struct sockaddr_in sa_current, sa_config;
   unsigned int size;
   const unsigned char * str_ip_current;
@@ -340,6 +369,7 @@ int check_server_dynamic_ip(void)
     }
   }
   return 0;
+#endif /* 0 */
 }
 
 
@@ -390,8 +420,9 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   unsigned short ident_port = 113;
   wzd_context_t * context;
   wzd_ident_context_t * ident_context;
+  net_family_t family;
 
-  newsock = socket_accept(mainConfig->mainSocket, remote_host, &remote_port);
+  newsock = socket_accept(socket_accept_fd, remote_host, &remote_port, &family);
   if (newsock == (fd_t)-1)
   {
     out_log(LEVEL_HIGH,"Error while accepting\n");
@@ -401,13 +432,16 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 
   memcpy(userip,remote_host,16);
 
-#if !defined(IPV6_SUPPORT)
-  inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
-#else
-  inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
-  if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
-    out_log(LEVEL_INFO,"IP is IPv4 compatible\n");
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
+    if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
+      out_log(LEVEL_INFO,"IP is IPv4 compatible\n");
+  } else
 #endif
+  {
+    inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
+  }
 
   /* Here we check IP BEFORE starting session */
   if (global_check_ip_allowed(userip)<=0) { /* IP was rejected */
@@ -445,6 +479,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 /*  context->magic = CONTEXT_MAGIC;*/  /* magic is set inside lock, it makes no sense here */
   context->state = STATE_CONNECTING;
   context->controlfd = newsock;
+  context->family = family;
   time (&context->login_time);
 
   memcpy(context->hostip,userip,16);
@@ -455,13 +490,8 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
     return 0;
   }
 
-  /* try to open ident connection */
-  /** \todo TODO XXX FIXME remove this hardcoded WZD_INET4 and use connection type */
-#if defined(IPV6_SUPPORT)
-  fd_ident = socket_connect(userip,WZD_INET6,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
-#else
-  fd_ident = socket_connect(userip,WZD_INET4,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
-#endif
+  /* try to open ident connection, the same type as the incoming connection */
+  fd_ident = socket_connect(userip,family,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
 
   if (fd_ident == (fd_t)-1) {
     if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
@@ -686,6 +716,60 @@ static void server_ident_remove(wzd_ident_context_t * ident_context)
 #endif
 }
 
+static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
+{
+  int ret;
+  ListElmt * elmnt;
+  server_ip_t * server_ip;
+
+  if (!server_ip_list.head) return;
+
+  for (elmnt=server_ip_list.head; elmnt; elmnt=list_next(elmnt)) {
+    server_ip = list_data(elmnt);
+    if (!server_ip) continue;
+
+    if (server_ip->sock != (fd_t)-1)
+    {
+      if (FD_ISSET(server_ip->sock,e_fds)) { /* error */
+        out_log(LEVEL_INFO,"ERROR reading response (%d) %d %s\n",server_ip->sock,errno,strerror(errno));
+      } else
+      if (FD_ISSET(server_ip->sock,r_fds)) { /* get ident */
+        if ((ret=server_add_ident_candidate(server_ip->sock))) {
+          if (ret != 1 /* global ip rejected */ &&
+              ret != 2 /* too many connections */
+             )
+            out_log(LEVEL_NORMAL,"could not add connection for connection: %d (errno: %d: %s) :%s:%d\n",
+                ret, errno, strerror(errno), __FILE__, __LINE__);
+          continue; /* possible cause of error: global ip rejected */
+/*          serverMainThreadExit(-1);*/
+          /* we abort, so we never returns */
+        }
+        mainConfig->stats.num_connections++;
+      }
+    }
+  }
+}
+
+/*
+ * add server ips to the correct fd_set
+ */
+static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
+{
+  ListElmt * elmnt;
+  server_ip_t * server_ip;
+
+  for (elmnt=server_ip_list.head; elmnt; elmnt=list_next(elmnt)) {
+    server_ip = list_data(elmnt);
+    if (!server_ip) continue;
+    if (server_ip->sock != (fd_t)-1)
+    {
+      FD_SET(server_ip->sock,r_fds);
+      FD_SET(server_ip->sock,e_fds);
+      *maxfd = MAX(*maxfd,server_ip->sock);
+    }
+  }
+}
+
 /*
  * checks if login sequence can start, creates new context, etc
  */
@@ -698,13 +782,16 @@ static void server_login_accept(wzd_context_t * context)
   int ret;
 
   userip = context->hostip;
-#if !defined(IPV6_SUPPORT)
-  inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
-#else
-  inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
-  if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
-    out_log(LEVEL_NORMAL,"IP is IPv4 compatible\n");
+#if defined(IPV6_SUPPORT)
+  if (context->family == WZD_INET6) {
+    inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
+    if (IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip)))
+      out_log(LEVEL_INFO,"IP is IPv4 compatible\n");
+  } else
 #endif
+  {
+    inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
+  }
 
   /* switch to tls mode ? */
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
@@ -832,21 +919,110 @@ int server_switch_to_config(wzd_config_t *config)
 {
   int fd;
   int ret;
+  int err;
+  wzd_string_t ** str_list;
+  const char * ptr_to_data;
+  char * ptr;
+  int i;
+  unsigned long ul;
+  fd_t sock4, sock6;
+  unsigned int port;
+  server_ip_t * server_ip;
+  char * ipaddress;
+  char * port_ptr; 
 
-  ret = (config->mainSocket = socket_make((const char *)config->ip,&config->port,config->max_threads));
-  if (ret == -1) {
-    out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
-      __FILE__, __LINE__);
-    out_err(LEVEL_CRITICAL,"Could not create main socket - check log for more infos\n");
-    return -1;
-  }
-  FD_REGISTER(ret,"Server listening socket");
-  {
-    int one=1;
+  WZD_ASSERT(config != NULL);
 
-    if (setsockopt(ret, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
-      out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
-      return -1;
+  str_list = config_get_string_list(config->cfg_file, "GLOBAL", "port", &err);
+  if (str_list) {
+    for (i=0; str_list[i]; i++) {
+      sock4 = sock6 = -1;
+      ptr_to_data = str_tochar(str_list[i]);
+      out_log(LEVEL_FLOOD, "DEBUG: binding to ip %s\n", ptr_to_data);
+
+      ipaddress = NULL;
+      port = 0;
+
+      /** \todo find a solution for dynamic ip
+       *  \todo if we have a host name, it will unlikely contains ':'
+       */
+      if (strchr(ptr_to_data,':') != NULL) {
+        /* specific bind */
+        ipaddress = strdup(ptr_to_data);
+        port_ptr = strrchr(ipaddress,':');
+        *port_ptr++ = '\0';
+
+        ul = strtoul(port_ptr, &ptr, 0);
+        if (ptr && *ptr == '\0' && ul < 65536) {
+          port = (unsigned int)ul;
+        }
+      } else {
+        /* port number: assume we want to bind to all addresses */
+        ul = strtoul(ptr_to_data, &ptr, 0);
+        if (ptr && *ptr == '\0' && ul < 65536) {
+          port = (unsigned int)ul;
+        } else {
+          out_log(LEVEL_HIGH, "ERROR: ip %s is invalid\n", ptr_to_data);
+        }
+      }
+
+      /* try IPv6 first:
+       * 1. set IPV6_V6ONLY for ipv6 socket before bind(2) if it is defined.
+       * if IPV6_V6ONLY is defined and setsockopt() failed, warn it.
+       * if IPV6_V6ONLY is defined and setsockopt() succeeded, let
+       * v4inv6 1.
+       *
+       * 2. if bind(2) for an socket (either for ipv4 or ipv6) failed
+       * when you already have socket (it is either ipv6 or ipv4,
+       * respectively because the loop trys only for ipv4 and/or ipv6) and the reason is
+       * EADDRINUSE and v4inv6 is 0, it is ok to ignore this "error."
+       */
+      if (ipaddress == NULL || strchr(ipaddress,':') != NULL)
+        sock6 = socket_make(ipaddress,&port,config->max_threads,WZD_INET6);
+      if (ipaddress == NULL || strchr(ipaddress,':') == NULL)
+        sock4 = socket_make(ipaddress,&port,config->max_threads,WZD_INET4);
+
+      if (sock6 >= 0) {
+        server_ip = malloc(sizeof(*server_ip));
+        server_ip->dynamic = 0;
+        server_ip->ip = strdup(ptr_to_data);
+        server_ip->sock = sock6;
+        FD_REGISTER(sock6,"Server listening socket");
+        if (list_ins_next(&server_ip_list, NULL, server_ip)) {
+          out_log(LEVEL_CRITICAL,"FATAL Could not register server ip %s\n",ptr_to_data);
+          server_ip_free(server_ip);
+          return -1;
+        }
+        {
+          int one=1;
+
+          if (setsockopt(sock6, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+            out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+            return -1;
+          }
+        }
+      }
+      if (sock4 >= 0) {
+        server_ip = malloc(sizeof(*server_ip));
+        server_ip->dynamic = 0;
+        server_ip->ip = strdup(ptr_to_data);
+        server_ip->sock = sock4;
+        FD_REGISTER(sock4,"Server listening socket");
+        if (list_ins_next(&server_ip_list, NULL, server_ip)) {
+          out_log(LEVEL_CRITICAL,"FATAL Could not register server ip %s\n",ptr_to_data);
+          server_ip_free(server_ip);
+          return -1;
+        }
+        {
+          int one=1;
+
+          if (setsockopt(sock4, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
+            out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+            return -1;
+          }
+        }
+      }
+
     }
   }
 
@@ -1150,6 +1326,9 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 
+  /* clear ip list */
+  list_init(&server_ip_list, server_ip_free);
+
 
   if (server_switch_to_config(mainConfig))
   {
@@ -1224,10 +1403,10 @@ void serverMainThreadProc(void *arg)
     FD_ZERO(&r_fds);
     FD_ZERO(&w_fds);
     FD_ZERO(&e_fds);
-    FD_SET(mainConfig->mainSocket,&r_fds);
-    FD_SET(mainConfig->mainSocket,&e_fds);
+
     tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
-    maxfd = mainConfig->mainSocket;
+    maxfd = 0;
+    server_ip_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_control_select(&r_fds, &w_fds, &e_fds, &maxfd);
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
@@ -1243,8 +1422,7 @@ void serverMainThreadProc(void *arg)
     case -1: /* error */
       if (errno == EINTR) continue; /* retry */
       if (errno == EBADF) {
-        out_log(LEVEL_CRITICAL,"Bad file descriptor %d\n",
-            mainConfig->mainSocket);
+        out_log(LEVEL_CRITICAL,"FATAL Bad file descriptor\n");
         serverMainThreadExit(-1);
       }
       out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%d\n",
@@ -1263,19 +1441,7 @@ void serverMainThreadProc(void *arg)
       server_ident_check(&r_fds,&w_fds,&e_fds);
       /* check ident timeout */
       server_ident_timeout_check();
-      if (FD_ISSET(mainConfig->mainSocket,&r_fds)) {
-        if ((ret=server_add_ident_candidate(mainConfig->mainSocket))) {
-          if (ret != 1 /* global ip rejected */ &&
-              ret != 2 /* too many connections */
-             )
-            out_log(LEVEL_NORMAL,"could not add connection for ident: %d (errno: %d: %s) :%s:%d\n",
-                ret, errno, strerror(errno), __FILE__, __LINE__);
-          continue; /* possible cause of error: global ip rejected */
-/*          serverMainThreadExit(-1);*/
-          /* we abort, so we never returns */
-        }
-        mainConfig->stats.num_connections++;
-      }
+      server_ip_check(&r_fds,&w_fds,&e_fds);
     }
 
     /* check cron jobs */
@@ -1348,8 +1514,8 @@ void serverMainThreadExit(int retcode)
   signal(SIGINT,SIG_IGN);
 #endif
 
-  socket_close(mainConfig->mainSocket);
-  FD_UNREGISTER(mainConfig->mainSocket,"Server listening socket");
+  list_destroy(&server_ip_list);
+
   if (mainConfig->controlfd != (fd_t)-1) {
     close(mainConfig->controlfd);
     FD_UNREGISTER(mainConfig->controlfd,"Server control fd");

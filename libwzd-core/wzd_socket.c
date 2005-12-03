@@ -63,6 +63,9 @@
 
 #endif /* WZD_USE_PCH */
 
+static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen);
+static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen);
+
 /*************** ul2a ***********************************/
 
 char * ul2a(unsigned long q)
@@ -102,104 +105,20 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
 /** bind socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-fd_t socket_make(const char *ip, unsigned int *port, int nListen)
+fd_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t family)
 {
-  socklen_t c;
-  fd_t sock;
-  struct sockaddr_in sai;
-#if defined(IPV6_SUPPORT)
-  struct sockaddr_in6 sai6;
-
-  memset(&sai6, 0, sizeof(struct sockaddr_in6));
-#endif
-  memset(&sai, 0, sizeof(struct sockaddr_in));
-
-  if (ip==NULL || *ip=='\0' || strcmp(ip,"*")==0)
-#if defined(IPV6_SUPPORT)
-    memset(&sai6.sin6_addr,0,16);
-#else
-    sai.sin_addr.s_addr = htonl(INADDR_ANY);
-#endif
-  else
-  {
-    struct hostent* host_info;
-    // try to decode dotted quad notation
-#if defined(WIN32) || defined(__sun__)
-    if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
-#else
-    if(!inet_aton(ip, &sai.sin_addr))
-#endif
-    {
-      const char *real_ip;
-      real_ip = ip;
-      if (real_ip[0]=='+') real_ip++;
-      // failing that, look up the name
-      if( (host_info = gethostbyname(real_ip)) == NULL)
-      {
-        out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
-        return -1;
-      }
-      memcpy(&sai.sin_addr, host_info->h_addr, host_info->h_length);
-   }
+  switch (family) {
+    case WZD_INET_NONE:
+      break;
+    case WZD_INET4:
+      return socket_make_v4(ip,port,nListen);
+    case WZD_INET6:
+      return socket_make_v6(ip,port,nListen);
+    default:
+      out_log(LEVEL_HIGH,"ERROR Invalid value for socket_make: family is %d\n",family);
+      break;
   }
-
-#if !defined(IPV6_SUPPORT)
-  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
-#else
-  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1) {
-#endif
-    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
-    return -1;
-  }
-
-  c = 1;
-#ifndef WINSOCK_SUPPORT
-  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&c,sizeof(c));
-#endif
-
-/*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
-
-#if !defined(IPV6_SUPPORT)
-  sai.sin_family = PF_INET;
-  sai.sin_port = htons((unsigned short)*port); /* any port */
-
-  if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))==-1) {
-#ifdef __CYGWIN__
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
-#else
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
-#endif
-    socket_close(sock);
-    return -1;
-  }
-#else /* IPV6_SUPPORT */
-  sai6.sin6_family = PF_INET6;
-  sai6.sin6_port = htons((unsigned short)*port); /* any port */
-  sai6.sin6_flowinfo = 0;
-/*  sai6.sin6_addr = IN6ADDR_ANY_INIT; */ /* FIXME VISUAL */
-  memset(&sai6.sin6_addr,0,16);
-  if (bind(sock,(struct sockaddr *)&sai6, sizeof(sai6))==-1) {
-#ifdef __CYGWIN__
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
-#else
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
-#endif
-    socket_close(sock);
-    return -1;
-  }
-#endif /* IPV6_SUPPORT */
-
-  c = sizeof(struct sockaddr_in);
-  getsockname(sock, (struct sockaddr *)&sai, &c);
-  {
-    unsigned char myip[4];
-    memcpy(myip,&sai.sin_addr,sizeof(myip));
-  }
-
-  listen(sock,nListen);
-
-  *port = ntohs(sai.sin_port);
-  return sock;
+  return -1;
 }
 
 
@@ -261,15 +180,17 @@ int socket_close(fd_t sock)
 
 /*************** socket_accept **************************/
 
-int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port)
+int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *f)
 {
   fd_t new_sock;
-#if !defined(IPV6_SUPPORT)
-  struct sockaddr_in from;
-  size_t len = sizeof(struct sockaddr_in);
-#else
-  struct sockaddr_in6 from;
+  net_family_t family = WZD_INET_NONE;
+  struct sockaddr_storage from;
+  struct sockaddr_in * from4;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 * from6;
   socklen_t len = sizeof(struct sockaddr_in6);
+#else
+  socklen_t len = sizeof(struct sockaddr_in);
 #endif
 #if 0
   int i=0;
@@ -280,6 +201,20 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   if (new_sock == (fd_t)-1) {
     out_log(LEVEL_CRITICAL,"Accept failed %s:%d\n", __FILE__, __LINE__);
     return -1;
+  }
+
+  switch (from.ss_family) {
+    case AF_INET:
+      out_log(LEVEL_FLOOD,"DEBUG IPv4 connection accepted\n");
+      family = WZD_INET4;
+      break;
+    case AF_INET6:
+      out_log(LEVEL_FLOOD,"DEBUG IPv6 connection accepted\n");
+      family = WZD_INET6;
+      break;
+    default:
+      out_log(LEVEL_FLOOD,"ERROR connection type UNKNOWN\n");
+      break;
   }
 
 #if defined(WIN32)
@@ -300,23 +235,30 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 #endif
 #endif /* 0 */
 
-#if !defined(IPV6_SUPPORT)
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    from6 = (struct sockaddr_in6 *)&from;
 #ifndef WIN32
-  bcopy((const char*)&from.sin_addr.s_addr, (char*)remote_host, sizeof(unsigned long));
+    bcopy((const char*)from6->sin6_addr.s6_addr, (char*)remote_host, 16);
 #else
-  /* FIXME VISUAL memory zones must NOT overlap ! */
-  memcpy((char*)remote_host, (const char*)&from.sin_addr.s_addr, sizeof(unsigned long));
-#endif  /* _MSC_VER */
-  *remote_port = ntohs(from.sin_port);
-#else
+    /* FIXME VISUAL memory zones must NOT overlap ! */
+    memcpy((char*)remote_host, (const char*)from6->sin6_addr.s6_addr, 16);
+#endif /* WIN32 */
+    *remote_port = ntohs(from6->sin6_port);
+  } else
+#endif
+  {
+    from4 = (struct sockaddr_in *)&from;
 #ifndef WIN32
-  bcopy((const char*)from.sin6_addr.s6_addr, (char*)remote_host, 16);
-  *remote_port = ntohs(from.sin6_port);
+    bcopy((const char*)&from4->sin_addr.s_addr, (char*)remote_host, sizeof(unsigned long));
 #else
-  /* FIXME VISUAL memory zones must NOT overlap ! */
-  memcpy((char*)remote_host, (const char*)from.sin6_addr.s6_addr, 16);
-#endif /* _MSC_VER */
-#endif /* IPV6_SUPPORT */
+    /* FIXME VISUAL memory zones must NOT overlap ! */
+    memcpy((char*)remote_host, (const char*)&from4->sin_addr.s_addr, sizeof(unsigned long));
+#endif  /* WIN32 */
+    *remote_port = ntohs(from4->sin_port);
+  }
+
+  if (f) *f = family;
 
   return new_sock;
 }
@@ -771,3 +713,199 @@ int socket_wait_to_write(fd_t sock, unsigned int timeout)
 
   return -1;
 }
+
+/*************** socket_make_v4 *************************/
+
+/** bind IPv4 socket at port, if port = 0 picks first free and set it
+ * \return -1 or socket
+ */
+static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
+{
+  socklen_t c;
+  fd_t sock;
+  struct sockaddr_in sai;
+
+  memset(&sai, 0, sizeof(struct sockaddr_in));
+
+  if (ip==NULL || *ip=='\0' || strcmp(ip,"*")==0)
+    sai.sin_addr.s_addr = htonl(INADDR_ANY);
+  else
+  {
+    struct hostent* host_info;
+    // try to decode dotted quad notation
+#if defined(WIN32) || defined(__sun__)
+    if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
+#else
+    if(!inet_aton(ip, &sai.sin_addr))
+#endif
+    {
+      const char *real_ip;
+      real_ip = ip;
+      if (real_ip[0]=='+') real_ip++;
+      // failing that, look up the name
+      if( (host_info = gethostbyname(real_ip)) == NULL)
+      {
+        out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
+        return -1;
+      }
+      memcpy(&sai.sin_addr, host_info->h_addr, host_info->h_length);
+   }
+  }
+
+  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
+    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+    return -1;
+  }
+
+  c = 1;
+#ifndef WINSOCK_SUPPORT
+  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&c,sizeof(c));
+#endif
+
+/*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
+
+  sai.sin_family = PF_INET;
+  sai.sin_port = htons((unsigned short)*port); /* any port */
+
+  if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))==-1) {
+#ifdef __CYGWIN__
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
+#else
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
+#endif
+    socket_close(sock);
+    return -1;
+  }
+
+  c = sizeof(struct sockaddr_in);
+  getsockname(sock, (struct sockaddr *)&sai, &c);
+  {
+    unsigned char myip[4];
+    memcpy(myip,&sai.sin_addr,sizeof(myip));
+  }
+
+  listen(sock,nListen);
+
+  *port = ntohs(sai.sin_port);
+  return sock;
+}
+
+
+#if defined(IPV6_SUPPORT)
+/*************** socket_make ****************************/
+
+/** bind IPv6 socket at port, if port = 0 picks first free and set it
+ * \return -1 or socket
+ */
+static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
+{
+  socklen_t c;
+  fd_t sock;
+  struct sockaddr_in sai;
+  struct sockaddr_in6 sai6;
+  int one=1;
+
+  memset(&sai6, 0, sizeof(struct sockaddr_in6));
+
+  sai6.sin6_family = PF_INET6;
+  sai6.sin6_port = htons((unsigned short)*port); /* any port */
+  sai6.sin6_flowinfo = 0;
+/*  sai6.sin6_addr = IN6ADDR_ANY_INIT; */ /* FIXME VISUAL */
+/*  memset(&sai6.sin6_addr,0,16);*/
+
+  if (ip==NULL || *ip=='\0' || strcmp(ip,"*")==0)
+    memset(&sai6.sin6_addr,0,16);
+  else
+  {
+    int ret;
+    struct addrinfo aiHint;
+    struct addrinfo * aiList = NULL;
+    struct sockaddr_in6 * addr6;
+
+    memset(&aiHint,0,sizeof(struct addrinfo));
+    aiHint.ai_family = AF_INET6;
+    aiHint.ai_socktype = SOCK_STREAM;
+    aiHint.ai_protocol = IPPROTO_TCP;
+
+    ret = getaddrinfo(ip, NULL, &aiHint, &aiList);
+    if (ret) {
+      out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",ip,__FILE__,__LINE__);
+      freeaddrinfo(aiList);
+      return -1;
+    }
+
+    addr6 = (struct sockaddr_in6*)aiList->ai_addr;
+
+    memcpy(&sai6.sin6_addr, addr6->sin6_addr.s6_addr, 16);
+    freeaddrinfo(aiList);
+#if 0
+    struct hostent* host_info;
+    // try to decode dotted quad notation
+#if defined(WIN32) || defined(__sun__)
+    if ((sai.sin_addr.s_addr = inet_addr(ip)) == INADDR_NONE)
+#else
+    if(!inet_aton(ip, &sai.sin_addr))
+#endif
+    {
+      const char *real_ip;
+      real_ip = ip;
+      if (real_ip[0]=='+') real_ip++;
+      // failing that, look up the name
+      if( (host_info = gethostbyname(real_ip)) == NULL)
+      {
+        out_err(LEVEL_CRITICAL,"Could not resolve ip %s %s:%d\n",real_ip,__FILE__,__LINE__);
+        return -1;
+      }
+      memcpy(&sai.sin_addr, host_info->h_addr, host_info->h_length);
+   }
+#endif /* 0 */
+  }
+
+  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1) {
+    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+    return -1;
+  }
+
+  if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&one, sizeof (one)) < 0)
+  {
+    out_log(LEVEL_HIGH,"Could not bind socket to IPv6 only (%s:%d) %s:%d\n", ip, port, __FILE__, __LINE__);
+    return -1;
+  }
+
+  c = 1;
+#ifndef WINSOCK_SUPPORT
+  setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(char*)&c,sizeof(c));
+#endif
+
+/*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
+
+  if (bind(sock,(struct sockaddr *)&sai6, sizeof(sai6))==-1) {
+#ifdef __CYGWIN__
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
+#else
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
+#endif
+    socket_close(sock);
+    return -1;
+  }
+
+  /** \todo we have to change this for IPv6 */
+  c = sizeof(struct sockaddr_in);
+  getsockname(sock, (struct sockaddr *)&sai, &c);
+  {
+    unsigned char myip[4];
+    memcpy(myip,&sai.sin_addr,sizeof(myip));
+  }
+
+  listen(sock,nListen);
+
+  *port = ntohs(sai.sin_port);
+  return sock;
+}
+#else /* IPV6_SUPPORT */
+static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
+{
+  return -1;
+}
+#endif /* IPV6_SUPPORT */
+

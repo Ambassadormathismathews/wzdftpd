@@ -1671,10 +1671,11 @@ int do_site_su(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t 
     const char * remote_host;
     struct hostent *h;
     char inet_str[256];
+    int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
     if (me->group_num > 0) groupname = GetGroupByID(me->groups[0])->groupname;
     inet_str[0] = '\0';
-    inet_ntop(CURRENT_AF,context->hostip,inet_str,sizeof(inet_str));
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),CURRENT_AF);
+    inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),af);
     if (h==NULL)
       remote_host = inet_str;
     else
