@@ -6,9 +6,7 @@ wzdftpd_SOURCES =    \
 	wzd_main.c         \
 	wzd_opts.h         \
 	wzd_ServerThread.c \
-	wzd_ServerThread.h \
-	wzd_savecfg.c      \
-	wzd_savecfg.h
+	wzd_ServerThread.h
 
 nodist_wzdftpd_SOURCES = wzd_init_lex.l
 
