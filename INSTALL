@@ -56,6 +56,9 @@ Building wzdftpd with icc:
 Set CC to icc during configure:
 CC=icc ./configure [args]
 
+Building SVN version on OpenBSD:
+AUTOMAKE_VERSION=1.9 AUTOCONF_VERSION=2.59 ./bootstrap
+
 Building SVN version on FreeBSD:
 It's known that there are some troubles with aclocal on FreeBSD 5.2.1 (and 
 may be other versions). The solution is to run aclocal with 
