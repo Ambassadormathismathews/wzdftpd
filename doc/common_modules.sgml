@@ -1,3 +1,5 @@
+<!-- vi:tw=80
+  -->
 <chapter id='common_modules'>
 <title>Common modules</title>
 
@@ -127,6 +129,35 @@ as usual.</para></listitem>
 This module has an embedded TCL interpreter, and offers several
 facilities based on TCL language.
 </para>
+
+<note><title>TCL and multi-threaded applications</title>
+<para>TCL has known problems with multi-thread for years, and authors does not
+seem to be willing to fix them. That, for example, prevents logging TCL errors
+correctly, since channels are <emphasis>not</emphasis> thread-safe, for example.
+</para>
+<para>
+Some of the problems:
+<itemizedlist>
+<listitem><para>
+<ulink url="http://www.codecomments.com/message293170.html">closing files in
+threads</ulink> (note: and in wzdftpd, files are always closed in the same
+thread they were opened ...)
+</para></listitem>
+<listitem><para>
+Changing channels does not seem very reliable ...
+</para></listitem>
+<listitem><para>
+How to log TCL parsing errors etc ? (the author must admit he is no TCL master
+...)
+</para></listitem>
+</itemizedlist>
+</para>
+<para>
+If you are a TCL coder with some skills in C and know how to fix these problems,
+please contact us.
+</para>
+</note>
+
 <para>
 The main feature is to add a <link linkend='gloss_proto'>protocol</link>
 for hooks, it means that

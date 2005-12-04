@@ -36,6 +36,11 @@
       </citetitle></ulink></para>
   </listitem>
 
+  <listitem>
+  <para>4217: <ulink url="http://www.ietf.org/rfc/rfc4217.txt">
+    <citetitle>Securing FTP with TLS</citetitle></ulink></para>
+  </listitem>
+
   </itemizedlist>
   </simplesect>
 
@@ -43,11 +48,6 @@
 
   <simplesect><title>Drafts</title>
   <itemizedlist mark="opencircle">
-
-  <listitem>
-  <para><ulink url="http://www.ietf.org/internet-drafts/draft-murray-auth-ftp-ssl-15.txt">
-    <citetitle>Securing FTP with TLS</citetitle></ulink></para>
-  </listitem>
 
   <listitem>
   <para><ulink url="http://www.ietf.org/internet-drafts/draft-ietf-ftpext-mlst-16.txt">

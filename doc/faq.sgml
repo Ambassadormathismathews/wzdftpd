@@ -1,3 +1,5 @@
+<!-- vi:tw=80
+  -->
 <chapter id='faq'>
   <title>FAQ</title>
 
@@ -52,6 +54,25 @@ SSL_CTX_use_certificate_file() error:0906D06C:PEM routines:PEM_read_bio:no start
 TLS subsystem could not be initialized.
 </screen>
 </answer>
+</qandaentry>
+
+<qandaentry id='faq_login_slow'>
+<question><para>Login is very slow (several seconds). After, speed is normal.
+</para></question>
+<answer><para>
+The most probable reason is that the ident connections are dropped by a
+firewall. When a client connects, the server tries to connect to the client on
+port 113 (ident) to make an ident lookup. If the connection is dropped, it will
+result in a timeout.
+</para>
+<para>
+You can totally disable ident lookups setting the <link
+linkend='cfg_disable_ident'>disable_ident</link> variable to 1 or 'yes'
+</para>
+<para>
+You must also ensure that the DNS settings are properly configured on the
+server: bad DNS settings will result in frequent timeouts on some commands.
+</para></answer>
 </qandaentry>
 
 <qandaentry id='faq_fxp'>

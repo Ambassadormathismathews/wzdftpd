@@ -28,12 +28,13 @@ removed.</para></listitem>
 </itemizedlist>
 </para>
 
+<note>
 <para>
-<emphasis>NOTE: </emphasis>This is a frequently asked question, so it
-is important to insist on the fact that wzdftpd has <emphasis>NOTHING</emphasis> to
-do with illegal things ! For those who can't figure it by themselves,
-wzd is for "wizard" !
+This is a frequently asked question, so it is important to insist on the fact
+that wzdftpd has <emphasis>NOTHING</emphasis> to do with illegal things ! For
+those who can't figure it by themselves, wzd is for "wizard" !
 </para>
+</note>
 
 </sect1>
 
@@ -52,8 +53,7 @@ hand, it is not designed to use system users permissions, it uses its own
 user database and permissions.
 </para></listitem>
 <listitem><para>
-<emphasis>Simple</emphasis> configuration file, supporting inclusions
-</para></listitem>
+<emphasis>Simple</emphasis> configuration file</para></listitem>
 <listitem><para>Online administration, using SITE commands</para></listitem>
 <listitem><para><link linkend='gloss_backend'>Backends</link> to store users/groups in different structures</para></listitem>
 <listitem><para>Modules: internal, using shared librairies, or external
@@ -63,8 +63,10 @@ user database and permissions.
 <listitem><para>Powerfull event system</para></listitem>
 <listitem><para>Job scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
-<listitem><para>Support for UTF-8: unicode filenames</para></listitem>
-<listitem><para>SSL/TLS support</para></listitem>
+<listitem><para>Support for UTF-8: unicode filenames. wzdftpd is unicode
+compliant, on all supported platforms</para></listitem>
+<listitem><para>Large files (> 2 GB) support, on all platforms</para></listitem>
+<listitem><para>SSL/TLS support, using either GnuTLS or OpenSSL</para></listitem>
 <listitem><para>IPv6 support (experimental)</para></listitem>
 <listitem><para>win32: can auto-register as a service, unregister, start/stop</para></listitem>
 <listitem><para>Server is designed to run as a non-privileged user to enforce

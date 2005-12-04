@@ -1,7 +1,20 @@
+<!-- vi:tw=80
+  -->
 <chapter id='sitebot'>
 <title>Sitebot</title>
 
-<simplesect id='sitebot_prereq'>
+<simplesect>
+<title>Installation</title>
+
+<para>The sitebot is <emphasis>not</emphasis> part of wzdftpd, so you won't find
+any in the distribution. However, the log format is quite compatible with the
+log used in other servers (with some additional things), so using a script for
+these servers should be fine (or require only a few modifications).
+</para>
+
+</simplesect>
+
+<!-- simplesect id='sitebot_prereq'>
 <title>Prerequisites</title>
 <para>
 You need the following to install and use the sitebot for wzdftpd:
@@ -44,7 +57,7 @@ REHASH THE BOT !</emphasis> (and you'd better check this twice if you bugreport
 me something !)
 </para>
 
-</simplesect>
+</simplesect -->
 
 
 

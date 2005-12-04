@@ -6,11 +6,35 @@
 <sect1 id='conf'>
 <title>General configuration</title>
 
+<para><emphasis>IMPORTANT: starting from 0.6.0, the config file format has
+changed.</emphasis> wzdftpd now uses a .ini like config:
+</para>
+<itemizedlist mark='opencircle'>
+<listitem><para>Lines beginning with a # are considered as
+comments</para></listitem>
+<listitem><para>Variables are organized in sections. The most important one is
+"GLOBAL", where all server parameters are stored. The name of the variable is
+also called a <emphasis>key</emphasis>, and the section a
+<emphasis>group</emphasis>.
+</para></listitem>
+<listitem><para>Section names are written with the name enclosed in brackets,
+for ex "[GLOBAL]"
+</para></listitem>
+<listitem><para>All variables are written using the standard form "key = value".
+Values can't be written on several lines. Multiples values must be separated by
+commas, for ex <programlisting>key = value1,value2</programlisting>
+</para></listitem>
+<listitem><para>The main groups are "GLOBAL" (the server config), "perms",
+"modules", "cron", "sections", "events", "vfs" and "messages".
+</para></listitem>
+</itemizedlist>
+
 <simplesect id='ip_and_ident'>
 <title>IPs and ident</title>
 
 <para>wzdftpd gives the possibility to check user identity on connection.</para>
-<para>To disable this, just add '*' to the list of authorized ip's for user</para>
+<para>To permanently disable ident lookups for all users, set the <link
+linkend='cfg_disable_ident'>disable_ident</link> variable to 1 or 'yes'</para>
 
 <para>Wildcards are accepted</para>
 
@@ -81,6 +105,18 @@ file.
 <screen>vfs = |/home/pollux/vfs|/etc|</screen>
 <para>This will create a virtual directory 'vfs' in '/home/pollux', which will be
 abolutely equivalent to '/etc'.</para>
+
+<note><title>Change in 0.6.0</title>
+<para>vfs are defined in the "vfs" section, so the syntax is slightly changed:
+<programlisting>customname = |vfspath|realpath|
+customname = |vfspath|realpath| permissions</programlisting>
+For ex:
+</para>
+<screen>
+[vfs]
+vfs1 = |/home/pollux/vfs|/etc|
+</screen>
+</note>
 
 <para>You can use restrictions on VFS, to allow only specified users to see and use them.
 Note this is only the ability to see and use VFS, and does not affect permissions on
@@ -189,16 +225,16 @@ This requires some little knowledge of FTP, but there are some
 well-known messages you can easily modify:</para>
 <para>Message 220 is known as 'FTP Banner', it is what the client
 sees when he connects. The default is:
-<programlisting>message_220 = wzd server ready.</programlisting></para>
+<programlisting>220 = wzd server ready.</programlisting></para>
 <para>Message 230 is known as 'Welcome Message', it is what the
 server sends to the client when the connection request has been accepted, and
 the login/password validated. It is generally used to show statistics about
 server, etc. The default message is:
-<programlisting>message_230 = User logged in, proceed.</programlisting>
+<programlisting>230 = User logged in, proceed.</programlisting>
 </para>
 <para>Message 221 is sent when client disconnects. The default
 message is
-<programlisting>message_221 = Cya !</programlisting>
+<programlisting>221 = Cya !</programlisting>
 </para>
 
 <para>Of course, using this would limit messages to only one
@@ -206,20 +242,23 @@ line per message .. so you can put a message in a file and use the
 file name as argument for the precedent commands, just prefix the
 file name with a + (the server will not guess this is a filename
 otherwise):
-<programlisting>message_230 = +/path/to/my/welcome.msg</programlisting>
+<programlisting>230 = +/path/to/my/welcome.msg</programlisting>
 </para>
 
 <para>Remember you can use cookies in your messages, but keep in mind
 that cookies are NOT always available (sometimes it just doesn't make
 sense). For exemple:
-<programlisting>message_230 = hello, %username.</programlisting>
+<programlisting>230 = hello, %username.</programlisting>
 will actually work, whereas
-<programlisting>message_220 = wzd server for %username</programlisting>
+<programlisting>220 = wzd server for %username</programlisting>
 will NOT, because at the moment the message 220 is sent the server
 does not know the user name (he isn't authenticated yet).</para>
 <para>If the server can't translate a cookie into its value, the
 cookie name will be written as is: '%username' will return 'username'
 </para>
+
+<para><emphasis>NOTE:</emphasis> messages are defined in the "messages" section
+of the config</para>
 
 </simplesect>
 
@@ -274,7 +313,8 @@ You need <emphasis>at least</emphasis> one backend.
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_backend_param'><term>backend_param_... </term>
+<varlistentry id='cfg_backend_param'><term>backend_param_...
+<emphasis>Deprecated since 0.6.0 !</emphasis></term>
 <listitem>
 <para>If backend needs an argument, specify it here. The argument depend on
 the backend used, see backend definition for details.
@@ -283,16 +323,28 @@ the backend used, see backend definition for details.
 <para>
 This line must come <emphasis>after</emphasis> the definition of the backend.
 </para>
+<para>Since 0.6.0, parameters are defined in sections with the same name as the
+backend. For ex, if you use the "plaintext" backend:</para>
+<screen>[plaintext]
+param = /path/to/users
+</screen>
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_cscript'><term>cscript</term>
+<varlistentry id='cfg_cscript'><term>cscript <emphasis>Deprecated since 0.6.0
+!</emphasis></term>
 <listitem>
 <para>Custom scripts (or binaries) to be executed before/after
 certain commands.
 <screen>cscript = /path/to/exe</screen>
 <screen>cscript = tcl:/path/to/script</screen>
 </para>
+<para>Since 0.6.0, events are defined in the "events" section.
+Syntax is customname = EVENT action arguments</para>
+<screen>[events]
+event1 = LOGIN /bin/echo hello %usertag
+event2 = SITE /path/to/event_site.sh
+</screen>
 </listitem>
 </varlistentry>
 
@@ -326,6 +378,22 @@ if present will append it to the end of the ftp reply.
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_disable_ident'><term>disable_ident (default: no)</term>
+<listitem>
+<para>Completely disable all ident lookups when a client connects.
+<screen>disable_ident = yes</screen>
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry id='cfg_disable_tls'><term>disable_tls (default: no)</term>
+<listitem>
+<para>Completely disable TLS/SSL support (even if compiled in).
+<screen>disable_tls = yes</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_dynamicip'><term>dynamic_ip (default: 0)</term>
  <listitem>
  <para>If you specify 1 or an ip, the server will try to detect ip changes (e.g
@@ -347,12 +415,16 @@ if present will append it to the end of the ftp reply.
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_ip'><term>ip (default: *)</term>
+<varlistentry id='cfg_ip'><term>ip (default: *) <emphasis>Deprecated since 0.6.0
+!</emphasis></term>
 <listitem>
 <para>Specify server ip, to restrict server to a specific interface (usefull
 mainly for server with multiples interfaces).
 <screen>ip = *</screen>
 <screen>ip = 127.0.0.1</screen>
+</para>
+<para>Since 0.6.0, this command is superseeded by the <link
+linkend="cfg_port">port</link> directive.
 </para>
 </listitem>
 </varlistentry>
@@ -463,17 +535,31 @@ to send signals to server.
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_port'><term>port (default: 21)</term>
+<varlistentry id='cfg_port'><term>port (default: 21) <emphasis>Changed in 0.6.0
+!</emphasis></term>
 <listitem>
 <para>The port to listen.
 <screen>port = 1321</screen>
 </para>
 <para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system
 port ( &lt; 1024 )</emphasis></para>
+<para>Since 0.6.0, this option controls the port AND the ip to bind to. If you
+specify <programlisting>port = 1321</programlisting>, the server will bind to
+all interfaces on port 1321, and in IPv6 if available</para>
+<para>To bind to a specific ip address, just use the ip:port syntax:
+<programlisting>ip = 127.0.0.1:1321</programlisting>
+The server will understand IPv6 addresses:
+<programlisting>ip = ::1:1321</programlisting>
+</para>
+<para>This option is multi-valued, so if you want to bind to several ip/ports,
+just use commas to separate the values:
+<programlisting>ip = 1321, 192.168.0.100:1234</programlisting>
+The server will listen on all specified addresses and ports.
+</para>
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_reject_unknown_usres'><term>reject_unknown_users (default: 1)</term>
+<varlistentry id='cfg_reject_unknown_users'><term>reject_unknown_users (default: 1)</term>
 <listitem>
 <para>This options defines the behaviour of the server if the user is not accepted.
 The default (1) will immediatly reject user and close connection, while setting 0 will
@@ -507,7 +593,8 @@ port ( &lt; 1024 )</emphasis></para>
 </listitem>
 </varlistentry>
 
-<varlistentry id='cfg_site_cmd'><term>site_cmd</term>
+<varlistentry id='cfg_site_cmd'><term>site_cmd <emphasis>Deprecated since 0.6.0
+!</emphasis></term>
 <listitem>
 <para>Custom site commands.
 <screen>site_cmd = my_free /path/to/free.sh</screen>
@@ -524,6 +611,16 @@ You can also print out the content of a file (parsing all cookies inside).
 The default permission is to allow ALL users to run command.
 Do not forget to add a permission line if your command needs to be restricted !
 </emphasis></para>
+<para>Since 0.6.0, custom scripts are defined in the "custom_commands" section.
+(Ultimately, this will allow to define general custom commands, not only site
+commands. Syntax is commandname = action</para>
+<screen>[custom_commands]
+site_myls = /path/to/myls.sh
+site_rules = !/path/to/rules.txt
+</screen>
+<para>If the first character of the command is !, then the command with return
+to the client the content of the specified file (replacing cookies).
+</para>
 </listitem>
 </varlistentry>
 
