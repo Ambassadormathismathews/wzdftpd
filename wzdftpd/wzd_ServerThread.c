@@ -140,6 +140,8 @@ int runMainThread(int argc, char **argv)
 
 /************ PRIVATE *************/
 
+static wzd_mutex_t * end_mutex = NULL;
+
 static void free_config(wzd_config_t * config);
 
 static List server_ip_list;
@@ -982,10 +984,10 @@ int server_switch_to_config(wzd_config_t *config)
       if (ipaddress == NULL || strchr(ipaddress,':') == NULL)
         sock4 = socket_make(ipaddress,&port,config->max_threads,WZD_INET4);
 
-      if (sock6 >= 0) {
-        server_ip = malloc(sizeof(*server_ip));
+      if (sock6 != (fd_t)-1) {
+        server_ip = wzd_malloc(sizeof(*server_ip));
         server_ip->dynamic = 0;
-        server_ip->ip = strdup(ptr_to_data);
+        server_ip->ip = wzd_strdup(ptr_to_data);
         server_ip->sock = sock6;
         FD_REGISTER(sock6,"Server listening socket");
         if (list_ins_next(&server_ip_list, NULL, server_ip)) {
@@ -1002,10 +1004,10 @@ int server_switch_to_config(wzd_config_t *config)
           }
         }
       }
-      if (sock4 >= 0) {
-        server_ip = malloc(sizeof(*server_ip));
+      if (sock4 != (fd_t)-1) {
+        server_ip = wzd_malloc(sizeof(*server_ip));
         server_ip->dynamic = 0;
-        server_ip->ip = strdup(ptr_to_data);
+        server_ip->ip = wzd_strdup(ptr_to_data);
         server_ip->sock = sock4;
         FD_REGISTER(sock4,"Server listening socket");
         if (list_ins_next(&server_ip_list, NULL, server_ip)) {
@@ -1314,6 +1316,8 @@ void serverMainThreadProc(void *arg)
   /* do this _before_ loading config, config can use it ! */
   vars_shm_init();
   server_mutex_set_init();
+  
+  end_mutex = wzd_mutex_create(0x4321);
 
   /********* set up functions *******/
 #if 0
@@ -1509,6 +1513,12 @@ static void free_config(wzd_config_t * config)
 
 void serverMainThreadExit(int retcode)
 {
+  static int finished = 0;
+
+  wzd_mutex_lock(end_mutex);
+
+  if (++finished > 1) exit(0); /* already finished ? */
+
   out_log(LEVEL_HIGH,"Server exiting, retcode %d\n",retcode);
 
   /* ignore standard signals from now, we are exiting */
@@ -1623,6 +1633,8 @@ void serverMainThreadExit(int retcode)
    */
   signal(SIGSEGV,SIG_DFL);
 #endif
+
+  wzd_mutex_unlock(server_mutex);
 
   exit (retcode);
 }

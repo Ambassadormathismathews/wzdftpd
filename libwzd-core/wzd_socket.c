@@ -184,7 +184,11 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 {
   fd_t new_sock;
   net_family_t family = WZD_INET_NONE;
+#ifdef WIN32 /** \todo no ipv6 support for windows ... */
+  struct sockaddr_in from;
+#else
   struct sockaddr_storage from;
+#endif
   struct sockaddr_in * from4;
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 * from6;
@@ -203,7 +207,12 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
     return -1;
   }
 
-  switch (from.ss_family) {
+#ifdef WIN32
+  switch (from.sin_family)
+#else
+  switch (from.ss_family)
+#endif
+  {
     case AF_INET:
       out_log(LEVEL_FLOOD,"DEBUG IPv4 connection accepted\n");
       family = WZD_INET4;

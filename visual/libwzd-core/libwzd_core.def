@@ -42,11 +42,13 @@ EXPORTS
 	clientThreadProc
 	commands_add
 	commands_add_defaults
+	commands_add_external
 	commands_fini
 	commands_init
 	commands_set_permission
 	config_free
 	config_get_string
+	config_get_string_list
 	config_load_from_file
 	config_new
 	config_set_value
@@ -61,7 +63,6 @@ EXPORTS
 	dir_close
 	dir_open
 	dir_read
-	do_sitecmd
 	encrypt
 	event2str
 	fd_dump
