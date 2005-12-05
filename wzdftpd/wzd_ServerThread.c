@@ -931,7 +931,7 @@ int server_switch_to_config(wzd_config_t *config)
   unsigned int port;
   server_ip_t * server_ip;
   char * ipaddress;
-  char * port_ptr; 
+  char * port_ptr;
 
   WZD_ASSERT(config != NULL);
 
@@ -1316,7 +1316,7 @@ void serverMainThreadProc(void *arg)
   /* do this _before_ loading config, config can use it ! */
   vars_shm_init();
   server_mutex_set_init();
-  
+
   end_mutex = wzd_mutex_create(0x4321);
 
   /********* set up functions *******/
@@ -1577,7 +1577,7 @@ void serverMainThreadExit(int retcode)
     }
   }
   /* we need to wait for child threads to be effectively dead */
-#ifndef _MSC_VER
+#ifndef WIN32
   usleep(300000);
 #else
   Sleep(300);
