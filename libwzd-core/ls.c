@@ -109,7 +109,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
   char line[WZD_MAX_PATH+80+1]; /* 80 is the long format max */
   char buffer_name[256];
   char send_buffer[HARD_LS_BUFFERSIZE];
-  unsigned int send_buffer_len;
+  size_t send_buffer_len;
   char datestr[128];
   char * buffer_ptr;
   size_t length;
