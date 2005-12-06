@@ -23,7 +23,13 @@ fi
 
 case "$1" in
 
-     purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+     purge)
+       rm -f /etc/wzdftpd/users /etc/wzdftpd/users.OLD
+       rm -f /etc/wzdftpd/wzd.cfg
+     
+     ;;
+     
+     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
 
      ;;
 

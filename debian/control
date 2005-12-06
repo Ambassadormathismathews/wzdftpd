@@ -2,12 +2,12 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
-Build-Depends: debhelper (>= 4.0.0), libgnutls11-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient12-dev | libmysqlclient-dev, libpq-dev, flex, docbook-utils, dpatch
+Build-Depends: debhelper (>= 4.0.0), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient14-dev, libpq-dev, flex, docbook-utils, dpatch
 Standards-Version: 3.6.2
 
 Package: wzdftpd
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, ucf
 Provides: ftp-server
 Conflicts: ftp-server
 Description: A portable, modular, not user-friendly ftp server

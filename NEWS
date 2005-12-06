@@ -1,5 +1,10 @@
    NEWS file for wzdftpd
 
+0.5.5: Sep 26 2005
+
+Security update: SITE command Remote Command Injection Vulnerability (see
+wzdftpd advisory 2005-01)
+
 0.5.4: Jul 09 2005
 
 Better error logging, new log system based on channels. Important changes on

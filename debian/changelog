@@ -1,8 +1,40 @@
 wzdftpd (0.6.0-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release (include patches 01 to 04, so we drop them)
+  * Config file format has changed
 
- -- Pierre Chifflier <chifflier@cpe.fr>  Sun, 23 Oct 2005 20:49:16 +0200
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue,  6 Dec 2005 15:21:57 +0100
+
+wzdftpd (0.5.5-5) unstable; urgency=low
+
+  * Fixed patch 04_list_firefox (Closes: #340711)
+  * Fixed errors in shell script in prerm scripts
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Fri, 25 Nov 2005 11:58:16 +0100
+
+wzdftpd (0.5.5-4) unstable; urgency=low
+
+  * Add ucf to dependencies (Closes: #338255)
+  * New patches:
+    - fix popen filter
+    - fix listing in firefox
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Mon, 21 Nov 2005 09:56:17 +0100
+
+wzdftpd (0.5.5-3) unstable; urgency=low
+
+  * Applied patch to make stack non executable
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Thu, 27 Oct 2005 10:46:11 +0200
+
+wzdftpd (0.5.5-2) unstable; urgency=low
+
+  * Build-depend on libgnutls-dev (Closes: #335772)
+  * Remove all config files on purge (Closes: #333287)
+  * Added patch to fix build on FreeBSD (thanks to Aurélien Jarno)
+  * bump mysql build-depend to 4.1
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Wed, 26 Oct 2005 12:50:11 +0200
 
 wzdftpd (0.5.5-1) unstable; urgency=high
 
