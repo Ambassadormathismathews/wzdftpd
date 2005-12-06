@@ -3,7 +3,7 @@
 
 Name: wzdftpd
 Summary: A very capable ftp server.
-Version: 0.6.0
+Version: 0.6.0-rc1
 Release: 1
 Packager: Chris Lount <mrlount@tiscali.co.uk>
 URL: http://www.wzdftpd.net

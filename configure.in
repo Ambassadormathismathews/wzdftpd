@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.6.0, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.6.0-rc1, pollux@wzdftpd.net)
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
@@ -122,7 +122,7 @@ AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
 
 dnl WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_TLS
-WZD_LIB_KRB5
+dnl WZD_LIB_KRB5  # disabled for release 0.6
 WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
@@ -331,7 +331,7 @@ Here is a short summary of what I've found on your system :
        SSL:    $wzd_lib_openssl
        GnuTLS: $wzd_have_gnutls
        UTF-8:  $wzd_have_utf8
-       Kerberos:  $wzd_have_krb5
+dnl       Kerberos:  $wzd_have_krb5
 
   backends:
        MySQL:  $wzd_have_mysql
