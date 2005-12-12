@@ -53,6 +53,7 @@
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_events.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
@@ -69,7 +70,7 @@
 
 /***********************/
 MODULE_NAME(sfv);
-MODULE_VERSION(109);
+MODULE_VERSION(110);
 
 static char progressmeter[256];
 static char del_progressmeter[256];
@@ -85,6 +86,12 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
 
 /* parse dir to calculate release completion % */
 float _sfv_get_release_percent(const char *dir, wzd_sfv_file sfv);
+
+
+static event_reply_t sfv_event_preupload(const char * args);
+int sfv_hook_preupload(unsigned long event_id, const char * username, const char *filename);
+static event_reply_t sfv_event_postupload(const char * args);
+int sfv_hook_postupload(unsigned long event_id, const char * username, const char *filename);
 
 /* get params from server */
 static int get_all_params(void)
@@ -1337,31 +1344,35 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
  * check sfv_name
  * create new_sfv_name
  */
-void do_site_sfv(char *command_line, wzd_context_t * context)
+/*void do_site_sfv(char *command_line, wzd_context_t * context)*/
+static int do_site_sfv(wzd_string_t *commandname, wzd_string_t *param, wzd_context_t *context)
 {
   char buffer[BUFFER_LEN];
   char * ptr;
   char * command, *name;
   int ret;
+  char * command_line;
   wzd_sfv_file sfv;
+
+  command_line = (char*)str_tochar(param); /** \todo convert code to use wzd_string_t */
 
   ptr = command_line;
   command = strtok_r(command_line," \t\r\n",&ptr);
   if (!command) {
     do_site_help_sfv(context);
-    return;
+    return -1;
   }
   name = strtok_r(NULL," \t\r\n",&ptr);
 
   if (!name) {
     do_site_help_sfv(context);
-    return;
+    return -1;
   }
 
   /* convert file to absolute path, remember sfv wants ABSOLUTE paths ! */
-  if ( (ret = checkpath(name,buffer,context)) != 0 ) {
+  if ( (ret = checkpath_new(name,buffer,context)) != 0 ) {
     do_site_help_sfv(context);
-    return;
+    return -1;
   }
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
   sfv_init(&sfv);
@@ -1392,10 +1403,28 @@ void do_site_sfv(char *command_line, wzd_context_t * context)
   }
 
   sfv_free(&sfv);
+
+  return ret;
 }
 
 
 /***** EVENT HOOKS *****/
+static event_reply_t sfv_event_preupload(const char * args)
+{
+  int ret;
+  const char * username, * filename;
+  char * str = strdup(args), * ptr;
+
+  username = strtok_r(str," ",&ptr);
+  filename = ptr;
+
+  ret = sfv_hook_preupload(EVENT_PREUPLOAD, username, filename);
+
+  free(str);
+
+  return EVENT_OK;
+}
+
 int sfv_hook_preupload(unsigned long event_id, const char * username, const char *filename)
 {
   wzd_sfv_file sfv;
@@ -1427,6 +1456,22 @@ int sfv_hook_preupload(unsigned long event_id, const char * username, const char
   }
   sfv_free(&sfv);
   return 0;
+}
+
+static event_reply_t sfv_event_postupload(const char * args)
+{
+  int ret;
+  const char * username, * filename;
+  char * str = strdup(args), * ptr;
+
+  username = strtok_r(str," ",&ptr);
+  filename = ptr;
+
+  ret = sfv_hook_preupload(EVENT_POSTUPLOAD, username, filename);
+
+  free(str);
+
+  return EVENT_OK;
 }
 
 int sfv_hook_postupload(unsigned long event_id, const char * username, const char *filename)
@@ -1481,28 +1526,29 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   return ret;
 }
 
-int sfv_hook_site(unsigned long event_id, wzd_context_t * context, const char *token, const char *args)
-{
-  if (strcasecmp(token,"site_sfv")==0) {
-    char buffer[BUFFER_LEN];
-    strncpy(buffer,args,BUFFER_LEN-1);
-    do_site_sfv(buffer,context);
-    return EVENT_HANDLED;
-  }
-
-  return EVENT_IGNORED;
-}
-
 /***********************/
 /* WZD_MODULE_INIT     */
 
 int WZD_MODULE_INIT(void)
 {
 /*  printf("WZD_MODULE_INIT\n");*/
-/*  out_err(LEVEL_INFO,"max threads: %d\n",getlib_mainConfig()->max_threads);*/
-  hook_add(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
-  hook_add(&getlib_mainConfig()->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
-  hook_add(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&sfv_hook_site);
+  event_connect_function(getlib_mainConfig()->event_mgr,EVENT_PREUPLOAD,sfv_event_preupload,NULL);
+  event_connect_function(getlib_mainConfig()->event_mgr,EVENT_POSTUPLOAD,sfv_event_postupload,NULL);
+
+  {
+    const char * command_name = "site_sfv";
+    /* add custom command */
+    if (commands_add(getlib_mainConfig()->commands_list,command_name,do_site_sfv,NULL,TOK_CUSTOM)) {
+      out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",command_name);
+    }
+
+    /* default permission XXX hardcoded */
+    if (commands_set_permission(getlib_mainConfig()->commands_list,command_name,"+O")) {
+      out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",command_name);
+      /** \bug XXX remove command from   config->commands_list */
+    }
+  }
+
 #ifdef DEBUG
   out_err(LEVEL_INFO,"module sfv: hooks registered\n");
 #endif
@@ -1511,9 +1557,9 @@ int WZD_MODULE_INIT(void)
 
 int WZD_MODULE_CLOSE(void)
 {
-  hook_remove(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
+/*  hook_remove(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&sfv_hook_preupload);
   hook_remove(&getlib_mainConfig()->hook,EVENT_POSTUPLOAD,(void_fct)&sfv_hook_postupload);
-  hook_remove(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&sfv_hook_site);
+  hook_remove(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&sfv_hook_site);*/
 #ifdef DEBUG
   out_err(LEVEL_INFO,"module sfv: hooks unregistered\n");
 #endif

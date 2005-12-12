@@ -1,6 +1,7 @@
 2005-12-10  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: reply wrong address on PASV
+	* bugfix: SFV module not working
 
 2005-12-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
