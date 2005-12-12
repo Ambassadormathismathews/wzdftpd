@@ -305,42 +305,43 @@ int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned i
 
 /*************** getmyip *****************************/
 
-/** \todo getmyip will NOT work correctly, since it depends on the socket type
- * see  socket_accept() for how to find family
+/** \brief Return our own ip
+ *
+ * \a buffer must be at least 16 bytes long
  */
-unsigned char * getmyip(int sock)
+unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
 {
-#if !defined(IPV6_SUPPORT)
-  static unsigned char myip[4];
   struct sockaddr_in sa;
   unsigned int size;
 
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    struct sockaddr_in6 sa6;
+
+    size = sizeof(struct sockaddr_in6);
+    memset(buffer,0,16);
+    if (getsockname(sock,(struct sockaddr *)&sa6,&size)!=-1)
+    {
+      memcpy(buffer,&sa6.sin6_addr,16);
+    } else { /* failed, using localhost */
+      out_log(LEVEL_CRITICAL,"getmyip: could not get my own ip !\n");
+      return NULL;
+    }
+
+    return buffer;
+  }
+#endif /* IPV6_SUPPORT */
   size = sizeof(struct sockaddr_in);
-  memset(myip,0,sizeof(myip));
+  memset(buffer,0,16);
   if (getsockname(sock,(struct sockaddr *)&sa,&size)!=-1)
   {
-    memcpy(myip,&sa.sin_addr,sizeof(myip));
+    memcpy(buffer,&sa.sin_addr,4);
   } else { /* failed, using localhost */
-    exit (1);
+    out_log(LEVEL_CRITICAL,"getmyip: could not get my own ip !\n");
+    return NULL;
   }
 
-  return myip;
-#else /* IPV6_SUPPORT */
-  static unsigned char myip[16];
-  struct sockaddr_in6 sa6;
-  unsigned int size;
-
-  size = sizeof(struct sockaddr_in6);
-  memset(myip,0,sizeof(myip));
-  if (getsockname(sock,(struct sockaddr *)&sa6,&size)!=-1)
-  {
-    memcpy(myip,&sa6.sin6_addr,sizeof(myip));
-  } else { /* failed, using localhost */
-    exit (1);
-  }
-
-  return myip;
-#endif /* IPV6_SUPPORT */
+  return buffer;
 }
 
 /***************** client_die ************************/
@@ -589,10 +590,6 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   if (ptr) {
     wzd_strncpy(context->currentpath,path,WZD_MAX_PATH-1);
   }
-
-#ifdef DEBUG
-out_err(LEVEL_INFO,"current path: '%s'\n",context->currentpath);
-#endif
 
   return E_OK;
 }
@@ -1612,6 +1609,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   struct sockaddr_in sai;
   unsigned char *myip;
   unsigned char pasv_bind_ip[16];
+  unsigned char buffer[16];
   int offset=0;
   int count=0;
 
@@ -1633,7 +1631,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
     return E_NO_DATA_CTX;
   }
 
-  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
 #if defined(IPV6_SUPPORT)
@@ -1721,7 +1719,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   FD_REGISTER(context->pasvsock,"Client PASV socket");
 
   context->datafamily = WZD_INET4;
-  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
 
@@ -1861,6 +1859,7 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 #endif
   unsigned char *myip;
   unsigned char pasv_bind_ip[16];
+  unsigned char buffer[16];
 
 #if !defined(IPV6_SUPPORT)
   size = sizeof(struct sockaddr_in);
@@ -1888,7 +1887,7 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_NO_DATA_CTX;
   }
 
-  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
     memcpy(pasv_bind_ip,myip,sizeof(pasv_bind_ip));
@@ -1958,7 +1957,7 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   FD_REGISTER(context->pasvsock,"Client PASV socket");
 
-  myip = getmyip(context->controlfd); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
 #if !defined(IPV6_SUPPORT)
   context->datafamily = WZD_INET4;

@@ -1,3 +1,7 @@
+2005-12-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: reply wrong address on PASV
+
 2005-12-03  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: support for multiple addresses/ports binds. This also
