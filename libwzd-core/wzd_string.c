@@ -462,13 +462,12 @@ wzd_string_t * str_read_token(wzd_string_t *str)
 
 
 
-/* str_sprintf
- * Produce output according to format and variable number of arguments,
- * and write output to str.
+/** \brief Produce output according to \a format and variable number of arguments,
+ * and write output to \a str.
  */
-int str_sprintf(wzd_string_t *str, const char *format, ...)
+int str_vsprintf(wzd_string_t *str, const char *format, va_list ap)
 {
-  va_list argptr;
+  va_list ap2;
   int result;
 
   if (!str) return -1;
@@ -477,17 +476,23 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   if (!str->buffer)
     _str_set_min_size(str,strlen(format)+1);
 
-  va_start(argptr,format); /* note: ansi compatible version of va_start */
+  /** vsnprintf modifies its last argument on some archs, we have to
+   * work on a copy of the va_list
+   */
+/*  va_copy(ap2,ap);*/
+  /** (autoconf.info)Function Portability: better use memcpy than va_copy
+   */
+  memcpy (&ap2,&ap, sizeof(va_list));
 
-  result = vsnprintf(str->buffer, str->allocated, format, argptr);
+  result = vsnprintf(str->buffer, str->allocated, format, ap2);
 #ifndef WIN32
   if (result < 0) return result;
   if ((unsigned int)result >= str->allocated)
   {
     _str_set_min_size(str, result+1);
-    va_end(argptr);
-    va_start(argptr,format); /* note: ansi compatible version of va_start */
-    result = vsnprintf(str->buffer, str->allocated, format, argptr);
+    va_end(ap2);
+    memcpy (&ap2,&ap, sizeof(va_list));
+    result = vsnprintf(str->buffer, str->allocated, format, ap2);
   }
   str->length = result;
 #else /* WIN32 */
@@ -501,9 +506,9 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
        return -1;
      }
      _str_set_min_size(str,str->allocated + (str->allocated >> 2) + 20);
-     va_end(argptr);
-     va_start(argptr,format); /* note: ansi compatible version of va_start */
-     result = vsnprintf(str->buffer, str->allocated-1, format, argptr);
+     va_end(ap2);
+     memcpy (&ap2,&ap, sizeof(va_list));
+     result = vsnprintf(str->buffer, str->allocated-1, format, ap2);
    }
    str->length = result;
    if ((u32_t)result == str->allocated) {
@@ -511,6 +516,29 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
     str->buffer[str->length] = '\0';
    }
 #endif
+
+  va_end (ap2);
+
+  return result;
+}
+
+
+
+/* str_sprintf
+ * Produce output according to format and variable number of arguments,
+ * and write output to str.
+ */
+int str_sprintf(wzd_string_t *str, const char *format, ...)
+{
+  va_list argptr;
+  int result;
+
+  if (!str) return -1;
+  if (!format) return -1;
+
+  va_start(argptr,format); /* note: ansi compatible version of va_start */
+
+  result = str_vsprintf(str, format, argptr);
 
   va_end (argptr);
 

@@ -5,14 +5,6 @@
 # <name> = <value>
 # (for windows users: without the < > ;-)
 
-# Server ip (default: *)
-# If you specify an ip, the server will bind to this ip and
-# will refuse connections on other interfaces
-# ip should be 128 chars max
-# if you specify a canonical name, the server will use DNS lookups
-ip = *
-#ip = 127.0.0.1
-
 # dynamic ip (default: 0)
 # if you specify 1 here, the server will try to use your system to detect
 # ip changes
@@ -68,9 +60,7 @@ max_threads = 32
 # backend name SHOULD NEVER contains spaces !
 #backend = plaintext > 123
 backend = @e_datadir@/@PACKAGE@/backends/libwzdplaintext.so > 124
-#backend_param_plaintext = @e_sysconfdir@/users
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdmysql.so
-#backend_param_mysql = login:password@host:base
 #backend = @e_datadir@/@PACKAGE@/backends/libwzdpam.so
 
 # speed limits in bytes /sec (approx !)
@@ -264,6 +254,9 @@ site_vfsdel = +O
 
 [plaintext]
 param = @e_sysconfdir@/users
+
+[mysql]
+#param = login:password@host:base
 
 [sections]
 # sections are used to define local server properties

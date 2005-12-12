@@ -25,6 +25,8 @@
 #ifndef __WZD_STRING__
 #define __WZD_STRING__
 
+#include <stdarg.h> /* va_list */
+
 typedef struct wzd_string_t wzd_string_t;
 
 wzd_string_t * str_allocate(void);
@@ -116,6 +118,11 @@ wzd_string_t * str_read_token(wzd_string_t *str);
  * and write output to str.
  */
 int str_sprintf(wzd_string_t *str, const char *format, ...);
+
+/** \brief Produce output according to \a format and variable number of arguments,
+ * and write output to \a str.
+ */
+int str_vsprintf(wzd_string_t *str, const char *format, va_list ap);
 
 /** \brief Append formatted output to string
  */

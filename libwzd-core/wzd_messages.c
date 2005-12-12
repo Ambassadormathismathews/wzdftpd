@@ -49,6 +49,7 @@
 
 #include "wzd_cache.h"
 #include "wzd_section.h"
+#include "wzd_string.h"
 #include "wzd_utf8.h"
 #include "wzd_vfs.h"
 
@@ -228,4 +229,58 @@ else
   ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
+}
+
+
+int send_message_formatted(int code, wzd_context_t * context, const char * format, ...)
+{
+  va_list argptr;
+  wzd_string_t * str;
+  wzd_string_t ** str_list, ** it;
+  int ret;
+
+  if (!format || code<0) return -1;
+
+  va_start(argptr, format);
+
+  str = str_allocate();
+  ret = str_vsprintf(str, format, argptr);
+
+  if (ret < 0) return -1;
+
+  /* convert str to unicode if connection is in UTF-8 mode */
+#ifdef HAVE_UTF8
+  if (context->connection_flags & CONNECTION_UTF8)
+  {
+    if (!str_is_valid_utf8(str))
+      str_local_to_utf8(str,local_charset());
+  }
+#endif
+
+  if (ret < 0) return -1;
+
+  /* split lines and send formatted message to client */
+  str_list = str_split(str, "\r\n", 0);
+  str_deallocate(str);
+
+  it = str_list;
+
+  if (*(it+1) == NULL) { /* one line */
+    out_log(LEVEL_FLOOD, "send_message_formatted UL -> [%d %s]\n", code, str_tochar(*it));
+  } else { /* multi-line */
+    out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d-%s]\n", code, str_tochar(*it));
+    it++;
+    for (; *it; it++) {
+      if (*(it+1) == NULL) { /* last line */
+        out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d %s]\n", code, str_tochar(*it));
+      } else {
+        out_log(LEVEL_FLOOD, "send_message_formatted ML -> [ %s]\n", str_tochar(*it));
+      }
+    }
+  }
+
+
+  va_end(argptr);
+  str_deallocate_array(str_list);
+  return 0;
 }
