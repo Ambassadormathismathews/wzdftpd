@@ -43,6 +43,8 @@ int wzd_thread_attr_destroy(wzd_thread_attr_t * attr);
 
 int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr);
 
+int wzd_thread_join(wzd_thread_t * thread, void ** thread_return);
+
 
 
 /* platform dependant types */

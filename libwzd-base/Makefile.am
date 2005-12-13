@@ -3,15 +3,13 @@ noinst_LTLIBRARIES = libwzd_base.la
 
 libwzd_base_ladir = ${e_prefix}/include/wzdftpd/libwzd-base
 
-noinst_HEADERS = \
-	wzd_strtok_r.h
-
 libwzd_base_la_HEADERS = \
 	dlist.h \
 	hash.h \
 	list.h \
 	stack.h \
-	wzd_strlcat.h
+	wzd_strlcat.h \
+	wzd_strtok_r.h
 
 libwzd_base_la_SOURCES = \
 	dlist.c \

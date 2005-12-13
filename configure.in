@@ -294,6 +294,7 @@ AC_CONFIG_FILES([Makefile
 		 libwzd-auth/Makefile
 		 libwzd-base/Makefile
 		 libwzd-core/Makefile
+		 libwzd-core/arch/Makefile
 		 libwzd-perl/Makefile
 		 libwzd-perl/ext/Makefile.PL
 		 m4/Makefile
