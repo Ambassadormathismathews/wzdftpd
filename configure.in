@@ -233,10 +233,10 @@ AM_CONDITIONAL([HAVE_PAM], [test "$wzd_have_pam" = "yes"])
 AM_CONDITIONAL([HAVE_PERL], [test "$wzd_have_perl" = "yes"])
 AM_CONDITIONAL([HAVE_PGSQL], [test "$wzd_have_pgsql" = "yes"])
 AM_CONDITIONAL([HAVE_TCL], [test "$wzd_have_tcl" = "yes"])
-AM_CONDITIONAL([HAVE_ZEROCONF], [test "$wzd_have_zeroconf" = "yes"])
-AM_CONDITIONAL([USE_BONJOUR], [test "$wzd_use_bonjour" = "yes"])
-AM_CONDITIONAL([USE_AVAHI], [test "$wzd_use_avahi" = "yes"])
-AM_CONDITIONAL([USE_HOWL], [test "$wzd_use_howl" = "yes"])
+AM_CONDITIONAL([HAVE_ZEROCONF], [test "$with_zeroconf" = "yes"])
+AM_CONDITIONAL([USE_BONJOUR], [test "$enable_bonjour" = "yes"])
+AM_CONDITIONAL([USE_AVAHI], [test "$enable_avahi" = "yes"])
+AM_CONDITIONAL([USE_HOWL], [test "$enable_howl" = "yes"])
 
 WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
 AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
@@ -338,7 +338,7 @@ Here is a short summary of what I've found on your system :
        SSL:    $wzd_lib_openssl
        GnuTLS: $wzd_have_gnutls
        UTF-8:  $wzd_have_utf8
-dnl       Kerberos:  $wzd_have_krb5
+       Kerberos:  $wzd_have_krb5
 
   backends:
        MySQL:  $wzd_have_mysql
@@ -349,10 +349,10 @@ dnl       Kerberos:  $wzd_have_krb5
        Perl:   $wzd_have_perl
        SFV:    yes
        TCL:    $wzd_have_tcl
-       Zeroconf:  $wzd_have_zeroconf
-       Bonjour:  $wzd_use_bonjour
-       Avahi:  $wzd_use_avahi
-       Howl:  $wzd_use_howl
+       Zeroconf:  $with_zeroconf
+       Bonjour:  $enable_bonjour
+       Avahi:  $enable_avahi
+       Howl:  $enable_howl
 
 EOF
 

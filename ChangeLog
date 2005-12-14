@@ -1,3 +1,7 @@
+2005-12-14  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: merge initial zeroconf support
+
 2005-12-10  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: reply wrong address on PASV

@@ -9,8 +9,8 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 	#
 	AC_MSG_CHECKING([whether to build with Zeroconf support])
 	PGAC_ARG_BOOL(with, zeroconf, no,
-								[  --with-zeroconf          build with Zeroconf support],
-								[AC_DEFINE([USE_ZEROCONF], 1, [Define to 1 to build with Zeroconf support. (--with-zeroconf)])])
+								[  --with-zeroconf           build with Zeroconf support],
+								[AC_DEFINE([HAVE_ZEROCONF], 1, [Define to 1 to build with Zeroconf support. (--with-zeroconf)])])
 	AC_MSG_RESULT([$with_zeroconf])
 	AC_SUBST(with_zeroconf)
 	
@@ -18,7 +18,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 	# Avahi
 	#
 	AC_MSG_CHECKING([whether to build with Avahi support])
-	PGAC_ARG_BOOL(enable, avahi, no, [  --enable-avahi  enable Avahi support],
+	PGAC_ARG_BOOL(enable, avahi, no, [  --enable-avahi           enable Avahi support],
 								[AC_DEFINE([USE_AVAHI], 1,
 													[Define to 1 if you want Avahi support. (--enable-avahi)])])
 	AC_MSG_RESULT([$enable_avahi])
@@ -28,7 +28,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 	# Bonjour
 	#
 	AC_MSG_CHECKING([whether to build with Bonjour support])
-	PGAC_ARG_BOOL(enable, bonjour, no, [  --enable-bonjour  enable Bonjour support],
+	PGAC_ARG_BOOL(enable, bonjour, no, [  --enable-bonjour           enable Bonjour support],
 								[AC_DEFINE([USE_BONJOUR], 1,
 													[Define to 1 if you want Bonjour support. (--enable-bonjour)])])
 	AC_MSG_RESULT([$enable_bonjour])
@@ -38,7 +38,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 	# Howl
 	#
 	AC_MSG_CHECKING([whether to build with Howl support])
-	PGAC_ARG_BOOL(enable, howl, no, [  --enable-howl  enable Howl support],
+	PGAC_ARG_BOOL(enable, howl, no, [  --enable-howl           enable Howl support],
 								[AC_DEFINE([USE_HOWL], 1,
 													[Define to 1 if you want Howl support. (--enable-howl)])])
 	AC_MSG_RESULT([$enable_howl])
@@ -75,8 +75,6 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 						AC_MSG_ERROR("Did not find avahi-client >= 0.6.0");
 					fi
 	
-					AC_SUBST(AVAHI_CLIENT_CFLAGS)
-					AC_SUBST(AVAHI_CLIENT_LIBS)
 					AC_CHECK_HEADER(avahi-client/client.h, [], [AC_MSG_ERROR([header file <avahi-client/client.h> is required for Avahi])])
 					AC_CHECK_HEADER(avahi-client/publish.h, [], [AC_MSG_ERROR([header file <avahi-client/publish.h> is required for Avahi])])
 					AC_CHECK_HEADER(avahi-common/alternative.h, [], [AC_MSG_ERROR([header file <avahi-common/alternative.h> is required for Avahi])])
@@ -87,6 +85,11 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 					AC_CHECK_LIB(dbus-1, dbus_bus_register, [], [AC_MSG_ERROR([library 'dbus' is required for Zeroconf support])])
 					AC_CHECK_LIB(avahi-common, avahi_simple_poll_loop, [], [AC_MSG_ERROR([library 'avahi-common' is required for Zeroconf support])])
 					AC_CHECK_LIB(avahi-client, avahi_client_new, [], [AC_MSG_ERROR([library 'avahi-client' is required for Zeroconf support])])
+
+          WZD_AVAHI_CFLAGS="`pkg-config --silence-errors --cflags 'avahi-client >= 0.6.0'`"
+          WZD_AVAHI_LIBS="`pkg-config --silence-errors --libs 'avahi-client >= 0.6.0'`"
+					AC_SUBST(WZD_AVAHI_CFLAGS)
+					AC_SUBST(WZD_AVAHI_LIBS)
 			fi
 		fi
 		if test "$enable_howl" = yes ; then
@@ -103,11 +106,14 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 						AC_MSG_ERROR("Did not find howl >= 1.0.0");
 					fi
 	
-					AC_SUBST(HOWL10_CFLAGS)
-					AC_SUBST(HOWL10_LIBS)
 					AC_CHECK_HEADER(howl.h, [], [AC_MSG_ERROR([header file <howl.h> is required for Howl])])
 	
 					AC_CHECK_LIB(howl, sw_discovery_publish, [], [AC_MSG_ERROR([library 'howl' is required for Zeroconf support])])
+
+          WZD_HOWL_CFLAGS="`pkg-config --silence-errors --cflags 'howl >= 1.0.0'`"
+          WZD_HOWL_LIBS="`pkg-config --silence-errors --libs 'howl >= 1.0.0'`"
+					AC_SUBST(WZD_HOWL_CFLAGS)
+					AC_SUBST(WZD_HOWL_LIBS)
 			fi
 		fi
 	fi
