@@ -26,11 +26,16 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <string.h>
+
+#include <arpa/inet.h> /* htonl() */
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 
+#include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_mod.h>
+#include <libwzd-core/wzd_string.h>
 
 #include <libwzd-core/wzd_threads.h>
 
@@ -45,9 +50,11 @@ static int initialized = 0;
 
 int WZD_MODULE_INIT(void)
 {
+  wzd_string_t * str;
+  int err;
   int ret = 1;
   void * arg = NULL;
-  const char *zeroconf_name;
+  const char *zeroconf_name = NULL;
   unsigned long wzdftpd_port;
 #ifdef USE_AVAHI
   const AvahiPoll *poll_api = NULL;
@@ -63,13 +70,30 @@ int WZD_MODULE_INIT(void)
   if (initialized > 0) return 1;
   initialized++;
 
+  str = config_get_string(mainConfig->cfg_file, "GLOBAL", "zeroconf_name", NULL);
+  if (!str) {
+    out_log(LEVEL_CRITICAL,"zeroconf: you must provide zeroconf_name=... in your config file\n");
+    initialized = 0;
+    return -1;
+  }
+  zeroconf_name = strdup(str_tochar(str));
+  str_deallocate(str);
+
+  wzdftpd_port = config_get_integer(mainConfig->cfg_file, "GLOBAL", "zeroconf_port", &err);
+  if (err) {
+    out_log(LEVEL_CRITICAL,"zeroconf: you must provide zeroconf_port=... in your config file\n");
+    initialized = 0;
+    return -1;
+  }
+  
+
 #ifdef USE_BONJOUR
   /*
     TODO: This has to be tested on a OSX box. Especially whether it
     blocks the main wzdftpd loop/thread.
   */
   DNSServiceRegistrationCreate(zeroconf_name,
-                               "_postgresql._tcp.",
+                               "_ftp._tcp.",
                                "",
                                htonl(PostPortNumber),
                                "",
@@ -126,6 +150,9 @@ void WZD_MODULE_CLOSE(void)
 
   if (initialized) {
     zeroconf_exit = 1;
+#ifdef USE_AVAHI
+    avahi_simple_poll_quit(simple_poll);
+#endif
 
     ret = wzd_thread_join(&zeroconf_thread, &thread_return);
   }
@@ -199,7 +226,7 @@ static void create_services(AvahiClient *c)
   out_log(LEVEL_INFO, "Adding Zeroconf service '%s'\n", g_name);
 
   /* Add the service for PostgreSQL */
-  if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, g_name, "_postgresql._tcp", NULL, NULL, g_port, NULL, NULL)) < 0) {
+  if ((ret = avahi_entry_group_add_service(group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, 0, g_name, "_ftp._tcp", NULL, NULL, g_port, NULL, NULL)) < 0) {
     out_log(LEVEL_CRITICAL, "Failed to add _ftp._tcp service: %s\n", avahi_strerror(ret));
     goto fail;
   }
@@ -257,6 +284,7 @@ static void doderegistration(void)
 {
   /* Cleanup things */
 
+  avahi_simple_poll_quit(simple_poll);
   if (client)
     avahi_client_free(client);
 
@@ -266,11 +294,11 @@ static void doderegistration(void)
   if (g_name)
     avahi_free(g_name);
 
-  if (group)
-    avahi_entry_group_free(group);
+/*  if (group)
+    avahi_entry_group_free(group);*/
 
   /* finally terminate the loop */
-  avahi_simple_poll_quit(simple_poll);
+/*  avahi_simple_poll_quit(simple_poll);*/
 }
 #endif
 #ifdef USE_HOWL

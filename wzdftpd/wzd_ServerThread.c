@@ -1026,6 +1026,7 @@ int server_switch_to_config(wzd_config_t *config)
       }
 
     }
+    str_deallocate_array(str_list);
   }
 
 /** \bug XXX FIXME polling with select on named pipe seems to fail ... */
