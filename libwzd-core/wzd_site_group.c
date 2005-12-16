@@ -786,6 +786,7 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   else {
     str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
     ret = send_message_with_args(501,context,"syntax error, unknow field");
+    return 0;
   }
 
   /* commit to backend */

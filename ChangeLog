@@ -1,3 +1,7 @@
+2005-12-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: crash when invalid arguments are given to site group
+
 2005-12-14  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: merge initial zeroconf support
