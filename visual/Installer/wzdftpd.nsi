@@ -3,9 +3,9 @@
 ; http://www.wzdftpd.net/
 ; Uses NSIS Script by Nulsoft - http://nsis.sourceforge.net/
 ; NSIS Script written by javsmo@users.sourceforge.net (Jose Antonio Oliveira)
-; Project Developer (pollux@cpe.fr)
+; Project Developer (pollux@wzdftpd.net)
 ; Creation date: Nov-07-2004
-; Last Modified: Mar-19-2005
+; Last Modified: Dec-19-2005
 
 
 ;--------------------------------
@@ -15,7 +15,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.5.4"
+  !define VER_DISPLAY "0.6.0-rc2"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -28,9 +28,12 @@
   !define LIBWZD-BASE_RELEASE_DIR "..\libwzd-base\release\"
   !define GNU_REGEX_DIST_DIR "..\gnu_regex_dist\"
   !define ICONV_BIN_DIR "..\iconv\bin\"
-  !define OPENSSL_LIB_DIR "..\openssl\lib\"
+  !define OPENSSL_LIB_DIR "C:\WINNT\system32\"
   !define ZLIB_DIR "..\zlib\"
-  !define SRC_DIR "..\..\src\"
+  !define LIBWZD-AUTH_DIR "..\..\libwzd-auth\"
+  !define LIBWZD-BASE_DIR "..\..\libwzd-base\"
+  !define LIBWZD-CORE_DIR "..\..\libwzd-core\"
+  !define WZDFTPD_DIR "..\..\wzdftpd\"
   !define ROOT_DIR "..\..\"
   !define DOT_DOT_DIR "..\"
   !define BACKEND_MYSQL_RELEASE_DIR "..\backends\mysql\release\"
@@ -42,8 +45,6 @@
   !define MODULES_TCL_RELEASE_DIR "..\modules\tcl\release\"
   !define MODULES_PERL_RELEASE_DIR "..\modules\perl\release\"
   !define MODULES_SFV_RELEASE_DIR "..\modules\sfv\release\"
-  !define MODULES_DEVELOP_DIR "..\src\"
-  !define MODULES_DEVELOP_LIB_DIR "..\src\"
 
   !define PROG_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROG_NAME}"
   !define PROG_UNINST_ROOT_KEY "HKLM"
@@ -380,20 +381,20 @@ Section "!$(CAPT_MainSec)" MainSec
   File "${OPENSSL_LIB_DIR}ssleay32.dll"
   File "${OPENSSL_LIB_DIR}libeay32.dll"
   File "${ZLIB_DIR}zlib1.dll"
-  File "${SRC_DIR}wzd.pem"
+  File "${WZDFTPD_DIR}wzd.pem"
 
   ;file_*.txt files
   SetOutPath "$INSTDIR\etc\"
-  File /nonfatal "${SRC_DIR}file_ginfo.txt"
-  File /nonfatal "${SRC_DIR}file_group.txt" 
-  File /nonfatal "${SRC_DIR}file_groups.txt" 
-  File /nonfatal "${SRC_DIR}file_help.txt" 
-  File /nonfatal "${SRC_DIR}file_rules.txt" 
-  File /nonfatal "${SRC_DIR}file_swho.txt" 
-  File /nonfatal "${SRC_DIR}file_user.txt" 
-  File /nonfatal "${SRC_DIR}file_users.txt" 
-  File /nonfatal "${SRC_DIR}file_vfs.txt" 
-  File /nonfatal "${SRC_DIR}file_who.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_ginfo.txt"
+  File /nonfatal "${WZDFTPD_DIR}file_group.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_groups.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_help.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_rules.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_swho.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_user.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_users.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_vfs.txt" 
+  File /nonfatal "${WZDFTPD_DIR}file_who.txt" 
 
   ;Other files
   SetOutPath "$INSTDIR"
@@ -405,9 +406,10 @@ Section "!$(CAPT_MainSec)" MainSec
   File "${ROOT_DIR}Permissions.ReadMeFirst"
   File "${ROOT_DIR}README"
   File "${ROOT_DIR}TLS.ReadmeFirst"
+  File "${ROOT_DIR}UPGRADING"
   File "${ROOT_DIR}wzd_tls.cnf"
-  File /oname=wzd.cfg "${SRC_DIR}wzd.cfg.sample.in"
-  File /oname=users "${SRC_DIR}users.sample"
+  File /oname=wzd.cfg "${WZDFTPD_DIR}wzd.cfg.sample.in"
+  File /oname=users "${WZDFTPD_DIR}users.sample"
 
   ;Plain-Text backend
   SetOutPath "$INSTDIR\backends"
@@ -652,53 +654,18 @@ SectionEnd
 Section /o $(CAPT_DevelopSec) DevelopSec
   ;Create the destination folders
   CreateDirectory "$INSTDIR\include\"
+  CreateDirectory "$INSTDIR\include\libwzd-auth"
+  CreateDirectory "$INSTDIR\include\libwzd-base"
+  CreateDirectory "$INSTDIR\include\libwzd-core"
   CreateDirectory "$INSTDIR\lib\"
 
   ;Copy Files to destination
-  SetOutPath "$INSTDIR\include"
-  File "${SRC_DIR}ls.h"
-  File "${SRC_DIR}wzd_action.h"
-  File "${SRC_DIR}wzd_all.h"
-  File "${SRC_DIR}wzd_backend.h"
-  File "${SRC_DIR}wzd_cache.h"
-  File "${SRC_DIR}wzd_ClientThread.h"
-  File "${SRC_DIR}wzd_commands.h"
-  File "${SRC_DIR}wzd_crc32.h"
-  File "${SRC_DIR}wzd_crontab.h"
-  File "${SRC_DIR}wzd_data.h"
-  File "${SRC_DIR}wzd_debug.h"
-  File "${SRC_DIR}wzd_dir.h"
-  File "${SRC_DIR}wzd_file.h"
-  File "${SRC_DIR}wzd_fs.h"
-  File "${SRC_DIR}wzd_hardlimits.h"
-  File "${SRC_DIR}wzd_init.h"
-  File "${SRC_DIR}wzd_ip.h"
-  File "${SRC_DIR}wzd_libmain.h"
-  File "${SRC_DIR}wzd_log.h"
-  File "${SRC_DIR}wzd_messages.h"
-  File "${SRC_DIR}wzd_misc.h"
-  File "${SRC_DIR}wzd_mod.h"
-  File "${SRC_DIR}wzd_mutex.h"
-  File "${SRC_DIR}wzd_opts.h"
-  File "${SRC_DIR}wzd_perm.h"
-  File "${SRC_DIR}wzd_ratio.h"
-  File "${SRC_DIR}wzd_savecfg.h"
-  File "${SRC_DIR}wzd_section.h"
-  File "${SRC_DIR}wzd_ServerThread.h"
-  File "${SRC_DIR}wzd_shm.h"
-  File "${SRC_DIR}wzd_site.h"
-  File "${SRC_DIR}wzd_site_group.h"
-  File "${SRC_DIR}wzd_site_user.h"
-  File "${SRC_DIR}wzd_socket.h"
-  File "${SRC_DIR}wzd_string.h"
-  File "${SRC_DIR}wzd_strptime.h"
-  File "${SRC_DIR}wzd_strtoull.h"
-  File "${SRC_DIR}wzd_structs.h"
-  File "${SRC_DIR}wzd_tls.h"
-  File "${SRC_DIR}wzd_types.h"
-  File "${SRC_DIR}wzd_utf8.h"
-  File "${SRC_DIR}wzd_vars.h"
-  File "${SRC_DIR}wzd_vfs.h"
+  SetOutPath "$INSTDIR\include\libwzd-auth"
+  File "${LIBWZD-AUTH_DIR}*.h"
+  SetOutPath "$INSTDIR\include\libwzd-base"
+  File "${LIBWZD-BASE_DIR}*.h"
+  SetOutPath "$INSTDIR\include\libwzd-core"
+  File "${LIBWZD-CORE_DIR}*.h"
   
   SetOutPath "$INSTDIR\lib"
   File "${BACKEND_MYSQL_RELEASE_DIR}libwzd_mysql.lib"
