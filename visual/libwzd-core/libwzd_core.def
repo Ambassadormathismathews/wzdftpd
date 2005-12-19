@@ -64,6 +64,7 @@ EXPORTS
 	dir_open
 	dir_read
 	encrypt
+	event_connect_function
 	event2str
 	fd_dump
 	fd_is_valid
@@ -202,6 +203,7 @@ EXPORTS
 	str_append
 	str_checklength
 	str_deallocate
+	str_deallocate_array
 	str_fromchar
 	str_length
 	str_read_token
