@@ -1,3 +1,7 @@
+2005-12-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: allow gadmins to change to homedir for their users
+
 2005-12-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: crash when invalid arguments are given to site group

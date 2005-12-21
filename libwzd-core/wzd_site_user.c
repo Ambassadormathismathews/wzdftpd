@@ -764,11 +764,6 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   }
   /* homedir */
   else if (strcmp(str_tochar(field),"homedir")==0) {
-    /* GAdmin ? */
-    if (is_gadmin) {
-       ret = send_message_with_args(501,context,"You can't change that field");
-       return 0;
-    }
     /* check if homedir exist */
     {
       fs_filestat_t s;
