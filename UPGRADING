@@ -1,3 +1,9 @@
+0.6.0:
+
+The config file is changed, all directives must be put into sections. Until the
+conversion script is ready, the easiest method is to use the default config
+file and merge changes manually.
+
 0.5.4:
 
 MySQL backend: all tables renamed to lowercase. See UPGRADING file in

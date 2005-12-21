@@ -1,5 +1,11 @@
    NEWS file for wzdftpd
 
+0.6.0: Dec 26 2005
+
+Major update: config file changed, multiple IPv4 and IPv6 binds,
+zeroconf support, multiples fixes in GnuTLS, cookies, permissions, and server
+replies. IPv6 code was also greatly improved.
+
 0.5.5: Sep 26 2005
 
 Security update: SITE command Remote Command Injection Vulnerability (see
