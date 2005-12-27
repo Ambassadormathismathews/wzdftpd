@@ -1,5 +1,7 @@
 2005-12-27  Pierre Chifflier  <pollux@wzdftpd.net>
 
+	* --- svn commit TAG: rel-0-6-0
+
 	* feature: pid file is now optional
 
 2005-12-21  Pierre Chifflier  <pollux@wzdftpd.net>
