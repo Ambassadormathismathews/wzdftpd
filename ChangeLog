@@ -1,3 +1,7 @@
+2005-12-27  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: pid file is now optional
+
 2005-12-21  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: allow gadmins to change to homedir for their users

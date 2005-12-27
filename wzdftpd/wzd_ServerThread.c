@@ -1125,11 +1125,11 @@ int server_switch_to_config(wzd_config_t *config)
   if (config->logdir) {
     fs_filestat_t s;
     if (fs_file_stat(config->logdir,&s)) {
-      out_err(LEVEL_HIGH,"Could not open log dir (%s)\n", config->logdir);
+      out_log(LEVEL_HIGH,"Could not open log dir (%s)\n", config->logdir);
       return 1;
     }
     if (!S_ISDIR(s.mode)) {
-      out_err(LEVEL_HIGH,"Log dir (%s) is NOT a directory, I'm confused!\n", config->logdir);
+      out_log(LEVEL_HIGH,"Log dir (%s) is NOT a directory, I'm confused!\n", config->logdir);
       return 1;
     }
   }
@@ -1138,82 +1138,82 @@ int server_switch_to_config(wzd_config_t *config)
     fd = xferlog_open(config->xferlog_name, 0600);
     if (fd == -1)
     {
-      out_err(LEVEL_HIGH,"Could not open xferlog (%s)\n", config->xferlog_name);
+      out_log(LEVEL_HIGH,"Could not open xferlog (%s)\n", config->xferlog_name);
       return 1;
     }
     config->xferlog_fd = fd;
   }
 
 
-  if (!config->pid_file) {
-    out_err(LEVEL_HIGH,"ERROR: no pid_file found !\n");
-    return -1;
-  }
-  fd = open(config->pid_file, O_RDONLY, 0644);
-  if (fd != -1)
-  {
-    unsigned long l,size;
-    char buf[64];
-    char *ptr;
-    int ret;
-
-    size = read(fd,buf,64);
-    if (size <= 0) {
-      out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
-      close(fd);
-      return 1;
-    }
-    l = strtoul(buf,&ptr,10);
-    if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
+  if (config->pid_file) {
+    fd = open(config->pid_file, O_RDONLY, 0644);
+    if (fd != -1)
     {
-      out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
-      close(fd);
-      return 1;
-    }
-    close(fd);
-    /* check no process is running with this pid */
-#ifndef WIN32
-    ret = kill(l,0);
-#else
-/*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
-    ret = -1;
-    errno = ESRCH;
-#endif
-    if (!ret || (ret==-1 && errno==EPERM)) {
-      out_log(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",config->pid_file);
-      return 1;
-    }
-    if ( !(ret==-1 && errno==ESRCH) ) {
-      out_log(LEVEL_CRITICAL,"Error: pid file: %s\n",config->pid_file);
-      out_log(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
-          l, ret, errno, strerror(errno));
-      out_log(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
-      return 1;
-    }
-    out_log(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",config->pid_file);
-    if (unlink(config->pid_file)) {
-      out_log(LEVEL_HIGH,"Could not remove pid_file (%s)\n",config->pid_file);
-      return 1;
-    }
-  }
+      unsigned long l,size;
+      char buf[64];
+      char *ptr;
+      int ret;
 
-  /* creates pid file */
-  {
-    char buf[64];
+      size = read(fd,buf,64);
+      if (size <= 0) {
+        out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+        close(fd);
+        return 1;
+      }
+      l = strtoul(buf,&ptr,10);
+      if (*ptr != '\n' && *ptr != '\r' && *ptr != '\0')
+      {
+        out_log(LEVEL_HIGH,"pid_file already exist and is invalid ! (%s)\nRemove it if you are sure",config->pid_file);
+        close(fd);
+        return 1;
+      }
+      close(fd);
+      /* check no process is running with this pid */
 #ifndef WIN32
-    fd = open(config->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+      ret = kill(l,0);
 #else
-    /* ignore if file exists for visual version ... */
-    fd = open(config->pid_file,O_WRONLY | O_CREAT,0644);
+      /*    ret = raise(l);*/ /* TODO XXX FIXME raise send signal to EXECUTING process ... */
+      ret = -1;
+      errno = ESRCH;
 #endif
-    snprintf(buf,64,"%ld\n",(unsigned long)getpid());
-    if (fd==-1) {
-      out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
-      free_config(config);
-      exit(1);
+      if (!ret || (ret==-1 && errno==EPERM)) {
+        out_log(LEVEL_CRITICAL,"Error: pid file (%s) contains the pid of a running process\n",config->pid_file);
+        return 1;
+      }
+      if ( !(ret==-1 && errno==ESRCH) ) {
+        out_log(LEVEL_CRITICAL,"Error: pid file: %s\n",config->pid_file);
+        out_log(LEVEL_CRITICAL,"kill(%ld,0) returned %d, errno=%d (%s)\n",
+            l, ret, errno, strerror(errno));
+        out_log(LEVEL_CRITICAL,"file: %s:%d\n",__FILE__,__LINE__);
+        return 1;
+      }
+      out_log(LEVEL_HIGH,"Warning: removing old pid file (%s)\n",config->pid_file);
+      if (unlink(config->pid_file)) {
+        out_log(LEVEL_HIGH,"Could not remove pid_file (%s)\n",config->pid_file);
+        return 1;
+      }
     }
-    ret = write(fd,buf,strlen(buf));
-    close(fd);
+
+    /* creates pid file */
+    {
+      char buf[64];
+#ifndef WIN32
+      fd = open(config->pid_file,O_WRONLY | O_CREAT | O_EXCL,0644);
+#else
+      /* ignore if file exists for visual version ... */
+      fd = open(config->pid_file,O_WRONLY | O_CREAT,0644);
+#endif
+      snprintf(buf,64,"%ld\n",(unsigned long)getpid());
+      if (fd==-1) {
+        out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
+        free_config(config);
+        exit(1);
+      }
+      ret = write(fd,buf,strlen(buf));
+      close(fd);
+    }
+  } else {
+    out_log(LEVEL_NORMAL,"INFO: not using pid_file\n");
   }
 
 
