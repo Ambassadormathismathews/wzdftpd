@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.6.0_rc2, pollux@wzdftpd.net)
+AC_INIT(wzdftpd, 0.6.0, pollux@wzdftpd.net)
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
