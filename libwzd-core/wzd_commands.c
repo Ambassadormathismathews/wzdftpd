@@ -220,6 +220,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"help",do_help,NULL,TOK_HELP)) return -1;
   if (commands_add(_ctable,"quit",do_quit,NULL,TOK_QUIT)) return -1;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
+  if (commands_add(_ctable,"pbsz",do_pbsz,NULL,TOK_PBSZ)) return -1;
   if (commands_add(_ctable,"prot",do_prot,NULL,TOK_PROT)) return -1;
   if (commands_add(_ctable,"cpsv",do_pasv,NULL,TOK_CPSV)) return -1;
   if (commands_add(_ctable,"sscn",do_sscn,NULL,TOK_SSCN)) return -1;

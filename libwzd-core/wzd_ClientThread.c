@@ -2814,6 +2814,27 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
 }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
+/*************** do_pbsz *****************************/
+int do_pbsz(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int ret;
+  const char *arg;
+
+  arg = str_tochar(param);
+  /** \todo TOK_BSZ: if user is NOT in TLS mode, insult him */
+  /** \todo TOK_BSZ: use argument */
+  ret = send_message_with_args(200,context,"PBSZ command OK");
+  return E_OK;
+}
+#else
+int do_pbsz(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+{
+  send_message(502,context);
+  return E_PARAM_INVALID;
+}
+#endif
+
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_prot *****************************/
 int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
@@ -2836,6 +2857,7 @@ int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 #else
 int do_prot(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
+  send_message(502,context);
   return E_PARAM_INVALID;
 }
 #endif

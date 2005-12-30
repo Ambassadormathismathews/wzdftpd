@@ -1,6 +1,7 @@
 2005-12-30  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: sfv module not using event POSTUPLOAD
+	* bugfix: PBSZ command not working
 
 2005-12-27  Pierre Chifflier  <pollux@wzdftpd.net>
 

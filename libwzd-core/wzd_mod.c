@@ -631,6 +631,11 @@ int module_load(wzd_module_t *module)
 #endif
 
   ret = (f_init)();
+  if (ret) {
+    out_log(LEVEL_HIGH,"ERROR could not load module %s\n",module->name);
+    dlclose(handle);
+    return ret;
+  }
 
   module->handle = handle;
 

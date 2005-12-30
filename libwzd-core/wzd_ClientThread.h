@@ -93,6 +93,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_xmd5(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_quit(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_pbsz(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_help(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
