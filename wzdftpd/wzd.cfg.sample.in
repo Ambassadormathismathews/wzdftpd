@@ -130,13 +130,6 @@ login_pre_ip_allowed = localhost
 #login_pre_ip_allowed = *.xxx.fr
 #login_pre_ip_denied = *
 
-##### MODULES
-
-param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]
-param_sfv_del_progressmeter = \[.*] - ...% Complete - \[WzD]
-param_sfv_incomplete_indicator = ../(incomplete)-%0
-param_sfv_other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
-
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands
 # order *IS* important
@@ -219,7 +212,6 @@ site_rules = *
 site_rusage = +O
 site_savecfg = +O
 site_sections = +O
-site_sfv = *
 site_shutdown = +O
 site_su = +O
 site_swho = +O
@@ -251,6 +243,12 @@ site_vfsdel = +O
 @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
 @e_datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
 @e_datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
+
+[sfv]
+progressmeter = [WzD] - %3d%% Complete - [WzD]
+del_progressmeter = \[.*] - ...% Complete - \[WzD]
+incomplete_indicator = ../(incomplete)-%0
+other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
 
 [plaintext]
 param = @e_sysconfdir@/users

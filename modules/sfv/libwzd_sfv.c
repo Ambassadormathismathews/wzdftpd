@@ -58,6 +58,7 @@
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
 #include <libwzd-core/wzd_cache.h>
+#include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_crc32.h>
 #include <libwzd-core/wzd_vfs.h> /* checkabspath */
 
@@ -96,24 +97,41 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
 /* get params from server */
 static int get_all_params(void)
 {
+  wzd_string_t * str;
+
   if (params_ok) return 0;
 
-  if (server_get_param("sfv_progressmeter",progressmeter,256,getlib_mainConfig()->param_list)) {
-    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_progressmeter'\n");
+  str = config_get_string(getlib_mainConfig()->cfg_file,"sfv","progressmeter",NULL);
+  if (!str) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter '[sfv] progressmeter'\n");
     return 1;
   }
-  if (server_get_param("sfv_del_progressmeter",del_progressmeter,256,getlib_mainConfig()->param_list)) {
-    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_del_progressmeter'\n");
+  strncpy(progressmeter,str_tochar(str),sizeof(progressmeter));
+  str_deallocate(str);
+
+  str = config_get_string(getlib_mainConfig()->cfg_file,"sfv","del_progressmeter",NULL);
+  if (!str) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter '[sfv] del_progressmeter'\n");
     return 1;
   }
-  if (server_get_param("sfv_incomplete_indicator",incomplete_indicator,256,getlib_mainConfig()->param_list)) {
-    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_incomplete_indicator'\n");
+  strncpy(del_progressmeter,str_tochar(str),sizeof(del_progressmeter));
+  str_deallocate(str);
+
+  str = config_get_string(getlib_mainConfig()->cfg_file,"sfv","incomplete_indicator",NULL);
+  if (!str) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter '[sfv] incomplete_indicator'\n");
     return 1;
   }
-  if (server_get_param("sfv_other_completebar",other_completebar,256,getlib_mainConfig()->param_list)) {
-    out_log(LEVEL_HIGH,"Module SFV: missing parameter 'sfv_other_completebar'\n");
+  strncpy(incomplete_indicator,str_tochar(str),sizeof(incomplete_indicator));
+  str_deallocate(str);
+
+  str = config_get_string(getlib_mainConfig()->cfg_file,"sfv","other_completebar",NULL);
+  if (!str) {
+    out_log(LEVEL_HIGH,"Module SFV: missing parameter '[sfv] other_completebar'\n");
     return 1;
   }
+  strncpy(other_completebar,str_tochar(str),sizeof(other_completebar));
+  str_deallocate(str);
 
   params_ok = 1;
   return 0;
@@ -1467,7 +1485,7 @@ static event_reply_t sfv_event_postupload(const char * args)
   username = strtok_r(str," ",&ptr);
   filename = ptr;
 
-  ret = sfv_hook_preupload(EVENT_POSTUPLOAD, username, filename);
+  ret = sfv_hook_postupload(EVENT_POSTUPLOAD, username, filename);
 
   free(str);
 
