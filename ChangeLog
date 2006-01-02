@@ -1,3 +1,7 @@
+2005-01-02  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: exit nicely when called with option -V
+
 2005-12-30  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: sfv module not using event POSTUPLOAD

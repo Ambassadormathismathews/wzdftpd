@@ -211,7 +211,7 @@ int main_parse_args(int argc, char **argv)
     case 'V':
       fprintf(stderr,"%s build %s (%s)\n",
           WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
-      return 1;
+      exit (0);
     }
   }
 #else /* WIN32 */
@@ -250,7 +250,7 @@ int main_parse_args(int argc, char **argv)
       if (!strcmp(argv[optindex],"-V")) {
         fprintf(stderr,"%s build %s (%s)\n",
             WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
-        return 1;
+        exit (0);
       }
       if (!strcmp(argv[optindex],"-si")) {
         start_command = CMD_SRV_REGISTER;
