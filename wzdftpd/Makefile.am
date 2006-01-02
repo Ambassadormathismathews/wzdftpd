@@ -8,8 +8,6 @@ wzdftpd_SOURCES =    \
 	wzd_ServerThread.c \
 	wzd_ServerThread.h
 
-nodist_wzdftpd_SOURCES = wzd_init_lex.l
-
 wzdftpd_DEPENDENCIES = ../libwzd-core/libwzd_core.la
 
 wzdftpd_LDADD = ../libwzd-core/libwzd_core.la
@@ -30,8 +28,5 @@ install-data-hook:
 uninstall-hook:
 	rmdir --ignore-fail-on-non-empty @e_localstatedir@/log/wzdftpd || true
 
-# them while "make clean", use CLEANFILES
-CLEANFILES = wzd_init_lex.c
-
-EXTRA_DIST = KNOWN_BUGS TODO wzd_init_lex.l
+EXTRA_DIST = KNOWN_BUGS TODO
 

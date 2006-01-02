@@ -3,10 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- implement events / in progress
-    - modify command_add() to support custom commands / site commands / OK
-    - replace do_sitecmd
-'********'
 - add options to
     - disable TLS / OK
     - disable ident lookups / OK
@@ -22,8 +18,6 @@
     - functions to parse values / OK
     - remove functions / OK
     - multi-lines ?
-'********'
-- Use custom site commands exactly like standard commands
 '********'
 - finish MLST
 - implement MLSD
@@ -67,8 +61,6 @@ Tue Sep 10 15:23:48 2002 COMPLETE: "/path/to/rlz/" "rlz_name [711mB in 50F at 69
   220- ... 220 command ok (easier !)
 '********'
 - commit backend iff it was modified
-'********'
-- getmyip does not seems to work with ipv6 ...
 '********'
 - permissions: siteop always have all perms on files (wzd_perm.c) / OK
   and gadmins on their group files

@@ -99,7 +99,6 @@
 #include <libwzd-core/wzd_utf8.h>
 #include <libwzd-core/wzd_vars.h>
 
-#include "wzd_init.h"
 #include "wzd_ServerThread.h"
 
 #include <libwzd-core/wzd_debug.h>

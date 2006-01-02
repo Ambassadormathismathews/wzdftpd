@@ -84,7 +84,6 @@
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_utf8.h>
 
-#include "wzd_init.h"
 #include "wzd_opts.h"
 #include "wzd_ServerThread.h"
 
@@ -160,13 +159,6 @@ void display_usage(void)
   fprintf(stderr," -V                          - Show version \n");
 
 #endif /* HAVE_GETOPT_LONG */
-}
-
-static wzd_config_t * load_config_file(const char *name, wzd_config_t ** config)
-{
-  *config = readConfigFile(name);
-
-  return *config;
 }
 
 
@@ -426,9 +418,7 @@ int main(int argc, char **argv)
       }
     }
     config_free(cf);
-/*    if (!ret) break;*/ /** \todo FIXME enable this line when config is really loaded */
-    /* old config loader */
-    if (load_config_file(config_files[i],&config)) break;
+    if (!ret) break;
   }
   if (!config) {
     fprintf(stderr,"FATAL: No valid config file found, aborting !\n");
