@@ -201,7 +201,7 @@ int main_parse_args(int argc, char **argv)
       break;
     case 'h':
       display_usage();
-      return 1;
+      exit (0);
     case 's':
       stay_foreground = 1;
       break;
@@ -245,7 +245,7 @@ int main_parse_args(int argc, char **argv)
       }
       if (!strcmp(argv[optindex],"-h")) {
         display_usage();
-        return 1;
+        exit (0);
       }
       if (!strcmp(argv[optindex],"-V")) {
         fprintf(stderr,"%s build %s (%s)\n",
