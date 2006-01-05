@@ -81,17 +81,12 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcmp(varname,"loglevel")==0) {
-    char * level;
     wzd_string_t * str;
 
     str = config_get_string(config->cfg_file, "GLOBAL", "loglevel", NULL);
     if (str) {
       snprintf(data,datalength,"%s",str_tochar(str));
       str_deallocate(str);
-      return 0;
-    }
-    if (config->htab && !(chtbl_lookup((CHTBL*)config->htab, "loglevel", (void**)&level))) {
-      snprintf(data,datalength,"%s",level);
       return 0;
     }
     snprintf(data,datalength,"%s",loglevel2str(config->loglevel));

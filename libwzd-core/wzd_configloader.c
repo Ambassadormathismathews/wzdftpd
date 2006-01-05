@@ -136,9 +136,6 @@ void cfg_free(wzd_config_t * cfg)
 {
   WZD_ASSERT_VOID(cfg != NULL);
 
-  if (cfg->htab) chtbl_destroy((CHTBL*)cfg->htab);
-  wzd_free(cfg->htab);
-
   wzd_free(cfg->logfilename);
   wzd_free(cfg->config_filename);
   wzd_free(cfg->pid_file);

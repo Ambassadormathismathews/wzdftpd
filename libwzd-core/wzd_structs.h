@@ -552,7 +552,6 @@ struct wzd_config_t {
   wzd_bw_limiter	global_dl_limiter;
   wzd_site_config_t	site_config;
 
-  struct CHTBL * htab;
   struct _wzd_configfile_t * cfg_file;
 
   struct wzd_cronjob_t * crontab;

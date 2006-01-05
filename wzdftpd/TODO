@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- event seems to be sent several times when login fails !!
+'********'
 - add options to
     - disable TLS / OK
     - disable ident lookups / OK

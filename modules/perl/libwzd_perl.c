@@ -159,9 +159,7 @@ int WZD_MODULE_INIT(void)
     int ret;
 
     ret = -1;
-    if (mainConfig->htab) {
-      chtbl_lookup((CHTBL*)mainConfig->htab, "logdir", (void**)&logdir);
-    } else { /* new config format */
+    {
       wzd_string_t * str;
       str = config_get_string(mainConfig->cfg_file, "GLOBAL", "logdir", NULL);
       if (str) {
