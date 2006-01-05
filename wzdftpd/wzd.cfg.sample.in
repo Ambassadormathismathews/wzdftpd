@@ -109,27 +109,6 @@ tls_certificate = @e_sysconfdir@/wzd.pem
 
 # /TLS
 
-##### IP RESTRICTIONS
-
-# This is global ip checking, BEFORE KNOWING the user name (default NO)
-# to enable it, uncomment the following
-# 0 = disabled
-# 1 = order allow, deny
-# 2 = order deny, allow
-login_pre_ip_check = 0
-
-# now the allowed ip: you can put as many lines login_pre_ip = as you want,
-# one per line
-# wildcards are accepted (*,?) - NOTE * stops after the first match of the next
-#   char
-#
-# WARNING: to match all ip ending by 0.1 you MUST write *.*.0.1, NOT *.0.1
-#login_pre_ip_allowed = xxx.xxx.org
-#login_pre_ip_allowed = xxx
-login_pre_ip_allowed = localhost
-#login_pre_ip_allowed = *.xxx.fr
-#login_pre_ip_denied = *
-
 ##### CUSTOM SCRIPTS
 # Custom scripts (or binaries) to be executed before/after certain commands
 # order *IS* important
@@ -157,6 +136,17 @@ sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 # maximum recursion is 16 (too big IMHO)
 #include permissions.cfg
 
+##### IP RESTRICTIONS
+[pre_ip_check]
+
+# wildcards are accepted (*,?) - NOTE * stops after the first match of the next
+#   char
+#
+# WARNING: to match all ip ending by 0.1 you MUST write *.*.0.1, NOT *.0.1
+#xxx.xxx.org = allow
+localhost = allow
+#*.xxx.fr = allow
+#* = deny
 
 ##### PERMISSIONS
 # you must add prefixes before permissions: -group =user +flag or *
