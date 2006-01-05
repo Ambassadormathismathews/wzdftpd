@@ -1,3 +1,7 @@
+2006-01-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: reject_unknown_users not working
+
 2006-01-02  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: exit nicely when called with option -V or -h

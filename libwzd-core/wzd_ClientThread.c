@@ -85,6 +85,7 @@
 #include "wzd_data.h"
 #include "wzd_messages.h"
 #include "wzd_vfs.h"
+#include "wzd_configfile.h"
 #include "wzd_crc32.h"
 #include "wzd_events.h"
 #include "wzd_file.h"
@@ -3541,17 +3542,19 @@ static int do_login_loop(wzd_context_t * context)
   char username[HARD_USERNAME_LENGTH];
   int ret;
   int user_ok=0, pass_ok=0;
-  int reject_nonexistant=1;
+  int reject_nonexistant=0;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   int tls_ok=0;
 #endif
   int command;
 
-  if (mainConfig->htab &&
-      chtbl_lookup((CHTBL*)mainConfig->htab, "reject_unknown_users", (void**)&ptr) == 0)
   {
-    if (ptr && strcmp(ptr,"0")==0)
-      reject_nonexistant = 0;
+    wzd_string_t * str;
+    str = config_get_string(mainConfig->cfg_file,"GLOBAL","reject_unknown_users",NULL);
+    if (str &&
+        (strcmp(str_tochar(str),"1")==0 || strcasecmp(str_tochar(str),"allow")==0))
+      reject_nonexistant = 1;
+    str_deallocate(str);
   }
 
   *username = '\0';
