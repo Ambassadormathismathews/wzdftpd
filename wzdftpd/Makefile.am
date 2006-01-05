@@ -2,7 +2,6 @@
 sbin_PROGRAMS = wzdftpd
 
 wzdftpd_SOURCES =    \
-	wzd_init.h         \
 	wzd_main.c         \
 	wzd_opts.h         \
 	wzd_ServerThread.c \
