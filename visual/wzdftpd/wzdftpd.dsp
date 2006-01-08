@@ -90,43 +90,6 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\wzdftpd\wzd_init_lex.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\wzdftpd\wzd_init_lex.l
-
-!IF  "$(CFG)" == "wzdftpd - Win32 Release"
-
-# PROP Ignore_Default_Tool 1
-# Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\wzdftpd
-InputPath=..\..\wzdftpd\wzd_init_lex.l
-InputName=wzd_init_lex
-
-"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "wzdftpd - Win32 Debug"
-
-# PROP Ignore_Default_Tool 1
-# Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\wzdftpd
-InputPath=..\..\wzdftpd\wzd_init_lex.l
-InputName=wzd_init_lex
-
-"$(InputDir)\$(InputName).c" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	..\flex\Release\flex.exe -o$(InputDir)\$(InputName).c $(InputDir)\$(InputName).l > $(InputDir)\$(InputName).l.c
-
-# End Custom Build
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\wzdftpd\wzd_main.c
 # End Source File
 # Begin Source File
@@ -137,10 +100,6 @@ SOURCE=..\..\wzdftpd\wzd_ServerThread.c
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
-# Begin Source File
-
-SOURCE=..\..\wzdftpd\wzd_init.h
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\wzdftpd\wzd_opts.h

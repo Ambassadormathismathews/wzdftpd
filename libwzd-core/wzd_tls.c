@@ -178,15 +178,7 @@ int tls_init(void)
     return 0;
   }
 
-  if (mainConfig->htab) {
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate", (void**)&tls_certificate)) {
-      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
-      return 1;
-    }
-    /* ignore errors */
-    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_file", (void**)&tls_ca_file);
-    chtbl_lookup((CHTBL*)mainConfig->htab, "tls_ca_path", (void**)&tls_ca_path);
-  } else { /* new config format */
+  {
     str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
     if (!str) {
       out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
@@ -195,6 +187,19 @@ int tls_init(void)
     /** \bug FIXME memory leak here !! */
     tls_certificate = strdup(str_tochar(str));
     str_deallocate(str);
+    /* ignore errors */
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_file", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_ca_file = strdup(str_tochar(str));
+      str_deallocate(str);
+    }
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_path", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_ca_path = strdup(str_tochar(str));
+      str_deallocate(str);
+    }
   }
 
   out_log(LEVEL_INFO,"Initializing TLS (this can take a while).\n");
@@ -231,13 +236,7 @@ int tls_init(void)
   }
 
   /* set private key file - usually the same */
-  if (mainConfig->htab) {
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_certificate_key", (void**)&tls_certificate_key))
-    {
-      /* if no key provided, try using the same certificate */
-      tls_certificate_key = tls_certificate;
-    }
-  } else { /* new config format */
+  {
     str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
     if (str) {
       /** \bug FIXME memory leak here !! */
@@ -443,12 +442,7 @@ int tls_auth (const char *type, wzd_context_t * context)
   }
 #endif
 
-  if (mainConfig->htab) {
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
-    {
-      tls_cipher_list = "ALL";
-    }
-  } else { /* new config format */
+  {
     str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
     if (str) {
       /** \bug FIXME memory leak here !! */
@@ -607,12 +601,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     return 1;
   }
 
-  if (mainConfig->htab) {
-    if (chtbl_lookup((CHTBL*)mainConfig->htab, "tls_cipher_list", (void**)&tls_cipher_list))
-    {
-      tls_cipher_list = "ALL";
-    }
-  } else { /* new config format */
+  {
     str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
     if (str) {
       /** \bug FIXME memory leak here !! */
