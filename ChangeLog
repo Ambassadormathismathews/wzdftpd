@@ -1,3 +1,7 @@
+2006-01-08  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: suppress debug messages for events
+
 2006-01-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: reject_unknown_users not working

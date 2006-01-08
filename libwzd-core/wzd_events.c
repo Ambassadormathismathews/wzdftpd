@@ -161,7 +161,9 @@ int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_cod
 
   if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
 
+#ifdef WZD_DBG_EVENT
   out_log(LEVEL_FLOOD,"DEBUG Sending event 0x%lx\n",event_id);
+#endif
 
   /* prepare arguments */
   /*   add command line args to permanent args */
@@ -264,8 +266,8 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
   sz64 = wzd_cache_getsize(fp);
   if (sz64 > INT_MAX) {
     out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
-	wzd_cache_close(fp);
-	return EVENT_ERROR;
+    wzd_cache_close(fp);
+    return EVENT_ERROR;
   }
   filesize = (unsigned int)sz64;
   file_buffer = malloc(filesize+1);
@@ -344,7 +346,7 @@ static event_reply_t _event_exec(const char * commandline, wzd_context_t * conte
   if (file == NULL) {
 /*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
     out_log(LEVEL_INFO,"Failed command: '%s'\n",clean_command);
-	free(clean_command);
+    free(clean_command);
     return EVENT_ERROR;
   }
   while (fgets(buffer,sizeof(buffer)-1,file) != NULL)

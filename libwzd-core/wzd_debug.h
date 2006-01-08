@@ -104,6 +104,9 @@ void dump_backtrace(void);
 /* debug crontab */
 /*#define WZD_DBG_CRONTAB*/
 
+/* debug events */
+/*#define WZD_DBG_EVENT*/
+
 /* debug ident */
 /*#define WZD_DBG_IDENT*/
 
