@@ -425,6 +425,21 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     str_deallocate(str);
   }
 
+  /* USE SYSLOG */
+  str = config_get_string(file, "GLOBAL", "use_syslog", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"deny")==0 || strcmp(str_tochar(str),"0")==0) {
+      CFG_CLR_OPTION(cfg,CFG_OPT_USE_SYSLOG);
+    }
+    else if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_USE_SYSLOG);
+    }
+    else {
+      out_log(LEVEL_HIGH,"Invalid value for option use_syslog\n");
+    }
+    str_deallocate(str);
+  }
+
   /* XFERLOG */
   str = config_get_string(file, "GLOBAL", "xferlog", NULL);
   if (str) {

@@ -218,6 +218,8 @@ void out_log(int level,const char *fmt,...)
 #ifndef _WIN32
     if (_log_channels[level].syslog)
     {
+      /* default priority: informational */
+      prior = LOG_INFO;
       switch (level) {
         case LEVEL_CRITICAL:
           prior = LOG_ALERT;

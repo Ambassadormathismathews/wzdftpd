@@ -492,8 +492,8 @@ int main(int argc, char **argv)
     // LOG_CONS - If syslog could not pass our messages they'll apear on console,
     // LOG_NDELAY - We don't want to wait for first message but open the connection to syslogd immediatly 
     // LOG_PID - We want see pid of of deamon in logfiles (Is it needed?)
-  for (i=0; i<MAX_LOG_CHANNELS; i++)
-    log_set_syslog(i,1);
+    for (i=0; i<MAX_LOG_CHANNELS; i++)
+      log_set_syslog(i,1);
   }
 #endif
   ret = log_open(mainConfig->logfilename,mainConfig->logfilemode);

@@ -1,3 +1,9 @@
+2006-01-09  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: server always send messages to syslog
+	* bugfix: messages with custom levels are sent to syslog with priority
+	emergency
+
 2006-01-08  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: suppress debug messages for events
