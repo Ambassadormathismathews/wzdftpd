@@ -1,3 +1,7 @@
+2006-01-10  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: custom commands broken
+
 2006-01-09  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: server always send messages to syslog
