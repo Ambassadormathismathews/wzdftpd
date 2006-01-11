@@ -1141,14 +1141,12 @@ int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 #endif
     /* let it go to error return */
   } /* UTF8 */
-#ifdef TEST_MLSD
   if (strncasecmp(ptr,"MLST",4)==0)
   {
     /** \todo XXX FIXME implement options support for MLST */
     ret = send_message_with_args(200, context, "MLST OPTS Type;Size;Modify;Perm;UNIX.mode;");
     return 0;
   } /* MLST */
-#endif /* TEST_MLSD */
 
 label_opts_error:
   ret = send_message_with_args(501,context,"OPTS option not recognized");

@@ -44,11 +44,7 @@ void client_die(wzd_context_t * context);
   " XMD5\n" \
   " MODA modify*;accessed*;\n"
 
-#ifdef TEST_MLSD
 #define FEAT_MLST  " MLST Type*;Size*;Modify*;Perm*;Unique*;UNIX.mode;\n"
-#else
-#define FEAT_MLST
-#endif
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 #define FEAT_TLS  " AUTH TLS\n PBSZ\n PROT\n SSCN\n CPSV\n"

@@ -198,10 +198,8 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"cwd",do_cwd,NULL,TOK_CWD)) return -1;
   if (commands_add(_ctable,"list",do_list,NULL,TOK_LIST)) return -1;
   if (commands_add(_ctable,"nlst",do_list,NULL,TOK_NLST)) return -1;
-#ifdef TEST_MLSD
   if (commands_add(_ctable,"mlst",do_mlst,NULL,TOK_MLST)) return -1;
   if (commands_add(_ctable,"mlsd",do_mlsd,NULL,TOK_MLSD)) return -1;
-#endif /* TEST_MLSD */
   if (commands_add(_ctable,"stat",do_stat,NULL,TOK_STAT)) return -1;
   if (commands_add(_ctable,"mkd",do_mkdir,NULL,TOK_MKD)) return -1;
   if (commands_add(_ctable,"rmd",do_rmdir,NULL,TOK_RMD)) return -1;
