@@ -48,7 +48,6 @@ static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *cont
 static void create_services(AvahiClient *c);
 
 static void doderegistration(void);
-static void *local_poll(void *arg);
 static void client_callback(AvahiClient *c,
 			AvahiClientState state, AVAHI_GCC_UNUSED void *userdata);
 static void entry_group_callback(AvahiEntryGroup *g,

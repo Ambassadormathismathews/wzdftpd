@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <arpa/inet.h> /* htonl() */
+#include <sys/wait.h>
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
@@ -39,14 +40,27 @@
 
 #include <libwzd-core/wzd_threads.h>
 
+#define ZEROCONF_USE_PROCESS
+
 /* function prototypes and globals */
 #include "libwzd_zeroconf.h"
 
 static void * routine (void * arg);
+#ifdef ZEROCONF_USE_PROCESS
+static pid_t pid_child = 0;
+#else
 static wzd_thread_t zeroconf_thread;
-static int zeroconf_exit = 0;
+#endif
 
 static int initialized = 0;
+
+#ifdef ZEROCONF_USE_PROCESS
+static void sighandler(int sig)
+{
+  out_log(LEVEL_FLOOD,"zeroconf: received signal %d\n",sig);
+  doderegistration();
+}
+#endif
 
 int WZD_MODULE_INIT(void)
 {
@@ -85,6 +99,41 @@ int WZD_MODULE_INIT(void)
     initialized = 0;
     return -1;
   }
+
+#ifdef ZEROCONF_USE_PROCESS
+  pid_child = fork();
+  if (pid_child < 0) {
+    out_log(LEVEL_CRITICAL,"zeroconf: could not create a new process\n");
+    initialized = 0;
+    return -1;
+  }
+  if (pid_child > 0) {
+    return 0;
+  }
+  {
+    sigset_t mask;
+    sigfillset(&mask);
+    ret = pthread_sigmask(SIG_UNBLOCK,&mask,NULL);
+    if (pid_child < 0) {
+      out_log(LEVEL_CRITICAL,"zeroconf: could not unblock pthread signals mask\n");
+      initialized = 0;
+      return -1;
+    }
+  }
+#ifdef DEBUG
+  /* We MUST close stdin, or the keyboard interrupts (like Ctrl+C) will be sent to both
+   * the server and the zeroconf module
+   */
+  close(0);
+#endif
+  /* We have to override ALL the signals trapped in wzd_ServerThread.c
+   * Since this process is created by fork(), it inheritates the file descriptors AND signal
+   * handlers, so the server's handler would be called in the forked process !
+   */
+  signal(SIGINT,sighandler);
+  signal(SIGTERM,sighandler);
+  signal(SIGHUP,SIG_DFL);
+#endif
   
 
 #ifdef USE_BONJOUR
@@ -136,9 +185,14 @@ int WZD_MODULE_INIT(void)
   }
 #endif
 
-  ret = wzd_thread_create (&zeroconf_thread, NULL, &routine, arg);
-
   out_log(LEVEL_INFO, "Module zeroconf loaded\n");
+
+#ifdef ZEROCONF_USE_PROCESS
+  routine(arg);
+  exit (0);
+#else
+  ret = wzd_thread_create (&zeroconf_thread, NULL, &routine, arg);
+#endif
 
   return 0;
 }
@@ -146,15 +200,24 @@ int WZD_MODULE_INIT(void)
 void WZD_MODULE_CLOSE(void)
 {
   int ret;
+#ifndef ZEROCONF_USE_PROCESS
   void * thread_return;
-
-  if (initialized) {
-    zeroconf_exit = 1;
-#ifdef USE_AVAHI
-    avahi_simple_poll_quit(simple_poll);
 #endif
 
+  if (initialized) {
+#ifdef ZEROCONF_USE_PROCESS
+    kill(pid_child,SIGTERM);
+#else
+# ifdef USE_AVAHI
+    avahi_simple_poll_quit(simple_poll);
+# endif
+#endif
+
+#ifdef ZEROCONF_USE_PROCESS
+    ret = wait4(pid_child, NULL, 0, NULL);
+#else
     ret = wzd_thread_join(&zeroconf_thread, &thread_return);
+#endif
   }
 
   out_log(LEVEL_INFO, "Module zeroconf unloaded\n");
@@ -298,7 +361,7 @@ static void doderegistration(void)
     avahi_entry_group_free(group);*/
 
   /* finally terminate the loop */
-/*  avahi_simple_poll_quit(simple_poll);*/
+  avahi_simple_poll_quit(simple_poll);
 }
 #endif
 #ifdef USE_HOWL
@@ -327,16 +390,18 @@ static void * routine (void * arg)
   int ret;
 
   /* this is a loop implementation ! */
-  avahi_simple_poll_loop(simple_poll);
+  ret = avahi_simple_poll_loop(simple_poll);
 
   if (ret < 0) {
     out_log(LEVEL_CRITICAL, "Avahi poll thread quit with error: %s\n", avahi_strerror(ret));
   } else {
-    out_log(LEVEL_CRITICAL, "Avahi poll thread quit.\n");
+    out_log(LEVEL_NORMAL, "Avahi poll thread quit.\n");
   }
 
+# ifndef ZEROCONF_USE_PROCESS
   /* clean things up */
   doderegistration();
+# endif
 #endif
 #ifdef USE_HOWL
   /* this is a loop implementation ! */
