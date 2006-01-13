@@ -91,6 +91,15 @@ int event_connect_external(wzd_event_manager_t * mgr, u32_t event_id, wzd_string
 
 int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_code, wzd_string_t * params, wzd_context_t * context);
 
+/** \brief Execute command
+ *
+ * If \a command begins with a !, the string is interpreted as a file name
+ * which is sent to the client. If \a command begins by a known protocol
+ * identifier (e.g perl:) then the corresponding handler is executed.
+ * In other cases, the corresponding shell command is executed.
+ */
+event_reply_t event_exec(const char * commandline, wzd_context_t * context);
+
 /** @} */
 
 #endif /* __WZD_EVENTS__ */

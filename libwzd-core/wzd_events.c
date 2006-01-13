@@ -84,7 +84,7 @@
 static void _event_free(wzd_event_t * event);
 static event_reply_t _event_print_file(const char *filename, wzd_context_t * context);
 
-static event_reply_t _event_exec(const char * commandline, wzd_context_t * context);
+static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t * context);
 
 void _cleanup_shell_command(char * buffer, size_t length);
 
@@ -149,7 +149,6 @@ int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_cod
   ListElmt * elmnt;
   wzd_event_t * event;
   int ret;
-  protocol_handler_t * proto;
   char fixed_args[4096];
   char buffer_args[4096];
   char * args;
@@ -211,26 +210,7 @@ int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_cod
       if (event->callback) {
         ret = (event->callback)(args);
       } else {
-        const char * command;
-
-        command = str_tochar(event->external_command);
-
-        /* if external_command begins with a ! , print the corresponding file */
-        if (command[0] == '!') {
-          ret = _event_print_file(command+1, context);
-        } else {
-          /* check for perl: like protocols */
-          proto = hook_check_protocol(command);
-
-          if (proto) {
-            ret = (*proto->handler)(command+proto->siglen,args);
-          } else {
-            /* call external command */
-            _cleanup_shell_command(fixed_args, sizeof(fixed_args));
-            out_log(LEVEL_INFO,"INFO calling external command [%s]\n",args);
-            ret = _event_exec(args,context);
-          }
-        }
+        ret = event_exec(args,context);
       }
       if (ret != EVENT_OK) return ret;
     }
@@ -247,6 +227,53 @@ static void _event_free(wzd_event_t * event)
   str_deallocate(event->external_command);
   str_deallocate(event->params);
   wzd_free(event);
+}
+
+event_reply_t event_exec(const char * commandline, wzd_context_t * context)
+{
+  int ret;
+  char * buffer;
+  protocol_handler_t * proto;
+
+  buffer = wzd_strdup(commandline);
+
+  if (buffer[0] == '!') { /* print the corresponding file */
+    ret = _event_print_file(buffer+1, context);
+  } else {
+    /* check for perl: like protocols */
+    proto = hook_check_protocol(buffer);
+
+    if (proto) {
+      char * command, * args;
+      /* skip signature */
+      command = buffer + proto->siglen;
+      /* split command and arguments */
+      if (command[0] == '"' || command[0] == '\'') {
+        args = strchr(command+1,command[0]);
+        if (!args) { /* unbalanced quotes */
+          wzd_free(buffer);
+          return EVENT_ERROR;
+        }
+        command++;
+        *args++ = '\0';
+        while (*args && (*args == ' ' || *args == '\t'))
+          args++;
+      } else {
+        command = strtok_r(command," \t",&args);
+      }
+      ret = (*proto->handler)(command,args);
+    } else {
+      /* call external command */
+      _cleanup_shell_command(buffer, strlen(buffer));
+      out_log(LEVEL_INFO,"INFO calling external command [%s]\n",buffer);
+      ret = _event_exec_shell(buffer,context);
+    }
+  }
+  
+
+  wzd_free(buffer);
+
+  return ret;
 }
 
 static event_reply_t _event_print_file(const char *filename, wzd_context_t * context)
@@ -290,7 +317,7 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
 }
 
 #ifndef WIN32
-static event_reply_t _event_exec(const char * commandline, wzd_context_t * context)
+static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t * context)
 {
 #if 0
   wzd_string_t * str, * commandname;
@@ -332,7 +359,7 @@ static event_reply_t _event_exec(const char * commandline, wzd_context_t * conte
 
 #else /* WIN32 */
 
-static event_reply_t _event_exec(const char * commandline, wzd_context_t * context)
+static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t * context)
 {
   FILE * file;
   char buffer[1024];
@@ -367,7 +394,7 @@ void _cleanup_shell_command(char * buffer, size_t length)
   size_t i,j;
   char * buf2;
 
-  buf2 = wzd_malloc(length);
+  buf2 = wzd_malloc(length+1);
 
   for (i=0,j=0; buffer[i]!='\0' && i<length && j<length; i++,j++) {
     if (strchr(specials,buffer[i]) != NULL) {

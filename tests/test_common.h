@@ -14,4 +14,6 @@ void fake_group(void);
 extern wzd_context_t * f_context;
 void fake_context(void);
 
+void fake_proto(void);
+
 void fake_exit(void);

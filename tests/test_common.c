@@ -4,6 +4,7 @@
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_libmain.h>
+#include <libwzd-core/wzd_mod.h>
 #include <libwzd-core/wzd_utf8.h>
 
 #include <libwzd-core/wzd_cache.h>
@@ -125,3 +126,14 @@ void fake_write_function(fd_t fd, const char * msg, size_t msg_len, unsigned int
 /*  printf("client out: [%s]\n",msg);*/
 }
 
+static int proto_handler(const char *command, const char * args)
+{
+  printf("proto out: [%s] [%s]\n",command,args);
+  return EVENT_NEXT;
+}
+
+void fake_proto(void)
+{
+  if (!mainConfig) fake_mainConfig();
+  hook_add_protocol("perl:",5,proto_handler);
+}

@@ -3,10 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- create a common function to execute commands (and remove redondant code in wzd_ClientThread.c and wzd_events.c)
-'********'
-- event seems to be sent several times when login fails !!
-'********'
 - add options to
     - disable TLS / OK
     - disable ident lookups / OK

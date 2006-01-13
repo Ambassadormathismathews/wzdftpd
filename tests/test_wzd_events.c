@@ -29,9 +29,33 @@ int main(int argc, char *argv[])
   wzd_event_manager_t * mgr;
   wzd_string_t * command_name;
   wzd_string_t * fixed_args, * event_args;
+  event_reply_t event_reply;
   unsigned long c2 = C2;
 
   fake_context();
+  fake_proto();
+
+  /******* event_exec **********/
+  /* test 1: printing a file */
+  event_reply = event_exec("!/etc/hosts", f_context);
+
+  /* test 2: running a simple command */
+  event_reply = event_exec("/bin/ls", f_context);
+
+  /* test 3: running a simple command with arguments */
+  event_reply = event_exec("/bin/ls -a /tmp", f_context);
+
+  /* test 4: testing a protocol */
+  event_reply = event_exec("perl:/tmp/test.pl", f_context);
+
+  /* test 5: testing a protocol with arguments*/
+  event_reply = event_exec("perl:/tmp/test.pl user group", f_context);
+
+  /* test 6: testing a protocol, special name */
+  event_reply = event_exec("perl:'/tmp 2/test.pl'", f_context);
+
+  /* test 7: testing a protocol, special name with args */
+  event_reply = event_exec("perl:'/tmp 2/test.pl' user group", f_context);
 
   mgr = malloc(sizeof(wzd_event_manager_t));
   event_mgr_init(mgr);
