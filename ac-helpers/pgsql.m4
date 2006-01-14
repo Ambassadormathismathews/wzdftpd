@@ -26,6 +26,15 @@ dnl   from the cache.
 
 AC_DEFUN([WZD_LIB_PGSQL],
 [
+  AC_ARG_ENABLE(pgsql, [  --disable-pgsql          disable pgsql support])
+
+  if eval "test x$enable_pgsql = xno"; then
+    WZD_PGSQL_INCLUDES=
+    WZD_PGSQL_LIBS=""
+    wzd_have_pgsql=no
+    ifelse([$2], , :, [$2])
+  else
+
   dnl  Process the 'with-psql' switch. We set the variable 'places' to
   dnl  either 'search', meaning we should check in a list of typical places,
   dnl  or to a single place spec.
@@ -153,6 +162,8 @@ AC_DEFUN([WZD_LIB_PGSQL],
       m4_ifval([$1])
     ;;
   esac
+
+  fi
   AC_SUBST(WZD_PGSQL_INCLUDES)
   AC_SUBST(WZD_PGSQL_LIBS)
 ])
