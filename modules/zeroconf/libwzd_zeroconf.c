@@ -38,6 +38,7 @@
 #include <libwzd-core/wzd_mod.h>
 #include <libwzd-core/wzd_string.h>
 
+#include <pthread.h>
 #include <libwzd-core/wzd_threads.h>
 
 #define ZEROCONF_USE_PROCESS
@@ -58,7 +59,9 @@ static int initialized = 0;
 static void sighandler(int sig)
 {
   out_log(LEVEL_FLOOD,"zeroconf: received signal %d\n",sig);
+#ifdef USE_AVAHI
   doderegistration();
+#endif
 }
 #endif
 
@@ -210,6 +213,9 @@ void WZD_MODULE_CLOSE(void)
 #else
 # ifdef USE_AVAHI
     avahi_simple_poll_quit(simple_poll);
+# endif
+# ifdef USE_HOWL
+    sw_discovery_fina(discovery);
 # endif
 #endif
 
