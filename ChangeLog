@@ -1,3 +1,7 @@
+2006-01-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: require pkg-config only when zeroconf support is enabled
+
 2006-01-14  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: add option to disable mysql or pgsql at configure time

@@ -44,13 +44,13 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 	AC_MSG_RESULT([$enable_howl])
 	AC_SUBST(enable_howl)
 	
-	dnl Find pkg-config
-	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-	if test "x$PKG_CONFIG" = "xno"; then
-					AC_MSG_ERROR([You need to install pkg-config])
-	fi
-	
 	if test "$with_zeroconf" = yes ; then
+		dnl Find pkg-config
+		AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+		if test "x$PKG_CONFIG" = "xno"; then
+					AC_MSG_ERROR([You need to install pkg-config])
+		fi
+	
 		if test "$enable_bonjour" = yes ; then
 			AC_MSG_CHECKING(checking whether to use Bonjour)
 			if test "x$enable_avahi" = "xyes" -o \
