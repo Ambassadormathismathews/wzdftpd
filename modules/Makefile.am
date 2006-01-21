@@ -12,9 +12,9 @@ if HAVE_ZEROCONF
   MAYBE_ZEROCONF = zeroconf
 endif
 
-SUBDIRS = sfv test $(MAYBE_PERL) $(MAYBE_TCL) $(MAYBE_ZEROCONF)
+SUBDIRS = debug sfv test $(MAYBE_PERL) $(MAYBE_TCL) $(MAYBE_ZEROCONF)
 
 # we need to include all subdirs in distribution, else the next
 # ./configure will fail because it won't be able to find
 # $SOMEDIR/Makefile.in
-DIST_SUBDIRS = sfv test perl tcl zeroconf
+DIST_SUBDIRS = debug sfv test perl tcl zeroconf

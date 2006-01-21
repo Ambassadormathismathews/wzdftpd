@@ -229,6 +229,7 @@ site_vfsdel = +O
 [modules]
 # modules are dynamic libraries
 # order *IS* important
+@e_datadir@/@PACKAGE@/modules/libwzd_debug.so = deny
 @e_datadir@/@PACKAGE@/modules/libwzd_test.so = deny
 @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
 @e_datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny

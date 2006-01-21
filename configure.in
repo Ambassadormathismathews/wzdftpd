@@ -305,6 +305,7 @@ AC_CONFIG_FILES([Makefile
 		 m4/Makefile
 		 man/Makefile
                  modules/Makefile
+                 modules/debug/Makefile
                  modules/perl/Makefile
                  modules/sfv/Makefile
                  modules/tcl/Makefile

@@ -1,3 +1,7 @@
+2006-01-21  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: added debug module
+
 2006-01-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: require pkg-config only when zeroconf support is enabled
