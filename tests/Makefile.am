@@ -10,6 +10,7 @@ test_programs = \
 	test_wzd_cookies \
 	test_wzd_crc32 \
 	test_wzd_crontab \
+	test_wzd_dir \
 	test_wzd_events \
 	test_wzd_ip \
 	test_wzd_ratio \
@@ -24,6 +25,7 @@ check_PROGRAMS = $(test_programs)
 TESTS = $(test_programs)
 
 test_wzd_cookies_SOURCES = test_wzd_cookies.c test_common.c
+test_wzd_dir_SOURCES = test_wzd_dir.c test_common.c
 test_wzd_events_SOURCES = test_wzd_events.c test_common.c
 test_wzd_ratio_SOURCES = test_wzd_ratio.c test_common.c
 test_wzd_string_SOURCES = test_wzd_string.c test_common.c

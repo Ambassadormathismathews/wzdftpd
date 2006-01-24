@@ -3,6 +3,10 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- write unit tests for dirs/files access
+- add function to recurse directories / vfs / ... and apply function, like
+  chmod
+'********'
 - add options to
     - disable TLS / OK
     - disable ident lookups / OK

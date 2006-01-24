@@ -396,7 +396,11 @@ char * path_getbasename(const char *file, const char *suffix)
 
   if (ptr == file)
   {
-    basename = strdup(file);
+    /* if file starts with '/', skip the '/' and return the name
+     * except if it is exactly '/', which we return unmodified
+     */
+    if (*ptr == '/' && *(ptr+1) != '\0') basename = strdup(file+1);
+    else basename = strdup(file);
   }
   else
   {
@@ -406,7 +410,17 @@ char * path_getbasename(const char *file, const char *suffix)
     basename[length] = '\0';
   }
 
-  /** \todo TODO if specified, remove suffix */
+  /* remove suffix if specified */
+  if (suffix && *suffix != '\0') {
+    size_t length_base, length_suffix;
+    length_base = strlen(basename);
+    length_suffix = strlen(suffix);
+    if (length_base >= length_suffix) {
+      if (strcmp(basename + length_base - length_suffix, suffix) == 0) {
+        *(basename + length_base - length_suffix) = '\0';
+      }
+    }
+  }
 
   return basename;
 }
@@ -436,7 +450,11 @@ char * path_gettrailingname(const char *file, unsigned int n)
 
   if (ptr == file)
   {
-    name = strdup(file);
+    /* if file starts with '/', skip the '/' and return the name
+     * except if it is exactly '/', which we return unmodified
+     */
+    if (*ptr == '/' && *(ptr+1) != '\0') name = strdup(file+1);
+    else name = strdup(file);
   }
   else
   {
@@ -463,6 +481,8 @@ char * path_gettrailingname(const char *file, unsigned int n)
 char * path_simplify(char *filename)
 {
   int pos, pos2;
+
+  if (!filename) return filename;
 
   pos = pos2 = 0;
 
@@ -499,7 +519,7 @@ char * path_simplify(char *filename)
     pos++;
   }
 
-  if (pos2 == '\0')
+  if (pos2 == 0)
   {
     filename[pos2] = '/';
     pos2++;
