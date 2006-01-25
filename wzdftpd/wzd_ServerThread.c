@@ -1701,7 +1701,8 @@ void serverMainThreadExit(int retcode)
   signal(SIGSEGV,SIG_DFL);
 #endif
 
-  wzd_mutex_unlock(server_mutex);
+  wzd_mutex_unlock(end_mutex);
+  wzd_mutex_destroy(end_mutex);
 
   exit (retcode);
 }

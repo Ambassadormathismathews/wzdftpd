@@ -160,6 +160,8 @@ void cfg_free(wzd_config_t * cfg)
 
   commands_fini(cfg->commands_list);
 
+  ip_list_free(cfg->login_pre_ip_checks);
+
   config_free(cfg->cfg_file);
 
   memset(cfg, 0, sizeof(wzd_config_t));
@@ -647,6 +649,7 @@ static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * conf
         } else {
           out_log(LEVEL_HIGH,"ERROR while adding event: %s\n",event_name);
         }
+        str_deallocate(command);
       }
     } else {
       out_log(LEVEL_HIGH,"ERROR incorrect syntax for event: %s\n",event_name);

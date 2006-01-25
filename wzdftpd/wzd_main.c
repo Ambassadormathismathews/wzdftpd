@@ -461,30 +461,8 @@ int main(int argc, char **argv)
   }
 
 
-  mainConfig = wzd_malloc(sizeof(wzd_config_t));
-
-#if DEBUG
-#if 0
-  /** \todo XXX this is a test ! */
-  cf = config_new();
-  ret = config_set_value(cf, "[GLOBAL]", "key", "value");
-  ret = config_load_from_file (cf, config->config_filename, CF_FILE_MERGE_MULTIPLE);
-  fprintf(stderr,"  config_filename(%p,%s,0) -> %d\n",
-      cf, config->config_filename,ret);
-  {
-    wzd_string_t * str;
-    str = config_to_data(cf, NULL);
-
-    if (str) printf("%s\n",str_tochar(str));
-    str_deallocate(str);
-  }
-  config_free(cf);
-  /** \todo XXX end of test ! */
-#endif /* 0 */
-#endif
-
+  mainConfig = config;
   setlib_mainConfig(mainConfig);
-  memcpy(mainConfig,config,sizeof(wzd_config_t));
 
 #ifndef WIN32
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
