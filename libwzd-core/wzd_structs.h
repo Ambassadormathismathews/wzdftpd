@@ -533,9 +533,6 @@ struct wzd_config_t {
   u32_t         pasv_high_range;
   unsigned char	pasv_ip[16];
   wzd_ip_list_t	*login_pre_ip_checks;
-  int		login_pre_ip_check;
-  wzd_ip_list_t	*login_pre_ip_allowed;
-  wzd_ip_list_t	*login_pre_ip_denied;
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;

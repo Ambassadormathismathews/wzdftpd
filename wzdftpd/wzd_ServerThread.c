@@ -403,8 +403,6 @@ static int check_ip_before_login(wzd_context_t * context)
     inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
   }
 
-  out_err(LEVEL_FLOOD,"check_ip_before_login: %s\n", inet_buf);
-
   /* check for all groups */
   gid_list = (gid_t*)backend_get_group(-2);
   if (gid_list) {
@@ -1537,10 +1535,6 @@ static void free_config(wzd_config_t * config)
 {
 /*  limiter_free(mainConfig->limiter_ul);
   limiter_free(mainConfig->limiter_dl);*/
-
-  ip_list_free(mainConfig->login_pre_ip_allowed);
-
-  ip_list_free(mainConfig->login_pre_ip_denied);
 
   if (mainConfig->xferlog_fd >= 0)
     xferlog_close(mainConfig->xferlog_fd);

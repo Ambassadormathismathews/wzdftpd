@@ -331,6 +331,19 @@ param = /path/to/users
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_check_ip_before_login'><term>check_ip_before_login (default:
+0)</term>
+<listitem>
+<para>Specify 1 here to check the ip address of a client at the connection
+level, before any message is sent. The address is searched in all groups and
+clients, and if not found, the connection is closed without any reply (the
+banner <programlisting>220 wzdftpd server ready.</programlisting> is not sent,
+for exemple).
+<screen>check_ip_before_login = 1</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_cscript'><term>cscript <emphasis>Deprecated since 0.6.0
 !</emphasis></term>
 <listitem>

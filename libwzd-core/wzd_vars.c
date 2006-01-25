@@ -76,10 +76,6 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     snprintf(data,datalength,"%lu",get_bandwidth(NULL,NULL));
     return 0;
   }
-  if (strcmp(varname,"login_pre_ip_check")==0) {
-    snprintf(data,datalength,"%d",config->login_pre_ip_check);
-    return 0;
-  }
   if (strcmp(varname,"loglevel")==0) {
     wzd_string_t * str;
 
