@@ -160,6 +160,7 @@ static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
 static void server_ip_free(void * p);
 
+static int check_ip_before_login(wzd_context_t * context);
 
 
 static void context_init(wzd_context_t * context)
@@ -380,6 +381,58 @@ int commit_backend(void)
   if (!mainConfig) return 1;
   backend_commit_changes(mainConfig->backend.name);
   return 0;
+}
+
+static int check_ip_before_login(wzd_context_t * context)
+{
+  char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
+  unsigned char * userip;
+  wzd_group_t * loop_group;
+  wzd_user_t * loop_user;
+  gid_t * gid_list;
+  uid_t * uid_list;
+  int i, ret;
+
+  userip = context->hostip;
+#if defined(IPV6_SUPPORT)
+  if (context->family == WZD_INET6) {
+    inet_ntop(AF_INET6,userip,inet_buf,INET6_ADDRSTRLEN);
+  } else
+#endif
+  {
+    inet_ntop(AF_INET,userip,inet_buf,INET_ADDRSTRLEN);
+  }
+
+  out_err(LEVEL_FLOOD,"check_ip_before_login: %s\n", inet_buf);
+
+  /* check for all groups */
+  gid_list = (gid_t*)backend_get_group(-2);
+  if (gid_list) {
+    for (i=0; gid_list[i] != (gid_t)-1; i++) {
+      loop_group = GetGroupByID(gid_list[i]);
+      if (loop_group) {
+        ret = group_ip_inlist(loop_group, inet_buf, context->ident);
+        if (ret) return 0; /* found ! */
+      }
+    }
+    wzd_free(gid_list);
+  }
+
+  /* check for all users */
+  uid_list = (uid_t*)backend_get_user(-2);
+  if (uid_list) {
+    for (i=0; uid_list[i] != (uid_t)-1; i++) {
+      loop_user = GetUserByID(uid_list[i]);
+      if (loop_user) {
+        ret = user_ip_inlist(loop_user, inet_buf, context->ident);
+        if (ret) return 0; /* found ! */
+      }
+    }
+    wzd_free(uid_list);
+  }
+
+
+  return 1;
 }
 
 /*
@@ -803,12 +856,26 @@ static void server_login_accept(wzd_context_t * context)
       out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
       /* mark context as free */
       context->magic = 0;
+      /** \todo FIXME context is NOT freed */
       return;
     }
     context->connection_flags |= CONNECTION_TLS;
   }
   context->ssl.data_mode = TLS_CLEAR;
 #endif
+
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_CHECKIP_LOGIN)) {
+    ret = check_ip_before_login(context);
+    if (ret) {
+      close(context->controlfd);
+      FD_UNREGISTER(context->controlfd,"Client socket");
+      out_log(LEVEL_NORMAL,"INFO rejected connection from %s\n",inet_buf);
+      /* mark context as free */
+      context->magic = 0;
+      /** \todo FIXME context is NOT freed */
+      return;
+    }
+  }
 
   /* start new thread */
 

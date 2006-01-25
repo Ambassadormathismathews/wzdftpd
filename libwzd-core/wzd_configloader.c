@@ -184,6 +184,15 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   cfg_init(cfg);
   cfg->cfg_file = file;
 
+  /* CHECK_IP_BEFORE_LOGIN */
+  str = config_get_string(file, "GLOBAL", "check_ip_before_login", NULL);
+  if (str) {
+    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
+      CFG_SET_OPTION(cfg,CFG_OPT_CHECKIP_LOGIN);
+    }
+    str_deallocate(str);
+  }
+
   /* DATA_BUFFER_LENGTH */
   str = config_get_string(file, "GLOBAL", "data_buffer_length", NULL);
   if (str) {

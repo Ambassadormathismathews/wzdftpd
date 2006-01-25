@@ -497,6 +497,7 @@ struct wzd_context_t {
 #define CFG_OPT_DISABLE_TLS                 0x00000100
 #define CFG_OPT_DISABLE_IDENT               0x00000200
 #define CFG_OPT_UTF8_CAPABLE                0x00001000
+#define CFG_OPT_CHECKIP_LOGIN               0x00010000
 
 
 #define CFG_CLR_OPTION(c,opt)   (c)->server_opts &= ~(opt)
