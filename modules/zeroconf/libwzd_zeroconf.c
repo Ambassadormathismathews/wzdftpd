@@ -62,6 +62,9 @@ static void sighandler(int sig)
 #ifdef USE_AVAHI
   doderegistration();
 #endif
+#ifdef USE_HOWL
+  sw_discovery_stop_run(discovery);
+#endif
 }
 #endif
 
