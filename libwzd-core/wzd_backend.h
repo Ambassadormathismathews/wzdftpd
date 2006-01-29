@@ -199,9 +199,13 @@ int backend_commit_changes(const char *backend);
 
 int backend_inuse(const char *backend);
 
+#ifndef STRINGIFY
+# define STRINGIFY(v) STRINGIFY1(v)
+# define STRINGIFY1(v) #v
+#endif
 
-#define BACKEND_NAME(n)    const char * wzd_backend_name = #n
-#define BACKEND_VERSION(v) const char * wzd_backend_version = #v
+#define BACKEND_NAME(n)    const char * wzd_backend_name = STRINGIFY(n)
+#define BACKEND_VERSION(v) const char * wzd_backend_version = STRINGIFY(v)
 
 
 /* wrappers to user list */

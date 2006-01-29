@@ -6,6 +6,7 @@ INCLUDES = -I$(top_srcdir) $(WZD_PERL_INCLUDES)
 lib_LTLIBRARIES = libwzd_debug.la
 
 libwzd_debug_la_SOURCES = libwzd_debug.c \
+	debug_backends.c debug_backends.h \
 	debug_commands.c debug_commands.h \
 	debug_modules.c debug_modules.h
 libwzd_debug_la_LIBADD = ../../libwzd-core/libwzd_core.la

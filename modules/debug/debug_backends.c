@@ -29,41 +29,26 @@
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_log.h>
+#include <libwzd-core/wzd_messages.h>
 
 #include <libwzd-core/wzd_mod.h>
 
 #include "debug_backends.h"
-#include "debug_commands.h"
-#include "debug_modules.h"
 
-typedef struct {
-  const char * name;
-  wzd_function_command_t fct;
-} dbg_command_name_t;
-
-int add_debug_commands(void)
+int do_site_listbackends(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
-  dbg_command_name_t commands[] = {
-    { "site_listbackends", do_site_listbackends },
-    { "site_listmodules", do_site_listmodules },
-    { NULL, NULL }
-  };
-  int i;
+  int ret;
+  char buffer[4096];
+  wzd_backend_def_t * backend;
 
-  for (i=0; commands[i].name != NULL; i++) {
-    if (commands_add(getlib_mainConfig()->commands_list,commands[i].name,commands[i].fct,NULL,TOK_CUSTOM)) {
-      out_log(LEVEL_HIGH,"ERROR while adding custom command: %s\n",commands[i].name)
-        ;
-      return -1;
-    }
+  backend = &getlib_mainConfig()->backend;
 
-    /* default permission XXX hardcoded */
-    if (commands_set_permission(getlib_mainConfig()->commands_list,commands[i].name, "+O")) {
-      out_log(LEVEL_HIGH,"ERROR setting default permission to custom command %s\n",commands[i].name);
-      /** \bug XXX remove command from   config->commands_list */
-      return -1;
-    }
-  }
+  send_message_raw("200-\r\n",context);
+
+  snprintf(buffer,sizeof(buffer)," %s version %s\n",backend->name,backend_get_version(backend));
+  ret = send_message_raw(buffer,context);
+
+  ret = send_message_raw("200 command ok\r\n",context);
 
   return 0;
 }
