@@ -145,7 +145,6 @@ typedef struct {
   char * file_group;
   char * file_groups;
   char * file_help;
-  char * file_rules;
   char * file_swho;
   char * file_user;
   char * file_users;

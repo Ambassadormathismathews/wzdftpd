@@ -60,6 +60,27 @@ Package=<4>
 
 ###############################################################################
 
+Project: "mod_debug"=.\modules\mod_debug\mod_debug.dsp - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd_auth
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libwzd_base
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name libwzd_core
+    End Project Dependency
+}}}
+
+###############################################################################
+
 Project: "mysql"=.\BACKENDS\mysql\mysql.dsp - Package Owner=<4>
 
 Package=<5>

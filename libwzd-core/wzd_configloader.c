@@ -148,7 +148,6 @@ void cfg_free(wzd_config_t * cfg)
   wzd_free(mainConfig->site_config.file_group);
   wzd_free(mainConfig->site_config.file_groups);
   wzd_free(mainConfig->site_config.file_help);
-  wzd_free(mainConfig->site_config.file_rules);
   wzd_free(mainConfig->site_config.file_swho);
   wzd_free(mainConfig->site_config.file_user);
   wzd_free(mainConfig->site_config.file_users);

@@ -24,7 +24,9 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_libmain.h>

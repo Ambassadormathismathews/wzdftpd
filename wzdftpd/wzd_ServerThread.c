@@ -1557,8 +1557,6 @@ static void free_config(wzd_config_t * config)
   mainConfig->site_config.file_groups = NULL;
   wzd_free(mainConfig->site_config.file_help);
   mainConfig->site_config.file_help = NULL;
-  wzd_free(mainConfig->site_config.file_rules);
-  mainConfig->site_config.file_rules = NULL;
   wzd_free(mainConfig->site_config.file_swho);
   mainConfig->site_config.file_swho = NULL;
   wzd_free(mainConfig->site_config.file_user);

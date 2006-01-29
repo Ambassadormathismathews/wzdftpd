@@ -24,7 +24,9 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
@@ -32,6 +34,10 @@
 #include <libwzd-core/wzd_mod.h>
 
 #include "debug_commands.h"
+
+/***********************/
+MODULE_NAME(debug);
+MODULE_VERSION(101);
 
 int WZD_MODULE_INIT(void)
 {
