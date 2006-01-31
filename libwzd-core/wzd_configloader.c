@@ -77,7 +77,6 @@ static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * con
 static void _cfg_parse_permissions(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * config);
-static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * config);
 static void _cfg_parse_vfs(const wzd_configfile_t * file, wzd_config_t * config);
 
 
@@ -143,16 +142,6 @@ void cfg_free(wzd_config_t * cfg)
   wzd_free(cfg->xferlog_name);
   wzd_free(cfg->logdir);
   wzd_free(cfg->backend.name);
-
-  wzd_free(mainConfig->site_config.file_ginfo);
-  wzd_free(mainConfig->site_config.file_group);
-  wzd_free(mainConfig->site_config.file_groups);
-  wzd_free(mainConfig->site_config.file_help);
-  wzd_free(mainConfig->site_config.file_swho);
-  wzd_free(mainConfig->site_config.file_user);
-  wzd_free(mainConfig->site_config.file_users);
-  wzd_free(mainConfig->site_config.file_vfs);
-  wzd_free(mainConfig->site_config.file_who);
 
   event_mgr_free(cfg->event_mgr);
   wzd_free(cfg->event_mgr);
@@ -480,8 +469,6 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   _cfg_parse_pre_ip(file, cfg);
 
-  _cfg_parse_sitefiles(file, cfg);
-
   _cfg_parse_messages(file, cfg);
   _cfg_parse_sections(file, cfg);
   _cfg_parse_vfs(file, cfg);
@@ -790,47 +777,6 @@ static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * co
   }
 
   str_deallocate_array(array);
-}
-
-static void _cfg_parse_sitefiles(const wzd_configfile_t * file, wzd_config_t * config)
-{
-  wzd_string_t * filename;
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_ginfo", NULL);
-  if (filename) { config->site_config.file_ginfo = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_group", NULL);
-  if (filename) { config->site_config.file_group = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_groups", NULL);
-  if (filename) { config->site_config.file_groups = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_help", NULL);
-  if (filename) { config->site_config.file_help = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_swho", NULL);
-  if (filename) { config->site_config.file_swho = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-  
-  filename = config_get_string(file, "GLOBAL", "sitefile_user", NULL);
-  if (filename) { config->site_config.file_user = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-
-  filename = config_get_string(file, "GLOBAL", "sitefile_users", NULL);
-  if (filename) { config->site_config.file_users = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-
-  filename = config_get_string(file, "GLOBAL", "sitefile_who", NULL);
-  if (filename) { config->site_config.file_who = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
-
-  filename = config_get_string(file, "GLOBAL", "sitefile_vfs", NULL);
-  if (filename) { config->site_config.file_vfs = wzd_strdup(str_tochar(filename)); }
-  str_deallocate(filename);
 }
 
 static void _cfg_parse_vfs(const wzd_configfile_t * file, wzd_config_t * config)

@@ -52,6 +52,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_configfile.h"
 #include "wzd_fs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -315,6 +316,7 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 
 int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
+  wzd_string_t * str;
   wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
@@ -332,14 +334,23 @@ int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
     return 0;
   }
 
+  str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_ginfo",NULL);
+  if (!str) {
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_ginfo does not exists");
+    return 0;
+  }
+
   /* TODO XXX FIXME gadmins can see ginfo only on their primary group ? */
-  do_site_print_file(mainConfig->site_config.file_ginfo,NULL,group,context);
+  do_site_print_file(str_tochar(str),NULL,group,context);
+
+  str_deallocate(str);
 
   return 0;
 }
 
 int do_site_gsinfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
+  wzd_string_t * str;
   wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
@@ -357,7 +368,15 @@ int do_site_gsinfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     return 0;
   }
 
-  do_site_print_file(mainConfig->site_config.file_group,NULL,group,context);
+  str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_group",NULL);
+  if (!str) {
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_group does not exists");
+    return 0;
+  }
+
+  do_site_print_file(str_tochar(str),NULL,group,context);
+
+  str_deallocate(str);
 
   return 0;
 }
@@ -857,8 +876,9 @@ int do_site_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
     do_site_grpkill( cmd, command_line, context );
   } else if(strcmp( "change", str_tochar(cmd)) == 0) {
     do_site_grpchange( cmd, command_line, context );
-  } else if(strcmp( "list", str_tochar(cmd)) == 0) {
-    do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);
+    /** \todo FIXME implement SITE GROUP LIST */
+/*  } else if(strcmp( "list", str_tochar(cmd)) == 0) {
+    do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);*/
   } else {
     ret = send_message_with_args(501,context,"site group action invalid");
   }

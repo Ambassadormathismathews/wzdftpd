@@ -287,13 +287,14 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
 
   fp = wzd_cache_open(filename,O_RDONLY,0644);
   if (!fp) {
-    send_message_raw("200-Inexistant file\r\n",context);
+    send_message_raw("200 Inexistant file\r\n",context);
     return EVENT_ERROR;
   }
   sz64 = wzd_cache_getsize(fp);
   if (sz64 > INT_MAX) {
     out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
     wzd_cache_close(fp);
+    send_message_raw("200 Internal error\r\n",context);
     return EVENT_ERROR;
   }
   filesize = (unsigned int)sz64;
@@ -303,11 +304,14 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
     out_log(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
     free(file_buffer);
     wzd_cache_close(fp);
+    send_message_raw("200 Internal error\r\n",context);
     return EVENT_ERROR;
   }
   file_buffer[filesize]='\0';
 
+  send_message_raw("200-\r\n",context);
   cookie_parse_buffer(file_buffer,user,group,context,NULL,0);
+  send_message_raw("200 Command OK\r\n",context);
 
   wzd_cache_close(fp);
 

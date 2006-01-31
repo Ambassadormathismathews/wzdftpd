@@ -1549,24 +1549,6 @@ static void free_config(wzd_config_t * config)
   wzd_free(mainConfig->pid_file);
   wzd_free(mainConfig->dir_message);
 
-  wzd_free(mainConfig->site_config.file_ginfo);
-  mainConfig->site_config.file_ginfo = NULL;
-  wzd_free(mainConfig->site_config.file_group);
-  mainConfig->site_config.file_group = NULL;
-  wzd_free(mainConfig->site_config.file_groups);
-  mainConfig->site_config.file_groups = NULL;
-  wzd_free(mainConfig->site_config.file_help);
-  mainConfig->site_config.file_help = NULL;
-  wzd_free(mainConfig->site_config.file_swho);
-  mainConfig->site_config.file_swho = NULL;
-  wzd_free(mainConfig->site_config.file_user);
-  mainConfig->site_config.file_user = NULL;
-  wzd_free(mainConfig->site_config.file_users);
-  mainConfig->site_config.file_users = NULL;
-  wzd_free(mainConfig->site_config.file_vfs);
-  mainConfig->site_config.file_vfs = NULL;
-  wzd_free(mainConfig->site_config.file_who);
-  mainConfig->site_config.file_who = NULL;
   wzd_free(mainConfig);
 }
 

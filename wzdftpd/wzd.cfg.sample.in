@@ -109,27 +109,10 @@ tls_certificate = @e_sysconfdir@/wzd.pem
 
 # /TLS
 
-##### CUSTOM SCRIPTS
-# Custom scripts (or binaries) to be executed before/after certain commands
-# order *IS* important
-#cscript = MKDIR /bin/df
-
-##### CUSTOM SITE COMMANDS
-# Here you can define external site commands.
-#site_cmd = my_free ./free.sh
-# this defines the SITE RULES command, which prints the following file
-site_cmd = rules !@e_sysconfdir@/file_rules.txt
-
 ##### SITE FILES
 sitefile_ginfo	= @e_sysconfdir@/file_ginfo.txt
 sitefile_group	= @e_sysconfdir@/file_group.txt
-sitefile_groups	= @e_sysconfdir@/file_groups.txt
-sitefile_help	= @e_sysconfdir@/file_help.txt
-sitefile_swho	= @e_sysconfdir@/file_swho.txt
 sitefile_user	= @e_sysconfdir@/file_user.txt
-sitefile_users	= @e_sysconfdir@/file_users.txt
-sitefile_who	= @e_sysconfdir@/file_who.txt
-sitefile_vfs	= @e_sysconfdir@/file_vfs.txt
 
 ##### INCLUSIONS
 # You can include other files
@@ -278,6 +261,13 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 #my_free = ./free.sh
 # this defines the SITE RULES command, which prints the following file
 site_rules = !@e_sysconfdir@/file_rules.txt
+
+site_groups = !@e_sysconfdir@/file_groups.txt
+site_help = !@e_sysconfdir@/file_help.txt
+site_swho = !@e_sysconfdir@/file_swho.txt
+site_users = !@e_sysconfdir@/file_users.txt
+site_vfsls = !@e_sysconfdir@/file_vfs.txt
+site_who = !@e_sysconfdir@/file_who.txt
 
 # first char is delimiter
 # format is e.g name = |/home/vfsroot|/physical/path|

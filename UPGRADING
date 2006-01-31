@@ -1,3 +1,10 @@
+0.7.0:
+
+Some commands were moved to the [custom_commands] section: site groups, help,
+swho, users, vfsls and who.
+Juste convert 'sitefile_groups = /path/to/file' (in [GLOBAL]) to
+'site_groups = !/path/to/file' (in [custom_commands]).
+
 0.6.0:
 
 The config file is changed, all directives must be put into sections. Until the

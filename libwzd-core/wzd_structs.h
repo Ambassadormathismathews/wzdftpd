@@ -138,20 +138,6 @@ typedef struct limiter
 
 /*********************** SITE *****************************/
 
-/** @brief names of files used by site commands
- */
-typedef struct {
-  char * file_ginfo;
-  char * file_group;
-  char * file_groups;
-  char * file_help;
-  char * file_swho;
-  char * file_user;
-  char * file_users;
-  char * file_vfs;
-  char * file_who;
-} wzd_site_config_t;
-
 /* opaque struct */
 typedef struct wzd_site_fct_t wzd_site_fct_t;
 
@@ -547,7 +533,6 @@ struct wzd_config_t {
 
   wzd_bw_limiter	global_ul_limiter;
   wzd_bw_limiter	global_dl_limiter;
-  wzd_site_config_t	site_config;
 
   struct _wzd_configfile_t * cfg_file;
 

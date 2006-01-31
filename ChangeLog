@@ -1,3 +1,7 @@
+2006-01-31  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: convert some commands from internal to standard file prints
+
 2006-01-25  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: option to check ip before sending banner

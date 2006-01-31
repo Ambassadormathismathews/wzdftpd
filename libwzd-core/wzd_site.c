@@ -69,6 +69,7 @@
 #include "wzd_vars.h"
 #include "wzd_vfs.h"
 #include "wzd_cache.h"
+#include "wzd_configfile.h"
 #include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_fs.h"
@@ -1477,6 +1478,7 @@ void do_site_user(const char *command_line, wzd_context_t * context)
   int ret;
   wzd_user_t user;
   int uid;
+  wzd_string_t * str;
 
   username = command_line;
   if (!username) {
@@ -1489,7 +1491,15 @@ void do_site_user(const char *command_line, wzd_context_t * context)
     return;
   }
 
-  do_site_print_file(mainConfig->site_config.file_user,&user,NULL,context);
+  str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_user",NULL);
+  if (!str) {
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_user does not exists");
+    return;
+  }
+
+  do_site_print_file(str_tochar(str),&user,NULL,context);
+
+  str_deallocate(str);
 }
 
 /********************* do_site_utime ***********************/
@@ -1834,17 +1844,6 @@ int do_site_version(wzd_string_t * ignored, wzd_string_t * command_line, wzd_con
   return 0;
 }
 
-/********************* do_site_vfsls ***********************/
-
-/* XXX : just send last vfs */
-
-int do_site_vfsls(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
-{
-  do_site_print_file(mainConfig->site_config.file_vfs,NULL,NULL,context);
-
-  return 0;
-}
-
 /********************* do_site_vfsadd **********************/
 /** vfsadd |/home/vfsroot|/physical/path| +O =user
  */
@@ -2127,41 +2126,15 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
     ret = send_message_with_args(250,context,"SITE: ","server is now closed");
     return 0;
   } else
-/******************* GINFO **********************/
-  if (strcmp(s_token,"site_groups")==0) {
-    do_site_print_file(mainConfig->site_config.file_groups,NULL,NULL,context);
-    return 0;
-  } else
-/******************* HELP ***********************/
-  if (strcmp(s_token,"site_help")==0) {
-    /* TODO check if there are arguments, and call specific help */
-    do_site_print_file(mainConfig->site_config.file_help,GetUserByID(context->userid),NULL,context);
-    return 0;
-  } else
 /******************** REOPEN ********************/
   if (strcmp(s_token,"site_reopen")==0) {
     mainConfig->site_closed = 0;
     ret = send_message_with_args(250,context,"SITE: ","server is now opened");
     return 0;
   } else
-/******************* SWHO ***********************/
-  if (strcmp(s_token,"site_swho")==0) {
-    do_site_print_file(mainConfig->site_config.file_swho,NULL,NULL,context);
-    return 0;
-  } else
 /******************* USER ***********************/
   if (strcmp(s_token,"site_user")==0) {
     do_site_user(str_tochar(command_line),context);
-    return 0;
-  } else
-/******************* USERS **********************/
-  if (strcmp(s_token,"site_users")==0) {
-    do_site_print_file(mainConfig->site_config.file_users,NULL,NULL,context);
-    return 0;
-  } else
-/******************* WHO ************************/
-  if (strcmp(s_token,"site_who")==0) {
-    do_site_print_file(mainConfig->site_config.file_who,NULL,NULL,context);
     return 0;
   } else
 /******************* UPTIME *********************/
