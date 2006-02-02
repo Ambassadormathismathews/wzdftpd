@@ -636,7 +636,7 @@ int waitaccept(wzd_context_t * context)
     }
   } while (!FD_ISSET(sock,&fds));
 
-  sock = socket_accept(context->pasvsock, remote_host, &remote_port, &context->family);
+  sock = socket_accept(context->pasvsock, remote_host, &remote_port, &context->datafamily);
   if (sock == (fd_t)-1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
