@@ -35,6 +35,7 @@
 #include <libwzd-base/hash.h>
 
 #include "wzd_structs.h"
+#include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_perm.h"
 #include "wzd_site.h"
@@ -127,52 +128,34 @@ int commands_add_external(CHTBL * _ctable,
   if (!_ctable) return -1;
   if (!name || !external_command) return -1;
 
+  /** \todo this should be done in an atomic way */
   if (chtbl_lookup(_ctable, name, (void**)&com) == 0) { /* already found, replace command */
-    free(com->name);
-    str_deallocate(com->external_command);
-
-    com->name = strdup(name);
-    ascii_lower(com->name,strlen(com->name));
-    com->id = TOK_CUSTOM;
-    com->external_command = str_dup(external_command);
-
-    com->command = NULL;
-    com->help_function = NULL;
-
-    if ((chtbl_change(_ctable, com->name, com)==0))
+    if ((chtbl_remove(_ctable, com->name)!=0))
     {
-      return 0;
+      out_err(LEVEL_CRITICAL,"ERROR Could not remove a previous command for %s\n",name);
+      return -1;
     }
-
-    str_deallocate(com->external_command);
-    free(com->name);
-    free(com);
-    return -1;
-  } else {
-    /* new entry */
-    com = malloc(sizeof(wzd_command_t));
-    com->name = strdup(name);
-    ascii_lower(com->name,strlen(com->name));
-    com->id = TOK_CUSTOM;
-    com->external_command = str_dup(external_command);
-
-    com->command = NULL;
-    com->help_function = NULL;
-
-    com->perms = NULL;
-
-    if ((chtbl_insert(_ctable, com->name, com, NULL, NULL, (void(*)(void*))_command_free))==0)
-    {
-      return 0;
-    }
-
-    str_deallocate(com->external_command);
-    free(com->name);
-    free(com);
-    return -1;
   }
 
-  return 0;
+  /* new entry */
+  com = malloc(sizeof(wzd_command_t));
+  com->name = strdup(name);
+  ascii_lower(com->name,strlen(com->name));
+  com->id = TOK_CUSTOM;
+  com->external_command = str_dup(external_command);
+
+  com->command = NULL;
+  com->help_function = NULL;
+
+  com->perms = NULL;
+
+  if ((chtbl_insert(_ctable, com->name, com, NULL, NULL, (void(*)(void*))_command_free))==0)
+    return 0;
+
+  str_deallocate(com->external_command);
+  free(com->name);
+  free(com);
+  return -1;
 }
 
 int commands_add_defaults(CHTBL * _ctable)
@@ -273,7 +256,6 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_sections",do_site_sections,NULL,TOK_SITE_SECTIONS)) return -1;
   if (commands_add(_ctable,"site_shutdown",do_site,NULL,TOK_SITE_SHUTDOWN)) return -1;
   if (commands_add(_ctable,"site_su",do_site_su,NULL,TOK_SITE_SU)) return -1;
-  if (commands_add(_ctable,"site_swho",do_site,NULL,TOK_SITE_SWHO)) return -1;
   if (commands_add(_ctable,"site_tagline",do_site_tagline,NULL,TOK_SITE_TAGLINE)) return -1;
   if (commands_add(_ctable,"site_take",do_site_take,NULL,TOK_SITE_TAKE)) return -1;
 #ifdef DEBUG
