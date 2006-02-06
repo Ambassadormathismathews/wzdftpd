@@ -18,7 +18,7 @@ filesystems, and thus go out of the chroot, or destroy your partitions !
 </para>
 <para>
 The real problem is to give root privileges to a process, not restricting
-these privileges. I personnaly believe that chroot is a bad solution to
+these privileges. I personally believe that chroot is a bad solution to
 the security problem, a better solution would be to ensure that the FTP
 server will <emphasis>never</emphasis> have root privileges.
 If you want real security, use strong methods like

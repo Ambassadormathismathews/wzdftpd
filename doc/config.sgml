@@ -65,7 +65,7 @@ don't give any ident as an implicit authorization for all idents).
 
 <para>Symbolic links are often used on linux and unix systems, so users of these
 systems should have no difficulty to use this.
-A symbolic link (symlink, in short) is a link between a non-existant directory (so-called
+A symbolic link (symlink, in short) is a link between a non-existent directory (so-called
 <emphasis>virtual</emphasis> directory) and an existing directory (so-called
 <emphasis>physical</emphasis> directory). This allows, for example, to create a directory
 whose contents are on another physical drive. This is similar to windows shortcuts.
@@ -94,7 +94,7 @@ enough to be be important, and symlinks are lighter than VFS.</para>
 <title>Virtual File system (VFS)</title>
 
 <para>wzdftpd offers the possibility to use virtual directories, also known as VFS.
-A VFS is a kind of link between a non-existant directory (so-called
+A VFS is a kind of link between a non-existent directory (so-called
 <emphasis>virtual</emphasis> directory) and an existing directory (so-called
 <emphasis>physical</emphasis> directory). This allows, for example, to create a directory
 whose contents are on another physical drive.
@@ -104,7 +104,7 @@ file.
 </para>
 <screen>vfs = |/home/pollux/vfs|/etc|</screen>
 <para>This will create a virtual directory 'vfs' in '/home/pollux', which will be
-abolutely equivalent to '/etc'.</para>
+absolutely equivalent to '/etc'.</para>
 
 <note><title>Change in 0.6.0</title>
 <para>vfs are defined in the "vfs" section, so the syntax is slightly changed:
@@ -122,7 +122,7 @@ vfs1 = |/home/pollux/vfs|/etc|
 Note this is only the ability to see and use VFS, and does not affect permissions on
 directories or files contained in VFS.</para>
 <screen>vfs = |/home/pollux/vfs|/etc| +O =admin</screen>
-<para>This will define the same VFS as precedently, restricted only to siteops (+O flag)
+<para>This will define the same VFS as previously, restricted only to siteops (+O flag)
 and members of the group 'admin' (=admin).</para>
 
 <para>It would be fastidious to define VFS for all users and groups, for example.
@@ -171,15 +171,15 @@ this point, foo will not be able to log in, mainly because it has no allowed ip
 <programlisting>site addip foo foobar@127.0.0.1</programlisting>
 if you want an ident check.</para>
 <para>The default ratio of foo is inherited from the group 'users', in this case
-we will suppose 1:3. If you want to change it you can use for exemple
+we will suppose 1:3. If you want to change it you can use for example
 <programlisting>site change foo ratio 0</programlisting></para>
 <para>The default homedir for foo is also inherited from group 'users', you can
-change it with for exemple:
+change it with for example:
 <programlisting>site change foo homedir /home/ftp</programlisting></para>
 <para>Please note that adding an authorized ip is also optional, as every ip
 authorized for the group is authorized for each group member.</para>
 
-<para>This short exemple should demonstrate how setting group values is important,
+<para>This short example should demonstrate how setting group values is important,
 as you can use group values when you create users.</para>
 
 </simplesect>
@@ -192,9 +192,9 @@ which supports several authentication methods, including: passwords,
 certificates, and third-party modules (like PAM).
 </para>
 
-<para>Each method is associated to a prefix, fox exemple: {SHA} for SHA-1
+<para>Each method is associated to a prefix, fox example: {SHA} for SHA-1
 encryption, {cert} for certificates, etc. The method is specified when changing
-a password by writing it just before the password. For exemple,
+a password by writing it just before the password. For example,
 <programlisting>site chpass username {SHA}newpass
 </programlisting>
 will change password for user <emphasis>username</emphasis>, set it to
@@ -211,7 +211,7 @@ password encrypted in <emphasis>crypt</emphasis> format.
 </para>
 
 <para>See <link linkend='authentication'>authentication chapter</link> for
-details on availables methods and implementation.
+details on available methods and implementation.
 </para>
 
 </simplesect>
@@ -247,7 +247,7 @@ otherwise):
 
 <para>Remember you can use cookies in your messages, but keep in mind
 that cookies are NOT always available (sometimes it just doesn't make
-sense). For exemple:
+sense). For example:
 <programlisting>230 = hello, %username.</programlisting>
 will actually work, whereas
 <programlisting>220 = wzd server for %username</programlisting>
@@ -338,7 +338,7 @@ param = /path/to/users
 level, before any message is sent. The address is searched in all groups and
 clients, and if not found, the connection is closed without any reply (the
 banner <programlisting>220 wzdftpd server ready.</programlisting> is not sent,
-for exemple).
+for example).
 <screen>check_ip_before_login = 1</screen>
 </para>
 </listitem>
@@ -367,7 +367,7 @@ event2 = SITE /path/to/event_site.sh
   <para>Change the size of the internal buffer used for data transfers.
   <screen>data_buffer_length = 65536</screen>
   </para>
-  <para><emphasis>Use this option carefully !</emphasis> This can havea big impact
+  <para><emphasis>Use this option carefully !</emphasis> This can have a big impact
   on transfer rates.
   </para>
  </listitem>
@@ -410,7 +410,7 @@ if present will append it to the end of the ftp reply.
 <varlistentry id='cfg_dynamicip'><term>dynamic_ip (default: 0)</term>
  <listitem>
  <para>If you specify 1 or an ip, the server will try to detect ip changes (e.g
- ADSL disconnections).
+ DSL disconnections).
  <screen>dynamic_ip = 1</screen>
  <screen>dynamic_ip = xxx.myftp.org</screen>
  </para>
@@ -431,7 +431,7 @@ if present will append it to the end of the ftp reply.
 <varlistentry id='cfg_ip'><term>ip (default: *) <emphasis>Deprecated since 0.6.0
 !</emphasis></term>
 <listitem>
-<para>Specify server ip, to restrict server to a specific interface (usefull
+<para>Specify server ip, to restrict server to a specific interface (useful
 mainly for server with multiples interfaces).
 <screen>ip = *</screen>
 <screen>ip = 127.0.0.1</screen>
@@ -574,8 +574,8 @@ The server will listen on all specified addresses and ports.
 
 <varlistentry id='cfg_reject_unknown_users'><term>reject_unknown_users (default: 1)</term>
 <listitem>
-<para>This options defines the behaviour of the server if the user is not accepted.
-The default (1) will immediatly reject user and close connection, while setting 0 will
+<para>This options defines the behavior of the server if the user is not accepted.
+The default (1) will immediately reject user and close connection, while setting 0 will
 cause the server to continue the login process (sending a password request) and reject
 user after.
 <screen>reject_unknown_users = 0</screen>
@@ -589,7 +589,7 @@ user names.
 <varlistentry id='cfg_server_gid'><term>server_gid (default: none)</term>
 <listitem>
 <para>Change the group ID of the server after binding port.
-This is usefull only if server is runned by root
+This is useful only if server is running as root
 <screen>server_gid = users</screen>
 </para>
 </listitem>
@@ -598,7 +598,7 @@ This is usefull only if server is runned by root
 <varlistentry id='cfg_server_uid'><term>server_uid (default: none)</term>
 <listitem>
 <para>[Linux] Server will drop privileges and change its uid to server_uid
-after binding port. This is usefull only if server is runned by root
+after binding port. This is useful only if server is runned by root
 <screen>server_uid = toto</screen>
 </para>
 <para><emphasis>IMPORTANT: under linux, you need privileges to bind to a system

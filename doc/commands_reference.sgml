@@ -52,7 +52,7 @@ You MUST add an ip after.
 you can shutdown or reload the server in a safe way</para></listitem>
 <listitem><para>init: loads a new backend.
 <emphasis>NO verifications are made - be sure of what you are doing !</emphasis></para></listitem>
-<listitem><para>reload: close and init a backend, <emphasis>without commiting it</emphasis>.
+<listitem><para>reload: close and init a backend, <emphasis>without committing it</emphasis>.
 This command allows you to modify backend and reload modifications.
 <emphasis>Modifications should be made carefully, especially if users are logged !
 </emphasis></para></listitem>
@@ -102,7 +102,7 @@ site change &lt;user&gt; &lt;field&gt; &lt;value&gt;
  (0 = Unlimited).</entry></row>
  <row><entry>max_dl</entry><entry>Same but for downloads.</entry></row>
  <row><entry>name</entry><entry>This will change the user's login name.
- <emphasis>The modification is immediate, even if user is currently loggued !</emphasis></entry></row>
+ <emphasis>The modification is immediate, even if user is currently logged !</emphasis></entry></row>
  <row><entry>num_logins</entry><entry>Maximum number of simultaneous logins.</entry></row>
  <row><entry>pass</entry><entry>This will change the user's password.
  This is similar to the <link linkend='site_chpass'>site chpass</link> command</entry></row>
@@ -282,7 +282,7 @@ site deluser &lt;user&gt;
 </term>
 <listitem>
 <para>
-Delete a user, may be readded with site READD
+Delete a user, may be re-added with site READD
 </para>
 <screen>site deluser toto</screen>
 <para>
@@ -396,7 +396,7 @@ site grpaddip &lt;group&gt; &lt;ip&gt;
 <para>Add IP to a group.
 <screen>site grpaddip idlers 127.*</screen>
 This will allow users from group <quote>idlers</quote> to connect from all ip
-beggining by <quote>127.</quote>
+beginning by <quote>127.</quote>
 </para>
 <para>To check ident when user is connecting, just add 'ident@' before the ip.
 </para>
@@ -415,7 +415,7 @@ site grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
 <row><entry>Field</entry><entry>Description</entry></row>
 
 <row><entry>name</entry><entry>This will change the group name.
-<emphasis>The modification is immediate, even if a user is currently loggued !</emphasis></entry></row>
+<emphasis>The modification is immediate, even if a user is currently logged !</emphasis></entry></row>
 <row><entry>tagline</entry><entry>Group's tagline.</entry></row>
 <row><entry>homedir</entry><entry>This will change the group's default homedir.</entry></row>
 <row><entry>max_idle</entry><entry>Set the maximum idle time for this
@@ -445,7 +445,7 @@ Delete a group
 <screen>site grpdel idlers</screen>
 <para>
 Unlike <link linkend='site_deluser'>site deluser</link>, the deletion is definitive
-(you can't readd deleted groups, so be carefull).
+(you can't re-add deleted groups, so be careful).
 </para>
 </listitem>
 </varlistentry>
@@ -531,7 +531,7 @@ site idle [&lt;idletime&gt;]
 <listitem>
 <para>
 This sets your idle-time (the amount of time you can be online without
-doing something) for this session only (unless commited to backend).
+doing something) for this session only (unless committed to backend).
 Max idle-time is 7200 sec.</para>
 <screen>site idle</screen>
 <para>This will show your current idle-time settings</para>
@@ -580,7 +580,7 @@ site link create &lt;dir&gt; &lt;linkname&gt;
 <para>Both paths are given relative to the current user homedir.</para>
 <para>NOTE: if the underlying filesystem supports symbolic
 links, they will be used, otherwise an abstraction layer is provided to have
-similar behaviour. Most unix filesystems support symbolic links.
+similar behavior. Most unix filesystems support symbolic links.
 </para>
 </listitem>
 </varlistentry>
@@ -647,7 +647,7 @@ site reopen
 </term>
 <listitem>
 <para>Re-open server for everyone.</para>
-<para>Usefull after server has been closed with the <link linkend='site_close'>site close</link> command</para>
+<para>Useful after server has been closed with the <link linkend='site_close'>site close</link> command</para>
 </listitem>
 </varlistentry>
 
@@ -665,7 +665,7 @@ site shutdown
 </term>
 <listitem>
 <para>
-Shutdown the server. Users that are currently loggued are not kicked, and your
+Shutdown the server. Users that are currently logged are not kicked, and your
 connection is not closed. You will need to start the server on the machine.
 </para>
 </listitem>
@@ -846,7 +846,7 @@ for the removed file.
 To remove a directory and all subdirectories recursively, you can
 specify the -r option.
 </para>
-<para><emphasis>Be carefull, this command is quite dangerous
+<para><emphasis>Be careful, this command is quite dangerous
 !</emphasis></para>
 </listitem>
 </varlistentry>

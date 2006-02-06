@@ -23,7 +23,7 @@ the program, followed by arguments given by user if needed.
 </para>
 
 <para>
-Exemple: with the previous definition of the 'rescan' command, the command
+Example: with the previous definition of the 'rescan' command, the command
 <programlisting>site rescan /dir
 </programlisting>
 run by user 'foo' will make the server run the following command:
@@ -77,7 +77,7 @@ You can use cookies in the arguments, they will be replaced as usual.
 
 <para>
 Please note that the return code of your command or program is important: a
-return code of 0 means the command is successfull, other codes are reserved for
+return code of 0 means the command is successful, other codes are reserved for
 errors.
 </para>
 <para>For example, if you return a code different from 0 for the POSTDOWNLOAD or

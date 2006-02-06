@@ -56,14 +56,14 @@ user database and permissions.
 <emphasis>Simple</emphasis> configuration file</para></listitem>
 <listitem><para>Online administration, using SITE commands</para></listitem>
 <listitem><para><link linkend='gloss_backend'>Backends</link> to store users/groups in different structures</para></listitem>
-<listitem><para>Modules: internal, using shared librairies, or external
+<listitem><para>Modules: internal, using shared libraries, or external
 (scripts/applications), and <link linkend='gloss_proto'>protocols</link></para></listitem>
 <listitem><para>Extensions scripts can be written in <link linkend='module_tcl'>TCL</link> or
 <link linkend='module_perl'>Perl</link></para></listitem>
-<listitem><para>Powerfull event system</para></listitem>
+<listitem><para>Powerful event system</para></listitem>
 <listitem><para>Job scheduler, also known as crontab</para></listitem>
 <listitem><para>Users are virtual: you do not need to create users in system</para></listitem>
-<listitem><para>Support for UTF-8: unicode filenames. wzdftpd is unicode
+<listitem><para>Support for UTF-8: Unicode filenames. wzdftpd is Unicode
 compliant, on all supported platforms</para></listitem>
 <listitem><para>Large files (> 2 GB) support, on all platforms</para></listitem>
 <listitem><para>SSL/TLS support, using either GnuTLS or OpenSSL</para></listitem>
@@ -75,7 +75,7 @@ security</para></listitem>
 passive ip accordingly</para></listitem>
 <listitem><para>Cross devices operations (copy/move) (though can be slow)</para></listitem>
 <listitem><para>Logging support (compatible with the wu-ftpd standard)</para></listitem>
-<listitem><para>Designed for high performances: coded with C, multithreaded</para></listitem>
+<listitem><para>Designed for high performances: coded with C, multi-threaded</para></listitem>
 </itemizedlist>
 
 </para>
@@ -102,7 +102,7 @@ url="http://www.gnu.org/software/flex/">Flex's official page</ulink>.
 The following packages are optional, depending on your configuration
 <itemizedlist>
 <listitem><para>Automake (&gt;= 1.5), Autoconf, Libtool</para>
-<para>Required only if you want to compile from cvs. CVS build assumes you have
+<para>Required only if you want to compile from svn. SVN build assumes you have
 basic knowledge of autotools. The following should run all autotools and
 configure packages for you:
 <programlisting>./bootstrap</programlisting>
@@ -183,9 +183,9 @@ After that, you have to:
 <screen>$PREFIX/sbin/wzdftpd -f $PREFIX/etc/wzdftpd/wzd.cfg</screen>
 </para></listitem>
 <listitem><para>login for the first time from LOCALHOST, user/pass: <ulink url="ftp://wzdftpd:wzdftpd@localhost">wzdftpd</ulink>
-and create users and groups using SITE commande (<link linkend='site_adduser'>
+and create users and groups using SITE command (<link linkend='site_adduser'>
 site adduser</link> and <link linkend='site_grpadd'>site grpadd</link>).
-See <link linkend='ex_add_user'>exemple of user creation</link>.
+See <link linkend='ex_add_user'>example of user creation</link>.
 </para></listitem>
 </itemizedlist>
 </para>

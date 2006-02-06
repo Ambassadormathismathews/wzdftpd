@@ -11,7 +11,7 @@
 
 <book>
 <bookinfo>
-  <title>wzdftpd: developper's guide</title>
+  <title>wzdftpd: developer's guide</title>
   <author><firstname>Pierre</firstname><surname>Chifflier</surname></author>
   <copyright><year>2005</year><holder>Pierre Chifflier</holder></copyright>
 </bookinfo>
@@ -58,7 +58,7 @@
 <para>To be done</para>
 </chapter>
 
-<chapter id='ipaddress'><title>IP adresses: IPv4 and IPv6</title>
+<chapter id='ipaddress'><title>IP addresses: IPv4 and IPv6</title>
 <para>Managing ip addresses, IPv6 support, etc.</para>
 <para>To be done</para>
 </chapter>

@@ -9,7 +9,7 @@
 <simplesect id='mod_sfv_desc'>
 <title>Description</title>
 <para>
-This module comes with some usefull functions to handle sfv files, and associated files (diz,
+This module comes with some useful functions to handle SFV files, and associated files (diz,
 zip, etc).
 </para>
 <para>
@@ -63,7 +63,7 @@ progression.</para></listitem>
 files has changed.
 </para></listitem>
 <listitem><screen>sfv_incomplete_indicator</screen>
-<para>This will be a simlink created to indicate that the release isn't complete.
+<para>This will be a symlink created to indicate that the release isn't complete.
 </para></listitem>
 <listitem><screen>sfv_other_completebar</screen>
 <para>This dir will be created when release is complete.
@@ -82,7 +82,7 @@ the SFV file, with '.missing' appended.
 </para></listitem>
 <listitem><para>
 If a SFV file is present, each file uploaded (and present in sfv) is checked,
-and marqued as bad if checksums doesn't match (.missing are removed).
+and marked as bad if checksums doesn't match (.missing are removed).
 </para></listitem>
 <listitem><para>
 A "progress bar" is maintained after each upload, to inform on the progression
@@ -94,7 +94,7 @@ A symbolic link is created to mark the upload as incomplete (and will be
 removed when complete).
 </para></listitem>
 <listitem><para>
-When a zip file is uploaded, it is checked, and marqued as bad if corrupted.
+When a zip file is uploaded, it is checked, and marked as bad if corrupted.
 </para></listitem>
 <listitem><para>
 When a diz file is uploaded, it is parsed, and the module tries to guess to number of files to be
@@ -168,7 +168,7 @@ use a TCL script with direct access to server internals
 </para>
 <para>
 TCL is provided as a module, keeping main server from adding
-many useless dependancies.
+many useless dependencies.
 </para>
 <para>
 Standard channels are redirected to internal functions in wzdftpd:
@@ -326,7 +326,7 @@ use a Perl script with direct access to server internals
 </para>
 <para>
 Perl is provided as a module, keeping main server from adding
-many useless dependancies.
+many useless dependencies.
 </para>
 <para>
 Warning and errors are logged in the file "perlerr.log", located in the directory specified in

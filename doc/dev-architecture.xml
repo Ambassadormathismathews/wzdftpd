@@ -54,15 +54,16 @@ users and groups management is delegated to a backend.</para></listitem>
   <title>Logical Modules</title>
 
 <para>
-  <!-- FIXME images does not work with pdf !! -->
+  <!-- FIXME mediaobject does not work with pdf !! -->
   <!--mediaobject>
-  <imageobject>
-    <imagedata fileref="images/archi.eps" format="EPS" />
-  </imageobject>
-  <imageobject>
-    <imagedata fileref="images/archi.png" format="PNG" />
-  </imageobject>
+    <imageobject>
+      <imagedata fileref="images/archi.png" format="PNG" />
+    </imageobject>
+    <imageobject>
+      <imagedata fileref="images/archi.eps" format="EPS" />
+    </imageobject>
   </mediaobject-->
+  <graphic srccredit="Pierre Chifflier, 2005" align="center" fileref="images/archi.png" />
 </para>
 <para>To be done</para>
 </section>

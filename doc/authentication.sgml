@@ -13,7 +13,7 @@ and/or radius and/or SASL).
 
 <para>
 This section explains which methods wzdftpd can use. The method is specified
-when changin a password, see <link linkend='site_chpass'>site chpass</link>
+when changing a password, see <link linkend='site_chpass'>site chpass</link>
 command and <link linkend='passwords'>"passwords" chapter</link> for details.
 </para>
 
@@ -41,7 +41,7 @@ Passwords stored in crypt format are limited to 8 characters.
 
 <para>
 Due to the limitations of the crypt format, and because it is a very common format on
-linux systems, wzdftpd also supports the MD5 format.
+Linux systems, wzdftpd also supports the MD5 format.
 </para>
 
 <para>
@@ -51,7 +51,7 @@ the encrypted password itself.
 </para>
 
 <para>
-The MD5 format is used in the "shadow" file, for exemple. So you can just copy and paste
+The MD5 format is used in the "shadow" file, for example. So you can just copy and paste
 the encrypted password and it will work.
 </para>
 
@@ -71,7 +71,7 @@ To use the SHA-1 format, the password is stored with the special prefix "{SHA}".
 </para>
 
 <para>
-Recently (feb and aug 2005), two attacks were published to find collisions in
+Recently (Feb and Aug 2005), two attacks were published to find collisions in
 SHA-1. This means that an attack is possible with a low complexity, compared to
 a brute force attack. However, this does not mean that this algorithm can be
 broken easily, only that finding a collision for SHA-1 is within reach of
@@ -112,7 +112,7 @@ the system.
 <title>SSL Certificates</title>
 
 <para>
-If the client is configurated to send a client certificate, the server can verify it
+If the client is configured to send a client certificate, the server can verify it
 (you have to add the certificate authority in the config file, or the certificates
 will be declared invalid).
 </para>

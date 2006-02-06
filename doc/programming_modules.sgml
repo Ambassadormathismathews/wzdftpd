@@ -6,7 +6,7 @@
 
 <para>This section describes how to create a new module in C. These modules
 have complete access to internals, and can completely modify the
-behaviour of the server. However, before trying to create such modules,
+behavior of the server. However, before trying to create such modules,
 please ensure you understand the <link linkend="modules_kernel_license">
 "License considerations"</link> at the end of this section, and that you agree
 with it.
@@ -92,7 +92,7 @@ That <emphasis>clearly</emphasis> means that you <emphasis>MUST</emphasis> distr
 your module under GPL, if you intend to distribute it (license covers distribution, and
 it means you must give source to people, or give them access, when you distribute them
 your module).</para>
-<para>This is an intentional behaviour, keep in mind that using wzdftpd you can benefit
+<para>This is an intentional behavior, keep in mind that using wzdftpd you can benefit
 from a big amount of functions, and that it has taken much time to do it. The only
 contribution that is asked in exchange is to make your work accessible, so others
 can benefit it.</para>
@@ -126,7 +126,7 @@ group variables.</para>
 <para>The following functions are provided as exported functions in the wzdftpd
 shared library, but all important modules (<link linkend="module_tcl">tcl</link>
 ,<link linkend="module_perl">perl</link>, etc.) will wrap them into the
-corresponding langages.
+corresponding languages.
 .
 </para>
 
@@ -142,7 +142,7 @@ The following variable names are available for vars get/set:</para>
 <tbody>
 <row><entry>Variable</entry><entry>Description</entry></row>
 
-<row><entry>bw</entry><entry>The current cumulated bandwith of the server
+<row><entry>bw</entry><entry>The current cumulated bandwidth of the server
 (downloads + uploads) (read-only)</entry></row>
 <row><entry>login_pre_ip_check</entry><entry>1 if server checks ip before login
 message, else 0</entry></row>

@@ -21,10 +21,10 @@ wzdftpd-devel</ulink> mailing list will assist you if you have questions.
 
   <simplesect><title id="howto_report_bugs">How to report bugs</title>
   <para>
-    First of all please try the latest CVS version of wzdftpd as your bug might
+    First of all please try the latest SVN version of wzdftpd as your bug might
 already be fixed there. Development moves extremely fast, most problems in
 official releases are reported within days or even hours, so please use
-CVS to report bugs.
+SVN to report bugs.
   </para>
   <para>
     Please do not send bug reports privately to individual developers. This is
@@ -63,7 +63,7 @@ wzdftpd tracker</ulink> to submit bugreports, requests, patches, etc.
   <para>
     You may need to include log, configuration or sample files in your bug
 report. If some of them are quite big then it is better to include a link
-to a url where the files are accessible to the developpers.
+to a url where the files are accessible to the developers.
   </para>
   </simplesect>
 

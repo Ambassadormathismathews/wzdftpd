@@ -17,10 +17,10 @@ since the object was allocated on another heap.
 <para>
   A solution would have been to add extra code on these systems to make shared
 libs use the same heap, but it would have been neither easy not portable.
-Additionaly, this would make creating new plugins quite hard and error-prompt.
+Additionally, this would make creating new plugins quite hard and error-prompt.
 </para>
 <para>
-  The solution we choosed is to add wrappers around standard memory allocation
+  The solution we choose is to add wrappers around standard memory allocation
 functions, like <literal>malloc</literal> or <literal>free</literal>. This has
 several benefits:
  <itemizedlist>

@@ -11,9 +11,9 @@ are encoded using unix <varname>crypt</varname> function).
 
 <para>
 You can edit the file <quote>users</quote>, either being offline or
-reloading backend (without commiting it !) after. You should pay attention
+reloading backend (without committing it !) after. You should pay attention
 to the fact that this file should be edited <emphasis>carefully</emphasis>,
-and will be overwritten next time backend is commited.
+and will be overwritten next time backend is committed.
 </para>
 
 <para>
@@ -71,14 +71,14 @@ libmysql is not detected (if you installed it in a non-standard place, you need 
 ./configure.
 </para></listitem>
 <listitem><para>In the source dir there is a dir called backends/mysql/ where all files regarding the MySQL
-backend. Pay attention to the two files with the extention .sql, these are instruction files for MySQL on
+backend. Pay attention to the two files with the extension .sql, these are instruction files for MySQL on
 how to create/delete a user, database and tables that wzdftpd will use.
 </para></listitem>
 <listitem><para>
 Let's look at tables.sql which is the file that creates all user/database/tables. If you don't have any
 experience with MySQL before you should look at <ulink
 url="http://www.mysql.com">http://www.mysql.com</ulink> and learn or google some up, but the SQL language
-is quite understandable. Im gonna go through the lines, what they do and what you "need" to change.
+is quite understandable. I'm gonna go through the lines, what they do and what you "need" to change.
 <programlisting>CREATE DATABASE IF NOT EXISTS wzdftpd;</programlisting>
 This creates a database with the name wzdftpd.
 <programlisting>GRANT ALL ON `wzdftpd`.* TO "wzdftpd"@"localhost" IDENTIFIED BY "wzdftpd";</programlisting>
@@ -145,7 +145,7 @@ They are related with a n:n relation, implemented using the
 </para>
 <para>
 Other tables are linked using 1:n relations to materialize the fact that one
-user or group can have several associated IP adresses. Users have
+user or group can have several associated IP addresses. Users have
 <emphasis>userip</emphasis>, groups have <emphasis>groupip</emphasis>.
 </para>
 <para>
@@ -223,7 +223,7 @@ They are related with a n:n relation, implemented using the
 </para>
 <para>
 Other tables are linked using 1:n relations to materialize the fact that one
-user or group can have several associated IP adresses. Users have
+user or group can have several associated IP addresses. Users have
 <emphasis>userip</emphasis>, groups have <emphasis>groupip</emphasis>.
 </para>
 <para>
