@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+/*
+ * test: 100% covered by Pierre Chifflier on Sat,  4 Feb 2006
+ */
+
 /** \file list.c
   * \brief Linked list implementation
   */
@@ -144,6 +148,7 @@ int list_remove(List *list, ListElmt *element, void **data)
   it = list->head;
   if (it == element) {
     /* head element suppressed */
+    *data = list->head->data;
     old_elmt = list->head;
     list->head = it->next;
 
