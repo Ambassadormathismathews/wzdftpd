@@ -4,6 +4,7 @@ INCLUDES = -I$(top_srcdir)
 LDADD = @DL_FLAGS@ ../libwzd-core/libwzd_core.la
 
 test_programs = \
+	test_list \
 	test_wzd_action \
 	test_wzd_cache \
 	test_wzd_configfile \
@@ -12,6 +13,7 @@ test_programs = \
 	test_wzd_crontab \
 	test_wzd_dir \
 	test_wzd_events \
+	test_wzd_fs \
 	test_wzd_ip \
 	test_wzd_ratio \
 	test_wzd_section \
