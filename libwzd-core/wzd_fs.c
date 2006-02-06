@@ -46,6 +46,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
@@ -81,12 +82,13 @@ struct fs_dir_t {
  *
  * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_mkdir(const char * pathname, unsigned long mode)
+int fs_mkdir(const char * pathname, unsigned long mode, int * err)
 {
   int ret;
 
 #ifndef WIN32
   ret = mkdir(pathname,mode);
+  if (err && (ret < 0)) *err = errno;
 #else
   {
     size_t sz;
@@ -105,6 +107,7 @@ int fs_mkdir(const char * pathname, unsigned long mode)
     if (ret <= 0) { free(dstname); return -1; }
 
     ret = _wmkdir(dstname);
+    if (err && (ret < 0)) *err = errno;
 
     free(dstname);
   }

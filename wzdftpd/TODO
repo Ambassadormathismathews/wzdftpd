@@ -3,6 +3,9 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- cleanup code:
+    - remove hook_call_custom() and related functions (wzd_mod.c)
+'********'
 - write unit tests for dirs/files access
 - add function to recurse directories / vfs / ... and apply function, like
   chmod

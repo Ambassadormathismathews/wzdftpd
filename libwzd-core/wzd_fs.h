@@ -44,8 +44,10 @@ struct fs_filestat_t {
 /** \brief Create a directory
  *
  * pathname should be UTF-8 encoded, or will be converted to unicode.
+ *
+ * \return -1 on error, and set \a err to errno
  */
-int fs_mkdir(const char * pathname, unsigned long mode);
+int fs_mkdir(const char * pathname, unsigned long mode, int * err);
 
 /** \brief Open a directory
  *
