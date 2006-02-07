@@ -208,6 +208,9 @@ int commands_add_defaults(CHTBL * _ctable)
 #endif
   if (commands_add(_ctable,"moda",do_moda,NULL,TOK_MODA)) return -1;
 
+#if defined(HAVE_KRB5)
+  if (commands_add(_ctable,"mic",do_mic,NULL,TOK_MIC)) return -1;
+#endif
 
   if (commands_add(_ctable,"site_addip",do_site_addip,NULL,TOK_SITE_ADDIP)) return -1;
   if (commands_add(_ctable,"site_adduser",do_site_adduser,NULL,TOK_SITE_ADDUSER)) return -1;

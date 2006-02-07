@@ -67,6 +67,7 @@ typedef enum {
   TOK_SSCN,
 
   TOK_ADAT,
+  TOK_MIC,
 
   TOK_SITE,
   TOK_FEAT,

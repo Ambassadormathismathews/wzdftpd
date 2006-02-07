@@ -178,7 +178,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
 
 int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out)
 {
-  OM_uint32 maj_stat, min_stat;
+  OM_uint32 maj_stat, min_stat, min_stat2;
   gss_buffer_desc input_token, output_token;
   gss_name_t client_name;
   gss_OID mechid;
@@ -209,7 +209,7 @@ int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t
                                      NULL, /* ignore time_rec */
                                      /*&delegated_cred_handle*/ NULL);
 
-  gss_release_buffer(&min_stat,&input_token);
+  gss_release_buffer(&min_stat2,&input_token);
 
   if (output_token.length != 0) {
     *ptr_out = calloc(output_token.length*4 + 1,1);
@@ -246,6 +246,91 @@ int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t
     return 1; /* we need more */
   }
   return -1;
+}
+
+int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out)
+{
+  int error;
+  OM_uint32 maj_stat, min_stat;
+  gss_buffer_desc tokbuf, outbuf;
+  OM_uint32 cflags;
+  gss_qop_t quality;
+
+  tokbuf.value = calloc(strlen(ptr_in),1);
+  if ((error = radix_encode((unsigned char*)ptr_in, tokbuf.value , (int *)&tokbuf.length, 1)) !=0  ) {
+    out_log(LEVEL_HIGH,"GSSAPI: could no decode MIC\n");
+    return -1;
+  }
+  outbuf.value = NULL;
+  outbuf.length = 0;
+
+  *ptr_out = NULL;
+
+  maj_stat = gss_unwrap (&min_stat,
+                         data->context_hdl,
+                         &tokbuf,
+                         &outbuf,
+                         &cflags,
+                         &quality);
+  if (maj_stat != GSS_S_COMPLETE) {
+    out_log(LEVEL_HIGH,"gss_unwrap error (%lx,%lx):\n",maj_stat,min_stat);
+    gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
+    return -1;
+  }
+
+  if (outbuf.length != 0) {
+    *ptr_out = strdup(outbuf.value);
+    *length_out = outbuf.length;
+
+    return 0;
+  }
+
+  return -1;
+}
+
+int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+{
+  int ret;
+  wzd_context_t * context = vcontext;
+
+  ret = clear_read(sock, msg, length, flags, timeout, vcontext);
+  if (ret < 0) return ret;
+
+  msg[ret] = '\0';
+
+  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_read %d = [%s]\n",ret,msg);
+  if (ret > 3 && strncasecmp(msg,"MIC ",4)==0) {
+    char * ptr_out = NULL;
+    size_t length_out;
+    int err;
+
+    chop(msg);
+
+    err = auth_gssapi_decode_mic(context->gssapi_data, msg+4, strlen(msg+4), &ptr_out, &length_out);
+
+    out_log(LEVEL_FLOOD,"DEBUG: decoded [%s]\n",ptr_out);
+
+    if (length_out >= length) {
+      out_log(LEVEL_CRITICAL,"FATAL: decoded MIC command is larger than base64\n");
+      free(ptr_out);
+      return -1;
+    }
+
+    strncpy(msg, ptr_out, length);
+    ret = length_out;
+  }
+
+  return ret;
+}
+
+int auth_gssapi_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+{
+  int ret;
+
+  ret = clear_write(sock, msg, length, flags, timeout, vcontext);
+  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_write %d = [%s]\n",ret,msg);
+
+  return ret;
 }
 
 int check_krb5(const char *user, const char *data)

@@ -92,6 +92,7 @@ int do_quit(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_pbsz(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+int do_mic(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_help(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
 int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);

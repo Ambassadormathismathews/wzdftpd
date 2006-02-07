@@ -35,6 +35,12 @@ int auth_gssapi_init(auth_gssapi_data_t * data);
 
 int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out);
 
+int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out);
+
+int auth_gssapi_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+
+int auth_gssapi_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+
 /* return 1 if user is validated */
 int check_krb5(const char *user, const char *data);
 

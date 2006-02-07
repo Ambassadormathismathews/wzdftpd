@@ -175,6 +175,7 @@ int identify_token(char *token)
       case STRTOINT('o','p','t','s'): return TOK_OPTS;
       case STRTOINT('m','o','d','a'): return TOK_MODA;
       case STRTOINT('a','d','a','t'): return TOK_ADAT;
+      case STRTOINT('m','i','c','\0'): return TOK_MIC;
 /*      default:
         return TOK_UNKNOWN;*/
     }
@@ -3443,10 +3444,9 @@ static int do_login_gssapi(wzd_context_t * context)
   char * base64data;
   int command;
   int ret;
-  auth_gssapi_data_t gssapi_data;
 
-  /** \todo initialize GSSAPI */
-  ret = auth_gssapi_init(&gssapi_data);
+  /** \todo initialize GSSAPI only once */
+  ret = auth_gssapi_init(&context->gssapi_data);
   if (ret) {
     ret = send_message_with_args(550,context,"GSSAPI","Initialisation failed");
     return 1;
@@ -3499,13 +3499,17 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 
           base64data = strtok_r(NULL," \t\r\n",&ptr);
           out_log(LEVEL_FLOOD,"DEBUG: received ADAT [%s]\n",base64data);
-          ret = auth_gssapi_accept_sec_context(gssapi_data, base64data, strlen(base64data), &ptr_out, &length_out);
+          ret = auth_gssapi_accept_sec_context(context->gssapi_data, base64data, strlen(base64data), &ptr_out, &length_out);
           switch (ret) {
             case 1:
               ret = send_message_with_args(334, context, "ADAT=", ptr_out);
               break;
             case 0:
               ret = send_message_with_args(235,context,"ADAT=", ptr_out);
+              /* authenticated, now switch read and write functions */
+              context->read_fct = auth_gssapi_read;
+              context->write_fct = auth_gssapi_write;
+              return 0;
               break;
             default:
               ret = send_message_with_args(535,context,"GSSAPI authentication failed");
@@ -3527,6 +3531,22 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
   } /* while (1) */
 
   return 1; /* error */
+}
+
+int do_mic(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  out_err(LEVEL_FLOOD,"DEBUG: received MIC [%s]\n",str_tochar(param));
+
+  return 0;
+}
+#else /* HAVE_KRB5 */
+int do_mic(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int ret;
+
+  ret = send_message_with_args(501,context,"Command not supported");
+
+  return 0;
 }
 #endif /* HAVE_KRB5 */
 
@@ -3680,7 +3700,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 #if defined (HAVE_KRB5)
       if (strcasecmp(token,"GSSAPI")==0) {
         ret = do_login_gssapi(context);
-        return ret;
+        /** \todo mark the user as already authenticated */
+        break;
+/*        return ret;*/
       }
 #endif
       if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {

@@ -465,6 +465,7 @@ struct wzd_context_t {
   wzd_ssl_t   	ssl;
   wzd_tls_t   	tls;
   tls_role_t    tls_role; /**< \brief TLS role: server or client */
+  struct _auth_gssapi_data_t * gssapi_data;
 };
 
 /********************** COMMANDS **************************/
