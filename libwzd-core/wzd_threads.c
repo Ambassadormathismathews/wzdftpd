@@ -131,8 +131,11 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
 #ifndef WIN32
   return pthread_join(thread->_t, thread_return);
 #else
-  /** \todo implement the windows part of the wzd_thread_join function */
-  out_log(LEVEL_CRITICAL, "Call to wzd_thread_join, NOT IMPLEMENTED\n");
-  return -1;
+  int ret;
+
+  ret = WaitForSingleObject(thread->_t, INFINITE);
+  CloseHandle(thread->_t);
+
+  return ret;
 #endif
 }

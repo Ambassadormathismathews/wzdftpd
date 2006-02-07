@@ -298,6 +298,7 @@ EXPORTS
 	wzd_thread_attr_init
 	wzd_thread_attr_set_detached
 	wzd_thread_create
+	wzd_thread_join
 	xferlog_close
 	xferlog_open
 	GetGroupByID
