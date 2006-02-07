@@ -92,7 +92,6 @@ struct event_entry_t event_tab[] = {
   { 0, NULL },
 };
 
-static int _hook_print_file(const char *filename, wzd_context_t *context);
 extern void _cleanup_shell_command(char * buffer, size_t length);
 
 static protocol_handler_t * proto_handler_list=NULL;
@@ -303,88 +302,6 @@ int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
   }
 
   return 1; /* not found */
-}
-
-/** hook_call_custom: custom site commands */
-int hook_call_custom(wzd_context_t * context, wzd_hook_t *hook, unsigned int code, char *args)
-{
-  char buffer[1024];
-  char buffer_args[1024];
-  FILE *command_output;
-  size_t l_command;
-  protocol_handler_t * proto;
-  char *real_command, *ptr, *first_args;
-
-  if (!hook || !hook->external_command) return 1;
-  l_command = strlen(hook->external_command);
-  if (l_command>=1022) return 1;
-
-  if (hook->external_command[0] == '!') { /* file */
-    return _hook_print_file(hook->external_command+1, GetMyContext());
-  }
-
-  /* do we have args specified in command ? */
-  (void)wzd_strncpy(buffer, hook->external_command, sizeof(buffer));
-  ptr = buffer;
-  real_command = read_token(buffer, &ptr);
-  if (!real_command) return 1;
-  first_args = strtok_r(NULL, "\r\n", &ptr);
-  if (first_args) {
-    if (args) {
-      size_t l;
-      /* add command line args to permanent args */
-      if (strlen(args) + strlen(hook->external_command) >= sizeof(buffer)+1) return 1;
-      /* insert space if not present */
-      l = strlen(first_args);
-      if (first_args[l-1] != ' ') {
-        first_args[l++] = ' ';
-        first_args[l++] = '\0';
-      }
-      (void)strlcat(first_args, args, sizeof(buffer));
-    }
-    args = first_args;
-  }
-
-  /* replace cookies in args */
-  {
-    wzd_context_t * context = GetMyContext();
-    wzd_user_t * user = GetUserByID(context->userid);
-    wzd_group_t * group = GetGroupByID(user->groups[0]);
-
-    cookie_parse_buffer(args, user, group, context, buffer_args, sizeof(buffer_args));
-  }
-/*  wzd_strncpy(buffer, hook->external_command, sizeof(buffer));*/
-  /* already done by read_token */
-  l_command = strlen(buffer);
-
-  while (l_command>0 && (buffer[l_command-1]=='\n' || buffer[l_command-1]=='\r'))
-    buffer[--l_command] = '\0';
-  _reply_code = code;
-  /* we can use protocol hooks here */
-  proto = hook_check_protocol(buffer);
-  if (proto)
-  {
-    return (*proto->handler)(buffer+proto->siglen,buffer_args);
-  }
-  else
-  {
-    *(buffer+l_command++) = ' ';
-    (void)wzd_strncpy(buffer + l_command, buffer_args, sizeof(buffer) - l_command - 1);
-    /* SECURITY filter buffer for shell special characters ! */
-    _cleanup_shell_command(buffer,sizeof(buffer));
-    if ( (command_output = popen(buffer,"r")) == NULL ) {
-      out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);
-      out_log(LEVEL_INFO,"Failed command: '%s'\n",buffer);
-      return 1;
-    }
-    while (fgets(buffer,1023,command_output) != NULL)
-    {
-      send_message_raw(buffer,context);
-    }
-    pclose(command_output);
-  }
-
-  return 0;
 }
 
 /** hook_call_external: events */
@@ -735,46 +652,4 @@ unsigned int hook_get_current_reply_code(void)
   return _reply_code;
 }
 
-
-/*************** STATIC ****************/
-
-static int _hook_print_file(const char *filename, wzd_context_t *context)
-{
-  wzd_cache_t * fp;
-  char * file_buffer;
-  unsigned int size, filesize;
-  u64_t sz64;
-  wzd_user_t * user = GetUserByID(context->userid);
-  wzd_group_t * group = GetGroupByID(user->groups[0]);
-
-  fp = wzd_cache_open(filename,O_RDONLY,0644);
-  if (!fp) {
-    send_message_raw("200-Inexistant file\r\n",context);
-    return -1;
-  }
-  sz64 = wzd_cache_getsize(fp);
-  if (sz64 > INT_MAX) {
-    out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
-	wzd_cache_close(fp);
-	return -1;
-  }
-  filesize = (unsigned int)sz64;
-  file_buffer = malloc(filesize+1);
-  if ( (size=(unsigned int)wzd_cache_read(fp,file_buffer,filesize))!=filesize )
-  {
-    out_log(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
-    free(file_buffer);
-    wzd_cache_close(fp);
-    return -1;
-  }
-  file_buffer[filesize]='\0';
-
-  cookie_parse_buffer(file_buffer,user,group,context,NULL,0);
-
-  wzd_cache_close(fp);
-
-  free(file_buffer);
-
-  return 0;
-}
 
