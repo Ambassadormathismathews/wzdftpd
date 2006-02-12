@@ -253,6 +253,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     str_deallocate(str);
   } else {
     out_err(LEVEL_CRITICAL,"No logfile found !\n");
+	cfg->cfg_file = NULL;
     cfg_free(cfg);
     return NULL;
   }
@@ -263,6 +264,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     i = str2loglevel(str_tochar(str));
     if( i==-1 ) {
       out_err(LEVEL_HIGH,"valid levels are lowest, flood, info, normal, high, critical\n");
+	  cfg->cfg_file = NULL;
       cfg_free(cfg);
       return NULL;
     }
@@ -344,6 +346,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     ul = strtoul(str_tochar(str),NULL,0);
     if (ul > 65535) {
       out_err(LEVEL_CRITICAL,"Invalid port number !\n");
+	  cfg->cfg_file = NULL;
       cfg_free(cfg);
       return NULL;
     }
