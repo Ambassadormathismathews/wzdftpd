@@ -651,7 +651,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
           goto continue_connection;
 #endif
           if (errno == EINPROGRESS) continue;
-          out_log(LEVEL_NORMAL,"error reading ident request %s\n",strerror(errno));
+          out_log(LEVEL_INFO,"error reading ident request %s\n",strerror(errno));
           FD_UNREGISTER(fd_ident,"Ident socket");
           socket_close(fd_ident);
           /* remove ident connection from list and continues with no ident */
@@ -720,7 +720,7 @@ continue_connection:
           goto continue_connection;
 #endif
           if (errno == EINPROGRESS) continue;
-          out_log(LEVEL_NORMAL,"error sending ident request %s\n",strerror(errno));
+          out_log(LEVEL_INFO,"error sending ident request %s\n",strerror(errno));
           socket_close(fd_ident);
           FD_UNREGISTER(fd_ident,"Ident socket");
           /* remove ident connection from list and continues with no ident */
@@ -790,7 +790,7 @@ static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
           if (ret != 1 /* global ip rejected */ &&
               ret != 2 /* too many connections */
              )
-            out_log(LEVEL_NORMAL,"could not add connection for connection: %d (errno: %d: %s) :%s:%d\n",
+            out_log(LEVEL_NORMAL,"could not add ident candidate for connection: %d (errno: %d: %s) :%s:%d\n",
                 ret, errno, strerror(errno), __FILE__, __LINE__);
           continue; /* possible cause of error: global ip rejected */
 /*          serverMainThreadExit(-1);*/
