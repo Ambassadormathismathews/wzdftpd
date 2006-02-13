@@ -1312,7 +1312,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       char unit_blocks, unit_free;
       int ret;
 
-      if (checkpath_new(".",dev_buffer,context)) {
+      if (context == NULL || checkpath_new(".",dev_buffer,context) != 0) {
         snprintf(internalbuffer,IBUFSIZE,"Could not get current path");
       } else {
         ret = get_device_info(dev_buffer,&l_type, &l_bsize, &l_blocks, &l_free);

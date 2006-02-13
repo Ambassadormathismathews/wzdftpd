@@ -598,6 +598,9 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   fs_filestat_t s;
   struct wzd_file_t * perm_list, * entry;
 
+  WZD_ASSERT(context != NULL);
+  if (context == NULL) return E_USER_IDONTEXIST;
+
   user = GetUserByID(context->userid);
 
   if (!user) return E_USER_IDONTEXIST;
