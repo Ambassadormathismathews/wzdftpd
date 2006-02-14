@@ -29,6 +29,7 @@ int test_cookies(const char * input, const char * reference, char * buffer, char
   return 0;
 }
 
+/* run this program inside a memory checker (like valgrind) */
 
 int main(int argc, char *argv[])
 {
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
   cookie_parse_buffer(NULL,NULL,NULL,NULL,NULL,0);
 
   /* do nothing test */
-  memset(buffer,'x',BUFLEN-2);
+  memset(buffer,'x',BUFLEN);
   buffer[BUFLEN-1] = '\0';
   cookie_parse_buffer(buffer,NULL,NULL,NULL,outbuf,BUFLEN);
 
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
   cookie_parse_buffer(buffer,NULL,NULL,NULL,outbuf,BUFLEN);
 
   fake_user();
+  fake_context();
 
   /* general tests */
   i = 0;
@@ -68,6 +70,37 @@ int main(int argc, char *argv[])
     }
     i++;
   }
+
+  /* spacefree with no user */
+  strncpy(buffer,"Space: %spacefree\n",BUFLEN);
+  cookie_parse_buffer(buffer,NULL,NULL,NULL,outbuf,BUFLEN);
+
+  /* spacefree with user */
+  strncpy(buffer,"Space: %spacefree\n",BUFLEN);
+  cookie_parse_buffer(buffer,f_user,NULL,f_context,outbuf,BUFLEN);
+printf("spacefree with user: [%s]\n",outbuf);
+
+  /* msg with no user */
+  strncpy(buffer,"msg: %msg\n",BUFLEN);
+  cookie_parse_buffer(buffer,NULL,NULL,NULL,outbuf,BUFLEN);
+
+  /* msg with user */
+  strncpy(buffer,"msg: %msg\n",BUFLEN);
+  cookie_parse_buffer(buffer,f_user,NULL,f_context,outbuf,BUFLEN);
+printf("msg with user: [%s]\n",outbuf);
+
+  /* usertotaldl2 with no user */
+  strncpy(buffer,"usertotal_dl2: %usertotal_dl2\n",BUFLEN);
+  cookie_parse_buffer(buffer,NULL,NULL,NULL,outbuf,BUFLEN);
+
+  /* usertotaldl2 with user */
+  strncpy(buffer,"%usertotal_dl2",BUFLEN);
+  cookie_parse_buffer(buffer,f_user,NULL,f_context,outbuf,BUFLEN);
+printf("usertotal_dl2 with user: [%s]\n",outbuf);
+
+
+
+  fake_exit();
 
   if (c1 != C1) {
     fprintf(stderr, "c1 nuked !\n");

@@ -51,6 +51,7 @@ void fake_user(void)
   strcpy(user->username,"test_user");
   user->uid = 666;
   strcpy(user->flags,"5"); /* 5 = color */
+  strcpy(user->rootpath, "/tmp");
 
   user->groups[0] = f_group->gid;
   user->group_num = 1;
@@ -93,6 +94,8 @@ void fake_context(void)
   context->userid = f_user->uid;
   context->write_fct = (write_fct_t)fake_write_function;
   context->thread_id = pthread_self();
+
+  strcpy(context->currentpath, "/");
 
   f_context = context;
 

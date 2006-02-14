@@ -601,12 +601,13 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   WZD_ASSERT(context != NULL);
   if (context == NULL) return E_USER_IDONTEXIST;
 
+  if (!wanted_path) return E_PARAM_NULL;
+
+  if (strlen(context->currentpath) == 0) return E_PARAM_INVALID;
+
   user = GetUserByID(context->userid);
 
   if (!user) return E_USER_IDONTEXIST;
-
-  if (!wanted_path) return E_PARAM_NULL;
-
   if (strlen(user->rootpath) + strlen(wanted_path) >= WZD_MAX_PATH) return E_PARAM_BIG;
 
   ftppath = malloc(WZD_MAX_PATH+1);

@@ -25,6 +25,9 @@ pasv_high_range  = 3000
 #pasv_ip = 62.xxx.xxx.xxx
 #pasv_ip = 134.xxx.xx.xx
 
+# uncomment this line to disable ident checks (default: check for ident)
+#disable_ident = 1
+
 # unix only: server will drop privileges to a user after binding port
 # you can specify a user login name
 # This will only be used if run by root !

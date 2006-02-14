@@ -34,7 +34,7 @@ commas, for ex <programlisting>key = value1,value2</programlisting>
 
 <para>wzdftpd gives the possibility to check user identity on connection.</para>
 <para>To permanently disable ident lookups for all users, set the <link
-linkend='cfg_disable_ident'>disable_ident</link> variable to 1 or 'yes'</para>
+linkend='cfg_disable_ident'>disable_ident</link> variable to 1 or 'allow'</para>
 
 <para>Wildcards are accepted</para>
 
