@@ -3,7 +3,32 @@
 
 
 AC_PREREQ(2.53)
-AC_INIT(wzdftpd, 0.6.0, pollux@wzdftpd.net)
+
+# Making releases on the stable branch:
+#   WZD_MICRO_VERSION += 1;
+#   WZD_INTERFACE_AGE += 1;
+#
+# unstable branch: increment micro, interface_age is always 0
+
+m4_define([wzd_major_version], [0])
+m4_define([wzd_minor_version], [7])
+m4_define([wzd_micro_version], [0])
+m4_define([wzd_real_version],
+          [wzd_major_version.wzd_minor_version.wzd_micro_version])
+m4_define([wzd_version], [wzd_real_version])
+m4_define([wzd_interface_age], [0])
+m4_define([wzd_binary_age],
+          [m4_eval(100 * wzd_minor_version + wzd_micro_version)])
+
+# For overriding the version string. Comment out if not needed.
+# m4_define([wzd_version], [0.7.0])
+
+m4_define([wzd_unstable],
+          m4_if(m4_eval(wzd_minor_version % 2), [1], [yes], [no]))
+m4_define([wzd_stable],
+          m4_if(m4_eval(wzd_minor_version % 2), [0], [yes], [no]))
+
+AC_INIT(wzdftpd, [wzd_version], pollux@wzdftpd.net)
 
 # having both commands will give warnings, but is necessary for BSD
 AC_CANONICAL_TARGET
@@ -14,6 +39,16 @@ AM_CONFIG_HEADER([config.h])
 
 
 AM_MAINTAINER_MODE
+
+
+# libtool versioning
+m4_define([lt_current], [m4_eval(100 * wzd_minor_version + wzd_micro_version - wzd_interface_age)])
+m4_define([lt_revision], [wzd_interface_age])
+m4_define([lt_age], [m4_eval(wzd_binary_age - wzd_interface_age)])
+LT_VERSION_INFO="lt_current:lt_revision:lt_age"
+LT_CURRENT_MINUS_AGE=m4_eval(lt_current - lt_age)
+AC_SUBST(LT_VERSION_INFO)
+AC_SUBST(LT_CURRENT_MINUS_AGE)
 
 # Checks for programs.
 #CFLAGS=""
