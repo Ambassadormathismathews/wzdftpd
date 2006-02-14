@@ -474,18 +474,20 @@ int main(int argc, char **argv)
       log_set_syslog(i,1);
   }
 #endif
-  ret = log_open(mainConfig->logfilename,mainConfig->logfilemode);
-  if (ret < 0) {
-    /* stderr is not closed here, even in release mode */
-    fprintf(stderr,"FATAL: Could not open log file %s\n",mainConfig->logfilename);
-    return 1;
-  }
-  /** \todo this should be removed (as well as log_get() function) and replace
-   * with a proper init code
-   */
-  for (i=0; i<MAX_LOG_CHANNELS; i++) {
-    if (log_get(i) == -1)
-      log_set(i,ret);
+  if (mainConfig->logfilename != NULL) {
+    ret = log_open(mainConfig->logfilename,mainConfig->logfilemode);
+    if (ret < 0) {
+      /* stderr is not closed here, even in release mode */
+      fprintf(stderr,"FATAL: Could not open log file %s\n",mainConfig->logfilename);
+      return 1;
+    }
+    /** \todo this should be removed (as well as log_get() function) and replace
+     * with a proper init code
+     */
+    for (i=0; i<MAX_LOG_CHANNELS; i++) {
+      if (log_get(i) == -1)
+        log_set(i,ret);
+    }
   }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)

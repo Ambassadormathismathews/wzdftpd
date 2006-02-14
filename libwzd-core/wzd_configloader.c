@@ -251,11 +251,6 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   if (str) {
     cfg->logfilename = strdup(str_tochar(str));
     str_deallocate(str);
-  } else {
-    out_err(LEVEL_CRITICAL,"No logfile found !\n");
-	cfg->cfg_file = NULL;
-    cfg_free(cfg);
-    return NULL;
   }
 
   /* LOGLEVEL */
@@ -264,7 +259,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     i = str2loglevel(str_tochar(str));
     if( i==-1 ) {
       out_err(LEVEL_HIGH,"valid levels are lowest, flood, info, normal, high, critical\n");
-	  cfg->cfg_file = NULL;
+      cfg->cfg_file = NULL;
       cfg_free(cfg);
       return NULL;
     }
@@ -346,7 +341,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     ul = strtoul(str_tochar(str),NULL,0);
     if (ul > 65535) {
       out_err(LEVEL_CRITICAL,"Invalid port number !\n");
-	  cfg->cfg_file = NULL;
+      cfg->cfg_file = NULL;
       cfg_free(cfg);
       return NULL;
     }
@@ -495,7 +490,7 @@ static void _cfg_parse_pre_ip(const wzd_configfile_t * file, wzd_config_t * conf
   int i, value;
   int err;
   char * address, * check;
-  
+
   array = config_get_keys(file,"pre_ip_check",&err);
   if (!array) return;
 
@@ -531,7 +526,7 @@ static void _cfg_parse_crontab(const wzd_configfile_t * file, wzd_config_t * con
   char * cron_name;
   wzd_string_t * cron_value;
   wzd_string_t * min, * hour, * day, * month, * day_of_week;
-  
+
   array = config_get_keys(file,"cron",&err);
   if (!array) return;
 
@@ -574,7 +569,7 @@ static void _cfg_parse_custom_commands(const wzd_configfile_t * file, wzd_config
   int err;
   char * command_name;
   wzd_string_t * value;
-  
+
   array = config_get_keys(file,"custom_commands",&err);
   if (!array) return;
 
@@ -616,7 +611,7 @@ static void _cfg_parse_events(const wzd_configfile_t * file, wzd_config_t * conf
   char * event_name;
   wzd_string_t * event, * value;
   unsigned long eventmask;
-  
+
   array = config_get_keys(file,"events",&err);
   if (!array) return;
 
@@ -660,7 +655,7 @@ static void _cfg_parse_messages(const wzd_configfile_t * file, wzd_config_t * co
   wzd_string_t * value;
   char * message;
   unsigned long ul;
-  
+
   array = config_get_keys(file,"messages",&err);
   if (!array) return;
 
@@ -691,7 +686,7 @@ static void _cfg_parse_modules(const wzd_configfile_t * file, wzd_config_t * con
   int err;
   char * module_name;
   wzd_string_t * permission;
-  
+
   array = config_get_keys(file,"modules",&err);
   if (!array) return;
 
@@ -728,7 +723,7 @@ static void _cfg_parse_permissions(const wzd_configfile_t * file, wzd_config_t *
   int err;
   char * permission_name;
   wzd_string_t * permission;
-  
+
   array = config_get_keys(file,"perms",&err);
   if (!array) return;
 
@@ -757,7 +752,7 @@ static void _cfg_parse_sections(const wzd_configfile_t * file, wzd_config_t * co
   int err;
   char * section_name;
   wzd_string_t * section, * section_mask;
-  
+
   array = config_get_keys(file,"sections",&err);
   if (!array) return;
 
@@ -790,7 +785,7 @@ static void _cfg_parse_vfs(const wzd_configfile_t * file, wzd_config_t * config)
   char * key_name;
   wzd_string_t * value, * physical_path, * virtual_path, * permissions;
   char delimiter[2];
-  
+
   array = config_get_keys(file,"vfs",&err);
   if (!array) return;
 
