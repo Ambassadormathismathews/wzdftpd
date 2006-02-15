@@ -92,50 +92,6 @@ struct wzd_backend_t {
 #define	_GROUP_GID		1<<10
 #define _GROUP_ALL	0xffffffff
 
-/* int FCN_INIT(const char *arg) */
-#define	FCN_INIT		wzd_init
-#define	STR_INIT		"wzd_init"
-
-/* int FCN_FINI(void) */
-#define	FCN_FINI		wzd_fini
-#define	STR_FINI		"wzd_fini"
-
-/* uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user) */
-#define	FCN_VALIDATE_LOGIN	wzd_validate_login
-#define	STR_VALIDATE_LOGIN	"wzd_validate_login"
-
-/* uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user) */
-#define	FCN_VALIDATE_PASS	wzd_validate_pass
-#define	STR_VALIDATE_PASS	"wzd_validate_pass"
-
-/* wzd_user_t * FCN_GET_USER(uid_t uid) */
-#define	FCN_GET_USER		wzd_get_user
-#define	STR_GET_USER	 	"wzd_get_user"
-
-/* wzd_group_t * FCN_GET_GROUP(gid_t gid) */
-#define	FCN_GET_GROUP		wzd_get_group
-#define	STR_GET_GROUP	 	"wzd_get_group"
-
-/* uid_t FCN_FIND_USER(const char *name, wzd_user_t * user) */
-#define	FCN_FIND_USER		wzd_find_user
-#define	STR_FIND_USER	 	"wzd_find_user"
-
-/* gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group) */
-#define	FCN_FIND_GROUP		wzd_find_group
-#define	STR_FIND_GROUP	 	"wzd_find_group"
-
-/* int FCN_MOD_USER(const char *name, wzd_user_t * user) */
-#define	FCN_MOD_USER		wzd_mod_user
-#define	STR_MOD_USER	 	"wzd_mod_user"
-
-/* int FCN_MOD_GROUP(int num, wzd_group_t * group) */
-#define	FCN_MOD_GROUP		wzd_mod_group
-#define	STR_MOD_GROUP	 	"wzd_mod_group"
-
-/* int FCN_COMMIT_CHANGES(void) */
-#define	FCN_COMMIT_CHANGES	wzd_commit_changes
-#define	STR_COMMIT_CHANGES	"wzd_commit_changes"
-
 
 char *backend_get_version(wzd_backend_def_t *backend);
 char *backend_get_name(wzd_backend_def_t *backend);
