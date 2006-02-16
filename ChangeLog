@@ -1,3 +1,7 @@
+2006-02-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: make vfs case insensitive on windows
+
 2006-02-14  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: log file is now optional

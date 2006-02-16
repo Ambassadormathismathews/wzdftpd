@@ -71,7 +71,7 @@ int vfs_remove( wzd_vfs_t **vfs_list, const char *vpath )
   {
     next_vfs = current_vfs->next_vfs;
 
-    if ( (strcmp( current_vfs->virtual_dir, vpath) == 0) )
+    if ( (DIRCMP( current_vfs->virtual_dir, vpath) == 0) )
     {
       if (current_vfs == *vfs_list)
       {
@@ -129,7 +129,7 @@ int vfs_add_restricted(wzd_vfs_t ** vfs_list, const char *vpath, const char *pat
   current_vfs = *vfs_list;
   while (current_vfs)
   {
-    if( (strcmp(vpath, current_vfs->virtual_dir)==0) )
+    if( (DIRCMP(vpath, current_vfs->virtual_dir)==0) )
     {
       /* virtual path already set */
       return 2;
@@ -258,7 +258,7 @@ int vfs_replace(wzd_vfs_t *vfs_list, char *buffer, unsigned int maxlen, wzd_cont
     if (DIRNCMP(buffer_vfs,buffer,strlen(buffer_vfs))==0
         &&
         (buffer[strlen(buffer_vfs)] == '/' || /* without this test, vfs will always match before vfs1 */
-      strcmp(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
+         DIRCMP(buffer_vfs,buffer)==0) ) /* without this test, 'cd vfs' will not match */
     {
       char buf[2*WZD_MAX_PATH];
       /* test perm */
@@ -743,7 +743,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
             ptr = buffer_vfs + strlen(syspath);
             /* bingo, vfs */
             /* we overwrite syspath ! */
-            if ( strchr(ptr,'/')==NULL && !strcmp(lpart,ptr) ) { /* not a subdir and same name */
+            if ( strchr(ptr,'/')==NULL && !DIRCMP(lpart,ptr) ) { /* not a subdir and same name */
               strncpy(syspath, vfs->physical_dir, WZD_MAX_PATH);
               sys_offset = strlen(syspath);
               ret = 0;
