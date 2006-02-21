@@ -94,7 +94,7 @@ libwzd_core_la_SOURCES = \
 nodist_libwzd_core_la_SOURCES = wzd_cookie_lex.l
 
 libwzd_core_la_LIBADD = ../libwzd-base/libwzd_base.la ../libwzd-auth/libwzd_auth.la
-libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info $(LT_VERSION_INFO) -module -no-undefined
+libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info $(LT_VERSION_INFO) -export-dynamic -no-undefined
 
 AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
