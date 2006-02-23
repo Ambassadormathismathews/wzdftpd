@@ -414,7 +414,7 @@ char *stripdir(char * dir, char *buf, int maxlen)
     {
       if (ldots == 1 || ldots == 2) {
         if (!*in) {
-          if (out-ldots<=dir || *(out-ldots-1) != '/')
+          if (out-ldots<=dir || *(out-ldots-1) != '/') /** \bug XXX FIXME pointers out and dir are NOT in the same buffers */
             ldots = 0;
         }
         while (ldots > 0 && --out > buf)
@@ -539,7 +539,8 @@ printf("Converted to: '%s'\n",path);
   if (path[strlen(cmd)-1] != '/')
     strcat(cmd,"/");
   /* check if user is allowed to even see the path */
-  if (strncmp(cmd,allowed,strlen(allowed))) return 1;
+  /* \bug this breaks the SFV module on VFS ! */
+  /* if (strncmp(cmd,allowed,strlen(allowed))) return 1; */
   /* in the case of VFS, we need to convert here to a realpath */
   vfs_replace(mainConfig->vfs,path,WZD_MAX_PATH,context);
   if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';

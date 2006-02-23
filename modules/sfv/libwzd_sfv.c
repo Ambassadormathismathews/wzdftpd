@@ -93,6 +93,8 @@ static event_reply_t sfv_event_preupload(const char * args);
 int sfv_hook_preupload(unsigned long event_id, const char * username, const char *filename);
 static event_reply_t sfv_event_postupload(const char * args);
 int sfv_hook_postupload(unsigned long event_id, const char * username, const char *filename);
+static event_reply_t sfv_event_rmdir(const char * args);
+int sfv_hook_rmdir(unsigned long event_id, const char * username, const char *filename);
 
 /* get params from server */
 static int get_all_params(void)
@@ -1425,6 +1427,36 @@ static int do_site_sfv(wzd_string_t *commandname, wzd_string_t *param, wzd_conte
   return ret;
 }
 
+/********************* sfv_remove_incomplete_indicator*************************/
+/* removes the incomplete bar (if exists)  when directory is deleted before upload completed
+ */
+ 
+int sfv_remove_incomplete_indicator(const char *dirname, wzd_context_t *context)
+{
+  char *dirname_ptr;
+  const char *incomplete;
+  char dir[WZD_MAX_PATH+1];
+  char buffer[2048];
+
+  if (get_all_params()) return -1;
+  strncpy(dir,dirname,WZD_MAX_PATH);
+
+  if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
+
+  dirname_ptr = strrchr(dir,'/')+1;
+
+  if (dirname_ptr) { 
+    incomplete = c_incomplete(incomplete_indicator,dirname_ptr);
+    if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
+    strcat(dir,incomplete);
+    if (!checkabspath(dir,buffer,context)) remove(buffer);
+  }
+
+  return 0;
+}
+
+
+
 
 /***** EVENT HOOKS *****/
 static event_reply_t sfv_event_preupload(const char * args)
@@ -1544,6 +1576,33 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
   return ret;
 }
 
+static event_reply_t sfv_event_rmdir(const char * args)
+{
+  int ret;
+  const char * username, * dirname;
+  char * str = strdup(args), * ptr;
+
+  username = strtok_r(str," ",&ptr);
+  dirname = ptr;
+
+  ret = sfv_hook_rmdir(EVENT_RMDIR, username, dirname);
+
+  free(str);
+
+  return EVENT_OK;
+}
+
+int sfv_hook_rmdir(unsigned long event_id, const char * username, const char *dirname)
+{
+  wzd_context_t * context;
+
+  context = GetMyContext();
+  sfv_remove_incomplete_indicator(dirname, context);
+
+  return 0;
+}
+
+
 /***********************/
 /* WZD_MODULE_INIT     */
 
@@ -1552,6 +1611,8 @@ int WZD_MODULE_INIT(void)
 /*  printf("WZD_MODULE_INIT\n");*/
   event_connect_function(getlib_mainConfig()->event_mgr,EVENT_PREUPLOAD,sfv_event_preupload,NULL);
   event_connect_function(getlib_mainConfig()->event_mgr,EVENT_POSTUPLOAD,sfv_event_postupload,NULL);
+
+  event_connect_function(getlib_mainConfig()->event_mgr,EVENT_RMDIR,sfv_event_rmdir,NULL);
 
   {
     const char * command_name = "site_sfv";
