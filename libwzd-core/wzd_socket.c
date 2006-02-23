@@ -875,11 +875,13 @@ static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
     return -1;
   }
 
+#ifdef IPV6_V6ONLY
   if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&one, sizeof (one)) < 0)
   {
     out_log(LEVEL_HIGH,"Could not bind socket to IPv6 only (%s:%d) %s:%d\n", ip, port, __FILE__, __LINE__);
     return -1;
   }
+#endif
 
   c = 1;
 #ifndef WINSOCK_SUPPORT

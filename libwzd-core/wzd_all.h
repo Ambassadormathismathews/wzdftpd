@@ -51,6 +51,7 @@
 #include <direct.h>
 #include <io.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <process.h> /* _getpid() */
 #endif /* WIN32 */
 

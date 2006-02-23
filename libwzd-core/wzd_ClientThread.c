@@ -48,12 +48,12 @@
 
 #include <netdb.h> /* gethostbyaddr */
 
+#endif /* WIN32 */
+
 /** \todo XXX FIXME remove this line and use correct types !!!!
  * this is used to convert char* to struct in6_addr
  */
 #define PORCUS_CAST(x) ( ((struct in6_addr*)(x)) )
-
-#endif /* WIN32 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -3453,7 +3453,7 @@ static int do_login_gssapi(wzd_context_t * context)
   }
 
   ret = send_message_with_args(334, context, "waiting for ", "ADAT");
- 
+
   while (1) {
     /* wait response */
     ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);

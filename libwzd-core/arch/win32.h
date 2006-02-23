@@ -277,9 +277,6 @@ typedef size_t ssize_t;
 #define popen	_popen
 #define pclose	_pclose
 
-#define strcasecmp	stricmp
-#define strncasecmp	strnicmp
-
 #define snprintf	_snprintf
 #define vsnprintf	_vsnprintf
 
@@ -304,6 +301,9 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 		} \
         continue; \
       }
+
+#define strcasecmp	stricmp
+#define strncasecmp	strnicmp
 
 #define DIRCMP	strcasecmp
 #define DIRNCMP	strncasecmp
