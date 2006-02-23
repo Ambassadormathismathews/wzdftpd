@@ -1520,16 +1520,6 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
     out_err(LEVEL_FLOOD,"rmdir returned %d (%s)\n",errno,strerror(errno));
     ret = E_PARAM_INVALID; goto label_error_rmdir;
   } else {
-    const char *groupname=NULL;
-    wzd_user_t * user;
-    char buffer[WZD_MAX_PATH], path[WZD_MAX_PATH];
-
-    user = GetUserByID(context->userid);
-
-    if (user->group_num > 0) {
-      groupname = GetGroupByID(user->groups[0])->groupname;
-    }
-
     /* send message header */
     send_message_raw("258- command ok\r\n",context);
     {
@@ -1539,21 +1529,30 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
     }
     ret = send_message_with_args(258,context,param,"removed");
 
-    if (param[0] != '/') {
-      strcpy(buffer,context->currentpath);
-      strlcat(buffer,"/",WZD_MAX_PATH);
-      strlcat(buffer,param,WZD_MAX_PATH);
-    } else {
-      strcpy(buffer,param);
-    }
-    stripdir(buffer,path,WZD_MAX_PATH-1);
+    {
+      const char *groupname=NULL;
+      char tbuf[WZD_MAX_PATH], path[WZD_MAX_PATH];
 
-    log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
-        path, /* ftp-absolute path */
-        user->username,
-        (groupname)?groupname:"No Group",
-        user->tagline
-        );
+      if (user->group_num > 0) {
+        groupname = GetGroupByID(user->groups[0])->groupname;
+      }
+
+      if (param[0] != '/') {
+        strcpy(tbuf,context->currentpath);
+        strlcat(tbuf,"/",WZD_MAX_PATH);
+        strlcat(tbuf,param,WZD_MAX_PATH);
+      } else {
+        strcpy(tbuf,param);
+      }
+      stripdir(tbuf,path,WZD_MAX_PATH-1);
+
+      log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
+          path, /* ftp-absolute path */
+          user->username,
+          (groupname)?groupname:"No Group",
+          user->tagline
+          );
+    }
 
   }
 
