@@ -1304,7 +1304,7 @@ void serverMainThreadProc(void *arg)
   fd_set r_fds, w_fds, e_fds;
   fd_t maxfd;
   struct timeval tv;
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
+#if defined(WIN32)
   WSADATA wsaData;
   int nCode;
 #endif
@@ -1368,7 +1368,7 @@ void serverMainThreadProc(void *arg)
 #endif
 #endif /* _WIN32 */
 
-#if defined(_MSC_VER)
+#if defined(WIN32)
   /* Start Winsock up */
   if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
     out_log(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
