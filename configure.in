@@ -288,7 +288,7 @@ AH_TEMPLATE([WZD_BUILD_NUM],
 #                 ||----w |
 #                 ||     ||
 #
-if eval "test x$sysconfdir == x\${prefix}/etc"; then
+if eval "test x$sysconfdir = x\${prefix}/etc"; then
   sysconfdir="${sysconfdir}/wzdftpd"
 fi
 
