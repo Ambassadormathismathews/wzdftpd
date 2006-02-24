@@ -1,7 +1,7 @@
 EXTRA_DIST = file_crc.txt test_common.h test_template.c
 
 INCLUDES = -I$(top_srcdir)
-LDADD = @DL_FLAGS@ ../libwzd-core/libwzd_core.la
+LDADD = @DL_FLAGS@ @CRYPT_FLAGS@ ../libwzd-core/libwzd_core.la
 
 test_programs = \
 	test_list \

@@ -151,7 +151,8 @@ wzd_string_t * str_store(wzd_string_t * str, const char * s)
   length = strlen(s);
   _str_set_min_size(str,length+1);
 
-  wzd_strncpy(str->buffer, s, length);
+  wzd_strncpy(str->buffer, s, length+1);
+  str->length = length;
 
   return str;
 }

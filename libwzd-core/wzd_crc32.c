@@ -85,7 +85,7 @@ int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, u
     int k;              /* generic integer */
     unsigned long tmpcrc=0xFFFFFFFF;
 
-    tmpcrc = ~*crc;
+    tmpcrc = (~*crc & 0xFFFFFFFF); /* stay on the 4 LSB */
 
     /* open file */
     if((in = fopen(fname, "rb")) == NULL) return -1;
@@ -106,6 +106,6 @@ int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, u
     }
     fclose(in);
     free(buf);
-    *crc=~tmpcrc; /* postconditioning */
+    *crc = (~tmpcrc & 0xFFFFFFFF); /* postconditioning */
     return 0;
 }
