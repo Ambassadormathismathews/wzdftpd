@@ -5,6 +5,9 @@
 <!-- compile file with: jw -d wzd_custom.dsl#html -o wzdftpd-dev -b html wzdftpd-dev.xml -->
 <!ENTITY architecture SYSTEM "dev-architecture.xml">
 <!ENTITY memory SYSTEM "dev-memory.xml">
+<!ENTITY backends SYSTEM "dev-backends.xml">
+
+<!ENTITY modules SYSTEM "dev-modules.xml">
 
 <!ENTITY license SYSTEM "license.sgml">
 ]>
@@ -24,16 +27,17 @@
 
 &architecture;
 &memory;
-
-<chapter id='backends'><title>Backends</title>
-<para>To be done</para>
-</chapter>
+&backends;
 
 <chapter id='authentication'><title>Authentication</title>
 <para>To be done</para>
 </chapter>
 
 <chapter id='messages'><title>Sending messages</title>
+<para>To be done</para>
+</chapter>
+
+<chapter id='cookies'><title>Cookies</title>
 <para>To be done</para>
 </chapter>
 
@@ -49,9 +53,7 @@
 <para>To be done</para>
 </chapter>
 
-<chapter id='modules'><title>Modules</title>
-<para>To be done</para>
-</chapter>
+&modules;
 
 <chapter id='generic'><title>Generic functions</title>
 <para>Strings, lists, shared memory, files</para>

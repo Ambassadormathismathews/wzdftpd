@@ -37,6 +37,28 @@
 (define %html-ext% ".html")        ;; default extension for html output files
 (define %html-prefix% "")	   ;; prefix for all filenames generated (except root)
 
+(define %root-filename%
+	;; Nom du fichier HTML principal
+	"index"
+)
+
+(define %stylesheet%
+	;; Nom et emplacement de la feuille de style (CSS) utilisée par les pages HTML
+	"../wzdftpd-docs.css"
+)
+
+(define %css-decoration%
+	;; Active l'utilisation des CSS dans le code HTML généré.
+	;; Notament les parametres CLASS= des principales balises
+	#t)
+
+(define %body-attr% 
+	;; Attribut utilisé dans la balise BODY
+	;; Ici on laisse faire la feuille de style CSS
+	(list
+	)
+)
+
 
 </style-specification-body>
 </style-specification>
