@@ -4078,7 +4078,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         ret = (*(command->command))(token,command_buffer,context);
       else { /* external command */
         char buffer_command[4096];
-        wzd_group_t * group;
+        wzd_group_t * group = NULL;
 
         if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
         cookie_parse_buffer(str_tochar(command->external_command), user, group, context, buffer_command, sizeof(buffer_command));
