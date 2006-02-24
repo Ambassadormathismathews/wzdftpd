@@ -1523,7 +1523,8 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
     /* send message header */
     send_message_raw("258- command ok\r\n",context);
     {
-      wzd_string_t * event_args = STR(buffer);
+      wzd_string_t * event_args = str_allocate();
+      str_sprintf(event_args,"%s %s",user->username,path);
       event_send(mainConfig->event_mgr, EVENT_RMDIR, 258, event_args, context);
       str_deallocate(event_args);
     }
