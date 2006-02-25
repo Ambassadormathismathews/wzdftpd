@@ -80,8 +80,7 @@ static char other_completebar[256];
 static short params_ok=0;
 
 /* Converts cookies in incomplete indicators */
-char *c_incomplete(char *instr, char *path);
-
+char *c_incomplete(const char * indicator, char * currentdir , wzd_context_t * context);
 /* updates complete bar (erasing preceding one if existing) */
 void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_t *context);
 
@@ -138,6 +137,171 @@ static int get_all_params(void)
   params_ok = 1;
   return 0;
 }
+
+/* Given a dir it will handle the complete incomplete indicators (including
+ * cookies)
+ *
+ * needs free after use
+*/
+char *c_incomplete(const char * indicator, char * currentdir, wzd_context_t * context)
+{
+  char buffer[2*WZD_MAX_PATH];
+  char sfvdirname[64]; /*take max 63 characters for the releasename*/
+  size_t length, needed;
+  char * out=NULL;
+  const char * ptr_in;
+  char * ptr_out;
+  wzd_user_t * user;
+  wzd_group_t * group;
+
+  user = GetUserByID(context->userid);
+  if (!user) return NULL;
+
+  if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
+  else group = NULL;
+
+  if (currentdir[strlen(currentdir)-1]=='/') currentdir[strlen(currentdir)-1]='\0';
+  strncpy(sfvdirname, strrchr(currentdir,'/')+1 ,63 ) ;
+  strcat(currentdir,"/");
+
+  length = 0;
+  ptr_in = indicator; ptr_out = buffer;
+
+#ifdef WIN32
+  if(strncmp(&ptr_in[0],"/",1)==0)  /* replace with current dir if / is used; win32 only */
+  {
+    needed = strlen(currentdir);
+    length += needed;
+    if (length >= 2*WZD_MAX_PATH) {
+      out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+      return NULL;
+    }
+    memcpy(ptr_out,currentdir,needed);
+    ptr_in +=1; /* 1 strlen /   */
+    ptr_out += needed;
+  }
+  else
+#endif
+  if(strncmp(&ptr_in[0],".",1)==0) /* check for ./ and ../ at start  */
+  {
+    if(strncmp(&ptr_in[1],"./",2)==0)
+    {
+      needed = strlen(currentdir);
+      length += needed + 3;
+      if (length >= 2*WZD_MAX_PATH) {
+        out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+        return NULL;
+      }
+      memcpy(ptr_out,currentdir,needed);
+      ptr_in +=3; /* 3 strlen ../   */
+      ptr_out += needed;
+      memcpy(ptr_out,"../",3);
+      ptr_out+=3;
+    }
+    else if (strncmp(&ptr_in[1],"/",1)==0)
+    {
+      needed = strlen(currentdir);
+      length += needed;
+      if (length >= 2*WZD_MAX_PATH) {
+        out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+        return NULL;
+      }
+      memcpy(ptr_out,currentdir,needed);
+      ptr_in +=2; /* 2 strlen ./   */
+      ptr_out += needed;
+    }
+    else return NULL;
+  }
+
+  while ( (*ptr_in) )
+  {
+    if (length >= 2*WZD_MAX_PATH) {
+      out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+      return NULL;
+    }
+    if (*ptr_in == '%')
+    {
+      if (strncmp(ptr_in,"%userhome",9)==0)
+      { /* 9 == strlen(%userhome) */
+        /* TODO XXX FIXME only print iff homedir exists !! */
+        needed = strlen(user->rootpath);
+        length += needed;
+        if (length >= 2*WZD_MAX_PATH) {
+          out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+          return NULL;
+        }
+        memcpy(ptr_out,user->rootpath,needed);
+        ptr_in += 9; /* 9 == strlen(%userhome) */
+        ptr_out += needed;
+      }
+      else if (strncmp(ptr_in,"%grouphome",10)==0)
+      {
+        if (group)
+        {
+          needed = strlen(group->defaultpath);
+          length += needed;
+          if (length >= 2*WZD_MAX_PATH) {
+            out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+            return NULL;
+          }
+          memcpy(ptr_out,group->defaultpath,needed);
+          ptr_in += 10; /* 10 == strlen(%usergroup) */
+          ptr_out += needed;
+        } else return NULL; /* we want user's main group and he has no one ... */
+      }
+      else if (strncmp(ptr_in,"%releasename",12)==0)
+      {
+        needed = strlen(sfvdirname);
+        length += needed;
+        if (length >= 2*WZD_MAX_PATH) {
+          out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
+          return NULL;
+        }
+        memcpy(ptr_out,sfvdirname,needed);
+        ptr_in += 12;
+        ptr_out += needed;
+      }
+#if 0	 
+      /* not such a good idea to make the file username/groupname dependent */
+      if (strncmp(ptr_in,"%username",9)==0) 
+      {  /* 9== strlen(%username) */
+        needed = strlen(user->username);
+        length += needed;
+        if (length >= 2*WZD_MAX_PATH) {	out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator); return NULL;}
+        memcpy(ptr_out,user->username,needed);
+        ptr_in += 9; 
+        ptr_out += needed;
+      } 
+      else if (strncmp(ptr_in,"%usergroup",10)==0) 
+      { /* 10 == strlen(%usergroup) */
+        if (group) 
+        {
+          needed = strlen(group->groupname);
+          length += needed;
+          if (length >= 2*WZD_MAX_PATH) {	out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator); return NULL;}
+          memcpy(ptr_out,group->groupname,needed);
+          ptr_in += 10; 
+          ptr_out += needed;
+        } else return NULL; /* we want user's main group and he has no one ... */
+      }
+#endif
+      else return NULL;
+    }
+    else
+    {
+      *ptr_out++ = *ptr_in++;
+      length++;
+    }
+  }
+  *ptr_out = '\0';
+
+  out = wzd_malloc(length+1);
+  strncpy(out,buffer,length+1);
+  if (out[strlen(out)-1]=='/') out[strlen(out)-1]='\0';
+
+  return out;
+}
+
 
 /* inits an sfv struct
  */
@@ -348,7 +512,7 @@ int sfv_create(const char * sfv_file)
 #else
   finished = 0;
   while (!finished) {
-	dir_filename = fileData.cFileName;
+    dir_filename = fileData.cFileName;
 #endif
     if (dir_filename[0]=='.') DIR_CONTINUE
     /* TODO check that file matches mask */
@@ -358,10 +522,10 @@ int sfv_create(const char * sfv_file)
       strcpy(extension,dir_filename+strlen(dir_filename)-4);
       /* files that should not be in a sfv */
       if (strcasecmp(extension,".nfo")==0 ||
-	  strcasecmp(extension,".diz")==0 ||
-	  strcasecmp(extension,".sfv")==0 ||
-	  strcasecmp(extension,".txt")==0)
-	  DIR_CONTINUE
+          strcasecmp(extension,".diz")==0 ||
+          strcasecmp(extension,".sfv")==0 ||
+          strcasecmp(extension,".txt")==0)
+        DIR_CONTINUE
     }
     /* add to sfv file */
     strcpy(filename,directory);
@@ -369,7 +533,7 @@ int sfv_create(const char * sfv_file)
 /*    strcpy(ptr,sfv.sfv_list[i]->filename);*/
     strcpy(ptr,dir_filename);
     if (stat(filename,&s) || S_ISDIR(s.st_mode))
-	  DIR_CONTINUE
+      DIR_CONTINUE
     crc = 0;
     thisret = calc_crc32(filename,&crc,0,-1);
     /* count_entries + 2 : +1 for the new line to add, +1 to terminate
@@ -382,7 +546,7 @@ int sfv_create(const char * sfv_file)
     sfv.sfv_list[count_entries]->state = SFV_OK;
     sfv.sfv_list[count_entries]->size = s.st_size;
     count_entries++;
-	DIR_CONTINUE
+    DIR_CONTINUE
   } /* while ((entr=readdir(dir))!=NULL) */
 #ifndef WIN32
   closedir(dir);
@@ -407,16 +571,16 @@ int sfv_create(const char * sfv_file)
     i=0;
     while (sfv.sfv_list[i]) {
       if (snprintf(buffer,2047,"%s %lx\n",sfv.sfv_list[i]->filename,
-	    sfv.sfv_list[i]->crc) <= 0) return -1;
+            sfv.sfv_list[i]->crc) <= 0) return -1;
       ret = strlen(buffer);
       if ( write(fd_sfv,buffer,ret) != ret ) {
-	out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
+        out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
 #ifndef WIN32
         closedir(dir);
 #else
         FindClose(dir);
 #endif
-       	return -1;
+        return -1;
       }
       i++;
     }
@@ -470,10 +634,10 @@ int sfv_check(const char * sfv_file)
       thisret = calc_crc32(filename,&crc,0,-1);
       if (thisret || crc != sfv.sfv_list[i]->crc) {
         ret ++;
-	sfv.sfv_list[i]->state = SFV_BAD;
+        sfv.sfv_list[i]->state = SFV_BAD;
       }
       else {
-	sfv.sfv_list[i]->state = SFV_OK;
+        sfv.sfv_list[i]->state = SFV_OK;
       }
 #ifdef DEBUG
 out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,crc,sfv.sfv_list[i]->crc);
@@ -535,12 +699,12 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 #else
   finished = 0;
   while (!finished) {
-	dir_filename = fileData.cFileName;
+    dir_filename = fileData.cFileName;
 #endif
     if (strcmp(dir_filename,".")==0 ||
-	strcmp(dir_filename,"..")==0 ||
+        strcmp(dir_filename,"..")==0 ||
         strcmp(dir_filename,HARD_PERMFILE)==0)
-	  DIR_CONTINUE;
+      DIR_CONTINUE;
     length = strlen(dir_filename);
     if (length<5) DIR_CONTINUE;
     if (strcasecmp(dir_filename+length-3,"sfv")==0)
@@ -550,18 +714,18 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
       i = 0;
       ptr = sfv_dir;
       while (*ptr) {
-	if (i >= 1022) DIR_CONTINUE
-	sfv_name[i] = *ptr;
-	i++;
-	ptr++;
+        if (i >= 1022) DIR_CONTINUE
+        sfv_name[i] = *ptr;
+        i++;
+        ptr++;
       }
       sfv_name[i++] = '/';
       ptr = dir_filename;
       while (*ptr) {
-	if (i >= 1023) DIR_CONTINUE
-	sfv_name[i] = *ptr;
-	i++;
-	ptr++;
+        if (i >= 1023) DIR_CONTINUE
+        sfv_name[i] = *ptr;
+        i++;
+        ptr++;
       }
       *ptr = '\0';
       sfv_name[i]='\0';
@@ -575,29 +739,29 @@ int sfv_find_sfv(const char * file, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 #else
         FindClose(dir);
 #endif
-		  return -1;
-	  }
+        return -1;
+      }
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]) {
 #ifdef WIN32
-	if (strcasecmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
+        if (strcasecmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
 #else /* WIN32 */
-	if (strcmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
+          if (strcmp(stripped_filename,sfv->sfv_list[i]->filename)==0) {
 #endif /* WIN32 */
-	  *entry = sfv->sfv_list[i];
+            *entry = sfv->sfv_list[i];
 #ifndef WIN32
-      closedir(dir);
+            closedir(dir);
 #else
-      FindClose(dir);
+            FindClose(dir);
 #endif
-	  return 0;
-	}
-	i++;
-      }
+            return 0;
+          }
+          i++;
+        }
       sfv_free(sfv);
     }
-	DIR_CONTINUE
+    DIR_CONTINUE
   } /* while readdir */
 
 #ifndef WIN32
@@ -654,52 +818,40 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
   /* create a dir/symlink to mark incomplete */
   if (strlen(dir)>2)
   {
-    const char * incomplete;
-    char dirname[256];
-    if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
-    ptr = strrchr(dir,'/');
-    if (ptr) {
-      stripped_dirname = ptr + 1; /* keep start of dir name for later use */
-      strncpy(dirname,ptr+1,255);
-      incomplete = c_incomplete(incomplete_indicator,dirname);
-      /* create empty file|dir / symlink ? */
-      if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
-      strcat(dir,incomplete); /* XXX FIXME bad ! */
-      if (!checkabspath(dir,filename,context))
-      {
-#ifndef _MSC_VER
-	/* symlink ? */
-	if (symlink(dirname,filename) && errno != EEXIST)
-	{
-	  out_log(LEVEL_INFO,"Symlink creation failed (%s -> %s) %d (%s)\n",
-	      dir, filename, errno, strerror(errno));
-	}
+    char * incomplete;
+    incomplete = c_incomplete(incomplete_indicator,dir,context);
+
+    /* create empty file|dir / symlink ? */
+    if (incomplete)
+    { //JGS
+#ifndef WIN32
+      /* symlink ? */
+      if (symlink(dir,incomplete) && errno != EEXIST)
+        out_log(LEVEL_INFO,"Symlink creation failed (%s -> %s) %d (%s)\n", dir, filename, errno, strerror(errno));
 #else
-	/* empty file ? */
-	close(creat(filename,0600));
+      /* empty file ? */
+      close(creat(incomplete,0600) );
 #endif
-        /** \bug XXX FIXME chown symlink to owner */
-      }
+      /** \bug XXX FIXME chown symlink to owner */
+      free(incomplete);
     }
   }
+
+  if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
+  stripped_dirname = strrchr(dir,'/') +1;
 
   /* warn user that we await xx files */
   if (stripped_dirname)
   {
-    /* TODO XXX FIXME we only show last dir: /upload/TEST-SFV => TEST-SFV
+   /* TODO XXX FIXME we only show last dir: /upload/TEST-SFV => TEST-SFV
      * This can be bad if dir name is like MOVIE-NAME/Cd1
      */
-    ptr = strchr(stripped_dirname,'/');
-    if (ptr)
-    {
-      *ptr = '\0';
       log_message("SFV","\"%s\" \"Got SFV for %s. Expecting %d file(s).\"",
           stripped_dirname,
           stripped_dirname,
           num_files
           );
-    }
-  }
+   }
 
   sfv_update_completebar(sfv,sfv_file,context);
 
@@ -707,27 +859,6 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
   return 0;
 }
 
-/* Converts cookies in incomplete indicators */
-char i_buf[ 256 ];
-char * c_incomplete(char *instr, char *path)
-{
-  char *buf_p;
-
-  buf_p = i_buf;
-  for ( ; *instr ; instr++ ) if ( *instr == '%' ) {
-    instr++;
-    switch ( *instr ) {
-/*      case '0': buf_p += sprintf( buf_p, "%s", path[0] ); break;
-      case '1': buf_p += sprintf( buf_p, "%s", path[1] ); break;*/
-       case '0': buf_p += sprintf( buf_p, "%s", path ); break;
-      case '%': *buf_p++ = '%' ; break;
-    }
-  } else {
-    *buf_p++ = *instr;
-  }
-  *buf_p = 0;
-  return i_buf;
-}
 
 char output[2048];
 /* Converts cookies in complete indicators
@@ -764,182 +895,182 @@ const char *_sfv_convert_cookies(char * instr, const char *dir, wzd_sfv_file sfv
  out_p = output;
 
  for ( ; *instr ; instr++ ) if ( *instr == '%' ) {
-	instr++;
-	m = instr;
-	if (*instr == '-' && isdigit(*(instr + 1))) instr += 2;
-	while (isdigit(*instr)) instr++;
-	if ( m != instr ) {
-		sprintf(ctrl, "%.*s", instr - m, m);
-		val1 = atoi(ctrl);
-		} else {
-		val1 = 0;
-		}
+   instr++;
+   m = instr;
+   if (*instr == '-' && isdigit(*(instr + 1))) instr += 2;
+   while (isdigit(*instr)) instr++;
+   if ( m != instr ) {
+     sprintf(ctrl, "%.*s", instr - m, m);
+     val1 = atoi(ctrl);
+   } else {
+     val1 = 0;
+   }
 
-	if ( *instr == '.' ) {
-		instr++;
-		m = instr;
-		if (*instr == '-' && isdigit(*(instr + 1))) instr += 2;
-		while (isdigit(*instr)) instr++;
-		if ( m != instr ) {
-			sprintf(ctrl, "%.*s", instr - m, m);
-			val2 = atoi(ctrl);
-			} else {
-			val2 = 0;
-			}
-		} else {
-		val2 = -1;
-		}
+   if ( *instr == '.' ) {
+     instr++;
+     m = instr;
+     if (*instr == '-' && isdigit(*(instr + 1))) instr += 2;
+     while (isdigit(*instr)) instr++;
+     if ( m != instr ) {
+       sprintf(ctrl, "%.*s", instr - m, m);
+       val2 = atoi(ctrl);
+     } else {
+       val2 = 0;
+     }
+   } else {
+     val2 = -1;
+   }
 
-	 switch ( *instr ) {
+   switch ( *instr ) {
 #if 0
-		case 'a': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / raceI->total.speed)); break;
-		case 'A': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / ((raceI->transfer_stop.tv_sec - raceI->transfer_start.tv_sec) + (raceI->transfer_stop.tv_usec - raceI->transfer_start.tv_usec) / 1000000.) / 1024)); break;
-		case 'b': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.size); break;
-		case 'B': out_p += sprintf(out_p, "\\002"); break;
-		case 'c':
-			from = to = reverse = 0;
-			instr++;
-			m = instr;
-			if ( *instr == '-' ) {
-				reverse = 1;
-				instr++;
-				}
+     case 'a': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / raceI->total.speed)); break;
+     case 'A': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / ((raceI->transfer_stop.tv_sec - raceI->transfer_start.tv_sec) + (raceI->transfer_stop.tv_usec - raceI->transfer_start.tv_usec) / 1000000.) / 1024)); break;
+     case 'b': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.size); break;
+     case 'B': out_p += sprintf(out_p, "\\002"); break;
+     case 'c':
+               from = to = reverse = 0;
+               instr++;
+               m = instr;
+               if ( *instr == '-' ) {
+                 reverse = 1;
+                 instr++;
+               }
 
-			for ( ; isdigit(*instr) ; instr++ ) {
-				from *= 10;
-				from += *instr - 48;
-				}
+               for ( ; isdigit(*instr) ; instr++ ) {
+                 from *= 10;
+                 from += *instr - 48;
+               }
 
-			if ( *instr == '-' ) {
-				instr++;
-				for ( ; isdigit(*instr) ; instr++ ) {
-					to *= 10;
-					to += *instr - 48;
-					}
-				if ( to == 0 || to >= raceI->total.groups ) {
-					to = raceI->total.groups - 1;
-					}
-				}
+               if ( *instr == '-' ) {
+                 instr++;
+                 for ( ; isdigit(*instr) ; instr++ ) {
+                   to *= 10;
+                   to += *instr - 48;
+                 }
+                 if ( to == 0 || to >= raceI->total.groups ) {
+                   to = raceI->total.groups - 1;
+                 }
+               }
 
-			if ( to < from ) {
-				to = from;
-				}
+               if ( to < from ) {
+                 to = from;
+               }
 
-			if ( reverse == 1 ) {
-				n = from;
-				from = raceI->total.groups - 1 - to;
-				to = raceI->total.groups - 1 - n;
-				}
+               if ( reverse == 1 ) {
+                 n = from;
+                 from = raceI->total.groups - 1 - to;
+                 to = raceI->total.groups - 1 - n;
+               }
 
-			if ( from >= raceI->total.groups ) {
-				to = -1;
-				}
+               if ( from >= raceI->total.groups ) {
+                 to = -1;
+               }
 
-			for ( n = from ; n <= to ; n++ ) {
-				out_p += sprintf(out_p, "%*.*s", val1, val2, convert3(raceI, groupI[groupI[n]->pos], group_info, n));
-				}
-			instr--;
-			break;
-		case 'C':
-			from = to = reverse = 0;
-			instr++;
-			m = instr;
-			if ( *instr == '-' ) {
-				reverse = 1;
-				instr++;
-				}
+               for ( n = from ; n <= to ; n++ ) {
+                 out_p += sprintf(out_p, "%*.*s", val1, val2, convert3(raceI, groupI[groupI[n]->pos], group_info, n));
+               }
+               instr--;
+               break;
+     case 'C':
+               from = to = reverse = 0;
+               instr++;
+               m = instr;
+               if ( *instr == '-' ) {
+                 reverse = 1;
+                 instr++;
+               }
 
-			for ( ; isdigit(*instr) ; instr++ ) {
-				from *= 10;
-				from += *instr - 48;
-				}
+               for ( ; isdigit(*instr) ; instr++ ) {
+                 from *= 10;
+                 from += *instr - 48;
+               }
 
-			if ( *instr == '-' ) {
-				instr++;
-				for ( ; isdigit(*instr) ; instr++ ) {
-					to *= 10;
-					to += *instr - 48;
-					}
-				if ( to == 0 || to >= raceI->total.users ) {
-					to = raceI->total.users - 1;
-					}
-				}
+               if ( *instr == '-' ) {
+                 instr++;
+                 for ( ; isdigit(*instr) ; instr++ ) {
+                   to *= 10;
+                   to += *instr - 48;
+                 }
+                 if ( to == 0 || to >= raceI->total.users ) {
+                   to = raceI->total.users - 1;
+                 }
+               }
 
-			if ( to < from ) {
-				to = from;
-				}
+               if ( to < from ) {
+                 to = from;
+               }
 
-			if ( reverse == 1 ) {
-				n = from;
-				from = raceI->total.users - 1 - to;
-				to = raceI->total.users - 1 - n;
-				}
+               if ( reverse == 1 ) {
+                 n = from;
+                 from = raceI->total.users - 1 - to;
+                 to = raceI->total.users - 1 - n;
+               }
 
-			if ( from >= raceI->total.users ) {
-				to = -1;
-				}
+               if ( from >= raceI->total.users ) {
+                 to = -1;
+               }
 
-			for ( n = from ; n <= to ; n++ ) {
-				out_p += sprintf(out_p, "%*.*s", val1, val2, convert2(raceI, userI[userI[n]->pos], groupI, user_info, n)); break;
-				}
-			instr--;
-			break;
-		case 'd': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)hms(raceI->transfer_stop.tv_sec - raceI->transfer_start.tv_sec)); break;
-		case 'e': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->file.size * raceI->total.files >> 10) / 1024.)); break;
+               for ( n = from ; n <= to ; n++ ) {
+                 out_p += sprintf(out_p, "%*.*s", val1, val2, convert2(raceI, userI[userI[n]->pos], groupI, user_info, n)); break;
+               }
+               instr--;
+               break;
+     case 'd': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)hms(raceI->transfer_stop.tv_sec - raceI->transfer_start.tv_sec)); break;
+     case 'e': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->file.size * raceI->total.files >> 10) / 1024.)); break;
 #endif
-		case 'f': out_p += sprintf(out_p, "%*i", val1, (int)total_files); break;
+     case 'f': out_p += sprintf(out_p, "%*i", val1, (int)total_files); break;
 #if 0
-		case 'F': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.files - raceI->total.files_missing); break;
-		case 'g': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.groups); break;
-		case 'G': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->user.group); break;
-		case 'k': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / 1024.)); break;
-		case 'l': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)convert2(raceI, userI[raceI->misc.slowest_user[1]], groupI, slowestfile, 0)); break;
-		case 'L': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)convert2(raceI, userI[raceI->misc.fastest_user[1]], groupI, fastestfile, 0)); break;
+     case 'F': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.files - raceI->total.files_missing); break;
+     case 'g': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.groups); break;
+     case 'G': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->user.group); break;
+     case 'k': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.size / 1024.)); break;
+     case 'l': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)convert2(raceI, userI[raceI->misc.slowest_user[1]], groupI, slowestfile, 0)); break;
+     case 'L': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)convert2(raceI, userI[raceI->misc.fastest_user[1]], groupI, fastestfile, 0)); break;
 #endif
-		case 'm': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(total_size / 1024.)); break;
+     case 'm': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(total_size / 1024.)); break;
 #if 0
-		case 'M': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.files_missing); break;
-		case 'n': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->file.name); break;
-		case 'o': out_p += sprintf(out_p, "%*i", val1, val2, (int)raceI->total.files_bad); break;
-		case 'O': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->total.bad_size >> 10) / 1024.)); break;
-		case 'p': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->total.files - raceI->total.files_missing) * 100. / raceI->total.files)); break;
-		case 'P': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.bad_size / 1024.)); break;
-		case 'S': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->file.speed / 1024.)); break;
-		case 'r': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.release_name); break;
-		case 'R': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.racer_list + 1); break;
-		case 't': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.top_messages[1] + 1); break;
-		case 'T': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.top_messages[0] + 1); break;
-		case 'u': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.users); break;
-		case 'U': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->user.name); break;
-		case 'v': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.error_msg); break;
-		case 'V': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.progress_bar); break;
+     case 'M': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.files_missing); break;
+     case 'n': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->file.name); break;
+     case 'o': out_p += sprintf(out_p, "%*i", val1, val2, (int)raceI->total.files_bad); break;
+     case 'O': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->total.bad_size >> 10) / 1024.)); break;
+     case 'p': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)((raceI->total.files - raceI->total.files_missing) * 100. / raceI->total.files)); break;
+     case 'P': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->total.bad_size / 1024.)); break;
+     case 'S': out_p += sprintf(out_p, "%*.*f", val1, val2, (double)(raceI->file.speed / 1024.)); break;
+     case 'r': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.release_name); break;
+     case 'R': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.racer_list + 1); break;
+     case 't': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.top_messages[1] + 1); break;
+     case 'T': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.top_messages[0] + 1); break;
+     case 'u': out_p += sprintf(out_p, "%*i", val1, (int)raceI->total.users); break;
+     case 'U': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->user.name); break;
+     case 'v': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.error_msg); break;
+     case 'V': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->misc.progress_bar); break;
 
-		/* Audio */
+               /* Audio */
 
-		case 'w': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_genre); break;
-		case 'W': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_album); break;
-		case 'x': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_artist); break;
-		case 'y': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_title); break;
-		case 'Y': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_year); break;
-		case 'X': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.bitrate); break;
-		case 'z': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.samplingrate); break;
-		case 'h': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.codec); break;
-		case 'q': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.layer); break;
-		case 'Q': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.channelmode); break;
+     case 'w': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_genre); break;
+     case 'W': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_album); break;
+     case 'x': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_artist); break;
+     case 'y': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_title); break;
+     case 'Y': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.id3_year); break;
+     case 'X': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.bitrate); break;
+     case 'z': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.samplingrate); break;
+     case 'h': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.codec); break;
+     case 'q': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.layer); break;
+     case 'Q': out_p += sprintf(out_p, "%*.*s", val1, val2, (char *)raceI->audio.channelmode); break;
 
-		/* Video */
+               /* Video */
 
-		case 'D': out_p += sprintf(out_p, "%*i", val1, raceI->video.width); break;
-		case 'E': out_p += sprintf(out_p, "%*i", val1, raceI->video.height); break;
-		case 'H': out_p += sprintf(out_p, "%*i", val1, raceI->video.fps); break;
+     case 'D': out_p += sprintf(out_p, "%*i", val1, raceI->video.width); break;
+     case 'E': out_p += sprintf(out_p, "%*i", val1, raceI->video.height); break;
+     case 'H': out_p += sprintf(out_p, "%*i", val1, raceI->video.fps); break;
 
-		/* Other */
+               /* Other */
 
-		case 'Z': *out_p++ = raceI->file.compression_method; break;
-		case '%': *out_p++ = *instr;
+     case 'Z': *out_p++ = raceI->file.compression_method; break;
+     case '%': *out_p++ = *instr;
 #endif
-		}
-	} else *out_p++ = *instr;
+   }
+ } else *out_p++ = *instr;
  *out_p = 0;
  return output;
 }
@@ -989,127 +1120,128 @@ void sfv_update_completebar(wzd_sfv_file sfv, const char *filename, wzd_context_
     if ((d = FindFirstFile(dirfilter,&fileData))== INVALID_HANDLE_VALUE) return;
 #endif
 #ifndef WIN32
-    while ((entr=readdir(d))!=NULL) {
+    while ((entr=readdir(d))!=NULL)
+    {
       dir_filename = entr->d_name;
 #else
-    finished = 0;
-    while (!finished) {
-	  dir_filename = fileData.cFileName;
-#endif
-      if (dir_filename[0]=='.')
-	  {
-#ifdef WIN32
-        if (!FindNextFile(d,&fileData))
-		{
-	      if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
-#endif
-	    continue;
-	  }
-      if ( regexec( &preg, dir_filename, 1, pmatch, 0) == 0 ) {
-	/* found, remove it  */
-	/* security check */
-	if (len+strlen(dir_filename)>510)
-	  {
-#ifdef WIN32
-        if (!FindNextFile(d,&fileData))
-		{
-	      if (GetLastError() == ERROR_NO_MORE_FILES)
-		    finished = 1;
-		}
-#endif
-	    continue;
-	  }
-	strcpy(dir+len,dir_filename);
-	rmdir (dir);
-	dir[len]='\0';
-      }
-#ifdef WIN32
-    if (!FindNextFile(d,&fileData))
-	{
-      if (GetLastError() == ERROR_NO_MORE_FILES)
-	    finished = 1;
-	}
-#endif
-    }
-#ifndef WIN32
-    closedir(d);
-#else
-    FindClose(d);
-#endif
-
-    percent = _sfv_get_release_percent(dir, sfv);
-    if (percent >= 100.f) { /* complete */
-      const char *complete;
-      const char *incomplete;
-      char dirname[512];
-      /* create complete tag */
-      complete = _sfv_convert_cookies(other_completebar,dir,sfv);
-      strcpy(dir+len,complete);
-      mkdir(dir,0755);
-      dir[len]='\0';
-      /* remove incomplete symlink */
-      if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
-      ptr = strrchr(dir,'/');
-      if (ptr) {
-	strncpy(dirname,ptr+1,255);
-	incomplete = c_incomplete(incomplete_indicator,dirname);
-	/* remove empty file|dir / symlink */
-	if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
-	strcat(dir,incomplete);
-	if (!checkabspath(dir,buffer,context))
-	{
-	  remove(buffer);
-	}
-      }
+      finished = 0;
+      while (!finished)
       {
-	wzd_context_t * context;
-	wzd_user_t * user;
-	char * groupname=NULL;
-	char buffer[2048];
-	char *ptr;
+        dir_filename = fileData.cFileName;
+#endif
+        if (dir_filename[0]=='.')
+        {
+#ifdef WIN32
+          if (!FindNextFile(d,&fileData))
+          {
+            if (GetLastError() == ERROR_NO_MORE_FILES)
+              finished = 1;
+          }
+#endif
+          continue;
+        }
 
-	context = GetMyContext();
-	user = GetUserByID(context->userid);
-	strncpy(buffer,context->currentpath,2048);
-	len = strlen(buffer);
-	if (buffer[len-1] != '/') {
-	  buffer[len++]='/';
-	  buffer[len]='\0';
-	}
-	strncpy(buffer+len,context->current_action.arg,2048-len);
-	ptr = strrchr(buffer,'/');
-	if (!ptr) {
+        if ( regexec( &preg, dir_filename, 1, pmatch, 0) == 0 )
+        {
+          /* found, remove it  */
+          /* security check */
+          if (len+strlen(dir_filename)>510)
+          {
+#ifdef WIN32
+            if (!FindNextFile(d,&fileData))
+            {
+              if (GetLastError() == ERROR_NO_MORE_FILES)
+                finished = 1;
+            }
+#endif
+            continue;
+          }
+          strcpy(dir+len,dir_filename);
+          rmdir (dir);
+          dir[len]='\0';
+        }
+#ifdef WIN32
+        if (!FindNextFile(d,&fileData))
+        {
+          if (GetLastError() == ERROR_NO_MORE_FILES) finished = 1;
+        }
+#endif
+      }
 #ifndef WIN32
       closedir(d);
 #else
       FindClose(d);
 #endif
-	  return;
-	}
-	*ptr='\0';
-	if (user->group_num>0) {
-	  wzd_group_t * group;
-	  group = GetGroupByID(user->groups[0]);
-	  if (group) groupname = group->groupname;
-	}
-	log_message("COMPLETE","\"%s\" \"%s\" \"%s\" \"%s\"",
-	    buffer, /* ftp-absolute path */
-	    user->username,
-	    (groupname)?groupname:"No Group",
-	    user->tagline
-	    );
-      }
-    } else { /* incomplete */
-      snprintf(buffer,255,progressmeter,(int)percent);
 
-      strcat(dir,buffer); /* XXX FIXME bad ! */
-      /* create empty dir ? */
-      mkdir (dir,0755);
-    } /* complete ? */
+      percent = _sfv_get_release_percent(dir, sfv);
+      if (percent >= 100.f)
+      { /* complete */
+        const char *complete;
+        char *incomplete;
+        /* create complete tag */
+        complete = _sfv_convert_cookies(other_completebar,dir,sfv);
+        strcpy(dir+len,complete);
+        mkdir(dir,0755);
+        dir[len]='\0';
+        /* remove incomplete symlink */
+        incomplete = c_incomplete(incomplete_indicator,dir,context);
+        /* remove empty file|dir / symlink */
+        if (incomplete)
+        {
+          remove(incomplete);
+          free(incomplete);
+        }
+        {
+          wzd_context_t * context;
+          wzd_user_t * user;
+          char * groupname=NULL;
+          char buffer[2048];
+          char *ptr;
+
+          context = GetMyContext();
+          user = GetUserByID(context->userid);
+          strncpy(buffer,context->currentpath,2048);
+          len = strlen(buffer);
+          if (buffer[len-1] != '/')
+          {
+            buffer[len++]='/';
+            buffer[len]='\0';
+          }
+          strncpy(buffer+len,context->current_action.arg,2048-len);
+          ptr = strrchr(buffer,'/');
+          if (!ptr)
+          {
+#ifndef WIN32
+            closedir(d);
+#else
+            FindClose(d);
+#endif
+            return;
+          }
+          *ptr='\0';
+          if (user->group_num>0)
+          {
+            wzd_group_t * group;
+            group = GetGroupByID(user->groups[0]);
+            if (group) groupname = group->groupname;
+          }
+          log_message("COMPLETE","\"%s\" \"%s\" \"%s\" \"%s\"",
+              buffer, /* ftp-absolute path */
+              user->username,
+              (groupname)?groupname:"No Group",
+              user->tagline
+              );
+        }
+      }
+      else
+      { /* incomplete */
+        snprintf(buffer,255,progressmeter,(int)percent);
+        strcat(dir,buffer); /* XXX FIXME bad ! */
+        /* create empty dir ? */
+        mkdir(dir,0755);
+      } /* complete ? */
+    }
   }
-}
 
 /* parse dir to calculate release completion % */
 float _sfv_get_release_percent(const char *dir, wzd_sfv_file sfv)
@@ -1144,10 +1276,10 @@ float _sfv_get_release_percent(const char *dir, wzd_sfv_file sfv)
       count++;
     } else {
       if ( stat(buffer,&s) ) {
-	if ( !stat(bad,&s) )
-	  remove(bad);
-	if ( stat(missing,&s) )
-	  close(open(missing,O_WRONLY|O_CREAT,0666));
+        if ( !stat(bad,&s) )
+          remove(bad);
+        if ( stat(missing,&s) )
+          close(open(missing,O_WRONLY|O_CREAT,0666));
       }
     }
     i++;
@@ -1430,28 +1562,21 @@ static int do_site_sfv(wzd_string_t *commandname, wzd_string_t *param, wzd_conte
 /********************* sfv_remove_incomplete_indicator*************************/
 /* removes the incomplete bar (if exists)  when directory is deleted before upload completed
  */
- 
+
 int sfv_remove_incomplete_indicator(const char *dirname, wzd_context_t *context)
 {
-  char *dirname_ptr;
-  const char *incomplete;
+  char *incomplete;
   char dir[WZD_MAX_PATH+1];
-  char buffer[2048];
 
   if (get_all_params()) return -1;
   strncpy(dir,dirname,WZD_MAX_PATH);
 
-  if (dir[strlen(dir)-1]=='/') dir[strlen(dir)-1]='\0';
+  incomplete = c_incomplete(incomplete_indicator,dir,context);
 
-  dirname_ptr = strrchr(dir,'/')+1;
-
-  if (dirname_ptr) { 
-    incomplete = c_incomplete(incomplete_indicator,dirname_ptr);
-    if (dir[strlen(dir)-1]!='/') strcat(dir,"/");
-    strcat(dir,incomplete);
-    if (!checkabspath(dir,buffer,context)) remove(buffer);
+  if (incomplete) {
+    remove(incomplete);
+    free(incomplete);
   }
-
   return 0;
 }
 
