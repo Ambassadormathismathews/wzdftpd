@@ -132,6 +132,22 @@ typedef struct {
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
+  const char * build_version = WZD_VERSION_STR;
+
+  out_log(LEVEL_FLOOD,"DEBUG Checking library version\n");
+
+  /* check that library was compiled in the same version as executable
+   *
+   * we are trying to avoid the dll hell, especially on windows
+   */
+  if (strcmp(build_version,wzd_get_version_long()) != 0) {
+    out_log(LEVEL_CRITICAL,"FATAL wzdftpd was NOT compiled for this library version\n");
+    out_log(LEVEL_CRITICAL,"FATAL   wzdftpd:     [%s]\n",WZD_VERSION_STR);
+    out_log(LEVEL_CRITICAL,"FATAL   libwzd-core: [%s]\n",wzd_get_version_long());
+
+    exit (-1);
+  }
+
   serverMainThreadProc(0);
 
   return 0;

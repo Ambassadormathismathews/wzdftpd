@@ -65,6 +65,16 @@ unsigned long mutex_set_key[SET_MUTEX_NUM] = {
 time_t          server_time;
 
 
+const char * wzd_get_version(void)
+{
+  return VERSION;
+}
+
+const char * wzd_get_version_long(void)
+{
+  return WZD_VERSION_STR;
+}
+
 wzd_config_t * getlib_mainConfig(void)
 { return mainConfig; }
 

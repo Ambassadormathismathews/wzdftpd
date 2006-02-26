@@ -1,3 +1,7 @@
+2006-02-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: compare server and core library version when starting
+
 2006-02-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: make vfs case insensitive on windows

@@ -73,6 +73,12 @@ void setlib_server_uid(int);
 void libtest(void);
 
 
+/** \brief Get server version (ex 0.7.0) */
+const char * wzd_get_version(void);
+
+/** \brief Get server version (build platform and server version) */
+const char * wzd_get_version_long(void);
+
 /** \brief remove a context from the list */
 int context_remove(List * context_list, wzd_context_t * context);
 
