@@ -107,8 +107,8 @@ static void backend_clear_struct(wzd_backend_def_t *backend)
     wzd_free(backend->param);
     backend->param = NULL;
   }
-  wzd_free(backend->name);
-  backend->name = NULL;
+  wzd_free(backend->filename);
+  backend->filename = NULL;
   backend->handle = NULL;
 
   wzd_free(backend->b);
@@ -242,10 +242,10 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
       memset(b,0,sizeof(wzd_backend_t));
       b->struct_version = STRUCT_BACKEND_VERSION;
 
-      if (backend != mainConfig->backend.name) /* strings must not overlap */
+      if (backend != mainConfig->backend.filename) /* strings must not overlap */
       {
-        wzd_free(mainConfig->backend.name);
-        mainConfig->backend.name = wzd_strdup(backend);
+        wzd_free(mainConfig->backend.filename);
+        mainConfig->backend.filename = wzd_strdup(backend);
       }
 
       ret = (*fcn)(b);
@@ -287,10 +287,10 @@ int backend_close(const char *backend)
   int (*fini_fcn)(void);
   int ret;
 
-  if (!backend || !mainConfig->backend.name) return 1;
+  if (!backend || !mainConfig->backend.filename) return 1;
 
   /* step 1: check that backend == mainConfig->backend.name */
-  if (strcmp(backend,mainConfig->backend.name)!=0) return 1;
+  if (strcmp(backend,mainConfig->backend.filename)!=0) return 1;
 
   /* step 2: call end function */
   if (mainConfig->backend.b) {

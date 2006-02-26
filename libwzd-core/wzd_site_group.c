@@ -146,7 +146,7 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     newgroup.ip_allowed[i][0]='\0';
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backend.name,str_tochar(groupname),&newgroup,_GROUP_ALL);
+  ret = backend_mod_group(mainConfig->backend.filename,str_tochar(groupname),&newgroup,_GROUP_ALL);
 
   str_deallocate(groupname);
 
@@ -237,7 +237,7 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   /* TODO XXX FIXME delete users belonging only to this group ? */
 
   /* commit changes to backend */
-  backend_mod_group(mainConfig->backend.name,str_tochar(groupname),NULL,_GROUP_ALL);
+  backend_mod_group(mainConfig->backend.filename,str_tochar(groupname),NULL,_GROUP_ALL);
   str_deallocate(groupname);
 
   ret = send_message_raw("200 Group deleted\r\n",context);
@@ -304,7 +304,7 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   str_deallocate(newgroupname);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backend.name,oldgroup->groupname,&group,_GROUP_GROUPNAME);
+  ret = backend_mod_group(mainConfig->backend.filename,oldgroup->groupname,&group,_GROUP_GROUPNAME);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -459,7 +459,7 @@ int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   strncpy(group->ip_allowed[i],str_tochar(ip),MAX_IP_LENGTH-1);
 
   /* commit to backend */
-  backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_IP);
+  backend_mod_group(mainConfig->backend.filename,group->groupname,group,_GROUP_IP);
 
   ret = send_message_with_args(200,context,"Group ip added");
   str_deallocate(ip);
@@ -534,7 +534,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
       return 0;
     }
     group->ip_allowed[ul][0] = '\0';
-    backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_IP);
+    backend_mod_group(mainConfig->backend.filename,group->groupname,group,_GROUP_IP);
     ret = send_message_with_args(200,context,"Group ip removed");
     return 0;
   } /* if (*ptr=='\0') */
@@ -547,7 +547,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
       group->ip_allowed[i][0] = '\0';
       /* commit to backend */
       /* FIXME backend name hardcoded */
-      backend_mod_group(mainConfig->backend.name,group->groupname,group,_USER_IP);
+      backend_mod_group(mainConfig->backend.filename,group->groupname,group,_USER_IP);
       ret = send_message_with_args(200,context,"Group ip removed");
       str_deallocate(ip);
       return 0;
@@ -616,7 +616,7 @@ int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   group->ratio = ratio;
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backend.name,group->groupname,group,_GROUP_RATIO);
+  ret = backend_mod_group(mainConfig->backend.filename,group->groupname,group,_GROUP_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -809,7 +809,7 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   }
 
   /* commit to backend */
-  ret = backend_mod_group(mainConfig->backend.name,str_tochar(groupname),group,mod_type);
+  ret = backend_mod_group(mainConfig->backend.filename,str_tochar(groupname),group,mod_type);
 
   str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
 

@@ -287,7 +287,7 @@ int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
   } while (ip);
 
   /* commit to backend */
-  return backend_mod_user(config->backend.name, username, user, _USER_IP);
+  return backend_mod_user(config->backend.filename, username, user, _USER_IP);
 }
 
 int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
@@ -342,7 +342,7 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
   } while (ip);
 
   /* commit to backend */
-  return backend_mod_user(config->backend.name, username, user, _USER_IP);
+  return backend_mod_user(config->backend.filename, username, user, _USER_IP);
 }
 
 int vars_user_set(const char *username, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
@@ -465,7 +465,7 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   }
 
   /* commit to backend */
-  ret = backend_mod_user(config->backend.name, username, user, mod_type);
+  ret = backend_mod_user(config->backend.filename, username, user, mod_type);
 
   return ret;
 }
@@ -528,7 +528,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   user.leech_slots=0;
 
   /* add it to backend */
-  ret = backend_mod_user(config->backend.name,username,&user,_USER_ALL);
+  ret = backend_mod_user(config->backend.filename,username,&user,_USER_ALL);
 
   return ret;
 }
@@ -645,7 +645,7 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
   }
 
   /* commit to backend */
-  ret = backend_mod_group(config->backend.name, groupname, group, mod_type);
+  ret = backend_mod_group(config->backend.filename, groupname, group, mod_type);
 
   return ret;
 }
@@ -696,7 +696,7 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
     newgroup.ip_allowed[i][0]='\0';
 
   /* add it to backend */
-  ret = backend_mod_group(config->backend.name,groupname,&newgroup,_GROUP_ALL);
+  ret = backend_mod_group(config->backend.filename,groupname,&newgroup,_GROUP_ALL);
 
   return (ret) ? 1 : 0;
 }

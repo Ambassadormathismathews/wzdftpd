@@ -141,7 +141,7 @@ void cfg_free(wzd_config_t * cfg)
   wzd_free(cfg->dir_message);
   wzd_free(cfg->xferlog_name);
   wzd_free(cfg->logdir);
-  wzd_free(cfg->backend.name);
+  wzd_free(cfg->backend.filename);
 
   event_mgr_free(cfg->event_mgr);
   wzd_free(cfg->event_mgr);
@@ -454,7 +454,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
       if (!ret) {
         if (cfg->backend.handle == NULL) {
           /*        i = backend_init(value);*/
-          cfg->backend.name = wzd_strdup(str_tochar(ptr));
+          cfg->backend.filename = wzd_strdup(str_tochar(ptr));
         } else { /* multiple backends ?? */
           ret=0;
         }

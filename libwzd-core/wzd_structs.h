@@ -39,6 +39,7 @@
 /****************** PRE DECLARATIONS **********************/
 
 typedef struct wzd_backend_t wzd_backend_t;
+typedef struct wzd_backend_def_t wzd_backend_def_t;
 
 typedef struct wzd_config_t wzd_config_t;
 
@@ -230,13 +231,14 @@ typedef struct {
  */
 
 
-typedef struct {
-  char * name; /**< \todo FIXME should be the _filename_, since the name is is struct wzd_backend_t */
+struct wzd_backend_def_t {
+  char * filename;
+
   char * param;
   void * handle;
 
   struct wzd_backend_t * b;
-} wzd_backend_def_t;
+};
 
 
 /************************ FLAGS ***************************/

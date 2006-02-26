@@ -642,7 +642,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   str_deallocate(new_pass);
 
   /* commit to backend */
-  ret = backend_mod_user(mainConfig->backend.name,user->username,user,mod_type);
+  ret = backend_mod_user(mainConfig->backend.filename,user->username,user,mod_type);
 
   if (ret)
     ret = send_message_with_args(501,context,"An error occurred during password change");
