@@ -159,7 +159,9 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 #endif
 
 /* Version */
-#define  WZD_VERSION_NUM "0.7.0 " WZD_BUILD_OPTS
+#define VERSION "0.7.0"
+
+#define  WZD_VERSION_NUM VERSION WZD_BUILD_OPTS
 #ifndef WZD_BUILD_NUM
 #define  WZD_BUILD_NUM __DATE__
 #endif
