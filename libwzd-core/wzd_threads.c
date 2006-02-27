@@ -133,7 +133,10 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
 #else
   int ret;
 
-  ret = WaitForSingleObject(thread->_t, INFINITE);
+  if (WaitForSingleObject(thread->_t, INFINITE) != WAIT_OBJECT_0)
+  {
+    out_log(LEVEL_CRITICAL, "Thread join failed.");
+  }
   CloseHandle(thread->_t);
 
   return ret;
