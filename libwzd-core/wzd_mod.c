@@ -647,6 +647,32 @@ void module_free(wzd_module_t ** module_list)
   *module_list = NULL;
 }
 
+/** \brief Get module name */
+const char * module_get_name(wzd_module_t * module)
+{
+  char ** module_name;
+
+  if (module->handle)
+    module_name = (char**)dlsym(module->handle,DL_PREFIX "module_name");
+  else
+    return NULL;
+
+  return (module_name) ? *module_name : NULL;
+}
+
+/** \brief Get module version */
+const char * module_get_version(wzd_module_t * module)
+{
+  char ** module_version;
+
+  if (module->handle)
+    module_version = (char**)dlsym(module->handle,DL_PREFIX "module_version");
+  else
+    return NULL;
+
+  return (module_version) ? *module_version : NULL;
+}
+
 unsigned int hook_get_current_reply_code(void)
 {
   return _reply_code;

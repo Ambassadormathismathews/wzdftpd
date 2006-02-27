@@ -102,6 +102,12 @@ int module_unload(wzd_module_t **module_list, const char *name);
 /* free module list */
 void module_free(wzd_module_t ** module_list);
 
+/** \brief Get module name */
+const char * module_get_name(wzd_module_t * module);
+
+/** \brief Get module version */
+const char * module_get_version(wzd_module_t * module);
+
 
 #define MODULE_NAME(n)    const char * module_name = #n
 #define MODULE_VERSION(v) const char * module_version = #v

@@ -42,6 +42,8 @@ int do_site_listmodules(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
   int ret;
   wzd_module_t * module_list;
   char buffer[4096];
+  const char * module_name;
+  const char * module_version;
 
   module_list = getlib_mainConfig()->module;
 
@@ -50,6 +52,16 @@ int do_site_listmodules(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
   while (module_list) {
     snprintf(buffer,sizeof(buffer)," %s\r\n",module_list->name);
     ret = send_message_raw(buffer,context);
+
+    module_name = module_get_name(module_list);
+    module_version = module_get_version(module_list);
+
+    snprintf(buffer,sizeof(buffer),"  -> name: %s\n",module_name ? module_name : "(null)");
+    ret = send_message_raw(buffer,context);
+
+    snprintf(buffer,sizeof(buffer),"  -> version: %s\n",module_version ? module_version : "(null)");
+    ret = send_message_raw(buffer,context);
+
     module_list = module_list->next_module;
   }
 

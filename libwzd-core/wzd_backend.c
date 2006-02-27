@@ -86,7 +86,7 @@ char *backend_get_version(wzd_backend_def_t *backend)
   else
     return NULL;
 
-  return strdup(*version_found);
+  return (*version_found);
 }
 
 char *backend_get_name(wzd_backend_def_t *backend)
@@ -98,7 +98,7 @@ char *backend_get_name(wzd_backend_def_t *backend)
   else
     return NULL;
 
-  return strdup(*backend_name);
+  return (*backend_name);
 }
 
 static void backend_clear_struct(wzd_backend_def_t *backend)

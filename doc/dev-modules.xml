@@ -78,6 +78,9 @@ libwzd_foo_la_SOURCES = foo_main.c
 
 #include &lt;libwzd-core/wzd_mod.h&gt;
 
+MODULE_NAME(foo);
+MODULE_VERSION(100);
+
 int WZD_MODULE_INIT(void)
 {
   out_log(LEVEL_INFO,"Module foo loaded\n");
@@ -94,6 +97,11 @@ void WZD_MODULE_CLOSE(void)
 module to the server: add new commands, add event hooks, etc. (using the
 provided API, look in the developer's reference for details) and initialize your
 own module.</para>
+
+<para>The <function>MODULE_NAME</function> and
+<function>MODULE_VERSION</function> are mandatory. The module version 100 is
+equivalent to 1.0.0 in the standard notation.
+</para>
 </section>
 
 <section><title>Building the module</title>
