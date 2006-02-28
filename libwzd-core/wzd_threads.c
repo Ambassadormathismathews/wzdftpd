@@ -131,14 +131,16 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
 #ifndef WIN32
   return pthread_join(thread->_t, thread_return);
 #else
-  int ret;
 
   if (WaitForSingleObject(thread->_t, INFINITE) != WAIT_OBJECT_0)
   {
     out_log(LEVEL_CRITICAL, "Thread join failed.");
+    CloseHandle(thread->_t);
+	  
+    return -1;
   }
   CloseHandle(thread->_t);
 
-  return ret;
+  return 0;
 #endif
 }
