@@ -23,55 +23,19 @@
  * with OpenSSL, and distribute the resulting executable, without including
  * the source code for OpenSSL in the source distribution.
  */
-#ifndef _LIBWZD_ZEROCONF_H
-#define _LIBWZD_ZEROCONF_H
+#ifndef _LIBWZD_ZEROCONF_NEW_H
+#define _LIBWZD_ZEROCONF_NEW_H
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #ifdef USE_BONJOUR
-#include <DNSServiceDiscovery/DNSServiceDiscovery.h>
-
-/* function prototypes */
-static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context);
-#endif
-#ifdef USE_AVAHI
-#include <stdlib.h>
-#include <assert.h>
-
-#include <avahi-client/client.h>
-#include <avahi-client/publish.h>
-
-#include <avahi-common/alternative.h>
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
-#include <avahi-common/error.h>
-
-/* function prototypes */
-static void create_services(AvahiClient *c);
-
-static void doderegistration(void);
-static void client_callback(AvahiClient *c,
-			AvahiClientState state, AVAHI_GCC_UNUSED void *userdata);
-static void entry_group_callback(AvahiEntryGroup *g,
-			AvahiEntryGroupState state, AVAHI_GCC_UNUSED void *userdata);
-
-/* Globals needed by Avahi */
-static AvahiEntryGroup *group = NULL;
-static AvahiSimplePoll *simple_poll = NULL;
-static AvahiClient *client = NULL;
-static char *g_name = NULL;
-static unsigned long g_port;
-#endif
-#ifdef USE_HOWL
-#include <howl.h>
-
-/* howl globals */
-static sw_discovery discovery;
-
-/* function prototypes */
-static sw_result HOWL_API
-my_service_reply(sw_discovery discovery,
-                 sw_discovery_oid oid,
-                 sw_discovery_publish_status status,
-                 sw_opaque extra);
+#include "libwzd_bonjour.h"
+#elif defined (USE_AVAHI)
+#include "libwzd_avahi.h"
+#elif defined (USE_HOWL)
+#include "libwzd_howl.h"
 #endif
 
 #endif   /* _LIBWZD_ZEROCONF_H */
