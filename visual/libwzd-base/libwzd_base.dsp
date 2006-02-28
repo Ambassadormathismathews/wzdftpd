@@ -129,6 +129,10 @@ SOURCE="..\..\libwzd-base\stack.h"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-base\stdint.h"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-base\wzd_strlcat.h"
 # End Source File
 # Begin Source File

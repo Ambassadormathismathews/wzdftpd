@@ -148,7 +148,7 @@ SOURCE="..\..\libwzd-core\wzd_cookie_lex.l"
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\libwzd-core
+InputDir=\projects\wzdftpd-trunk\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
@@ -161,7 +161,7 @@ InputName=wzd_cookie_lex
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\HOMEDIR\wzdftpd\libwzd-core
+InputDir=\projects\wzdftpd-trunk\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 

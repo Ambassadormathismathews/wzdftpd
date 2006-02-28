@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "libwzd"=.\libwzd\libwzd.dsp - Package Owner=<4>
+Project: "libwzd"=".\libwzd\libwzd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -60,7 +60,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mod_debug"=.\modules\mod_debug\mod_debug.dsp - Package Owner=<4>
+Project: "mod_debug"=".\modules\mod_debug\mod_debug.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -81,7 +81,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "mysql"=.\BACKENDS\mysql\mysql.dsp - Package Owner=<4>
+Project: "mysql"=".\BACKENDS\mysql\mysql.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -96,7 +96,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "perl"=.\MODULES\perl\perl.dsp - Package Owner=<4>
+Project: "perl"=".\MODULES\perl\perl.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -108,7 +108,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "pgsql"=.\BACKENDS\pgsql\pgsql.dsp - Package Owner=<4>
+Project: "pgsql"=".\BACKENDS\pgsql\pgsql.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -120,7 +120,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "plaintext"=.\backends\plaintext\plaintext.dsp - Package Owner=<4>
+Project: "plaintext"=".\backends\plaintext\plaintext.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -135,7 +135,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "sfv"=.\MODULES\sfv\sfv.dsp - Package Owner=<4>
+Project: "sfv"=".\MODULES\sfv\sfv.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -147,22 +147,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "siteconfig"=.\TOOLS\siteconfig\siteconfig.dsp - Package Owner=<4>
-
-Package=<5>
-{{{
-}}}
-
-Package=<4>
-{{{
-    Begin Project Dependency
-    Project_Dep_Name libwzd
-    End Project Dependency
-}}}
-
-###############################################################################
-
-Project: "siteuptime"=.\TOOLS\siteuptime\siteuptime.dsp - Package Owner=<4>
+Project: "siteconfig"=".\TOOLS\siteconfig\siteconfig.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -177,7 +162,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "sitewho"=.\TOOLS\sitewho\sitewho.dsp - Package Owner=<4>
+Project: "siteuptime"=".\TOOLS\siteuptime\siteuptime.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -192,7 +177,22 @@ Package=<4>
 
 ###############################################################################
 
-Project: "tcl"=.\MODULES\tcl\tcl.dsp - Package Owner=<4>
+Project: "sitewho"=".\TOOLS\sitewho\sitewho.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name libwzd
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "tcl"=".\MODULES\tcl\tcl.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -204,7 +204,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "wzdftpd"=.\wzdftpd\wzdftpd.dsp - Package Owner=<4>
+Project: "wzdftpd"=".\wzdftpd\wzdftpd.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -215,6 +215,18 @@ Package=<4>
     Begin Project Dependency
     Project_Dep_Name libwzd_core
     End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "zeroconf"=".\modules\zeroconf\zeroconf.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################
