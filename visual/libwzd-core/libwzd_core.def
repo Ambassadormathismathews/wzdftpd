@@ -150,6 +150,8 @@ EXPORTS
 	module_add
 	module_check
 	module_free
+	module_get_name
+	module_get_version
 	module_load
 	module_unload
 	msg_tab
