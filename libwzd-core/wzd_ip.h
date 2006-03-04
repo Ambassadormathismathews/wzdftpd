@@ -71,7 +71,7 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
  * Caller must free \a ip with wzd_free()
  * \return 0 if ok
  */
-int hostnametoip(const char *hostname, const char **ip, size_t *length, net_family_t *family);
+int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *family);
 
 /** \brief Convert a numeric ip to a hostname
  *
