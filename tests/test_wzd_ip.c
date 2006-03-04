@@ -78,6 +78,38 @@ int main(int argc, char *argv[])
 
 
 
+  /* hostnametoip */
+  {
+    const char * hostname;
+    char * out_buffer;
+    size_t out_length;
+    net_family_t family = WZD_INET_NONE;
+    int ret;
+
+    hostname = "www.kame.net";
+    ret = hostnametoip(hostname,&out_buffer,&out_length,&family);
+    if (ret != 0) {
+      fprintf(stderr,"Error while using hostnametoip\n");
+    }
+    wzd_free(out_buffer);
+
+    hostname = "www.google.fr";
+    ret = hostnametoip(hostname,&out_buffer,&out_length,&family);
+    if (ret != 0) {
+      fprintf(stderr,"Error while using hostnametoip\n");
+    }
+    wzd_free(out_buffer);
+
+    hostname = "213.228.0.42";
+    family = WZD_INET_NONE;
+    ret = iptohostname(hostname,family,&out_buffer,&out_length);
+    if (ret != 0) {
+      fprintf(stderr,"Error while using iptohostname\n");
+    }
+    wzd_free(out_buffer);
+  }
+
+  /* iptohostname */
 
 
   if (c1 != C1) {

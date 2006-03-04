@@ -365,12 +365,6 @@ typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } t
 
 typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t;
 
-typedef enum {
-  WZD_INET_NONE = 0,
-  WZD_INET4     = 2,  /* AF_INET */
-  WZD_INET6     = 10, /* AF_INET6 */
-} net_family_t;
-
 /** @brief SSL connection objects */
 typedef struct {
   SSL *         obj;

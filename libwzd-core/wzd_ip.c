@@ -468,3 +468,199 @@ int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
 
   return 0;
 }
+
+int hostnametoip(const char *hostname, const char **ip, size_t *length, net_family_t *family)
+{
+#if defined(HAVE_GETADDRINFO)
+  {
+    struct addrinfo * result = NULL;
+    int error;
+    const char * ptr;
+    char ip_buf[128];
+    struct sockaddr_in * addr4;
+    struct sockaddr_in6 * addr6;
+
+    error = getaddrinfo(hostname,NULL,NULL,&result);
+    if (error) {
+      out_log(LEVEL_NORMAL,"Error using getaddrinfo: %s\n",gai_strerror(error));
+      return -1;
+    }
+    out_err(LEVEL_FLOOD,"Family: %d\n",result->ai_family);
+    switch (result->ai_family) {
+      case PF_INET:
+        if (family) *family = WZD_INET4;
+        addr4 = (struct sockaddr_in*)result->ai_addr;
+        ptr = inet_ntop(AF_INET,(void*)&addr4->sin_addr,ip_buf,sizeof(ip_buf));
+        break;
+      case PF_INET6:
+        if (family) *family = WZD_INET6;
+        addr6 = (struct sockaddr_in6*)result->ai_addr;
+        ptr = inet_ntop(AF_INET6,addr6->sin6_addr.s6_addr,ip_buf,sizeof(ip_buf));
+        break;
+      default:
+        out_log(LEVEL_NORMAL,"getaddrinfo: unsupported family %d\n",result->ai_family);
+        freeaddrinfo(result);
+        return -1;
+    }
+    if (ptr == NULL) {
+      out_log(LEVEL_NORMAL,"Error converting address with inet_ntop\n");
+      freeaddrinfo(result);
+      return -1;
+    }
+    out_err(LEVEL_FLOOD,"Address: %s\n",ip_buf);
+    if (ip) *ip = wzd_strdup(ip_buf);
+    if (length) *length = strlen(ip_buf);
+
+    freeaddrinfo(result);
+    return 0;
+  }
+#else
+  {
+    struct hostent * hent;
+    const char * ptr;
+    char ip_buf[128];
+
+    /** \bug FIXME gethostbyname is _not_ thread-safe */
+    hent = gethostbyname(hostname);
+    if (hent == NULL) {
+      out_log(LEVEL_NORMAL,"Error using gethostbyname: %s\n",hstrerror(h_errno));
+      return -1;
+    }
+
+    switch (hent->h_addrtype) {
+      case AF_INET:
+        if (family) *family = WZD_INET4;
+        ptr = inet_ntop(AF_INET,hent->h_addr,ip_buf,sizeof(ip_buf));
+        break;
+      case AF_INET6:
+        if (family) *family = WZD_INET6;
+        ptr = inet_ntop(AF_INET6,hent->h_addr,ip_buf,sizeof(ip_buf));
+        break;
+      default:
+        out_log(LEVEL_NORMAL,"gethostbyname: unsupported family %d\n",hent->h_addrtype);
+        return -1;
+    }
+
+    if (ptr == NULL) {
+      out_log(LEVEL_NORMAL,"Error converting address with inet_ntop\n");
+      return -1;
+    }
+    out_err(LEVEL_FLOOD,"Address: %s\n",ip_buf);
+    if (ip) *ip = wzd_strdup(ip_buf);
+    if (length) *length = strlen(ip_buf);
+
+    return 0;
+  }
+#endif
+  return -1;
+}
+
+int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *length)
+{
+#if defined(HAVE_GETADDRINFO) && defined(HAVE_GETNAMEINFO)
+  {
+    char tmphost[NI_MAXHOST];
+    struct addrinfo * result = NULL;
+    struct addrinfo hints;
+    int error;
+    int ai_family;
+
+    if (hostname) *hostname = NULL;
+
+    switch (family) {
+      case WZD_INET_NONE:
+        ai_family = AF_UNSPEC;
+        break;
+      case WZD_INET4:
+        ai_family = AF_INET;
+        break;
+      case WZD_INET6:
+        ai_family = AF_INET6;
+        break;
+      default:
+        out_log(LEVEL_NORMAL,"iptohostname: unsupported family %d\n",family);
+        return -1;
+    }
+
+    memset(&hints,0,sizeof(hints));
+    hints.ai_family = ai_family;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_CANONNAME;
+
+    error = getaddrinfo(ip, NULL, &hints, &result);
+    if (error) {
+      out_log(LEVEL_NORMAL,"Error using getaddrinfo: %s\n",gai_strerror(error));
+      return -1;
+    }
+
+    error = getnameinfo (result->ai_addr, result->ai_addrlen, tmphost, sizeof(tmphost), NULL, 0, 0);
+    if (error) {
+      out_log(LEVEL_NORMAL,"Error using getnameinfo: %s\n",gai_strerror(error));
+      freeaddrinfo(result);
+      return -1;
+    }
+
+    out_err(LEVEL_FLOOD,"AddressToIP: %s\n",tmphost);
+    if (hostname) *hostname = wzd_strdup(tmphost);
+    if (length) *length = strlen(tmphost);
+
+    freeaddrinfo(result);
+    return 0;
+  }
+#else
+  {
+    int ai_family;
+    struct hostent * hent;
+    char ip_buffer[128];
+
+    if (hostname) *hostname = NULL;
+
+    switch (family) {
+      case WZD_INET_NONE:
+        /* guess family */
+        if (strchr(ip,':')!=NULL) {
+          family = WZD_INET6;
+          ai_family = AF_INET6;
+        } else {
+          family = WZD_INET4;
+          ai_family = AF_INET;
+        }
+        break;
+      case WZD_INET4:
+        ai_family = AF_INET;
+        break;
+      case WZD_INET6:
+        ai_family = AF_INET6;
+        break;
+      default:
+        out_log(LEVEL_NORMAL,"iptohostname: unsupported family %d\n",family);
+        return -1;
+    }
+
+    memset(ip_buffer,0,sizeof(ip_buffer));
+    /* convert ip (string) to ip (numeric form) */
+    hent = gethostbyname(ip);
+    if (hent == NULL) {
+      out_log(LEVEL_NORMAL,"Error using gethostbyname: %s\n",hstrerror(h_errno));
+      return -1;
+    }
+    memcpy(ip_buffer,hent->h_addr,(family==WZD_INET6) ? 16 : 4);
+
+
+    hent = gethostbyaddr(ip_buffer,(family==WZD_INET6)?16:4,ai_family);
+
+    if (hent == NULL) {
+      out_log(LEVEL_NORMAL,"Error using gethostbyaddr: %s\n",hstrerror(h_errno));
+      return -1;
+    }
+
+    out_err(LEVEL_FLOOD,"AddressToIP: %s\n",hent->h_name);
+    if (hostname) *hostname = wzd_strdup(hent->h_name);
+    if (length) *length = strlen(hent->h_name);
+
+    return 0;
+  }
+#endif
+  return -1;
+}

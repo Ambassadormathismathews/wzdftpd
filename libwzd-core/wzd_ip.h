@@ -25,6 +25,12 @@
 #ifndef __WZD_IP_H__
 #define __WZD_IP_H__
 
+typedef enum {
+  WZD_INET_NONE = 0,
+  WZD_INET4     = 2,  /* AF_INET */
+  WZD_INET6     = 10, /* AF_INET6 */
+} net_family_t;
+
 typedef struct _wzd_ip_t wzd_ip_t;
 
 /** \brief Allocate and initialize a new \a wzd_ip_t struct
@@ -59,5 +65,21 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);
 
 int group_ip_add(wzd_group_t * group, const char *newip);
 int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
+
+/** \brief Convert a host name to a numeric ip
+ *
+ * Caller must free \a ip with wzd_free()
+ * \return 0 if ok
+ */
+int hostnametoip(const char *hostname, const char **ip, size_t *length, net_family_t *family);
+
+/** \brief Convert a numeric ip to a hostname
+ *
+ * If \a family is \a WZD_INET_NONE, the family is guessed
+ *
+ * Caller must free \a hostname with wzd_free()
+ * \return 0 if ok
+ */
+int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *length);
 
 #endif /* __WZD_IP_H__ */
