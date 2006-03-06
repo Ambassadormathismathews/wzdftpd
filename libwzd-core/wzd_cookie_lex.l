@@ -636,6 +636,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
                   && !strchr(me->flags,FLAG_SITEOP)
                   && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                 continue;
+              /* check if user is ultrahidden */
+              if (loop_user->flags && strchr(loop_user->flags,FLAG_ULTRAHIDDEN)
+                  && (me)
+                  && !strchr(me->flags,FLAG_SITEOP)
+                  && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
+                continue;
             }
             if (out_buffer)
               cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
@@ -657,6 +663,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
             loop_user = GetUserByID(uid_list[i]);
             current_user = loop_user;
             if (loop_user && loop_user->username[0] != '\0') {
+
+              /* check if user is ultrahidden */
+             if (loop_user->flags && strchr(loop_user->flags,FLAG_ULTRAHIDDEN)
+               && (me)
+               && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
+               continue;
               if (out_buffer)
                 cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
@@ -703,6 +715,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
               loop_user = GetUserByID(uid_list[i]);
               current_user = loop_user;
               if (loop_user && loop_user->username[0] != '\0' && is_user_in_group(loop_user,gid)==1) {
+
+                /* check if user is ultrahidden */
+                if (loop_user->flags && strchr(loop_user->flags,FLAG_ULTRAHIDDEN)
+                    && (me)
+                    && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
+                  continue;
                 if (out_buffer)
                   cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
                 else

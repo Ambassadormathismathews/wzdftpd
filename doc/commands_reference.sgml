@@ -316,11 +316,14 @@ site flags [&lt;user&gt;] [&lt;newflags&gt;]
  <row><entry>SEE_IP</entry><entry>s</entry><entry>User is allowed to see other's ip</entry></row>
  <row><entry>SEE_HOME</entry><entry>t</entry><entry>User is allowed to see other's home</entry></row>
  <row><entry>HIDDEN</entry><entry>H</entry><entry>User will not appear in site who</entry></row>
+ <row><entry>ULTRAHIDDEN</entry><entry>h</entry><entry>User will not appear anywhere, even for siteops</entry></row>
  <row><entry>TLS</entry><entry>k</entry><entry>User will be forced to use TLS/SSL connections</entry></row>
  <row><entry>TLS_DATA</entry><entry>K</entry><entry>User will be forced to use TLS/SSL data connections</entry></row>
  <row><entry>ANONYMOUS</entry><entry>A</entry><entry>User cannot make any modifications</entry></row>
  <row><entry>COLOR</entry><entry>5</entry><entry>Enable the use of color (toggle with
  <link linkend='site_color'>site color</link>)</entry></row>
+ <row><entry>FULLPATH</entry><entry>f</entry><entry>Show the complete (system)
+ path to the user (WIN32 only)</entry></row>
  </tbody>
  </tgroup>
 </table>

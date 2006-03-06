@@ -243,17 +243,21 @@ struct wzd_backend_def_t {
 
 /************************ FLAGS ***************************/
 
-#define	FLAG_SITEOP	'O'
-#define	FLAG_DELETED	'D'
-#define	FLAG_IDLE	'I'
-#define	FLAG_SEE_IP	's'
-#define	FLAG_SEE_HOME	't'
-#define	FLAG_HIDDEN	'H'
-#define	FLAG_GADMIN	'G'
-#define	FLAG_TLS	'k'	/**< explicit and implicit connections only */
-#define	FLAG_TLS_DATA	'K'	/**< user must use encrypted data connection */
-#define	FLAG_ANONYMOUS	'A'	/**< anonymous users cannot modify filesystem */
-#define	FLAG_COLOR	'5'	/**< enable use of colors */
+enum wzd_flag_t {
+  FLAG_ANONYMOUS = 'A', /**< anonymous users cannot modify filesystem */
+  FLAG_DELETED = 'D',
+  FLAG_FULLPATH = 'f',  /**< show the complete path to the user */
+  FLAG_GADMIN = 'G',
+  FLAG_HIDDEN = 'H',
+  FLAG_ULTRAHIDDEN = 'h',
+  FLAG_IDLE = 'I',
+  FLAG_TLS = 'k',       /**< explicit and implicit connections only */
+  FLAG_TLS_DATA = 'K',  /**< user must use encrypted data connection */
+  FLAG_SITEOP = 'O',
+  FLAG_SEE_IP = 's',
+  FLAG_SEE_HOME = 't',
+  FLAG_COLOR = '5',     /**< enable use of colors */
+};
 
 /************************ MODULES *************************/
 

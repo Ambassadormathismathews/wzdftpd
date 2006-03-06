@@ -1,3 +1,9 @@
+2006-03-06  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	Merge patches from JGS:
+	* feature: new flag ultrahidden to hide user completely
+	* feature: new flag fullpath to show logical drives on windows
+
 2006-02-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: compare server and core library version when starting

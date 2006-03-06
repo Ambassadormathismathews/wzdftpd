@@ -500,53 +500,6 @@ printf("Converted to: '%s'\n",path);
   return 0;
 }
 
-int checkabspath(const char *wanted_path, char *path, wzd_context_t *context)
-{
-  char allowed[WZD_MAX_PATH];
-  char cmd[WZD_MAX_PATH];
-
-  {
-    snprintf(allowed,strlen(allowed),"%s/",GetUserByID(context->userid)->rootpath);
-    if (strcmp(allowed,"//")==0) allowed[1]='\0';
-    snprintf(cmd,strlen(cmd),"%s%s",GetUserByID(context->userid)->rootpath,context->currentpath);
-  }
-  if (cmd[strlen(cmd)-1] != '/')
-    strcat(cmd,"/");
-  if (wanted_path) {
-#ifndef _MSC_VER
-    if (wanted_path[0]!='/')
-#else
-    if (wanted_path[0]!='/' && wanted_path[1]!=':')
-#endif
-    {
-      return -1; /* we need absolute path, but it doesn't begin with / */
-    } else {
-      strcpy(cmd,wanted_path);
-    }
-  }
-/*#ifdef DEBUG
-printf("Checking path '%s' (cmd)\nallowed = '%s'\n",cmd,allowed);
-#endif*/
-/*  if (!realpath(cmd,path)) return 1;*/
-  if (!stripdir(cmd,path,WZD_MAX_PATH)) return 1;
-/*#ifdef DEBUG
-printf("Converted to: '%s'\n",path);
-#endif*/
-  if (path[strlen(path)-1] != '/')
-    strcat(path,"/");
-  strcpy(cmd,path);
-  cmd[strlen(allowed)]='\0';
-  if (path[strlen(cmd)-1] != '/')
-    strcat(cmd,"/");
-  /* check if user is allowed to even see the path */
-  /* \bug this breaks the SFV module on VFS ! */
-  /* if (strncmp(cmd,allowed,strlen(allowed))) return 1; */
-  /* in the case of VFS, we need to convert here to a realpath */
-  vfs_replace(mainConfig->vfs,path,WZD_MAX_PATH,context);
-  if (strlen(path)>1 && path[strlen(path)-1] == '/') path[strlen(path)-1]='\0';
-  return 0;
-}
-
 /* FIXME: does not yet support vfs */
 int path_abs2rel(const char *abs, char *rel, int rel_len, wzd_context_t *context)
 {
@@ -614,8 +567,14 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   ftppath = malloc(WZD_MAX_PATH+1);
   syspath = malloc(WZD_MAX_PATH+1);
 
-  strncpy(syspath, user->rootpath, WZD_MAX_PATH);
-  sys_offset = strlen(syspath);
+#ifdef WIN32
+  if (strchr(user->flags,FLAG_FULLPATH) )  memset(syspath,0,sizeof(syspath));
+  else
+#endif
+  {
+    strncpy(syspath, user->rootpath, WZD_MAX_PATH);
+    sys_offset = strlen(syspath);
+  }
 
   /* if wanted_path is relative */
   if (wanted_path[0] != '/') {
@@ -658,8 +617,15 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   ptr_ftppath = ftppath;
   if (*ptr_ftppath == '/')
     ptr_ftppath++;
-  if (syspath[sys_offset-1] != '/')
-    syspath[sys_offset++] = '/';
+
+#ifdef WIN32
+  if (strchr(user->flags,FLAG_FULLPATH) ) sys_offset=0;
+  else
+#endif
+  {
+    if (syspath[sys_offset-1] != '/')
+      memcpy(&syspath[sys_offset++],"/\0",2); /*use either strcat or memcpy with terminating 0 or corruption can occur*/
+  }
 
   while (ptr_ftppath[0] != '\0')
   {
@@ -785,7 +751,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
      */
     if (S_ISDIR(s.mode) || S_ISLNK(s.mode)) {
       if (syspath[sys_offset-1] != '/')
-        syspath[sys_offset++] = '/';
+        memcpy(&syspath[sys_offset++],"/\0",2); /*use either strcat or memcpy with terminating 0 or corruption can occur*/
       if (_checkFileForPerm(syspath,".",RIGHT_CWD,user)) {
         /* no permissions ! */
         free(ftppath);

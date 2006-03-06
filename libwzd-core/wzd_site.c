@@ -1479,6 +1479,7 @@ void do_site_user(const char *command_line, wzd_context_t * context)
   wzd_user_t user;
   int uid;
   wzd_string_t * str;
+  wzd_user_t * me = NULL;
 
   username = command_line;
   if (!username) {
@@ -1487,6 +1488,14 @@ void do_site_user(const char *command_line, wzd_context_t * context)
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
+    ret = send_message_with_args(501,context,"User does not exists");
+    return;
+  }
+  if ( strchr(user.flags,FLAG_ULTRAHIDDEN )&&
+       me != NULL &&
+       (strcmp(username,me->username)!=0)/* do not hide to self ! */
+     ) {
+    /* for siteops we could send a different message, like 'user is hidden' */
     ret = send_message_with_args(501,context,"User does not exists");
     return;
   }

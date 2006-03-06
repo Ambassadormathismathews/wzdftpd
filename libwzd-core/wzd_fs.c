@@ -284,10 +284,12 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
     sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    wbuffer = malloc(sz * sizeof(wchar_t) + 3);
+    wbuffer = malloc(sz * sizeof(wchar_t) + 5);
 
     ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
     if (ret <= 0) { free(wbuffer); return -1; }
+
+    if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
 
     ret = -1;
     if (!_wstati64(wbuffer,&st)) {
@@ -339,10 +341,12 @@ int fs_file_stat(const char *pathname, fs_filestat_t * s)
     sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    wbuffer = malloc(sz * sizeof(wchar_t) + 3);
+    wbuffer = malloc(sz * sizeof(wchar_t) + 5);
 
     ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
     if (ret <= 0) { free(wbuffer); return -1; }
+
+    if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
 
     ret = -1;
     if (!_wstati64(wbuffer,&st)) {
