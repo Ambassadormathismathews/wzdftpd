@@ -3251,6 +3251,9 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
 
   /* initial dir */
   strcpy(context->currentpath,"/");
+#ifdef WIN32
+  if (strchr(user->flags,FLAG_FULLPATH) ) strcat(context->currentpath,user->rootpath);
+#endif
   if (do_chdir(context->currentpath,context))
   {
     /* could not chdir to home !!!! */

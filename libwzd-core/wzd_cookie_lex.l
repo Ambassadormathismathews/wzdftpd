@@ -639,7 +639,6 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
               /* check if user is ultrahidden */
               if (loop_user->flags && strchr(loop_user->flags,FLAG_ULTRAHIDDEN)
                   && (me)
-                  && !strchr(me->flags,FLAG_SITEOP)
                   && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                 continue;
             }

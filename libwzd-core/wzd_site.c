@@ -1472,7 +1472,7 @@ int do_site_unlock(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 /** user username
  */
 
-void do_site_user(const char *command_line, wzd_context_t * context)
+int do_site_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   const char * username;
   int ret;
@@ -1481,34 +1481,37 @@ void do_site_user(const char *command_line, wzd_context_t * context)
   wzd_string_t * str;
   wzd_user_t * me = NULL;
 
-  username = command_line;
+  if (context) me = GetUserByID(context->userid); /*get self*/
+
+  username = str_tochar(command_line);
   if (!username) {
     do_site_help("user",context);
-    return;
+    return 0;
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
     ret = send_message_with_args(501,context,"User does not exists");
-    return;
+    return 0;
   }
   if ( strchr(user.flags,FLAG_ULTRAHIDDEN )&&
-       me != NULL &&
+       (me) &&
        (strcmp(username,me->username)!=0)/* do not hide to self ! */
      ) {
     /* for siteops we could send a different message, like 'user is hidden' */
     ret = send_message_with_args(501,context,"User does not exists");
-    return;
+    return 0;
   }
 
   str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_user",NULL);
   if (!str) {
     ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_user does not exists");
-    return;
+    return 0;
   }
 
   do_site_print_file(str_tochar(str),&user,NULL,context);
 
   str_deallocate(str);
+  return 0;
 }
 
 /********************* do_site_utime ***********************/
@@ -2139,11 +2142,6 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
   if (strcmp(s_token,"site_reopen")==0) {
     mainConfig->site_closed = 0;
     ret = send_message_with_args(250,context,"SITE: ","server is now opened");
-    return 0;
-  } else
-/******************* USER ***********************/
-  if (strcmp(s_token,"site_user")==0) {
-    do_site_user(str_tochar(command_line),context);
     return 0;
   } else
 /******************* UPTIME *********************/

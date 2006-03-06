@@ -54,9 +54,9 @@ int do_site_vars(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
 int do_site_vars_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_vars_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_version(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
-int do_site_vfsls(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_vfsadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_vfsdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
 #endif /* __WZD_SITE__ */

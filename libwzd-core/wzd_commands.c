@@ -266,7 +266,7 @@ int commands_add_defaults(CHTBL * _ctable)
 #endif
   if (commands_add(_ctable,"site_unlock",do_site_unlock,NULL,TOK_SITE_UNLOCK)) return -1;
   if (commands_add(_ctable,"site_uptime",do_site,NULL,TOK_SITE_UPTIME)) return -1;
-  if (commands_add(_ctable,"site_user",do_site,NULL,TOK_SITE_USER)) return -1;
+  if (commands_add(_ctable,"site_user",do_site_user,NULL,TOK_SITE_USER)) return -1;
   if (commands_add(_ctable,"site_utime",do_site_utime,NULL,TOK_SITE_UTIME)) return -1;
   if (commands_add(_ctable,"site_vars",do_site_vars,NULL,TOK_SITE_VARS)) return -1;
   if (commands_add(_ctable,"site_vars_group",do_site_vars_group,NULL,TOK_SITE_VARS_GROUP)) return -1;
