@@ -523,7 +523,10 @@ int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *
     /** \bug FIXME gethostbyname is _not_ thread-safe */
     hent = gethostbyname(hostname);
     if (hent == NULL) {
+      /* TODO: fix this. it currently breaks win32 compiles */
+#ifndef WIN32
       out_log(LEVEL_NORMAL,"Error using gethostbyname: %s\n",hstrerror(h_errno));
+#endif
       return -1;
     }
 
@@ -642,7 +645,10 @@ int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *l
     /* convert ip (string) to ip (numeric form) */
     hent = gethostbyname(ip);
     if (hent == NULL) {
+      /* TODO: fix this it does not compile on win32 */
+#ifndef WIN32
       out_log(LEVEL_NORMAL,"Error using gethostbyname: %s\n",hstrerror(h_errno));
+#endif
       return -1;
     }
     memcpy(ip_buffer,hent->h_addr,(family==WZD_INET6) ? 16 : 4);
@@ -651,7 +657,10 @@ int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *l
     hent = gethostbyaddr(ip_buffer,(family==WZD_INET6)?16:4,ai_family);
 
     if (hent == NULL) {
+      /* TODO: fix this it does not compile on win32 */
+#ifndef WIN32
       out_log(LEVEL_NORMAL,"Error using gethostbyaddr: %s\n",hstrerror(h_errno));
+#endif
       return -1;
     }
 
