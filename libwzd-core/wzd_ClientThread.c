@@ -2628,11 +2628,14 @@ int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   context->resume = 0;
   if (strcmp(str_tochar(name),"cdup")==0) param="..";
 
-  if (!param) {
+  if (param == NULL) {
     param = "/";
   }
   /* avoir error if current is "/" and action is ".." */
-  if (param && !strcmp("/",context->currentpath) && !strcmp("..",param)) {
+  if (!strcmp("..",param)
+      && ( !strcmp("/",context->currentpath)
+         || ( (strlen(context->currentpath)<=3) && (context->currentpath[2]==':') ) )
+      ) {
     ret = send_message_with_args(250,context,context->currentpath," now current directory.");
     return E_OK;
   }
