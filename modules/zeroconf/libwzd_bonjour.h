@@ -47,12 +47,12 @@ static void DNSSD_API
 #else
 static void
 #endif
-publish_reply(DNSServiceRef sdRef,
-              const DNSServiceFlags flags,
-              DNSServiceErrorType errorCode,
-              const char *name,
-              const char *regtype,
-              const char *domain,
-              void *context);
+publish_reply(DNSServiceRef,
+              const DNSServiceFlags,
+              DNSServiceErrorType,
+              const char *,
+              const char *,
+              const char *,
+              void *);
 
 #endif   /* _LIBWZD_BONJOUR_H */

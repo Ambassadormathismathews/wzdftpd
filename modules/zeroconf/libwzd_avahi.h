@@ -75,9 +75,9 @@ int av_zeroconf_unregister(void*);
 void av_zeroconf_shutdown(void*);
 void av_zeroconf_lock(void *);
 void av_zeroconf_unlock(void *);
-static void publish_reply(AvahiEntryGroup *g,
-                          AvahiEntryGroupState state,
-                          void *userdata);
+static void publish_reply(AvahiEntryGroup *,
+                          AvahiEntryGroupState,
+                          void *);
 
 #endif   /* _LIBWZD_AVAHI_H */
 
