@@ -204,6 +204,10 @@ int FCN_INIT(const char *arg)
 {
   int ret;
 
+  /* defaults to the standard log */
+  if (log_get(PLAINTEXT_LOG_CHANNEL) == -1)
+    log_set(PLAINTEXT_LOG_CHANNEL,log_get(LEVEL_NORMAL));
+
   USERS_FILE = malloc(256);
 
   user_count_max = HARD_DEF_USER_MAX; /* XXX FIXME remove me */
