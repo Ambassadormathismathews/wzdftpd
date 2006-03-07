@@ -29,7 +29,6 @@ EXPORTS
 	changepass_crypt
 	charset_detect_local
 	check_auth
-	checkabspath
 	checkpath
 	checkpath_new
 	chop
