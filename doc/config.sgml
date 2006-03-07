@@ -331,6 +331,16 @@ param = /path/to/users
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_backup_config'><term>backup config (default: false) </term>
+<listitem>
+<para>Make a backup of the configuration before saving changes. The backup will
+have the same name, with ".old" appended.</para>
+<para>You must ensure that the user running the ftp server has the permission
+the create a file in the server's configuration directory.</para>
+<screen>backup config = true</screen>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_check_ip_before_login'><term>check_ip_before_login (default:
 0)</term>
 <listitem>

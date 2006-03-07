@@ -5,6 +5,9 @@
 # <name> = <value>
 # (for windows users: without the < > ;-)
 
+# backup config when saving changes (default: false)
+backup config = true
+
 # dynamic ip (default: 0)
 # if you specify 1 here, the server will try to use your system to detect
 # ip changes

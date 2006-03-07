@@ -1395,15 +1395,25 @@ int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 {
   wzd_string_t * data = NULL;
   size_t length = 0, written;
-  char * filename = NULL;
   int fd;
-  size_t name_length;
+  int do_backup;
+  int err = 0;
 
-  /* XXX backup the previous file XXX */
+  do_backup = config_get_boolean(mainConfig->cfg_file, "GLOBAL", "backup config", &err);
+  if (err == CF_ERROR_NOT_FOUND) do_backup = 0; /* default: no backup */
+  else if (err != CF_OK) {
+    out_log(LEVEL_HIGH,"ERROR Could not save config (error while getting option 'backup config')\n");
+    send_message_with_args(501,context,"Cannot save server config");
+    return -1;
+  }
+
+  if (do_backup)
   {
     int backup_fd;
     char buffer[1024];
     ssize_t ret;
+    char * filename = NULL;
+    size_t name_length;
 
     name_length = strlen(mainConfig->config_filename);
     filename = malloc(name_length + 6);
@@ -1425,7 +1435,6 @@ int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     close(fd);
     close(backup_fd);
   }
-  /* XXX end of backup XXX */
 
   out_log(LEVEL_NORMAL,"INFO saving config to %s\n",mainConfig->config_filename);
 
