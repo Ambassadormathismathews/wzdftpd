@@ -778,6 +778,7 @@ static inline void _str_set_min_size(wzd_string_t *str, size_t length)
 
       if (!str->buffer) {
         str->buffer = wzd_malloc(length);
+        str->buffer[0] = '\0';
       } else {
         if ( (ptr = wzd_realloc(str->buffer,length)) ) {
           str->buffer = ptr;
