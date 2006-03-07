@@ -1393,16 +1393,68 @@ int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
 /********************* do_site_savecfg *********************/
 int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-  send_message_with_args(501,context,"Not yet implemented");
-  return 1;
+  wzd_string_t * data = NULL;
+  size_t length = 0, written;
+  char * filename = NULL;
+  int fd;
+  size_t name_length;
 
-#if 0
-  if( wzd_savecfg() )
+  /* XXX backup the previous file XXX */
+  {
+    int backup_fd;
+    char buffer[1024];
+    ssize_t ret;
+
+    name_length = strlen(mainConfig->config_filename);
+    filename = malloc(name_length + 6);
+    snprintf(filename,name_length+5,"%s.old",mainConfig->config_filename);
+    out_log(LEVEL_FLOOD,"DEBUG Config file saved to [%s]\n",filename);
+
+    fd = open(mainConfig->config_filename, O_RDONLY, 0644);
+    backup_fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0644);
+    if (fd < 0 || backup_fd < 0) {
+      out_log(LEVEL_HIGH,"ERROR Could not save config (error when opening files)\n");
+      send_message_with_args(501,context,"Cannot save server config");
+      close(fd);
+      close(backup_fd);
+      return -1;
+    }
+    while ((ret = read(fd,buffer,sizeof(buffer))) > 0) {
+      write(backup_fd,buffer,ret);
+    }
+    close(fd);
+    close(backup_fd);
+  }
+  /* XXX end of backup XXX */
+
+  out_log(LEVEL_NORMAL,"INFO saving config to %s\n",mainConfig->config_filename);
+
+  fd = open(mainConfig->config_filename, O_WRONLY | O_TRUNC, 0644); /** XXX file mode is hardcoded */
+  if (fd < 0) {
+    out_log(LEVEL_HIGH,"ERROR Could not save config (error while creating a temporary file: %d: %s)\n",errno,strerror(errno));
     send_message_with_args(501,context,"Cannot save server config");
-  else
-    send_message_with_args(200,context,"Server config saved");
+    return -1;
+  }
+
+  data = config_to_data(mainConfig->cfg_file,&length);
+
+  if (data == NULL) {
+    out_log(LEVEL_HIGH,"ERROR Could not save config (error in config_to_data)\n");
+    send_message_with_args(501,context,"Cannot save server config");
+    close(fd);
+    return -1;
+  }
+
+  written = write(fd, str_tochar(data), length);
+  if (written != length) {
+    out_log(LEVEL_HIGH,"ERROR Could not save config (written %d bytes instead of %d\n",written,length);
+  }
+  close(fd);
+
+  send_message_with_args(200,context,"Server config saved");
+
+  str_deallocate(data);
   return 0;
-#endif
 }
 
 /********************* do_site_sections ******************/
