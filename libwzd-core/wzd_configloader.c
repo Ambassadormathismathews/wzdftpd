@@ -165,7 +165,7 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   wzd_string_t * str, * ptr;
   char * p;
   unsigned long ul;
-  int ret;
+  int ret, err;
   int i;
 
   cfg = wzd_malloc(sizeof(wzd_config_t));
@@ -195,13 +195,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   }
 
   /* DENY_ACCESS_FILES_UPLOADED */
-  str = config_get_string(file, "GLOBAL", "deny_access_files_uploaded", NULL);
-  if (str) {
-    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
-      CFG_SET_OPTION(cfg,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
-    }
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "deny_access_files_uploaded", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_DENY_ACCESS_FILES_UPLOADED);
 
   /* DIR_MESSAGE */
   str = config_get_string(file, "GLOBAL", "dir_message", NULL);
@@ -211,22 +207,14 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   }
 
   /* DISABLE_IDENT */
-  str = config_get_string(file, "GLOBAL", "disable_ident", NULL);
-  if (str) {
-    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
-      CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_IDENT);
-    }
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "disable_ident", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_IDENT);
 
   /* DISABLE_TLS */
-  str = config_get_string(file, "GLOBAL", "disable_tls", NULL);
-  if (str) {
-    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
-      CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_TLS);
-    }
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "disable_tls", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_TLS);
 
   /* DYNAMIC_IP */
   str = config_get_string(file, "GLOBAL", "dynamic_ip", NULL);
@@ -236,13 +224,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   }
 
   /* HIDE_DOTTED_FILES */
-  str = config_get_string(file, "GLOBAL", "hide_dotted_files", NULL);
-  if (str) {
-    if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
-      CFG_SET_OPTION(cfg,CFG_OPT_HIDE_DOTTED_FILES);
-    }
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "hide_dotted_files", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_HIDE_DOTTED_FILES);
 
   /* IP XXX to be implemented */
 
@@ -349,6 +333,11 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     str_deallocate(str);
   }
 
+  /* REJECT_UNKNOWN_USERS */
+  ret = config_get_boolean(file, "GLOBAL", "reject_unknown_users", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_REJECT_UNKNOWN_USERS);
+
   /* SERVER_GID */
   str = config_get_string(file, "GLOBAL", "server_gid", NULL);
   if (str) {
@@ -423,19 +412,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   }
 
   /* USE SYSLOG */
-  str = config_get_string(file, "GLOBAL", "use_syslog", NULL);
-  if (str) {
-    if (strcasecmp(str_tochar(str),"deny")==0 || strcmp(str_tochar(str),"0")==0) {
-      CFG_CLR_OPTION(cfg,CFG_OPT_USE_SYSLOG);
-    }
-    else if (strcasecmp(str_tochar(str),"allow")==0 || strcmp(str_tochar(str),"1")==0) {
-      CFG_SET_OPTION(cfg,CFG_OPT_USE_SYSLOG);
-    }
-    else {
-      out_log(LEVEL_HIGH,"Invalid value for option use_syslog\n");
-    }
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "use_syslog", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_USE_SYSLOG);
 
   /* XFERLOG */
   str = config_get_string(file, "GLOBAL", "xferlog", NULL);

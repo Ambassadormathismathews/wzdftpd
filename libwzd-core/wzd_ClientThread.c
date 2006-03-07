@@ -3572,14 +3572,8 @@ static int do_login_loop(wzd_context_t * context)
 #endif
   int command;
 
-  {
-    wzd_string_t * str;
-    str = config_get_string(mainConfig->cfg_file,"GLOBAL","reject_unknown_users",NULL);
-    if (str &&
-        (strcmp(str_tochar(str),"1")==0 || strcasecmp(str_tochar(str),"allow")==0))
-      reject_nonexistant = 1;
-    str_deallocate(str);
-  }
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_REJECT_UNKNOWN_USERS))
+    reject_nonexistant = 1;
 
   *username = '\0';
 

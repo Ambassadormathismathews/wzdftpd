@@ -398,8 +398,8 @@ int config_get_boolean(wzd_configfile_t * file, const char * groupname, const ch
     return -1;
   }
 
-  if (strcmp(value,"true")==0 || strcmp(value,"1")==0) return 1;
-  if (strcmp(value,"false")==0 || strcmp(value,"0")==0) return 0;
+  if (strcmp(value,"true")==0  || strcmp(value,"1")==0 || strcmp(value,"yes")==0) return 1;
+  if (strcmp(value,"false")==0 || strcmp(value,"0")==0 || strcmp(value,"no")==0 ) return 0;
 
   if (errcode) *errcode = CF_ERROR_PARSE;
 
