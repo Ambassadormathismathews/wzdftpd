@@ -43,8 +43,6 @@
 #define	HARD_MSG_LIMIT		1024
 #define	HARD_MSG_LENGTH_MAX	16384
 
-#define MAX_IDENT_LENGTH        256
-
 #define	MAX_IP_LENGTH		128
 #define	HARD_IP_PER_USER	8
 #define	HARD_IP_PER_GROUP	8

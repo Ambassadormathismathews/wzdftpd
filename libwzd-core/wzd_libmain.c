@@ -264,6 +264,7 @@ void context_free(wzd_context_t * context)
 {
   WZD_ASSERT_VOID(context != NULL);
 
+  wzd_free(context->ident); context->ident = NULL;
   wzd_free(context->data_buffer); context->data_buffer = NULL;
   str_deallocate(context->current_action.command);
   ip_free(context->peer_ip);

@@ -423,7 +423,7 @@ struct wzd_context_t {
   net_family_t  family; /**< \brief IPv4 or IPv6 */
   unsigned char	hostip[16];
   wzd_ip_t      * peer_ip;
-  char          ident[MAX_IDENT_LENGTH];
+  char          * ident;
   connection_state_t state;
   unsigned char	exitclient;
   fd_t          controlfd;

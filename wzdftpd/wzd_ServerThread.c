@@ -686,7 +686,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
         }
         ptr++; /* skip ':' */
         while (*ptr && isspace(*ptr)) ptr++;
-        strncpy(context->ident,ptr,MAX_IDENT_LENGTH);
+        context->ident = wzd_strdup(ptr);
         chop(context->ident);
 
 #ifdef WZD_DBG_IDENT

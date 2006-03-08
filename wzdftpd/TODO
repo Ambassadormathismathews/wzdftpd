@@ -3,6 +3,9 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- add the sockaddr* structs for local and remote part to the context
+- use this structs to guess the data port (and ip ?)
+'********'
 - cleanup code:
     - remove hook_call_custom() and related functions (wzd_mod.c) / OK
     - hook_call_external() is used only in crontab ?!
