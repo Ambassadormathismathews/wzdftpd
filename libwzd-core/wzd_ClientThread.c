@@ -107,6 +107,9 @@
 
 #include "wzd_debug.h"
 
+#define TELNET_SYNCH    242
+#define TELNET_IP       244
+
 #define BUFFER_LEN	4096
 
 /*************** identify_token **********************/
@@ -2574,6 +2577,7 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     /* transfer aborted, we should send a 426 */
     ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
+#if 0
     /** \bug FIXME XXX TODO
      * the two following sleep(5) are MANDATORY
      * the reason is unknown, but seems to be link to network
@@ -2585,6 +2589,7 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 #else
     Sleep(1000);
 #endif
+#endif /* 0 */
     if (context->current_action.token == TOK_STOR || context->current_action.token == TOK_RETR) {
       file_unlock(context->current_action.current_file);
       file_close(context->current_action.current_file,context);
@@ -2608,11 +2613,13 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     data_close(context);
     if (context->pasvsock != (fd_t)-1)
       context->pasvsock = -1;
+#if 0
 #ifndef _MSC_VER
     sleep(1);
 #else
     Sleep(1000);
 #endif
+#endif /* 0 */
   }
   ret = send_message(226,context);
   return E_OK;
@@ -3960,7 +3967,14 @@ void * clientThreadProc(void *arg)
     if ((signed)sockfd > ret) ret = sockfd;
 
     tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
-    ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);
+    /* bug in windows implementation of select(): when aborting a data connection,
+     * next calls to select() always return immediatly, causing wzdftpd
+     * to use 100% cpu (infinite loop).
+     * The solution is not to use efds
+     */
+/*    ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);*/
+    ret = select(ret+1,&fds_r,&fds_w,NULL,&tv);
+    FD_ZERO(&efds);
     save_errno = errno;
 
     if (ret==-1) {
@@ -4016,6 +4030,19 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     buffer[ret] = '\0';
 
     if (buffer[0]=='\0') continue;
+
+    if (buffer[0]=='\xff') {
+      const char * ptr = buffer;
+      char * ptr2;
+      /* skip telnet characters */
+      while (*ptr != '\0' &&
+          ((unsigned char)*ptr == 255 || (unsigned char)*ptr == TELNET_IP || (unsigned char)*ptr == TELNET_SYNCH))
+        ptr++;
+      /* TODO replace this by a working memmove or copy characters directly */
+      ptr2 = strdup(ptr);
+      wzd_strncpy(buffer,ptr2,WZD_BUFFER_LEN-1);
+      free(ptr2);
+    }
 
     command_buffer = STR(buffer);
 
