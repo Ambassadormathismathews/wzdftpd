@@ -44,32 +44,33 @@ md5 sums, this is similar - with a different algorithm).
 <title>Installation</title>
 <para>
 Just add the line
-<screen>module = /path/to/libwzd_sfv.so</screen>
-in your config file.
+<screen>/path/to/libwzd_sfv.so = allow</screen>
+in your config file, in the <application>modules</application> section.
 </para>
 </simplesect>
 
 <simplesect id='mod_sfv_param'>
 <title>Parameters</title>
 <para>
-The following parameters are available, you can set them in the config file (don't forget the prefix
-<emphasis>param_</emphasis>).</para>
+The following parameters are available, you can set them in the config file, in
+the <application>sfv</application> section.
+</para>
 <itemizedlist>
-<listitem><screen>sfv_progressmeter</screen>
+<listitem><screen>progressmeter</screen>
 <para>This dir is created during the upload, when the release isn't complete, to indicate the
 progression.</para></listitem>
-<listitem><screen>sfv_del_progressmeter</screen>
+<listitem><screen>del_progressmeter</screen>
 <para>This regex must match the progressmeter, and is used to find and delete it when the number of
 files has changed.
 </para></listitem>
-<listitem><screen>sfv_incomplete_indicator</screen>
+<listitem><screen>incomplete_indicator</screen>
 <para>This will be a symlink created to indicate that the release isn't complete.
 </para></listitem>
-<listitem><screen>sfv_other_completebar</screen>
+<listitem><screen>other_completebar</screen>
 <para>This dir will be created when release is complete.
 </para></listitem>
 </itemizedlist>
-<para>e.g: <screen>param_sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]</screen>
+<para>e.g: <screen>sfv_progressmeter = [WzD] - %3d%% Complete - [WzD]</screen>
 </para>
 </simplesect>
 
@@ -182,8 +183,8 @@ linkend='cfg_logdir'>logdir</link> directive of the config file.
 <title>Installation</title>
 <para>
 Just add the line
-<screen>module = /path/to/libwzd_tcl.so</screen>
-in your config file.
+<screen>/path/to/libwzd_tcl.so = allow</screen>
+in your config file, in the <application>modules</application> section.
 </para>
 <para>
 You must ensure that the tcl shared library (for ex
@@ -338,8 +339,8 @@ the <link linkend='cfg_logdir'>logdir</link> directive of the config file.
 <title>Installation</title>
 <para>
 Just add the line
-<screen>module = /path/to/libwzd_perl.so</screen>
-in your config file.
+<screen>/path/to/libwzd_perl.so = allow</screen>
+in your config file, in the <application>modules</application> section.
 </para>
 <para>
 You must ensure that the perl shared library (for ex
