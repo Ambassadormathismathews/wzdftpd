@@ -616,6 +616,16 @@ port ( &lt; 1024 )</emphasis></para>
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_server_tick'><term>server tick (default: 10)
+   <emphasis>(ADVANCED, > 0.6.1)</emphasis></term>
+<listitem>
+<para>The maximum duration time, in seconds, for the main server loop (waiting
+for connections).
+<screen>server tick = 10</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_site_cmd'><term>site_cmd <emphasis>Deprecated since 0.6.0
 !</emphasis></term>
 <listitem>

@@ -550,7 +550,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   context->family = family;
   time (&context->login_time);
 
-  memcpy(context->hostip,userip,16);
+  memcpy(context->hostip,userip,sizeof(context->hostip));
 
   /* check if ident lookups are disabled */
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_IDENT)) {
@@ -1317,6 +1317,7 @@ int server_switch_to_config(wzd_config_t *config)
 void serverMainThreadProc(void *arg)
 {
   int ret;
+  unsigned long max_wait_time;
   fd_set r_fds, w_fds, e_fds;
   fd_t maxfd;
   struct timeval tv;
@@ -1472,6 +1473,12 @@ void serverMainThreadProc(void *arg)
 #endif
 
   out_log(LEVEL_INFO,"Process %d ok\n",getpid());
+  
+  /* get value for server tick */
+  max_wait_time = config_get_integer(mainConfig->cfg_file, "GLOBAL", "server tick", &ret);
+  if (ret != CF_OK) {
+    max_wait_time = DEFAULT_SERVER_TICK;
+  }
 
   /* sets start time, for uptime */
   time(&mainConfig->server_start);
@@ -1491,7 +1498,7 @@ void serverMainThreadProc(void *arg)
     FD_ZERO(&w_fds);
     FD_ZERO(&e_fds);
 
-    tv.tv_sec = HARD_REACTION_TIME; tv.tv_usec = 0;
+    tv.tv_sec = max_wait_time; tv.tv_usec = 0;
     maxfd = 0;
     server_ip_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);

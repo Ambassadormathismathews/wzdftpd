@@ -29,6 +29,8 @@
 # include "../config.h"
 #endif
 
+#define	DEFAULT_SERVER_TICK	10L
+
 #define	HARD_REACTION_TIME	1L
 
 /* FIXME should be a variable */
