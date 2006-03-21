@@ -93,12 +93,16 @@ void* ho_zeroconf_setup(unsigned long port, const char *name) {
 }
 
 void* ho_zeroconf_run(void) {
+  out_log(LEVEL_INFO, "Starting discovery (Yields control of the CPU to Howl)...\n");
   sw_discovery_run(discovery);
+  out_log(LEVEL_INFO, "Discovery started.");
 }
 
 void* ho_zeroconf_unregister(void) {
+  out_log(LEVEL_INFO, "Trying to stop discovery and to de-allocated resources...\n");
   sw_discovery_stop_run(discovery);
-  sw_discovery_fina(discovery);
+  out_log(LEVEL_INFO, "Discovery stopped.");
+
 }
 
 #endif /* USE_HOWL */
