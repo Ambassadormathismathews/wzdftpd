@@ -249,11 +249,16 @@ int  FCN_COMMIT_CHANGES(void)
 wzd_user_t * FCN_GET_USER(uid_t uid)
 {
   int i;
+  wzd_user_t * user;
 
   for (i=0; i<_user_count; i++)
   {
-    if (user_pool[i].uid == uid)
-      return &user_pool[i];
+    if (user_pool[i].uid == uid) {
+      user = wzd_malloc(sizeof(wzd_user_t));
+      if (!user) return NULL;
+      memcpy(user, &user_pool[i], sizeof(wzd_user_t));
+      return user;
+    }
   }
 
   return NULL;

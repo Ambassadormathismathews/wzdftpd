@@ -1,3 +1,7 @@
+2006-03-22  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: PAM backend segfaults on login
+
 2006-03-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: ability to save config file
