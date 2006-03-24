@@ -1473,7 +1473,7 @@ void serverMainThreadProc(void *arg)
 #endif
 
   out_log(LEVEL_INFO,"Process %d ok\n",getpid());
-  
+
   /* get value for server tick */
   max_wait_time = config_get_integer(mainConfig->cfg_file, "GLOBAL", "server tick", &ret);
   if (ret != CF_OK) {
