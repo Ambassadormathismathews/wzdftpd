@@ -70,6 +70,20 @@ in MySQL for wzdftpd.
 
 This package requires wzdftpd to be installed.
 
+## PgSQL backend package attributes
+
+%package back-pgsql
+Summary: PostgreSQL backend for wzdftpd
+Requires: wzdftpd = %{version}
+Group: Development/Libraries/C and C++
+
+%description back-pgsql
+
+This package provides the necessary files to store users and groups
+in PostgreSQL for wzdftpd.
+
+This package requires wzdftpd to be installed.
+
 ## Development package attributes
 
 %package devel
@@ -98,7 +112,7 @@ make CFLAGS="$RPM_OPT_FLAGS"
 ## Package installation
 
 %install
-
+rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/init.d/
 mkdir -p $RPM_BUILD_ROOT/var/logs/wzdftpd
 
@@ -109,6 +123,12 @@ make install DESTDIR=$RPM_BUILD_ROOT
 %__install -m 755 init.d/wzdftpd $RPM_BUILD_ROOT/etc/init.d/wzdftpd
 %__install -m 755 wzdftpd/wzd.cfg.sample $RPM_BUILD_ROOT/etc/wzdftpd/wzd.cfg
 %__install -m 755 wzdftpd/users.sample $RPM_BUILD_ROOT/etc/wzdftpd/users
+
+rm -f $RPM_BUILD_ROOT/etc/wzdftpd/*.sample
+rm -f $RPM_BUILD_ROOT/usr/lib/wzdftpd/backends/libwzd*.a
+rm -f $RPM_BUILD_ROOT/usr/lib/wzdftpd/backends/libwzd*.la
+rm -f $RPM_BUILD_ROOT/usr/lib/wzdftpd/modules//libwzd*.a
+rm -f $RPM_BUILD_ROOT/usr/lib/wzdftpd/modules//libwzd*.la
 
 ## Main package pre and post install scripts
 
@@ -139,6 +159,7 @@ rm -Rf $RPM_BUILD_ROOT
 /var/logs/wzdftpd
 /usr/lib/wzdftpd/backends/libwzdplaintext.so
 /usr/lib/wzdftpd/backends/libwzdpam.so
+/usr/lib/wzdftpd/modules/libwzd_debug.so
 /usr/lib/wzdftpd/modules/libwzd_sfv.so
 %config /etc/wzdftpd/wzd.cfg
 %config /etc/wzdftpd/wzd.pem
@@ -177,6 +198,11 @@ rm -Rf $RPM_BUILD_ROOT
 %files back-mysql
 /usr/lib/wzdftpd/backends/libwzdmysql.so
 
+## PgSQL backend package files
+
+%files back-pgsql
+/usr/lib/wzdftpd/backends/libwzdpgsql.so
+
 ## Development package files
 
 %files devel
@@ -188,6 +214,10 @@ rm -Rf $RPM_BUILD_ROOT
 ## Changelog
 
 %changelog
+* Fri Mar 24 2006 Pierre Chifflier <chifflier@cpe.fr>
+- New upstream release
+- Added PgSQL backend
+
 * Wed Oct 23 2005 Pierre Chifflier <chifflier@cpe.fr>
 - New upstream release
 
