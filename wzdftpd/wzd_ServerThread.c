@@ -1321,10 +1321,6 @@ void serverMainThreadProc(void *arg)
   fd_set r_fds, w_fds, e_fds;
   fd_t maxfd;
   struct timeval tv;
-#if defined(WIN32)
-  WSADATA wsaData;
-  int nCode;
-#endif
 
 #ifndef WIN32
   /* catch broken pipe ! */
@@ -1384,15 +1380,6 @@ void serverMainThreadProc(void *arg)
   }
 #endif
 #endif /* _WIN32 */
-
-#if defined(WIN32)
-  /* Start Winsock up */
-  if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
-    out_log(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
-      __FILE__, __LINE__);
-    exit(-1);
-  }
-#endif
 
   /******** init shm *******/
   /* do this _before_ loading config, config can use it ! */

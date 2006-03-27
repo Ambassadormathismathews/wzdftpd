@@ -292,8 +292,21 @@ int main(int argc, char **argv)
   pid_t forkresult;
   wzd_config_t * config;
   wzd_configfile_t * cf;
+#if defined(WIN32)
+  WSADATA wsaData;
+  int nCode;
+#endif
 
   wzd_debug_init();
+
+#if defined(WIN32)
+  /* Start Winsock up */
+  if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
+    out_err(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
+      __FILE__, __LINE__);
+    exit(-1);
+  }
+#endif
 
 #if 0
   fprintf(stderr,"--------------------------------------\n");
