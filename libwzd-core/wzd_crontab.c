@@ -34,12 +34,19 @@
 #include <string.h>
 
 #include "wzd_structs.h"
+#include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_mod.h"
+#include "wzd_threads.h"
 #include "wzd_crontab.h"
 
 #include "wzd_debug.h"
 #endif /* WZD_USE_PCH */
+
+static int _crontab_running = 0;
+static wzd_thread_t _crontab_thread;
+
+static void * _crontab_thread_fund(void *);
 
 static int _crontab_insert_sorted(wzd_cronjob_t * job, wzd_cronjob_t ** crontab)
 {
@@ -55,7 +62,7 @@ static int _crontab_insert_sorted(wzd_cronjob_t * job, wzd_cronjob_t ** crontab)
     *crontab = job;
     job->next_cronjob = current;
 #ifdef WZD_DBG_CRONTAB
-  out_err(LEVEL_HIGH,"cronjob: head insertion for %s\n",job->hook->external_command);
+    out_err(LEVEL_HIGH,"cronjob: head insertion for %s\n",job->hook->external_command);
 #endif
     return 0;
   }
@@ -184,6 +191,7 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
 {
   wzd_cronjob_t *new;
   time_t now;
+  int ret;
 
   if (!fn && !command) return 1;
 /*  if (fn && command) return 1;*/ /* why ?! This forbis to provide a description of functions */
@@ -214,7 +222,11 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
   out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&new->next_run));
 #endif
 
-  return _crontab_insert_sorted(new,crontab);
+  WZD_MUTEX_LOCK(SET_MUTEX_CRONTAB);
+  ret = _crontab_insert_sorted(new,crontab);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CRONTAB);
+
+  return ret;
 }
 
 int cronjob_run(wzd_cronjob_t ** crontab)
@@ -223,8 +235,13 @@ int cronjob_run(wzd_cronjob_t ** crontab)
   time_t now;
   int ret;
 
-  /** list is sorted, so we only need to check the first entries */
   (void)time(&now);
+
+  if (!job || now < job->next_run) return 0;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_CRONTAB);
+
+  /** list is sorted, so we only need to check the first entries */
   while (job && now >= job->next_run )
   {
     /* run job */
@@ -255,6 +272,7 @@ int cronjob_run(wzd_cronjob_t ** crontab)
     _crontab_insert_sorted(job,crontab);
   }
 
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CRONTAB);
   return 0;
 }
 
@@ -263,6 +281,7 @@ void cronjob_free(wzd_cronjob_t ** crontab)
   wzd_cronjob_t * current_job, * next_job;
 
   current_job = *crontab;
+  WZD_MUTEX_LOCK(SET_MUTEX_CRONTAB);
 
   while (current_job) {
     next_job = current_job->next_cronjob;
@@ -280,5 +299,60 @@ void cronjob_free(wzd_cronjob_t ** crontab)
     current_job = next_job;
   }
   *crontab = NULL;
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CRONTAB);
+}
+
+/** \brief Start crontab thread */
+int crontab_start(wzd_cronjob_t ** crontab)
+{
+  int ret;
+
+  if (_crontab_running) {
+    out_log(LEVEL_NORMAL,"INFO attempt to start crontab twice\n");
+    return 0;
+  }
+
+  out_log(LEVEL_NORMAL,"INFO starting crontab\n");
+  ret = wzd_thread_create(&_crontab_thread, NULL, _crontab_thread_fund, crontab);
+
+  return ret;
+}
+
+/** \brief Stop crontab thread */
+int crontab_stop(void)
+{
+  void * ret;
+
+  /** \bug test if crontab is already started */
+  if (_crontab_running == 0) {
+    out_log(LEVEL_INFO,"INFO crontab already stopped\n");
+    return 0;
+  }
+
+  _crontab_running = 0;
+  out_log(LEVEL_INFO,"INFO waiting for crontab thread to exit\n");
+  wzd_thread_join(&_crontab_thread, &ret);
+
+  return 0;
+}
+
+/* The main crontab thread.
+ *
+ * Checks for cron jobs each second.
+ * The parameter is the address of the cron job list.
+ *
+ * \todo Optimize the wait time by sleeping the exact time until the next job
+ * (how to deal with crontab additions ?)
+ */
+static void * _crontab_thread_fund(void *param) {
+  _crontab_running = 1;
+
+  while (_crontab_running) {
+    sleep(1);
+
+    cronjob_run(param);
+  };
+
+  return NULL;
 }
 

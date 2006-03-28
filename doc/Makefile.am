@@ -4,7 +4,7 @@ DOC_XML_FILES=commands_reference.sgml common_backends.sgml common_modules.sgml \
 	programming_modules.sgml freebsd_notes.sgml custom_commands.sgml \
 	appendix_ref.sgml authentication.sgml
 DEV_XML_FILES = dev-architecture.xml dev-memory.xml dev-backends.xml \
-	dev-modules.xml
+	dev-modules.xml dev-crontab.xml
 HTML_DEPS=html_head.html html_tail.html
 DOC_MAIN_XML_FILE=wzdftpd.sgml
 DEV_MAIN_XML_FILE = wzdftpd-dev.xml

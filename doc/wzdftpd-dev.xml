@@ -6,6 +6,7 @@
 <!ENTITY architecture SYSTEM "dev-architecture.xml">
 <!ENTITY memory SYSTEM "dev-memory.xml">
 <!ENTITY backends SYSTEM "dev-backends.xml">
+<!ENTITY crontab SYSTEM "dev-crontab.xml">
 
 <!ENTITY modules SYSTEM "dev-modules.xml">
 
@@ -48,6 +49,8 @@
 <chapter id='config'><title>Configuration and server variables</title>
 <para>To be done</para>
 </chapter>
+
+&crontab;
 
 <chapter id='permissions'><title>Permissions</title>
 <para>To be done</para>

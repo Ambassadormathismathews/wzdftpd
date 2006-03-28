@@ -46,4 +46,10 @@ void cronjob_free(wzd_cronjob_t ** crontab);
 
 int cronjob_run(wzd_cronjob_t ** crontab);
 
+/** \brief Start crontab thread */
+int crontab_start(wzd_cronjob_t ** crontab);
+
+/** \brief Stop crontab thread */
+int crontab_stop(void);
+
 #endif /* __WZD_CRONTAB__ */

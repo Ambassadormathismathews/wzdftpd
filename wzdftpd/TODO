@@ -3,8 +3,6 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
-- use a separate thread for crontab
-'********'
 - add the sockaddr* structs for local and remote part to the context
 - use this structs to guess the data port (and ip ?)
 '********'

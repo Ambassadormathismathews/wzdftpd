@@ -1,6 +1,7 @@
 2006-03-28  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: malformed response to client (Closes: #0033)
+	* feature: use a separate thread for crontab
 
 2006-03-24  Pierre Chifflier  <pollux@wzdftpd.net>
 

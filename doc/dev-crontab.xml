@@ -1,0 +1,28 @@
+<chapter id='crontab'><title>Crontab</title>
+
+<section>
+  <title>Cron jobs</title>
+
+<para>
+  A cron job is a scheduled job, to be executed periodically or at a defined
+time. Each second, the cron thread wakes up and examines all stored crontabs,
+checking each command to see if it should be run.
+</para>
+<para>
+  Commands are executed without any user context, so it can't be used to
+interact with connected users. Any output will be stored in the standard log.
+</para>
+<para>
+  <emphasis>NOTE</emphasis>: Cron jobs are executed in a separate thread, sharing
+its memory with the server. This means that cron jobs must pay attention not to
+cause classical threads problems (like modifying a linked list used by the
+server without using mutexes) and not to overwrite the server's memory !
+</para>
+
+<para>As usual, cron jobs can be internal (functions written in C and added by
+modules) or external (defined in config file).
+</para>
+
+</section>
+</chapter>
+

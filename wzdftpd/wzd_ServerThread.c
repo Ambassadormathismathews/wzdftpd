@@ -1431,6 +1431,8 @@ void serverMainThreadProc(void *arg)
     out_log(LEVEL_HIGH,"TLS: error adding cron job _dh_params_regenerate\n");
 #endif
 
+  crontab_start(&mainConfig->crontab);
+
 
   /********** init modules **********/
   {
@@ -1525,9 +1527,6 @@ void serverMainThreadProc(void *arg)
       server_ip_check(&r_fds,&w_fds,&e_fds);
     }
 
-    /* check cron jobs */
-    cronjob_run(&mainConfig->crontab);
-
   } /* while (!serverstop) */
 
 
@@ -1576,6 +1575,8 @@ void serverMainThreadExit(int retcode)
 #ifndef _MSC_VER
   signal(SIGINT,SIG_IGN);
 #endif
+
+  crontab_stop();
 
   list_destroy(&server_ip_list);
 
