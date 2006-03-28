@@ -348,7 +348,11 @@ static void * _crontab_thread_fund(void *param) {
   _crontab_running = 1;
 
   while (_crontab_running) {
+#ifndef WIN32
     sleep(1);
+#else
+	Sleep(1000);
+#endif
 
     cronjob_run(param);
   };
