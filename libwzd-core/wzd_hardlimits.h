@@ -30,6 +30,7 @@
 #endif
 
 #define	DEFAULT_SERVER_TICK	10L
+#define	DEFAULT_CLIENT_TICK	10L
 
 #define	HARD_REACTION_TIME	1L
 

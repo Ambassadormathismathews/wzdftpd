@@ -3822,6 +3822,7 @@ void * clientThreadProc(void *arg)
 {
   struct timeval tv;
   fd_set fds_r,fds_w,efds;
+  unsigned long max_wait_time;
   wzd_context_t * context;
   char *buffer = NULL;
   int save_errno;
@@ -3927,6 +3928,12 @@ void * clientThreadProc(void *arg)
 
   buffer = malloc(WZD_BUFFER_LEN);
 
+  /* get value for server tick */
+  max_wait_time = config_get_integer(mainConfig->cfg_file, "GLOBAL", "client tick", &ret);
+  if (ret != CF_OK) {
+    max_wait_time = DEFAULT_CLIENT_TICK;
+  }
+
   /* main loop */
   context->exitclient=0;
   context->idle_time_start = time(NULL);
@@ -3966,7 +3973,7 @@ void * clientThreadProc(void *arg)
     ret = data_set_fd(context,&fds_r,&fds_w,&efds);
     if ((signed)sockfd > ret) ret = sockfd;
 
-    tv.tv_sec=HARD_REACTION_TIME; tv.tv_usec=0L;
+    tv.tv_sec=max_wait_time; tv.tv_usec=0L;
     /* bug in windows implementation of select(): when aborting a data connection,
      * next calls to select() always return immediatly, causing wzdftpd
      * to use 100% cpu (infinite loop).

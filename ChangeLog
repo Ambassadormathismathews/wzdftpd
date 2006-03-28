@@ -2,6 +2,7 @@
 
 	* bugfix: malformed response to client (Closes: #0033)
 	* feature: use a separate thread for crontab
+	* feature: new config option 'client tick' to tune client thread loop
 
 2006-03-24  Pierre Chifflier  <pollux@wzdftpd.net>
 

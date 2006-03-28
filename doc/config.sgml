@@ -354,6 +354,16 @@ for example).
 </listitem>
 </varlistentry>
 
+<varlistentry id='cfg_client_tick'><term>client tick (default: 10)
+   <emphasis>(ADVANCED, > 0.7)</emphasis></term>
+<listitem>
+<para>The maximum duration time, in seconds, for the main client loop (waiting
+for commands).
+<screen>client tick = 10</screen>
+</para>
+</listitem>
+</varlistentry>
+
 <varlistentry id='cfg_cscript'><term>cscript <emphasis>Deprecated since 0.6.0
 !</emphasis></term>
 <listitem>
