@@ -5,7 +5,7 @@
 Enable IPv6 and MLSD by default, add new options to reject users at connection
 time. There were improvements in the Zeroconf support, events, custom commands,
 unit tests, and several bugs were fixed.
-Lots of deprecated or unsafe code was removed, inclusing the support for the
+Lots of deprecated or unsafe code was removed, including the support for the
 previous config file format and for old backends.
 
 0.6.0: Dec 26 2005
