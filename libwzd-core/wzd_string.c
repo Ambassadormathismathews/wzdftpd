@@ -596,9 +596,9 @@ int str_append_printf(wzd_string_t *str, const char *format, ...)
     result = vsnprintf(buffer, length-1, format, argptr);
   }
   length = result;
+  buffer[length] = '\0';
   if ((u32_t)result == length) {
    _str_set_min_size(str, result+1);
-   buffer[length] = '\0';
   }
 #endif
 
