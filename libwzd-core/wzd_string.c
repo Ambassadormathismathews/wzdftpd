@@ -512,9 +512,9 @@ int str_vsprintf(wzd_string_t *str, const char *format, va_list ap)
      result = vsnprintf(str->buffer, str->allocated-1, format, ap2);
    }
    str->length = result;
+   str->buffer[str->length] = '\0';
    if ((u32_t)result == str->allocated) {
     _str_set_min_size(str, result+1);
-    str->buffer[str->length] = '\0';
    }
 #endif
 
