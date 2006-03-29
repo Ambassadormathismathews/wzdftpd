@@ -40,6 +40,7 @@
 
 #ifndef HAVE_AVAHI_THREADED_POLL
 #include <avahi-common/simple-watch.h>
+#include <signal.h> /* SIG_BLOCK */
 #else
 #include <avahi-common/thread-watch.h>
 #endif

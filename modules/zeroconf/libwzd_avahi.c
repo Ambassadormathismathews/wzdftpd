@@ -219,6 +219,53 @@ static void client_callback(AvahiClient *client,
   }
 }
 
+static void* thread(void *userdata) {
+#ifndef HAVE_AVAHI_THREADED_POLL
+  struct context *ctx = userdata;
+  sigset_t mask;
+  int r;
+
+  /* Make sure that signals are delivered to the main thread */
+  sigfillset(&mask);
+  pthread_sigmask(SIG_BLOCK, &mask, NULL);
+    
+  pthread_mutex_lock(&ctx->mutex);
+
+  /* Run the main loop */
+  r = avahi_simple_poll_loop(ctx->simple_poll);
+
+  /* Cleanup some stuff */
+  if (ctx->client)
+    avahi_client_free(ctx->client);
+  ctx->client = NULL;
+  ctx->group = NULL;
+    
+  pthread_mutex_unlock(&ctx->mutex);
+#endif    
+  return NULL;
+}
+
+static int poll_func(struct pollfd *ufds,
+                     unsigned int nfds,
+                     int timeout,
+                     void *userdata) {
+#ifndef HAVE_AVAHI_THREADED_POLL
+  pthread_mutex_t *mutex = userdata;
+  int r;
+
+  /* Before entering poll() we unlock the mutex, so that
+   * avahi_simple_poll_quit() can succeed from another thread. */
+    
+  pthread_mutex_unlock(mutex);
+  r = poll(ufds, nfds, timeout);
+  pthread_mutex_lock(mutex);
+
+  return r;
+#else
+  return 0;
+#endif
+}
+
 /*
  * Tries to setup the Zeroconf thread and any
  * neccessary config setting.
@@ -268,12 +315,12 @@ void* av_zeroconf_setup(unsigned long port, const char *name) {
      return;
   }
 #else
-  avahi_simple_poll_set_func(ctx->simple_poll, poll_func, &ctx->mutex);
-
   if (!(ctx->simple_poll = avahi_simple_poll_new())) {
       out_log(LEVEL_CRITICAL, "Failed to create event loop object.\n");
       goto fail;
   }
+
+  avahi_simple_poll_set_func(ctx->simple_poll, poll_func, &ctx->mutex);
 #endif
 
 /* now we need to acquire a client */
@@ -355,9 +402,11 @@ fail:
  * Currently unused.
  */
 void av_zeroconf_lock(void *u) {
+#ifdef HAVE_AVAHI_THREADED_POLL
   struct context *ctx = u;
 
   avahi_threaded_poll_lock(ctx->threaded_poll);
+#endif
 }
 
 /*
@@ -365,9 +414,11 @@ void av_zeroconf_lock(void *u) {
  * Currently unused.
  */
 void av_zeroconf_unlock(void *u) {
+#ifdef HAVE_AVAHI_THREADED_POLL
   struct context *ctx = u;
 
   avahi_threaded_poll_unlock(ctx->threaded_poll);
+#endif
 }
 
 /*
