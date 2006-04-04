@@ -217,11 +217,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     CFG_SET_OPTION(cfg,CFG_OPT_DISABLE_TLS);
 
   /* DYNAMIC_IP */
-  str = config_get_string(file, "GLOBAL", "dynamic_ip", NULL);
-  if (str) {
-    strncpy(cfg->dynamic_ip,str_tochar(str),MAX_IP_LENGTH);
-    str_deallocate(str);
-  }
+  ret = config_get_boolean(file, "GLOBAL", "dynamic_ip", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_DYNAMIC_IP);
 
   /* HIDE_DOTTED_FILES */
   ret = config_get_boolean(file, "GLOBAL", "hide_dotted_files", &err);

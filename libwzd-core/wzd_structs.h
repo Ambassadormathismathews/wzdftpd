@@ -475,6 +475,7 @@ struct wzd_context_t {
 #define CFG_OPT_UTF8_CAPABLE                0x00001000
 #define CFG_OPT_CHECKIP_LOGIN               0x00010000
 #define CFG_OPT_REJECT_UNKNOWN_USERS        0x00020000
+#define CFG_OPT_DYNAMIC_IP                  0x00100000
 
 
 #define CFG_CLR_OPTION(c,opt)   (c)->server_opts &= ~(opt)

@@ -286,8 +286,19 @@ void server_rebind(const char *new_ip, unsigned int new_port)
  */
 int check_server_dynamic_ip(void)
 {
-  out_log(LEVEL_HIGH,"ERROR check_server_dynamic_ip: not implemented yet\n");
-  return -1;
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DYNAMIC_IP)) {
+    out_log(LEVEL_FLOOD,"DEBUG check_server_dynamic_ip: not implemented yet\n");
+
+    /* get ip and port */
+
+    /* update pasv_ip */
+
+    /* rebind server if needed */
+
+    return -1;
+  }
+
+  return 0;
 #if 0
   struct sockaddr_in sa_current, sa_config;
   unsigned int size;
@@ -1418,10 +1429,8 @@ void serverMainThreadProc(void *arg)
 
 
   /********** set up crontab ********/
-#if 0
   cronjob_add(&mainConfig->crontab,check_server_dynamic_ip,"fn:check_server_dynamic_ip",HARD_DYNAMIC_IP_INTVL,
       "*","*","*","*");
-#endif
   cronjob_add(&mainConfig->crontab,commit_backend,"fn:commit_backend",HARD_COMMIT_BACKEND_INTVL,
       "*","*","*","*");
 #ifdef HAVE_GNUTLS
