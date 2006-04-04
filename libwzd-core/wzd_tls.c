@@ -775,6 +775,11 @@ int tls_dh_params_regenerate(void)
   int ret;
   gnutls_dh_params new, tmp;
 
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
+    out_log(LEVEL_FLOOD,"TLS Disabled by config (tls_dh_params_regenerate)\n");
+    return 0;
+  }
+
   /* generate a new DH key */
   ret = gnutls_dh_params_init(&new);
   if (ret < 0) {
