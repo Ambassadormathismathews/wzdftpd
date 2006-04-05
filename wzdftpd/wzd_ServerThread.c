@@ -1075,6 +1075,12 @@ int server_switch_to_config(wzd_config_t *config)
       if (ipaddress == NULL || strchr(ipaddress,':') == NULL)
         sock4 = socket_make(ipaddress,&port,config->max_threads,WZD_INET4);
 
+      if (sock4 == (fd_t)-1 && sock6 == (fd_t)-1) {
+        out_log(LEVEL_CRITICAL,"FATAL Could not bind to ip %s\n",str_tochar(str_list[i]));
+        str_deallocate_array(str_list);
+        return -1;
+      }
+
       if (sock6 != (fd_t)-1) {
         server_ip = wzd_malloc(sizeof(*server_ip));
         server_ip->dynamic = 0;
@@ -1084,6 +1090,7 @@ int server_switch_to_config(wzd_config_t *config)
         if (list_ins_next(&server_ip_list, NULL, server_ip)) {
           out_log(LEVEL_CRITICAL,"FATAL Could not register server ip %s\n",ptr_to_data);
           server_ip_free(server_ip);
+          str_deallocate_array(str_list);
           return -1;
         }
         {
@@ -1091,6 +1098,7 @@ int server_switch_to_config(wzd_config_t *config)
 
           if (setsockopt(sock6, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
             out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+            str_deallocate_array(str_list);
             return -1;
           }
         }
@@ -1104,6 +1112,7 @@ int server_switch_to_config(wzd_config_t *config)
         if (list_ins_next(&server_ip_list, NULL, server_ip)) {
           out_log(LEVEL_CRITICAL,"FATAL Could not register server ip %s\n",ptr_to_data);
           server_ip_free(server_ip);
+          str_deallocate_array(str_list);
           return -1;
         }
         {
@@ -1111,6 +1120,7 @@ int server_switch_to_config(wzd_config_t *config)
 
           if (setsockopt(sock4, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
             out_log(LEVEL_CRITICAL,"setsockopt(SO_KEEPALIVE");
+            str_deallocate_array(str_list);
             return -1;
           }
         }

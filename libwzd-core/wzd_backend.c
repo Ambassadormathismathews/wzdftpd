@@ -284,7 +284,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
 
 int backend_close(const char *backend)
 {
-  int (*fini_fcn)(void);
+  int (*fini_fcn)(void) = NULL;
   int ret;
 
   if (!backend || !mainConfig->backend.filename) return 1;
