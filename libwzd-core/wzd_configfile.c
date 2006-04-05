@@ -226,6 +226,7 @@ int config_has_key(wzd_configfile_t * file, const char * groupname, const char *
 
 /** \brief Returns the value associated with \a key under \a groupname.
  * \return the value, or NULL if the key is not found
+ * The returned value is a pointer to the object, it must not be freed.
  */
 char * config_get_value(const wzd_configfile_t * file, const char * groupname, const char * key)
 {

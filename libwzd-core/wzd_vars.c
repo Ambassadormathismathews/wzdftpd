@@ -77,12 +77,11 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     return 0;
   }
   if (strcmp(varname,"loglevel")==0) {
-    wzd_string_t * str;
+    const char * str;
 
-    str = config_get_string(config->cfg_file, "GLOBAL", "loglevel", NULL);
+    str = config_get_value(config->cfg_file, "GLOBAL", "loglevel");
     if (str) {
-      snprintf(data,datalength,"%s",str_tochar(str));
-      str_deallocate(str);
+      snprintf(data,datalength,"%s",str);
       return 0;
     }
     snprintf(data,datalength,"%s",loglevel2str(config->loglevel));
@@ -108,7 +107,14 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
     snprintf(data,datalength,"%u",config->pasv_high_range);
     return 0;
   }
-  if (strcasecmp(varname,"port")==0) {
+  if (strcmp(varname,"port")==0) {
+    const char * str;
+
+    str = config_get_value(config->cfg_file, "GLOBAL", "port");
+    if (str) {
+      snprintf(data,datalength,"%s",str);
+      return 0;
+    }
     snprintf(data,datalength,"%u",config->port);
     return 0;
   }
