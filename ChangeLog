@@ -1,3 +1,7 @@
+2006-04-05  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: set default port to 21 (Closes: #0040)
+
 2006-03-28  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: malformed response to client (Closes: #0033)

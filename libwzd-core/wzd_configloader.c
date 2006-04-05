@@ -329,6 +329,9 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
     }
     cfg->port = ul;
     str_deallocate(str);
+  } else {
+    /* set default value to FTP port */
+    config_set_value(file, "GLOBAL", "port", "21");
   }
 
   /* REJECT_UNKNOWN_USERS */
