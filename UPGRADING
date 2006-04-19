@@ -1,3 +1,10 @@
+0.7.1:
+
+Moved Zerconf specific parameters to its own config section. This section
+is named [ZEROCONF]. Possible parameters are: zeroconf_port = 8021,
+zeroconf_name = foobar, zeroconf_username = wzdftpd, zeroconf_password = wzdftpd
+zeroconf_path = /tmp.
+
 0.7.0:
 
 Some commands were moved to the [custom_commands] section: site groups, help,

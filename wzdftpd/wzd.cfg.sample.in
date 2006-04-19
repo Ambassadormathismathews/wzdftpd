@@ -127,6 +127,13 @@ sitefile_user	= @e_sysconfdir@/file_user.txt
 # maximum recursion is 16 (too big IMHO)
 #include permissions.cfg
 
+##### Zeroconf Settings
+[ZEROCONF]
+zeroconf_port = 6969
+#zeroconf_username = wzdftpd
+#zeroconf_password = wzdftpd
+#zeroconf_path = /tmp
+
 ##### IP RESTRICTIONS
 [pre_ip_check]
 
