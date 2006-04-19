@@ -38,7 +38,11 @@
 #define FTP_DNS_SERVICE_TYPE "_ftp._tcp"
 
 /* prototype definitions */
-void* ho_zeroconf_setup(unsigned long, const char *);
+void* ho_zeroconf_setup(unsigned long, /* port */
+                        const char *,  /* mDNS name */
+                        const char *,  /* username */
+                        const char *,  /* password */
+                        const char *); /* path */
 void* ho_zeroconf_unregister(void);
 void* ho_zeroconf_run(void);
 static sw_result HOWL_API publish_reply(sw_discovery,

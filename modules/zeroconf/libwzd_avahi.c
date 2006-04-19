@@ -32,12 +32,18 @@
 
 #include "libwzd_avahi.h"
 
+static void publish_reply(AvahiEntryGroup *,
+                          AvahiEntryGroupState,
+                          void *);
+
 /*
  * This function tries to register the FTP DNS
  * SRV service type.
  */
 static void register_stuff(struct context *ctx) {
-  char r[128];
+  char txt_uname[255], txt_pwd[255], txt_path[255];
+  int txt_keys_size = 0;
+  AvahiStringList* list = NULL;
   int ret;
 
   assert(ctx->client);
@@ -60,20 +66,88 @@ static void register_stuff(struct context *ctx) {
   if (avahi_entry_group_is_empty(ctx->group)) {
     /* Register our service */
 
-    if (avahi_entry_group_add_service(ctx->group,
-                                      AVAHI_IF_UNSPEC,
-                                      AVAHI_PROTO_UNSPEC,
-                                      0,
-                                      ctx->name,
-                                      FTP_DNS_SERVICE_TYPE,
-                                      NULL,
-                                      NULL,
-                                      ctx->port,
-                                      NULL) < 0) {
-      out_log(LEVEL_CRITICAL,
-              "Failed to add service: %s\n",
-              avahi_strerror(avahi_client_errno(ctx->client)));
-      goto fail;
+    /* prepare TXT records */
+    if (ctx->username) {
+      snprintf(txt_uname, 255, "u=%s", ctx->username);
+      txt_keys_size++;
+
+      out_log(LEVEL_INFO, "Adding TXT key '%s' to TXT array\n", txt_uname);
+    }
+    if (ctx->password) {
+      snprintf(txt_pwd, 255, "p=%s", ctx->password);
+      txt_keys_size++;
+
+      out_log(LEVEL_INFO, "Adding TXT key '%s' to TXT array\n", txt_pwd);
+    }
+    if (ctx->path) {
+      snprintf(txt_path, 255, "path=%s", ctx->path);
+      txt_keys_size++;
+
+      out_log(LEVEL_INFO, "Adding TXT key '%s' to TXT array\n", txt_path);
+    }
+  
+    if (txt_keys_size > 0) {
+      const char *txt_keys[txt_keys_size];
+      int i = 0;
+
+      out_log(LEVEL_INFO, "Adding %i TXT keys to list\n", txt_keys_size);
+
+      while (i < txt_keys_size)
+      {
+        if (ctx->username)
+        {
+          txt_keys[i] = &txt_uname;
+          i++;
+        }
+        if (ctx->password)
+        {
+          txt_keys[i] = &txt_pwd;
+          i++;
+        }
+        if (ctx->path)
+        {
+          txt_keys[i] = &txt_path;
+          i++;
+        }     
+      }
+
+      list = avahi_string_list_new_from_array(txt_keys, txt_keys_size);
+
+      if (avahi_entry_group_add_service_strlst(ctx->group,
+                                               AVAHI_IF_UNSPEC,
+                                               AVAHI_PROTO_UNSPEC,
+                                               0,
+                                               ctx->name,
+                                               FTP_DNS_SERVICE_TYPE,
+                                               NULL,
+                                               NULL,
+                                               ctx->port,
+                                               list) < 0) {
+        out_log(LEVEL_CRITICAL,
+                "Failed to add service: %s\n",
+                avahi_strerror(avahi_client_errno(ctx->client)));
+        goto fail;
+      }
+
+      avahi_string_list_free(list);
+    }
+    else
+    {
+      if (avahi_entry_group_add_service(ctx->group,
+                                        AVAHI_IF_UNSPEC,
+                                        AVAHI_PROTO_UNSPEC,
+                                        0,
+                                        ctx->name,
+                                        FTP_DNS_SERVICE_TYPE,
+                                        NULL,
+                                        NULL,
+                                        ctx->port,
+                                        NULL) < 0) {
+        out_log(LEVEL_CRITICAL,
+                "Failed to add service: %s\n",
+                avahi_strerror(avahi_client_errno(ctx->client)));
+        goto fail;
+      }
     }
 
     if (avahi_entry_group_commit(ctx->group) < 0) {
@@ -270,7 +344,11 @@ static int poll_func(struct pollfd *ufds,
  * Tries to setup the Zeroconf thread and any
  * neccessary config setting.
  */
-void* av_zeroconf_setup(unsigned long port, const char *name) {
+void* av_zeroconf_setup(unsigned long port,
+                        const char *name,
+                        const char *username,
+                        const char *password,
+                        const char *path) {
   struct context *ctx = NULL;
 
   /* default service name, if there's none in
@@ -307,7 +385,27 @@ void* av_zeroconf_setup(unsigned long port, const char *name) {
     ctx->name = strdup(name);
   }
 
-  assert(ctx->name);
+  /* assign TXT keys if any */
+  if (username) {
+    ctx->username = strdup(username);
+  }
+  else {
+    ctx->username = NULL;
+  }
+  if (password) {
+    ctx->password = strdup(password);
+  }
+  else {
+    ctx->password = NULL;
+  }
+  if (path) {
+    ctx->path = strdup(path);
+  }
+  else {
+    ctx->path = NULL;
+  }
+
+  assert(strlen(ctx->name) > 0);
 
 /* first of all we need to initialize our threading env */
 #ifdef HAVE_AVAHI_THREADED_POLL

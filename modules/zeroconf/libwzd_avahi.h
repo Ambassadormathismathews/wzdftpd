@@ -59,6 +59,10 @@ struct context {
   pthread_mutex_t mutex;
 #endif
   char *name;
+  /* TXT keys */
+  char *username;
+  char *password;
+  char *path;
 #ifndef HAVE_AVAHI_THREADED_POLL
   AvahiSimplePoll   *simple_poll;
 #else
@@ -70,15 +74,16 @@ struct context {
 };
 
 /* prototype definitions */
-void* av_zeroconf_setup(unsigned long, const char *);
+void* av_zeroconf_setup(unsigned long, /* port */
+                        const char *,  /* mDNS name */
+                        const char *,  /* username */
+                        const char *,  /* password */
+                        const char *); /* path */
 int av_zeroconf_run(void*);
 int av_zeroconf_unregister(void*);
 void av_zeroconf_shutdown(void*);
 void av_zeroconf_lock(void *);
 void av_zeroconf_unlock(void *);
-static void publish_reply(AvahiEntryGroup *,
-                          AvahiEntryGroupState,
-                          void *);
 
 #endif   /* _LIBWZD_AVAHI_H */
 

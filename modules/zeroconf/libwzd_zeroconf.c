@@ -99,18 +99,45 @@ int WZD_MODULE_INIT(void)
   int ret = 1;
   void * arg = NULL;
   const char *zeroconf_name = NULL;
+  const char *zeroconf_username = NULL;
+  const char *zeroconf_password = NULL;
+  const char *zeroconf_path = NULL;
   unsigned long wzdftpd_port;
 
   if (initialized > 0) return 1;
   initialized++;
 
-  str = config_get_string(mainConfig->cfg_file, "GLOBAL", "zeroconf_name", NULL);
+  /* the mDNS name that should be published */
+  str = config_get_string(mainConfig->cfg_file, "ZEROCONF", "zeroconf_name", NULL);
   if (str) {
     zeroconf_name = strdup(str_tochar(str));
     str_deallocate(str);
   }
 
-  wzdftpd_port = config_get_integer(mainConfig->cfg_file, "GLOBAL", "zeroconf_port", &err);
+  /* TXT keys - see http://www.dns-sd.org/ServiceTypes.html */
+  str = config_get_string(mainConfig->cfg_file, "ZEROCONF", "zeroconf_username", NULL);
+  if (str) {
+    zeroconf_username = strdup(str_tochar(str));
+    str_deallocate(str);
+  }
+
+  str = config_get_string(mainConfig->cfg_file, "ZEROCONF", "zeroconf_password", NULL);
+  if (str) {
+    zeroconf_password = strdup(str_tochar(str));
+    str_deallocate(str);
+  }
+
+  str = config_get_string(mainConfig->cfg_file, "ZEROCONF", "zeroconf_path", NULL);
+  if (str) {
+    zeroconf_path = strdup(str_tochar(str));
+    str_deallocate(str);
+  }
+
+  /** the actual port
+   * \todo determine port(s) dynamically from port = ...
+   *  \todo support multiple ports
+   */
+  wzdftpd_port = config_get_integer(mainConfig->cfg_file, "ZEROCONF", "zeroconf_port", &err);
   if (err) {
     out_log(LEVEL_CRITICAL,"zeroconf: you must provide zeroconf_port=... in your config file\n");
     initialized = 0;
@@ -161,9 +188,17 @@ int WZD_MODULE_INIT(void)
 #elif defined (USE_AVAHI)
   assert(wzdftpd_port != 0); // the port should be defined in the config file
 
-  ctx = av_zeroconf_setup(wzdftpd_port, zeroconf_name);
+  ctx = av_zeroconf_setup(wzdftpd_port,
+                          zeroconf_name,
+                          zeroconf_username,
+                          zeroconf_password,
+                          zeroconf_path);
 #elif defined (USE_HOWL)
-  ho_zeroconf_setup(wzdftpd_port, zeroconf_name);
+  ho_zeroconf_setup(wzdftpd_port,
+                    zeroconf_name,
+                    zeroconf_username,
+                    zeroconf_password,
+                    zeroconf_path);
 #endif
 
   out_log(LEVEL_INFO, "Module zeroconf loaded\n");

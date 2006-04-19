@@ -51,9 +51,15 @@ static sw_result HOWL_API publish_reply(sw_discovery discovery,
   return SW_OKAY;
 }
 
-void* ho_zeroconf_setup(unsigned long port, const char *name) {
+void* ho_zeroconf_setup(unsigned long port,
+                        const char *name,
+                        const char *username,
+                        const char *password,
+                        const char *path) {
   sw_result result;
   sw_discovery_publish_id id;
+  sw_text_record text_record;
+  int txt_rec_len = 0;
   char service[256] = "WZDFTP Server on ";
 
   if (sw_discovery_init (&discovery) != SW_OKAY) {
@@ -73,6 +79,43 @@ void* ho_zeroconf_setup(unsigned long port, const char *name) {
 
   assert(name);
 
+  /* prepare text records */
+  if (sw_text_record_init(&text_record) != SW_OKAY) {
+    out_log(LEVEL_CRITICAL, "Initializing TXT data structure failed\n");
+  }
+
+  /* assign TXT keys if any */
+  if (username) {
+    if (sw_text_record_add_key_and_string_value(text_record,
+                                                "u",
+                                                username) != SW_OKAY) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "u", username);
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+  if (password) {
+    if (sw_text_record_add_key_and_string_value(text_record,
+                                                "p",
+                                                password) != SW_OKAY) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "p", password);
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+  if (path) {
+    if (sw_text_record_add_key_and_string_value(text_record,
+                                                "path",
+                                                path) != SW_OKAY) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "path", path);
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+
   if (!(result = sw_discovery_publish (discovery,
                                        0,
                                        name,
@@ -80,8 +123,8 @@ void* ho_zeroconf_setup(unsigned long port, const char *name) {
                                        NULL,
                                        NULL,
                                        port,
-                                       NULL,
-                                       0,
+                                       text_record,
+                                       txt_rec_len++,
                                        publish_reply,
                                        NULL,
                                        &id)) != SW_OKAY) {
@@ -90,6 +133,8 @@ void* ho_zeroconf_setup(unsigned long port, const char *name) {
     out_log(LEVEL_CRITICAL, "Adding service '%s' failed\n", name);
     ho_zeroconf_unregister();
   }
+
+  sw_text_record_fina(text_record);
 }
 
 void* ho_zeroconf_run(void) {
