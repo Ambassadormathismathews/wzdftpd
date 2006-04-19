@@ -90,6 +90,9 @@ void* ho_zeroconf_setup(unsigned long port,
                                                 "u",
                                                 username) != SW_OKAY) {
       out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "u", username);
+
+      ho_zeroconf_unregister();
+      sw_text_record_fina(text_record);
     }
     else {
       txt_rec_len++;
@@ -100,6 +103,9 @@ void* ho_zeroconf_setup(unsigned long port,
                                                 "p",
                                                 password) != SW_OKAY) {
       out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "p", password);
+
+      ho_zeroconf_unregister();
+      sw_text_record_fina(text_record);
     }
     else {
       txt_rec_len++;
@@ -110,6 +116,9 @@ void* ho_zeroconf_setup(unsigned long port,
                                                 "path",
                                                 path) != SW_OKAY) {
       out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "path", path);
+
+      ho_zeroconf_unregister();
+      sw_text_record_fina(text_record);
     }
     else {
       txt_rec_len++;

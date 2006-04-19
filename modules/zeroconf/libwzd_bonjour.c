@@ -49,8 +49,13 @@ publish_reply (DNSServiceRef sdRef,
 {
 }
 
-void* bo_zeroconf_setup(unsigned long port, const char *name) {
+void* bo_zeroconf_setup(unsigned long port,
+                        const char *name,
+                        const char *username,
+                        const char *password,
+                        const char *path) {
   DNSServiceErrorType err;
+  TXTRecordRef txtRecord;
   char service[256] = "WZDFTP Server on ";
 
   /* Prepare service name */
@@ -65,18 +70,67 @@ void* bo_zeroconf_setup(unsigned long port, const char *name) {
   assert(name);
   assert(port);
 
+  /* prepare text records */
+  TXTRecordCreate(&txtRecord, 0, 0);
+
+  /* assign TXT keys if any */
+  if (username) {
+    if (TXTRecordSetValue(&text_record,
+                          "u",
+                          8,
+                          username) != kDNSServiceErr_NoError) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "u", username);
+
+      TXTRecordDeallocate(&txt_record);
+      bo_zeroconf_unregister();
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+  if (password) {
+    if (TXTRecordSetValue(&text_record,
+                          "p",
+                          8,
+                          password) != kDNSServiceErr_NoError) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "p", password);
+
+      TXTRecordDeallocate(&txt_record);
+      bo_zeroconf_unregister();
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+  if (path) {
+    if (TXTRecordSetValue(&text_record
+                          "path",
+                          4,
+                          path) != kDNSServiceErr_NoError) {
+      out_log(LEVEL_CRITICAL, "Adding TXT record %s=%s failed\n", "path", path);
+
+      TXTRecordDeallocate(&txt_record);
+      bo_zeroconf_unregister();
+    }
+    else {
+      txt_rec_len++;
+    }
+  }
+
   err = DNSServiceRegister (&publish_session,
-                            0,                    /* flags */
-                            0,                    /* interface; 0 for all */
-                            name,                 /* name */
-                            FTP_DNS_SERVICE_TYPE, /* type */
-                            NULL,                 /* domain */
-                            NULL,                 /* hostname */
-                            htons (port),         /* port in network byte order */
-                            0,                    /* text record length */
-                            NULL,                 /* text record */
-                            publish_reply,        /* callback */
-                            NULL);                /* context */
+                            0,                          /* flags */
+                            0,                          /* interface; 0 for all */
+                            name,                       /* name */
+                            FTP_DNS_SERVICE_TYPE,       /* type */
+                            NULL,                       /* domain */
+                            NULL,                       /* hostname */
+                            htons (port),               /* port in network byte order */
+                            TXTRecordGetLength(&txt),   /* text record length */
+                            TXTRecordGetBytesPtr(&txt), /* text record */
+                            publish_reply,              /* callback */
+                            NULL);                      /* context */
+
+  TXTRecordDeallocate(&txt_record);
 
   if (err == kDNSServiceErr_NoError) {
     out_log(LEVEL_INFO, "Adding service '%s'\n", name);

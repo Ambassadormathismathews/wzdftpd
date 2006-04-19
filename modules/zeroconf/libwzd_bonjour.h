@@ -38,7 +38,11 @@
 #define FTP_DNS_SERVICE_TYPE "_ftp._tcp"
 
 /* prototype definitions */
-void* bo_zeroconf_setup(unsigned long, const char *);
+void* bo_zeroconf_setup(unsigned long, /* port */
+                        const char *,  /* mDNS name */
+                        const char *,  /* username */
+                        const char *,  /* password */
+                        const char *); /* path */
 int bo_zeroconf_unregister(void);
 int bo_zeroconf_run(void);
 
