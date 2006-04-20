@@ -94,9 +94,6 @@ void* ho_zeroconf_setup(unsigned long port,
       ho_zeroconf_unregister();
       sw_text_record_fina(text_record);
     }
-    else {
-      txt_rec_len++;
-    }
   }
   if (password) {
     if (sw_text_record_add_key_and_string_value(text_record,
@@ -106,9 +103,6 @@ void* ho_zeroconf_setup(unsigned long port,
 
       ho_zeroconf_unregister();
       sw_text_record_fina(text_record);
-    }
-    else {
-      txt_rec_len++;
     }
   }
   if (path) {
@@ -120,9 +114,6 @@ void* ho_zeroconf_setup(unsigned long port,
       ho_zeroconf_unregister();
       sw_text_record_fina(text_record);
     }
-    else {
-      txt_rec_len++;
-    }
   }
 
   if (!(result = sw_discovery_publish (discovery,
@@ -132,8 +123,8 @@ void* ho_zeroconf_setup(unsigned long port,
                                        NULL,
                                        NULL,
                                        port,
-                                       text_record,
-                                       txt_rec_len,
+                                       sw_text_record_bytes(text_record),
+                                       sw_text_record_len(text_record),
                                        publish_reply,
                                        NULL,
                                        &id)) != SW_OKAY) {
