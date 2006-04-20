@@ -30,6 +30,10 @@
 
 #ifdef USE_AVAHI
 
+#ifdef HAVE_PTHREAD
+# include <pthread.h>
+#endif
+
 #include "libwzd_avahi.h"
 
 static void publish_reply(AvahiEntryGroup *,
@@ -44,7 +48,6 @@ static void register_stuff(struct context *ctx) {
   char txt_uname[255], txt_pwd[255], txt_path[255];
   int txt_keys_size = 0;
   AvahiStringList* list = NULL;
-  int ret;
 
   assert(ctx->client);
 
@@ -85,7 +88,7 @@ static void register_stuff(struct context *ctx) {
 
       out_log(LEVEL_INFO, "Adding TXT key '%s' to TXT array\n", txt_path);
     }
-  
+
     if (txt_keys_size > 0) {
       const char *txt_keys[txt_keys_size];
       int i = 0;
@@ -96,19 +99,19 @@ static void register_stuff(struct context *ctx) {
       {
         if (ctx->username)
         {
-          txt_keys[i] = &txt_uname;
+          txt_keys[i] = (const char*)&txt_uname;
           i++;
         }
         if (ctx->password)
         {
-          txt_keys[i] = &txt_pwd;
+          txt_keys[i] = (const char*)&txt_pwd;
           i++;
         }
         if (ctx->path)
         {
-          txt_keys[i] = &txt_path;
+          txt_keys[i] = (const char*)&txt_path;
           i++;
-        }     
+        }
       }
 
       list = avahi_string_list_new_from_array(txt_keys, txt_keys_size);
@@ -302,7 +305,7 @@ static void* thread(void *userdata) {
   /* Make sure that signals are delivered to the main thread */
   sigfillset(&mask);
   pthread_sigmask(SIG_BLOCK, &mask, NULL);
-    
+
   pthread_mutex_lock(&ctx->mutex);
 
   /* Run the main loop */
@@ -329,7 +332,7 @@ static int poll_func(struct pollfd *ufds,
 
   /* Before entering poll() we unlock the mutex, so that
    * avahi_simple_poll_quit() can succeed from another thread. */
-    
+
   pthread_mutex_unlock(mutex);
   r = poll(ufds, nfds, timeout);
   pthread_mutex_lock(mutex);
@@ -355,7 +358,7 @@ void* av_zeroconf_setup(unsigned long port,
    * the config file.
    */
   char service[256] = "WZDFTP Server on ";
-  int error, ret;
+  int error;
 
   /* initialize the struct that holds our
    * config settings.
@@ -410,7 +413,7 @@ void* av_zeroconf_setup(unsigned long port,
 /* first of all we need to initialize our threading env */
 #ifdef HAVE_AVAHI_THREADED_POLL
   if (!(ctx->threaded_poll = avahi_threaded_poll_new())) {
-     return;
+     return NULL;
   }
 #else
   if (!(ctx->simple_poll = avahi_simple_poll_new())) {
@@ -461,7 +464,9 @@ fail:
  */
 int av_zeroconf_run(void *u) {
   struct context *ctx = u;
+#ifndef HAVE_AVAHI_THREADED_POLL
   int ret;
+#endif
 
 #ifdef HAVE_AVAHI_THREADED_POLL
   /* Finally, start the event loop thread */
