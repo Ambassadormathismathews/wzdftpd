@@ -108,6 +108,12 @@ case "$host" in
   *-cygwin*)
     LIBS="${LIBS} -lwsock32" 
     ;;
+  *-darwin*)
+    darwin_version=`uname -r | grep '8.'`
+    if test -n "$darwin_version" ; then
+      AC_DEFINE([HAVE_OSX_TIGER], 1, [We are running OSX Tiger])
+    fi
+    ;;
 esac
 
 # Checks for library functions.
