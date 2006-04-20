@@ -133,7 +133,7 @@ void* ho_zeroconf_setup(unsigned long port,
                                        NULL,
                                        port,
                                        text_record,
-                                       txt_rec_len++,
+                                       txt_rec_len,
                                        publish_reply,
                                        NULL,
                                        &id)) != SW_OKAY) {
