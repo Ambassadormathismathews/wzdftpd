@@ -25,6 +25,12 @@
 #ifndef __WZD_THREADS__
 #define __WZD_THREADS__
 
+#ifndef WIN32
+#  ifdef HAVE_PTHREAD
+#    include <pthread.h>
+#  endif
+#endif
+
 /* use the WZD_THREAD_VOID macro to cast these types to void * */
 
 typedef union wzd_thread_attr_t wzd_thread_attr_t;

@@ -43,7 +43,6 @@
 #include <windows.h>
 #else
 #include <unistd.h>
-#include <pthread.h>
 
 #include <signal.h>
 #endif
