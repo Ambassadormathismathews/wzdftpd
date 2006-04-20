@@ -184,7 +184,11 @@ int WZD_MODULE_INIT(void)
     TODO: This has to be tested on a OSX box. Especially whether it
     blocks the main wzdftpd loop/thread.
   */
-  bo_zeroconf_setup(wzdftpd_port, zeroconf_name);
+  bo_zeroconf_setup(wzdftpd_port,
+                    zeroconf_name,
+                    zeroconf_username,
+                    zeroconf_password,
+                    zeroconf_path);
 #elif defined (USE_AVAHI)
   assert(wzdftpd_port != 0); // the port should be defined in the config file
 

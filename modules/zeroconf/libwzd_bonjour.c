@@ -55,7 +55,9 @@ void* bo_zeroconf_setup(unsigned long port,
                         const char *password,
                         const char *path) {
   DNSServiceErrorType err;
+#ifdef HAVE_OSX_TIGER
   TXTRecordRef txtRecord;
+#endif
   char service[256] = "WZDFTP Server on ";
 
   /* Prepare service name */
@@ -70,6 +72,7 @@ void* bo_zeroconf_setup(unsigned long port,
   assert(name);
   assert(port);
 
+#ifdef HAVE_OSX_TIGER
   /* prepare text records */
   TXTRecordCreate(&txtRecord, 0, 0);
 
@@ -116,6 +119,11 @@ void* bo_zeroconf_setup(unsigned long port,
       txt_rec_len++;
     }
   }
+#else
+  out_log(LEVEL_INFO,
+          "You did provide certain TXT keys.\n"
+          "Unfortunatly this particular OSX version is not able to publish TXT keys.\n");
+#endif
 
   err = DNSServiceRegister (&publish_session,
                             0,                          /* flags */
@@ -125,12 +133,19 @@ void* bo_zeroconf_setup(unsigned long port,
                             NULL,                       /* domain */
                             NULL,                       /* hostname */
                             htons (port),               /* port in network byte order */
+#ifdef HAVE_OSX_TIGER
                             TXTRecordGetLength(&txt),   /* text record length */
                             TXTRecordGetBytesPtr(&txt), /* text record */
+#else
+                            0,
+                            NULL,
+#endif
                             publish_reply,              /* callback */
                             NULL);                      /* context */
 
+#ifdef HAVE_OSX_TIGER
   TXTRecordDeallocate(&txt_record);
+#endif
 
   if (err == kDNSServiceErr_NoError) {
     out_log(LEVEL_INFO, "Adding service '%s'\n", name);
