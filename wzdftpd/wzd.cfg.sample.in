@@ -232,6 +232,7 @@ site_vfsdel = +O
 @e_datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
 @e_datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
 @e_datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
+@e_datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
 
 [sfv]
 progressmeter = [WzD] - %3d%% Complete - [WzD]
