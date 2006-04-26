@@ -46,7 +46,10 @@
 
 #include "libmysql.h"
 
-#define MYSQL_BACKEND_VERSION   122
+/*
+ * 123: allow auto-reconnection if mysql server has gone for server 5.x
+ */
+#define MYSQL_BACKEND_VERSION   123
 
 #define MYSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+16)
 
@@ -109,6 +112,8 @@ static int wzd_parse_arg(const char *arg)
 
 int FCN_INIT(const char *arg)
 {
+  my_bool b = 1;
+
   if ((wzd_parse_arg(arg)) != 0) {
     return -1;
   }
@@ -121,6 +126,8 @@ int FCN_INIT(const char *arg)
     mysql_close(&mysql);
     return -1;
   }
+
+  mysql_options( &mysql, MYSQL_OPT_RECONNECT, &b );
 
   return 0;
 }

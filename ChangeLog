@@ -1,6 +1,7 @@
 2006-04-26  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: reconnect to server when connection is interrupted (PostgreSQL backend)
+	* bugfix: allow MySQL backend to auto-reconnect to 5.x server (Closes: #0037, #0041)
 
 2006-04-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
