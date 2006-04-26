@@ -5,7 +5,7 @@
 # <name> = <value>
 # (for windows users: without the < > ;-)
 
-config version = 0.7.0
+config version = @WZD_VERSION@
 
 # backup config when saving changes (default: false)
 backup config = true

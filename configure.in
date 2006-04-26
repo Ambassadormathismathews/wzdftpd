@@ -50,6 +50,9 @@ LT_CURRENT_MINUS_AGE=m4_eval(lt_current - lt_age)
 AC_SUBST(LT_VERSION_INFO)
 AC_SUBST(LT_CURRENT_MINUS_AGE)
 
+WZD_VERSION="wzd_version"
+AC_SUBST(WZD_VERSION)
+
 # Checks for programs.
 #CFLAGS=""
 #CXXFLAGS=""
