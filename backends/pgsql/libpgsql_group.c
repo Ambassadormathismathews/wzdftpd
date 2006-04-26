@@ -52,24 +52,14 @@ gid_t group_get_ref(const char * name, unsigned int ref);
 
 gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
-  char *query;
+  char query[512];
   gid_t gid;
   PGresult * res;
 
   if (!wzd_pgsql_check_name(name)) return (gid_t)-1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM groups WHERE groupname='%s'", name);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE groupname='%s'", name)) == NULL) return (gid_t)-1;
 
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (gid_t)-1;
-  }
-
-  free(query);
   gid = (gid_t)-1;
 
   /** no !! this returns the number of COLUMNS (here, 14) */
@@ -175,12 +165,8 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
       snprintf(mod, 512, " WHERE groupname='%s'", name);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
-	  res = PQexec(pgconn, query);
-
-      if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
-        _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      if (_wzd_run_update_query(query,query_length,query) != 0)
         goto error_mod_group_free;
-      }
 
       PQclear(res);
 
@@ -247,7 +233,7 @@ error_mod_group_free:
 
 int _group_update_ip(uid_t ref, wzd_group_t * group)
 {
-  char *query;
+  char query[512];
   PGresult * res;
   unsigned int i;
   int index;
@@ -256,16 +242,7 @@ int _group_update_ip(uid_t ref, wzd_group_t * group)
 
   if (!ref) return -1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT groupip.ip FROM groupip WHERE ref=%d", ref);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip WHERE ref=%d",ref)) == NULL) return 0;
 
   for (i=0; i<HARD_IP_PER_GROUP; i++)
     ip_list[i][0] = '\0';
@@ -307,7 +284,6 @@ int _group_update_ip(uid_t ref, wzd_group_t * group)
   }
 
   PQclear(res);
-  free(query);
 
   return 0;
 }
@@ -315,27 +291,19 @@ int _group_update_ip(uid_t ref, wzd_group_t * group)
 
 gid_t group_get_ref(const char * name, unsigned int ref)
 {
-  char *query;
+  char query[512];
   gid_t gid=0;
   unsigned long ul;
   int index;
   char *ptr;
   PGresult * res;
 
+  /** \bug XXX FIXME 0 is a valid gid - should it be -1 ? */
   if (!wzd_pgsql_check_name(name)) return 0;
 
   if (ref) return ref;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT groups.ref FROM groups WHERE groupname='%s'", name);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.ref FROM groups WHERE groupname='%s'",name)) == NULL) return 0;
 
   for (index=0; index<PQntuples(res); index++) {
     ul = strtoul(PQgetvalue(res,0,0), &ptr, 0);
@@ -346,7 +314,6 @@ gid_t group_get_ref(const char * name, unsigned int ref)
   }
 
   PQclear(res);
-  free(query);
 
   return gid;
 }

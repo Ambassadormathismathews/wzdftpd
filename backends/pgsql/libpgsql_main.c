@@ -46,7 +46,9 @@
 
 #include "libpgsql.h"
 
-#define PGSQL_BACKEND_VERSION   103
+/* 104: reconnect if connection with server was interrupted
+ */
+#define PGSQL_BACKEND_VERSION   104
 
 #define PGSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+17)
 
@@ -148,7 +150,6 @@ int FCN_INIT(const char *arg)
   }
 
   res = PQexec(pgconn, "select ref from users;");
-  PQclear(res);
 
   if (!res) {
     out_log(PGSQL_LOG_CHANNEL,"PG: could not find expected data in database %s on %s\n",db,db_hostname);
@@ -157,6 +158,7 @@ int FCN_INIT(const char *arg)
     PQfinish(pgconn);
     return -1;
   }
+  PQclear(res);
 
   out_log(PGSQL_LOG_CHANNEL,"PG: backend version %d loaded\n",PGSQL_BACKEND_VERSION);
 
@@ -165,23 +167,13 @@ int FCN_INIT(const char *arg)
 
 uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
-  char *query;
+  char query[512];
   uid_t uid;
   PGresult * res;
 
   if (!wzd_pgsql_check_name(login)) return (uid_t)-1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
-  }
-  free(query);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", login)) == NULL) return (uid_t)-1;
 
   uid = (uid_t)-1;
 
@@ -215,24 +207,14 @@ uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 
 uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
-  char *query;
+  char query[512];
   uid_t uid;
   PGresult * res;
 
   if (!wzd_pgsql_check_name(login)) return (uid_t)-1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", login)) == NULL) return (uid_t)-1;
 
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
-  }
-
-  free(query);
   uid = (uid_t)-1;
 
 
@@ -288,24 +270,14 @@ uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 
 uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
-  char *query;
+  char query[512];
   uid_t uid;
   PGresult * res;
 
   if (!wzd_pgsql_check_name(name)) return (uid_t)-1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", name);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", name)) == NULL) return (uid_t)-1;
 
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
-  }
-
-  free(query);
   uid = (uid_t)-1;
 
   /** no !! this returns the number of COLUMNS (here, 14) */
@@ -350,7 +322,7 @@ int FCN_FINI(void)
 
 wzd_user_t * FCN_GET_USER(uid_t uid)
 {
-  char *query;
+  char query[512];
   int num_fields;
   wzd_user_t * user;
   unsigned int i,j;
@@ -358,16 +330,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   if (uid == (uid_t)-2) return (wzd_user_t*)wzd_pgsql_get_user_list();
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE uid='%d'", uid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE uid='%d'", uid)) == NULL) return NULL;
 
   if ( PQntuples(res) != 1 ) {
     /* more than 1 result !!!! */
@@ -409,15 +372,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   /* Now get IP */
   user->ip_allowed[0][0] = '\0';
 
-  snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid)) == NULL) return user;
 
   for (i=0; (int)i<PQntuples(res); i++) {
     if (i >= HARD_IP_PER_USER) {
@@ -432,15 +387,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Groups */
 
-  snprintf(query, 512, "SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid)) == NULL) return user;
 
   for (i=0; (int)i<PQntuples(res); i++) {
     if (i >= HARD_IP_PER_USER) {
@@ -456,15 +403,7 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
 
   /* Now get Stats */
 
-  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid)) == NULL) return user;
 
   wzd_row_get_ullong(&user->stats.bytes_ul_total, res, SCOL_BYTES_UL);
   wzd_row_get_ullong(&user->stats.bytes_dl_total, res, SCOL_BYTES_DL);
@@ -474,15 +413,13 @@ wzd_user_t * FCN_GET_USER(uid_t uid)
   PQclear(res);
 
 
-  free(query);
-
   return user;
 }
 
 
 wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
-  char *query;
+  char query[512];
   int num_fields;
   wzd_group_t * group;
   unsigned int i;
@@ -491,17 +428,7 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
 
   if (gid == (gid_t)-2) return (wzd_group_t*)wzd_pgsql_get_group_list();
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM groups WHERE gid='%d'", gid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
-  free(query);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE gid='%d'", gid)) == NULL) return NULL;
 
   if ( PQntuples(res) != 1 ) {
     /* more than 1 result !!!! */
@@ -536,17 +463,7 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
   /* Now get ip */
   group->ip_allowed[0][0] = '\0';
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return group;
-  }
-  free(query);
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid)) == NULL) return NULL;
 
   for (index=0; index<PQntuples(res); index++) {
     wzd_row_get_string(group->ip_allowed[index], MAX_IP_LENGTH, res, 0 /* query asks only one column */);
@@ -556,7 +473,6 @@ wzd_group_t * FCN_GET_GROUP(gid_t gid)
 
   return group;
 }
-
 
 
 
@@ -681,23 +597,14 @@ static inline int wzd_row_get_ullong(u64_t *dst, PGresult * res, unsigned int in
 
 static uid_t * wzd_pgsql_get_user_list(void)
 {
-  char *query;
+  char query[512];
   uid_t * uid_list;
   int index;
   unsigned int i;
   int num_rows;
   PGresult * res;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT uid FROM users");
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT uid FROM users")) == NULL) return NULL;
 
   /* number of rows */
   num_rows = PQntuples(res);
@@ -712,30 +619,20 @@ static uid_t * wzd_pgsql_get_user_list(void)
   uid_list[num_rows] = (uid_t)-1;
 
   PQclear(res);
-  free(query);
 
   return uid_list;
 }
 
 static gid_t * wzd_pgsql_get_group_list(void)
 {
-  char *query;
+  char query[512];
   gid_t * gid_list;
   int index;
   unsigned int i;
   int num_rows;
   PGresult * res;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT gid FROM groups");
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT gid FROM groups")) == NULL) return NULL;
 
   /* number of rows */
   num_rows = PQntuples(res);
@@ -751,9 +648,47 @@ static gid_t * wzd_pgsql_get_group_list(void)
 
 
   PQclear(res);
-  free(query);
 
   return gid_list;
+}
+
+PGresult * _wzd_run_select_query(char * query, size_t length, const char * query_format, ...)
+{
+  PGresult * res;
+  va_list argptr;
+
+  va_start(argptr, query_format);
+  vsnprintf(query, length, query_format, argptr);
+  va_end(argptr);
+
+  res = PQexec(pgconn, query);
+
+  if (!res) {
+    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+  if ((PQresultStatus(res) != PGRES_TUPLES_OK) && (PQstatus(pgconn) != CONNECTION_OK)) {
+    PQreset(pgconn);
+    if (PQstatus(pgconn) == CONNECTION_OK) {
+      out_log(PGSQL_LOG_CHANNEL,"[PGSQL] WARNING query [%s] returned disconnect, reconnect succeeded.\n", query);
+      res = PQexec(pgconn, query);
+    } else {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return NULL;
+    }
+    if (!res) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      return NULL;
+    }
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return NULL;
+    }
+  }
+
+  return res;
 }
 
 int _wzd_run_delete_query(char * query, size_t length, const char * query_format, ...)
@@ -767,9 +702,29 @@ int _wzd_run_delete_query(char * query, size_t length, const char * query_format
 
   res = PQexec(pgconn, query);
 
-  if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+  if (!res) {
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
+  }
+  if ((PQresultStatus(res) != PGRES_COMMAND_OK) && (PQstatus(pgconn) != CONNECTION_OK)) {
+    PQreset(pgconn);
+    if (PQstatus(pgconn) == CONNECTION_OK) {
+      out_log(PGSQL_LOG_CHANNEL,"[PGSQL] WARNING query [%s] returned disconnect, reconnect succeeded.\n", query);
+      res = PQexec(pgconn, query);
+    } else {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
+    if (!res) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      return -1;
+    }
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
   }
 
   PQclear(res);
@@ -788,9 +743,29 @@ int _wzd_run_insert_query(char * query, size_t length, const char * query_format
 
   res = PQexec(pgconn, query);
 
-  if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+  if (!res) {
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
+  }
+  if ((PQresultStatus(res) != PGRES_COMMAND_OK) && (PQstatus(pgconn) != CONNECTION_OK)) {
+    PQreset(pgconn);
+    if (PQstatus(pgconn) == CONNECTION_OK) {
+      out_log(PGSQL_LOG_CHANNEL,"[PGSQL] WARNING query [%s] returned disconnect, reconnect succeeded.\n", query);
+      res = PQexec(pgconn, query);
+    } else {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
+    if (!res) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      return -1;
+    }
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
   }
 
   PQclear(res);
@@ -798,21 +773,45 @@ int _wzd_run_insert_query(char * query, size_t length, const char * query_format
   return 0;
 }
 
+/* Format and execute update statement.
+ * If query == query_format, do not format string
+ */
 int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...)
 {
   PGresult * res;
   va_list argptr;
 
-  va_start(argptr, query_format);
-  vsnprintf(query, length, query_format, argptr);
-  va_end(argptr);
+  if (query != query_format) {
+    va_start(argptr, query_format);
+    vsnprintf(query, length, query_format, argptr);
+    va_end(argptr);
+  }
 
   res = PQexec(pgconn, query);
 
-  if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
+  if (!res) {
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    out_log(PGSQL_LOG_CHANNEL,"PG: query was '%s'\n", query);
     return -1;
+  }
+  if ((PQresultStatus(res) != PGRES_COMMAND_OK) && (PQstatus(pgconn) != CONNECTION_OK)) {
+    PQreset(pgconn);
+    if (PQstatus(pgconn) == CONNECTION_OK) {
+      out_log(PGSQL_LOG_CHANNEL,"[PGSQL] WARNING query [%s] returned disconnect, reconnect succeeded.\n", query);
+      res = PQexec(pgconn, query);
+    } else {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
+    if (!res) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      return -1;
+    }
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+      _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
+      PQclear(res);
+      return -1;
+    }
   }
 
   PQclear(res);

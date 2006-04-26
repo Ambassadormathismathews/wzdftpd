@@ -75,7 +75,6 @@ char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, un
 int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   char *query, *mod;
-  PGresult * res;
   int modified = 0;
   unsigned int query_length = 512;
   uid_t ref = 0;
@@ -175,14 +174,7 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       snprintf(mod, 512, " WHERE username='%s'", name);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
-      res = PQexec(pgconn, query);
-
-      if (!res || PQresultStatus(res) != PGRES_COMMAND_OK) {
-        _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-        goto error_mod_user_free;
-      }
-
-      PQclear(res);
+      if (_wzd_run_update_query(query,query_length,query) != 0)
 
       free(mod); free(query);
       return 0;
@@ -271,7 +263,7 @@ error_mod_user_free:
 
 int _user_update_ip(uid_t ref, wzd_user_t * user)
 {
-  char *query;
+  char query[512];
   PGresult * res;
   unsigned int i;
   int index;
@@ -280,16 +272,7 @@ int _user_update_ip(uid_t ref, wzd_user_t * user)
 
   if (!ref) return -1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT userip.ip FROM userip WHERE ref=%d", ref);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip WHERE ref=%d",ref)) == NULL) return 0;
 
   for (i=0; i<HARD_IP_PER_USER; i++)
     ip_list[i][0] = '\0';
@@ -331,30 +314,20 @@ int _user_update_ip(uid_t ref, wzd_user_t * user)
   }
 
   PQclear(res);
-  free(query);
 
   return 0;
 }
 
 int _user_update_stats(uid_t ref, wzd_user_t * user)
 {
-  char *query;
+  char query[512];
   PGresult * res;
   int ret;
   int numrows;
 
   if (!ref) return -1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM stats WHERE ref=%d", ref);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM stats WHERE ref=%d",ref)) == NULL) return 0;
 
   numrows = PQntuples(res);
   PQclear(res);
@@ -372,13 +345,10 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
         ref);
     break;
   default:
-    free(query);
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
 
-
-  free(query);
 
   return 0;
 }
@@ -386,27 +356,19 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
 
 uid_t user_get_ref(const char * name, unsigned int ref)
 {
-  char *query;
+  char query[512];
   unsigned int uid=0;
   unsigned long ul;
   int index;
   char *ptr;
   PGresult * res;
 
+  /** \bug XXX FIXME 0 is a valid uid - should it be -1 ? */
   if (!wzd_pgsql_check_name(name)) return 0;
 
   if (ref) return ref;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT users.ref FROM users WHERE username='%s'", name);
-
-  res = PQexec(pgconn, query);
-
-  if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-    free(query);
-    _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
-  }
+  if ( (res = _wzd_run_select_query(query,512,"SELECT users.ref FROM users WHERE username='%s'",name)) == NULL) return 0;
 
   for (index=0; index<PQntuples(res); index++) {
     ul = strtoul(PQgetvalue(res,index,0), &ptr, 0);
@@ -417,7 +379,6 @@ uid_t user_get_ref(const char * name, unsigned int ref)
   }
 
   PQclear(res);
-  free(query);
 
   return uid;
 }

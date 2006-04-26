@@ -77,12 +77,16 @@ extern PGconn * pgconn;
 
 void _wzd_pgsql_error(const char *filename, const char  *func_name, int line); /*, const char *error); */
 
+PGresult * _wzd_run_select_query(char * query, size_t length, const char * query_format, ...);
 int _wzd_run_delete_query(char * query, size_t length, const char * query_format, ...);
 int _wzd_run_insert_query(char * query, size_t length, const char * query_format, ...);
 int _wzd_run_update_query(char * query, size_t length, const char * query_format, ...);
 
 /* basic syntax checking to avoid injections */
 int wzd_pgsql_check_name(const char *name);
+
+/* check connection and reset it if needed */
+int _sql_check_connection(void);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 

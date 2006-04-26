@@ -1,3 +1,7 @@
+2006-04-26  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: reconnect to server when connection is interrupted (PostgreSQL backend)
+
 2006-04-05  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: set default port to 21 (Closes: #0040)
