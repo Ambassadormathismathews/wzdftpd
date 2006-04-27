@@ -95,7 +95,6 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
-  PGresult * res;
   int modified = 0;
   unsigned int query_length = 512;
   gid_t ref = 0;
@@ -167,8 +166,6 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
       if (_wzd_run_update_query(query,query_length,query) != 0)
         goto error_mod_group_free;
-
-      PQclear(res);
 
       free(mod); free(query);
       return 0;
