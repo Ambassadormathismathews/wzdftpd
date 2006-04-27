@@ -127,7 +127,9 @@ int FCN_INIT(const char *arg)
     return -1;
   }
 
+#if defined(MYSQL_VERSION_ID) && (MYSQL_VERSION_ID >= 50000)
   mysql_options( &mysql, MYSQL_OPT_RECONNECT, &b );
+#endif
 
   return 0;
 }
