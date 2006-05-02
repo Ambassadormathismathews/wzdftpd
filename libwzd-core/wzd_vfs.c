@@ -53,8 +53,10 @@
 #include "wzd_dir.h"
 #include "wzd_file.h"
 #include "wzd_fs.h"
+#include "wzd_group.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 

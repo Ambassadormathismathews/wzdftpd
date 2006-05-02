@@ -28,56 +28,33 @@
 
 #ifndef WZD_USE_PCH
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+
+#include <sys/types.h>
+
 #ifdef WIN32
 #include <winsock2.h>
+#include <direct.h> /* _getcwd */
 #else
-#include <sys/types.h>
+#include <unistd.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
+#include <arpa/inet.h>
 #endif
-
-#include <stdio.h>
-#include <sys/stat.h>
 
 #include "wzd_structs.h"
 
-#include "wzd_ratio.h"
-#include "wzd_fs.h"
-#include "wzd_misc.h"
 #include "wzd_user.h"
+#include "wzd_log.h"
+#include "wzd_misc.h"
+
+#include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
 
-u64_t ratio_get_credits(wzd_user_t * user)
-{
-  if (!user->ratio) return (u64_t)-1;
 
-  return user->credits;
-}
-
-int ratio_check_download(const char *path, wzd_context_t *context)
-{
-  wzd_user_t * me;
-  u64_t credits;
-  fs_filestat_t s;
-  u64_t needed=0;
-
-  me = GetUserByID(context->userid);
-  if (!me) return -1;
-
-  if (!me->ratio) return 0;
-  credits = ratio_get_credits(me);
-
-  if (fs_file_stat(path,&s)) {
-    /* problem during stat() */
-    return -1;
-  }
-
-  needed = s.size;
-
-  if (needed <= credits)
-    return 0;
-  else
-    return 1;
-}

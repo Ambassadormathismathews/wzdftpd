@@ -73,10 +73,12 @@
 #include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_fs.h"
+#include "wzd_group.h"
 #include "wzd_dir.h"
 #include "wzd_mod.h"
 #include "wzd_perm.h"
 #include "wzd_tls.h"
+#include "wzd_user.h"
 
 #include <libwzd-auth/wzd_tls.h> /* XXX test only */
 

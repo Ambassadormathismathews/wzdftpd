@@ -48,6 +48,8 @@ void wzd_cache_close(wzd_cache_t * c);
 void wzd_cache_purge(void);
 
 
+#ifndef WZD_NO_USER_CACHE
+
 typedef int (*predicate_user_t)(wzd_user_t *, void * arg);
 typedef int (*predicate_group_t)(wzd_group_t *, void * arg);
 
@@ -68,6 +70,8 @@ wzd_group_t * groupcache_getbyname( const char * name );
 wzd_group_t * groupcache_getbygid( unsigned int gid );
 wzd_group_t * groupcache_search( predicate_group_t p, void * arg );
 void groupcache_invalidate( predicate_group_t p, void * arg );
+
+#endif /* WZD_NO_USER_CACHE */
 
 #endif /* __WZD_CACHE__ */
 

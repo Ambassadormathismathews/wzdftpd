@@ -55,9 +55,11 @@
 
 #include "wzd_structs.h"
 #include "wzd_fs.h"
+#include "wzd_group.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 
@@ -583,6 +585,7 @@ void wzd_cache_purge(void)
 }
 
 
+#ifndef WZD_NO_USER_CACHE
 
 static CHTBL index_user_name;
 static CHTBL index_user_uid;
@@ -822,4 +825,6 @@ void groupcache_invalidate( predicate_group_t p, void * arg )
   if (group) chtbl_remove(&index_group_gid, (void*)group->gid);
   if (group) chtbl_remove(&index_group_name, group->groupname);
 }
+
+#endif /* WZD_NO_USER_CACHE */
 

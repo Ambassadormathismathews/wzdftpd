@@ -62,6 +62,7 @@
 #include "wzd_misc.h"
 #include "wzd_messages.h"
 #include "wzd_mod.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 

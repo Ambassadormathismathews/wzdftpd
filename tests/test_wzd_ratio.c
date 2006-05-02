@@ -2,6 +2,7 @@
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_cache.h>
+#include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_ratio.h>
 
 #include "test_common.h"

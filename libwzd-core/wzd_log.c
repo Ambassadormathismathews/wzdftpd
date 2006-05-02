@@ -58,6 +58,7 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 

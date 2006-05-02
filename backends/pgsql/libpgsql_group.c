@@ -39,6 +39,7 @@
 #include <libwzd-base/wzd_strlcat.h>
 
 #include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_group.h>
 #include <libwzd-core/wzd_misc.h> /* win_normalize */
 
 #include <libwzd-core/wzd_debug.h>

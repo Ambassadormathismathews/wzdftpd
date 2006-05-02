@@ -54,11 +54,13 @@
 
 #include "wzd_configfile.h"
 #include "wzd_fs.h"
+#include "wzd_group.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
 #include "wzd_site.h"
 #include "wzd_site_group.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 

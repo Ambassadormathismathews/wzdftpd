@@ -65,6 +65,7 @@
 #include "wzd_mod.h"
 #include "wzd_data.h"
 #include "wzd_socket.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 

@@ -98,6 +98,7 @@
 #include "wzd_misc.h"
 #include "wzd_messages.h"
 #include "wzd_mutex.h"
+#include "wzd_user.h"
 
 #endif /* WZD_USE_PCH */
 

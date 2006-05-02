@@ -42,7 +42,9 @@
 #include <libwzd-auth/wzd_auth.h>
 
 #include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_group.h>
 #include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_debug.h>
 
 #include "libplaintext_main.h"

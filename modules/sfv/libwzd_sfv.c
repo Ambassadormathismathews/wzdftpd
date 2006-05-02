@@ -60,6 +60,8 @@
 #include <libwzd-core/wzd_cache.h>
 #include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_crc32.h>
+#include <libwzd-core/wzd_group.h>
+#include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_vfs.h> /* checkabspath */
 
 #include <libwzd-core/wzd_debug.h>

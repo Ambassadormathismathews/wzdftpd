@@ -74,6 +74,7 @@
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_mod.h> /* essential to define WZD_MODULE_INIT */
+#include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_vfs.h> /* checkpath_new */
 #include <libwzd-core/wzd_vars.h> /* needed to access variables */
 

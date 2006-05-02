@@ -177,45 +177,9 @@ typedef struct {
 
 /********************** USER, GROUP ***********************/
 
-/** @brief User definition
- */
-typedef struct {
-  u32_t                 uid;
-  char                  username[HARD_USERNAME_LENGTH];
-  char			userpass[MAX_PASS_LENGTH];
-  char                  rootpath[WZD_MAX_PATH];
-  char                  tagline[MAX_TAGLINE_LENGTH];
-  unsigned int          group_num;
-  unsigned int          groups[MAX_GROUPS_PER_USER];
-  u32_t 	        max_idle_time;
-  wzd_perm_t            userperms;      /**< @brief default permissions */
-  char                  flags[MAX_FLAGS_NUM];
-  u32_t                 max_ul_speed;
-  u32_t                 max_dl_speed;   /**< @brief bytes / sec */
-  unsigned short	num_logins;	/**< @brief number of simultaneous logins allowed */
-  char			ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
-  wzd_stats_t		stats;
-  u64_t         	credits;
-  unsigned int		ratio;
-  unsigned short	user_slots;	/**< @brief user slots for gadmins */
-  unsigned short	leech_slots;	/**< @brief leech slots for gadmins */
-  time_t		last_login;
-} wzd_user_t;
+typedef struct wzd_user_t wzd_user_t;
 
-/** @brief Group definition */
-typedef struct {
-  unsigned int          gid;
-  char                  groupname[HARD_GROUPNAME_LENGTH];
-  char                  tagline[MAX_TAGLINE_LENGTH];
-  wzd_perm_t            groupperms;
-  u32_t 		max_idle_time;
-  unsigned short	num_logins;	/**< number of simultaneous logins allowed */
-  u32_t                 max_ul_speed;
-  u32_t                 max_dl_speed;
-  unsigned int		ratio;
-  char			ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
-  char			defaultpath[WZD_MAX_PATH];
-} wzd_group_t;
+typedef struct wzd_group_t wzd_group_t;
 
 /*********************** BACKEND **************************/
 

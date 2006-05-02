@@ -1430,7 +1430,9 @@ void serverMainThreadProc(void *arg)
     serverMainThreadExit(-1);
   }
 
+#ifndef WZD_NO_USER_CACHE
   usercache_init();
+#endif
 
 
 
@@ -1668,7 +1670,9 @@ void serverMainThreadExit(int retcode)
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
   free_messages();
+#ifndef WZD_NO_USER_CACHE
   usercache_fini();
+#endif
 
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (server_mutex) wzd_mutex_destroy(server_mutex);

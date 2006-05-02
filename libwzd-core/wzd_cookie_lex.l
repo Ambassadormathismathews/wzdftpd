@@ -69,8 +69,10 @@
 
 #include "wzd_cache.h"
 #include "wzd_crc32.h"
+#include "wzd_group.h"
 #include "wzd_messages.h"
 #include "wzd_section.h"
+#include "wzd_user.h"
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"

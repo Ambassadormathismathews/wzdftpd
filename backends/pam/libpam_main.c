@@ -42,6 +42,7 @@
 #include <sys/types.h>
 
 #include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_debug.h>
 
 #define	HARD_DEF_USER_MAX	64

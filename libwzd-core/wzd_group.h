@@ -1,5 +1,3 @@
-/* vi:ai:et:ts=8 sw=2
- */
 /*
  * wzdftpd - a modular and cool ftp server
  * Copyright (C) 2002-2004  Pierre Chifflier
@@ -24,60 +22,22 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#include "wzd_all.h"
+#ifndef __WZD_GROUP_H__
+#define __WZD_GROUP_H__
 
-#ifndef WZD_USE_PCH
+/** @brief Group definition */
+struct wzd_group_t {
+  gid_t                 gid;
+  char                  groupname[HARD_GROUPNAME_LENGTH];
+  char                  tagline[MAX_TAGLINE_LENGTH];
+  wzd_perm_t            groupperms;
+  u32_t                 max_idle_time;
+  unsigned short        num_logins;     /**< number of simultaneous logins allowed */
+  u32_t                 max_ul_speed;
+  u32_t                 max_dl_speed;
+  unsigned int          ratio;
+  char                  ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  char                  defaultpath[WZD_MAX_PATH];
+};
 
-#ifdef WIN32
-#include <winsock2.h>
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>	/* struct in_addr (wzd_misc.h) */
-#endif
-
-#include <stdio.h>
-#include <sys/stat.h>
-
-#include "wzd_structs.h"
-
-#include "wzd_ratio.h"
-#include "wzd_fs.h"
-#include "wzd_misc.h"
-#include "wzd_user.h"
-
-#endif /* WZD_USE_PCH */
-
-u64_t ratio_get_credits(wzd_user_t * user)
-{
-  if (!user->ratio) return (u64_t)-1;
-
-  return user->credits;
-}
-
-int ratio_check_download(const char *path, wzd_context_t *context)
-{
-  wzd_user_t * me;
-  u64_t credits;
-  fs_filestat_t s;
-  u64_t needed=0;
-
-  me = GetUserByID(context->userid);
-  if (!me) return -1;
-
-  if (!me->ratio) return 0;
-  credits = ratio_get_credits(me);
-
-  if (fs_file_stat(path,&s)) {
-    /* problem during stat() */
-    return -1;
-  }
-
-  needed = s.size;
-
-  if (needed <= credits)
-    return 0;
-  else
-    return 1;
-}
+#endif /* __WZD_GROUP_H__ */

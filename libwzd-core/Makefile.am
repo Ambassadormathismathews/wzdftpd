@@ -43,6 +43,7 @@ libwzd_core_la_HEADERS = \
 	wzd_threads.h    \
 	wzd_tls.h        \
 	wzd_types.h      \
+	wzd_user.h       \
 	wzd_utf8.h       \
 	wzd_vars.h       \
 	wzd_vfs.h
@@ -86,6 +87,7 @@ libwzd_core_la_SOURCES = \
 	wzd_string.c     \
 	wzd_threads.c    \
 	wzd_tls.c        \
+	wzd_user.c       \
 	wzd_utf8.c       \
 	wzd_vars.c       \
 	wzd_vfs.c
