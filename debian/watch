@@ -1,5 +1,4 @@
-# format version number, currently 2; this line is compulsory!
-version=2
+version=3
 
 # Line continuations are performed with \
 

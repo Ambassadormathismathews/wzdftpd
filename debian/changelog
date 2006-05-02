@@ -1,8 +1,41 @@
+wzdftpd (0.8.0-0) unstable; urgency=low
+
+  * New upstream release
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue,  2 May 2006 10:54:40 +0200
+
+wzdftpd (0.7.1-0) unstable; urgency=low
+
+  * New upstream release
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue, 18 Apr 2006 14:09:25 +0200
+
+wzdftpd (0.7.0-2) unstable; urgency=low
+
+  * Use a pid file (really close #349003)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Thu, 13 Apr 2006 14:42:38 +0200
+
 wzdftpd (0.7.0-1) unstable; urgency=low
 
   * New upstream release
 
- -- Pierre Chifflier <chifflier@cpe.fr>  Tue, 14 Feb 2006 17:04:19 +0100
+ -- Pierre Chifflier <chifflier@cpe.fr>  Tue, 06 Apr 2006 17:04:19 +0100
+
+wzdftpd (0.6.1-2) unstable; urgency=low
+
+  * Use a pid file (Closes: #349003)
+  * Templates translation:
+    + French (Closes: #349903)
+    + Czech (Closes: #353374)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Thu, 23 Feb 2006 15:43:16 +0100
+
+wzdftpd (0.6.1-1) unstable; urgency=low
+
+  * New upstream release (drop patches included upstream)
+
+ -- Pierre Chifflier <chifflier@cpe.fr>  Sun, 15 Jan 2006 16:09:02 +0100
 
 wzdftpd (0.6.0-1) unstable; urgency=low
 

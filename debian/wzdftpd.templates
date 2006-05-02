@@ -1,0 +1,9 @@
+Template: wzdftpd/upgrade
+Type: note
+_Description: Upgrading
+ The format of the config file has changed in version 0.6.0, and is not
+ compatible with previous version.
+ .
+ You must create a new config file. See /usr/share/doc/wzdftpd/examples for
+ an example.
+

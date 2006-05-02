@@ -55,6 +55,9 @@ if [ "$1" = "configure" ]; then
 
     # merge configuration
     cp /usr/share/wzdftpd/files/wzd.cfg.sample $CONF_NEW
+    sed -e "s|^#pid_file[[:space:]]*=[[:space:]]*.*|pid_file = $PID_DIR/wzdftpd.pid|" $CONF_NEW >$CONF_NEW.wzdconf
+    chmod --reference=$CONF_NEW $CONF_NEW.wzdconf
+    mv $CONF_NEW.wzdconf $CONF_NEW
 
     do_update $CONF
 
@@ -63,23 +66,15 @@ if [ "$1" = "configure" ]; then
     fi
 fi
 
-if [ -f $CONF ]; then
-	if [ ! -d $PID_DIR ]; then
-	  mkdir $PID_DIR
-	fi
-	if grep -q "^pid_file[[:space:]]*=[[:space:]]*.*" $CONF
-	then
-	  sed -e "s|^pid_file[[:space:]]*=[[:space:]]*.*|pid_file = $PID_DIR/wzdftpd.pid|" $CONF >$CONF.wzdconf
-	  chmod --reference=$CONF $CONF.wzdconf
-	  mv $CONF.wzdconf $CONF
-	else
-	  echo "pid_file = $PID_DIR/wzdftpd.pid" >> $CONF
-	fi
-	if (id ftp >/dev/null 2>/dev/null) ; then
-	  chown ftp $PID_DIR
-	fi
-fi
-
+# the following will be used to run the server as a non-privileged user
+#    # extract PID_DIR from config
+# 	if [ ! -d $PID_DIR ]; then
+# 	  mkdir $PID_DIR
+# 	fi
+# 	if (id ftp >/dev/null 2>/dev/null) ; then
+# 	  chown ftp $PID_DIR
+# 	fi
+#
 
 case "$1" in
     configure)

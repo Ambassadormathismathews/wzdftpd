@@ -1,0 +1,42 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wzdftpd\n"
+"Report-Msgid-Bugs-To: chifflier@cpe.fr\n"
+"POT-Creation-Date: 2006-01-09 16:19+0100\n"
+"PO-Revision-Date: 2006-02-17 18:38+0100\n"
+"Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
+"Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:3
+msgid "Upgrading"
+msgstr "Aktualizace"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:3
+msgid ""
+"The format of the config file has changed in version 0.6.0, and is not "
+"compatible with previous version."
+msgstr ""
+"Formát konfiguračního souboru se ve verzi 0.6.0 změnil a není "
+"zpětně kompatibilní s předchozími verzemi."
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:3
+msgid ""
+"You must create a new config file. See /usr/share/doc/wzdftpd/examples for "
+"an example."
+msgstr ""
+"To znamená, že budete muset vytvořit konfigurační soubor znovu. Za vzor "
+"můžete použít /usr/share/doc/wzdftpd/examples."

@@ -2,15 +2,15 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
-Build-Depends: debhelper (>= 4.0.0), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, docbook-utils, dpatch
+Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, docbook-utils, dpatch
 Standards-Version: 3.6.2
 
 Package: wzdftpd
 Architecture: any
-Depends: ${shlibs:Depends}, ucf
+Depends: ${shlibs:Depends}, ucf, debconf (>= 0.2.26) | debconf-2.0, po-debconf
 Provides: ftp-server
 Conflicts: ftp-server
-Description: A portable, modular, not user-friendly ftp server
+Description: A portable, modular, small and efficient ftp server
  wzdftpd is designed to be run as root or non-root, It supports IPv6, SSL, and
  is multithreaded. Server is fully configurable online using SITE commands, and
  implements the lastest RFC extensions to FTP protocol.
