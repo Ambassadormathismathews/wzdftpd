@@ -120,6 +120,8 @@ void fake_exit(void)
   }
   free(f_user); f_user = NULL;
   free(f_group); f_group = NULL;
+  user_free_registry();
+  group_free_registry();
   if (mainConfig) {
     free(mainConfig);
     mainConfig = NULL;

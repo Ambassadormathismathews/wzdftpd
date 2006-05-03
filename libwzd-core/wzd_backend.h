@@ -29,7 +29,10 @@
 
 #include "wzd_structs.h"
 
-#define STRUCT_BACKEND_VERSION  100
+/*
+ * 101 backend_id
+ */
+#define STRUCT_BACKEND_VERSION  101
 
 /** \brief Initialization for backends */
 struct wzd_backend_t {
@@ -52,6 +55,8 @@ struct wzd_backend_t {
   int (*backend_commit_changes) (void);
 
   int (*backend_exit)(void);
+
+  u16_t backend_id;
 };
 
 /* used to know what was modified in update functions */

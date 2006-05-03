@@ -29,6 +29,7 @@
  */
 struct wzd_user_t {
   uid_t                 uid;
+  u16_t                 backend_id;
   char                  username[HARD_USERNAME_LENGTH];
   char                  userpass[MAX_PASS_LENGTH];
   char                  rootpath[WZD_MAX_PATH];
@@ -49,5 +50,28 @@ struct wzd_user_t {
   unsigned short        leech_slots;    /**< @brief leech slots for gadmins */
   time_t                last_login;
 };
+
+/** \brief Allocate a new empty structure for a user
+ */
+wzd_user_t * user_allocate(void);
+
+/** \brief Free memory used by a \a user structure
+ */
+void user_free(wzd_user_t * user);
+
+/** \brief Register a user to the main server
+ * \return The uid of the registered user, or -1 on error
+ */
+uid_t user_register(wzd_user_t * user, u16_t backend_id);
+
+/** \brief Unregister a user to the main server
+ * The \a user struct must be freed using user_free()
+ * \return The unregistered user structure, or NULL on error
+ */
+wzd_user_t * user_unregister(uid_t uid);
+
+/** \brief Free memory used to register users
+ */
+void user_free_registry(void);
 
 #endif /* __WZD_USER_H__ */

@@ -244,6 +244,7 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
       b = mainConfig->backend.b = wzd_malloc(sizeof(wzd_backend_t));
       memset(b,0,sizeof(wzd_backend_t));
       b->struct_version = STRUCT_BACKEND_VERSION;
+      b->backend_id = 1; /** \todo auto-increment */
 
       if (backend != mainConfig->backend.filename) /* strings must not overlap */
       {

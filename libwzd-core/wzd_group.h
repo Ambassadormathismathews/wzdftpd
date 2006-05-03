@@ -28,6 +28,7 @@
 /** @brief Group definition */
 struct wzd_group_t {
   gid_t                 gid;
+  u16_t                 backend_id;
   char                  groupname[HARD_GROUPNAME_LENGTH];
   char                  tagline[MAX_TAGLINE_LENGTH];
   wzd_perm_t            groupperms;
@@ -39,5 +40,28 @@ struct wzd_group_t {
   char                  ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
   char                  defaultpath[WZD_MAX_PATH];
 };
+
+/** \brief Allocate a new empty structure for a group
+ */
+wzd_group_t * group_allocate(void);
+
+/** \brief Free memory used by a \a group structure
+ */
+void group_free(wzd_group_t * group);
+
+/** \brief Register a group to the main server
+ * \return The gid of the registered group, or -1 on error
+ */
+gid_t group_register(wzd_group_t * group, u16_t backend_id);
+
+/** \brief Unregister a group to the main server
+ * The \a group struct must be freed using group_free()
+ * \return The unregistered group structure, or NULL on error
+ */
+wzd_group_t * group_unregister(gid_t gid);
+
+/** \brief Free memory used to register groups
+ */
+void group_free_registry(void);
 
 #endif /* __WZD_GROUP_H__ */

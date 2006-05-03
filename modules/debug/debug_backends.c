@@ -56,6 +56,9 @@ int do_site_listbackends(wzd_string_t *name, wzd_string_t *param, wzd_context_t 
   snprintf(buffer,sizeof(buffer),"  -> version: %s\n",backend_get_version(backend));
   ret = send_message_raw(buffer,context);
 
+  snprintf(buffer,sizeof(buffer),"  -> id: %d\n",backend->b->backend_id);
+  ret = send_message_raw(buffer,context);
+
   ret = send_message_raw("200 command ok\r\n",context);
 
   return 0;

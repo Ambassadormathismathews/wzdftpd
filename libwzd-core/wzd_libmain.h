@@ -42,6 +42,8 @@ typedef enum {
   SET_MUTEX_FILE_T,
   SET_MUTEX_ACL_T,
 
+  SET_MUTEX_USER,
+
   SET_MUTEX_NUM /* must be last */
 } wzd_set_mutext_t;
 

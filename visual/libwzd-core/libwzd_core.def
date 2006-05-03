@@ -98,6 +98,9 @@ EXPORTS
 	getlib_server_gid
 	getlib_server_uid
 	getMessage
+	group_allocate
+	group_free
+	group_free_registry
 	group_ip_add
 	group_ip_inlist
 	group_remove_user
@@ -231,6 +234,9 @@ EXPORTS
 	tls_auth
 	tls_exit
 	tls_init
+	user_allocate
+	user_free
+	user_free_registry
 	user_ip_add
 	user_ip_inlist
 	usercache_init
