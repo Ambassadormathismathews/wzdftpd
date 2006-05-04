@@ -274,7 +274,8 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
   if (!ptr) return -1;
   if (ptr+1 != '\0') ptr++;
 
-  if (fs_file_lstat(filename,&s)) return -1;
+  /** \bug this kills VFS */
+/*  if (fs_file_lstat(filename,&s)) return -1;*/
 
   temp = str_allocate();
 
@@ -399,8 +400,8 @@ int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t 
 int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
     wzd_context_t * context)
 {
-  fs_dir_t * dir;
-  fs_fileinfo_t * finfo;
+  struct wzd_dir_t * dir;
+  struct wzd_file_t * file;
   unsigned long watchdog=0;
   char buffer[WZD_MAX_PATH+1], * ptr_to_buffer;
   size_t length;
@@ -409,7 +410,9 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
   size_t send_buffer_len;
   const char * dir_filename;
 
-  if (fs_dir_open(dirname, &dir)) return 1;
+  if (!dirname || strlen(dirname)<1) return 1;
+  dir = dir_open(dirname,context);
+  if (!dir) return 0;
 
   /* ensure buffer is / terminated */
   strncpy(buffer, dirname, sizeof(buffer)-1);
@@ -444,7 +447,7 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
 
   /** \todo send info on parent dir ? */
 
-  while ( !fs_dir_read(dir, &finfo) )
+  while ( (file = dir_read(dir,context)) )
   {
     if (watchdog++ > 65535) {
       out_log(LEVEL_HIGH, "watchdog: detected infinite loop in list()\n");
@@ -452,7 +455,8 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
       break;
     }
 
-    dir_filename = fs_fileinfo_getname(finfo);
+/*    dir_filename = fs_fileinfo_getname(finfo);*/
+    dir_filename = file->filename;
 
     if (strcmp(dir_filename,".")==0 ||
         strcmp(dir_filename,"..")==0 ||
@@ -489,7 +493,7 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
   /* flush buffer ! */
   list_call_wrapper(sock, context, NULL, send_buffer, &send_buffer_len, callback);
 
-  fs_dir_close(dir);
+  dir_close(dir);
   str_deallocate(str);
 
   return 0;

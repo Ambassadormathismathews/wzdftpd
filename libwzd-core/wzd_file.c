@@ -130,6 +130,7 @@ typedef struct
 #include "wzd_cache.h"
 #include "wzd_perm.h"
 #include "wzd_user.h"
+#include "wzd_vfs.h"
 
 
 
@@ -1792,6 +1793,32 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 /*  if (fs_stat(filename,&s))
     return NULL;*/
 
+  /* check for VFS */
+  {
+    wzd_vfs_t * vfs = mainConfig->vfs;
+    char * buffer_vfs;
+
+    while (vfs) {
+      buffer_vfs = vfs_replace_cookies(vfs->virtual_dir,context);
+      if (!buffer_vfs) {
+        out_log(LEVEL_CRITICAL,"vfs_replace_cookies returned NULL for %s\n",vfs->virtual_dir);
+        vfs = vfs->next_vfs;
+        continue;
+      }
+
+      if (DIRCMP(buffer_vfs,filename)==0) {
+        /* ok, we have a candidate */
+        file = file_stat(vfs->physical_dir,context);
+        wzd_free(buffer_vfs);
+        return file;
+      }
+
+      wzd_free(buffer_vfs);
+      vfs = vfs->next_vfs;
+    }
+
+  }
+
   file = NULL;
 
   /* find the dir containing the perms file */
@@ -1823,7 +1850,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
         return NULL;
       }
     }
-  } /* ! isdir */
+  } /* ! exists */
 
 
 /*  strcpy(stripped_filename,ptr+1);*/
