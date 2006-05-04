@@ -142,13 +142,6 @@ typedef struct limiter
 /* opaque struct */
 typedef struct wzd_site_fct_t wzd_site_fct_t;
 
-/********************* IP CHECKING ************************/
-typedef struct _wzd_ip_list_t {
-  char  * regexp;
-  u8_t  is_allowed;
-  struct _wzd_ip_list_t * next_ip;
-} wzd_ip_list_t;
-
 /************************ VFS *****************************/
 typedef struct _wzd_vfs_t {
   char	* virtual_dir;
@@ -474,7 +467,7 @@ struct wzd_config_t {
   u32_t         pasv_low_range;
   u32_t         pasv_high_range;
   unsigned char	pasv_ip[16];
-  wzd_ip_list_t	*login_pre_ip_checks;
+  struct wzd_ip_list_t	*login_pre_ip_checks;
   wzd_vfs_t	*vfs;
   wzd_hook_t	*hook;
   wzd_module_t	*module;

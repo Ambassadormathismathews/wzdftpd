@@ -25,6 +25,12 @@
 #ifndef __WZD_IP_H__
 #define __WZD_IP_H__
 
+struct wzd_ip_list_t {
+  char  * regexp;
+  u8_t  is_allowed;
+  struct wzd_ip_list_t * next_ip;
+};
+
 typedef enum {
   WZD_INET_NONE = 0,
   WZD_INET4     = 2,  /* AF_INET */
@@ -45,20 +51,20 @@ void ip_free(wzd_ip_t * ip);
 int ip_compare(const char * src, const char *dst);
 
 /* IP allowing */
-int ip_add(wzd_ip_list_t **list, const char *newip);
+int ip_add(struct wzd_ip_list_t **list, const char *newip);
 
 /** \brief Add a new ip to be checked when user logs in
  */
-int ip_add_check(wzd_ip_list_t **list, const char *newip, int is_allowed);
+int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed);
 
 /** \brief Check if ip is allowed by list.
  *
  * \returns: 1 if allowed, 0 if denied, -1 on error
  */
-int ip_list_check(wzd_ip_list_t *list, const char *ip);
+int ip_list_check(struct wzd_ip_list_t *list, const char *ip);
 
-int ip_inlist(wzd_ip_list_t *list, const char *ip);
-void ip_list_free(wzd_ip_list_t *list);
+int ip_inlist(struct wzd_ip_list_t *list, const char *ip);
+void ip_list_free(struct wzd_ip_list_t *list);
 
 int user_ip_add(wzd_user_t * user, const char *newip);
 int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);

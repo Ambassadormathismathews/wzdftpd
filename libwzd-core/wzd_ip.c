@@ -231,9 +231,9 @@ int ip_compare(const char * ip, const char * pattern)
 
 
 /** IP allowing */
-int ip_add(wzd_ip_list_t **list, const char *newip)
+int ip_add(struct wzd_ip_list_t **list, const char *newip)
 {
-  wzd_ip_list_t * new_ip_t, *insert_point;
+  struct wzd_ip_list_t * new_ip_t, *insert_point;
 
   /* of course this should never happen :) */
   if (list == NULL) return -1;
@@ -241,7 +241,7 @@ int ip_add(wzd_ip_list_t **list, const char *newip)
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
-  new_ip_t = malloc(sizeof(wzd_ip_list_t));
+  new_ip_t = malloc(sizeof(struct wzd_ip_list_t));
   new_ip_t->regexp = wzd_strndup(newip,MAX_IP_LENGTH);
   new_ip_t->next_ip = NULL;
 
@@ -261,9 +261,9 @@ int ip_add(wzd_ip_list_t **list, const char *newip)
 
 /** \brief Add a new ip to be checked when user logs in
  */
-int ip_add_check(wzd_ip_list_t **list, const char *newip, int is_allowed)
+int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)
 {
-  wzd_ip_list_t * new_ip_t, *insert_point;
+  struct wzd_ip_list_t * new_ip_t, *insert_point;
 
   WZD_ASSERT( list != NULL );
 
@@ -293,9 +293,9 @@ int ip_add_check(wzd_ip_list_t **list, const char *newip, int is_allowed)
  *
  * \returns: 1 if allowed, 0 if denied, -1 on error
  */
-int ip_list_check(wzd_ip_list_t *list, const char *ip)
+int ip_list_check(struct wzd_ip_list_t *list, const char *ip)
 {
-  wzd_ip_list_t * current_ip;
+  struct wzd_ip_list_t * current_ip;
   const char * ptr_ip;
   char * ptr_test;
 
@@ -313,9 +313,9 @@ int ip_list_check(wzd_ip_list_t *list, const char *ip)
   return 1; /** \bug FIXME XXX set a default value to return */
 }
 
-int ip_inlist(wzd_ip_list_t *list, const char *ip)
+int ip_inlist(struct wzd_ip_list_t *list, const char *ip)
 {
-  wzd_ip_list_t * current_ip;
+  struct wzd_ip_list_t * current_ip;
   const char * ptr_ip;
   char * ptr_test;
 
@@ -333,9 +333,9 @@ int ip_inlist(wzd_ip_list_t *list, const char *ip)
   return 0;
 }
 
-void ip_list_free(wzd_ip_list_t *list)
+void ip_list_free(struct wzd_ip_list_t *list)
 {
-  wzd_ip_list_t * current, *next;
+  struct wzd_ip_list_t * current, *next;
 
   if (!list) return;
   current = list;
