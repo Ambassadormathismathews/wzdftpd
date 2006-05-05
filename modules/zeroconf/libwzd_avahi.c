@@ -531,15 +531,23 @@ void av_zeroconf_unlock(void *u) {
 void av_zeroconf_shutdown(void *u) {
   struct context *ctx = u;
 
+  out_log(LEVEL_INFO, "Going to free Avahi-related ressources...\n");
+
   /* Call this when the app shuts down */
 #ifdef HAVE_AVAHI_THREADED_POLL
-  avahi_threaded_poll_stop(ctx->threaded_poll);
-  avahi_free(ctx->name);
-  avahi_client_free(ctx->client);
-  avahi_threaded_poll_free(ctx->threaded_poll);
+  if (ctx->threaded_poll)
+    avahi_threaded_poll_stop(ctx->threaded_poll);
+  if (ctx->name)
+    avahi_free(ctx->name);
+  if (ctx->client)
+    avahi_client_free(ctx->client);
+  if (ctx->threaded_poll)
+    avahi_threaded_poll_free(ctx->threaded_poll);
 #else
   av_zeroconf_unregister(ctx);
 #endif
+
+  out_log(LEVEL_INFO, "Finished freeing Avahi-related ressources.\n");
 }
 
 /*

@@ -251,21 +251,17 @@ void WZD_MODULE_CLOSE(void)
 static void * routine (void * arg)
 {
 #ifdef USE_AVAHI
-  /* now start the loop */
+  /* Now start the loop.
+   * Note: run does not block the main loop. Tho It will create a new thread.
+   */
   av_zeroconf_run(ctx);
 # ifndef ZEROCONF_USE_PROCESS
-  /* TODO: If using threaded_poll this line is not needed
-     But maybe it is needed if using standard threading.
-  */
-  /* av_zeroconf_shutdown(ctx); */
 # endif
 #elif defined (USE_HOWL)
   ho_zeroconf_run();
 #elif defined (USE_BONJOUR)
   bo_zeroconf_run();
 #endif
-
-  out_log(LEVEL_FLOOD,"zeroconf: exit\n");
 
   return NULL;
 }
