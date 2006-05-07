@@ -114,6 +114,8 @@ int backend_close(const char *backend);
 
 int backend_reload(const char *backend);
 
+enum { INVALID_USER = (uid_t)-1, GET_USER_LIST = (uid_t)-2 };
+
 /**
  * \brief Get user informations
  * \param userid The user id, or the special value (uid_t)-2
@@ -125,6 +127,8 @@ int backend_reload(const char *backend);
  * free the returned array using wzd_free().
  */
 wzd_user_t * backend_get_user(uid_t userid);
+
+enum { INVALID_GROUP = (gid_t)-1, GET_GROUP_LIST = (gid_t)-2 };
 
 /**
  * \brief Get group informations
