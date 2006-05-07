@@ -2008,6 +2008,7 @@ ssize_t file_write(fd_t fd,const void *data,size_t length)
 
 /** \brief create symlink
  * paths must be absolute
+ * paths must not be / terminated !
  * \todo if paths are relative, convert them ?
  */
 int symlink_create(const char *existing, const char *link)

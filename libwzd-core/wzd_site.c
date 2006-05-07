@@ -830,15 +830,16 @@ int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     str_deallocate(command);
     return 1;
   }
- 
+
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-  if (checkpath(str_tochar(dirname),buffer_dir,context)) {
+  if (checkpath_new(str_tochar(dirname),buffer_dir,context)) {
     ret = send_message_with_args(501,context,"dirname is invalid");
     str_deallocate(command); str_deallocate(dirname);
     return 0;
   }
   str_deallocate(dirname);
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
+  /* remove the last slash */
+  if(buffer_dir[strlen(buffer_dir)-1]=='/') buffer_dir[strlen(buffer_dir)-1]=0;
 
   if (strcasecmp(str_tochar(command),"CREATE")==0)
   {
@@ -849,13 +850,15 @@ int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
       str_deallocate(linkname);
       return 1;
     }
-    if (checkpath(str_tochar(linkname),buffer_link,context)) {
+    if ( (ret = checkpath_new(str_tochar(linkname),buffer_link,context) ) && ret != E_FILE_NOEXIST) { /* of course it returns no_exist */
       ret = send_message_with_args(501,context,"linkname is invalid");
       str_deallocate(command);
       str_deallocate(linkname);
       return 0;
     }
     str_deallocate(linkname);
+    if(buffer_link[strlen(buffer_link)-1]=='/') buffer_link[strlen(buffer_link)-1]=0;
+
     ret = symlink_create(buffer_dir, buffer_link);
   }
   else if (strcasecmp(str_tochar(command),"REMOVE")==0)
