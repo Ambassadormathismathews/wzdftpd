@@ -60,6 +60,8 @@ EXPORTS
 	cronjob_add
 	cronjob_free
 	cronjob_run
+	crontab_start
+	crontab_stop
 	crypt
 	dir_close
 	dir_open
@@ -99,11 +101,17 @@ EXPORTS
 	getlib_server_uid
 	getMessage
 	group_allocate
+	group_find_free_gid
 	group_free
 	group_free_registry
+	group_get_by_id
+	group_get_by_name
+	group_get_list
 	group_ip_add
 	group_ip_inlist
+	group_register
 	group_remove_user
+	group_unregister
 	hash_str
 	hook_add
 	hook_add_custom_command
@@ -235,10 +243,16 @@ EXPORTS
 	tls_exit
 	tls_init
 	user_allocate
+	user_find_free_uid
 	user_free
 	user_free_registry
+	user_get_by_id
+	user_get_by_name
+	user_get_list
 	user_ip_add
 	user_ip_inlist
+	user_register
+	user_unregister
 	usercache_init
 	usercache_fini
 	utf8_detect

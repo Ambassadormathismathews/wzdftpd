@@ -148,7 +148,7 @@ SOURCE="..\..\libwzd-core\wzd_cookie_lex.l"
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\projects\wzdftpd-trunk\libwzd-core
+InputDir=\HOMEDIR\wzdftpd\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
@@ -161,7 +161,7 @@ InputName=wzd_cookie_lex
 
 # PROP Ignore_Default_Tool 1
 # Begin Custom Build
-InputDir=\projects\wzdftpd-trunk\libwzd-core
+InputDir=\HOMEDIR\wzdftpd\libwzd-core
 InputPath="..\..\libwzd-core\wzd_cookie_lex.l"
 InputName=wzd_cookie_lex
 
@@ -204,6 +204,10 @@ SOURCE="..\..\libwzd-core\wzd_file.c"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_fs.c"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_group.c"
 # End Source File
 # Begin Source File
 
@@ -284,6 +288,10 @@ SOURCE="..\..\libwzd-core\wzd_threads.c"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_tls.c"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_user.c"
 # End Source File
 # Begin Source File
 
@@ -368,6 +376,10 @@ SOURCE="..\..\libwzd-core\wzd_file.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_fs.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_group.h"
 # End Source File
 # Begin Source File
 
@@ -460,6 +472,10 @@ SOURCE="..\..\libwzd-core\wzd_tls.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_types.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_user.h"
 # End Source File
 # Begin Source File
 

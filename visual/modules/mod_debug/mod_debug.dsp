@@ -102,6 +102,10 @@ SOURCE=..\..\..\modules\debug\debug_commands.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\..\modules\debug\debug_crontab.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\..\modules\debug\debug_modules.c
 # End Source File
 # Begin Source File
@@ -123,6 +127,10 @@ SOURCE=..\..\..\modules\debug\debug_backends.h
 # Begin Source File
 
 SOURCE=..\..\..\modules\debug\debug_commands.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\debug\debug_crontab.h
 # End Source File
 # Begin Source File
 
