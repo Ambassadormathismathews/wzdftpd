@@ -28,32 +28,37 @@
 /** @brief User definition
  */
 struct wzd_user_t {
-  uid_t                 uid;
-  u16_t                 backend_id;
-  char                  username[HARD_USERNAME_LENGTH];
-  char                  userpass[MAX_PASS_LENGTH];
-  char                  rootpath[WZD_MAX_PATH];
-  char                  tagline[MAX_TAGLINE_LENGTH];
-  unsigned int          group_num;
-  unsigned int          groups[MAX_GROUPS_PER_USER];
-  u32_t                 max_idle_time;
-  wzd_perm_t            userperms;      /**< @brief default permissions */
-  char                  flags[MAX_FLAGS_NUM];
-  u32_t                 max_ul_speed;
-  u32_t                 max_dl_speed;   /**< @brief bytes / sec */
-  unsigned short        num_logins;     /**< @brief number of simultaneous logins allowed */
-  char                  ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
-  wzd_stats_t           stats;
-  u64_t                 credits;
-  unsigned int          ratio;
-  unsigned short        user_slots;     /**< @brief user slots for gadmins */
-  unsigned short        leech_slots;    /**< @brief leech slots for gadmins */
-  time_t                last_login;
+  uid_t                  uid;
+  u16_t                  backend_id;
+  char                   username[HARD_USERNAME_LENGTH];
+  char                   userpass[MAX_PASS_LENGTH];
+  char                   rootpath[WZD_MAX_PATH];
+  char                   tagline[MAX_TAGLINE_LENGTH];
+  unsigned int           group_num;
+  unsigned int           groups[MAX_GROUPS_PER_USER];
+  u32_t                  max_idle_time;
+  wzd_perm_t             userperms;      /**< @brief default permissions */
+  char                   flags[MAX_FLAGS_NUM];
+  u32_t                  max_ul_speed;
+  u32_t                  max_dl_speed;   /**< @brief bytes / sec */
+  unsigned short         num_logins;     /**< @brief number of simultaneous logins allowed */
+  char                   ip_allowed[HARD_IP_PER_USER][MAX_IP_LENGTH];
+  struct wzd_ip_list_t * ip_list;
+  wzd_stats_t            stats;
+  u64_t                  credits;
+  unsigned int           ratio;
+  unsigned short         user_slots;     /**< @brief user slots for gadmins */
+  unsigned short         leech_slots;    /**< @brief leech slots for gadmins */
+  time_t                 last_login;
 };
 
 /** \brief Allocate a new empty structure for a user
  */
 wzd_user_t * user_allocate(void);
+
+/** \brief Initialize members of struct \a user
+ */
+void user_init_struct(wzd_user_t * user);
 
 /** \brief Free memory used by a \a user structure
  */
@@ -66,6 +71,7 @@ uid_t user_register(wzd_user_t * user, u16_t backend_id);
 
 /** \brief Unregister a user to the main server
  * The \a user struct must be freed using user_free()
+ * \warning Unregistering a user at runtime can break the server if the user is being used
  * \return The unregistered user structure, or NULL on error
  */
 wzd_user_t * user_unregister(uid_t uid);
@@ -73,5 +79,29 @@ wzd_user_t * user_unregister(uid_t uid);
 /** \brief Free memory used to register users
  */
 void user_free_registry(void);
+
+/** \brief Get registered user using the \a uid
+ * \return The user, or NULL
+ */
+wzd_user_t * user_get_by_id(uid_t uid);
+
+/** \brief Get registered user using the \a name
+ * \return The user, or NULL
+ */
+wzd_user_t * user_get_by_name(const char * username);
+
+/** \brief Get list or users register for a specific backend
+ * The returned list is terminated by -1, and must be freed with wzd_free()
+ */
+uid_t * user_get_list(u16_t backend_id);
+
+/** \brief Find the first free uid, starting from \a start
+ */
+uid_t user_find_free_uid(uid_t start);
+
+/** \brief Add an ip to the list of authorized/forbidden ips
+ * \return 0 if ok
+ */
+int user_ip_add(wzd_user_t * user, const char * ip, int is_authorized);
 
 #endif /* __WZD_USER_H__ */

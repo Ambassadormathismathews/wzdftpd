@@ -49,6 +49,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_ip.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -76,10 +77,21 @@ wzd_user_t * user_allocate(void)
     return NULL;
   }
 
-  memset(user,0,sizeof(user));
-  user->uid = (uid_t)-1;
+  user_init_struct(user);
 
   return user;
+}
+
+/** \brief Initialize members of struct \a user
+ */
+void user_init_struct(wzd_user_t * user)
+{
+  WZD_ASSERT_VOID(user != NULL);
+  if (user == NULL) return;
+
+  memset(user,0,sizeof(wzd_user_t));
+
+  user->uid = (uid_t)-1;
 }
 
 /** \brief Free memory used by a \a user structure
@@ -88,6 +100,7 @@ void user_free(wzd_user_t * user)
 {
   if (user == NULL) return;
 
+  ip_list_free(user->ip_list);
   wzd_free(user);
 }
 
@@ -106,15 +119,17 @@ uid_t user_register(wzd_user_t * user, u16_t backend_id)
 
   /* safety check */
   if (user->uid >= INT_MAX) {
-    out_log(LEVEL_HIGH, "ERROR user_register(uid=%d): uid too big\n",uid);
+    out_log(LEVEL_HIGH, "ERROR user_register(uid=%d): uid too big\n",user->uid);
     return (uid_t)-1;
   }
 
   WZD_MUTEX_LOCK(SET_MUTEX_USER);
 
+  /** \todo we should check unicity of username */
+
   uid = user->uid;
 
-  if (uid > _max_uid) {
+  if (uid >= _max_uid) {
     size_t size; /* size of extent */
 
     if (uid >= _max_uid + 255)
@@ -143,6 +158,7 @@ uid_t user_register(wzd_user_t * user, u16_t backend_id)
 
 /** \brief Unregister a user to the main server
  * The \a user struct must be freed using user_free()
+ * \warning Unregistering a user at runtime can break the server if the user is being used
  * \return The unregistered user structure, or NULL on error
  */
 wzd_user_t * user_unregister(uid_t uid)
@@ -175,4 +191,99 @@ void user_free_registry(void)
   _max_uid = 0;
   WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
 }
+
+/** \brief Get registered user using the \a uid
+ * \return The user, or NULL
+ */
+wzd_user_t * user_get_by_id(uid_t uid)
+{
+  if (uid == (uid_t)-1) return NULL;
+  if (uid > _max_uid) return NULL;
+  if (_max_uid == 0) return NULL;
+
+  return _user_array[uid];
+}
+
+/** \brief Get registered user using the \a name
+ * \return The user, or NULL
+ * \todo Re-implement the function using a hash table
+ */
+wzd_user_t * user_get_by_name(const char * username)
+{
+  uid_t uid;
+
+  if (username == NULL || strlen(username)<1 || _max_uid==0) return NULL;
+
+  /* We don't need to lock the access since the _user_array can only grow */
+  for (uid=0; uid<=_max_uid; uid++) {
+    if (_user_array[uid] != NULL
+        && _user_array[uid]->username != NULL
+        && strcmp(username,_user_array[uid]->username)==0)
+      return _user_array[uid];
+  }
+  return NULL;
+}
+
+/** \brief Get list or users register for a specific backend
+ * The returned list is terminated by -1, and must be freed with wzd_free()
+ */
+uid_t * user_get_list(u16_t backend_id)
+{
+  uid_t * uid_list = NULL;
+  uid_t size;
+  int index;
+  uid_t uid;
+
+  /** \todo XXX we should use locks (and be careful to avoid deadlocks) */
+
+  /** \todo it would be better to get the real number of used uid */
+  size = _max_uid;
+
+  uid_list = (uid_t*)wzd_malloc((size+1)*sizeof(uid_t));
+  index = 0;
+  /* We don't need to lock the access since the _user_array can only grow */
+  for (uid=0; uid<=size; uid++) {
+    if (_user_array[uid] != NULL
+        && _user_array[uid]->uid != INVALID_USER)
+      uid_list[index++] = _user_array[uid]->uid;
+  }
+  uid_list[index] = (uid_t)-1;
+  uid_list[size] = (uid_t)-1;
+
+  return uid_list;
+}
+
+/** \brief Find the first free uid, starting from \a start
+ */
+uid_t user_find_free_uid(uid_t start)
+{
+  uid_t uid;
+
+  if (start == (uid_t)-1) start = 0;
+
+  /** \todo locking may be harmful if this function is called from another
+   * user_x() function
+   */
+/*  WZD_MUTEX_LOCK(SET_MUTEX_USER);*/
+  for (uid = start; uid < _max_uid && uid != (uid_t)-1; uid++) {
+    if (_user_array[uid] == NULL) break;
+  }
+/*  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);*/
+
+  return uid;
+}
+
+/** \brief Add an ip to the list of authorized/forbidden ips
+ * \return 0 if ok
+ */
+int user_ip_add(wzd_user_t * user, const char * ip, int is_authorized)
+{
+  WZD_ASSERT( user != NULL );
+  if (user == NULL) return -1;
+
+  /** \note The number of stored ips per user is no more limited */
+
+  return ip_add_check(&user->ip_list, ip, is_authorized);
+}
+
 
