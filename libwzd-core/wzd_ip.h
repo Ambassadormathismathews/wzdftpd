@@ -66,10 +66,12 @@ int ip_list_check(struct wzd_ip_list_t *list, const char *ip);
 int ip_inlist(struct wzd_ip_list_t *list, const char *ip);
 void ip_list_free(struct wzd_ip_list_t *list);
 
-int user_ip_add(wzd_user_t * user, const char *newip);
+/** \deprecated use user_add_ip() */
+int user_ip_add_old(wzd_user_t * user, const char *newip);
 int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);
 
-int group_ip_add(wzd_group_t * group, const char *newip);
+/** \deprecated use group_add_ip() */
+int group_ip_add_old(wzd_group_t * group, const char *newip);
 int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
 
 /** \brief Convert a host name to a numeric ip

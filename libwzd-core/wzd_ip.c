@@ -280,6 +280,7 @@ int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)
   if (insert_point == NULL) {
     *list = new_ip_t;
   } else {
+    /** \note using a circular list would be faster here */
     while (insert_point->next_ip != NULL)
       insert_point = insert_point->next_ip;
 
@@ -350,7 +351,7 @@ void ip_list_free(struct wzd_ip_list_t *list)
   }
 }
 
-int user_ip_add(wzd_user_t * user, const char *newip)
+int user_ip_add_old(wzd_user_t * user, const char *newip)
 {
   int i;
 
@@ -396,11 +397,11 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
         if ( !(*ptr_ident=='*' && ident_length==1) ) {
           if (!ident || ident[0] == '\0') {
             continue;
-		  }
-		  if (strncmp(ident,ptr_ident,ident_length) != 0) {
+          }
+          if (strncmp(ident,ptr_ident,ident_length) != 0) {
             /* ident does not match */
             continue;
-		  }
+          }
         }
       }
 
@@ -412,7 +413,8 @@ int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
   return 0;
 }
 
-int group_ip_add(wzd_group_t * group, const char *newip)
+/** \deprecated use group_add_ip() */
+int group_ip_add_old(wzd_group_t * group, const char *newip)
 {
   int i;
 
