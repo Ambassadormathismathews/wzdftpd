@@ -14,15 +14,17 @@
 privgroup	admin
 ip_allowed=127.0.0.1
 default_home=/home
-gid=15
+gid=0
 
 privgroup	users
 default_home=/home
 ratio=3
+gid=1
 
 privgroup	anonymous
 max_idle_time=10
 default_home=/home
+gid=2
 
 # users definitions
 # users MUST begin by line name=<>
@@ -81,8 +83,4 @@ ratio=3
 flags=G
 user_slots=3
 leech_slots=1
-
-# per hosts rights
-[HOSTS]
-all = *
 
