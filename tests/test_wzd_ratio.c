@@ -33,8 +33,10 @@ int main(int argc, char *argv[])
 
   context.userid = user.uid;
 
+#ifndef WZD_NO_USER_CACHE
   usercache_init();
   usercache_add( &user );
+#endif
 
   /* ratio_check_download */
   ret = ratio_check_download( path, &context );
@@ -58,7 +60,9 @@ int main(int argc, char *argv[])
     return 3;
   }
 
+#ifndef WZD_NO_USER_CACHE
   usercache_fini();
+#endif
   fake_exit();
 
   if (c1 != C1) {

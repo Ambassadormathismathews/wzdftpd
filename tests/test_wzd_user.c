@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
   user_free(user);
 
   ret = user_register(user2,1 /* backend id */);
+  user_ip_add(user2, "127.0.0.1", 1);
 
   user = user_unregister(user1->uid);
   user_free(user);
