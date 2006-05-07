@@ -27,26 +27,12 @@
 #ifndef __LIBWZD_PLAINTEXT_MAIN__
 #define __LIBWZD_PLAINTEXT_MAIN__
 
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
-
-
-
-
-wzd_group_t * plaintext_get_group_from_gid(gid_t gid);
-
-wzd_user_t * user_allocate_new(void);
-
-wzd_group_t * group_allocate_new(void);
-
 
 #define ERRLOG(s) plaintext_log((s),__FILE__,__FUNCTION__,__LINE__)
 
 void plaintext_log(const char * error, const char * filename, const char * func_name, int line);
 
 extern char * USERS_FILE;
-
-extern List user_list;
-extern List group_list;
 
 extern unsigned int group_count, group_count_max;
 extern unsigned int user_count, user_count_max;

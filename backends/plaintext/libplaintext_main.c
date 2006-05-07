@@ -53,8 +53,10 @@
 
 #define	MAX_LINE		1024
 
-
-#define PLAINTEXT_BACKEND_VERSION 143
+/*
+ * 144 Use user/group registry
+ */
+#define PLAINTEXT_BACKEND_VERSION 144
 
 #define PLAINTEXT_LOG_CHANNEL (RESERVED_LOG_CHANNELS+11)
 
@@ -67,16 +69,11 @@ BACKEND_VERSION(PLAINTEXT_BACKEND_VERSION);
 
 char * USERS_FILE = NULL;
 
-List user_list;
 unsigned int user_count, user_count_max=0;
 
-List group_list;
 unsigned int group_count, group_count_max=0;
 
 
-
-
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
 
 
 void plaintext_log(const char * error, const char * filename, const char * func_name, int line)
@@ -85,124 +82,8 @@ void plaintext_log(const char * error, const char * filename, const char * func_
 }
 
 
-static uid_t find_free_uid(uid_t start)
-{
-  uid_t uid = start;
-  unsigned int found;
-  unsigned int uid_is_free = 0;
-  ListElmt * elmnt;
-  wzd_user_t * user;
 
-  while (!uid_is_free) {
-    found = 0;
-    for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt))
-    {
-      user = list_data(elmnt);
-      if (user && user->uid == uid) { found=1; break; }
-    }
-    if (!found) return uid;
-    uid ++;
-    if (uid == (uid_t)-1) return (uid_t)-1; /* we have too many users ! */
-  }
-
-  /* we should never be here */
-  return (uid_t)-1;
-}
-
-static gid_t find_free_gid(gid_t start)
-{
-  gid_t gid = start;
-  unsigned int found;
-  unsigned int gid_is_free = 0;
-  ListElmt * elmnt;
-  wzd_group_t * group;
-
-  while (!gid_is_free) {
-    found = 0;
-    for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt))
-    {
-      group = list_data(elmnt);
-      if (group && group->gid == gid) { found=1; break; }
-    }
-    if (!found) return gid;
-    gid ++;
-    if (gid == (gid_t)-1) return (gid_t)-1; /* we have too many groups ! */
-  }
-
-  /* we should never be here */
-  return (gid_t)-1;
-}
-
-
-static wzd_user_t * _get_user_from_uid(uid_t uid)
-{
-  ListElmt * elmnt;
-  wzd_user_t * user;
-
-  for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-    user = list_data(elmnt);
-    if (user && user->uid == uid) return user;
-  }
-  return NULL;
-}
-
-wzd_group_t * plaintext_get_group_from_gid(gid_t gid)
-{
-  ListElmt * elmnt;
-  wzd_group_t * group;
-
-  for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt)) {
-    group = list_data(elmnt);
-    if (group && group->gid == gid) return group;
-  }
-  return NULL;
-}
-
-static void user_init_struct(wzd_user_t * user)
-{
-  if (!user) return;
-
-  memset(user,0,sizeof(wzd_user_t));
-
-  user->uid = (uid_t)-1;
-}
-
-wzd_user_t * user_allocate_new(void)
-{
-  wzd_user_t * user;
-
-  user = wzd_malloc(sizeof(wzd_user_t));
-  if (!user) return NULL;
-  user_init_struct(user);
-
-  return user;
-}
-
-static void group_init_struct(wzd_group_t * group)
-{
-  if (!group) return;
-
-  memset(group,0,sizeof(wzd_group_t));
-
-  group->gid = (gid_t)-1;
-}
-
-
-wzd_group_t * group_allocate_new(void)
-{
-  wzd_group_t * group;
-
-  group = wzd_malloc(sizeof(wzd_group_t));
-  if (!group) return NULL;
-  group_init_struct(group);
-
-  return group;
-}
-
-
-
-
-int FCN_INIT(const char *arg)
+static int FCN_INIT(const char *arg)
 {
   int ret;
 
@@ -215,9 +96,6 @@ int FCN_INIT(const char *arg)
   user_count_max = HARD_DEF_USER_MAX; /* XXX FIXME remove me */
   group_count_max = HARD_DEF_GROUP_MAX; /* XXX FIXME remove me */
 
-  list_init(&user_list, wzd_free);
-  list_init(&group_list, wzd_free);
-
   ret = read_files( (const char *)arg);
 
   /* TODO check user definitions (no missing fields, etc) */
@@ -227,11 +105,9 @@ int FCN_INIT(const char *arg)
   return ret;
 }
 
-int FCN_FINI(void)
+static int FCN_FINI(void)
 {
   ERRLOG("Backend plaintext unloading\n");
-  list_destroy(&user_list);
-  list_destroy(&group_list);
 
   free(USERS_FILE);
   USERS_FILE = NULL;
@@ -239,42 +115,28 @@ int FCN_FINI(void)
   return 0;
 }
 
-uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
+static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_user_t * loop_user;
 
-  found = 0;
+  if ( (loop_user = user_get_by_name(login)) != NULL )
+    return loop_user->uid; /** \todo update registered user from backend data, or at least
+                             check if backend file was not modified ! */
 
-  for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_user = list_data(elmnt))) continue;
-    if (strcmp(login,loop_user->username)==0)
-      { found = 1; break; }
-  }
-
-  if (!found) return (uid_t)-1;
-  return loop_user->uid;
+  return INVALID_USER;
 }
 
-uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_user_t * loop_user;
 
-  found = 0;
-  for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_user = list_data(elmnt))) continue;
-    if (strcmp(login,loop_user->username)==0)
-      { found = 1; break; }
-  }
+  loop_user = user_get_by_name(login);
 
-  if (!found) {
+  if (loop_user == NULL) {
 #ifdef DEBUG
 out_err(LEVEL_HIGH," plaintext: User %s not found\n",login);
 #endif
-    return (uid_t)-1;
+    return INVALID_USER;
   }
 
   /* special case: if loop_user->userpass == "%" then any pass
@@ -285,92 +147,67 @@ out_err(LEVEL_HIGH," plaintext: User %s not found\n",login);
   else {
     if (check_auth(login, pass, loop_user->userpass)==1)
       return loop_user->uid;
-    return (uid_t)-1;
+    return INVALID_USER;
   }
 
   return loop_user->uid;
 }
 
-uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
+static uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_user_t * loop_user;
 
-  found = 0;
-  for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_user = list_data(elmnt))) continue;
-    if (strcmp(name,loop_user->username)==0)
-      { found = 1; break; }
-  }
+  if ( (loop_user = user_get_by_name(name)) != NULL )
+    return loop_user->uid;
 
-  if (!found) return (uid_t)-1;
-  else return loop_user->uid;
+  return INVALID_USER;
 }
 
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
+static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_group_t * loop_group;
 
-  if (!name || strlen(name)<=0) return -1;
+  if ( (loop_group = group_get_by_name(name)) != NULL )
+    return loop_group->gid;
 
-  found = 0;
-  for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_group = list_data(elmnt))) continue;
-    if (strcmp(name,loop_group->groupname)==0)
-      { found = 1; break; }
-  }
-
-  return (found) ? loop_group->gid : (gid_t)-1;
+  return INVALID_GROUP;
 }
 
 
 /* if user does not exist, add it */
-int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
+static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_user_t * loop_user;
-  void * data;
 
-  found = 0;
-  for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_user = list_data(elmnt))) continue;
-    if (strcmp(name,loop_user->username)==0)
-      { found = 1; break; }
-  }
+  loop_user = user_get_by_name(name);
 
-  if (found) { /* user exist */
+  if (loop_user != NULL) { /* user exist */
 /*    fprintf(stderr,"User %s exist\n",name);*/
     if (!user) { /* delete user permanently */
-      if (list_size(&user_list)==0) return -1;
 
-      loop_user = list_data(user_list.head);
-      if ( strcmp(loop_user->username,name)==0 ) {
-        list_rem_next(&user_list, NULL, &data);
-        wzd_free( (wzd_user_t*)data );
-        return 0;
-      }
-
-      for (elmnt=user_list.head; list_next(elmnt); elmnt=list_next(elmnt)) {
-        loop_user = list_data(list_next(elmnt));
-        if (loop_user && loop_user->username[0] != '\0') {
-          /* test entry */
-          if ( strcmp(loop_user->username,name)==0 ) {
-            list_rem_next(&user_list, elmnt, &data);
-            wzd_free( (wzd_user_t*)data );
-            return 0;
-          }
-        }
-      } /* for */
+      loop_user = user_unregister(loop_user->uid);
+      user_free(loop_user);
 
       return 0;
     }
     /* basic verification: trying to commit on self ? then ok */
     if (loop_user == user) {
-      /** \todo possible problem: change password !!! */
+      if (mod_type & _USER_USERPASS) {
+        char buffer[MAX_PASS_LENGTH];
+        memcpy(buffer, user->userpass, MAX_PASS_LENGTH);
+        if (strcasecmp(buffer,"%")==0) {
+          /* special case: if loop_user->userpass == "%" then any pass
+           *  is accepted */
+          strcpy(buffer,user->userpass);
+        } else {
+          /* TODO choose encryption func ? */
+          if (changepass(buffer,user->userpass, user->userpass, MAX_PASS_LENGTH-1)) {
+            memset(buffer,0,MAX_PASS_LENGTH);
+            return -1;
+          }
+        }
+        memset(buffer,0,MAX_PASS_LENGTH);
+      }
       return 0;
     }
     if (mod_type & _USER_USERNAME) strcpy(loop_user->username,user->username);
@@ -431,55 +268,40 @@ int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
       }
     }
     /* find a free uid */
-    loop_user->uid = find_free_uid(1);
+    loop_user->uid = user_find_free_uid(1);
 
-    list_ins_next(&user_list,list_tail(&user_list),loop_user);
+    /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
+
+    if (loop_user->uid != (uid_t)-1) {
+      int err;
+      err = user_register(loop_user,1 /* XXX backend id */);
+      if ((uid_t)err != loop_user->uid) {
+        char errbuf[1024];
+        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register user %s\n",loop_user->username);
+        ERRLOG(errbuf);
+      }
+    }
 
     user_count++;
-  } /* if (found) */
+  } /* if (loop_user == NULL) */
 
   write_user_file();
 
   return 0;
 }
 
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
+static int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
-  int found;
-  ListElmt * elmnt;
   wzd_group_t * loop_group;
-  void * data;
 
-  found = 0;
-  for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt)) {
-    if (!(loop_group = list_data(elmnt))) continue;
-    if (strcmp(name,loop_group->groupname)==0)
-      { found = 1; break; }
-  }
+  loop_group = group_get_by_name(name);
 
-  if (found) { /* user exist */
+  if (loop_group != NULL) { /* group exist */
 /*    fprintf(stderr,"User %s exist\n",name);*/
     if (!group) { /* delete group permanently */
-      if (list_size(&group_list)==0) return -1;
 
-      loop_group = list_data(group_list.head);
-      if ( strcmp(loop_group->groupname,name)==0 ) {
-        list_rem_next(&group_list, NULL, &data);
-        wzd_free( (wzd_group_t*)data );
-        return 0;
-      }
-
-      for (elmnt=group_list.head; list_next(elmnt); elmnt=list_next(elmnt)) {
-        loop_group = list_data(list_next(elmnt));
-        if (loop_group && loop_group->groupname[0] != '\0') {
-          /* test entry */
-          if ( strcmp(loop_group->groupname,name)==0 ) {
-            list_rem_next(&group_list, elmnt, &data);
-            wzd_free( (wzd_group_t*)data );
-            return 0;
-          }
-        }
-      } /* for */
+      loop_group = group_unregister(loop_group->gid);
+      group_free(loop_group);
 
       return 0;
     }
@@ -511,101 +333,53 @@ int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
     DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
     loop_group = wzd_malloc(sizeof(wzd_group_t));
     memcpy(loop_group,group,sizeof(wzd_group_t));
-    loop_group->gid = find_free_gid(1);
+    loop_group->gid = group_find_free_gid(1);
 
-    list_ins_next(&group_list,list_tail(&group_list),loop_group);
+    /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
+
+    if (loop_group->gid != (gid_t)-1) {
+      int err;
+      err = group_register(loop_group,1 /* XXX backend id */);
+      if ((gid_t)err != loop_group->gid) {
+        char errbuf[1024];
+        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register group %s\n",loop_group->groupname);
+        ERRLOG(errbuf);
+      }
+    }
 
     group_count++;
-  } /* if (found) */
+  } /* group == NULL */
 
   write_user_file();
 
   return 0;
 }
 
-int FCN_COMMIT_CHANGES(void)
+static int FCN_COMMIT_CHANGES(void)
 {
   return write_user_file();
 }
 
-wzd_user_t * FCN_GET_USER(uid_t uid)
+static wzd_user_t * FCN_GET_USER(uid_t uid)
 {
-  int index;
-  wzd_user_t * user;
-  ListElmt * elmnt;
-  wzd_user_t * loop_user;
-
-  if (uid == (uid_t)-2) {
-    uid_t * uid_list = NULL;
-    int size;
-
-    size = list_size(&user_list);
-
-    uid_list = (uid_t*)wzd_malloc((size+1)*sizeof(uid_t));
-    index = 0;
-    for (elmnt=list_head(&user_list); elmnt; elmnt=list_next(elmnt)) {
-      loop_user = list_data(elmnt);
-      if (loop_user && loop_user->username[0]!='\0' && loop_user->uid!=(uid_t)-1)
-        uid_list[index++] = loop_user->uid;
-    }
-    uid_list[index] = (uid_t)-1;
-    uid_list[size] = (uid_t)-1;
-
-    return (wzd_user_t*)uid_list;
+  if (uid == (uid_t)GET_USER_LIST) {
+    return (wzd_user_t*)user_get_list(1 /* backend id */);
   }
 
   if (uid == (uid_t)-1) return NULL;
 
-  loop_user =  _get_user_from_uid(uid);
-  if (loop_user)
-  {
-    if (loop_user->username[0] == '\0') return NULL;
-    user = wzd_malloc(sizeof(wzd_user_t));
-    if (!user) return NULL;
-    memcpy(user, loop_user, sizeof(wzd_user_t));
-    return user;
-  }
-  return NULL;
+  return user_get_by_id(uid);
 }
 
-wzd_group_t * FCN_GET_GROUP(gid_t gid)
+static wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
-  gid_t index;
-  wzd_group_t * group;
-  ListElmt * elmnt;
-  wzd_group_t * loop_group;
-
-  if (gid == (gid_t)-2) {
-    gid_t * gid_list = NULL;
-    int size;
-
-    size = list_size(&group_list);
-
-    gid_list = (gid_t*)wzd_malloc((size+1)*sizeof(gid_t));
-    index = 0;
-    for (elmnt=list_head(&group_list); elmnt; elmnt=list_next(elmnt)) {
-      loop_group = list_data(elmnt);
-      if (loop_group && loop_group->groupname[0]!='\0' && loop_group->gid!=(gid_t)-1)
-        gid_list[index++] = loop_group->gid;
-    }
-    gid_list[index] = (gid_t)-1;
-    gid_list[size] = (gid_t)-1;
-
-    return (wzd_group_t*)gid_list;
+  if (gid == (gid_t)GET_GROUP_LIST) {
+    return (wzd_group_t*)group_get_list(1 /* backend id */);
   }
 
   if (gid == (gid_t)-1) return NULL;
 
-  loop_group =  plaintext_get_group_from_gid(gid);
-  if (loop_group)
-  {
-    if (loop_group->groupname[0] == '\0') return NULL;
-    group = wzd_malloc(sizeof(wzd_group_t));
-    if (!group) return NULL;
-    memcpy(group, loop_group, sizeof(wzd_group_t));
-    return group;
-  }
-  return NULL;
+  return group_get_by_id(gid);
 }
 
 int wzd_backend_init(wzd_backend_t * backend)
