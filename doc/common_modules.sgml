@@ -23,7 +23,7 @@ HINT: when uploading dirs, be sure to upload the SFV file first. The server
 will automatically check files as they are uploaded, and update a progress bar
 to quickly see how many percent are done.</para>
 <para>
-NOTE to w_nd0ws users: although a (stupid) os can give you bad habits,
+NOTE to windows users: although a (stupid) os can give you bad habits,
 files <emphasis>ARE CASE SENSITIVE !</emphasis></para>
 </simplesect>
 

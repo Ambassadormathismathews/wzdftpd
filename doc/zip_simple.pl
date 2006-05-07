@@ -14,7 +14,7 @@ $binary{UNZIP} = "./scripts/unzip.exe";
 ##main proc
 sub zip_check {
 
-  my ($user,$group,$file) = split " ", $wzd_args, 3;
+  my ($user,$group,$file) = split " ", $wzd::args, 3;
   if ($file =~ m/.*\.zip/i) {
     my @args = ($binary{UNZIP}, "-qqt", "$file");
     my $rc = system( @args );
