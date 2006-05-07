@@ -27,23 +27,28 @@
 
 /** @brief Group definition */
 struct wzd_group_t {
-  gid_t                 gid;
-  u16_t                 backend_id;
-  char                  groupname[HARD_GROUPNAME_LENGTH];
-  char                  tagline[MAX_TAGLINE_LENGTH];
-  wzd_perm_t            groupperms;
-  u32_t                 max_idle_time;
-  unsigned short        num_logins;     /**< number of simultaneous logins allowed */
-  u32_t                 max_ul_speed;
-  u32_t                 max_dl_speed;
-  unsigned int          ratio;
-  char                  ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
-  char                  defaultpath[WZD_MAX_PATH];
+  gid_t                  gid;
+  u16_t                  backend_id;
+  char                   groupname[HARD_GROUPNAME_LENGTH];
+  char                   tagline[MAX_TAGLINE_LENGTH];
+  wzd_perm_t             groupperms;
+  u32_t                  max_idle_time;
+  unsigned short         num_logins;     /**< number of simultaneous logins allowed */
+  u32_t                  max_ul_speed;
+  u32_t                  max_dl_speed;
+  unsigned int           ratio;
+  char                   ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  struct wzd_ip_list_t * ip_list;
+  char                   defaultpath[WZD_MAX_PATH];
 };
 
 /** \brief Allocate a new empty structure for a group
  */
 wzd_group_t * group_allocate(void);
+
+/** \brief Initialize members of struct \a group
+ */
+void group_init_struct(wzd_group_t * group);
 
 /** \brief Free memory used by a \a group structure
  */
@@ -63,5 +68,29 @@ wzd_group_t * group_unregister(gid_t gid);
 /** \brief Free memory used to register groups
  */
 void group_free_registry(void);
+
+/** \brief Get registered group using the \a gid
+ * \return The group, or NULL
+ */
+wzd_group_t * group_get_by_id(gid_t gid);
+
+/** \brief Get registered group using the \a name
+ * \return The group, or NULL
+ */
+wzd_group_t * group_get_by_name(const char * groupname);
+
+/** \brief Get list or groups register for a specific backend
+ * The returned list is terminated by -1, and must be freed with wzd_free()
+ */
+gid_t * group_get_list(u16_t backend_id);
+
+/** \brief Find the first free gid, starting from \a start
+ */
+gid_t group_find_free_gid(gid_t start);
+
+/** \brief Add an ip to the list of authorized/forbidden ips
+ * \return 0 if ok
+ */
+int group_ip_add(wzd_group_t * group, const char * ip, int is_authorized);
 
 #endif /* __WZD_GROUP_H__ */

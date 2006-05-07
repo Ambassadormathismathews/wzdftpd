@@ -75,10 +75,21 @@ wzd_group_t * group_allocate(void)
     return NULL;
   }
 
-  memset(group,0,sizeof(group));
-  group->gid = (gid_t)-1;
+  group_init_struct(group);
 
   return group;
+}
+
+/** \brief Initialize members of struct \a group
+ */
+void group_init_struct(wzd_group_t * group)
+{
+  WZD_ASSERT_VOID(group != NULL);
+  if (group == NULL) return;
+
+  memset(group,0,sizeof(wzd_group_t));
+
+  group->gid = (gid_t)-1;
 }
 
 /** \brief Free memory used by a \a group structure
@@ -87,6 +98,7 @@ void group_free(wzd_group_t * group)
 {
   if (group == NULL) return;
 
+  ip_list_free(group->ip_list);
   wzd_free(group);
 }
 
@@ -105,7 +117,7 @@ gid_t group_register(wzd_group_t * group, u16_t backend_id)
 
   /* safety check */
   if (group->gid >= INT_MAX) {
-    out_log(LEVEL_HIGH, "ERROR group_register(gid=%d): gid too big\n",gid);
+    out_log(LEVEL_HIGH, "ERROR group_register(gid=%d): gid too big\n",group->gid);
     return (gid_t)-1;
   }
 
@@ -113,7 +125,7 @@ gid_t group_register(wzd_group_t * group, u16_t backend_id)
 
   gid = group->gid;
 
-  if (gid > _max_gid) {
+  if (gid >= _max_gid) {
     size_t size; /* size of extent */
 
     if (gid >= _max_gid + 255)
@@ -173,5 +185,99 @@ void group_free_registry(void)
   _group_array = NULL;
   _max_gid = 0;
   WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
+}
+
+/** \brief Get registered group using the \a gid
+ * \return The group, or NULL
+ */
+wzd_group_t * group_get_by_id(gid_t gid)
+{
+  if (gid == (gid_t)-1) return NULL;
+  if (gid > _max_gid) return NULL;
+  if (_max_gid == 0) return NULL;
+
+  return _group_array[gid];
+}
+
+/** \brief Get registered group using the \a name
+ * \return The group, or NULL
+ * \todo Re-implement the function using a hash table
+ */
+wzd_group_t * group_get_by_name(const char * groupname)
+{
+  gid_t gid;
+
+  if (groupname == NULL || strlen(groupname)<1 || _max_gid==0) return NULL;
+
+  /* We don't need to lock the access since the _group_array can only grow */
+  for (gid=0; gid<=_max_gid; gid++) {
+    if (_group_array[gid] != NULL
+        && _group_array[gid]->groupname != NULL
+        && strcmp(groupname,_group_array[gid]->groupname)==0)
+      return _group_array[gid];
+  }
+  return NULL;
+}
+
+/** \brief Get list or groups register for a specific backend
+ * The returned list is terminated by -1, and must be freed with wzd_free()
+ */
+gid_t * group_get_list(u16_t backend_id)
+{
+  gid_t * gid_list = NULL;
+  gid_t size;
+  int index;
+  gid_t gid;
+
+  /** \todo XXX we should use locks (and be careful to avoid deadlocks) */
+
+  /** \todo it would be better to get the real number of used gid */
+  size = _max_gid;
+
+  gid_list = (gid_t*)wzd_malloc((size+1)*sizeof(gid_t));
+  index = 0;
+  /* We don't need to lock the access since the _group_array can only grow */
+  for (gid=0; gid<=size; gid++) {
+    if (_group_array[gid] != NULL
+        && _group_array[gid]->gid != INVALID_USER)
+      gid_list[index++] = _group_array[gid]->gid;
+  }
+  gid_list[index] = (gid_t)-1;
+  gid_list[size] = (gid_t)-1;
+
+  return gid_list;
+}
+
+/** \brief Find the first free gid, starting from \a start
+ */
+gid_t group_find_free_gid(gid_t start)
+{
+  gid_t gid;
+
+  if (start == (gid_t)-1) start = 0;
+
+  /** \todo locking may be harmful if this function is called from another
+   * group_x() function
+   */
+/*  WZD_MUTEX_LOCK(SET_MUTEX_USER);*/
+  for (gid = start; gid < _max_gid && gid != (gid_t)-1; gid++) {
+    if (_group_array[gid] == NULL) break;
+  }
+/*  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);*/
+
+  return gid;
+}
+
+/** \brief Add an ip to the list of authorized/forbidden ips
+ * \return 0 if ok
+ */
+int group_ip_add(wzd_group_t * group, const char * ip, int is_authorized)
+{
+  WZD_ASSERT( group != NULL );
+  if (group == NULL) return -1;
+
+  /** \note The number of stored ips per group is no more limited */
+
+  return ip_add_check(&group->ip_list, ip, is_authorized);
 }
 
