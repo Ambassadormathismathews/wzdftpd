@@ -237,7 +237,7 @@ gid_t * group_get_list(u16_t backend_id)
   gid_list = (gid_t*)wzd_malloc((size+1)*sizeof(gid_t));
   index = 0;
   /* We don't need to lock the access since the _group_array can only grow */
-  for (gid=0; gid<=size; gid++) {
+  for (gid=0; gid<size; gid++) {
     if (_group_array[gid] != NULL
         && _group_array[gid]->gid != INVALID_USER)
       gid_list[index++] = _group_array[gid]->gid;

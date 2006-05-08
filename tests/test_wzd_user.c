@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
   wzd_user_t * user;
   wzd_user_t * user1;
   wzd_user_t * user2;
+  uid_t * uid_list;
   int ret;
   unsigned long c2 = C2;
 
@@ -37,6 +38,10 @@ int main(int argc, char *argv[])
 
   ret = user_register(user2,1 /* backend id */);
   user_ip_add(user2, "127.0.0.1", 1);
+
+  uid_list = user_get_list(1 /* backend id */);
+
+  wzd_free(uid_list);
 
   user = user_unregister(user1->uid);
   user_free(user);

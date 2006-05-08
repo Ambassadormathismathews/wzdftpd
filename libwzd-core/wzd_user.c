@@ -242,7 +242,7 @@ uid_t * user_get_list(u16_t backend_id)
   uid_list = (uid_t*)wzd_malloc((size+1)*sizeof(uid_t));
   index = 0;
   /* We don't need to lock the access since the _user_array can only grow */
-  for (uid=0; uid<=size; uid++) {
+  for (uid=0; uid<size; uid++) {
     if (_user_array[uid] != NULL
         && _user_array[uid]->uid != INVALID_USER)
       uid_list[index++] = _user_array[uid]->uid;

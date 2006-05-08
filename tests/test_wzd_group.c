@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
   wzd_group_t * group;
   wzd_group_t * group1;
   wzd_group_t * group2;
+  gid_t * gid_list;
   int ret;
   unsigned long c2 = C2;
 
@@ -36,6 +37,10 @@ int main(int argc, char *argv[])
   group_free(group);
 
   ret = group_register(group2,1 /* backend id */);
+
+  gid_list = group_get_list(1 /* backend id */);
+
+  wzd_free(gid_list);
 
   group = group_unregister(group1->gid);
   group_free(group);
