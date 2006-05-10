@@ -96,6 +96,7 @@ int changepass_cert(const char *pass, char *buffer, size_t len)
   if (len < strlen(AUTH_SIG_CERT)) return -1;
 
   strncpy(buffer,AUTH_SIG_CERT,len);
+  strlcat(buffer,pass,len);
 
   return 0;
 }
@@ -199,6 +200,8 @@ int changepass_cert(const char *pass, char *buffer, size_t len)
   if (len < strlen(AUTH_SIG_CERT)) return -1;
 
   strncpy(buffer,AUTH_SIG_CERT,len);
+  strlcat(buffer,pass,len);
+
 
   return 0;
 }
