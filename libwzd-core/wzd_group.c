@@ -152,6 +152,43 @@ gid_t group_register(wzd_group_t * group, u16_t backend_id)
   return gid;
 }
 
+/** \brief Update a registered group atomically. Datas are copied,
+ * and old group is freed.
+ * A pointer to the old group is still valid (change is done in-place)
+ * If the gid had changed, the group will be moved
+ * \return 0 if ok
+ */
+int group_update(gid_t gid, wzd_group_t * new_group)
+{
+  wzd_group_t * buffer;
+
+  if (gid == (gid_t)-1) return -1;
+  if (gid > _max_gid) return -1;
+  if (_group_array[gid] == NULL) return -2;
+
+  if (gid != new_group->gid) {
+    if (_group_array[new_group->gid] != NULL) return -3;
+  }
+
+  /* same group ? do nothing */
+  if (gid == new_group->gid && _group_array[gid] == new_group) return 0;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_USER);
+  /* backup old group */
+  buffer = wzd_malloc(sizeof(wzd_group_t));
+  *buffer = *_group_array[gid];
+  /* update group */
+  *_group_array[gid] = *new_group;
+  group_free(buffer);
+  if (gid != new_group->gid) {
+    _group_array[new_group->gid] = _group_array[gid];
+    _group_array[gid] = NULL;
+  }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
+
+  return 0;
+}
+
 /** \brief Unregister a group to the main server
  * The \a group struct must be freed using group_free()
  * \return The unregistered group structure, or NULL on error

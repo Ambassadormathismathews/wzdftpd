@@ -69,6 +69,14 @@ void user_free(wzd_user_t * user);
  */
 uid_t user_register(wzd_user_t * user, u16_t backend_id);
 
+/** \brief Update a registered user atomically. Datas are copied,
+ * and old user is freed.
+ * A pointer to the old user is still valid (change is done in-place)
+ * If the uid had changed, the user will be moved
+ * \return 0 if ok
+ */
+int user_update(uid_t uid, wzd_user_t * new_user);
+
 /** \brief Unregister a user to the main server
  * The \a user struct must be freed using user_free()
  * \warning Unregistering a user at runtime can break the server if the user is being used

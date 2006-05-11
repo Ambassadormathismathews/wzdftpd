@@ -156,6 +156,43 @@ uid_t user_register(wzd_user_t * user, u16_t backend_id)
   return uid;
 }
 
+/** \brief Update a registered user atomically. Datas are copied,
+ * and old user is freed.
+ * A pointer to the old user is still valid (change is done in-place)
+ * If the uid had changed, the user will be moved
+ * \return 0 if ok
+ */
+int user_update(uid_t uid, wzd_user_t * new_user)
+{
+  wzd_user_t * buffer;
+
+  if (uid == (uid_t)-1) return -1;
+  if (uid > _max_uid) return -1;
+  if (_user_array[uid] == NULL) return -2;
+
+  if (uid != new_user->uid) {
+    if (_user_array[new_user->uid] != NULL) return -3;
+  }
+
+  /* same user ? do nothing */
+  if (uid == new_user->uid && _user_array[uid] == new_user) return 0;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_USER);
+  /* backup old user */
+  buffer = wzd_malloc(sizeof(wzd_user_t));
+  *buffer = *_user_array[uid];
+  /* update user */
+  *_user_array[uid] = *new_user;
+  user_free(buffer);
+  if (uid != new_user->uid) {
+    _user_array[new_user->uid] = _user_array[uid];
+    _user_array[uid] = NULL;
+  }
+  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
+
+  return 0;
+}
+
 /** \brief Unregister a user to the main server
  * The \a user struct must be freed using user_free()
  * \warning Unregistering a user at runtime can break the server if the user is being used

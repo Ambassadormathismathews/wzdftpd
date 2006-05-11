@@ -59,6 +59,14 @@ void group_free(wzd_group_t * group);
  */
 gid_t group_register(wzd_group_t * group, u16_t backend_id);
 
+/** \brief Update a registered group atomically. Datas are copied,
+ * and old group is freed.
+ * A pointer to the old group is still valid (change is done in-place)
+ * If the gid had changed, the group will be moved
+ * \return 0 if ok
+ */
+int group_update(gid_t gid, wzd_group_t * new_group);
+
 /** \brief Unregister a group to the main server
  * The \a group struct must be freed using group_free()
  * \return The unregistered group structure, or NULL on error
