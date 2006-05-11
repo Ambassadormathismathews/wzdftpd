@@ -784,8 +784,6 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
   wzd_backend_t * b;
   wzd_group_t * new_group;
 
-  WZD_ASSERT( group != NULL);
-
   WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
   if ( (b = mainConfig->backend.b) && b->backend_mod_group)

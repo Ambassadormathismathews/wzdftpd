@@ -206,7 +206,7 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 
   send_message_raw("200-\r\n",context);
   /* iterate through user list and delete all references to group */
-  uid_list = (int*)backend_get_user(-2);
+  uid_list = (int*)backend_get_user(GET_USER_LIST);
   if (uid_list) {
     for (i=0; uid_list[i] >= 0; i++)
     {
@@ -216,7 +216,7 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
       {
         /* warn for users with no groups and / or primary group
          * changed
-         */ 
+         */
         if (user->groups[0] == gid) {
           snprintf(buffer,sizeof(buffer),"200-WARNING %s main group is changed !\r\n",user->username);
           send_message_raw(buffer,context);
@@ -543,7 +543,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
       group->ip_allowed[i][0] = '\0';
       /* commit to backend */
       /* FIXME backend name hardcoded */
-      backend_mod_group(mainConfig->backend.filename,group->groupname,group,_USER_IP);
+      backend_mod_group(mainConfig->backend.filename,group->groupname,group,_GROUP_IP);
       ret = send_message_with_args(200,context,"Group ip removed");
       str_deallocate(ip);
       return 0;
@@ -731,7 +731,7 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   }
 
   /* find modification type */
-  mod_type = _USER_NOTHING;
+  mod_type = _GROUP_NOTHING;
 
   /* groupname */
   if (strcmp(str_tochar(field),"name")==0) {
