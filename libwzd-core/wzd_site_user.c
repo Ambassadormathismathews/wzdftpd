@@ -88,9 +88,8 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   wzd_string_t * username, *password, *groupname, *ip=NULL;
   const char * homedir;
   int ret;
-  wzd_user_t user, *me;
+  wzd_user_t *user, *me;
   wzd_group_t * group=NULL;
-  int uid;
   int i;
   unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
   short is_gadmin;
@@ -121,7 +120,7 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   groupname = NULL;
 
   /* check if user already exists */
-  if ( !backend_find_user(str_tochar(username),&user,&uid) ) {
+  if ( GetUserByName(str_tochar(username)) ) {
     ret = send_message_with_args(501,context,"User already exists");
     str_deallocate(username); str_deallocate(password); str_deallocate(ip);
     return 0;
@@ -177,52 +176,39 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   }
 
   /* create new user */
-  strncpy(user.username,str_tochar(username),HARD_USERNAME_LENGTH);
-  strncpy(user.userpass,str_tochar(password),MAX_PASS_LENGTH);
-  strncpy(user.rootpath,homedir,WZD_MAX_PATH);
-  user.tagline[0]='\0';
-  user.uid=-1; /* will be changed by backend */
-  user.group_num=0;
+  user = user_allocate();
+
+  strncpy(user->username,str_tochar(username),HARD_USERNAME_LENGTH);
+  strncpy(user->userpass,str_tochar(password),MAX_PASS_LENGTH);
+  strncpy(user->rootpath,homedir,WZD_MAX_PATH);
+  user->group_num=0;
   if (groupname) {
-    user.groups[0] = GetGroupIDByName(str_tochar(groupname));
-    if (user.groups[0]) user.group_num=1;
+    user->groups[0] = GetGroupIDByName(str_tochar(groupname));
+    if (user->groups[0]) user->group_num=1;
   }
-  user.max_idle_time=0;
-  user.userperms=0xffffffff;
-  user.flags[0]='\0';
-  user.max_ul_speed=0;
-  user.max_dl_speed=0;
-  user.num_logins=0;
-  for (i=0; i<HARD_IP_PER_USER; i++)
-    user.ip_allowed[i][0]='\0';
-  user.stats.bytes_ul_total=0;
-  user.stats.bytes_dl_total=0;
-  user.stats.files_ul_total=0;
-  user.stats.files_dl_total=0;
-  user.credits = 0;
-  user.ratio = ratio;
-  user.user_slots=0;
-  user.leech_slots=0;
-  user.last_login = 0;
+  user->userperms=0xffffffff;
+  user->ratio = ratio;
 
   i = 0;
   if (ip) {
-    wzd_strncpy(user.ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
+    wzd_strncpy(user->ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
     str_deallocate(ip);
   };
   while ( (ip = str_tok(command_line," \t")) ) {
-    wzd_strncpy(user.ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
+    wzd_strncpy(user->ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
     str_deallocate(ip);
   }
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backend.filename,str_tochar(username),&user,_USER_ALL);
+  ret = backend_mod_user(mainConfig->backend.filename,str_tochar(username),user,_USER_ALL);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem adding user");
+    user_free(user);
   } else {
     if (is_gadmin) me->user_slots--; /* decrement user slots counter */
     ret = send_message_with_args(200,context,"User added");
+    /* do not free user, it is stored in registry */
   }
   str_deallocate(username); str_deallocate(password); str_deallocate(ip);
   return 0;
@@ -650,7 +636,7 @@ int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t
   int i, found, ret;
 
   me = GetUserByID(context->userid);
-  
+
   found=0;
   src_ptr = me->flags;
   dst_ptr = new_flags;
@@ -713,6 +699,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   wzd_user_t * user, *me;
   unsigned int i;
   short is_gadmin;
+  char old_username[HARD_USERNAME_LENGTH];
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -723,8 +710,10 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     return 0;
   }
   /* check if user  exists */
-  user = GetUserByName( str_tochar(username) );
+  strncpy(old_username,str_tochar(username),HARD_USERNAME_LENGTH);
   str_deallocate(username);
+
+  user = GetUserByName( old_username );
   if ( !user) {
     ret = send_message_with_args(501,context,"User does not exist");
     return 0;
@@ -801,7 +790,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     if (newgroupid != (unsigned int)-1) {
       ret=0;
       for (i=0; i<user->group_num; i++)
-        if (newgroupid == user->groups[i]) { ret=1; break; } 
+        if (newgroupid == user->groups[i]) { ret=1; break; }
       if (ret) { /* remove from group, shift them */
         user->groups[i] = 0;
         for (;i<user->group_num-1; i++)
@@ -822,7 +811,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   /* perms */
   else if (strcmp(str_tochar(field),"perms")==0) {
     ul=strtoul(str_tochar(value),&ptr,0);
-    if (!*ptr) { mod_type = _USER_PERMS; user->userperms = ul;} 
+    if (!*ptr) { mod_type = _USER_PERMS; user->userperms = ul;}
   }
   /* flags */ /* TODO accept modifications style +f or -f */
   else if (strcmp(str_tochar(field),"flags")==0) {
@@ -923,7 +912,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   i = user->uid;
 
   /* commit to backend */
-  ret = backend_mod_user(mainConfig->backend.filename,user->username,user,mod_type);
+  ret = backend_mod_user(mainConfig->backend.filename,old_username,user,mod_type);
 
   /* user has been modified, we have to refresh cache entry */
   user = GetUserByID(i);

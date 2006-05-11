@@ -382,11 +382,13 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
     return -1;
   }
 
-  if (ret >= 0 && user) {
-    wzd_user_t * _tmp_user;
-    _tmp_user = GetUserByID(ret);
-    if (!_tmp_user) return -1;
-    memcpy(user,_tmp_user,sizeof(wzd_user_t));
+  if (ret >= 0) {
+    if (user) {
+      wzd_user_t * _tmp_user;
+      _tmp_user = GetUserByID(ret);
+      if (!_tmp_user) return -1;
+      memcpy(user,_tmp_user,sizeof(wzd_user_t));
+    }
     if (userid) *userid = ret;
     return 0;
   }
@@ -511,11 +513,13 @@ int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
     return -1;
   }
 
-  if (ret >= 0 && group) {
-    wzd_group_t * _tmp_group;
-    _tmp_group = GetGroupByID(ret);
-    if (!_tmp_group) return -1;
-    memcpy(group,_tmp_group,sizeof(wzd_group_t));
+  if (ret >= 0) {
+    if (group) {
+      wzd_group_t * _tmp_group;
+      _tmp_group = GetGroupByID(ret);
+      if (!_tmp_group) return -1;
+      memcpy(group,_tmp_group,sizeof(wzd_group_t));
+    }
     if (groupid) *groupid = ret;
     return 0;
   }
@@ -758,11 +762,13 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
       usercache_invalidate( predicate_name, (void *)name );
     }
 #else
-    if (new_user) {
-      *user = *new_user;
-      wzd_free(new_user);
-    } else {
-      wzd_free(user);
+    if (new_user != user) {
+      if (new_user) {
+        *user = *new_user;
+        wzd_free(new_user);
+      } else {
+        wzd_free(user);
+      }
     }
 #endif
   }
@@ -818,11 +824,13 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
       groupcache_invalidate( predicate_groupname, (void *)name );
     }
 #else
-    if (new_group) {
-      *group = *new_group;
-      wzd_free(new_group);
-    } else {
-      wzd_free(group);
+    if (new_group != group) {
+      if (new_group) {
+        *group = *new_group;
+        wzd_free(new_group);
+      } else {
+        wzd_free(group);
+      }
     }
 #endif
   }

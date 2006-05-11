@@ -87,8 +87,7 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   char *homedir;
   int ret;
   wzd_user_t *me;
-  wzd_group_t *mygroup=NULL, newgroup;
-  int i;
+  wzd_group_t *mygroup=NULL, *newgroup;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -135,27 +134,22 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   }
 
   /* create new group */
-  strncpy(newgroup.groupname,str_tochar(groupname),sizeof(newgroup.groupname));
-  strncpy(newgroup.defaultpath,homedir,WZD_MAX_PATH);
-  newgroup.groupperms = 0;
-  newgroup.max_idle_time = 0;
-  newgroup.max_dl_speed = 0;
-  newgroup.max_ul_speed = 0;
-  newgroup.ratio = 0;
-  newgroup.num_logins = 0;
-  newgroup.tagline[0] = '\0';
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-    newgroup.ip_allowed[i][0]='\0';
+  newgroup = group_allocate();
+
+  strncpy(newgroup->groupname,str_tochar(groupname),sizeof(newgroup->groupname));
+  strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backend.filename,str_tochar(groupname),&newgroup,_GROUP_ALL);
+  ret = backend_mod_group(mainConfig->backend.filename,str_tochar(groupname),newgroup,_GROUP_ALL);
 
   str_deallocate(groupname);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem adding group");
+    group_free(newgroup);
   } else {
     ret = send_message_with_args(200,context,"Group added");
+    /* do not free group, it is stored in registry */
   }
   return 0;
 }
