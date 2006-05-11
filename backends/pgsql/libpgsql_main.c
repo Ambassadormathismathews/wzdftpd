@@ -48,9 +48,11 @@
 
 #include "libpgsql.h"
 
-/* 104: reconnect if connection with server was interrupted
+/*
+ * 105: use users/group registry
+ * 104: reconnect if connection with server was interrupted
  */
-#define PGSQL_BACKEND_VERSION   104
+#define PGSQL_BACKEND_VERSION   105
 
 #define PGSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+17)
 
@@ -74,13 +76,30 @@ static int wzd_parse_arg(const char *arg);
 static inline int wzd_row_get_string(char *dst, unsigned int dst_len, PGresult * res, unsigned int index);
 static inline int wzd_row_get_string_offset(char *dst, unsigned int dst_len, PGresult * res, unsigned int row_number, unsigned int index);
 static inline int wzd_row_get_long(long *dst, PGresult * res, unsigned int index);
-static inline int wzd_row_get_uint(unsigned int *dst, PGresult * res, unsigned int index);
 static inline int wzd_row_get_uint_offset(unsigned int *dst, PGresult * res, unsigned int row_number, unsigned int index);
 static inline int wzd_row_get_ulong(unsigned long *dst, PGresult * res, unsigned int index);
 static inline int wzd_row_get_ullong(u64_t *dst, PGresult * res, unsigned int index);
 
 static uid_t * wzd_pgsql_get_user_list(void);
 static gid_t * wzd_pgsql_get_group_list(void);
+
+
+/** \brief Allocates a new user and get informations from database
+ * User must be freed using user_free()
+ * \return A new user struct or NULL
+ */
+static wzd_user_t * get_user_from_db(const char * where_statement);
+
+wzd_user_t * get_user_from_db_by_id(uid_t id);
+static wzd_user_t * get_user_from_db_by_name(const char * name);
+
+/** \brief Allocates a new group and get informations from database
+ * User must be freed using group_free()
+ * \return A new group struct or NULL
+ */
+static wzd_group_t * get_group_from_db(const char * where_statement);
+
+static wzd_group_t * get_group_from_db_by_name(const char * name);
 
 
 
@@ -123,7 +142,7 @@ static int wzd_parse_arg(const char *arg)
 }
 
 
-int FCN_INIT(const char *arg)
+static int FCN_INIT(const char *arg)
 {
   PGresult   *res;
 
@@ -167,312 +186,184 @@ int FCN_INIT(const char *arg)
   return 0;
 }
 
-uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
+static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
 {
-  char query[512];
-  uid_t uid;
-  PGresult * res;
+  wzd_user_t * user, * registered_user;
+  uid_t reg_uid, uid;
 
-  if (!wzd_pgsql_check_name(login)) return (uid_t)-1;
+  if (!wzd_pgsql_check_name(login)) return INVALID_USER;
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", login)) == NULL) return (uid_t)-1;
+  user = get_user_from_db_by_name(login);
+  if (user == NULL) return INVALID_USER;
 
-  uid = (uid_t)-1;
+  registered_user = user_get_by_id(user->uid);
+  if (registered_user != NULL) {
+    out_log(LEVEL_FLOOD,"PGSQL updating registered user %s\n",user->username);
 
-
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    int num_fields;
-
-    if ( PQntuples(res) != 1 ) {
-      /* 0 or more than 1 result  */
-      PQclear(res);
-      return (uid_t)-1;
+    if (user_update(registered_user->uid,user)) {
+      out_log(LEVEL_HIGH,"ERROR PGSQL Could not update user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
     }
+    uid = user->uid;
+    /* free user, but not the dynamic lists inside, since they are used in registry */
+    wzd_free(user);
+  } else {
+    /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
 
-    num_fields = PQnfields(res);
+    if (user->uid != (uid_t)-1) {
+      reg_uid = user_register(user,1 /* XXX backend id */);
+      if (reg_uid != user->uid) {
+        out_log(LEVEL_HIGH,"ERROR PGSQL Could not register user %s %d\n",user->username,user->uid);
+        /** \todo free user and return INVALID_USER */
+      }
+    }
+    uid = user->uid;
+    /* do not free user, it will be kept in registry */
+  }
 
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(PQgetvalue(res,0,UCOL_UID));
-
-    PQclear(res);
-  } /*else // user does not exist in table
-    return -1; */
+  /** \todo update groups */
 
   return uid;
 }
 
-uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * _unused)
 {
-  char query[512];
-  uid_t uid;
-  PGresult * res;
+  wzd_user_t * user;
 
-  if (!wzd_pgsql_check_name(login)) return (uid_t)-1;
+  if (!wzd_pgsql_check_name(login)) return INVALID_USER;
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", login)) == NULL) return (uid_t)-1;
+  user = user_get_by_name(login);
+  if (user == NULL) return INVALID_USER;
 
-  uid = (uid_t)-1;
+  if (strlen(user->userpass) == 0) {
+    out_log(PGSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
+    out_log(PGSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
+    return user->uid; /* passworldless login */
+  }
 
+  if (strcmp(user->userpass,"%")==0)
+    return user->uid; /* passworldless login */
 
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    int num_fields;
-    char stored_pass[MAX_PASS_LENGTH];
+  if (check_auth(login, pass, user->userpass)==1)
+    return user->uid;
 
-    if ( PQntuples(res) != 1 ) {
-      /* 0 or more than 1 result */
-      PQclear(res);
-      return (uid_t)-1;
-    }
-
-    num_fields = PQnfields(res);
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(PQgetvalue(res,0,UCOL_UID));
-
-    if (!PQgetisnull(res,0,UCOL_USERPASS))
-      strncpy(stored_pass, PQgetvalue(res,0,UCOL_USERPASS), MAX_PASS_LENGTH);
-    else
-      stored_pass[0] = '\0';
-
-    PQclear(res);
-
-    if (strlen(stored_pass) == 0)
-    {
-      out_log(PGSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
-      out_log(PGSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
-      return uid; /* passworldless login */
-    }
-
-    if (strcmp(stored_pass,"%")==0)
-      return uid; /* passworldless login */
-
-    if (check_auth(login, pass, stored_pass)==1)
-      return uid;
-    return (uid_t)-1;
-
-  } /* else // user does not exist in table
-    return -1;*/
-
-
-  return uid;
+  return INVALID_USER;
 }
 
-uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
+static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
 {
-  char query[512];
-  uid_t uid;
-  PGresult * res;
+  wzd_user_t * user;
+  uid_t reg_uid;
 
   if (!wzd_pgsql_check_name(name)) return (uid_t)-1;
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE username='%s'", name)) == NULL) return (uid_t)-1;
+  user = user_get_by_name(name);
+  if (user != NULL) return user->uid;
 
-  uid = (uid_t)-1;
+  user = get_user_from_db_by_name(name);
+  if (user == NULL) return INVALID_USER;
 
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    int num_fields;
+  /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
 
-    if ( PQntuples(res) != 1 ) {
-      /* 0 or more than 1 result */
-      PQclear(res);
-      return (uid_t)-1;
+  if (user->uid != (uid_t)-1) {
+    reg_uid = user_register(user,1 /* XXX backend id */);
+    if (reg_uid != user->uid) {
+      out_log(LEVEL_HIGH,"ERROR PGSQL Could not register user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
     }
-
-    num_fields = PQnfields(res);
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(PQgetvalue(res,0,UCOL_UID));
-
-    PQclear(res);
-
-  }/* else  // no such user
-    return -1;*/
-
-  return uid;
+  }
+  /* do not free user, it will be kept in registry */
+  return user->uid;
 }
 
-int  FCN_COMMIT_CHANGES(void)
+static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * _ignored)
+{
+  wzd_group_t * group;
+  gid_t reg_gid;
+
+  if (!wzd_pgsql_check_name(name)) return (gid_t)-1;
+
+  group = group_get_by_name(name);
+  if (group != NULL) return group->gid;
+
+  group = get_group_from_db_by_name(name);
+  if (group == NULL) return INVALID_USER;
+
+  /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
+
+  if (group->gid != (gid_t)-1) {
+    reg_gid = group_register(group,1 /* XXX backend id */);
+    if (reg_gid != group->gid) {
+      out_log(LEVEL_HIGH,"ERROR PGSQL Could not register group %s %d\n",group->groupname,group->gid);
+      /** \todo free group and return INVALID_USER */
+    }
+  }
+  /* do not free group, it will be kept in registry */
+  return group->gid;
+}
+
+static int  FCN_COMMIT_CHANGES(void)
 {
   return 0;
 }
 
-int FCN_FINI(void)
+static int FCN_FINI(void)
 {
   PQfinish(pgconn);
 
   return 0;
 }
 
-wzd_user_t * FCN_GET_USER(uid_t uid)
+static wzd_user_t * FCN_GET_USER(uid_t uid)
 {
-  char query[512];
-  int num_fields;
   wzd_user_t * user;
-  unsigned int i,j;
-  PGresult * res;
+  uid_t reg_uid;
 
-  if (uid == (uid_t)-2) return (wzd_user_t*)wzd_pgsql_get_user_list();
+  if (uid == GET_USER_LIST) return (wzd_user_t*)wzd_pgsql_get_user_list();
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE uid='%d'", uid)) == NULL) return NULL;
+  user = user_get_by_id(uid);
+  if (user != NULL) return user;
 
-  if ( PQntuples(res) != 1 ) {
-    /* more than 1 result !!!! */
-    /** \todo warn user */
-    free(query);
-    PQclear(res);
-    return NULL;
-  }
+  user = get_user_from_db_by_id(uid);
+  if (user == NULL) return NULL;
 
-  num_fields = PQnfields(res);
+  /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
 
-  user = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t));
-  memset(user, 0, sizeof(wzd_user_t));
-
-  if ( wzd_row_get_uint(&user->uid, res, UCOL_UID) ) {
-    wzd_free(user);
-    PQclear(res);
-    return NULL;
-  }
-
-  wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, res, UCOL_USERNAME);
-  wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, res, UCOL_USERPASS);
-  wzd_row_get_string(user->rootpath, WZD_MAX_PATH, res, UCOL_ROOTPATH);
-  wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, res, UCOL_TAGLINE);
-  wzd_row_get_string(user->flags, MAX_FLAGS_NUM, res, UCOL_FLAGS);
-  wzd_row_get_uint((unsigned int*)&user->max_idle_time, res, UCOL_MAX_IDLE_TIME);
-  wzd_row_get_uint(&user->max_ul_speed, res, UCOL_MAX_UL_SPEED);
-  wzd_row_get_uint(&user->max_dl_speed, res, UCOL_MAX_DL_SPEED);
-  if (wzd_row_get_uint(&i, res, UCOL_NUM_LOGINS)==0) user->num_logins = i;
-  wzd_row_get_uint(&user->ratio, res, UCOL_RATIO);
-  if (wzd_row_get_uint(&i, res, UCOL_USER_SLOTS)==0) user->user_slots = i;
-  if (wzd_row_get_uint(&i, res, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
-  wzd_row_get_ulong(&user->userperms, res, UCOL_PERMS);
-  wzd_row_get_ullong(&user->credits, res, UCOL_CREDITS);
-  /* XXX FIXME last login */
-
-  PQclear(res);
-
-  /* Now get IP */
-  user->ip_allowed[0][0] = '\0';
-
-  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid)) == NULL) return user;
-
-  for (i=0; (int)i<PQntuples(res); i++) {
-    if (i >= HARD_IP_PER_USER) {
-      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many IP for user %s, dropping others\n",user->username);
-      break;
+  if (user->uid != (uid_t)-1) {
+    reg_uid = user_register(user,1 /* XXX backend id */);
+    if (reg_uid != user->uid) {
+      out_log(LEVEL_HIGH,"ERROR PGSQL Could not register user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
     }
-    wzd_row_get_string_offset(user->ip_allowed[i], MAX_IP_LENGTH, res, i, 0 /* query asks only one column */);
   }
-
-
-  PQclear(res);
-
-  /* Now get Groups */
-
-  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid)) == NULL) return user;
-
-  for (i=0; (int)i<PQntuples(res); i++) {
-    if (i >= HARD_IP_PER_USER) {
-      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many groups for user %s, dropping others\n",user->username);
-      break;
-    }
-    if (wzd_row_get_uint(&j, res, 0 /* query asks only one column */)==0)
-      user->groups[i] = j;
-  }
-  user->group_num = i;
-
-  PQclear(res);
-
-  /* Now get Stats */
-
-  if ( (res = _wzd_run_select_query(query,512,"SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid)) == NULL) return user;
-
-  wzd_row_get_ullong(&user->stats.bytes_ul_total, res, SCOL_BYTES_UL);
-  wzd_row_get_ullong(&user->stats.bytes_dl_total, res, SCOL_BYTES_DL);
-  wzd_row_get_ulong(&user->stats.files_ul_total, res, SCOL_FILES_UL);
-  wzd_row_get_ulong(&user->stats.files_dl_total, res, SCOL_FILES_DL);
-
-  PQclear(res);
-
-
+  /* do not free user, it will be kept in registry */
   return user;
 }
 
 
-wzd_group_t * FCN_GET_GROUP(gid_t gid)
+static wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
-  char query[512];
-  int num_fields;
   wzd_group_t * group;
-  unsigned int i;
-  int index;
-  PGresult * res;
+  gid_t reg_gid;
 
-  if (gid == (gid_t)-2) return (wzd_group_t*)wzd_pgsql_get_group_list();
+  if (gid == GET_GROUP_LIST) return (wzd_group_t*)wzd_pgsql_get_group_list();
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE gid='%d'", gid)) == NULL) return NULL;
+  group = group_get_by_id(gid);
+  if (group != NULL) return group;
 
-  if ( PQntuples(res) != 1 ) {
-    /* more than 1 result !!!! */
-    /** \todo warn user */
-    PQclear(res);
-    return NULL;
+  group = get_group_from_db_by_id(gid);
+  if (group == NULL) return NULL;
+
+  /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
+
+  if (group->gid != (gid_t)-1) {
+    reg_gid = group_register(group,1 /* XXX backend id */);
+    if (reg_gid != group->gid) {
+      out_log(LEVEL_HIGH,"ERROR PGSQL Could not register group %s %d\n",group->groupname,group->gid);
+      /** \todo free group and return INVALID_USER */
+    }
   }
-
-  num_fields = PQnfields(res);
-
-  /** XXX FIXME memory leak here !! */
-  group = (wzd_group_t*)wzd_malloc(sizeof(wzd_group_t));
-  memset(group, 0, sizeof(wzd_group_t));
-
-  if ( wzd_row_get_uint(&group->gid, res, GCOL_GID) ) {
-    wzd_free(group);
-    PQclear(res);
-    return NULL;
-  }
-  wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, res, GCOL_GROUPNAME);
-  wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, res, GCOL_DEFAULTPATH);
-  wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, res, GCOL_TAGLINE);
-  wzd_row_get_ulong(&group->groupperms, res, GCOL_GROUPPERMS);
-  wzd_row_get_uint((unsigned int*)&group->max_idle_time, res, GCOL_MAX_IDLE_TIME);
-  if (wzd_row_get_uint(&i, res, GCOL_NUM_LOGINS)==0) group->num_logins = i;
-  wzd_row_get_uint(&group->max_ul_speed, res, GCOL_MAX_UL_SPEED);
-  wzd_row_get_uint(&group->max_dl_speed, res, GCOL_MAX_DL_SPEED);
-  wzd_row_get_uint(&group->ratio, res, GCOL_RATIO);
-
-  PQclear(res);
-
-  /* Now get ip */
-  group->ip_allowed[0][0] = '\0';
-
-  if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid)) == NULL) return NULL;
-
-  for (index=0; index<PQntuples(res); index++) {
-    wzd_row_get_string(group->ip_allowed[index], MAX_IP_LENGTH, res, 0 /* query asks only one column */);
-  }
-
-  PQclear(res);
-
+  /* do not free group, it will be kept in registry */
   return group;
 }
 
@@ -528,7 +419,7 @@ static inline int wzd_row_get_long(long *dst, PGresult * res, unsigned int index
   return 1;
 }
 
-static inline int wzd_row_get_uint(unsigned int *dst, PGresult * res, unsigned int index)
+int wzd_row_get_uint(unsigned int *dst, PGresult * res, unsigned int index)
 {
   char *ptr;
   unsigned long i;
@@ -819,6 +710,195 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
   PQclear(res);
 
   return 0;
+}
+
+/** \brief Allocates a new user and get informations from database
+ * User must be freed using user_free()
+ * \return A new user struct or NULL
+ */
+static wzd_user_t * get_user_from_db(const char * where_statement)
+{
+  char query[512];
+  int num_fields;
+  wzd_user_t * user;
+  unsigned int i,j;
+  PGresult * res;
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE %s", where_statement)) == NULL) return NULL;
+
+  if ( PQntuples(res) != 1 ) {
+    /* more than 1 result !!!! */
+    /** \todo warn user */
+    PQclear(res);
+    return NULL;
+  }
+
+  num_fields = PQnfields(res);
+
+  out_log(LEVEL_FLOOD,"PGSQL allocating new user %s\n",where_statement);
+  user = user_allocate();
+
+  if ( wzd_row_get_uint(&user->uid, res, UCOL_UID) ) {
+    wzd_free(user);
+    PQclear(res);
+    return NULL;
+  }
+
+  wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, res, UCOL_USERNAME);
+  wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, res, UCOL_USERPASS);
+  wzd_row_get_string(user->rootpath, WZD_MAX_PATH, res, UCOL_ROOTPATH);
+  wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, res, UCOL_TAGLINE);
+  wzd_row_get_string(user->flags, MAX_FLAGS_NUM, res, UCOL_FLAGS);
+  wzd_row_get_uint((unsigned int*)&user->max_idle_time, res, UCOL_MAX_IDLE_TIME);
+  wzd_row_get_uint(&user->max_ul_speed, res, UCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&user->max_dl_speed, res, UCOL_MAX_DL_SPEED);
+  if (wzd_row_get_uint(&i, res, UCOL_NUM_LOGINS)==0) user->num_logins = i;
+  wzd_row_get_uint(&user->ratio, res, UCOL_RATIO);
+  if (wzd_row_get_uint(&i, res, UCOL_USER_SLOTS)==0) user->user_slots = i;
+  if (wzd_row_get_uint(&i, res, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
+  wzd_row_get_ulong(&user->userperms, res, UCOL_PERMS);
+  wzd_row_get_ullong(&user->credits, res, UCOL_CREDITS);
+  /* XXX FIXME last login */
+
+  PQclear(res);
+
+  /* Now get IP */
+  user->ip_allowed[0][0] = '\0';
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip,users WHERE %s AND users.ref=userip.ref", where_statement)) == NULL) return user;
+
+  for (i=0; (int)i<PQntuples(res); i++) {
+    if (i >= HARD_IP_PER_USER) {
+      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many IP for user %s, dropping others\n",user->username);
+      break;
+    }
+    wzd_row_get_string_offset(user->ip_allowed[i], MAX_IP_LENGTH, res, i, 0 /* query asks only one column */);
+  }
+
+
+  PQclear(res);
+
+  /* Now get Groups */
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.gid FROM groups,users,ugr WHERE %s AND users.ref=ugr.uref AND groups.ref=ugr.gref", where_statement)) == NULL) return user;
+
+  for (i=0; (int)i<PQntuples(res); i++) {
+    if (i >= HARD_IP_PER_USER) {
+      out_log(PGSQL_LOG_CHANNEL,"PGsql: too many groups for user %s, dropping others\n",user->username);
+      break;
+    }
+    if (wzd_row_get_uint_offset(&j, res, i, 0 /* query asks only one column */)==0)
+      user->groups[i] = j;
+  }
+  user->group_num = i;
+
+  PQclear(res);
+
+  /* Now get Stats */
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE %s AND users.ref=stats.ref", where_statement)) == NULL) return user;
+
+  wzd_row_get_ullong(&user->stats.bytes_ul_total, res, SCOL_BYTES_UL);
+  wzd_row_get_ullong(&user->stats.bytes_dl_total, res, SCOL_BYTES_DL);
+  wzd_row_get_ulong(&user->stats.files_ul_total, res, SCOL_FILES_UL);
+  wzd_row_get_ulong(&user->stats.files_dl_total, res, SCOL_FILES_DL);
+
+  PQclear(res);
+
+  return user;
+}
+
+wzd_user_t * get_user_from_db_by_id(uid_t id)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"users.uid = '%d'",id);
+
+  return get_user_from_db(where);
+}
+
+static wzd_user_t * get_user_from_db_by_name(const char * name)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"users.username = '%s'",name);
+
+  return get_user_from_db(where);
+}
+
+/** \brief Allocates a new group and get informations from database
+ * User must be freed using group_free()
+ * \return A new group struct or NULL
+ */
+static wzd_group_t * get_group_from_db(const char * where_statement)
+{
+  char query[512];
+  int num_fields;
+  wzd_group_t * group;
+  unsigned int i;
+  int index;
+  PGresult * res;
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE %s", where_statement)) == NULL) return NULL;
+
+  if ( PQntuples(res) != 1 ) {
+    /* more than 1 result !!!! */
+    /** \todo warn user */
+    PQclear(res);
+    return NULL;
+  }
+
+  num_fields = PQnfields(res);
+
+  group = group_allocate();
+
+  if ( wzd_row_get_uint(&group->gid, res, GCOL_GID) ) {
+    wzd_free(group);
+    PQclear(res);
+    return NULL;
+  }
+  wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, res, GCOL_GROUPNAME);
+  wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, res, GCOL_DEFAULTPATH);
+  wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, res, GCOL_TAGLINE);
+  wzd_row_get_ulong(&group->groupperms, res, GCOL_GROUPPERMS);
+  wzd_row_get_uint((unsigned int*)&group->max_idle_time, res, GCOL_MAX_IDLE_TIME);
+  if (wzd_row_get_uint(&i, res, GCOL_NUM_LOGINS)==0) group->num_logins = i;
+  wzd_row_get_uint(&group->max_ul_speed, res, GCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&group->max_dl_speed, res, GCOL_MAX_DL_SPEED);
+  wzd_row_get_uint(&group->ratio, res, GCOL_RATIO);
+
+  PQclear(res);
+
+  /* Now get ip */
+  group->ip_allowed[0][0] = '\0';
+
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip,groups WHERE %s AND groups.ref=groupip.ref", where_statement)) == NULL) return NULL;
+
+  for (index=0; index<PQntuples(res); index++) {
+    wzd_row_get_string_offset(group->ip_allowed[index], MAX_IP_LENGTH, res, index, 0 /* query asks only one column */);
+  }
+
+  PQclear(res);
+
+  return group;
+}
+
+wzd_group_t * get_group_from_db_by_id(gid_t id)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"groups.gid = '%d'",id);
+
+  return get_group_from_db(where);
+}
+
+static wzd_group_t * get_group_from_db_by_name(const char * name)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"groups.groupname = '%s'",name);
+
+  return get_group_from_db(where);
 }
 
 int wzd_backend_init(wzd_backend_t * backend)

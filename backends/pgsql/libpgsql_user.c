@@ -41,6 +41,7 @@
 #include <libwzd-base/wzd_strlcat.h>
 
 #include <libwzd-core/wzd_backend.h>
+#include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h> /* win_normalize */
 #include <libwzd-core/wzd_user.h>
 
@@ -48,10 +49,11 @@
 
 #include "libpgsql.h"
 
-int _user_update_ip(uid_t ref, wzd_user_t * user);
-int _user_update_stats(uid_t ref, wzd_user_t * user);
+static int _user_update_groups(uid_t ref, wzd_user_t * user);
+static int _user_update_ip(uid_t ref, wzd_user_t * user);
+static int _user_update_stats(uid_t ref, wzd_user_t * user);
 
-uid_t user_get_ref(const char * name, unsigned int ref);
+static uid_t user_get_ref(const char * name, unsigned int ref);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
 {
@@ -76,10 +78,11 @@ char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, un
 int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 {
   char *query, *mod;
-  int modified = 0;
+  int modified = 0, update_registry = 0;
   unsigned int query_length = 512;
-  uid_t ref = 0;
+  uid_t ref = 0, reg_uid;
   unsigned int i;
+  wzd_user_t * registered_user;
 
   if (!user) { /* delete user permanently */
     query = malloc(2048);
@@ -92,6 +95,13 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
     }
     _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", name);
     free(query);
+
+    /** \todo use user_get_id_by_name */
+    registered_user = user_get_by_name(name);
+    if (registered_user != NULL) {
+      registered_user = user_unregister(registered_user->uid);
+      user_free(registered_user);
+    }
 
     return 0;
   }
@@ -118,6 +128,7 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
         }
       memset(user->userpass,0,MAX_PASS_LENGTH);
       APPEND_STRING_TO_QUERY("userpass='%s' ", passbuffer, query, query_length, mod, modified);
+      memcpy(user->userpass, passbuffer, MAX_PASS_LENGTH);
     }
 
     if (mod_type & _USER_ROOTPATH) {
@@ -136,6 +147,10 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       APPEND_STRING_TO_QUERY("max_idle_time='%u' ", user->max_idle_time, query, query_length, mod, modified);
 
     /* XXX FIXME GROUP and GROUPNUM must be treated separately .. */
+    if (mod_type & _USER_GROUP) {
+      _user_update_groups(ref,user); /** \todo FIXME use return ! */
+      update_registry = 1;
+    }
 
     if (mod_type & _USER_PERMS)
       APPEND_STRING_TO_QUERY("perms='%lx' ", user->userperms, query, query_length, mod, modified);
@@ -150,11 +165,15 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", user->num_logins, query, query_length, mod, modified);
 
-    if ((mod_type & _USER_BYTESDL) || (mod_type & _USER_BYTESUL))
+    if ((mod_type & _USER_BYTESDL) || (mod_type & _USER_BYTESUL)) {
       _user_update_stats(ref,user); /** \todo FIXME test return ! */
+      update_registry = 1;
+    }
 
-    if (mod_type & _USER_IP)
+    if (mod_type & _USER_IP) {
       _user_update_ip(ref,user); /** \todo FIXME use return ! */
+      update_registry = 1;
+    }
 
     if (mod_type & _USER_CREDITS)
 #ifndef WIN32
@@ -176,10 +195,35 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       query = _append_safely_mod(query, &query_length, mod, 0);
 
       if (_wzd_run_update_query(query,query_length,query) != 0)
+        goto error_mod_user_free;
 
       free(mod); free(query);
+
+      update_registry = 1;
+    }
+
+    if (update_registry) {
+      registered_user = user_get_by_id(user->uid);
+      if (registered_user != NULL) {
+        out_log(LEVEL_FLOOD,"PGSQL updating registered user %s\n",user->username);
+
+        if (user_update(registered_user->uid,user)) {
+          out_log(LEVEL_HIGH,"ERROR PGSQL Could not update user %s %d\n",user->username,user->uid);
+          return -1;
+        }
+      } else {
+        if (user->uid != (uid_t)-1) {
+          reg_uid = user_register(user,1 /* XXX backend id */);
+          if (reg_uid != user->uid) {
+            out_log(LEVEL_HIGH,"ERROR PGSQL Could not register user %s %d\n",user->username,user->uid);
+            return -1;
+          }
+        }
+      }
+
+
       return 0;
-    } /* if (modified) */
+    } /* if (update_registry) */
 
     free(mod); free(query);
     return -1;
@@ -188,12 +232,18 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 
   /* create new user */
 
+  registered_user = user_get_by_name(name);
+  if (registered_user) {
+    out_log(LEVEL_INFO,"WARNING: user %s is not present in DB but already registered\n");
+    return -1;
+  }
+
   /* Part 1, User */
   query = malloc(2048);
   mod = NULL;
 
   /* sequence will find a free uid */
-  user->uid = (uid_t)-1;
+  user->uid = INVALID_USER;
 
   {
     char passbuffer[MAX_PASS_LENGTH];
@@ -203,6 +253,7 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       goto error_user_add;
     }
     memset(user->userpass,0,MAX_PASS_LENGTH);
+    memcpy(user->userpass, passbuffer, MAX_PASS_LENGTH);
 
     if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',nextval('users_uid_seq'),'%s',%u,%lu,%lu,%u,%u,%u,%u,CAST (X'%lx' as integer),% " PRIu64 ")",
           user->username, passbuffer,
@@ -238,6 +289,31 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
         ref))
     goto error_user_add;
 
+  /* get generated uid from DB */
+  {
+    PGresult * res;
+    if ( (res = _wzd_run_select_query(query,2048,"SELECT users.uid FROM users WHERE ref='%d'",ref)) == NULL )
+      goto error_user_add;
+    if ( PQntuples(res) != 1 ) {
+      PQclear(res);
+      goto error_user_add;
+    }
+    if ( wzd_row_get_uint(&user->uid, res, 0 /* only 1 column */) ) {
+      PQclear(res);
+      goto error_user_add;
+    }
+    PQclear(res);
+  }
+
+  /** \todo check values and register user */
+
+  reg_uid = user_register(user,1 /* XXX backend id */);
+  if (reg_uid != user->uid) {
+    out_log(LEVEL_HIGH,"ERROR PGSQL Could not register user %s %d\n",user->username,user->uid);
+    /** \todo free user and return INVALID_USER */
+    goto error_user_add;
+  }
+
   free(query);
 
   return 0;
@@ -253,6 +329,13 @@ error_user_add:
   _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", user->username);
   free(query);
 
+  /** \todo use user_get_id_by_name */
+  registered_user = user_get_by_name(name);
+  if (registered_user != NULL) {
+    registered_user = user_unregister(registered_user->uid);
+    user_free(registered_user);
+  }
+
   return -1;
 
 error_mod_user_free:
@@ -262,64 +345,144 @@ error_mod_user_free:
   return -1;
 }
 
-int _user_update_ip(uid_t ref, wzd_user_t * user)
+/** Update groups for a specific user using the following:
+ * get stored group. For each group of modified user, try to find it
+ * for the stored user: if not present, add it. For each group of the
+ * stored user, try to find it in the modified user: if not present,
+ * delete it.
+ * \return O if ok
+ */
+static int _user_update_groups(uid_t ref, wzd_user_t * user)
 {
   char query[512];
   PGresult * res;
-  unsigned int i;
-  int index;
-  char ip_list[HARD_IP_PER_USER][MAX_IP_LENGTH];
+  int g_stored, g_mod;
+  int found;
+  long l;
+  char *ptr;
+  gid_t gid;
   int ret;
+  int gref;
 
   if (!ref) return -1;
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip WHERE ref=%d",ref)) == NULL) return 0;
+  /* extract groups for user */
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.gid,groups.ref FROM groups,ugr WHERE ugr.uref=%d AND ugr.gref = groups.ref",ref)) == NULL) return -1;
 
-  for (i=0; i<HARD_IP_PER_USER; i++)
-    ip_list[i][0] = '\0';
-
-  i = 0;
-  for (index=0; index<PQntuples(res); index++) {
-    strncpy(ip_list[i],PQgetvalue(res,0,0),MAX_IP_LENGTH);
-    i++;
-    if (i >= HARD_IP_PER_USER) {
-      /** too many ip in db ?! - ignoring others */
-      break;
+  /* find NEW groups */
+  for (g_mod = 0; g_mod < (int)user->group_num; g_mod++) {
+    found = 0;
+    for (g_stored = 0; g_stored < PQntuples(res); g_stored++) {
+      l = strtol(PQgetvalue(res,g_stored,0), &ptr, 0);
+      if (ptr && *ptr == '\0') {
+        gid = (gid_t)l;
+        if (user->groups[g_mod] == gid) {
+          found = 1;
+          break;
+        }
+      }
+    }
+    if (found == 0) {
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=%d and groups.gid=%d",user->uid,user->groups[g_mod]);
+      if (ret) {
+        PQclear(res);
+        return -1;
+      }
     }
   }
 
-  /* compare the two sets of ip */
-  for (i=0; i<HARD_IP_PER_USER; i++) {
-    ret = 1;
-    if (strcmp(user->ip_allowed[i],ip_list[i])!=0) {
-      /* check for injections in ip */
-      if (!wzd_pgsql_check_name(ip_list[i]) || !wzd_pgsql_check_name(user->ip_allowed[i])) {
-        /* print error message ? */
-        break;
+  /* find DELETED groups */
+  for (g_stored = 0; g_stored < PQntuples(res); g_stored++) {
+    l = strtol(PQgetvalue(res,g_stored,0), &ptr, 0);
+    if (ptr && *ptr == '\0') {
+      gid = (gid_t)l;
+      for (g_mod = 0; g_mod < (int)user->group_num; g_mod++) {
+        found = 0;
+        if (user->groups[g_mod] == gid) {
+          found = 1;
+          break;
+        }
       }
-      if (user->ip_allowed[i][0]=='\0')
-        ret = _wzd_run_delete_query(query,512,"DELETE FROM userip WHERE userip.ref=%d AND userip.ip='%s'",ref,ip_list[i]);
-      else {
-        if (ip_list[i][0]=='\0')
-          ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
-        else
-          ret = _wzd_run_update_query(query,512,"UPDATE userip SET ip='%' WHERE userip.ref=%d AND userip.ip='%s'",ip_list[i],ref,user->ip_allowed[i]);
+      if (found == 0) {
+        gref = (int)strtol(PQgetvalue(res,g_stored,1), NULL, 0);
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM ugr WHERE uref=%d AND gref=%d",ref,gref);
+        if (ret) {
+          PQclear(res);
+          return -1;
+        }
       }
-    }
-    else
-      ret = 0;
-    if (ret) {
-      /* print error message ? */
-      break;
     }
   }
 
   PQclear(res);
-
   return 0;
 }
 
-int _user_update_stats(uid_t ref, wzd_user_t * user)
+/** Update ip for a specific user using the following:
+ * get stored ip list For each ip of modified user, try to find it
+ * for the stored user: if not present, add it. For each ip of the
+ * stored user, try to find it in the modified user: if not present,
+ * delete it.
+ * \return O if ok
+ */
+static int _user_update_ip(uid_t ref, wzd_user_t * user)
+{
+  char query[512];
+  PGresult * res;
+  int i, i_stored;
+  int found;
+  int ret;
+  const char *ip_stored;
+
+  if (!ref) return -1;
+
+  /* extract ip list for user */
+  if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip WHERE ref=%d",ref)) == NULL) return 0;
+
+  /* find NEW ip */
+  for (i=0; i<HARD_IP_PER_USER; i++) {
+    if (strlen(user->ip_allowed[i]) <= 0) continue;
+    found = 0;
+    for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
+      ip_stored = PQgetvalue(res,i_stored,0);
+      if (strcmp(user->ip_allowed[i],ip_stored)==0) {
+        found = 1;
+        break;
+      }
+    }
+    if (found == 0) {
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
+      if (ret) {
+        PQclear(res);
+        return -1;
+      }
+    }
+  }
+
+  /* find DELETED ip */
+  for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
+    ip_stored = PQgetvalue(res,i_stored,0);
+    for (i=0; i<HARD_IP_PER_USER; i++) {
+      found = 0;
+      if (strcmp(user->ip_allowed[i],ip_stored)==0) {
+        found = 1;
+        break;
+      }
+    }
+    if (found == 0) {
+      ret = _wzd_run_delete_query(query,512,"DELETE FROM userip WHERE userip.ref=%d AND userip.ip='%s'",ref,ip_stored);
+      if (ret) {
+        PQclear(res);
+        return -1;
+      }
+    }
+  }
+
+  PQclear(res);
+  return 0;
+}
+
+static int _user_update_stats(uid_t ref, wzd_user_t * user)
 {
   char query[512];
   PGresult * res;
@@ -355,7 +518,7 @@ int _user_update_stats(uid_t ref, wzd_user_t * user)
 }
 
 
-uid_t user_get_ref(const char * name, unsigned int ref)
+static uid_t user_get_ref(const char * name, unsigned int ref)
 {
   char query[512];
   unsigned int uid=0;

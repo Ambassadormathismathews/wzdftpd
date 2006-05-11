@@ -90,8 +90,19 @@ int _sql_check_connection(void);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group);
 int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type);
 int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type);
+
+int wzd_row_get_uint(unsigned int *dst, PGresult * res, unsigned int index);
+
+/** \brief Retrieve user from DB.
+ * A new wzd_user_t is allocated, and must be freed using user_free()
+ */
+wzd_user_t * get_user_from_db_by_id(uid_t id);
+
+/** \brief Retrieve group from DB.
+ * A new wzd_group_t is allocated, and must be freed using group_free()
+ */
+wzd_group_t * get_group_from_db_by_id(gid_t id);
 
 #endif /* __LIBPGSQL__ */

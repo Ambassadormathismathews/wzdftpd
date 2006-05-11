@@ -40,51 +40,17 @@
 
 #include <libwzd-core/wzd_backend.h>
 #include <libwzd-core/wzd_group.h>
+#include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h> /* win_normalize */
 
 #include <libwzd-core/wzd_debug.h>
 
 #include "libpgsql.h"
 
-int _group_update_ip(uid_t ref, wzd_group_t * group);
+static int _group_update_ip(uid_t ref, wzd_group_t * group);
 
-gid_t group_get_ref(const char * name, unsigned int ref);
+static gid_t group_get_ref(const char * name, unsigned int ref);
 
-
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
-{
-  char query[512];
-  gid_t gid;
-  PGresult * res;
-
-  if (!wzd_pgsql_check_name(name)) return (gid_t)-1;
-
-  if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE groupname='%s'", name)) == NULL) return (gid_t)-1;
-
-  gid = (gid_t)-1;
-
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    int num_fields;
-
-    if ( PQntuples(res) != 1 ) {
-      /* 0 or more than 1 result */
-      PQclear(res);
-      return (gid_t)-1;
-    }
-
-    num_fields = PQnfields(res);
-
-    gid = atoi(PQgetvalue(res,0,GCOL_GID));
-
-    PQclear(res);
-
-  }/* else  // no such user
-    return -1;*/
-
-  return gid;
-}
 
 #define APPEND_STRING_TO_QUERY(format, s, query, query_length, mod, modified) \
   do { \
@@ -96,12 +62,14 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
-  int modified = 0;
+  int modified = 0, update_registry = 0;
   unsigned int query_length = 512;
   gid_t ref = 0;
   unsigned int i;
+  wzd_group_t * registered_group;
+  gid_t reg_gid;
 
-  if (!group) { /* delete user permanently */
+  if (!group) { /* delete group permanently */
     query = malloc(2048);
     /* we don't care about the results of the queries */
     ref = group_get_ref(name, 0);
@@ -111,6 +79,13 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
     }
     _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", name);
     free(query);
+
+    /** \todo use group_get_id_by_name */
+    registered_group = group_get_by_name(name);
+    if (registered_group != NULL) {
+      registered_group = group_unregister(registered_group->gid);
+      group_free(registered_group);
+    }
 
     return 0;
   }
@@ -152,9 +127,10 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
     if (mod_type & _GROUP_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", group->num_logins, query, query_length, mod, modified);
 
-    /* XXX FIXME IP requires some work ... */
-    if (mod_type & _GROUP_IP)
-      _group_update_ip(ref,group);
+    if (mod_type & _GROUP_IP) {
+      _group_update_ip(ref,group); /** \todo XXX test return ! */
+      update_registry = 1;
+    }
 
     if (mod_type & _GROUP_RATIO)
       APPEND_STRING_TO_QUERY("ratio='%u' ", group->ratio, query, query_length, mod, modified);
@@ -169,8 +145,32 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
         goto error_mod_group_free;
 
       free(mod); free(query);
+
+      update_registry = 1;
+    }
+
+    if (update_registry) {
+      registered_group = group_get_by_id(group->gid);
+      if (registered_group != NULL) {
+        out_log(LEVEL_FLOOD,"PGSQL updating registered group %s\n",group->groupname);
+
+        if (group_update(registered_group->gid,group)) {
+          out_log(LEVEL_HIGH,"ERROR PGSQL Could not update group %s %d\n",group->groupname,group->gid);
+          return -1;
+        }
+      } else {
+        if (group->gid != (gid_t)-1) {
+          reg_gid = group_register(group,1 /* XXX backend id */);
+          if (reg_gid != group->gid) {
+            out_log(LEVEL_HIGH,"ERROR PGSQL Could not register group %s %d\n",group->groupname,group->gid);
+            return -1;
+          }
+        }
+      }
+
+
       return 0;
-    } /* if (modified) */
+    } /* if (update_registry) */
 
     free(mod); free(query);
     return -1;
@@ -178,12 +178,18 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
   /* create new group */
 
+  registered_group = group_get_by_name(name);
+  if (registered_group) {
+    out_log(LEVEL_INFO,"WARNING: group %s is not present in DB but already registered\n");
+    return -1;
+  }
+
   /* Part 1, Group */
   query = malloc(2048);
   mod = NULL;
 
-  /* XXX FIXME find a free gid !! */
-  group->gid = 155;
+  /* sequence will find a free uid */
+  group->gid = INVALID_USER;
 
   if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',nextval('groups_gid_seq'),'%s','%s',CAST (X'%lx' AS integer),%u,%u,%lu,%lu,%u)",
       group->groupname,
@@ -206,7 +212,34 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
         goto error_group_add;
     }
 
+  /* get generated gid from DB */
+  {
+    PGresult * res;
+    if ( (res = _wzd_run_select_query(query,2048,"SELECT groups.gid FROM groups WHERE ref='%d'",ref)) == NULL )
+      goto error_group_add;
+    if ( PQntuples(res) != 1 ) {
+      PQclear(res);
+      goto error_group_add;
+    }
+    if ( wzd_row_get_uint(&group->gid, res, 0 /* only 1 column */) ) {
+      PQclear(res);
+      goto error_group_add;
+    }
+    PQclear(res);
+  }
+
+  /** \todo check values and register group */
+
+  reg_gid = group_register(group,1 /* XXX backend id */);
+  if (reg_gid != group->gid) {
+    out_log(LEVEL_HIGH,"ERROR PGSQL Could not register group %s %d\n",group->groupname,group->gid);
+    /** \todo free group and return INVALID_USER */
+    goto error_group_add;
+  }
+
   free(query);
+
+  /** \todo register group */
 
   return 0;
 
@@ -220,6 +253,14 @@ error_group_add:
   _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", group->groupname);
   free(query);
 
+  /** \todo use group_get_id_by_name */
+  registered_group = group_get_by_name(name);
+  if (registered_group != NULL) {
+    registered_group = group_unregister(registered_group->gid);
+    group_free(registered_group);
+  }
+
+
   return -1;
 
 error_mod_group_free:
@@ -229,65 +270,72 @@ error_mod_group_free:
   return -1;
 }
 
-int _group_update_ip(uid_t ref, wzd_group_t * group)
+/** Update ip for a specific group using the following:
+ * get stored ip list For each ip of modified group, try to find it
+ * for the stored group: if not present, add it. For each ip of the
+ * stored group, try to find it in the modified group: if not present,
+ * delete it.
+ * \return O if ok
+ */
+static int _group_update_ip(gid_t ref, wzd_group_t * group)
 {
   char query[512];
   PGresult * res;
-  unsigned int i;
-  int index;
-  char ip_list[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  int i, i_stored;
+  int found;
   int ret;
+  const char *ip_stored;
 
   if (!ref) return -1;
 
+  /* extract ip list for group */
   if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip WHERE ref=%d",ref)) == NULL) return 0;
 
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-    ip_list[i][0] = '\0';
-
-  i = 0;
-  for (index=0; index<PQntuples(res); index++) {
-    strncpy(ip_list[i],PQgetvalue(res,0,0),MAX_IP_LENGTH);
-    i++;
-    if (i >= HARD_IP_PER_GROUP) {
-      /** too many ip in db ?! - ignoring others */
-      break;
+  /* find NEW ip */
+  for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    if (strlen(group->ip_allowed[i]) <= 0) continue;
+    found = 0;
+    for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
+      ip_stored = PQgetvalue(res,i_stored,0);
+      if (strcmp(group->ip_allowed[i],ip_stored)==0) {
+        found = 1;
+        break;
+      }
+    }
+    if (found == 0) {
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
+      if (ret) {
+        PQclear(res);
+        return -1;
+      }
     }
   }
 
-  /* compare the two sets of ip */
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    ret = 1;
-    if (strcmp(group->ip_allowed[i],ip_list[i])!=0) {
-      /* check for injections in ip */
-      if (!wzd_pgsql_check_name(ip_list[i]) || !wzd_pgsql_check_name(group->ip_allowed[i])) {
-        /* print error message ? */
+  /* find DELETED ip */
+  for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
+    ip_stored = PQgetvalue(res,i_stored,0);
+    for (i=0; i<HARD_IP_PER_GROUP; i++) {
+      found = 0;
+      if (strcmp(group->ip_allowed[i],ip_stored)==0) {
+        found = 1;
         break;
       }
-      if (group->ip_allowed[i][0]=='\0')
-        ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,ip_list[i]);
-      else {
-        if (ip_list[i][0]=='\0')
-          ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
-        else
-          ret = _wzd_run_update_query(query,512,"UPDATE groupip SET ip='%' WHERE groupip.ref=%d AND groupip.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
-      }
     }
-    else
-      ret = 0;
-    if (ret) {
-      /* print error message ? */
-      break;
+    if (found == 0) {
+      ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,ip_stored);
+      if (ret) {
+        PQclear(res);
+        return -1;
+      }
     }
   }
 
   PQclear(res);
-
   return 0;
 }
 
 
-gid_t group_get_ref(const char * name, unsigned int ref)
+static gid_t group_get_ref(const char * name, unsigned int ref)
 {
   char query[512];
   gid_t gid=0;
