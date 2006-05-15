@@ -813,7 +813,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _USER_PERMS; user->userperms = ul;}
   }
-  /* flags */ /* TODO accept modifications style +f or -f */
+  /* flags */
   else if (strcmp(str_tochar(field),"flags")==0) {
     /* GAdmin ? */
     if (is_gadmin) {

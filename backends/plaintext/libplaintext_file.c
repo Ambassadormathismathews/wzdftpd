@@ -404,8 +404,6 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
   char * ptr;
   wzd_group_t * group;
 
-  out_err(LEVEL_NORMAL,"DEBUG creating new group [%s]\n",groupname);
-
   group = group_allocate();
 
   strncpy(group->groupname,groupname,HARD_GROUPNAME_LENGTH-1);
@@ -414,7 +412,6 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
 
   while ( fgets(buffer,MAX_LINE-1,file) != NULL ) {
     chop(buffer);
-    out_err(LEVEL_NORMAL,"DEBUG [%s]\n",buffer);
 
     if (strlen(buffer) == 0) return group;
 
@@ -521,8 +518,6 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
   unsigned long u_num;
   u64_t ul_num;
 
-  out_err(LEVEL_NORMAL,"DEBUG creating new user [%s]\n",username);
-
   user = user_allocate();
 
   strncpy(user->username,username,HARD_USERNAME_LENGTH-1);
@@ -531,7 +526,6 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
 
   while ( fgets(buffer,MAX_LINE-1,file) != NULL ) {
     chop(buffer);
-    out_err(LEVEL_NORMAL,"DEBUG [%s]\n",buffer);
 
     if (strlen(buffer) == 0) return user;
 
@@ -745,11 +739,8 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
  */
 void section_ignore(FILE * file, const char *sectionname, char * buffer, size_t length)
 {
-  out_err(LEVEL_NORMAL,"DEBUG ignoring section [%s]\n",sectionname);
-
   while ( fgets(buffer,MAX_LINE-1,file) != NULL ) {
     chop(buffer);
-    out_err(LEVEL_NORMAL,"DEBUG [%s]\n",buffer);
 
     if (strlen(buffer) == 0) return;
   };
