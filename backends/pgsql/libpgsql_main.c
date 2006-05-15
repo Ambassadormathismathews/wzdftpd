@@ -146,6 +146,14 @@ static int FCN_INIT(const char *arg)
 {
   PGresult   *res;
 
+  if (arg == NULL) {
+    out_log(PGSQL_LOG_CHANNEL, "%s(%s):%d no arguments given\n", __FILE__, __FUNCTION__, __LINE__);
+    out_log(PGSQL_LOG_CHANNEL, "You MUST provide a parameter for the PostgreSQL connection\n");
+    out_log(PGSQL_LOG_CHANNEL, "Add  param = user:pass@host:database in [pgsql] section in your config file\n");
+    out_log(PGSQL_LOG_CHANNEL, "See documentation for help\n");
+    return -1;
+  }
+
   if ((wzd_parse_arg(arg)) != 0) {
     out_log(PGSQL_LOG_CHANNEL, "%s(%s):%d could not parse arguments\n", __FILE__, __FUNCTION__, __LINE__);
     return -1;

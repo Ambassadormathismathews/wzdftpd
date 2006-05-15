@@ -116,7 +116,16 @@ int FCN_INIT(const char *arg)
 {
   my_bool b = 1;
 
+  if (arg == NULL) {
+    out_log(MYSQL_LOG_CHANNEL, "%s(%s):%d no arguments given\n", __FILE__, __FUNCTION__, __LINE__);
+    out_log(MYSQL_LOG_CHANNEL, "You MUST provide a parameter for the MySQL connection\n");
+    out_log(MYSQL_LOG_CHANNEL, "Add  param = user:pass@host:database in [mysql] section in your config file\n");
+    out_log(MYSQL_LOG_CHANNEL, "See documentation for help\n");
+    return -1;
+  }
+
   if ((wzd_parse_arg(arg)) != 0) {
+    out_log(MYSQL_LOG_CHANNEL, "%s(%s):%d could not parse arguments\n", __FILE__, __FUNCTION__, __LINE__);
     return -1;
   }
 
