@@ -201,7 +201,7 @@ static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_t
           strcpy(buffer,user->userpass);
         } else {
           /* TODO choose encryption func ? */
-          if (changepass(buffer,user->userpass, user->userpass, MAX_PASS_LENGTH-1)) {
+          if (changepass(name,buffer,user->userpass, MAX_PASS_LENGTH-1)) {
             memset(buffer,0,MAX_PASS_LENGTH);
             return -1;
           }
