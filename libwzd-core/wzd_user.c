@@ -133,11 +133,11 @@ uid_t user_register(wzd_user_t * user, u16_t backend_id)
     size_t size; /* size of extent */
 
     if (uid >= _max_uid + 255)
-      size = uid + 1 - _max_uid;
+      size = uid - _max_uid;
     else
       size = 256;
-    _user_array = wzd_realloc(_user_array, (_max_uid + size)*sizeof(wzd_user_t*));
-    memset(_user_array + _max_uid, 0, size * sizeof(wzd_user_t*));
+    _user_array = wzd_realloc(_user_array, (_max_uid + size + 1)*sizeof(wzd_user_t*));
+    memset(_user_array + _max_uid, 0, (size+1) * sizeof(wzd_user_t*));
     _max_uid = _max_uid + size;
   }
 

@@ -129,11 +129,11 @@ gid_t group_register(wzd_group_t * group, u16_t backend_id)
     size_t size; /* size of extent */
 
     if (gid >= _max_gid + 255)
-      size = gid + 1 - _max_gid;
+      size = gid - _max_gid;
     else
       size = 256;
-    _group_array = wzd_realloc(_group_array, (_max_gid + size)*sizeof(wzd_group_t*));
-    memset(_group_array + _max_gid, 0, size * sizeof(wzd_group_t*));
+    _group_array = wzd_realloc(_group_array, (_max_gid + size + 1)*sizeof(wzd_group_t*));
+    memset(_group_array + _max_gid, 0, (size+1) * sizeof(wzd_group_t*));
     _max_gid = _max_gid + size;
   }
 
