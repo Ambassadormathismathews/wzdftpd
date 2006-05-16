@@ -85,11 +85,8 @@ void fake_context(void)
 
   wzd_debug_init();
 
-#ifndef WZD_NO_USER_CACHE
-  usercache_init();
-  groupcache_add(f_group);
-  usercache_add(f_user);
-#endif
+  user_register(f_user,f_user->uid);
+  group_register(f_group,f_group->gid);
 
   context = malloc(sizeof(wzd_context_t));
   memset(context, 0, sizeof(wzd_context_t));
@@ -114,10 +111,9 @@ void fake_exit(void)
   if (f_context) {
     list_destroy(context_list);
     free(context_list);
-#ifndef WZD_NO_USER_CACHE
-    usercache_fini();
-#endif
     free(f_context);
+    user_free_registry();
+    group_free_registry();
     f_context = NULL;
 
     wzd_debug_fini();

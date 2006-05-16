@@ -1432,10 +1432,6 @@ void serverMainThreadProc(void *arg)
     serverMainThreadExit(-1);
   }
 
-#ifndef WZD_NO_USER_CACHE
-  usercache_init();
-#endif
-
 
 
   /* clear ident list */
@@ -1675,10 +1671,6 @@ void serverMainThreadExit(int retcode)
 
   user_free_registry();
   group_free_registry();
-
-#ifndef WZD_NO_USER_CACHE
-  usercache_fini();
-#endif
 
   if (limiter_mutex) wzd_mutex_destroy(limiter_mutex);
   if (server_mutex) wzd_mutex_destroy(server_mutex);

@@ -398,21 +398,12 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 /** wrappers to user list */
 wzd_user_t * GetUserByID(uid_t id)
 {
-#ifndef WZD_NO_USER_CACHE
-  wzd_user_t *user_return;
-#endif
   wzd_user_t *user;
   wzd_backend_t * b;
 
   if (!mainConfig) return NULL;
 
   if (id == (uid_t)-1) return NULL;
-
-#ifndef WZD_NO_USER_CACHE
-  /* try cache first */
-  if ( (user = usercache_getbyuid( id )) )
-    return user;
-#endif
 
   if ( (b = mainConfig->backend.b) && b->backend_get_user) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
@@ -427,14 +418,7 @@ wzd_user_t * GetUserByID(uid_t id)
     return NULL;
   }
 
-#ifndef WZD_NO_USER_CACHE
-  if (!user) return NULL;
-  user_return = usercache_add( user );
-  wzd_free(user);
-  return user_return;
-#else
   return user;
-#endif
 }
 
 wzd_user_t * GetUserByName(const char *name)
@@ -445,12 +429,6 @@ wzd_user_t * GetUserByName(const char *name)
 
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
 out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
-
-#ifndef WZD_NO_USER_CACHE
-  /* try cache first */
-  if ( (user = usercache_getbyname( name )) )
-    return user;
-#endif
 
   if ( (b = mainConfig->backend.b) && b->backend_find_user) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
@@ -530,19 +508,10 @@ int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
 /** wrappers to Group list */
 wzd_group_t * GetGroupByID(gid_t id)
 {
-#ifndef WZD_NO_USER_CACHE
-  wzd_group_t * group_return;
-#endif
   wzd_group_t * group = NULL;
   wzd_backend_t * b;
 
   if (!mainConfig) return NULL;
-
-#ifndef WZD_NO_USER_CACHE
-  /* try cache first */
-  if ( (group = groupcache_getbygid( id )) )
-    return group;
-#endif
 
   if ( (b = mainConfig->backend.b) && b->backend_get_group) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
@@ -557,14 +526,7 @@ wzd_group_t * GetGroupByID(gid_t id)
     return NULL;
   }
 
-#ifndef WZD_NO_USER_CACHE
-  if (!group) return NULL;
-  group_return = groupcache_add( group );
-  wzd_free(group);
-  return group_return;
-#else
   return group;
-#endif
 }
 
 wzd_group_t * GetGroupByName(const char *name)
@@ -574,12 +536,6 @@ wzd_group_t * GetGroupByName(const char *name)
   wzd_backend_t * b;
 
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
-
-#ifndef WZD_NO_USER_CACHE
-  /* try cache first */
-  if ( (group = groupcache_getbyname( name )) )
-    return group;
-#endif
 
   if ( (b = mainConfig->backend.b) && b->backend_find_group) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
@@ -751,17 +707,6 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
       return -1;
     }
 
-#ifndef WZD_NO_USER_CACHE
-    if (new_user) {
-      wzd_user_t * _tmp_user = usercache_getbyuid( user->uid );
-      if (_tmp_user) *_tmp_user = *new_user;
-      *user = *new_user;
-      wzd_free(new_user);
-    } else {
-      /* user was deleted */
-      usercache_invalidate( predicate_name, (void *)name );
-    }
-#else
     if (new_user != user) {
       if (new_user) {
         *user = *new_user;
@@ -770,7 +715,6 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
         wzd_free(user);
       }
     }
-#endif
   }
 
   WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -811,17 +755,6 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
       return -1;
     }
 
-#ifndef WZD_NO_USER_CACHE
-    if (new_group) {
-      wzd_group_t * _tmp_group = groupcache_getbygid( group->gid );
-      if (_tmp_group) *_tmp_group = *new_group;
-      *group = *new_group;
-      wzd_free(new_group);
-    } else {
-      /* group was deleted */
-      groupcache_invalidate( predicate_groupname, (void *)name );
-    }
-#else
     if (new_group != group) {
       if (new_group) {
         *group = *new_group;
@@ -830,7 +763,6 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
         wzd_free(group);
       }
     }
-#endif
   }
 
   WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
