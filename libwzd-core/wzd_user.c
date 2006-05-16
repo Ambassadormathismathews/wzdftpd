@@ -219,10 +219,17 @@ wzd_user_t * user_unregister(uid_t uid)
 }
 
 /** \brief Free memory used to register users
+ * \warning Also free ALL registered users !
  */
 void user_free_registry(void)
 {
+  uid_t uid;
   WZD_MUTEX_LOCK(SET_MUTEX_USER);
+  if (_user_array != NULL) {
+    for (uid=0; uid<=_max_uid; uid++) {
+      user_free(_user_array[uid]);
+    }
+  }
   wzd_free(_user_array);
   _user_array = NULL;
   _max_uid = 0;

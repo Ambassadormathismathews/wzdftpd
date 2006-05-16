@@ -85,6 +85,7 @@ int user_update(uid_t uid, wzd_user_t * new_user);
 wzd_user_t * user_unregister(uid_t uid);
 
 /** \brief Free memory used to register users
+ * \warning Also free ALL registered users !
  */
 void user_free_registry(void);
 

@@ -74,6 +74,7 @@ int group_update(gid_t gid, wzd_group_t * new_group);
 wzd_group_t * group_unregister(gid_t gid);
 
 /** \brief Free memory used to register groups
+ * \warning Also free ALL registered groups !
  */
 void group_free_registry(void);
 

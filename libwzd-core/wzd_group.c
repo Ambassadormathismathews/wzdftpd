@@ -214,10 +214,17 @@ wzd_group_t * group_unregister(gid_t gid)
 }
 
 /** \brief Free memory used to register groups
+ * \warning Also free ALL registered groups !
  */
 void group_free_registry(void)
 {
+  gid_t gid;
   WZD_MUTEX_LOCK(SET_MUTEX_USER);
+  if (_group_array != NULL) {
+    for (gid=0; gid<=_max_gid; gid++) {
+      group_free(_group_array[gid]);
+    }
+  }
   wzd_free(_group_array);
   _group_array = NULL;
   _max_gid = 0;
