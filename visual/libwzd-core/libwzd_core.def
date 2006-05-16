@@ -112,6 +112,7 @@ EXPORTS
 	group_register
 	group_remove_user
 	group_unregister
+	group_update
 	hash_str
 	hook_add
 	hook_add_custom_command
@@ -253,8 +254,7 @@ EXPORTS
 	user_ip_inlist
 	user_register
 	user_unregister
-	usercache_init
-	usercache_fini
+	user_update
 	utf8_detect
 	utf8_end
 	utf8_to_local_charset
