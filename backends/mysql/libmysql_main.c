@@ -49,9 +49,10 @@
 #include "libmysql.h"
 
 /*
+ * 124: use users/group registry
  * 123: allow auto-reconnection if mysql server has gone for server 5.x
  */
-#define MYSQL_BACKEND_VERSION   123
+#define MYSQL_BACKEND_VERSION   124
 
 #define MYSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+16)
 
@@ -77,6 +78,23 @@ static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int ind
 
 static uid_t * wzd_mysql_get_user_list(void);
 static gid_t * wzd_mysql_get_group_list(void);
+
+/** \brief Allocates a new user and get informations from database
+ * User must be freed using user_free()
+ * \return A new user struct or NULL
+ */
+static wzd_user_t * get_user_from_db(const char * where_statement);
+
+wzd_user_t * get_user_from_db_by_id(uid_t id);
+static wzd_user_t * get_user_from_db_by_name(const char * name);
+
+/** \brief Allocates a new group and get informations from database
+ * User must be freed using group_free()
+ * \return A new group struct or NULL
+ */
+static wzd_group_t * get_group_from_db(const char * where_statement);
+
+static wzd_group_t * get_group_from_db_by_name(const char * name);
 
 
 
@@ -112,7 +130,7 @@ static int wzd_parse_arg(const char *arg)
 }
 
 
-int FCN_INIT(const char *arg)
+static int FCN_INIT(const char *arg)
 {
   my_bool b = 1;
 
@@ -145,447 +163,184 @@ int FCN_INIT(const char *arg)
   return 0;
 }
 
-uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * user)
+static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
 {
-  char *query;
-  uid_t uid;
+  uid_t uid, reg_uid;
+  wzd_user_t * user, * registered_user;
 
-  if (!wzd_mysql_check_name(login)) return (uid_t)-1;
+  if (!wzd_mysql_check_name(login)) return INVALID_USER;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
+  user = get_user_from_db_by_name(login);
+  if (user == NULL) return INVALID_USER;
 
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
+  registered_user = user_get_by_id(user->uid);
+  if (registered_user != NULL) {
+    out_log(LEVEL_FLOOD,"MYSQL updating registered user %s\n",user->username);
+
+    if (user_update(registered_user->uid,user)) {
+      out_log(LEVEL_HIGH,"ERROR MYSQL Could not update user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
+    }
+    uid = user->uid;
+    /* free user, but not the dynamic lists inside, since they are used in registry */
+    wzd_free(user);
+  } else {
+    /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
+    if (user->uid != INVALID_USER) {
+      reg_uid = user_register(user, 1 /* XXX backend id */);
+      if (reg_uid != user->uid) {
+        out_log(LEVEL_HIGH, "ERROR MYSQL Could not register user %s %d\n",user->username,user->uid);
+        /** \todo free user and return INVALID_USER */
+      }
+    }
+    uid = user->uid;
+    /* do not free user, it will be kept in registry */
   }
-  free(query);
 
-  uid = (uid_t)-1;
-
-
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    MYSQL_RES   *res;
-    MYSQL_ROW    row;
-    int num_fields;
-
-    if (!(res = mysql_store_result(&mysql))) {
-      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return (uid_t)-1;
-    }
-
-    if ( (int)mysql_num_rows(res) != 1 ) {
-      /* 0 or more than 1 result  */
-      mysql_free_result(res);
-      return (uid_t)-1;
-    }
-
-    num_fields = mysql_num_fields(res);
-    row = mysql_fetch_row(res);
-
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(row[UCOL_UID]);
-
-    mysql_free_result(res);
-  } /*else // user does not exist in table
-    return -1; */
+  /** \todo update groups */
 
   return uid;
 }
 
-uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * user)
+static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * _ignored)
 {
-  char *query;
-  uid_t uid;
+  wzd_user_t * user;
 
-  if (!wzd_mysql_check_name(login)) return (uid_t)-1;
+  if (!wzd_mysql_check_name(login)) return INVALID_USER;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", login);
+  user = user_get_by_name(login);
+  if (user == NULL) return INVALID_USER;
 
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
+  if (strlen(user->userpass) == 0) {
+    out_log(MYSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
+    out_log(MYSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
+    return user->uid; /* passworldless login */
   }
 
-  free(query);
-  uid = (uid_t)-1;
+  if (strcmp(user->userpass,"%")==0)
+    return user->uid; /* passworldless login */
 
+  if (check_auth(login, pass, user->userpass)==1)
+    return user->uid;
 
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    MYSQL_RES   *res;
-    MYSQL_ROW    row;
-    int num_fields;
-    char stored_pass[MAX_PASS_LENGTH];
-
-    if (!(res = mysql_store_result(&mysql))) {
-      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return (uid_t)-1;
-    }
-
-    if ( (int)mysql_num_rows(res) != 1 ) {
-      /* 0 or more than 1 result */
-      mysql_free_result(res);
-      return (uid_t)-1;
-    }
-
-    num_fields = mysql_num_fields(res);
-    row = mysql_fetch_row(res);
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(row[UCOL_UID]);
-
-    if (row[UCOL_USERPASS])
-      strncpy(stored_pass, row[UCOL_USERPASS], MAX_PASS_LENGTH);
-    else
-      stored_pass[0] = '\0';
-
-    mysql_free_result(res);
-
-    if (strlen(stored_pass) == 0)
-    {
-      out_log(MYSQL_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
-      out_log(MYSQL_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
-      return uid; /* passworldless login */
-    }
-
-    if (strcmp(stored_pass,"%")==0)
-      return uid; /* passworldless login */
-
-    if (check_auth(login, pass, stored_pass)==1)
-      return uid;
-    return (uid_t)-1;
-
-  } /* else // user does not exist in table
-    return -1;*/
-
-
-  return uid;
+  return INVALID_USER;
 }
 
-uid_t FCN_FIND_USER(const char *name, wzd_user_t * user)
+static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
 {
-  char *query;
-  uid_t uid;
+  wzd_user_t * user;
+  uid_t reg_uid;
 
   if (!wzd_mysql_check_name(name)) return (uid_t)-1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE username='%s'", name);
+  user = user_get_by_name(name);
+  if (user != NULL) return user->uid;
 
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (uid_t)-1;
+  user = get_user_from_db_by_name(name);
+  if (user == NULL) return INVALID_USER;
+
+  /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
+
+  if (user->uid != (uid_t)-1) {
+    reg_uid = user_register(user,1 /* XXX backend id */);
+    if (reg_uid != user->uid) {
+      out_log(LEVEL_HIGH,"ERROR MYSQL Could not register user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
+    }
   }
-
-  free(query);
-  uid = (uid_t)-1;
-
-  /** no !! this returns the number of COLUMNS (here, 14) */
-/*  if (mysql_field_count(&mysql) == 1)*/
-  {
-    MYSQL_RES   *res;
-    MYSQL_ROW    row;
-    int num_fields;
-
-    if (!(res = mysql_store_result(&mysql))) {
-      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return (uid_t)-1;
-    }
-
-    if ( (int)mysql_num_rows(res) != 1 ) {
-      /* 0 or more than 1 result */
-      mysql_free_result(res);
-      return (uid_t)-1;
-    }
-
-    num_fields = mysql_num_fields(res);
-    row = mysql_fetch_row(res);
-#if 0 /* not working yet */
-    strncpy(user->username, row[0], (HARD_USERNAME_LENGTH- 1)); // username
-    strncpy(user->userpass, row[1], (MAX_PASS_LENGTH -1)); // userpass
-    strncpy(user->username, row[2], (MAX_PASS_LENGTH - 1)); // rootpath
-    user->uid = atoi(row[3]);
-#endif /* 0 */
-    uid = atoi(row[UCOL_UID]);
-
-    mysql_free_result(res);
-
-  }/* else  // no such user
-    return -1;*/
-
-  return uid;
+  /* do not free user, it will be kept in registry */
+  return user->uid;
 }
 
-int  FCN_COMMIT_CHANGES(void)
+static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * _ignored)
+{
+  wzd_group_t * group;
+  gid_t reg_gid;
+
+  if (!wzd_mysql_check_name(name)) return (gid_t)-1;
+
+  group = group_get_by_name(name);
+  if (group != NULL) return group->gid;
+
+  group = get_group_from_db_by_name(name);
+  if (group == NULL) return INVALID_USER;
+
+  /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
+
+  if (group->gid != (gid_t)-1) {
+    reg_gid = group_register(group,1 /* XXX backend id */);
+    if (reg_gid != group->gid) {
+      out_log(LEVEL_HIGH,"ERROR MYSQL Could not register group %s %d\n",group->groupname,group->gid);
+      /** \todo free group and return INVALID_USER */
+    }
+  }
+  /* do not free group, it will be kept in registry */
+  return group->gid;
+}
+static int  FCN_COMMIT_CHANGES(void)
 {
   return 0;
 }
 
-int FCN_FINI(void)
+static int FCN_FINI(void)
 {
   mysql_close(&mysql);
 
   return 0;
 }
 
-wzd_user_t * FCN_GET_USER(uid_t uid)
+static wzd_user_t * FCN_GET_USER(uid_t uid)
 {
-  char *query;
-  MYSQL_RES   *res;
-  MYSQL_ROW    row;
-  int num_fields;
   wzd_user_t * user;
-  unsigned int i,j;
+  uid_t reg_uid;
 
-  if (uid == (uid_t)-2) return (wzd_user_t*)wzd_mysql_get_user_list();
+  if (uid == GET_USER_LIST) return (wzd_user_t*)wzd_mysql_get_user_list();
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM users WHERE uid='%d'", uid);
+  user = user_get_by_id(uid);
+  if (user != NULL) return user;
 
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  user = get_user_from_db_by_id(uid);
+  if (user == NULL) return NULL;
 
-  if (!(res = mysql_store_result(&mysql))) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
 
-  if ( (int)mysql_num_rows(res) != 1 ) {
-    /* more than 1 result !!!! */
-    /** \todo warn user */
-    free(query);
-    mysql_free_result(res);
-    return NULL;
-  }
-
-  num_fields = mysql_num_fields(res);
-  row = mysql_fetch_row(res);
-
-  user = (wzd_user_t*)wzd_malloc(sizeof(wzd_user_t));
-  memset(user, 0, sizeof(wzd_user_t));
-
-  if ( wzd_row_get_uint(&user->uid, row, UCOL_UID) ) {
-    free(query);
-    wzd_free(user);
-    mysql_free_result(res);
-    return NULL;
-  }
-  wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, row, UCOL_USERNAME);
-  wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, row, UCOL_USERPASS);
-  wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, UCOL_ROOTPATH);
-  wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, row, UCOL_TAGLINE);
-  wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, UCOL_FLAGS);
-  wzd_row_get_uint((unsigned int*)&user->max_idle_time, row, UCOL_MAX_IDLE_TIME);
-  wzd_row_get_uint(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);
-  wzd_row_get_uint(&user->max_dl_speed, row, UCOL_MAX_DL_SPEED);
-  if (wzd_row_get_uint(&i, row, UCOL_NUM_LOGINS)==0) user->num_logins = i;
-  wzd_row_get_uint(&user->ratio, row, UCOL_RATIO);
-  if (wzd_row_get_uint(&i, row, UCOL_USER_SLOTS)==0) user->user_slots = i;
-  if (wzd_row_get_uint(&i, row, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
-  wzd_row_get_ulong(&user->userperms, row, UCOL_PERMS);
-  wzd_row_get_ullong(&user->credits, row, UCOL_CREDITS);
-  /* XXX FIXME last login */
-
-  mysql_free_result(res);
-
-  /* Now get IP */
-  user->ip_allowed[0][0] = '\0';
-
-  snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE users.uid='%d' AND users.ref=userip.ref", uid);
-
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-  if (!(res = mysql_store_result(&mysql))) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-
-  i =0;
-  while ( (row = mysql_fetch_row(res)) ) {
-    if (i >= HARD_IP_PER_USER) {
-      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many IP for user %s, dropping others\n",user->username);
-      break;
+  if (user->uid != (uid_t)-1) {
+    reg_uid = user_register(user,1 /* XXX backend id */);
+    if (reg_uid != user->uid) {
+      out_log(LEVEL_HIGH,"ERROR MYSQL Could not register user %s %d\n",user->username,user->uid);
+      /** \todo free user and return INVALID_USER */
     }
-    wzd_row_get_string(user->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
-    i++;
   }
-
-
-  mysql_free_result(res);
-
-  /* Now get Groups */
-
-  snprintf(query, 512, "SELECT groups.gid FROM groups,users,ugr WHERE users.uid='%d' AND users.ref=ugr.uref AND groups.ref=ugr.gref", uid);
-
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-  if (!(res = mysql_store_result(&mysql))) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-
-  i =0;
-  while ( (row = mysql_fetch_row(res)) ) {
-    if (i >= HARD_IP_PER_USER) {
-      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many groups for user %s, dropping others\n",user->username);
-      break;
-    }
-    if (wzd_row_get_uint(&j, row, 0 /* query asks only one column */)==0)
-      user->groups[i++] = j;
-  }
-  user->group_num = i;
-
-  mysql_free_result(res);
-
-  /* Now get stats */
-  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE users.uid=%d AND users.ref=stats.ref", uid);
-
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-  if (!(res = mysql_store_result(&mysql))) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return user;
-  }
-
-  row = mysql_fetch_row(res);
-
-  wzd_row_get_ullong(&user->stats.bytes_ul_total, row, SCOL_BYTES_UL);
-  wzd_row_get_ullong(&user->stats.bytes_dl_total, row, SCOL_BYTES_DL);
-  wzd_row_get_ulong(&user->stats.files_ul_total, row, SCOL_FILES_UL);
-  wzd_row_get_ulong(&user->stats.files_dl_total, row, SCOL_FILES_DL);
-
-  mysql_free_result(res);
-
-  free(query);
-
+  /* do not free user, it will be kept in registry */
   return user;
 }
 
 
-wzd_group_t * FCN_GET_GROUP(gid_t gid)
+static wzd_group_t * FCN_GET_GROUP(gid_t gid)
 {
-  char *query;
-  MYSQL_RES   *res;
-  MYSQL_ROW    row;
-  int num_fields;
   wzd_group_t * group;
-  unsigned int i;
+  gid_t reg_gid;
 
-  if (gid == (gid_t)-2) return (wzd_group_t*)wzd_mysql_get_group_list();
+  if (gid == GET_GROUP_LIST) return (wzd_group_t*)wzd_mysql_get_group_list();
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM groups WHERE gid='%d'", gid);
+  group = group_get_by_id(gid);
+  if (group != NULL) return group;
 
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
-  free(query);
+  group = get_group_from_db_by_id(gid);
+  if (group == NULL) return NULL;
 
-  if (!(res = mysql_store_result(&mysql))) {
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return NULL;
-  }
+  /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
 
-  if ( (int)mysql_num_rows(res) != 1 ) {
-    /* more than 1 result !!!! */
-    /** \todo warn user */
-    mysql_free_result(res);
-    return NULL;
-  }
-
-  num_fields = mysql_num_fields(res);
-  row = mysql_fetch_row(res);
-
-  /** XXX FIXME memory leak here !! */
-  group = (wzd_group_t*)wzd_malloc(sizeof(wzd_group_t));
-  memset(group, 0, sizeof(wzd_group_t));
-
-  if ( wzd_row_get_uint(&group->gid, row, GCOL_GID) ) {
-    wzd_free(group);
-    mysql_free_result(res);
-    return NULL;
-  }
-  wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, row, GCOL_GROUPNAME);
-  wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, row, GCOL_DEFAULTPATH);
-  wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, row, GCOL_TAGLINE);
-  wzd_row_get_ulong(&group->groupperms, row, GCOL_GROUPPERMS);
-  wzd_row_get_uint((unsigned int*)&group->max_idle_time, row, GCOL_MAX_IDLE_TIME);
-  if (wzd_row_get_uint(&i, row, GCOL_NUM_LOGINS)==0) group->num_logins = i;
-  wzd_row_get_uint(&group->max_ul_speed, row, GCOL_MAX_UL_SPEED);
-  wzd_row_get_uint(&group->max_dl_speed, row, GCOL_MAX_DL_SPEED);
-  wzd_row_get_uint(&group->ratio, row, GCOL_RATIO);
-
-  mysql_free_result(res);
-
-  /* Now get IP */
-  group->ip_allowed[0][0] = '\0';
-
-  query = malloc(512);
-  snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE groups.gid='%d' AND groups.ref=groupip.ref", gid);
-
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return group;
-  }
-  if (!(res = mysql_store_result(&mysql))) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return group;
-  }
-
-  i =0;
-  while ( (row = mysql_fetch_row(res)) ) {
-    if (i >= HARD_IP_PER_GROUP) {
-      out_log(MYSQL_LOG_CHANNEL,"Mysql: too many IP for group %s, dropping others\n",group->groupname);
-      break;
+  if (group->gid != (gid_t)-1) {
+    reg_gid = group_register(group,1 /* XXX backend id */);
+    if (reg_gid != group->gid) {
+      out_log(LEVEL_HIGH,"ERROR MYSQL Could not register group %s %d\n",group->groupname,group->gid);
+      /** \todo free group and return INVALID_USER */
     }
-    wzd_row_get_string(group->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
-    i++;
   }
-
-
-  mysql_free_result(res);
-  free(query);
-
+  /* do not free group, it will be kept in registry */
   return group;
 }
-
 
 
 
@@ -829,6 +584,264 @@ int _wzd_run_update_query(char * query, size_t length, const char * query_format
 
 
   return 0;
+}
+
+/** \brief Allocates a new user and get informations from database
+ * User must be freed using user_free()
+ * \return A new user struct or NULL
+ */
+static wzd_user_t * get_user_from_db(const char * where_statement)
+{
+  char query[512];
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  int num_fields;
+  wzd_user_t * user;
+  unsigned int i,j;
+
+  snprintf(query, 512, "SELECT * FROM users WHERE %s", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if ( (int)mysql_num_rows(res) != 1 ) {
+    /* more than 1 result !!!! */
+    /** \todo warn user */
+    mysql_free_result(res);
+    return NULL;
+  }
+
+  num_fields = mysql_num_fields(res);
+  row = mysql_fetch_row(res);
+
+  user = user_allocate();
+
+  if ( wzd_row_get_uint(&user->uid, row, UCOL_UID) ) {
+    wzd_free(user);
+    mysql_free_result(res);
+    return NULL;
+  }
+  wzd_row_get_string(user->username, HARD_USERNAME_LENGTH, row, UCOL_USERNAME);
+  wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, row, UCOL_USERPASS);
+  wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, UCOL_ROOTPATH);
+  wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, row, UCOL_TAGLINE);
+  wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, UCOL_FLAGS);
+  wzd_row_get_uint((unsigned int*)&user->max_idle_time, row, UCOL_MAX_IDLE_TIME);
+  wzd_row_get_uint(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&user->max_dl_speed, row, UCOL_MAX_DL_SPEED);
+  if (wzd_row_get_uint(&i, row, UCOL_NUM_LOGINS)==0) user->num_logins = i;
+  wzd_row_get_uint(&user->ratio, row, UCOL_RATIO);
+  if (wzd_row_get_uint(&i, row, UCOL_USER_SLOTS)==0) user->user_slots = i;
+  if (wzd_row_get_uint(&i, row, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;
+  wzd_row_get_ulong(&user->userperms, row, UCOL_PERMS);
+  wzd_row_get_ullong(&user->credits, row, UCOL_CREDITS);
+  /* XXX FIXME last login */
+
+  mysql_free_result(res);
+
+  /* Now get IP */
+  user->ip_allowed[0][0] = '\0';
+
+  snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE %s AND users.ref=userip.ref", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+
+  i =0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (i >= HARD_IP_PER_USER) {
+      out_log(MYSQL_LOG_CHANNEL,"MYSQL: too many IP for user %s, dropping others\n",user->username);
+      break;
+    }
+    wzd_row_get_string(user->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    i++;
+  }
+
+
+  mysql_free_result(res);
+
+  /* Now get Groups */
+
+  snprintf(query, 512, "SELECT groups.gid FROM groups,users,ugr WHERE %s AND users.ref=ugr.uref AND groups.ref=ugr.gref", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+
+  i =0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (i >= HARD_IP_PER_USER) {
+      out_log(MYSQL_LOG_CHANNEL,"MYSQL: too many groups for user %s, dropping others\n",user->username);
+      break;
+    }
+    if (wzd_row_get_uint(&j, row, 0 /* query asks only one column */)==0)
+      user->groups[i++] = j;
+  }
+  user->group_num = i;
+
+  mysql_free_result(res);
+
+  /* Now get stats */
+  snprintf(query, 512, "SELECT bytes_ul_total,bytes_dl_total,files_ul_total,files_dl_total FROM stats,users WHERE %s AND users.ref=stats.ref", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return user;
+  }
+
+  row = mysql_fetch_row(res);
+
+  wzd_row_get_ullong(&user->stats.bytes_ul_total, row, SCOL_BYTES_UL);
+  wzd_row_get_ullong(&user->stats.bytes_dl_total, row, SCOL_BYTES_DL);
+  wzd_row_get_ulong(&user->stats.files_ul_total, row, SCOL_FILES_UL);
+  wzd_row_get_ulong(&user->stats.files_dl_total, row, SCOL_FILES_DL);
+
+  mysql_free_result(res);
+
+  return user;
+}
+
+wzd_user_t * get_user_from_db_by_id(uid_t id)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"users.uid = '%d'",id);
+
+  return get_user_from_db(where);
+}
+
+static wzd_user_t * get_user_from_db_by_name(const char * name)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"users.username = '%s'",name);
+
+  return get_user_from_db(where);
+}
+
+/** \brief Allocates a new group and get informations from database
+ * User must be freed using group_free()
+ * \return A new group struct or NULL
+ */
+static wzd_group_t * get_group_from_db(const char * where_statement)
+{
+  char query[512];
+  MYSQL_RES   *res;
+  MYSQL_ROW    row;
+  int num_fields;
+  wzd_group_t * group;
+  unsigned int i;
+
+  snprintf(query, 512, "SELECT * FROM groups WHERE %s", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  if ( (int)mysql_num_rows(res) != 1 ) {
+    /* more than 1 result !!!! */
+    /** \todo warn user */
+    mysql_free_result(res);
+    return NULL;
+  }
+
+  num_fields = mysql_num_fields(res);
+  row = mysql_fetch_row(res);
+
+  /** XXX FIXME memory leak here !! */
+  group = group_allocate();
+
+  if ( wzd_row_get_uint(&group->gid, row, GCOL_GID) ) {
+    group_free(group);
+    mysql_free_result(res);
+    return NULL;
+  }
+  wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, row, GCOL_GROUPNAME);
+  wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, row, GCOL_DEFAULTPATH);
+  wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, row, GCOL_TAGLINE);
+  wzd_row_get_ulong(&group->groupperms, row, GCOL_GROUPPERMS);
+  wzd_row_get_uint((unsigned int*)&group->max_idle_time, row, GCOL_MAX_IDLE_TIME);
+  if (wzd_row_get_uint(&i, row, GCOL_NUM_LOGINS)==0) group->num_logins = i;
+  wzd_row_get_uint(&group->max_ul_speed, row, GCOL_MAX_UL_SPEED);
+  wzd_row_get_uint(&group->max_dl_speed, row, GCOL_MAX_DL_SPEED);
+  wzd_row_get_uint(&group->ratio, row, GCOL_RATIO);
+
+  mysql_free_result(res);
+
+  /* Now get IP */
+  group->ip_allowed[0][0] = '\0';
+
+  snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE %s AND groups.ref=groupip.ref", where_statement);
+
+  if (mysql_query(&mysql, query) != 0) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return group;
+  }
+  if (!(res = mysql_store_result(&mysql))) {
+    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+    return group;
+  }
+
+  i =0;
+  while ( (row = mysql_fetch_row(res)) ) {
+    if (i >= HARD_IP_PER_GROUP) {
+      out_log(MYSQL_LOG_CHANNEL,"MYSQL: too many IP for group %s, dropping others\n",group->groupname);
+      break;
+    }
+    wzd_row_get_string(group->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    i++;
+  }
+
+
+  mysql_free_result(res);
+
+  return group;
+}
+
+wzd_group_t * get_group_from_db_by_id(gid_t id)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"groups.gid = '%d'",id);
+
+  return get_group_from_db(where);
+}
+
+static wzd_group_t * get_group_from_db_by_name(const char * name)
+{
+  char where[128];
+
+  snprintf(where,sizeof(where)-1,"groups.groupname = '%s'",name);
+
+  return get_group_from_db(where);
 }
 
 int wzd_backend_init(wzd_backend_t * backend)

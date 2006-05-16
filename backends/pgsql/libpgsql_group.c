@@ -189,7 +189,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   mod = NULL;
 
   /* sequence will find a free uid */
-  group->gid = INVALID_USER;
+  group->gid = INVALID_GROUP;
 
   if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',nextval('groups_gid_seq'),'%s','%s',CAST (X'%lx' AS integer),%u,%u,%lu,%lu,%u)",
       group->groupname,
@@ -238,8 +238,6 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   }
 
   free(query);
-
-  /** \todo register group */
 
   return 0;
 

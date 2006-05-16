@@ -40,61 +40,19 @@
 
 #include <libwzd-core/wzd_backend.h>
 #include <libwzd-core/wzd_group.h>
+#include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h> /* win_normalize */
 
 #include <libwzd-core/wzd_debug.h>
 
 #include "libmysql.h"
 
-int _group_update_ip(uid_t ref, wzd_group_t * group);
+static int _group_update_ip(uid_t ref, wzd_group_t * group);
 
-gid_t group_get_ref(const char * name, unsigned int ref);
+static gid_t group_get_ref(const char * name, unsigned int ref);
 
 static gid_t _mysql_get_next_gid();
 
-
-gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
-{
-  char *query;
-  gid_t gid;
-
-  if (!wzd_mysql_check_name(name)) return (gid_t)-1;
-
-  query = malloc(512);
-  snprintf(query, 512, "SELECT * FROM groups WHERE groupname='%s'", name);
-
-  if (mysql_query(&mysql, query) != 0) {
-    free(query);
-    _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return (gid_t)-1;
-  }
-
-  free(query);
-  gid = (gid_t)-1;
-
-  {
-    MYSQL_RES   *res;
-    MYSQL_ROW    row;
-    int num_fields;
-
-    if (!(res = mysql_store_result(&mysql))) {
-      _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-      return (gid_t)-1;
-    }
-
-    if ( (int)mysql_num_rows(res) == 1 ) {
-      num_fields = mysql_num_fields(res);
-      row = mysql_fetch_row(res);
-
-      gid = atoi(row[GCOL_GID]);
-    }
-
-    mysql_free_result(res);
-
-  }
-
-  return gid;
-}
 
 #define APPEND_STRING_TO_QUERY(format, s, query, query_length, mod, modified) \
   do { \
@@ -107,10 +65,12 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 {
   char *query, *mod;
   MYSQL_RES   *res;
-  int modified = 0;
+  int modified = 0, update_registry = 0;
   unsigned int query_length = 512;
   gid_t ref = 0;
   unsigned int i;
+  wzd_group_t * registered_group;
+  gid_t reg_gid;
 
   if (!group) { /* delete user permanently */
     query = malloc(2048);
@@ -122,6 +82,13 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
     }
     _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", name);
     free(query);
+
+    /** \todo use group_get_id_by_name */
+    registered_group = group_get_by_name(name);
+    if (registered_group != NULL) {
+      registered_group = group_unregister(registered_group->gid);
+      group_free(registered_group);
+    }
 
     return 0;
   }
@@ -164,8 +131,10 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
       APPEND_STRING_TO_QUERY("num_logins='%u' ", group->num_logins, query, query_length, mod, modified);
 
     /* IP requires some work */
-    if (mod_type & _GROUP_IP)
+    if (mod_type & _GROUP_IP) {
       _group_update_ip(ref,group); /** \todo FIXME use return ! */
+      update_registry = 1;
+    }
 
     if (mod_type & _GROUP_RATIO)
       APPEND_STRING_TO_QUERY("ratio='%u' ", group->ratio, query, query_length, mod, modified);
@@ -186,8 +155,31 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
       if (res) mysql_free_result(res);
       free(mod); free(query);
+
+      update_registry = 1;
+    }
+
+    if (update_registry) {
+      registered_group = group_get_by_id(group->gid);
+      if (registered_group != NULL) {
+        out_log(LEVEL_FLOOD,"MYSQL updating registered group %s\n",group->groupname);
+
+        if (group_update(registered_group->gid,group)) {
+          out_log(LEVEL_HIGH,"ERROR MYSQL Could not update group %s %d\n",group->groupname,group->gid);
+          return -1;
+        }
+      } else {
+        if (group->gid != (gid_t)-1) {
+          reg_gid = group_register(group,1 /* XXX backend id */);
+          if (reg_gid != group->gid) {
+            out_log(LEVEL_HIGH,"ERROR MYSQL Could not register group %s %d\n",group->groupname,group->gid);
+            return -1;
+          }
+        }
+      }
+
       return 0;
-    } /* if (modified) */
+    } /* if (update_registry) */
 
     free(mod); free(query);
     return -1;
@@ -200,7 +192,7 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
   /* find a free gid */
   group->gid = _mysql_get_next_gid();
-  if (group->gid == (gid_t)-1) return -1;
+  if (group->gid == INVALID_GROUP) return -1;
 
   query = malloc(2048);
 
@@ -218,12 +210,22 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   if (!ref) goto error_group_add;
 
   /* Part 2, IP */
-  for ( i=0; i<HARD_IP_PER_GROUP; i++ )
+  for ( i=0; i<HARD_IP_PER_GROUP; i++ ) {
     if (group->ip_allowed[i][0] != '\0') {
       if (_wzd_run_update_query(query, 2048, "INSERT INTO groupip (ref,ip) VALUES (%u,'%s')",
             ref, group->ip_allowed[i]))
         goto error_group_add;
     }
+  }
+
+  /** \todo check values and register group */
+
+  reg_gid = group_register(group,1 /* XXX backend id */);
+  if (reg_gid != group->gid) {
+    out_log(LEVEL_HIGH,"ERROR MYSQL Could not register group %s %d\n",group->groupname,group->gid);
+    /** \todo free group and return INVALID_USER */
+    goto error_group_add;
+  }
 
   free(query);
 
@@ -239,6 +241,13 @@ error_group_add:
   _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", group->groupname);
   free(query);
 
+  /** \todo use group_get_id_by_name */
+  registered_group = group_get_by_name(name);
+  if (registered_group != NULL) {
+    registered_group = group_unregister(registered_group->gid);
+    group_free(registered_group);
+  }
+
   return -1;
 
 error_mod_group_free:
@@ -246,86 +255,99 @@ error_mod_group_free:
   free(query);
 
   return -1;
-
-  return -1;
 }
 
-int _group_update_ip(uid_t ref, wzd_group_t * group)
+static int _group_update_ip(uid_t ref, wzd_group_t * group)
 {
-  char *query;
+  char query[512];
   MYSQL_RES   *res;
   MYSQL_ROW    row;
+  int g_stored, g_mod;
   unsigned int i;
-  char ip_list[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
+  int found;
   int ret;
+  int gref;
+  my_ulonglong num_rows;
+  char ** stored_rows;
+  unsigned long * stored_ref;
 
   if (!ref) return -1;
 
-  query = malloc(512);
-  snprintf(query, 512, "SELECT groupip.ip FROM groupip WHERE ref=%d", ref);
+  /* extract ip list for user */
+  snprintf(query,512,"SELECT groupip.ip,groupip.ref FROM groupip WHERE groupip.ref=%d",ref);
 
   if (mysql_query(&mysql, query) != 0) {
-    free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
+    return -1;
   }
 
   if (!(res = mysql_store_result(&mysql))) {
-    free(query);
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-    return 0;
+    return -1;
   }
 
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-    ip_list[i][0] = '\0';
+  /* number of rows */
+  num_rows = mysql_num_rows(res);
 
-  i = 0;
-  while ( (row = mysql_fetch_row(res)) ) {
-    if (!row || row[0]==NULL) break;
+  stored_rows = malloc(num_rows * sizeof(*stored_rows));
+  stored_ref = malloc(num_rows * sizeof(*stored_ref));
+  for (i=0; i<num_rows; i++) {
+    stored_rows[i] = malloc(MAX_IP_LENGTH+1);
+    row = mysql_fetch_row(res);
+    strncpy(stored_rows[i], row[0], MAX_IP_LENGTH);
+    stored_ref[i] = strtoul(row[1], NULL, 0);
+  }
+  mysql_free_result(res);
 
-    strncpy(ip_list[i],row[0],MAX_IP_LENGTH);
-    i++;
-    if (i >= HARD_IP_PER_GROUP) {
-      /** too many ip in db ?! - ignoring others */
-      break;
+  /* find NEW ip */
+  for (g_mod = 0; g_mod < HARD_IP_PER_GROUP; g_mod++) {
+    if (strlen(group->ip_allowed[g_mod])>0) {
+      found = 0;
+      for (g_stored = 0; g_stored < (int)num_rows; g_stored++) {
+        if (strcmp(group->ip_allowed[g_mod],stored_rows[g_stored])==0) {
+          found = 1;
+          break;
+        }
+      }
+      if (found == 0) {
+        ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[g_mod]);
+        if (ret) {
+          _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+          return -1;
+        }
+      }
     }
   }
 
-
-  /* compare the two sets of ip */
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    ret = 1;
-    if (strcmp(group->ip_allowed[i],ip_list[i])!=0) {
-      /* check for injections in ip */
-      if (!wzd_mysql_check_name(ip_list[i]) || !wzd_mysql_check_name(group->ip_allowed[i])) {
-        /* print error message ? */
+  /* find DELETED ips */
+  for (g_stored = 0; g_stored < (int)num_rows; g_stored++) {
+    for (g_mod = 0; g_mod < HARD_IP_PER_GROUP; g_mod++) {
+      found = 0;
+      if (strcmp(group->ip_allowed[g_mod],stored_rows[g_stored])==0) {
+        found = 1;
         break;
       }
-      if (group->ip_allowed[i][0]=='\0')
-        ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,ip_list[i]);
-      else {
-        if (ip_list[i][0]=='\0')
-          ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
-        else
-          ret = _wzd_run_update_query(query,512,"UPDATE groupip SET ip='%' WHERE groupip.ref=%d AND groupip.ip='%s'",ip_list[i],ref,group->ip_allowed[i]);
+      if (found == 0) {
+        gref = stored_ref[g_stored];
+        ret = _wzd_run_delete_query(query,512,"DELETE FROM groupip WHERE groupip.ref=%d AND groupip.ip='%s'",ref,stored_rows[g_stored]);
+        if (ret) {
+          _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+          return -1;
+        }
       }
-    }
-    else
-      ret = 0;
-    if (ret) {
-      /* print error message ? */
-      break;
     }
   }
 
-  mysql_free_result(res);
-  free(query);
-
-  return ret;
+  for (i=0; i<num_rows; i++) {
+    free(stored_rows[i]);
+  }
+  free(stored_rows);
+  free(stored_ref);
+  return 0;
 }
 
 
-gid_t group_get_ref(const char * name, unsigned int ref)
+static gid_t group_get_ref(const char * name, unsigned int ref)
 {
   char *query;
   MYSQL_RES   *res;
