@@ -376,8 +376,8 @@ static int _user_update_groups(uid_t ref, wzd_user_t * user)
 
   /* number of rows */
   num_rows = mysql_num_rows(res);
-  stored_ref = malloc(num_rows * sizeof(*stored_ref));
-  stored_gid = malloc(num_rows * sizeof(*stored_gid));
+  stored_ref = malloc((int)num_rows * sizeof(*stored_ref));
+  stored_gid = malloc((int)num_rows * sizeof(*stored_gid));
   for (i=0; i<num_rows; i++) {
     row = mysql_fetch_row(res);
     stored_gid[i] = strtoul(row[0], NULL, 0);
@@ -466,8 +466,8 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  stored_rows = malloc(num_rows * sizeof(*stored_rows));
-  stored_ref = malloc(num_rows * sizeof(*stored_ref));
+  stored_rows = malloc((int)num_rows * sizeof(*stored_rows));
+  stored_ref = malloc((int)num_rows * sizeof(*stored_ref));
   for (i=0; i<num_rows; i++) {
     stored_rows[i] = malloc(MAX_IP_LENGTH+1);
     row = mysql_fetch_row(res);

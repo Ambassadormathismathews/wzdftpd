@@ -289,8 +289,8 @@ static int _group_update_ip(uid_t ref, wzd_group_t * group)
   /* number of rows */
   num_rows = mysql_num_rows(res);
 
-  stored_rows = malloc(num_rows * sizeof(*stored_rows));
-  stored_ref = malloc(num_rows * sizeof(*stored_ref));
+  stored_rows = malloc((int)num_rows * sizeof(*stored_rows));
+  stored_ref = malloc((int)num_rows * sizeof(*stored_ref));
   for (i=0; i<num_rows; i++) {
     stored_rows[i] = malloc(MAX_IP_LENGTH+1);
     row = mysql_fetch_row(res);
