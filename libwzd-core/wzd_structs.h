@@ -450,6 +450,7 @@ struct wzd_config_t {
   unsigned char	serverstop;
   unsigned char	site_closed;
   wzd_backend_def_t	backend;
+  wzd_backend_def_t * backends;
   int		max_threads;
   char *	logfilename;
   unsigned int	logfilemode;

@@ -278,12 +278,68 @@ int backend_init(const char *backend, unsigned int user_max, unsigned int group_
       }
 
       out_log(LEVEL_INFO,"Backend %s loaded (new interface)\n",backend);
-
       return ret;
     }
   }
 
   return -1;
+}
+
+/** \brief Register backend
+ * Use \a filename for dynamic modules (shared libraries)
+ * \a fcn for static modules.
+ * When loading a static module, \a filename is used as a comment
+ */
+struct wzd_backend_def_t * backend_register(const char * filename, backend_init_function_t fcn)
+{
+  wzd_backend_def_t * def = NULL;
+  wzd_backend_t * b;
+  void * handle = NULL;
+  int ret;
+
+  if (filename == NULL && fcn == NULL) return NULL;
+
+  if (fcn == NULL) {
+    /* test dlopen */
+    handle = dlopen(filename,DL_ARG);
+    if (!handle) {
+      out_log(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
+      out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
+      out_log(LEVEL_HIGH,"dlerror: %s\n",dlerror());
+      return NULL;
+    }
+
+    fcn = (backend_init_function_t)dlsym(handle, DL_PREFIX "wzd_backend_init");
+    if (fcn == NULL) {
+      out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - function %s was not found\n",filename,"wzd_backend_init");
+      dlclose(handle);
+      return NULL;
+    }
+  }
+
+  b = wzd_malloc(sizeof(wzd_backend_t));
+  memset(b,0,sizeof(wzd_backend_t));
+  b->struct_version = STRUCT_BACKEND_VERSION;
+  b->backend_id = 1; /** \todo auto-increment */
+
+  ret = (*fcn)(b);
+
+  if (ret != 0) {
+    out_log(LEVEL_HIGH,"ERROR could not backend %s, init function returned %d\n",filename,ret);
+    wzd_free(b);
+    if (handle != NULL) dlclose(handle);
+    return NULL;
+  }
+
+  def = wzd_malloc(sizeof(wzd_backend_def_t));
+  memset(def,0,sizeof(wzd_backend_def_t));
+  if (handle != NULL) {
+    def->handle = handle;
+    def->filename = wzd_strdup(filename);
+  }
+  def->b = b;
+
+  return def;
 }
 
 int backend_close(const char *backend)

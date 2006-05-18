@@ -59,6 +59,9 @@ struct wzd_backend_t {
   u16_t backend_id;
 };
 
+
+typedef int (*backend_init_function_t)(wzd_backend_t*);
+
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING		0
 #define	_USER_USERNAME		1<<0
@@ -101,6 +104,13 @@ struct wzd_backend_t {
 char *backend_get_version(wzd_backend_def_t *backend);
 char *backend_get_name(wzd_backend_def_t *backend);
 int backend_validate(const char *backend, const char *pred, const char *version);
+
+/** \brief Register backend
+ * Use \a filename for dynamic modules (shared libraries)
+ * \a fcn for static modules.
+ * When loading a static module, \a filename is used as a comment
+ */
+struct wzd_backend_def_t * backend_register(const char * filename, backend_init_function_t fcn);
 
 /**
  * \brief loads backend
