@@ -316,12 +316,15 @@ int do_site_backend(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   } /* close */
   if (strcasecmp(str_tochar(command),"init")==0) {
     str_deallocate(command);
-    ret = backend_init(str_tochar(name),0 /* max users */,0 /* max groups */);
+#if 0
+    ret = backend_init(str_tochar(name));
     if (ret) {
       ret = send_message_with_args(501,context,"Could not init backend");
     } else {
       ret = send_message_with_args(200,context,"Backend loaded successfully");
     }
+#endif
+    ret = send_message_with_args(501,context,"Not yet implemented");
     str_deallocate(name);
     return 0;
   } /* init */
@@ -644,7 +647,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   str_deallocate(new_pass);
 
   /* commit to backend */
-  ret = backend_mod_user(mainConfig->backend.filename,user->username,user,mod_type);
+  ret = backend_mod_user(mainConfig->backends->filename,user->username,user,mod_type);
 
   if (ret)
     ret = send_message_with_args(501,context,"An error occurred during password change");

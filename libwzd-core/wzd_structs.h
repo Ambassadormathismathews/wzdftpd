@@ -188,13 +188,20 @@ typedef struct wzd_group_t wzd_group_t;
  */
 
 
+
+typedef int (*backend_init_function_t)(struct wzd_backend_t*);
+
 struct wzd_backend_def_t {
   char * filename;
 
   char * param;
   void * handle;
 
+  backend_init_function_t fcn_init;
+
   struct wzd_backend_t * b;
+
+  struct wzd_backend_def_t * next_backend;
 };
 
 
@@ -449,7 +456,6 @@ struct wzd_config_t {
   time_t	server_start;
   unsigned char	serverstop;
   unsigned char	site_closed;
-  wzd_backend_def_t	backend;
   wzd_backend_def_t * backends;
   int		max_threads;
   char *	logfilename;

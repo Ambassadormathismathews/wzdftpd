@@ -43,7 +43,7 @@ int do_site_listbackends(wzd_string_t *name, wzd_string_t *param, wzd_context_t 
   char buffer[4096];
   wzd_backend_def_t * backend;
 
-  backend = &getlib_mainConfig()->backend;
+  backend = getlib_mainConfig()->backends;
 
   send_message_raw("200-\r\n",context);
 

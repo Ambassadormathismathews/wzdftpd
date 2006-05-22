@@ -60,8 +60,6 @@ struct wzd_backend_t {
 };
 
 
-typedef int (*backend_init_function_t)(wzd_backend_t*);
-
 /* used to know what was modified in update functions */
 #define	_USER_NOTHING		0
 #define	_USER_USERNAME		1<<0
@@ -103,7 +101,8 @@ typedef int (*backend_init_function_t)(wzd_backend_t*);
 
 char *backend_get_version(wzd_backend_def_t *backend);
 char *backend_get_name(wzd_backend_def_t *backend);
-int backend_validate(const char *backend, const char *pred, const char *version);
+
+wzd_backend_def_t * backend_validate(const char *backend, const char *pred, const char *version);
 
 /** \brief Register backend
  * Use \a filename for dynamic modules (shared libraries)
@@ -113,12 +112,10 @@ int backend_validate(const char *backend, const char *pred, const char *version)
 struct wzd_backend_def_t * backend_register(const char * filename, backend_init_function_t fcn);
 
 /**
- * \brief loads backend
+ * \brief Initialize backend
  * \param backend The backend name
- * \param user_max Max number of users to store in user_list (NOT used! !)
- * \param group_max Max number of group to store in group_list (NOT used! !)
  */
-int backend_init(const char *backend, unsigned int user_max, unsigned int group_max);
+int backend_init(wzd_backend_def_t * backend);
 
 int backend_close(const char *backend);
 

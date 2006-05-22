@@ -118,171 +118,63 @@ static void backend_clear_struct(wzd_backend_def_t *backend)
   backend->b = NULL;
 }
 
-int backend_validate(const char *backend, const char *pred, const char *version)
+wzd_backend_def_t * backend_validate(const char *backend, const char *pred, const char *version)
 {
   fs_filestat_t st;
   int ret;
-  void * handle;
-  char filename[1024];
-  char path[1024];
-  int length;
+  wzd_backend_def_t * def;
 
-  /* default: current path */
-  strcpy(path,".");
-  length=(int)strlen(path); /* FIXME wtf are these 4 lines for ? */
-  /* add a / at the end if not present - XXX will conflict if last char is \ ? */
-  if (path[length-1]!='/') {
-    path[length++] = '/';
-    path[length]='\0';
-  }
-
-  DIRNORM((char*)backend,strlen(backend),0);
-  /* TODO if backend name already contains .so, do not add .o */
-  /* if backend name contains /, do not add path */
-  if (strchr(backend,'/')==NULL)
-#ifdef WIN32
-    length = snprintf(filename,1024,"%slibwzd%s.dll",path,backend);
-#else
-    length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
-#endif
-  else
-    length = snprintf(filename,1024,"%s",backend);
-  if (length<0)
-  {
-    out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
-    return 1;
-  }
-  ret = fs_file_lstat(filename,&st);
+  ret = fs_file_lstat(backend,&st);
   if (ret) {
-    out_err(LEVEL_HIGH,"Could not stat backend '%s'\n",filename);
-    out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-    return 1;
+    out_log(LEVEL_HIGH,"Could not stat backend '%s'\n",backend);
+    out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
+    return NULL;
   }
 
-  /* test dlopen */
-  handle = dlopen(filename,DL_ARG);
-  if (!handle) {
-    out_err(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
-    out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-    out_err(LEVEL_HIGH,"dlerror: %s\n",dlerror());
-    return 1;
+  def = backend_register(backend, NULL /* dynamic backend */);
+  if (def == NULL) {
+    out_err(LEVEL_HIGH,"ERROR while registering backend '%s'\n",backend);
+    return NULL;
   }
 
-  /* search wzd_backend_init. If found, use the new interface */
-  {
-    typedef int (*backend_init_function)(wzd_backend_t*);
-
-    backend_init_function fcn;
-
-    fcn = (backend_init_function)dlsym(handle, DL_PREFIX "wzd_backend_init");
-    if (fcn) {
-      dlclose(handle);
-      return 0;
-    }
-  }
-
-  out_err(LEVEL_HIGH,"%s does not seem to be a valid backend - there are missing functions\n",backend);
-  dlclose(handle);
-  return 1;
+  return def;
 }
 
-int backend_init(const char *backend, unsigned int user_max, unsigned int group_max)
+/**
+ * \brief Initialize backend
+ * \param backend The backend name
+ */
+int backend_init(wzd_backend_def_t * backend)
 {
-  void * handle;
-  char filename[1024];
-  char path[1024];
-  int length;
+  wzd_backend_t * b;
   int ret;
 
-  /* default: current path */
-  strcpy(path,".");
-  length=(int)strlen(path); /* FIXME wtf are these 4 lines for ? */
-  /* add a / at the end if not present - XXX will conflict if last char is \ ? */
-  if (path[length-1]!='/') {
-    path[length++] = '/';
-    path[length]='\0';
-  }
+  WZD_ASSERT(backend != NULL);
+  if (backend == NULL) return -1;
 
-  DIRNORM((char*)backend,strlen(backend),0);
-  /* TODO if backend name already contains .so, do not add .o */
-  /* if backend name contains /, do not add path */
-  if (strchr(backend,'/')==NULL)
-#ifdef WIN32
-    length = snprintf(filename,1024,"%slibwzd%s.dll",path,backend);
-#else
-    length = snprintf(filename,1024,"%slibwzd%s.so",path,backend);
-#endif
-  else
-    length = snprintf(filename,1024,"%s",backend);
-  if (length<0)
-  {
-    out_err(LEVEL_HIGH,"Backend name too long (%s:%d)\n",__FILE__,__LINE__);
-    return 1;
-  }
+  b = backend->b;
 
-  /* test dlopen */
-  handle = dlopen(filename,DL_ARG);
-  if (!handle) {
-    out_log(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
-    out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-    out_log(LEVEL_HIGH,"dlerror: %s\n",dlerror());
-    return 1;
-  }
+  WZD_ASSERT(backend != NULL);
+  if (backend == NULL) return -1;
 
-  mainConfig->backend.handle = handle;
+  if (b->backend_init) {
+    wzd_string_t * str;
+    /* LOGFILE */
+    str = config_get_string(mainConfig->cfg_file, b->name, "param", NULL);
+    if (str) {
+      wzd_free(backend->param);
+      backend->param = wzd_strdup(str_tochar(str));
+      str_deallocate(str);
+    }
 
-  /* search wzd_backend_init. If found, use the new interface */
-  {
-    typedef int (*backend_init_function)(wzd_backend_t*);
-
-    backend_init_function fcn;
-    wzd_backend_t * b;
-
-    fcn = (backend_init_function)dlsym(handle, DL_PREFIX "wzd_backend_init");
-    if (fcn) {
-
-      b = mainConfig->backend.b = wzd_malloc(sizeof(wzd_backend_t));
-      memset(b,0,sizeof(wzd_backend_t));
-      b->struct_version = STRUCT_BACKEND_VERSION;
-      b->backend_id = 1; /** \todo auto-increment */
-
-      if (backend != mainConfig->backend.filename) /* strings must not overlap */
-      {
-        wzd_free(mainConfig->backend.filename);
-        mainConfig->backend.filename = wzd_strdup(backend);
-      }
-
-      ret = (*fcn)(b);
-
-      if (b->backend_init) {
-        wzd_string_t * str;
-        /* LOGFILE */
-        str = config_get_string(mainConfig->cfg_file, b->name, "param", NULL);
-        if (str) {
-          wzd_free(mainConfig->backend.param);
-          mainConfig->backend.param = wzd_strdup(str_tochar(str));
-          str_deallocate(str);
-        }
-
-        ret = (b->backend_init)(mainConfig->backend.param);
-        if (ret) { /* backend says NO */
-          backend_clear_struct(&mainConfig->backend);
-          dlclose(handle);
-          return ret;
-        }
-      } else {
-        out_log(LEVEL_CRITICAL,"FATAL: backend %s does not define init method\n",b->name);
-        backend_clear_struct(&mainConfig->backend);
-        dlclose(handle);
-        return -1;
-      }
-
-      out_log(LEVEL_INFO,"Backend %s loaded (new interface)\n",backend);
-      return ret;
+    ret = (b->backend_init)(backend->param);
+    if (ret) {
+      out_log(LEVEL_HIGH,"ERROR could not backend %s, init function returned %d\n",backend->filename,ret);
+      return 1;
     }
   }
 
-  return -1;
+  return 0;
 }
 
 /** \brief Register backend
@@ -347,48 +239,51 @@ int backend_close(const char *backend)
   int (*fini_fcn)(void) = NULL;
   int ret;
 
-  if (!backend || !mainConfig->backend.filename) return 1;
+  if (!backend || !mainConfig->backends) return 1;
 
   /* step 1: check that backend == mainConfig->backend.name */
-  if (strcmp(backend,mainConfig->backend.filename)!=0) return 1;
+  if (strcmp(backend,mainConfig->backends->filename)!=0) return 1;
 
   /* step 2: call end function */
-  if (mainConfig->backend.b) {
-    fini_fcn = ((wzd_backend_t*)mainConfig->backend.b)->backend_exit;
+  if (mainConfig->backends->b) {
+    fini_fcn = mainConfig->backends->b->backend_exit;
   }
   if (fini_fcn) {
     ret = (*fini_fcn)();
     if (ret) {
       out_log(LEVEL_CRITICAL,"Backend %s reported errors on exit (handle %lu)\n",
-          backend,mainConfig->backend.handle);
+          backend,mainConfig->backends->handle);
 /*      return 1;*/
     }
   }
 
   /* close backend */
   ret = 0;
-  if (mainConfig->backend.handle)
+  if (mainConfig->backends->handle)
   {
     char * tempname = strdup(backend);
-    ret = dlclose(mainConfig->backend.handle);
+    ret = dlclose(mainConfig->backends->handle);
     if (ret) {
 #ifdef WIN32
       ret = GetLastError();
       out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
-          tempname,mainConfig->backend.handle, ret,strerror(ret));
-      backend_clear_struct(&mainConfig->backend);
+          tempname,mainConfig->backends->handle, ret,strerror(ret));
+      backend_clear_struct(&mainConfig->backends);
 #else
       out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
-          tempname,mainConfig->backend.handle);
+          tempname,mainConfig->backends->handle);
       out_log(LEVEL_INFO," Error '%s'\n",dlerror());
 #endif
+
       free(tempname);
       return 1;
     }
     free(tempname);
   }
 
-  backend_clear_struct(&mainConfig->backend);
+  backend_clear_struct(mainConfig->backends);
+
+  /** \todo XXX remove backend from list */
 
   return 0;
 }
@@ -397,13 +292,16 @@ int backend_reload(const char *backend)
 {
   int ret;
 
+#if 0
   ret = backend_close(backend);
   if (ret) return 1;
 
   ret = backend_init(backend,0 /* max users */,0 /* max groups */);
   if (ret) return 1;
+#endif
+  out_log(LEVEL_HIGH,"backend_reload: not yet implemented\n");
 
-  return 0;
+  return 1;
 }
 
 wzd_user_t * backend_get_user(uid_t userid)
@@ -412,7 +310,7 @@ wzd_user_t * backend_get_user(uid_t userid)
 
   if (userid == (uid_t)-1) return NULL;
 
-  if ( (b = mainConfig->backend.b) && b->backend_get_user)
+  if ( (b = mainConfig->backends->b) && b->backend_get_user)
     return b->backend_get_user(userid);
 
   if (b == NULL)
@@ -428,7 +326,7 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
   int ret;
   wzd_backend_t * b;
 
-  if ( (b = mainConfig->backend.b) && b->backend_find_user)
+  if ( (b = mainConfig->backends->b) && b->backend_find_user)
     ret = b->backend_find_user(name,user);
   else {
     if (b == NULL)
@@ -461,7 +359,7 @@ wzd_user_t * GetUserByID(uid_t id)
 
   if (id == (uid_t)-1) return NULL;
 
-  if ( (b = mainConfig->backend.b) && b->backend_get_user) {
+  if ( (b = mainConfig->backends->b) && b->backend_get_user) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     user = b->backend_get_user(id);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -486,7 +384,7 @@ wzd_user_t * GetUserByName(const char *name)
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
 out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
 
-  if ( (b = mainConfig->backend.b) && b->backend_find_user) {
+  if ( (b = mainConfig->backends->b) && b->backend_find_user) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     uid = b->backend_find_user(name,user);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -522,7 +420,7 @@ uid_t GetUserIDByName(const char *name)
 wzd_group_t * backend_get_group(gid_t groupid)
 {
   wzd_backend_t * b;
-  if ( (b = mainConfig->backend.b) && b->backend_get_group)
+  if ( (b = mainConfig->backends->b) && b->backend_get_group)
     return b->backend_get_group(groupid);
 
   if (b == NULL)
@@ -537,7 +435,7 @@ int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
   int ret;
   wzd_backend_t * b;
 
-  if ( (b = mainConfig->backend.b) && b->backend_find_group)
+  if ( (b = mainConfig->backends->b) && b->backend_find_group)
     ret = b->backend_find_group(name,group);
   else {
     if (b == NULL)
@@ -569,7 +467,7 @@ wzd_group_t * GetGroupByID(gid_t id)
 
   if (!mainConfig) return NULL;
 
-  if ( (b = mainConfig->backend.b) && b->backend_get_group) {
+  if ( (b = mainConfig->backends->b) && b->backend_get_group) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     group = b->backend_get_group(id);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -593,7 +491,7 @@ wzd_group_t * GetGroupByName(const char *name)
 
   if (!mainConfig || !name || strlen(name)<=0) return NULL;
 
-  if ( (b = mainConfig->backend.b) && b->backend_find_group) {
+  if ( (b = mainConfig->backends->b) && b->backend_find_group) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     gid = b->backend_find_group(name,group);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -629,7 +527,7 @@ int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
   uid_t ret;
   wzd_backend_t * b;
 
-  if ( (b = mainConfig->backend.b) && b->backend_validate_login) {
+  if ( (b = mainConfig->backends->b) && b->backend_validate_login) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     ret = b->backend_validate_login(name,user);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -660,7 +558,7 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
   uid_t ret;
   wzd_backend_t * b;
 
-  if ( (b = mainConfig->backend.b) && b->backend_validate_pass) {
+  if ( (b = mainConfig->backends->b) && b->backend_validate_pass) {
     WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
     ret = b->backend_validate_pass(name,pass,user);
     WZD_MUTEX_UNLOCK(SET_MUTEX_BACKEND);
@@ -690,7 +588,7 @@ int backend_commit_changes(const char *backend)
 {
   wzd_backend_t * b;
 
-  if ( (b = mainConfig->backend.b) && b->backend_commit_changes)
+  if ( (b = mainConfig->backends->b) && b->backend_commit_changes)
     return b->backend_commit_changes();
 
   if (b == NULL)
@@ -706,7 +604,7 @@ int backend_inuse(const char *backend)
   ListElmt * elmnt;
   wzd_context_t * context;
   /* unusually, if backend is not loaded it is not in use ... so no error here */
-  if (!mainConfig->backend.handle) {
+  if (!mainConfig->backends->handle) {
     return -1;
   }
   /* TODO we should check here that if someone is loggued he is using the
@@ -733,7 +631,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 
   WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
-  if ( (b = mainConfig->backend.b) && b->backend_mod_user)
+  if ( (b = mainConfig->backends->b) && b->backend_mod_user)
     ret = b->backend_mod_user(name,user,mod_type);
   else {
     if (b == NULL)
@@ -752,7 +650,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 /*  usercache_invalidate( predicate_name, (void *)name );*/
 
   if (!ret && user) { /* modification ok, reload user */
-    if ( (b = mainConfig->backend.b) && b->backend_get_user)
+    if ( (b = mainConfig->backends->b) && b->backend_get_user)
       new_user = b->backend_get_user(user->uid);
     else {
       if (b == NULL)
@@ -786,7 +684,7 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
 
   WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
-  if ( (b = mainConfig->backend.b) && b->backend_mod_group)
+  if ( (b = mainConfig->backends->b) && b->backend_mod_group)
     ret = b->backend_mod_group(name,group,mod_type);
   else {
     if (b == NULL)
@@ -800,7 +698,7 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
 /*  groupcache_invalidate( predicate_groupname, (void *)name );*/
 
   if (!ret && group) { /* modification ok, reload group */
-    if ( (b = mainConfig->backend.b) && b->backend_get_group)
+    if ( (b = mainConfig->backends->b) && b->backend_get_group)
       new_group = b->backend_get_group(group->gid);
     else {
       if (b == NULL)

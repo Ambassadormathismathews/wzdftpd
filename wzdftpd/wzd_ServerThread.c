@@ -408,7 +408,7 @@ int commit_backend(void)
 {
   /* TODO XXX FIXME flush backend IFF modified ! */
   if (!mainConfig) return 1;
-  backend_commit_changes(mainConfig->backend.filename);
+  backend_commit_changes(mainConfig->backends->filename);
   return 0;
 }
 
@@ -976,7 +976,7 @@ fprintf(stderr,"Received signal %d\n",signum);
 #endif
 #endif
   /* commit backend changes */
-  ret = backend_commit_changes(mainConfig->backend.filename);
+  ret = backend_commit_changes(mainConfig->backends->filename);
   if (ret) {
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
   }
@@ -1213,13 +1213,13 @@ int server_switch_to_config(wzd_config_t *config)
 
 
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (!mainConfig->backend.filename) {
+  if (mainConfig->backends == NULL) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     return -1;
   }
-  ret = backend_init(config->backend.filename,0 /* max users */,0 /* max groups */);
+  ret = backend_init(config->backends);
   /* if no backend available, we must bail out - otherwise there would be no login/pass ! */
-  if (ret || config->backend.handle == NULL) {
+  if (ret) {
     out_log(LEVEL_CRITICAL,"I have no backend ! I must die, otherwise you will have no login/pass !!\n");
     return -1;
   }
@@ -1550,7 +1550,7 @@ void serverMainThreadProc(void *arg)
 
 
   /* commit backend changes */
-  ret = backend_commit_changes(mainConfig->backend.filename);
+  ret = backend_commit_changes(mainConfig->backends->filename);
   if (ret) {
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
   } else
@@ -1663,7 +1663,8 @@ void serverMainThreadExit(int retcode)
   hook_free(&mainConfig->hook);
   hook_free_protocols();
   module_free(&mainConfig->module);
-  backend_close(mainConfig->backend.filename);
+  /** \todo XXX close ALL backends */
+  backend_close(mainConfig->backends->filename);
   cronjob_free(&mainConfig->crontab);
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
