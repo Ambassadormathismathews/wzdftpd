@@ -114,6 +114,10 @@ static void backend_clear_struct(wzd_backend_def_t *backend)
   backend->filename = NULL;
   backend->handle = NULL;
 
+  if (backend->b) {
+    wzd_free(backend->b->name);
+  }
+
   wzd_free(backend->b);
   backend->b = NULL;
 }

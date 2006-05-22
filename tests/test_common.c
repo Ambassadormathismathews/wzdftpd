@@ -14,6 +14,7 @@
 #include <libwzd-core/wzd_debug.h>
 
 #include "test_common.h"
+#include "fake_backend.h"
 
 void fake_write_function(fd_t fd, const char * msg, size_t msg_len, unsigned int timeout, wzd_context_t * context);
 
@@ -25,10 +26,18 @@ wzd_context_t * f_context = NULL;
 void fake_mainConfig(void)
 {
   wzd_config_t * config;
+  wzd_backend_def_t * def;
+  int ret;
+
   config = malloc(sizeof(wzd_config_t));
   memset(config, 0, sizeof(wzd_config_t));
 
+  def = backend_register(NULL,fake_backend_init);
+  config->backends = def;
+
   mainConfig = config;
+
+  ret = def->b->backend_init("param");
 }
 
 void fake_backend(void)
@@ -59,6 +68,8 @@ void fake_user(void)
   user->group_num = 1;
 
   f_user = user;
+
+  user_register(user,1 /* backend id */);
 }
 
 void fake_group(void)
@@ -73,6 +84,8 @@ void fake_group(void)
   group->gid = 333;
 
   f_group = group;
+
+  group_register(group,1 /* backend id */);
 }
 
 void fake_context(void)
@@ -84,9 +97,6 @@ void fake_context(void)
   if (!f_group) fake_group();
 
   wzd_debug_init();
-
-  user_register(f_user,f_user->uid);
-  group_register(f_group,f_group->gid);
 
   context = malloc(sizeof(wzd_context_t));
   memset(context, 0, sizeof(wzd_context_t));
@@ -112,14 +122,10 @@ void fake_exit(void)
     list_destroy(context_list);
     free(context_list);
     free(f_context);
-    user_free_registry();
-    group_free_registry();
     f_context = NULL;
 
     wzd_debug_fini();
   }
-  free(f_user); f_user = NULL;
-  free(f_group); f_group = NULL;
   user_free_registry();
   group_free_registry();
   if (mainConfig) {

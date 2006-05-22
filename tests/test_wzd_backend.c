@@ -4,7 +4,7 @@
 #include <libwzd-core/wzd_string.h>
 #include <libwzd-core/wzd_backend.h>
 
-#include "fake_backend.h"
+#include "test_common.h"
 
 #define C1 0x12345678
 #define C2 0x9abcdef0
@@ -16,15 +16,7 @@ int main(int argc, char *argv[])
   unsigned long c2 = C2;
   int ret;
 
-  def = backend_register(NULL,fake_backend_init);
-  if (def == NULL) {
-    fprintf(stderr,"Could not register fake backend\n");
-    return 1;
-  }
-
-  ret = def->b->backend_init("param");
-
-/*  mainConfig->backend = def;*/
+  fake_mainConfig();
 
 
   if (c1 != C1) {

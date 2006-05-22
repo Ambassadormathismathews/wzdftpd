@@ -4,6 +4,8 @@
 #include <libwzd-core/wzd_string.h>
 #include <libwzd-core/wzd_action.h>
 
+#include <libwzd-core/wzd_debug.h>
+
 #define C1 0x12345678
 #define C2 0x9abcdef0
 
@@ -24,6 +26,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Incorrect length\n");
     return 2;
   }
+
+  str_deallocate(context.current_action.command);
 
   if (c1 != C1) {
     fprintf(stderr, "c1 nuked !\n");
