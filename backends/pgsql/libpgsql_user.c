@@ -83,6 +83,7 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
   uid_t ref = 0, reg_uid;
   unsigned int i;
   wzd_user_t * registered_user;
+  struct wzd_ip_list_t * current_ip;
 
   if (!user) { /* delete user permanently */
     query = malloc(2048);
@@ -277,12 +278,11 @@ int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       goto error_user_add;
 
   /* Part 3, IP */
-  for ( i=0; i<HARD_IP_PER_USER; i++ )
-    if (user->ip_allowed[i][0] != '\0') {
-      if (_wzd_run_update_query(query, 2048, "INSERT INTO userip (ref,ip) VALUES (%u,'%s')",
-            ref, user->ip_allowed[i]))
-        goto error_user_add;
-    }
+  for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO userip (ref,ip) VALUES (%u,'%s')",
+          ref, current_ip->regexp))
+      goto error_user_add;
+  }
 
   /* Part 4, stats */
   if (_wzd_run_update_query(query, 2048, "INSERT INTO stats (ref) VALUES (%u)",
@@ -429,10 +429,11 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
 {
   char query[512];
   PGresult * res;
-  int i, i_stored;
+  int i_stored;
   int found;
   int ret;
   const char *ip_stored;
+  struct wzd_ip_list_t * current_ip;
 
   if (!ref) return -1;
 
@@ -440,18 +441,17 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip WHERE ref=%d",ref)) == NULL) return 0;
 
   /* find NEW ip */
-  for (i=0; i<HARD_IP_PER_USER; i++) {
-    if (strlen(user->ip_allowed[i]) <= 0) continue;
+  for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
     found = 0;
     for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
       ip_stored = PQgetvalue(res,i_stored,0);
-      if (strcmp(user->ip_allowed[i],ip_stored)==0) {
+      if (strcmp(current_ip->regexp,ip_stored)==0) {
         found = 1;
         break;
       }
     }
     if (found == 0) {
-      ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[i]);
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,current_ip->regexp);
       if (ret) {
         PQclear(res);
         return -1;
@@ -462,9 +462,9 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   /* find DELETED ip */
   for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
     ip_stored = PQgetvalue(res,i_stored,0);
-    for (i=0; i<HARD_IP_PER_USER; i++) {
+    for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
       found = 0;
-      if (strcmp(user->ip_allowed[i],ip_stored)==0) {
+      if (strcmp(current_ip->regexp,ip_stored)==0) {
         found = 1;
         break;
       }

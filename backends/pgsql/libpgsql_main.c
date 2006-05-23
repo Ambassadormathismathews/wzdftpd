@@ -731,6 +731,7 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   wzd_user_t * user;
   unsigned int i,j;
   PGresult * res;
+  char ip_buffer[MAX_IP_LENGTH+1];
 
   if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM users WHERE %s", where_statement)) == NULL) return NULL;
 
@@ -771,7 +772,6 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   PQclear(res);
 
   /* Now get IP */
-  user->ip_allowed[0][0] = '\0';
 
   if ( (res = _wzd_run_select_query(query,512,"SELECT userip.ip FROM userip,users WHERE %s AND users.ref=userip.ref", where_statement)) == NULL) return user;
 
@@ -780,7 +780,8 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
       out_log(PGSQL_LOG_CHANNEL,"PGsql: too many IP for user %s, dropping others\n",user->username);
       break;
     }
-    wzd_row_get_string_offset(user->ip_allowed[i], MAX_IP_LENGTH, res, i, 0 /* query asks only one column */);
+    wzd_row_get_string_offset(ip_buffer, MAX_IP_LENGTH, res, i, 0 /* query asks only one column */);
+    ip_add_check(&user->ip_list, ip_buffer, 1 /* allowed */);
   }
 
 
@@ -846,6 +847,7 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
   unsigned int i;
   int index;
   PGresult * res;
+  char ip_buffer[MAX_IP_LENGTH+1];
 
   if ( (res = _wzd_run_select_query(query,512,"SELECT * FROM groups WHERE %s", where_statement)) == NULL) return NULL;
 
@@ -878,12 +880,12 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
   PQclear(res);
 
   /* Now get ip */
-  group->ip_allowed[0][0] = '\0';
 
   if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip,groups WHERE %s AND groups.ref=groupip.ref", where_statement)) == NULL) return NULL;
 
   for (index=0; index<PQntuples(res); index++) {
-    wzd_row_get_string_offset(group->ip_allowed[index], MAX_IP_LENGTH, res, index, 0 /* query asks only one column */);
+    wzd_row_get_string_offset(ip_buffer, MAX_IP_LENGTH, res, index, 0 /* query asks only one column */);
+    ip_add_check(&group->ip_list, ip_buffer, 1 /* allowed */);
   }
 
   PQclear(res);

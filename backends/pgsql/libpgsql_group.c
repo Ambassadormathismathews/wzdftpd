@@ -65,9 +65,9 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   int modified = 0, update_registry = 0;
   unsigned int query_length = 512;
   gid_t ref = 0;
-  unsigned int i;
   wzd_group_t * registered_group;
   gid_t reg_gid;
+  struct wzd_ip_list_t * current_ip;
 
   if (!group) { /* delete group permanently */
     query = malloc(2048);
@@ -205,12 +205,11 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   if (!ref) goto error_group_add;
 
   /* Part 2, IP */
-  for ( i=0; i<HARD_IP_PER_GROUP; i++ )
-    if (group->ip_allowed[i][0] != '\0') {
-      if (_wzd_run_update_query(query, 2048, "INSERT INTO groupip (ref,ip) VALUES (%u,'%s')",
-            ref, group->ip_allowed[i]))
-        goto error_group_add;
-    }
+  for (current_ip=group->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO groupip (ref,ip) VALUES (%u,'%s')",
+          ref, current_ip->regexp))
+      goto error_group_add;
+  }
 
   /* get generated gid from DB */
   {
@@ -279,10 +278,11 @@ static int _group_update_ip(gid_t ref, wzd_group_t * group)
 {
   char query[512];
   PGresult * res;
-  int i, i_stored;
+  int i_stored;
   int found;
   int ret;
   const char *ip_stored;
+  struct wzd_ip_list_t * current_ip;
 
   if (!ref) return -1;
 
@@ -290,18 +290,17 @@ static int _group_update_ip(gid_t ref, wzd_group_t * group)
   if ( (res = _wzd_run_select_query(query,512,"SELECT groupip.ip FROM groupip WHERE ref=%d",ref)) == NULL) return 0;
 
   /* find NEW ip */
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    if (strlen(group->ip_allowed[i]) <= 0) continue;
+  for (current_ip=group->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
     found = 0;
     for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
       ip_stored = PQgetvalue(res,i_stored,0);
-      if (strcmp(group->ip_allowed[i],ip_stored)==0) {
+      if (strcmp(current_ip->regexp,ip_stored)==0) {
         found = 1;
         break;
       }
     }
     if (found == 0) {
-      ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,group->ip_allowed[i]);
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO groupip (ref,ip) VALUES (%d,'%s')",ref,current_ip->regexp);
       if (ret) {
         PQclear(res);
         return -1;
@@ -312,9 +311,9 @@ static int _group_update_ip(gid_t ref, wzd_group_t * group)
   /* find DELETED ip */
   for (i_stored=0; i_stored<PQntuples(res); i_stored++) {
     ip_stored = PQgetvalue(res,i_stored,0);
-    for (i=0; i<HARD_IP_PER_GROUP; i++) {
+    for (current_ip=group->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
       found = 0;
-      if (strcmp(group->ip_allowed[i],ip_stored)==0) {
+      if (strcmp(current_ip->regexp,ip_stored)==0) {
         found = 1;
         break;
       }
