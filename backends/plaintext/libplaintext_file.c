@@ -80,42 +80,30 @@ static unsigned int find_directive(const char *name)
 /* IP allowing */
 static int __user_ip_add(wzd_user_t * user, const char *newip)
 {
-  int i;
-
   /* of course this should never happen :) */
   if (user == NULL || newip==NULL) return -1;
 
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
-  /* tail insertion, be aware that order is important */
-  for (i=0; i<HARD_IP_PER_USER; i++) {
-    if (user->ip_allowed[i][0] == '\0') {
-      strncpy(user->ip_allowed[i],newip,MAX_IP_LENGTH-1);
-      return 0;
-    }
-  }
-  return 1; /* full */
+  if (ip_add_check(&user->ip_list, newip, 1 /* is_allowed */))
+    return 1;
+
+  return 0;
 }
 
 static int __group_ip_add(wzd_group_t * group, const char *newip)
 {
-  int i;
-
   /* of course this should never happen :) */
   if (group == NULL || newip==NULL) return -1;
 
   if (strlen(newip) < 1) return -1;
   if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
 
-  /* tail insertion, be aware that order is important */
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    if (group->ip_allowed[i][0] == '\0') {
-      strncpy(group->ip_allowed[i],newip,MAX_IP_LENGTH-1);
-      return 0;
-    }
-  }
-  return 1; /* full */
+  if (ip_add_check(&group->ip_list, newip, 1 /* is_allowed */))
+    return 1;
+
+  return 0;
 }
 
 int write_single_user(FILE * file, const wzd_user_t * user)
@@ -123,6 +111,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   unsigned int j;
   wzd_group_t * loop_group;
   char buffer[4096], errbuf[1024];
+  struct wzd_ip_list_t * current_ip;
 
   fprintf(file,"name=%s\n",user->username);
   fprintf(file,"pass=%s\n",user->userpass);
@@ -155,11 +144,8 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   fprintf(file,"rights=0x%lx\n",user->userperms);
   if (strlen(user->tagline)>0)
     fprintf(file,"tagline=%s\n",user->tagline);
-  /** \todo XXX use user->ip_list */
-  for (j=0; j<HARD_IP_PER_USER; j++)
-  {
-    if (user->ip_allowed[j][0] != '\0')
-      fprintf(file,"ip_allowed=%s\n",user->ip_allowed[j]);
+  for (current_ip = user->ip_list; current_ip != NULL; current_ip = current_ip->next_ip) {
+    fprintf(file,"ip_allowed=%s\n",current_ip->regexp);
   }
   if (user->max_ul_speed)
     fprintf(file,"max_ul_speed=%u\n",user->max_ul_speed);
@@ -195,7 +181,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
 
 int write_single_group(FILE * file, const wzd_group_t * group)
 {
-  unsigned int j;
+  struct wzd_ip_list_t * current_ip;
 
   fprintf(file,"privgroup\t%s\n",group->groupname);
   if (group->max_idle_time)
@@ -209,11 +195,8 @@ int write_single_group(FILE * file, const wzd_group_t * group)
   if (strlen(group->tagline)>0)
     fprintf(file,"tagline=%s\n",group->tagline);
   fprintf(file,"gid=%d\n",group->gid);
-  /** \todo XXX use group->ip_list */
-  for (j=0; j<HARD_IP_PER_GROUP; j++)
-  {
-    if (group->ip_allowed[j][0] != '\0')
-      fprintf(file,"ip_allowed=%s\n",group->ip_allowed[j]);
+  for (current_ip = group->ip_list; current_ip != NULL; current_ip = current_ip->next_ip) {
+    fprintf(file,"ip_allowed=%s\n",current_ip->regexp);
   }
   if (strlen(group->defaultpath)>0)
     fprintf(file,"default_home=%s\n",group->defaultpath);

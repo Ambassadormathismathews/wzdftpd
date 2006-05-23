@@ -240,9 +240,14 @@ static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_t
     if (mod_type & _USER_MAX_DLS) loop_user->max_dl_speed = user->max_dl_speed;
     if (mod_type & _USER_NUMLOGINS) loop_user->num_logins = user->num_logins;
     if (mod_type & _USER_IP) {
-      int i;
-      for ( i=0; i<HARD_IP_PER_USER; i++ )
-        strcpy(loop_user->ip_allowed[i],user->ip_allowed[i]);
+      /* replace old list by the new one */
+      struct wzd_ip_list_t * old_list;
+
+      if (loop_user->ip_list != user->ip_list) {
+        old_list = loop_user->ip_list;
+        loop_user->ip_list = user->ip_list;
+        ip_list_free(old_list);
+      }
     }
     if (mod_type & _USER_BYTESUL) loop_user->stats.bytes_ul_total = user->stats.bytes_ul_total;
     if (mod_type & _USER_BYTESDL) loop_user->stats.bytes_dl_total = user->stats.bytes_dl_total;
@@ -322,9 +327,14 @@ static int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mo
     }
     if (mod_type & _GROUP_NUMLOGINS) loop_group->num_logins = group->num_logins;
     if (mod_type & _GROUP_IP) {
-      int i;
-      for ( i=0; i<HARD_IP_PER_GROUP; i++ )
-        strcpy(loop_group->ip_allowed[i],group->ip_allowed[i]);
+      /* replace old list by the new one */
+      struct wzd_ip_list_t * old_list;
+
+      if (loop_group->ip_list != group->ip_list) {
+        old_list = loop_group->ip_list;
+        loop_group->ip_list = group->ip_list;
+        ip_list_free(old_list);
+      }
     }
   } else { /* group not found, add it */
     if (!group) return -1;
