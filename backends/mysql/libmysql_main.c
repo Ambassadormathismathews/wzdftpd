@@ -598,6 +598,7 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   int num_fields;
   wzd_user_t * user;
   unsigned int i,j;
+  char ip_buffer[MAX_IP_LENGTH+1];
 
   snprintf(query, 512, "SELECT * FROM users WHERE %s", where_statement);
 
@@ -647,7 +648,6 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   mysql_free_result(res);
 
   /* Now get IP */
-  user->ip_allowed[0][0] = '\0';
 
   snprintf(query, 512, "SELECT userip.ip FROM userip,users WHERE %s AND users.ref=userip.ref", where_statement);
 
@@ -666,7 +666,8 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
       out_log(MYSQL_LOG_CHANNEL,"MYSQL: too many IP for user %s, dropping others\n",user->username);
       break;
     }
-    wzd_row_get_string(user->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    wzd_row_get_string(ip_buffer, MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    ip_add_check(&user->ip_list, ip_buffer, 1 /* allowed */);
     i++;
   }
 
@@ -753,6 +754,7 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
   int num_fields;
   wzd_group_t * group;
   unsigned int i;
+  char ip_buffer[MAX_IP_LENGTH+1];
 
   snprintf(query, 512, "SELECT * FROM groups WHERE %s", where_statement);
 
@@ -797,7 +799,6 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
   mysql_free_result(res);
 
   /* Now get IP */
-  group->ip_allowed[0][0] = '\0';
 
   snprintf(query, 512, "SELECT groupip.ip FROM groupip,groups WHERE %s AND groups.ref=groupip.ref", where_statement);
 
@@ -816,7 +817,8 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
       out_log(MYSQL_LOG_CHANNEL,"MYSQL: too many IP for group %s, dropping others\n",group->groupname);
       break;
     }
-    wzd_row_get_string(group->ip_allowed[i], MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    wzd_row_get_string(ip_buffer, MAX_IP_LENGTH, row, 0 /* query asks only one column */);
+    ip_add_check(&group->ip_list, ip_buffer, 1 /* allowed */);
     i++;
   }
 

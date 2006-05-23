@@ -86,6 +86,7 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
   uid_t ref = 0, reg_uid;
   unsigned int i;
   wzd_user_t * registered_user;
+  struct wzd_ip_list_t * current_ip;
 
   if (!user) { /* delete user permanently */
     query = malloc(2048);
@@ -286,12 +287,11 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       goto error_user_add;
 
   /* Part 3, IP */
-  for ( i=0; i<HARD_IP_PER_USER; i++ )
-    if (user->ip_allowed[i][0] != '\0') {
-      if (_wzd_run_update_query(query, 2048, "INSERT INTO userip (ref,ip) VALUES (%u,'%s')",
-            ref, user->ip_allowed[i]))
-        goto error_user_add;
-    }
+  for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO userip (ref,ip) VALUES (%u,'%s')",
+          ref, current_ip->regexp))
+      goto error_user_add;
+  }
 
   /* Part 4, stats */
   if (_wzd_run_update_query(query, 2048, "INSERT INTO stats (ref) VALUES (%u)",
@@ -439,7 +439,7 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   char query[512];
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  int g_stored, g_mod;
+  int g_stored;
   unsigned int i;
   int found;
   int ret;
@@ -447,6 +447,7 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   my_ulonglong num_rows;
   char ** stored_rows;
   unsigned long * stored_ref;
+  struct wzd_ip_list_t * current_ip;
 
   if (!ref) return -1;
 
@@ -477,21 +478,19 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   mysql_free_result(res);
 
   /* find NEW ip */
-  for (g_mod = 0; g_mod < HARD_IP_PER_USER; g_mod++) {
-    if (strlen(user->ip_allowed[g_mod])>0) {
-      found = 0;
-      for (g_stored = 0; g_stored < (int)num_rows; g_stored++) {
-        if (strcmp(user->ip_allowed[g_mod],stored_rows[g_stored])==0) {
-          found = 1;
-          break;
-        }
+  for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
+    found = 0;
+    for (g_stored = 0; g_stored < (int)num_rows; g_stored++) {
+      if (strcmp(current_ip->regexp,stored_rows[g_stored])==0) {
+        found = 1;
+        break;
       }
-      if (found == 0) {
-        ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,user->ip_allowed[g_mod]);
-        if (ret) {
-          _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
-          return -1;
-        }
+    }
+    if (found == 0) {
+      ret = _wzd_run_insert_query(query,512,"INSERT INTO userip (ref,ip) VALUES (%d,'%s')",ref,current_ip->regexp);
+      if (ret) {
+        _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
+        return -1;
       }
     }
   }
@@ -499,8 +498,8 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   /* find DELETED groups */
   for (g_stored = 0; g_stored < (int)num_rows; g_stored++) {
     found = 0;
-    for (g_mod = 0; g_mod < HARD_IP_PER_USER; g_mod++) {
-      if (strcmp(user->ip_allowed[g_mod],stored_rows[g_stored])==0) {
+    for (current_ip=user->ip_list; current_ip != NULL; current_ip=current_ip->next_ip) {
+      if (strcmp(current_ip->regexp,stored_rows[g_stored])==0) {
         found = 1;
         break;
       }
