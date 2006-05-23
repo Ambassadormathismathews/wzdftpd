@@ -1,3 +1,7 @@
+2006-05-23  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: moving ip list to a dynamic list
+
 2006-05-04  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: show vfs entries in MLSD (Closes: #0042)

@@ -282,7 +282,7 @@ static int _pam_adduser(const char *name, int uid, const char *homedir)
 
   strncpy(user_pool[_user_count].username, name, sizeof(user_pool[_user_count].username));
   user_pool[_user_count].uid = uid;
-  strncpy(user_pool[_user_count].ip_allowed[0],"*",2);
+  ip_add_check(&user_pool[_user_count].ip_list,"*",1 /* is allowed */);
   strncpy(user_pool[_user_count].rootpath, homedir, sizeof(user_pool[_user_count].rootpath));
   user_pool[_user_count].userperms = 0xffffffff;
   /* root is always siteop .. */
