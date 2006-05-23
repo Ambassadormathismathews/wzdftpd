@@ -37,7 +37,6 @@ struct wzd_group_t {
   u32_t                  max_ul_speed;
   u32_t                  max_dl_speed;
   unsigned int           ratio;
-  char                   ip_allowed[HARD_IP_PER_GROUP][MAX_IP_LENGTH];
   struct wzd_ip_list_t * ip_list;
   char                   defaultpath[WZD_MAX_PATH];
 };

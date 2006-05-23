@@ -255,7 +255,7 @@ int vars_user_get(const char *username, const char *varname, void *data, unsigne
 int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
 {
   wzd_user_t *user;
-  int i;
+  int ret;
 
   if (!username || !ip) return 1;
 
@@ -264,31 +264,10 @@ int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
 
   do {
 
-    /* check if ip is already present or included in list, or if it shadows one present */
-    for (i=0; i<HARD_IP_PER_USER; i++)
-    {
-      if (user->ip_allowed[i][0]=='\0') continue;
-      if (my_str_compare(ip, user->ip_allowed[i])==1) {
-        /* ip is already included in list */
-        return 1;
-      }
-      if (my_str_compare(user->ip_allowed[i],ip)==1) {
-        /* ip will shadow one ore more ip in list */
-        return 2;
-      }
-    }
+    ret = ip_inlist(user->ip_list, ip);
+    if (ret) return 1; /* already present */
 
-    /* update user */
-    for (i=0; i<HARD_IP_PER_USER; i++)
-      if (user->ip_allowed[i][0]=='\0') break;
-
-    /* no more slots ? */
-    if (i==HARD_IP_PER_USER) {
-      /* no more slots available - either recompile with more slots, or use them more cleverly */
-      return 3;
-    }
-    /* TODO check ip validity */
-    strncpy(user->ip_allowed[i],ip,MAX_IP_LENGTH-1);
+    ret = ip_add_check(&user->ip_list, ip, 1 /* is_allowed */);
 
 /*    ip = strtok_r(NULL," \t\r\n",&ptr);*/
     ip = NULL; /** \todo add only one ip (for the moment) */
@@ -302,9 +281,8 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
 {
   char *ptr_ul;
   wzd_user_t *user;
-  int i;
   unsigned long ul;
-  int found;
+  int ret;
 
   if (!username || !ip) return 1;
 
@@ -316,33 +294,21 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
     /* try to take argument as a slot number */
     ul = strtoul(ip,&ptr_ul,0);
     if (*ptr_ul=='\0') {
-      if (ul <= 0 || ul >= HARD_IP_PER_USER) {
-        /* Invalid ip slot number */
-        return 1;
+      unsigned int i;
+      struct wzd_ip_list_t * current_ip;
+
+      current_ip = user->ip_list;
+      for (i=1; i<ul && current_ip != NULL; i++) {
+        current_ip = current_ip->next_ip;
       }
-      ul--; /* to index slot number from 1 */
-      if (user->ip_allowed[ul][0] == '\0') {
-        /* Slot is already empty */
-        return 2;
-      }
-      user->ip_allowed[ul][0] = '\0';
+      if (current_ip == NULL) return 2; /* not found */
+      ret = ip_remove(&user->ip_list,current_ip->regexp);
+      if (ret != 0) return -1;
     } else { /* if (*ptr=='\0') */
 
-      /* try to find ip in list */
-      found = 0;
-      for (i=0; i<HARD_IP_PER_USER; i++)
-      {
-        if (user->ip_allowed[i][0]=='\0') continue;
-        if (strcmp(ip,user->ip_allowed[i])==0) {
-          user->ip_allowed[i][0] = '\0';
-          found = 1;
-        }
-      }
+      ret = ip_remove(&user->ip_list,ip);
+      if (ret != 0) return 3;
 
-      if (!found) {
-        /* IP not found */
-        return 3;
-      }
     } /* if (*ptr=='\0') */
 
 /*    ip = strtok_r(NULL," \t\r\n",&ptr);*/
@@ -480,11 +446,11 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
 
 int vars_user_new(const char *username, const char *pass, const char *groupname, wzd_config_t * config)
 {
-  wzd_user_t user, *test_user;
+  wzd_user_t * user, *test_user;
   wzd_group_t *group;
   unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
   char *homedir;
-  int i, ret;
+  int ret;
 
   if (!username || !groupname || !config) return -1;
 
@@ -508,37 +474,20 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   }
 
   /* create new user */
-  strncpy(user.username, username, sizeof(user.username));
-  strncpy(user.userpass, pass, sizeof(user.userpass));
-  strncpy(user.rootpath,homedir,WZD_MAX_PATH);
-  user.tagline[0]='\0';
-  user.uid=0;
-  user.group_num=0;
-  if (groupname) {
-    user.groups[0] = GetGroupIDByName(groupname);
-    if (user.groups[0]) user.group_num=1;
-  }
-  user.max_idle_time=0;
-  user.userperms=0xffffffff;
-  user.flags[0]='\0';
-  user.max_ul_speed=0;
-  user.max_dl_speed=0;
-  user.num_logins=0;
-  for (i=0; i<HARD_IP_PER_USER; i++)
-    user.ip_allowed[i][0]='\0';
-  user.stats.bytes_ul_total=0;
-  user.stats.bytes_dl_total=0;
-  user.stats.files_ul_total=0;
-  user.stats.files_dl_total=0;
-  user.credits = 0;
-  user.ratio = ratio;
-  user.user_slots=0;
-  user.leech_slots=0;
+  user = user_allocate();
+
+  strncpy(user->username, username, HARD_USERNAME_LENGTH-1);
+  strncpy(user->userpass, pass, MAX_PASS_LENGTH-1);
+  strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_user(config->backends->filename,username,&user,_USER_ALL);
+  ret = backend_mod_user(config->backends->filename,username,user,_USER_ALL);
 
-  return ret;
+  if (ret) { /* problem adding user */
+    user_free(user);
+  }
+
+  return ret ? 1 : 0;
 }
 
 int vars_group_get(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
@@ -662,8 +611,7 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
 {
   char *homedir;
   int ret;
-  wzd_group_t newgroup;
-  int i;
+  wzd_group_t * newgroup;
 
   /* check if group already exists */
   if ( GetGroupByName(groupname) ) {
@@ -691,20 +639,17 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
 #endif
 
   /* create new group */
-  strncpy(newgroup.groupname,groupname,sizeof(newgroup.groupname));
-  strncpy(newgroup.defaultpath,homedir,WZD_MAX_PATH);
-  newgroup.groupperms = 0;
-  newgroup.max_idle_time = 0;
-  newgroup.max_dl_speed = 0;
-  newgroup.max_ul_speed = 0;
-  newgroup.ratio = 0;
-  newgroup.num_logins = 0;
-  newgroup.tagline[0] = '\0';
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-    newgroup.ip_allowed[i][0]='\0';
+  newgroup = group_allocate();
+
+  strncpy(newgroup->groupname,groupname,HARD_GROUPNAME_LENGTH-1);
+  strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_group(config->backends->filename,groupname,&newgroup,_GROUP_ALL);
+  ret = backend_mod_group(config->backends->filename,groupname,newgroup,_GROUP_ALL);
+
+  if (ret) { /* problem adding group */
+    group_free(newgroup);
+  }
 
   return (ret) ? 1 : 0;
 }

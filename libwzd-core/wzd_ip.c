@@ -292,17 +292,48 @@ int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)
 
 /** \brief Check if ip is allowed by list.
  *
- * \returns: 1 if allowed, 0 if denied, -1 on error
+ * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
  */
 int ip_list_check(struct wzd_ip_list_t *list, const char *ip)
 {
   struct wzd_ip_list_t * current_ip;
-  const char * ptr_ip;
   char * ptr_test;
 
   current_ip = list;
   while (current_ip) {
-    ptr_ip = ip;
+    ptr_test = current_ip->regexp;
+    if (*ptr_test == '\0') return -1; /* ip has length 0 ! */
+
+    if (ip_compare(ip,ptr_test)==1) return current_ip->is_allowed;
+
+    current_ip = current_ip->next_ip;
+  } /* while current_ip */
+
+  return -1;
+}
+
+/** \brief Check if ip is allowed by list, comparing \a ident if present
+ *
+ * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
+ */
+int ip_list_check_ident(struct wzd_ip_list_t *list, const char *ip, const char * ident)
+{
+  struct wzd_ip_list_t * current_ip;
+  char * ptr_test;
+  const char * ptr_ip;
+  char buffer[1024];
+
+  if (ident != NULL)
+    snprintf(buffer,sizeof(buffer)-1,"%s@%s",ident,ip);
+  else
+    strncpy(buffer,ip,sizeof(buffer)-1);
+
+  current_ip = list;
+  while (current_ip) {
+    ptr_ip = buffer;
+    /* if we do not have an ident to check, then any is accepted */
+    if (ident != NULL && strchr(current_ip->regexp,'@')==NULL)
+      ptr_ip = ip;
     ptr_test = current_ip->regexp;
     if (*ptr_test == '\0') return -1; /* ip has length 0 ! */
 
@@ -311,7 +342,39 @@ int ip_list_check(struct wzd_ip_list_t *list, const char *ip)
     current_ip = current_ip->next_ip;
   } /* while current_ip */
 
-  return 1; /** \bug FIXME XXX set a default value to return */
+  return -1;
+}
+
+/** \brief Remove \a ip from list
+ * \return 0 if ok, -1 if not found
+ */
+int ip_remove(struct wzd_ip_list_t ** list, const char * ip)
+{
+  struct wzd_ip_list_t * current_ip, * free_ip;
+
+  current_ip = *list;
+  if (current_ip == NULL) return -1;
+
+  /* first ? */
+  if (strcmp(current_ip->regexp, ip)==0) {
+    *list = (*list)->next_ip;
+    wzd_free(current_ip->regexp);
+    wzd_free(current_ip);
+    return 0;
+  }
+
+  while (current_ip->next_ip && current_ip->next_ip->regexp) {
+    if (strcmp(current_ip->next_ip->regexp,ip)==0) {
+      free_ip = current_ip->next_ip;
+      current_ip->next_ip = free_ip->next_ip;
+      wzd_free(free_ip->regexp);
+      wzd_free(free_ip);
+      return 0;
+    }
+    current_ip = current_ip->next_ip;
+  }
+
+  return -1;
 }
 
 int ip_inlist(struct wzd_ip_list_t *list, const char *ip)
@@ -351,127 +414,6 @@ void ip_list_free(struct wzd_ip_list_t *list)
   }
 }
 
-int user_ip_add_old(wzd_user_t * user, const char *newip)
-{
-  int i;
-
-  /* of course this should never happen :) */
-  if (user == NULL || newip==NULL) return -1;
-
-  if (strlen(newip) < 1) return -1;
-  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
-
-  /* tail insertion, be aware that order is important */
-  for (i=0; i<HARD_IP_PER_USER; i++) {
-    if (user->ip_allowed[i][0] == '\0') {
-      strncpy(user->ip_allowed[i],newip,MAX_IP_LENGTH-1);
-      return 0;
-    }
-  }
-  return 1; /* full */
-}
-
-int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident)
-{
-  int i;
-  const char * ptr_ip;
-  char * ptr_test;
-  const char * ptr;
-  const char * ptr_ident;
-  unsigned int ident_length=0;
-
-  for (i=0; i<HARD_IP_PER_USER; i++) {
-    if (user->ip_allowed[i][0] != '\0') {
-      ptr_ip = ip;
-      ptr_test = user->ip_allowed[i];
-      if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
-
-      ptr = strchr(ptr_test,'@');
-      if (ptr) { /* we have an ident to check */
-        ptr_ident = ptr_test;
-        ident_length = ptr - ptr_ident;
-#ifdef WZD_DBG_IDENT
-        out_log(LEVEL_CRITICAL,"user ip with ident: %s:%d\n",ptr_ident,ident_length);
-#endif
-        ptr_test = (char*)ptr+1;
-        if ( !(*ptr_ident=='*' && ident_length==1) ) {
-          if (!ident || ident[0] == '\0') {
-            continue;
-          }
-          if (strncmp(ident,ptr_ident,ident_length) != 0) {
-            /* ident does not match */
-            continue;
-          }
-        }
-      }
-
-      if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-
-    }
-  } /* while ip */
-
-  return 0;
-}
-
-/** \deprecated use group_add_ip() */
-int group_ip_add_old(wzd_group_t * group, const char *newip)
-{
-  int i;
-
-  /* of course this should never happen :) */
-  if (group == NULL || newip==NULL) return -1;
-
-  if (strlen(newip) < 1) return -1;
-  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
-
-  /* tail insertion, be aware that order is important */
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    if (group->ip_allowed[i][0] == '\0') {
-      strncpy(group->ip_allowed[i],newip,MAX_IP_LENGTH-1);
-      return 0;
-    }
-  }
-  return 1; /* full */
-}
-
-int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident)
-{
-  int i;
-  const char * ptr_ip;
-  char * ptr_test;
-  const char * ptr;
-  const char * ptr_ident;
-  unsigned int ident_length=0;
-
-  for (i=0; i<HARD_IP_PER_GROUP; i++) {
-    if (group->ip_allowed[i][0] != '\0') {
-      ptr_ip = ip;
-      ptr_test = group->ip_allowed[i];
-      if (*ptr_test == '\0') return 0; /* ip has length 0 ! */
-
-      ptr = strchr(ptr_test,'@');
-      if (ptr) { /* we have an ident to check */
-        if (!ident) {
-          continue;
-        }
-        ptr_ident = ptr_test;
-        ident_length = ptr - ptr_ident;
-        out_log(LEVEL_CRITICAL,"ident: %s:%d\n",ptr_ident,ident_length);
-        ptr_test = (char*)ptr+1;
-        if ( !(*ptr_ident=='*' && ident_length==1) &&
-            strncmp(ident,ptr_ident,ident_length) != 0) {
-          /* ident does not match */
-          continue;
-        }
-      }
-
-      if (ip_compare(ptr_ip,ptr_test)==1) return 1;
-
-    }
-  } /* while current_ip */
-
-  return 0;
-}
 
 int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *family)
 {

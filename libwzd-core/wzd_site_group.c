@@ -392,7 +392,6 @@ int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
-  int i;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -425,47 +424,27 @@ int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
     return 0;
   }
 
-  /* check if ip is already present or included in list, or if it shadows one present */
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-  {
-    if (group->ip_allowed[i][0]=='\0') continue;
-    if (my_str_compare(str_tochar(ip),group->ip_allowed[i])==1) { /* ip is already included in list */
-      ret = send_message_with_args(501,context,"ip is already included in list");
-      str_deallocate(ip);
-      return 0;
-    }
-    if (my_str_compare(group->ip_allowed[i],str_tochar(ip))==1) { /* ip will shadow one ore more ip in list */
-      ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
-      str_deallocate(ip);
-      return 0;
-    }
-  }
-
-  /* update group */
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-    if (group->ip_allowed[i][0]=='\0') break;
-
-  /* no more slots ? */
-  if (i==HARD_IP_PER_GROUP) {
-    ret = send_message_with_args(501,context,"No more slots available - either recompile with more slots, or use them more cleverly !");
+  ret = ip_inlist(group->ip_list, str_tochar(ip));
+  if (ret) {
+    ret = send_message_with_args(501,context,"ip is already included in list");
     str_deallocate(ip);
     return 0;
   }
-  /* TODO check ip validity */
-  strncpy(group->ip_allowed[i],str_tochar(ip),MAX_IP_LENGTH-1);
+
+  ret = ip_add_check(&group->ip_list, str_tochar(ip), 1 /* is_allowed */);
+  str_deallocate(ip);
 
   /* commit to backend */
   backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
 
   ret = send_message_with_args(200,context,"Group ip added");
-  str_deallocate(ip);
   return 0;
 }
 
 void do_site_help_grpdelip(wzd_context_t * context)
 {
   send_message_raw("501-Usage: site grpdelip <group> <ip>\r\n",context);
-  send_message_raw("501  or: site grpdelip <grp> <slot_number> (get it with site ginfo <group>)\r\n",context);
+  send_message_raw("501  or: site grpdelip <grp> <slot_number> (get it with site gsinfo <group>)\r\n",context);
 }
 
 /** site grpdelip: removes ip from group
@@ -481,7 +460,6 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   int ret;
   wzd_user_t * me;
   wzd_group_t * group;
-  int i;
   unsigned long ul;
   short is_gadmin;
 
@@ -518,40 +496,47 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   /* try to take argument as a slot number */
   ul = strtoul(str_tochar(ip),&ptr,0);
   if (*ptr=='\0') {
-    if (ul <= 0 || ul > HARD_IP_PER_GROUP) {
-      ret = send_message_with_args(501,context,"Invalid ip slot number");
-      str_deallocate(ip);
-      return 0;
-    }
+    unsigned int i;
+    struct wzd_ip_list_t * current_ip;
+
     str_deallocate(ip);
     ul--; /* to index slot number from 1 */
-    if (group->ip_allowed[ul][0] == '\0') {
-      ret = send_message_with_args(501,context,"Slot is already empty");
+    current_ip = group->ip_list;
+    for (i=0; i<ul && current_ip != NULL; i++) {
+      current_ip = current_ip->next_ip;
+    }
+    if (current_ip == NULL) {
+      char buffer[256];
+      snprintf(buffer,256,"IP slot %lu not found",ul+1);
+      ret = send_message_with_args(501,context,buffer);
       return 0;
     }
-    group->ip_allowed[ul][0] = '\0';
+    ret = ip_remove(&group->ip_list,current_ip->regexp);
+    if (ret != 0) {
+      char buffer[256];
+      snprintf(buffer,256,"error removing IP slot %lu",ul+1);
+      ret = send_message_with_args(501,context,buffer);
+      return 0;
+    }
     backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
     ret = send_message_with_args(200,context,"Group ip removed");
     return 0;
   } /* if (*ptr=='\0') */
 
-  /* try to find ip in list */
-  for (i=0; i<HARD_IP_PER_GROUP; i++)
-  {
-    if (group->ip_allowed[i][0]=='\0') continue;
-    if (strcmp(str_tochar(ip),group->ip_allowed[i])==0) {
-      group->ip_allowed[i][0] = '\0';
-      /* commit to backend */
-      /* FIXME backend name hardcoded */
-      backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
-      ret = send_message_with_args(200,context,"Group ip removed");
-      str_deallocate(ip);
-      return 0;
-    }
+  ret = ip_remove(&group->ip_list,str_tochar(ip));
+  if (ret != 0) {
+    char buffer[256];
+    snprintf(buffer,256,"IP %s not found",str_tochar(ip));
+    ret = send_message_with_args(501,context,buffer);
+    str_deallocate(ip);
+    return 0;
   }
   str_deallocate(ip);
 
-  ret = send_message_with_args(501,context,"IP not found");
+  /* commit to backend */
+  backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
+  ret = send_message_with_args(200,context,"Group ip removed");
+
   return 0;
 }
 

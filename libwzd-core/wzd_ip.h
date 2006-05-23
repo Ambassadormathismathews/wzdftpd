@@ -59,20 +59,23 @@ int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)
 
 /** \brief Check if ip is allowed by list.
  *
- * \returns: 1 if allowed, 0 if denied, -1 on error
+ * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
  */
 int ip_list_check(struct wzd_ip_list_t *list, const char *ip);
 
+/** \brief Check if ip is allowed by list, comparing \a ident if present
+ *
+ * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
+ */
+int ip_list_check_ident(struct wzd_ip_list_t *list, const char *ip, const char * ident);
+
+/** \brief Remove \a ip from list
+ * \return 0 if ok, -1 if not found
+ */
+int ip_remove(struct wzd_ip_list_t ** list, const char * ip);
+
 int ip_inlist(struct wzd_ip_list_t *list, const char *ip);
 void ip_list_free(struct wzd_ip_list_t *list);
-
-/** \deprecated use user_add_ip() */
-int user_ip_add_old(wzd_user_t * user, const char *newip);
-int user_ip_inlist(wzd_user_t * user, const char *ip, const char *ident);
-
-/** \deprecated use group_add_ip() */
-int group_ip_add_old(wzd_group_t * group, const char *newip);
-int group_ip_inlist(wzd_group_t * group, const char *ip, const char *ident);
 
 /** \brief Convert a host name to a numeric ip
  *

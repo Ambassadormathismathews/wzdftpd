@@ -246,6 +246,9 @@ static int global_check_ip_allowed(unsigned char *userip)
 {
   char ip[INET6_ADDRSTRLEN];
 
+  /** \warning If no ip was specified (ok or denied), then the default is to allow */
+  if (mainConfig->login_pre_ip_checks == NULL) return 1;
+
 #if !defined(IPV6_SUPPORT)
   inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
 #else
@@ -433,25 +436,25 @@ static int check_ip_before_login(wzd_context_t * context)
   }
 
   /* check for all groups */
-  gid_list = (gid_t*)backend_get_group(-2);
+  gid_list = (gid_t*)backend_get_group(GET_GROUP_LIST);
   if (gid_list) {
     for (i=0; gid_list[i] != (gid_t)-1; i++) {
       loop_group = GetGroupByID(gid_list[i]);
       if (loop_group) {
-        ret = group_ip_inlist(loop_group, inet_buf, context->ident);
-        if (ret) return 0; /* found ! */
+        ret = ip_list_check_ident(loop_group->ip_list, inet_buf, context->ident);
+        if (ret > 1) return 0; /* found ! */
       }
     }
     wzd_free(gid_list);
   }
 
   /* check for all users */
-  uid_list = (uid_t*)backend_get_user(-2);
+  uid_list = (uid_t*)backend_get_user(GET_USER_LIST);
   if (uid_list) {
     for (i=0; uid_list[i] != (uid_t)-1; i++) {
       loop_user = GetUserByID(uid_list[i]);
       if (loop_user) {
-        ret = user_ip_inlist(loop_user, inet_buf, context->ident);
+        ret = ip_list_check_ident(loop_user->ip_list, inet_buf, context->ident);
         if (ret) return 0; /* found ! */
       }
     }

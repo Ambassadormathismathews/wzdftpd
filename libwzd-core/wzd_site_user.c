@@ -191,11 +191,11 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 
   i = 0;
   if (ip) {
-    wzd_strncpy(user->ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
+    ret = ip_add_check(&user->ip_list, str_tochar(ip), 1 /* is_allowed */);
     str_deallocate(ip);
   };
   while ( (ip = str_tok(command_line," \t")) ) {
-    wzd_strncpy(user->ip_allowed[i++],str_tochar(ip),MAX_IP_LENGTH);
+    ret = ip_add_check(&user->ip_list, str_tochar(ip), 1 /* is_allowed */);
     str_deallocate(ip);
   }
 
@@ -441,7 +441,6 @@ int do_site_addip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   wzd_string_t * username, *ip;
   int ret;
   wzd_user_t *user, *me;
-  int i;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -479,35 +478,14 @@ int do_site_addip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 
   do {
 
-    /* check if ip is already present or included in list, or if it shadows one present */
-    for (i=0; i<HARD_IP_PER_USER; i++)
-    {
-      if (user->ip_allowed[i][0]=='\0') continue;
-      if (my_str_compare(str_tochar(ip),user->ip_allowed[i])==1) { /* ip is already included in list */
-        ret = send_message_with_args(501,context,"ip is already included in list");
-        str_deallocate(ip);
-        return 0;
-      }
-      if (my_str_compare(user->ip_allowed[i],str_tochar(ip))==1) { /* ip will shadow one ore more ip in list */
-        ret = send_message_with_args(501,context,"ip will shadow some ip in list, remove them before");
-        str_deallocate(ip);
-        return 0;
-      }
-    }
-
-    /* update user */
-    for (i=0; i<HARD_IP_PER_USER; i++)
-      if (user->ip_allowed[i][0]=='\0') break;
-
-    /* no more slots ? */
-    if (i==HARD_IP_PER_USER) {
-      ret = send_message_with_args(501,context,"No more slots available - either recompile with more slots, or use them more cleverly !");
+    ret = ip_inlist(user->ip_list, str_tochar(ip));
+    if (ret) {
+      ret = send_message_with_args(501,context,"ip is already included in list");
       str_deallocate(ip);
       return 0;
     }
-    /* TODO check ip validity */
-    strncpy(user->ip_allowed[i],str_tochar(ip),MAX_IP_LENGTH-1);
 
+    ret = ip_add_check(&user->ip_list, str_tochar(ip), 1 /* is_allowed */);
     str_deallocate(ip);
 
     ip = str_tok(command_line," \t\r\n");
@@ -538,10 +516,8 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   wzd_string_t * username, *ip;
   int ret;
   wzd_user_t *user, *me;
-  int i;
   unsigned long ul;
   short is_gadmin;
-  int found;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -579,32 +555,31 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
     /* try to take argument as a slot number */
     ul = strtoul(str_tochar(ip),&ptr_ul,0);
     if (*ptr_ul=='\0') {
-      if (ul <= 0 || ul > HARD_IP_PER_USER) {
-        ret = send_message_with_args(501,context,"Invalid ip slot number");
-        str_deallocate(ip);
-        return 0;
-      }
+      unsigned int i;
+      struct wzd_ip_list_t * current_ip;
+
       str_deallocate(ip);
-      ul--; /* to index slot number from 1 */
-      if (user->ip_allowed[ul][0] == '\0') {
-        ret = send_message_with_args(501,context,"Slot is already empty");
+      current_ip = user->ip_list;
+      for (i=1; i<ul && current_ip != NULL; i++) {
+        current_ip = current_ip->next_ip;
+      }
+      if (current_ip == NULL) {
+        char buffer[256];
+        snprintf(buffer,256,"IP slot %lu not found",ul);
+        ret = send_message_with_args(501,context,buffer);
         return 0;
       }
-      user->ip_allowed[ul][0] = '\0';
+      ret = ip_remove(&user->ip_list,current_ip->regexp);
+      if (ret != 0) {
+        char buffer[256];
+        snprintf(buffer,256,"error removing IP slot %lu",ul);
+        ret = send_message_with_args(501,context,buffer);
+        return 0;
+      }
     } else { /* if (*ptr=='\0') */
 
-      /* try to find ip in list */
-      found = 0;
-      for (i=0; i<HARD_IP_PER_USER; i++)
-      {
-        if (user->ip_allowed[i][0]=='\0') continue;
-        if (strcmp(str_tochar(ip),user->ip_allowed[i])==0) {
-          user->ip_allowed[i][0] = '\0';
-          found = 1;
-        }
-      }
-
-      if (!found) {
+      ret = ip_remove(&user->ip_list,str_tochar(ip));
+      if (ret != 0) {
         char buffer[256];
         snprintf(buffer,256,"IP %s not found",str_tochar(ip));
         ret = send_message_with_args(501,context,buffer);
@@ -612,6 +587,7 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
         return 0;
       }
       str_deallocate(ip);
+
     } /* if (*ptr=='\0') */
 
     ip = str_tok(command_line," \t\r\n");

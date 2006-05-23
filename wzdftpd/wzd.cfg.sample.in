@@ -145,6 +145,7 @@ zeroconf_port = 6969
 #xxx.xxx.org = allow
 localhost = allow
 #*.xxx.fr = allow
+* = allow
 #* = deny
 
 ##### PERMISSIONS

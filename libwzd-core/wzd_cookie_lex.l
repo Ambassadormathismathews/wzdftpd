@@ -70,6 +70,7 @@
 #include "wzd_cache.h"
 #include "wzd_crc32.h"
 #include "wzd_group.h"
+#include "wzd_ip.h"
 #include "wzd_messages.h"
 #include "wzd_section.h"
 #include "wzd_user.h"
@@ -1006,8 +1007,19 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         index = strtoul(numstart,&ptr,10);
         if (index<HARD_IP_PER_GROUP)
         {
-          if (current_group)
-            snprintf(internalbuffer,IBUFSIZE,"%s",current_group->ip_allowed[index]);
+          if (current_group) {
+            unsigned int i=0;
+            struct wzd_ip_list_t * it = current_group->ip_list;
+            while (i < index) {
+              if (it == NULL) break;
+              it = it->next_ip;
+              i++;
+            }
+            if (it != NULL)
+              snprintf(internalbuffer,IBUFSIZE,"%s",it->regexp);
+            else
+              internalbuffer[0] = '\0';
+          }
           else
             snprintf(internalbuffer,IBUFSIZE,"usergroup_allow");
         } else {
@@ -1533,8 +1545,19 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         index = strtoul(numstart,&ptr,10);
         if (index<HARD_IP_PER_USER)
         {
-          if (current_user)
-            snprintf(internalbuffer,IBUFSIZE,"%s",current_user->ip_allowed[index]);
+          if (current_user) {
+            unsigned int i=0;
+            struct wzd_ip_list_t * it = current_user->ip_list;
+            while (i < index) {
+              if (it == NULL) break;
+              it = it->next_ip;
+              i++;
+            }
+            if (it != NULL)
+              snprintf(internalbuffer,IBUFSIZE,"%s",it->regexp);
+            else
+              internalbuffer[0] = '\0';
+          }
           else
             snprintf(internalbuffer,IBUFSIZE,"userip_allow");
         } else {

@@ -3384,13 +3384,14 @@ int do_help(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /*************** do_user_ip **************************/
 
-int do_user_ip(const char *username, wzd_context_t * context)
+static int do_user_ip(const char *username, wzd_context_t * context)
 {
   char ip[INET6_ADDRSTRLEN];
-  const unsigned char *userip = context->hostip;
+  const char *userip = (const char*)context->hostip;
   wzd_user_t * user;
   wzd_group_t *group;
   unsigned int i;
+  int ret;
 
   user = GetUserByID(context->userid);
 
@@ -3404,13 +3405,14 @@ int do_user_ip(const char *username, wzd_context_t * context)
   {
     inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
   }
-  if (user_ip_inlist(user,ip,context->ident)==1)
-    return E_OK;
+
+  ret = ip_list_check_ident(user->ip_list, ip, context->ident);
+  if (ret > 0) return E_OK;
 
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
     group = GetGroupByID(user->groups[i]);
-    if (group_ip_inlist(group,ip,context->ident)==1)
+    if (ip_list_check_ident(group->ip_list, ip, context->ident)==1)
       return E_OK;
   }
 
@@ -3422,7 +3424,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
  * return E_OK if user is in tls mode or is not forced to user
  *        E_USER_TLSFORCED if user should be in tls but is not
  */
-int check_tls_forced(wzd_context_t * context)
+static int check_tls_forced(wzd_context_t * context)
 {
   wzd_user_t * user;
 /*  wzd_group_t *group;
@@ -3658,7 +3660,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       /* validate ip for user */
       ret = do_user_ip(token,context);
-      if (reject_nonexistant && ret) { /* user was not accepted */
+      if (ret) { /* user was not accepted */
         ret = send_message_with_args(421,context,"IP not allowed");
         return 1;
       }
