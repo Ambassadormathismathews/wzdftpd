@@ -438,8 +438,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
     } /* else if (strcmp("num_logins",... */
 
     else if (strcmp("ip_allowed",varname)==0) {
-      __group_ip_add(group,value);
-      err = group_ip_add(group, value, 1);
+      err = __group_ip_add(group,value);
       if (err != 0 ) {
         snprintf(errbuf,sizeof(errbuf),"ERROR unable to add ip %s\n",value);
         ERRLOG(errbuf);
@@ -705,8 +704,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       user->max_idle_time = num;
     } /* max_idle_time */
     else if (strcmp("ip_allowed",varname)==0) {
-      __user_ip_add(user,value); /** \todo XXX remove me */
-      err = user_ip_add(user, value, 1);
+      err = __user_ip_add(user,value);
       if (err != 0 ) {
         snprintf(errbuf,sizeof(errbuf),"ERROR unable to add ip %s\n",value);
         ERRLOG(errbuf);
