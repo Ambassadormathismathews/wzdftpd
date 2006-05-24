@@ -177,7 +177,7 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
 #ifdef HAVE_GNUTLS
   ret = tls_dh_params_regenerate();
 #endif
-  
+
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
   ret = send_message_with_args(200,context,"TEST command ok");
@@ -626,7 +626,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     }
   }
   else {
-    if ( !(me->flags && strchr(me->flags,FLAG_SITEOP)) 
+    if ( !(me->flags && strchr(me->flags,FLAG_SITEOP))
         && me->uid != user->uid )
     {
       ret = send_message_with_args(501,context,"You can't change password for other users");
@@ -634,7 +634,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
       return 1;
     }
   }
-  if ( (user->flags && strchr(user->flags,FLAG_SITEOP)) 
+  if ( (user->flags && strchr(user->flags,FLAG_SITEOP))
       && me->uid != user->uid )
   {
     ret = send_message_with_args(501,context,"You can't change password for a siteop");
@@ -1176,9 +1176,9 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   sz64 = wzd_cache_getsize(fp);
   if (sz64 > INT_MAX) {
     out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
-	wzd_cache_close(fp);
-	send_message_with_args(501,context,"Internal error (see log)");
-	return;
+    wzd_cache_close(fp);
+    send_message_with_args(501,context,"Internal error (see log)");
+    return;
   }
   filesize = (unsigned int)sz64;
   file_buffer = malloc(filesize+1);
@@ -1187,7 +1187,7 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
     out_err(LEVEL_HIGH,"Could not read file %s read %u instead of %u (%s:%d)\n",filename,size,filesize,__FILE__,__LINE__);
     free(file_buffer);
     wzd_cache_close(fp);
-	send_message_with_args(501,context,"Internal error (see log)");
+    send_message_with_args(501,context,"Internal error (see log)");
     return;
   }
   file_buffer[filesize]='\0';
@@ -1609,7 +1609,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   filename = str_tok(command_line," \t\r\n");
   if (!filename) {
     do_site_help("utime",context);
-    return 1; 
+    return 1;
   }
   new_atime = str_tok(command_line," \t\r\n");
   if (!new_atime) {
@@ -1676,7 +1676,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   }
   str_deallocate(filename);
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
-  ret = _checkPerm(buffer,RIGHT_RNFR,user);  
+  ret = _checkPerm(buffer,RIGHT_RNFR,user);
   if (ret) {
     ret = send_message_with_args(501,context,"Access denied");
     return 1;
@@ -1699,7 +1699,7 @@ int do_site_vars(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context
   command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars",context);
-    return 1; 
+    return 1;
   }
   str_tolower(command);
 
@@ -1717,11 +1717,8 @@ int do_site_vars(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
-    else {
-      send_message_raw("200-\r\n",context);
-      send_message_raw(buffer,context);
-      send_message_raw("\r\n200 Command OK\r\n",context);
-    }
+    else
+      send_message_with_args(200,context,buffer);
 
     free(buffer);
     str_deallocate(varname);
@@ -1766,7 +1763,7 @@ int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_c
   command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars_group",context);
-    return 1; 
+    return 1;
   }
   str_tolower(command);
 
@@ -1774,14 +1771,14 @@ int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_c
   if (!groupname) {
     do_site_help("vars_group",context);
     str_deallocate(command);
-    return 1; 
+    return 1;
   }
   group = GetGroupByName(str_tochar(groupname));
   str_deallocate(groupname);
   if ( !group ) {
     send_message_with_args(501,context,"group does not exist");
     str_deallocate(command);
-    return 1; 
+    return 1;
   }
 
   varname = str_tok(command_line," \t\r\n");
@@ -1798,11 +1795,8 @@ int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_c
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
-    else {
-      send_message_raw("200-\r\n",context);
-      send_message_raw(buffer,context);
-      send_message_raw("\r\n200 Command OK\r\n",context);
-    }
+    else
+      send_message_with_args(200,context,buffer);
 
     free(buffer);
     str_deallocate(varname);
@@ -1846,7 +1840,7 @@ int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_co
   command = str_tok(command_line," \t\r\n");
   if (!command) {
     do_site_help("vars_user",context);
-    return 1; 
+    return 1;
   }
   str_tolower(command);
 
@@ -1854,14 +1848,14 @@ int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_co
   if (!username) {
     do_site_help("vars_user",context);
     str_deallocate(command);
-    return 1; 
+    return 1;
   }
   user = GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
     send_message_with_args(501,context,"user does not exist");
     str_deallocate(command);
-    return 1; 
+    return 1;
   }
 
   varname = str_tok(command_line," \t\r\n");
@@ -1878,11 +1872,8 @@ int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_co
 
     if (ret)
       send_message_with_args(200,context,"an error occurred");
-    else {
-      send_message_raw("200-\r\n",context);
-      send_message_raw(buffer,context);
-      send_message_raw("\r\n200 Command OK\r\n",context);
-    }
+    else
+      send_message_with_args(200,context,buffer);
 
     free(buffer);
     str_deallocate(varname);
@@ -1981,7 +1972,7 @@ int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
     return 1;
   }
   *dstptr = '\0';
- 
+
   target = NULL;
   ptr++;
 
@@ -1990,7 +1981,7 @@ int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
     if (*ptr)
       target = (char*)ptr;
   }
- 
+
   if( target )
     ret = vfs_add_restricted( &mainConfig->vfs, vpath, ppath, target );
   else
@@ -2005,7 +1996,7 @@ int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
     send_message_with_args(501,context,tmp);
   }  else
     send_message_with_args(200,context,"VFSADD command ok");
-  
+
   free(vpath); free(ppath);
 
   return 0;
