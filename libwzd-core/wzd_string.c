@@ -480,10 +480,11 @@ int str_vsprintf(wzd_string_t *str, const char *format, va_list ap)
   /** vsnprintf modifies its last argument on some archs, we have to
    * work on a copy of the va_list
    */
-/*  va_copy(ap2,ap);*/
-  /** (autoconf.info)Function Portability: better use memcpy than va_copy
-   */
+#ifdef va_copy
+  va_copy(ap2,ap);
+#else
   memcpy (&ap2,&ap, sizeof(va_list));
+#endif
 
   result = vsnprintf(str->buffer, str->allocated, format, ap2);
 #ifndef WIN32
@@ -492,7 +493,11 @@ int str_vsprintf(wzd_string_t *str, const char *format, va_list ap)
   {
     _str_set_min_size(str, result+1);
     va_end(ap2);
+#ifdef va_copy
+  va_copy(ap2,ap);
+#else
     memcpy (&ap2,&ap, sizeof(va_list));
+#endif
     result = vsnprintf(str->buffer, str->allocated, format, ap2);
   }
   str->length = result;
@@ -508,7 +513,11 @@ int str_vsprintf(wzd_string_t *str, const char *format, va_list ap)
      }
      _str_set_min_size(str,str->allocated + (str->allocated >> 2) + 20);
      va_end(ap2);
+#ifdef va_copy
+     va_copy(ap2,ap);
+#else
      memcpy (&ap2,&ap, sizeof(va_list));
+#endif
      result = vsnprintf(str->buffer, str->allocated-1, format, ap2);
    }
    str->length = result;
