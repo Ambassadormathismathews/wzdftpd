@@ -102,37 +102,37 @@ char * create_filepath(const char *dir, const char * file){
 
 static int get_all_params(wzd_sfv_config * SfvConfig)
 {
-  char * ptr;
+  const char * ptr;
 
   SfvConfig->incomplete_symlink=0; /* default: false */
 
-  ptr = config_get_value (getlib_mainConfig()->cfg_file, "sfv", "progressmeter");
+  ptr = config_get_value (mainConfig->cfg_file, "sfv", "progressmeter");
   if (ptr == NULL) {
     out_log(LEVEL_HIGH,"Module SFV: missing parameter 'progressmeter' in section [sfv]\n");
     return 1;
   }
-  memcpy(SfvConfig->progressmeter,ptr,255);
+  strncpy(SfvConfig->progressmeter,ptr,255);
 
   ptr = config_get_value (getlib_mainConfig()->cfg_file, "sfv", "del_progressmeter");
   if (ptr == NULL) {
     out_log(LEVEL_HIGH,"Module SFV: missing parameter 'del_progressmeter' in section [sfv]\n");
     return 1;
   }
-  memcpy(SfvConfig->del_progressmeter,ptr,255);
+  strncpy(SfvConfig->del_progressmeter,ptr,255);
 
   ptr = config_get_value (getlib_mainConfig()->cfg_file, "sfv", "incomplete_indicator");
   if (ptr == NULL) {
     out_log(LEVEL_HIGH,"Module SFV: missing parameter 'incomplete_indicator' in section [sfv]\n");
     return 1;
   }
-  memcpy(SfvConfig->incomplete_indicator,ptr,255);
+  strncpy(SfvConfig->incomplete_indicator,ptr,255);
 
   ptr = config_get_value (getlib_mainConfig()->cfg_file, "sfv", "other_completebar");
   if (ptr == NULL) {
     out_log(LEVEL_HIGH,"Module SFV: missing parameter 'other_completebar' in section [sfv]\n");
     return 1;
   }
-  memcpy(SfvConfig->other_completebar,ptr,255);
+  strncpy(SfvConfig->other_completebar,ptr,255);
 
   return 0;
 }
