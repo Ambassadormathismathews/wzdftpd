@@ -108,7 +108,6 @@ EXPORTS
 	group_get_by_name
 	group_get_list
 	group_ip_add
-	group_ip_inlist
 	group_register
 	group_remove_user
 	group_unregister
@@ -127,10 +126,12 @@ EXPORTS
 	inet_pton
 	init_default_messages
 	ip_add
+	ip_add_check
 	ip_create
 	ip_free
 	ip_inlist
 	ip_list_check
+	ip_list_check_ident
 	ip_list_free
 	is_hidden_file
 	is_perm_file
@@ -251,7 +252,6 @@ EXPORTS
 	user_get_by_name
 	user_get_list
 	user_ip_add
-	user_ip_inlist
 	user_register
 	user_unregister
 	user_update

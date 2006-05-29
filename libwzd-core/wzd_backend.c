@@ -272,7 +272,7 @@ int backend_close(const char *backend)
       ret = GetLastError();
       out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
           tempname,mainConfig->backends->handle, ret,strerror(ret));
-      backend_clear_struct(&mainConfig->backends);
+      backend_clear_struct(mainConfig->backends);
 #else
       out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
           tempname,mainConfig->backends->handle);
