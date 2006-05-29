@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX- /O2 /I "../../../src/" /I "../../../" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /FD /c
+# ADD CPP /nologo /MT /W3 /O2 /I "../../../src/" /I "../../../" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX- /ZI /Od /I "../../../src/" /I "../../../" /D "HAVE_ZLIB" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /FD /GZ /c
+# ADD CPP /nologo /MTd /W3 /Gm /ZI /Od /I "../../../src/" /I "../../../" /D "HAVE_ZLIB" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SFV_EXPORTS" /FD /GZ /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
@@ -94,7 +94,19 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\..\..\modules\sfv\libwzd_sfv.c
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_indicators.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_main.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_sfv.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_site.c
 # End Source File
 # Begin Source File
 
@@ -110,7 +122,19 @@ SOURCE=.\sfv.def
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=..\..\..\modules\sfv\libwzd_sfv.h
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_indicators.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_main.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_sfv.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\libwzd_sfv_site.h
 # End Source File
 # Begin Source File
 
@@ -120,6 +144,30 @@ SOURCE=..\..\..\modules\sfv\libwzd_sfv_zip.h
 # Begin Group "Resource Files"
 
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+# End Group
+# Begin Group "minizip"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\minizip\crypt.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\minizip\ioapi.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\minizip\ioapi.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\minizip\unzip.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\modules\sfv\minizip\unzip.h
+# End Source File
 # End Group
 # Begin Source File
 

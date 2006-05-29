@@ -50,6 +50,7 @@ EXPORTS
 	config_get_integer
 	config_get_string
 	config_get_string_list
+	config_get_value
 	config_load_from_file
 	config_new
 	config_set_value
