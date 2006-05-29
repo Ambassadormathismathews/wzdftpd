@@ -6,6 +6,10 @@
    Copyright (C) 1998-2005 Gilles Vollant
 */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #ifdef HAVE_ZLIB
 
 #include <stdio.h>
@@ -182,3 +186,4 @@ void fill_fopen_filefunc (pzlib_filefunc_def)
 }
 
 #endif /* HAVE_ZLIB */
+

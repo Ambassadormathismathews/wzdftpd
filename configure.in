@@ -352,6 +352,7 @@ AC_CONFIG_FILES([Makefile
                  modules/debug/Makefile
                  modules/perl/Makefile
                  modules/sfv/Makefile
+                 modules/sfv/minizip/Makefile
                  modules/tcl/Makefile
                  modules/test/Makefile
                  modules/zeroconf/Makefile

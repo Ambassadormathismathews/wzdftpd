@@ -6,7 +6,7 @@ typedef struct {
   char del_progressmeter[256];
   char incomplete_indicator[256];
   char other_completebar[256];
-  BOOL incomplete_symlink;
+  unsigned short incomplete_symlink;
 } wzd_sfv_config;
 
 typedef struct {

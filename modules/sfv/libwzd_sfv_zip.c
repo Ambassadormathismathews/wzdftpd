@@ -59,7 +59,7 @@
 #include <libwzd-core/wzd_file.h>
 
 #ifdef HAVE_ZLIB
-#include ".\minizip\unzip.h"
+#include "./minizip/unzip.h"
 #endif
 
 #include "libwzd_sfv_zip.h"

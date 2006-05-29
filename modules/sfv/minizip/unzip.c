@@ -34,6 +34,10 @@ woven in by Terry Thorsen 1/2003.
   version without encryption capabilities).
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #ifdef HAVE_ZLIB
 
 #include <stdio.h>

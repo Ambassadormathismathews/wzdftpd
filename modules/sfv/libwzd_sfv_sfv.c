@@ -340,7 +340,7 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
       }
       ret = sfv_read(sfv_file,sfv);
 #ifdef DEBUG
-      out_err(LEVEL_CRITICAL,"sfv file: %s\n",entr->d_name);
+      out_err(LEVEL_CRITICAL,"sfv file: %s\n",file->filename);
 #endif
       free(sfv_file);
       if ( ret == -1 || sfv->sfv_list == NULL) {
@@ -456,7 +456,7 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
   if(ret!=0) return -1; /* Dont process if no sfv is found */
   
 #ifdef DEBUG
-  out_err(LEVEL_NORMAL,"sfv_hook_postupload user %s file %s, crc %08lX OK\n",username,filename,entry->crc);
+  out_err(LEVEL_NORMAL,"sfv_hook_postupload user %d file %s, crc %08lX OK\n",context->userid,filename,entry->crc);
 #endif
 
   real_crc = 0;

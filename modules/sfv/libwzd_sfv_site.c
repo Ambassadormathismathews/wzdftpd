@@ -64,7 +64,7 @@
 
 
 #ifdef HAVE_ZLIB
-#include ".\minizip\unzip.h"
+#include "./minizip/unzip.h"
 #endif
 
 /***** SITE SFV FUNCTIONS *****/
