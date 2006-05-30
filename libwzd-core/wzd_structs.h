@@ -297,19 +297,6 @@ typedef struct {
   unsigned long num_childs; /**< @brief total # of childs process created since server start */
 } wzd_server_stat_t;
 
-/********************** SERVER PARAMS *********************/
-
-/** @brief Server parameters: stored in server global memory space,
- * accessible to every thread.
- */
-typedef struct _wzd_param_t {
-  char * name;
-  void * param;
-  unsigned int length;
-
-  struct _wzd_param_t	* next_param;
-} wzd_param_t;
-
 /*************************** IP **************************/
 
 #include "wzd_ip.h"
@@ -486,7 +473,6 @@ struct wzd_config_t {
   CHTBL          * commands_list;
   wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
-  wzd_param_t		* param_list;
 
   wzd_bw_limiter	global_ul_limiter;
   wzd_bw_limiter	global_dl_limiter;

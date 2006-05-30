@@ -195,12 +195,9 @@ EXPORTS
 	send_message
 	send_message_with_args
 	send_message_raw
-	server_clear_param
-	server_get_param
 	server_mutex
 	server_mutex_set_fini
 	server_mutex_set_init
-	server_set_param
 	server_time
 	setlib_contextList
 	setlib_mainConfig

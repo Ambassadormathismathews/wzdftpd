@@ -1662,7 +1662,6 @@ void serverMainThreadExit(int retcode)
   wzd_cache_purge();
   vars_shm_free();
   utf8_end(mainConfig);
-  server_clear_param(&mainConfig->param_list);
   hook_free(&mainConfig->hook);
   hook_free_protocols();
   module_free(&mainConfig->module);

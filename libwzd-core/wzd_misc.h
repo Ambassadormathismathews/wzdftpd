@@ -70,10 +70,6 @@ time_t lget_file_ctime(int fd);
 /* renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst);
 
-int server_get_param(const char *name, void *buffer, unsigned int maxlen, wzd_param_t *param_list);
-int server_set_param(const char *name, void *data, unsigned int length, wzd_param_t **plist);
-void server_clear_param(wzd_param_t **plist);
-
 /** \brief Checks server status
  */
 int server_diagnose(void);
