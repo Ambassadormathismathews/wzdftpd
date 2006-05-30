@@ -274,7 +274,7 @@ int vars_user_addip(const char *username, const char *ip, wzd_config_t *config)
   } while (ip);
 
   /* commit to backend */
-  return backend_mod_user(config->backends->filename, username, user, _USER_IP);
+  return backend_mod_user(config->backends->filename, user->uid, user, _USER_IP);
 }
 
 int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
@@ -316,7 +316,7 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
   } while (ip);
 
   /* commit to backend */
-  return backend_mod_user(config->backends->filename, username, user, _USER_IP);
+  return backend_mod_user(config->backends->filename, user->uid, user, _USER_IP);
 }
 
 int vars_user_set(const char *username, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
@@ -439,7 +439,7 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   }
 
   /* commit to backend */
-  ret = backend_mod_user(config->backends->filename, username, user, mod_type);
+  ret = backend_mod_user(config->backends->filename, user->uid, user, mod_type);
 
   return ret;
 }
@@ -481,7 +481,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_user(config->backends->filename,username,user,_USER_ALL);
+  ret = backend_mod_user(config->backends->filename,user->uid,user,_USER_ALL);
 
   if (ret) { /* problem adding user */
     user_free(user);
@@ -602,7 +602,7 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
   }
 
   /* commit to backend */
-  ret = backend_mod_group(config->backends->filename, groupname, group, mod_type);
+  ret = backend_mod_group(config->backends->filename, group->gid, group, mod_type);
 
   return ret;
 }
@@ -645,7 +645,7 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
   strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_group(config->backends->filename,groupname,newgroup,_GROUP_ALL);
+  ret = backend_mod_group(config->backends->filename,newgroup->gid/* XXX find new gid */,newgroup,_GROUP_ALL);
 
   if (ret) { /* problem adding group */
     group_free(newgroup);

@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
   wzd_string_t * str;
   wzd_string_t ** str_array;
   unsigned int i;
+  const char * ptr;
   unsigned long c2 = C2;
   const char * data = "[GLOBAL]\n"
     "# comment 1\n"
@@ -36,6 +37,11 @@ int main(int argc, char *argv[])
   ret = config_load_from_data (file, data, strlen(data), 0 /* flags */);
 
   config_set_value(file, "GLOBAL", "key1", "new_value1");
+  ptr = config_get_value(file, "GLOBAL", "key1");
+  if (strcmp(ptr,"new_value1")!=0) {
+    fprintf(stderr,"config_get_value failed\n");
+    exit (-1);
+  }
 
   config_set_value(file, "GLOBAL", "key2", "value2");
 

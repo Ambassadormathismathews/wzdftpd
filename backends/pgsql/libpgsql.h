@@ -90,8 +90,8 @@ int _sql_check_connection(void);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
-int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type);
-int wpgsql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type);
+int wpgsql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type);
+int wpgsql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type);
 
 int wzd_row_get_uint(unsigned int *dst, PGresult * res, unsigned int index);
 

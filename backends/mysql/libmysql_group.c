@@ -49,7 +49,7 @@
 
 static int _group_update_ip(uid_t ref, wzd_group_t * group);
 
-static gid_t group_get_ref(const char * name, unsigned int ref);
+static unsigned int group_get_ref(gid_t gid, unsigned int ref);
 
 static gid_t _mysql_get_next_gid();
 
@@ -61,7 +61,7 @@ static gid_t _mysql_get_next_gid();
     modified = 1; \
   } while (0);
 
-int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
+int wmysql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
   MYSQL_RES   *res;
@@ -75,16 +75,16 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   if (!group) { /* delete user permanently */
     query = malloc(2048);
     /* we don't care about the results of the queries */
-    ref = group_get_ref(name, 0);
+    ref = group_get_ref(gid, 0);
     if (ref) {
       _wzd_run_update_query(query, 2048, "DELETE FROM groupip WHERE ref=%d", ref);
       _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE gref=%d", ref);
     }
-    _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", name);
+    _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE gid='%d'", gid);
     free(query);
 
     /** \todo use group_get_id_by_name */
-    registered_group = group_get_by_name(name);
+    registered_group = group_get_by_id(gid);
     if (registered_group != NULL) {
       registered_group = group_unregister(registered_group->gid);
       group_free(registered_group);
@@ -94,7 +94,7 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   }
 
   /* search if group exists, if not, create it */
-  ref = group_get_ref(name,0);
+  ref = group_get_ref(gid,0);
 
   if (ref) { /* group exists, just modify fields */
     query = malloc(query_length);
@@ -142,7 +142,7 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
     if (modified)
     {
-      snprintf(mod, 512, " WHERE groupname='%s'", name);
+      snprintf(mod, 512, " WHERE gid='%d'", gid);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
       if (mysql_query(&mysql, query) != 0) {
@@ -206,7 +206,7 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
       ))
     goto error_group_add;
 
-  ref = group_get_ref(group->groupname,0);
+  ref = group_get_ref(group->gid,0);
   if (!ref) goto error_group_add;
 
   /* Part 2, IP */
@@ -231,7 +231,7 @@ int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
 error_group_add:
   /* we don't care about the results of the queries */
-  ref = group_get_ref(group->groupname,0);
+  ref = group_get_ref(group->gid,0);
   if (ref) {
     _wzd_run_update_query(query, 2048, "DELETE FROM groupip WHERE ref=%d", ref);
     _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE gref=%d", ref);
@@ -240,7 +240,7 @@ error_group_add:
   free(query);
 
   /** \todo use group_get_id_by_name */
-  registered_group = group_get_by_name(name);
+  registered_group = group_get_by_id(gid);
   if (registered_group != NULL) {
     registered_group = group_unregister(registered_group->gid);
     group_free(registered_group);
@@ -344,21 +344,19 @@ static int _group_update_ip(uid_t ref, wzd_group_t * group)
 }
 
 
-static gid_t group_get_ref(const char * name, unsigned int ref)
+static unsigned int group_get_ref(gid_t gid, unsigned int ref)
 {
   char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  gid_t gid=0;
+  unsigned int ret_ref = 0;
   unsigned long ul;
   char *ptr;
-
-  if (!wzd_mysql_check_name(name)) return 0;
 
   if (ref) return ref;
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT groups.ref FROM groups WHERE groupname='%s'", name);
+  snprintf(query, 512, "SELECT groups.ref FROM groups WHERE gid='%d'", gid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -377,7 +375,7 @@ static gid_t group_get_ref(const char * name, unsigned int ref)
 
     ul = strtoul(row[0], &ptr, 0);
     if (ptr && *ptr == '\0') {
-      gid = (gid_t)ul;
+      ret_ref = (unsigned int)ul;
     }
 
   }
@@ -385,7 +383,7 @@ static gid_t group_get_ref(const char * name, unsigned int ref)
   mysql_free_result(res);
   free(query);
 
-  return gid;
+  return ret_ref;
 }
 
 static gid_t _mysql_get_next_gid()

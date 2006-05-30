@@ -86,8 +86,8 @@ int wzd_mysql_check_name(const char *name);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified);
 
-int wmysql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type);
-int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type);
+int wmysql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type);
+int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type);
 
 wzd_group_t * get_group_from_db_by_id(gid_t id);
 

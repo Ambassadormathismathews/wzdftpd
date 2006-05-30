@@ -210,6 +210,8 @@ wzd_group_t * group_unregister(gid_t gid)
   }
 
   WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
+  out_log(LEVEL_FLOOD,"DEBUG unregistered gid %d\n",gid);
+
   return group;
 }
 

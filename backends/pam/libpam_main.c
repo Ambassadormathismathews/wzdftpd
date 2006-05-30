@@ -231,12 +231,12 @@ gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 }
 
 /* if user does not exist, add it */
-int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
+int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 {
   return 1;
 }
 
-int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
+int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   return 1;
 }

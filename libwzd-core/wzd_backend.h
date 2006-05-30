@@ -50,8 +50,8 @@ struct wzd_backend_t {
   uid_t (*backend_find_user) (const char *, wzd_user_t *);
   gid_t (*backend_find_group) (const char *, wzd_group_t *);
   int (*backend_chpass) (const char *, const char *);
-  int (*backend_mod_user) (const char *, wzd_user_t *, unsigned long);
-  int (*backend_mod_group) (const char *, wzd_group_t *, unsigned long);
+  int (*backend_mod_user) (uid_t, wzd_user_t *, unsigned long);
+  int (*backend_mod_group) (gid_t, wzd_group_t *, unsigned long);
   int (*backend_commit_changes) (void);
 
   int (*backend_exit)(void);
@@ -82,7 +82,8 @@ struct wzd_backend_t {
 #define	_USER_USERSLOTS		1<<17
 #define	_USER_LEECHSLOTS	1<<18
 #define	_USER_RATIO		1<<19
-#define _USER_ALL	0xffffffff
+#define _USER_ALL               0x0000ffff
+#define _USER_CREATE            0x01000000
 
 #define _GROUP_NOTHING		0
 #define	_GROUP_GROUPNAME	1<<0
@@ -96,7 +97,8 @@ struct wzd_backend_t {
 #define	_GROUP_NUMLOGINS	1<<8
 #define	_GROUP_TAGLINE		1<<9
 #define	_GROUP_GID		1<<10
-#define _GROUP_ALL	0xffffffff
+#define _GROUP_ALL              0x0000ffff
+#define _GROUP_CREATE           0x01000000
 
 
 char *backend_get_version(wzd_backend_def_t *backend);
@@ -160,12 +162,12 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
 /* if user does not exist, add it
  * if struct user is NULL, delete user
  */
-int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type);
+int backend_mod_user(const char *backend, uid_t uid, wzd_user_t * user, unsigned long mod_type);
 
 /* if group does not exist, add it
  * if struct group is null, delete group
  */
-int backend_mod_group(const char *backend, const char *name, wzd_group_t * group, unsigned long mod_type);
+int backend_mod_group(const char *backend, gid_t gid, wzd_group_t * group, unsigned long mod_type);
 
 int backend_commit_changes(const char *backend);
 

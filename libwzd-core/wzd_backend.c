@@ -627,7 +627,7 @@ int backend_inuse(const char *backend)
 }
 
 /* if user does not exist, add it */
-int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, unsigned long mod_type)
+int backend_mod_user(const char *backend, uid_t uid, wzd_user_t * user, unsigned long mod_type)
 {
   int ret;
   wzd_backend_t * b;
@@ -636,7 +636,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
   WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
   if ( (b = mainConfig->backends->b) && b->backend_mod_user)
-    ret = b->backend_mod_user(name,user,mod_type);
+    ret = b->backend_mod_user(uid,user,mod_type);
   else {
     if (b == NULL)
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);
@@ -680,7 +680,7 @@ int backend_mod_user(const char *backend, const char *name, wzd_user_t * user, u
 }
 
 /* if group does not exist, add it */
-int backend_mod_group(const char *backend, const char *name, wzd_group_t * group, unsigned long mod_type)
+int backend_mod_group(const char *backend, gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   int ret;
   wzd_backend_t * b;
@@ -689,7 +689,7 @@ int backend_mod_group(const char *backend, const char *name, wzd_group_t * group
   WZD_MUTEX_LOCK(SET_MUTEX_BACKEND);
 
   if ( (b = mainConfig->backends->b) && b->backend_mod_group)
-    ret = b->backend_mod_group(name,group,mod_type);
+    ret = b->backend_mod_group(gid,group,mod_type);
   else {
     if (b == NULL)
       out_log(LEVEL_CRITICAL,"Attempt to call a backend function on %s:%d while there is no available backend !\n", __FILE__, __LINE__);

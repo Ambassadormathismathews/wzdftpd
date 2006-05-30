@@ -55,7 +55,7 @@ static int _user_update_stats(uid_t ref, wzd_user_t * user);
 
 static uid_t _mysql_get_next_uid();
 
-static uid_t user_get_ref(const char * name, unsigned int ref);
+static uid_t user_get_ref(uid_t uid, unsigned int ref);
 
 char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, unsigned int modified)
 {
@@ -77,7 +77,7 @@ char * _append_safely_mod(char *query, unsigned int *query_length, char *mod, un
   } while (0);
 
 /* if user does not exist, add it */
-int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
+int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 {
   char *query, *mod;
   MYSQL_RES   *res;
@@ -91,17 +91,17 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
   if (!user) { /* delete user permanently */
     query = malloc(2048);
     /* we don't care about the results of the queries */
-    ref = user_get_ref(name, 0);
+    ref = user_get_ref(uid, 0);
     if (ref) {
       _wzd_run_update_query(query, 2048, "DELETE FROM stats WHERE ref=%d", ref);
       _wzd_run_update_query(query, 2048, "DELETE FROM userip WHERE ref=%d", ref);
       _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE uref=%d", ref);
     }
-    _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE username='%s'", name);
+    _wzd_run_update_query(query, 2048, "DELETE FROM users WHERE uid='%d'", uid);
     free(query);
 
     /** \todo use user_get_id_by_name */
-    registered_user = user_get_by_name(name);
+    registered_user = user_get_by_id(uid);
     if (registered_user != NULL) {
       registered_user = user_unregister(registered_user->uid);
       user_free(registered_user);
@@ -111,7 +111,7 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
   }
 
   /* search if user exists, if not, create it */
-  ref = user_get_ref(name,0);
+  ref = user_get_ref(uid,0);
 
   if (ref) { /* user exists, just modify fields */
     query = malloc(query_length);
@@ -194,7 +194,7 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 
     if (modified)
     {
-      snprintf(mod, 512, " WHERE username='%s'", name);
+      snprintf(mod, 512, " WHERE uid='%d'", uid);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
       if (mysql_query(&mysql, query) != 0) {
@@ -239,9 +239,9 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 
   /* create new user */
 
-  registered_user = user_get_by_name(name);
+  registered_user = user_get_by_id(uid);
   if (registered_user) {
-    out_log(LEVEL_INFO,"WARNING: user %s is not present in DB but already registered\n");
+    out_log(LEVEL_INFO,"WARNING: user (uid %d) is not present in DB but already registered\n",uid);
     return -1;
   }
 
@@ -276,7 +276,7 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
       goto error_user_add;
   }
 
-  ref = user_get_ref(user->username,0);
+  ref = user_get_ref(user->uid,0);
   if (!ref) goto error_user_add;
 
   /* Part 2, ugr */
@@ -313,7 +313,7 @@ int wmysql_mod_user(const char *name, wzd_user_t * user, unsigned long mod_type)
 
 error_user_add:
   /* we don't care about the results of the queries */
-  ref = user_get_ref(user->username,0);
+  ref = user_get_ref(user->uid,0);
   if (ref) {
     _wzd_run_update_query(query, 2048, "DELETE FROM stats WHERE ref=%d", ref);
     _wzd_run_update_query(query, 2048, "DELETE FROM userip WHERE ref=%d", ref);
@@ -323,7 +323,7 @@ error_user_add:
   free(query);
 
   /** \todo use user_get_id_by_name */
-  registered_user = user_get_by_name(name);
+  registered_user = user_get_by_id(uid);
   if (registered_user != NULL) {
     registered_user = user_unregister(registered_user->uid);
     user_free(registered_user);
@@ -571,21 +571,19 @@ static int _user_update_stats(uid_t ref, wzd_user_t * user)
   return ret;
 }
 
-static uid_t user_get_ref(const char * name, unsigned int ref)
+static uid_t user_get_ref(uid_t uid, unsigned int ref)
 {
   char *query;
   MYSQL_RES   *res;
   MYSQL_ROW    row;
-  unsigned int uid=0;
+  unsigned int ret_ref=0;
   unsigned long ul;
   char *ptr;
-
-  if (!wzd_mysql_check_name(name)) return 0;
 
   if (ref) return ref;
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT users.ref FROM users WHERE username='%s'", name);
+  snprintf(query, 512, "SELECT users.ref FROM users WHERE users.uid'%d'", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
@@ -604,7 +602,7 @@ static uid_t user_get_ref(const char * name, unsigned int ref)
 
     ul = strtoul(row[0], &ptr, 0);
     if (ptr && *ptr == '\0') {
-      uid = (unsigned int)ul;
+      ret_ref = (unsigned int)ul;
     }
 
   }
@@ -612,7 +610,7 @@ static uid_t user_get_ref(const char * name, unsigned int ref)
   mysql_free_result(res);
   free(query);
 
-  return uid;
+  return ret_ref;
 }
 
 static uid_t _mysql_get_next_uid()

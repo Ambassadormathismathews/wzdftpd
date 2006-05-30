@@ -3,9 +3,13 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- remove wzd_config_t->param_list
+'********'
 - recode site backend
 '********'
 - use uid for mod_user (instead of username)
+    -> use special uid/gid when creating user/group / OK
+    -> recode do_site_grpren
 '********'
 - lower noise when using syslog
 '********'

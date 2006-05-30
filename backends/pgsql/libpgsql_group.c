@@ -49,7 +49,7 @@
 
 static int _group_update_ip(uid_t ref, wzd_group_t * group);
 
-static gid_t group_get_ref(const char * name, unsigned int ref);
+static unsigned int group_get_ref(gid_t gid, unsigned int ref);
 
 
 #define APPEND_STRING_TO_QUERY(format, s, query, query_length, mod, modified) \
@@ -59,7 +59,7 @@ static gid_t group_get_ref(const char * name, unsigned int ref);
     modified = 1; \
   } while (0);
 
-int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_type)
+int wpgsql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   char *query, *mod;
   int modified = 0, update_registry = 0;
@@ -72,16 +72,16 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   if (!group) { /* delete group permanently */
     query = malloc(2048);
     /* we don't care about the results of the queries */
-    ref = group_get_ref(name, 0);
+    ref = group_get_ref(gid, 0);
     if (ref) {
       _wzd_run_update_query(query, 2048, "DELETE FROM groupip WHERE ref=%d", ref);
       _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE gref=%d", ref);
     }
-    _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE groupname='%s'", name);
+    _wzd_run_update_query(query, 2048, "DELETE FROM groups WHERE gid='%d'", gid);
     free(query);
 
     /** \todo use group_get_id_by_name */
-    registered_group = group_get_by_name(name);
+    registered_group = group_get_by_id(gid);
     if (registered_group != NULL) {
       registered_group = group_unregister(registered_group->gid);
       group_free(registered_group);
@@ -91,7 +91,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
   }
 
   /* search if group exists, if not, create it */
-  ref = group_get_ref(name,0);
+  ref = group_get_ref(gid,0);
 
   if (ref) { /* group exists, just modify fields */
     query = malloc(query_length);
@@ -138,7 +138,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
     if (modified)
     {
-      snprintf(mod, 512, " WHERE groupname='%s'", name);
+      snprintf(mod, 512, " WHERE gid='%d'", gid);
       query = _append_safely_mod(query, &query_length, mod, 0);
 
       if (_wzd_run_update_query(query,query_length,query) != 0)
@@ -178,7 +178,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
   /* create new group */
 
-  registered_group = group_get_by_name(name);
+  registered_group = group_get_by_id(gid);
   if (registered_group) {
     out_log(LEVEL_INFO,"WARNING: group %s is not present in DB but already registered\n");
     return -1;
@@ -201,7 +201,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
       ))
     goto error_group_add;
 
-  ref = group_get_ref(group->groupname,0);
+  ref = group_get_ref(group->gid,0);
   if (!ref) goto error_group_add;
 
   /* Part 2, IP */
@@ -242,7 +242,7 @@ int wpgsql_mod_group(const char *name, wzd_group_t * group, unsigned long mod_ty
 
 error_group_add:
   /* we don't care about the results of the queries */
-  ref = group_get_ref(group->groupname,0);
+  ref = group_get_ref(group->gid,0);
   if (ref) {
     _wzd_run_update_query(query, 2048, "DELETE FROM groupip WHERE ref=%d", ref);
     _wzd_run_update_query(query, 2048, "DELETE FROM ugr WHERE gref=%d", ref);
@@ -251,7 +251,7 @@ error_group_add:
   free(query);
 
   /** \todo use group_get_id_by_name */
-  registered_group = group_get_by_name(name);
+  registered_group = group_get_by_id(gid);
   if (registered_group != NULL) {
     registered_group = group_unregister(registered_group->gid);
     group_free(registered_group);
@@ -332,32 +332,31 @@ static int _group_update_ip(gid_t ref, wzd_group_t * group)
 }
 
 
-static gid_t group_get_ref(const char * name, unsigned int ref)
+static unsigned int group_get_ref(gid_t gid, unsigned int ref)
 {
   char query[512];
-  gid_t gid=0;
+  unsigned int ret_ref=0;
   unsigned long ul;
   int index;
   char *ptr;
   PGresult * res;
 
   /** \bug XXX FIXME 0 is a valid gid - should it be -1 ? */
-  if (!wzd_pgsql_check_name(name)) return 0;
 
   if (ref) return ref;
 
-  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.ref FROM groups WHERE groupname='%s'",name)) == NULL) return 0;
+  if ( (res = _wzd_run_select_query(query,512,"SELECT groups.ref FROM groups WHERE gid='%d'",gid)) == NULL) return 0;
 
   for (index=0; index<PQntuples(res); index++) {
     ul = strtoul(PQgetvalue(res,0,0), &ptr, 0);
     if (ptr && *ptr == '\0') {
-      gid = (gid_t)ul;
+      ret_ref = (unsigned int)ul;
     }
 
   }
 
   PQclear(res);
 
-  return gid;
+  return ret_ref;
 }
 

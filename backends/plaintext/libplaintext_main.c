@@ -175,17 +175,59 @@ static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * group)
 
 
 /* if user does not exist, add it */
-static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_type)
+static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 {
   wzd_user_t * loop_user;
 
-  loop_user = user_get_by_name(name);
+  if (mod_type == _USER_CREATE) { /* user not found, add it */
+    char buffer[MAX_PASS_LENGTH];
 
-  if (loop_user != NULL) { /* user exist */
+    if (!user) return -1;
+
+    /** \todo check if user is valid (homedir != NULL etc.) */
+
+    loop_user = user_get_by_name(user->username);
+    if (loop_user != NULL) return -2; /* user already exists */
+
+    if (user_count >= user_count_max) return -1;
+/*    fprintf(stderr,"Add user %s\n",name);*/
+    DIRNORM(user->rootpath,strlen(user->rootpath),0);
+
+    memcpy(buffer, user->userpass, MAX_PASS_LENGTH);
+    if (strcasecmp(buffer,"%")==0) {
+      /* special case: if loop_user->userpass == "%" then any pass
+       *  is accepted */
+      strcpy(buffer,user->userpass);
+    } else {
+      /* TODO choose encryption func ? */
+      if (changepass(user->username,buffer,user->userpass, MAX_PASS_LENGTH-1)) {
+        memset(buffer,0,MAX_PASS_LENGTH);
+        return -1;
+      }
+    }
+    memset(buffer,0,MAX_PASS_LENGTH);
+    /* find a free uid */
+    user->uid = user_find_free_uid(1);
+
+    if (user->uid != (uid_t)-1) {
+      int err;
+      err = user_register(user,1 /* XXX backend id */);
+      if ((uid_t)err != user->uid) {
+        char errbuf[1024];
+        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register user %s\n",user->username);
+        ERRLOG(errbuf);
+      }
+    }
+
+    user_count++;
+  } else { /* modification */
+
+    loop_user = user_get_by_id(uid);
+
 /*    fprintf(stderr,"User %s exist\n",name);*/
     if (!user) { /* delete user permanently */
 
-      loop_user = user_unregister(loop_user->uid);
+      loop_user = user_unregister(uid);
       user_free(loop_user);
 
       return 0;
@@ -201,7 +243,7 @@ static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_t
           strcpy(buffer,user->userpass);
         } else {
           /* TODO choose encryption func ? */
-          if (changepass(name,buffer,user->userpass, MAX_PASS_LENGTH-1)) {
+          if (changepass(user->username,buffer,user->userpass, MAX_PASS_LENGTH-1)) {
             memset(buffer,0,MAX_PASS_LENGTH);
             return -1;
           }
@@ -255,53 +297,45 @@ static int FCN_MOD_USER(const char *name, wzd_user_t * user, unsigned long mod_t
     if (mod_type & _USER_USERSLOTS) loop_user->user_slots = user->user_slots;
     if (mod_type & _USER_LEECHSLOTS) loop_user->leech_slots = user->leech_slots;
     if (mod_type & _USER_RATIO) loop_user->ratio = user->ratio;
-  } else { /* user not found, add it */
-    if (!user) return -1;
-    if (user_count >= user_count_max) return -1;
-/*    fprintf(stderr,"Add user %s\n",name);*/
-    DIRNORM(user->rootpath,strlen(user->rootpath),0);
-    loop_user = wzd_malloc(sizeof(wzd_user_t));
-    memcpy(loop_user,user,sizeof(wzd_user_t));
-    if (strcasecmp(user->userpass,"%")==0) {
-      /* special case: if loop_user->userpass == "%" then any pass
-       *  is accepted */
-      strcpy(loop_user->userpass,user->userpass);
-    } else {
-      /* TODO choose encryption func ? */
-      if (changepass_crypt(user->userpass, loop_user->userpass, MAX_PASS_LENGTH-1)) {
-        return -1;
-      }
-    }
-    /* find a free uid */
-    loop_user->uid = user_find_free_uid(1);
-
-    /** \todo check if user is valid (uid != -1, homedir != NULL etc.) */
-
-    if (loop_user->uid != (uid_t)-1) {
-      int err;
-      err = user_register(loop_user,1 /* XXX backend id */);
-      if ((uid_t)err != loop_user->uid) {
-        char errbuf[1024];
-        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register user %s\n",loop_user->username);
-        ERRLOG(errbuf);
-      }
-    }
-
-    user_count++;
-  } /* if (loop_user == NULL) */
+  } /* if (mod_type == _USER_CREATE) */
 
   write_user_file();
 
   return 0;
 }
 
-static int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mod_type)
+static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   wzd_group_t * loop_group;
 
-  loop_group = group_get_by_name(name);
+  if (mod_type == _GROUP_CREATE) { /* group not found, add it */
+    if (!group) return -1;
 
-  if (loop_group != NULL) { /* group exist */
+    /** \todo check if group is valid (homedir != NULL etc.) */
+
+    loop_group = group_get_by_name(group->groupname);
+    if (loop_group != NULL) return -2; /* group already exists */
+
+    if (group_count >= group_count_max) return -1;
+/*    fprintf(stderr,"Add group %s\n",name);*/
+    DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
+
+    group->gid = group_find_free_gid(1);
+
+    if (group->gid != (gid_t)-1) {
+      int err;
+      err = group_register(group,1 /* XXX backend id */);
+      if ((gid_t)err != group->gid) {
+        char errbuf[1024];
+        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register group %s\n",group->groupname);
+        ERRLOG(errbuf);
+      }
+    }
+
+    group_count++;
+  } else { /* modification */
+    loop_group = group_get_by_id(gid);
+
 /*    fprintf(stderr,"User %s exist\n",name);*/
     if (!group) { /* delete group permanently */
 
@@ -336,29 +370,7 @@ static int FCN_MOD_GROUP(const char *name, wzd_group_t * group, unsigned long mo
         ip_list_free(old_list);
       }
     }
-  } else { /* group not found, add it */
-    if (!group) return -1;
-    if (group_count >= group_count_max) return -1;
-/*    fprintf(stderr,"Add group %s\n",name);*/
-    DIRNORM(group->defaultpath,strlen(group->defaultpath),0);
-    loop_group = wzd_malloc(sizeof(wzd_group_t));
-    memcpy(loop_group,group,sizeof(wzd_group_t));
-    loop_group->gid = group_find_free_gid(1);
-
-    /** \todo check if group is valid (gid != -1, homedir != NULL etc.) */
-
-    if (loop_group->gid != (gid_t)-1) {
-      int err;
-      err = group_register(loop_group,1 /* XXX backend id */);
-      if ((gid_t)err != loop_group->gid) {
-        char errbuf[1024];
-        snprintf(errbuf,sizeof(errbuf),"ERROR Could not register group %s\n",loop_group->groupname);
-        ERRLOG(errbuf);
-      }
-    }
-
-    group_count++;
-  } /* group == NULL */
+  } /* if (mod_type == _GROUP_CREATE) */
 
   write_user_file();
 

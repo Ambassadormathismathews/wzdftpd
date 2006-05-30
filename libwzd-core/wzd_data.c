@@ -232,7 +232,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 
       /* user will be invalidated */
-      backend_mod_user(mainConfig->backends->filename, user->username, user, _USER_BYTESDL | _USER_CREDITS);
+      backend_mod_user(mainConfig->backends->filename, user->uid, user, _USER_BYTESDL | _USER_CREDITS);
 
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = server_time;
@@ -291,7 +291,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
 
       /* user will be invalidated */
-      backend_mod_user(mainConfig->backends->filename, user->username, user, _USER_BYTESUL | _USER_CREDITS);
+      backend_mod_user(mainConfig->backends->filename, user->uid, user, _USER_BYTESUL | _USER_CREDITS);
 
       context->current_action.token = TOK_UNKNOWN;
       context->idle_time_start = server_time;

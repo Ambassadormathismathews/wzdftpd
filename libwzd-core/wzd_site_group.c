@@ -140,7 +140,7 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,str_tochar(groupname),newgroup,_GROUP_ALL);
+  ret = backend_mod_group(mainConfig->backends->filename,0,newgroup,_GROUP_CREATE);
 
   str_deallocate(groupname);
 
@@ -195,12 +195,12 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     str_deallocate(groupname);
     return 0;
   }
+  str_deallocate(groupname);
 
   /* GAdmin ? */
   if (is_gadmin)
   {
     ret = send_message_with_args(501,context,"Gadmin can't delete groups");
-    str_deallocate(groupname);
     return 0;
   }
 
@@ -233,8 +233,7 @@ int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   /* TODO XXX FIXME delete users belonging only to this group ? */
 
   /* commit changes to backend */
-  backend_mod_group(mainConfig->backends->filename,str_tochar(groupname),NULL,_GROUP_ALL);
-  str_deallocate(groupname);
+  backend_mod_group(mainConfig->backends->filename,gid,NULL,_GROUP_ALL);
 
   ret = send_message_raw("200 Group deleted\r\n",context);
   return 0;
@@ -300,7 +299,7 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   str_deallocate(newgroupname);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,oldgroup->groupname,&group,_GROUP_GROUPNAME);
+  ret = backend_mod_group(mainConfig->backends->filename,oldgroup->gid,&group,_GROUP_GROUPNAME);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -435,7 +434,7 @@ int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   str_deallocate(ip);
 
   /* commit to backend */
-  backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
+  backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
 
   ret = send_message_with_args(200,context,"Group ip added");
   return 0;
@@ -518,7 +517,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
       ret = send_message_with_args(501,context,buffer);
       return 0;
     }
-    backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
+    backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
     ret = send_message_with_args(200,context,"Group ip removed");
     return 0;
   } /* if (*ptr=='\0') */
@@ -534,7 +533,7 @@ int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   str_deallocate(ip);
 
   /* commit to backend */
-  backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_IP);
+  backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
   ret = send_message_with_args(200,context,"Group ip removed");
 
   return 0;
@@ -597,7 +596,7 @@ int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   group->ratio = ratio;
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,group->groupname,group,_GROUP_RATIO);
+  ret = backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -683,6 +682,7 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   int ret;
   wzd_group_t * group;
   wzd_user_t * me;
+  gid_t gid;
 
   me = GetUserByID(context->userid);
 
@@ -714,6 +714,8 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
     str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
     return 0;
   }
+  str_deallocate(groupname);
+  gid = group->gid;
 
   /* find modification type */
   mod_type = _GROUP_NOTHING;
@@ -738,7 +740,7 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
       fs_filestat_t s;
       if (fs_file_stat(str_tochar(value),&s) || !S_ISDIR(s.mode)) {
         ret = send_message_with_args(501,context,"Homedir does not exist");
-        str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
+        str_deallocate(field); str_deallocate(value);
         return 0;
       }
     }
@@ -777,22 +779,22 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
       if ((!me->flags || !strchr(me->flags,FLAG_SITEOP)) && ul==0) {
         /* wants a leech access for group, but is not siteop */
         ret = send_message_with_args(501,context,"Only siteops can do that");
-        str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
+        str_deallocate(field); str_deallocate(value);
         return 0;
       }
       mod_type = _GROUP_RATIO; group->ratio = ul;
     }
   }
   else {
-    str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
+    str_deallocate(field); str_deallocate(value);
     ret = send_message_with_args(501,context,"syntax error, unknow field");
     return 0;
   }
 
   /* commit to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,str_tochar(groupname),group,mod_type);
+  ret = backend_mod_group(mainConfig->backends->filename,gid,group,mod_type);
 
-  str_deallocate(groupname); str_deallocate(field); str_deallocate(value);
+  str_deallocate(field); str_deallocate(value);
 
   if (ret)
     ret = send_message_with_args(501,context,"Problem occured when committing");

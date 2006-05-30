@@ -205,7 +205,7 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   }
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,str_tochar(username),user,_USER_ALL);
+  ret = backend_mod_user(mainConfig->backends->filename,0,user,_USER_CREATE);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem adding user");
@@ -278,7 +278,7 @@ int do_site_deluser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   user->flags[length+1] = '\0';
 
   /* commit changes to backend */
-  backend_mod_user(mainConfig->backends->filename,user->username,user,_USER_FLAGS);
+  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
 
   ret = send_message_with_args(200,context,"User deleted");
   return 0;
@@ -298,8 +298,7 @@ int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   char *ptr;
   wzd_string_t * username;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   int length;
   short is_gadmin;
 
@@ -312,25 +311,25 @@ int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
     return 0;
   }
 
-  /* check if user already exists */
-  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
+  /* check if user exists */
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exist");
-    str_deallocate(username);
     return 0;
   }
-  str_deallocate(username);
 
   /* GAdmin ? */
   if (is_gadmin)
   {
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+  if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
       ret = send_message_with_args(501,context,"You can't change this user");
       return 0;
     }
   }
 
   /* unmark user as deleted */
-  if ( (ptr = strchr(user.flags,FLAG_DELETED)) == NULL ) {
+  if ( (ptr = strchr(user->flags,FLAG_DELETED)) == NULL ) {
     ret = send_message_with_args(501,context,"User is not marked as deleted");
     return 0;
   }
@@ -343,7 +342,7 @@ int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   }
 
   /* commit changes to backend */
-  backend_mod_user(mainConfig->backends->filename,user.username,&user,_USER_FLAGS);
+  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
 
   ret = send_message_with_args(200,context,"User undeleted");
   return 0;
@@ -357,8 +356,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
 {
   wzd_string_t * username;
   int ret;
-  wzd_user_t user, * me;
-  int uid;
+  wzd_user_t * user, * me;
   short is_gadmin;
   const char *ptr;
 
@@ -370,37 +368,34 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
   /* TODO read backend */
 
   if (username) { /* case 1: name was given */
-    /* check if user already exists */
-    if ( backend_find_user(str_tochar(username),&user,&uid) ) {
+    /* check if user exists */
+    user = GetUserByName(str_tochar(username));
+    str_deallocate(username);
+    if ( !user ) {
       ret = send_message_with_args(501,context,"User does not exist");
-      str_deallocate(username);
       return 0;
     }
 
     /* unmark user as deleted */
-    if ( (ptr = strchr(user.flags,FLAG_DELETED)) == NULL ) {
+    if ( (ptr = strchr(user->flags,FLAG_DELETED)) == NULL ) {
       ret = send_message_with_args(501,context,"User is not marked as deleted");
-      str_deallocate(username);
       return 0;
     }
 
     /* gadmin ? */
     if (is_gadmin)
     {
-      if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+      if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
         ret = send_message_with_args(501,context,"You can't purge this user (GAdmin limits)");
-        str_deallocate(username);
         return 0;
       }
     }
 
     /* commit changes to backend */
-    backend_mod_user(mainConfig->backends->filename,str_tochar(username),NULL,_USER_ALL);
-    str_deallocate(username);
+    backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
   } else { /* if (username) */
     /* TODO iterate users and purge those marked as deleted */
     unsigned int i;
-    wzd_user_t * user;
     int * uid_list;
     uid_list = (int*)backend_get_user(-2);
 
@@ -419,7 +414,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
             }
           }
           /* commit changes to backend */
-          backend_mod_user(mainConfig->backends->filename,user->username,NULL,_USER_ALL);
+          backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
         }
       }
       wzd_free (uid_list);
@@ -497,7 +492,7 @@ int do_site_addip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   } while (ip);
 
   /* commit to backend */
-  backend_mod_user(mainConfig->backends->filename,user->username,user,_USER_IP);
+  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IP);
 
   ret = send_message_with_args(200,context,"User ip(s) added");
   return 0;
@@ -599,7 +594,7 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   } while (ip);
 
   /* commit to backend */
-  backend_mod_user(mainConfig->backends->filename,user->username,user,_USER_IP);
+  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IP);
   ret = send_message_with_args(200,context,"User ip(s) removed");
   return 0;
 }
@@ -630,12 +625,12 @@ int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t
     *dst_ptr++ = FLAG_COLOR;
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
-    ret = backend_mod_user(mainConfig->backends->filename,me->username,me,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_FLAGS);
     ret = send_message_with_args(200,context,"color mode ON");
   } else {
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
-    ret = backend_mod_user(mainConfig->backends->filename,me->username,me,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_FLAGS);
     ret = send_message_with_args(200,context,"color mode OFF");
   }
   return 0;
@@ -681,6 +676,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   unsigned int i;
   short is_gadmin;
   char old_username[HARD_USERNAME_LENGTH];
+  uid_t uid;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -710,6 +706,8 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     str_deallocate(field);
     return 0;
   }
+
+  uid = user->uid;
 
   /* GAdmin ? */
   if (is_gadmin)
@@ -893,7 +891,7 @@ int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   i = user->uid;
 
   /* commit to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,old_username,user,mod_type);
+  ret = backend_mod_user(mainConfig->backends->filename,uid,user,mod_type);
 
   /* user has been modified, we have to refresh cache entry */
   user = GetUserByID(i);
@@ -950,11 +948,11 @@ int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
     return 0;
   }
 
-  /* check if user  exists */
+  /* check if user exists */
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"User does not exist");
+    ret = send_message_with_args(501,context,"user does not exist");
     return 0;
   }
 
@@ -976,7 +974,7 @@ int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
     if (newgroupid != (unsigned int)-1) {
       ret=0;
       for (i=0; i<user->group_num; i++)
-        if (newgroupid == user->groups[i]) { ret=1; break; } 
+        if (newgroupid == user->groups[i]) { ret=1; break; }
       if (ret) { /* remove from group, shift them */
         user->groups[i] = 0;
         for (;i<user->group_num-1; i++)
@@ -1000,7 +998,7 @@ int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   } /* while (group_name) */
 
   /* commit to backend */
-  backend_mod_user(mainConfig->backends->filename,user->username,user,mod_type);
+  backend_mod_user(mainConfig->backends->filename,user->uid,user,mod_type);
 
   ret = send_message_with_args(200,context,"User field change successfull");
   return 0;
@@ -1022,8 +1020,7 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   char *ptr=NULL;
   wzd_string_t * str_ratio, *username;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   unsigned int ratio, oldratio;
   short is_gadmin;
 
@@ -1042,10 +1039,11 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     return 0;
   }
 
-  /* check if user already exists */
-  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
-    str_deallocate(username); str_deallocate(str_ratio);
+  /* check if user exists */
+  user=GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
+    ret = send_message_with_args(501,context,"user does not exist");
     return 0;
   }
 
@@ -1053,7 +1051,6 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 
   if (*ptr!='\0') {
     do_site_help_chratio(context);
-    str_deallocate(username);
     return 0;
   }
   str_deallocate(str_ratio);
@@ -1062,10 +1059,9 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   if (is_gadmin)
   {
     /* GAdmins cannot change user from different group */
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0])
     {
       ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
-      str_deallocate(username);
       return 0;
     }
   }
@@ -1075,15 +1071,15 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   {
     if (me->leech_slots == 0) {
       ret = send_message_with_args(501,context,"No more slots available");
-      str_deallocate(username); str_deallocate(str_ratio);
+      str_deallocate(str_ratio);
       return 0;
     }
   }
-  oldratio = user.ratio;
-  user.ratio = ratio;
+  oldratio = user->ratio;
+  user->ratio = ratio;
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,str_tochar(username),&user,_USER_RATIO);
+  ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_RATIO);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
@@ -1097,7 +1093,6 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     }
     ret = send_message_with_args(200,context,"User ratio changed");
   }
-  str_deallocate(username);
   return 0;
 }
 
@@ -1113,8 +1108,7 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   wzd_string_t *newflags = NULL;
   wzd_string_t * username = NULL;
   int ret;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t * user;
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
@@ -1125,14 +1119,15 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   }
 
   /* check if user exists */
-  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exist");
-    str_deallocate(username); str_deallocate(newflags);
+  user=GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
+    ret = send_message_with_args(501,context,"user does not exist");
     return 0;
   }
 
   if (!newflags) {
-    snprintf(buffer,1023,"Flags for %s: %s",str_tochar(username),user.flags);
+    snprintf(buffer,1023,"Flags for %s: %s",user->username,user->flags);
 
     ret = send_message_with_args(200,context,buffer);
   } else {
@@ -1144,33 +1139,33 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
     /* GAdmin ? */
     if (is_gadmin)
     {
-      if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0]) {
+      if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
         ret = send_message_with_args(501,context,"You can't change this user");
-        str_deallocate(username); str_deallocate(newflags);
+        str_deallocate(newflags);
         return 0;
       }
     }
     /* authorized ? */
     if (!strchr(me->flags,FLAG_SITEOP)) {
       ret = send_message_with_args(501,context,"You can't change flags for other users");
-      str_deallocate(username); str_deallocate(newflags);
+      str_deallocate(newflags);
       return 0;
     }
 
-    if (_user_changeflags(&user,str_tochar(newflags))) {
+    if (_user_changeflags(user,str_tochar(newflags))) {
       ret = send_message_with_args(501,context,"Error occurred changing flags");
-      str_deallocate(username); str_deallocate(newflags);
+      str_deallocate(newflags);
       return 0;
     }
     /* commit to backend */
-    ret = backend_mod_user(mainConfig->backends->filename,str_tochar(username),&user,_USER_FLAGS);
+    ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
     if (!ret)
       ret = send_message_with_args(200,context,"Flags changed");
     else
       ret = send_message_with_args(501,context,"Flags changed, but error committing changes to backend");
   }
 
-  str_deallocate(username); str_deallocate(newflags);
+  str_deallocate(newflags);
   return 0;
 }
 
@@ -1208,7 +1203,7 @@ int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     }
     user->max_idle_time = idletime;
     /* commit to backend */
-    backend_mod_user(mainConfig->backends->filename,user->username,user,_USER_IDLE);
+    backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IDLE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
@@ -1240,7 +1235,7 @@ int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   if (command_line && strlen(str_tochar(command_line))>0) {
     strncpy(user->tagline,str_tochar(command_line),255);
     /* commit to backend */
-    backend_mod_user(mainConfig->backends->filename,user->username,user,_USER_TAGLINE);
+    backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_TAGLINE);
     snprintf(buffer,1023,"%s","Command ok");
   } else { /* if (*command_line != '\0') */
 
@@ -1388,7 +1383,7 @@ int do_site_killpath(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
       ret = send_message_with_args(501,context,"Unknown error");
       break;
   };
-  
+
   return 0;
 }
 
@@ -1406,8 +1401,7 @@ int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   char *ptr;
   wzd_string_t * str_give, *username;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   u64_t kbytes;
   short is_gadmin;
 
@@ -1426,17 +1420,18 @@ int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     return 0;
   }
 
-  /* check if user already exists */
-  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
-    str_deallocate(username); str_deallocate(str_give);
+  /* check if user exists */
+  user=GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
+    ret = send_message_with_args(501,context,"user does not exist");
     return 0;
   }
 
   kbytes = strtoull(str_tochar(str_give),&ptr,0);
   if (*ptr!='\0') {
     do_site_help_give(context);
-    str_deallocate(username); str_deallocate(str_give);
+    str_deallocate(str_give);
     return 0;
   }
   str_deallocate(str_give);
@@ -1458,23 +1453,21 @@ int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   /* check user credits */
   if (me->credits && me->credits < kbytes) {
     ret = send_message_with_args(501,context,"You don't have enough credits !");
-    str_deallocate(username);
     return 0;
   }
 
-  user.credits += kbytes;
+  user->credits += kbytes;
   if (me->credits)
     me->credits -= kbytes;
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,str_tochar(username),&user,_USER_CREDITS);
+  ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
     ret = send_message_with_args(200,context,"Credits given");
   }
-  str_deallocate(username);
   return 0;
 }
 
@@ -1492,8 +1485,7 @@ int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   char *ptr;
   wzd_string_t * str_take, *username;
   int ret;
-  wzd_user_t user, *me;
-  int uid;
+  wzd_user_t *user, *me;
   u64_t kbytes;
   short is_gadmin;
 
@@ -1512,17 +1504,18 @@ int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     return 0;
   }
 
-  /* check if user already exists */
-  if ( backend_find_user(str_tochar(username),&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
-    str_deallocate(username); str_deallocate(str_take);
+  /* check if user exists */
+  user=GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( !user ) {
+    ret = send_message_with_args(501,context,"user does not exist");
     return 0;
   }
 
   kbytes = strtoull(str_tochar(str_take),&ptr,0);
   if (*ptr!='\0') {
     do_site_help_take(context);
-    str_deallocate(username); str_deallocate(str_take);
+    str_deallocate(str_take);
     return 0;
   }
   str_deallocate(str_take);
@@ -1542,26 +1535,24 @@ int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
 #endif /* 0 */
 
   /* check user credits */
-  if (user.ratio==0) {
+  if (user->ratio==0) {
     ret = send_message_with_args(501,context,"User has unlimited credits !");
-    str_deallocate(username);
     return 0;
   }
 
-  if (user.credits > kbytes)
-    user.credits -= kbytes;
+  if (user->credits > kbytes)
+    user->credits -= kbytes;
   else
-    user.credits = 0;
+    user->credits = 0;
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,str_tochar(username),&user,_USER_CREDITS);
+  ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
     ret = send_message_with_args(200,context,"Credits removed");
   }
-  str_deallocate(username);
   return 0;
 }
 

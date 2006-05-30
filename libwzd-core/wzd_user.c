@@ -215,6 +215,8 @@ wzd_user_t * user_unregister(uid_t uid)
   }
 
   WZD_MUTEX_UNLOCK(SET_MUTEX_USER);
+  out_log(LEVEL_FLOOD,"DEBUG unregistered uid %d\n",uid);
+
   return user;
 }
 
