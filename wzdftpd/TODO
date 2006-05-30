@@ -5,10 +5,6 @@
 '********'
 - recode site backend
 '********'
-- use uid for mod_user (instead of username)
-    -> use special uid/gid when creating user/group / OK
-    -> recode do_site_grpren
-'********'
 - lower noise when using syslog
 '********'
 - add the sockaddr* structs for local and remote part to the context

@@ -252,7 +252,7 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   wzd_string_t * groupname, *newgroupname;
   int ret;
   wzd_user_t *me;
-  wzd_group_t group, *oldgroup;
+  wzd_group_t *oldgroup;
 /*  unsigned int ratio;*/
   short is_gadmin;
 
@@ -279,7 +279,6 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     str_deallocate(newgroupname);
     return 0;
   }
-  memcpy(&group,oldgroup,sizeof(wzd_group_t));
 
   /* check if group exists */
   if ( (GetGroupByName(str_tochar(newgroupname))) ) {
@@ -295,11 +294,11 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     return 0;
   }
 
-  strncpy(group.groupname,str_tochar(newgroupname),sizeof(group.groupname));
+  strncpy(oldgroup->groupname,str_tochar(newgroupname),HARD_GROUPNAME_LENGTH-1);
   str_deallocate(newgroupname);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,oldgroup->gid,&group,_GROUP_GROUPNAME);
+  ret = backend_mod_group(mainConfig->backends->filename,oldgroup->gid,oldgroup,_GROUP_GROUPNAME);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
