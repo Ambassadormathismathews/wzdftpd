@@ -454,6 +454,10 @@ int tls_auth (const char *type, wzd_context_t * context)
   }
 
   context->ssl.obj = SSL_new(mainConfig->tls_ctx);
+  if (context->ssl.obj == NULL) {
+    out_log(LEVEL_CRITICAL,"SSL_new failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
+    return 1;
+  }
   SSL_set_cipher_list(context->ssl.obj,tls_cipher_list);
   ret = SSL_set_fd(context->ssl.obj,context->controlfd);
   if (ret != 1) {

@@ -359,6 +359,8 @@ unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
  */
 void client_die(wzd_context_t * context)
 {
+  if (context == NULL) return;
+
   if (context->magic != CONTEXT_MAGIC) {
 #ifdef DEBUG
 out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
@@ -3887,9 +3889,12 @@ void * clientThreadProc(void *arg)
         (groupname)?groupname:"No Group",
         user ? user->tagline : "unknown"
         );
-#ifdef WZD_MULTITHREAD
+#if defined (WIN32) || !defined(WZD_MULTITHREAD)
     client_die(context);
 #endif /* WZD_MULTITHREAD */
+    /* on other platforms, the cleanup function will be executed
+     * using pthread_cleanup_pop
+     */
     return NULL;
   }
 
