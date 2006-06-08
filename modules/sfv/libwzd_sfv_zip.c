@@ -95,7 +95,7 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
   dirname = wzd_strdup(directory);
   dir = dir_open(dirname,context);
   wzd_free(dirname);
-  if (!dir) -1;
+  if (!dir) return -1;
 
   dirlen=strlen(directory);
 
@@ -150,6 +150,7 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
   stats->files_total=files_total;
   stats->size_total=size_total;
 
+  dir_close(dir);
   return 0;
 }
 
@@ -315,6 +316,7 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
     sfv_diz_update_release_and_get_stats( &stats , directory, files_total );
     sfv_update_completebar(&stats, directory, context) ;
   }
+  wzd_free(directory);
 
 #else
   ret=0;

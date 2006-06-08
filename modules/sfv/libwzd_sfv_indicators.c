@@ -307,6 +307,7 @@ void sfv_update_completebar(wzd_release_stats * stats, const char * directory, w
       }
     }
   }
+  regfree(&preg);
   dir_close(dir);
 
   /*Check status */
