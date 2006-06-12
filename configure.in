@@ -160,10 +160,6 @@ AC_CHECK_FUNCS([crypt])
 
 WZD_STAT64
 
-AC_PATH_PROG(JW, jw, no)
-AC_SUBST(JW)
-AM_CONDITIONAL(HAVE_JW, test "x$JW" != "xno")
-
 dnl WZD_LIB_BERKELEY_DB(4, 1, 24, [db-4.2 db-4.1 db-4 db4 db])
 WZD_TLS
 WZD_LIB_KRB5  # disabled for release 0.6
@@ -336,7 +332,6 @@ AC_CONFIG_FILES([Makefile
                  backends/mysql/Makefile
                  backends/pam/Makefile
                  backends/pgsql/Makefile
-		 doc/Makefile
 		 init.d/Makefile
                  init.d/wzdftpd
 		 libwzd/Makefile
