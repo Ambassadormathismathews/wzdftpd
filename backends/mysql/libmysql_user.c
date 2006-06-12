@@ -583,7 +583,7 @@ static uid_t user_get_ref(uid_t uid, unsigned int ref)
   if (ref) return ref;
 
   query = malloc(512);
-  snprintf(query, 512, "SELECT users.ref FROM users WHERE users.uid'%d'", uid);
+  snprintf(query, 512, "SELECT users.ref FROM users WHERE users.uid='%d'", uid);
 
   if (mysql_query(&mysql, query) != 0) {
     free(query);
