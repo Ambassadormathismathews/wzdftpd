@@ -196,15 +196,11 @@ AC_ARG_ENABLE(debug, [  --enable-debug          enable debug mode],
     if eval "test x$enable_debug = xyes"; then
       AC_MSG_RESULT(yes)
       WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}debug"
-      CPPFLAGS="$CPPFLAGS -g -O0 -DDEBUG"
+      CPPFLAGS="$CPPFLAGS -DDEBUG"
     else
-#      CPPFLAGS="$CPPFLAGS -O3 -pipe -fomit-frame-pointer -ffast-math"
-      CPPFLAGS="$CPPFLAGS -O3 -pipe"
       AC_MSG_RESULT(no)
       WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}release"
     fi,
-#    CPPFLAGS="$CPPFLAGS -O3 -pipe -fomit-frame-pointer -ffast-math"
-    CPPFLAGS="$CPPFLAGS -O3 -pipe"
     AC_MSG_RESULT(no)
     WZD_BUILD_OPTS="${WZD_BUILD_OPTS}${COMMA}release"
 )
