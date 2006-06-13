@@ -95,8 +95,6 @@ install-indep:
 	# Add here commands to install the indep part of the package into
 	# debian/<package>-doc.
 	#INSTALLDOC#
-#	install -m 755 -d debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
-#	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd-doc/usr/share/wzdftpd-doc/html
 
 	dh_install -i
 
@@ -112,8 +110,6 @@ install-arch:
 
 	# TODO since we install in standard dir, the following is becoming
 	# useless ??
-	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/html ;\
-	install -m 644 doc/wzdftpd-doc/*.html debian/wzdftpd/usr/share/doc/wzdftpd/html;\
 
 	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
 	install -m 644 wzdftpd/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
