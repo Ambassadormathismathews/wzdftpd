@@ -330,7 +330,8 @@ AC_CONFIG_FILES([Makefile
                  tools/siteuptime/Makefile
                  tools/sitewho/Makefile
 		 wzd-config
-		 wzdftpd/Makefile])
+		 wzdftpd/Makefile
+		 wzdftpd.pc])
 
 AC_CONFIG_COMMANDS([default], [
 	chmod +x wzd-config

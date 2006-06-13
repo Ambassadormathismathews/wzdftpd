@@ -2,9 +2,11 @@
 #
 # $Header$
 
+# order is important
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 exec_prefix_set="no"
+datarootdir="@datarootdir@"
 data_dir="@datadir@/@PACKAGE@"
 
 version="@VERSION@"
