@@ -15,16 +15,25 @@ int main(int argc, char *argv[])
 {
   unsigned long c1 = C1;
   char buffer1[1024];
-  const char * input1 = "file_crc.txt";
+  char input1[1024];
+  const char * file1 = "file_crc.txt";
   wzd_cache_t * cache;
   FILE * file;
   char buffer2[1024];
+  char * srcdir = NULL;
   unsigned long c2 = C2;
 
   wzd_debug_init();
 
+  srcdir = getenv("srcdir");
+  if (srcdir == NULL) {
+    fprintf(stderr, "Environment variable $srcdir not found, aborting\n");
+    return 1;
+  }
+
   /* Compare output from wzd_cache and standard FILE functions */
 
+  snprintf(input1,sizeof(input1)-1,"%s/%s",srcdir,file1);
   file = fopen(input1,"r");
   if (!file) {
     fprintf(stderr, "Input file not found\n");
