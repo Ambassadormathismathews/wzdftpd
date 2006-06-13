@@ -283,40 +283,12 @@ AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
 AH_TEMPLATE([WZD_BUILD_NUM],
             [Build number.])
 
-#
-#  ---------
-# ( moo moo )
-#  ---------
-#         o   ^__^
-#          o  (0_)\_______
-#             (__)\       )\/\
-#                 ||----w |
-#                 ||     ||
-#
-if eval "test x$sysconfdir = x\${prefix}/etc"; then
-  sysconfdir="${sysconfdir}/wzdftpd"
-fi
-
-e_prefix=`echo $prefix | sed -e 's|NONE|/usr/local|'`
-e_sysconfdir=`echo $sysconfdir | sed -e "s|\\${prefix}|$e_prefix|"`
-e_datadir=`echo $datadir | sed -e "s|\\${prefix}|$e_prefix|"`
-e_localstatedir=`echo $localstatedir | sed -e "s|\\${prefix}|$e_prefix|"`
-
-default_config=$e_sysconfdir/wzd.cfg
-AC_DEFINE_UNQUOTED(WZD_DEFAULT_CONF,"$default_config")
-
-AH_TEMPLATE([WZD_DEFAULT_CONF],
-            [Default config file.])
 
 AC_DEFINE_UNQUOTED(WZD_VERSION_STR,"$PACKAGE_NAME $ac_cv_build_alias mt $PACKAGE_VERSION")
 
 AH_TEMPLATE([WZD_VERSION_STR],
             [Version string])
 
-AC_SUBST(e_prefix)
-AC_SUBST(e_datadir)
-AC_SUBST(e_sysconfdir)
-AC_SUBST(e_localstatedir)
 AC_SUBST(CRYPT_FLAGS)
 AC_SUBST(DL_FLAGS)
 AC_SUBST(PTHREAD_FLAGS)
@@ -358,8 +330,7 @@ AC_CONFIG_FILES([Makefile
                  tools/siteuptime/Makefile
                  tools/sitewho/Makefile
 		 wzd-config
-		 wzdftpd/Makefile
-                 wzdftpd/wzd.cfg.sample])
+		 wzdftpd/Makefile])
 
 AC_CONFIG_COMMANDS([default], [
 	chmod +x wzd-config

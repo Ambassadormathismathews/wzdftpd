@@ -12,7 +12,7 @@ wzdftpd_DEPENDENCIES = ../libwzd-core/libwzd_core.la
 wzdftpd_LDADD = ../libwzd-core/libwzd_core.la
 wzdftpd_LDFLAGS = $(WZD_SSL_LIBS) @CRYPT_FLAGS@ @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
+AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@ -DWZD_DEFAULT_CONF=\"$(sysconfdir)/$(PACKAGE)/wzd.cfg\"
 
 dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \
@@ -22,10 +22,22 @@ dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	users.sample
 
 install-data-hook:
-	${INSTALL_PROGRAM} -m 775 -d @e_localstatedir@/log/wzdftpd || true
+	${INSTALL_PROGRAM} -m 775 -d $(localstatedir)/log/wzdftpd || true
 
 uninstall-hook:
-	rmdir --ignore-fail-on-non-empty @e_localstatedir@/log/wzdftpd || true
+	rmdir --ignore-fail-on-non-empty $(localstatedir)/log/wzdftpd || true
 
 EXTRA_DIST = KNOWN_BUGS TODO
 
+edit = sed \
+	-e 's|@WZD_VERSION[@]|$(WZD_VERSION)|g' \
+	-e 's|@PACKAGE[@]|$(PACKAGE)|g' \
+	-e 's|@datadir[@]|$(datadir)|g' \
+	-e 's|@localstatedir[@]|$(localstatedir)|g' \
+	-e 's|@sysconfdir[@]|$(sysconfdir)|g' \
+	-e 's|@prefix[@]|$(prefix)|g'
+
+wzd.cfg.sample: Makefile $(srcdir)/wzd.cfg.sample.in
+	rm -f wzd.cfg.sample
+	$(edit) $(srcdir)/wzd.cfg.sample.in >wzd.cfg.sample.tmp
+	mv wzd.cfg.sample.tmp wzd.cfg.sample

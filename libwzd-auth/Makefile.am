@@ -1,7 +1,7 @@
 
 noinst_LTLIBRARIES = libwzd_auth.la
 
-libwzd_auth_ladir = ${e_prefix}/include/wzdftpd/libwzd-auth
+libwzd_auth_ladir = ${prefix}/include/wzdftpd/libwzd-auth
 
 INCLUDES = -I$(top_srcdir) $(WZD_PAM_INCLUDES) $(WZD_SSL_INCLUDES) $(WZD_KRB5_INCLUDES)
 

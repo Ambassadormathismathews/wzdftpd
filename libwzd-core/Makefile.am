@@ -2,7 +2,7 @@ SUBDIRS = arch
 
 lib_LTLIBRARIES = libwzd_core.la
 
-libwzd_core_ladir = ${e_prefix}/include/wzdftpd/libwzd-core
+libwzd_core_ladir = ${prefix}/include/wzdftpd/libwzd-core
 
 libwzd_core_la_HEADERS = \
 	ls.h             \
@@ -62,6 +62,7 @@ libwzd_core_la_SOURCES = \
 	wzd_commands.c   \
 	wzd_configfile.c \
 	wzd_configloader.c \
+	wzd_cookie_lex.l \
 	wzd_crc32.c      \
 	wzd_crontab.c    \
 	wzd_data.c       \
@@ -95,17 +96,12 @@ libwzd_core_la_SOURCES = \
 	wzd_vfs.c
 
 
-nodist_libwzd_core_la_SOURCES = wzd_cookie_lex.l
-
 libwzd_core_la_LIBADD = ../libwzd-base/libwzd_base.la ../libwzd-auth/libwzd_auth.la
 libwzd_core_la_LDFLAGS = @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -version-info $(LT_VERSION_INFO) -export-dynamic -no-undefined
 
 AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
-# them while "make clean", use CLEANFILES
-CLEANFILES = wzd_cookie_lex.c
-
-EXTRA_DIST = DOCS_XFERLOG_FORMAT wzd_cookie_lex.l
+EXTRA_DIST = DOCS_XFERLOG_FORMAT
 
 if USE_ICC
 # Workaround for compilation with icc
