@@ -14,7 +14,7 @@ wzdftpd_LDFLAGS = $(WZD_SSL_LIBS) @CRYPT_FLAGS@ @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ 
 
 AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@ -DWZD_DEFAULT_CONF=\"$(sysconfdir)/$(PACKAGE)/wzd.cfg\"
 
-dist_sysconf_DATA = wzd.cfg.sample.in wzd.pem \
+dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \
 	file_user.txt file_group.txt  file_rules.txt  \
 	file_users.txt  file_who.txt  file_groups.txt  \
@@ -27,7 +27,7 @@ install-data-hook:
 uninstall-hook:
 	rmdir --ignore-fail-on-non-empty $(localstatedir)/log/wzdftpd || true
 
-EXTRA_DIST = KNOWN_BUGS TODO
+EXTRA_DIST = KNOWN_BUGS TODO wzd.cfg.sample.in
 
 edit = sed \
 	-e 's|@WZD_VERSION[@]|$(WZD_VERSION)|g' \
