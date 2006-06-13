@@ -121,7 +121,7 @@ touch $RPM_BUILD_ROOT/var/logs/wzdftpd/xferlog
 
 make install DESTDIR=$RPM_BUILD_ROOT
 %__install -m 755 init.d/wzdftpd $RPM_BUILD_ROOT/etc/init.d/wzdftpd
-%__install -m 755 wzdftpd/wzd.cfg.sample $RPM_BUILD_ROOT/etc/wzdftpd/wzd.cfg
+%__install -m 755 $RPM_BUILD_ROOT/etc/wzdftpd/wzd.cfg.sample $RPM_BUILD_ROOT/etc/wzdftpd/wzd.cfg
 %__install -m 755 wzdftpd/users.sample $RPM_BUILD_ROOT/etc/wzdftpd/users
 
 rm -f $RPM_BUILD_ROOT/etc/wzdftpd/*.sample
