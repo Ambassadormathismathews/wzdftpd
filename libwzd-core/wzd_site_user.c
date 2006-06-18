@@ -138,11 +138,10 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     if (is_gadmin)
     {
       /* GAdmins cannot add user to different group */
-      if (me->group_num==0 || me->groups[0]!=GetGroupIDByName(str_tochar(groupname)))
+      if (me->group_num==0 || me->groups[0]!=group->gid)
       {
         ret = send_message_with_args(501,context,"You are not allowed to add users to this group");
         str_deallocate(username); str_deallocate(password); str_deallocate(ip);
-        str_deallocate(groupname);
         return 0;
       }
     }
@@ -153,13 +152,11 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     if (me->user_slots == 0) {
       ret = send_message_with_args(501,context,"No more slots available");
       str_deallocate(username); str_deallocate(password); str_deallocate(ip);
-      str_deallocate(groupname);
       return 0;
     }
   }
   if (group) {
     homedir = group->defaultpath;
-    groupname = STR(group->groupname);
     ratio = group->ratio;
   } else {
     /* XXX FIXME we should abort here */
@@ -173,7 +170,6 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
       ret = send_message_with_args(501,context,"Homedir does not exist");
       str_deallocate(username); str_deallocate(password); str_deallocate(ip);
-      str_deallocate(groupname);
       return 0;
     }
   }
@@ -185,11 +181,9 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   strncpy(user->userpass,str_tochar(password),MAX_PASS_LENGTH);
   strncpy(user->rootpath,homedir,WZD_MAX_PATH);
   user->group_num=0;
-  if (groupname) {
-    user->groups[0] = GetGroupIDByName(str_tochar(groupname));
+  if (group) {
+    user->groups[0] = group->gid;
     if (user->groups[0]) user->group_num=1;
-
-    str_deallocate(groupname);
   }
   user->userperms=0xffffffff;
   user->ratio = ratio;
