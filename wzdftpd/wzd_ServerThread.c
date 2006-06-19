@@ -106,8 +106,8 @@
 #include <libwzd-core/wzd_debug.h>
 
 /************ PROTOTYPES ***********/
-void serverMainThreadProc(void *arg);
-void serverMainThreadExit(int);
+int serverMainThreadProc(void *arg);
+void serverMainThreadCleanup(int);
 void server_crashed(int signum);
 
 void child_interrupt(int signum);
@@ -135,6 +135,7 @@ typedef struct {
 int runMainThread(int argc, char **argv)
 {
   const char * build_version = WZD_VERSION_STR;
+  int ret;
 
   out_log(LEVEL_FLOOD,"DEBUG Checking library version\n");
 
@@ -150,9 +151,9 @@ int runMainThread(int argc, char **argv)
     exit (-1);
   }
 
-  serverMainThreadProc(0);
+  ret = serverMainThreadProc(0);
 
-  return 0;
+  return ret;
 }
 
 /************ PRIVATE *************/
@@ -273,7 +274,8 @@ void server_rebind(const char *new_ip, unsigned int new_port)
   if (sock == (fd_t)-1) {
       out_log(LEVEL_CRITICAL,"Error creating socket %s:%d\n",
           __FILE__, __LINE__);
-      serverMainThreadExit(-1);
+      serverMainThreadCleanup(-1);
+      return -1;
   }
   {
     int one=1;
@@ -509,8 +511,9 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   newsock = socket_accept(socket_accept_fd, remote_host, &remote_port, &family);
   if (newsock == (fd_t)-1)
   {
-    out_log(LEVEL_HIGH,"Error while accepting\n");
-    serverMainThreadExit(-1); /** \todo do not exit server, just client */
+    out_log(LEVEL_HIGH,"FATAL Error while accepting\n");
+    serverMainThreadCleanup(-1); /** \todo do not exit server, just client */
+    return -1;
   }
   FD_REGISTER(newsock,"Client control socket");
 
@@ -825,7 +828,7 @@ static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
             out_log(LEVEL_NORMAL,"could not add ident candidate for connection: %d (errno: %d: %s) :%s:%d\n",
                 ret, errno, strerror(errno), __FILE__, __LINE__);
           continue; /* possible cause of error: global ip rejected */
-/*          serverMainThreadExit(-1);*/
+/*          serverMainThreadCleanup(-1);*/
           /* we abort, so we never returns */
         }
         mainConfig->stats.num_connections++;
@@ -983,7 +986,8 @@ fprintf(stderr,"Received signal %d\n",signum);
   if (ret) {
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
   }
-  serverMainThreadExit(0);
+  serverMainThreadCleanup(0);
+  /* XXX should we exit after ? */
 }
 
 
@@ -1313,7 +1317,7 @@ int server_switch_to_config(wzd_config_t *config)
       if (fd==-1) {
         out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
         free_config(config);
-        exit(1);
+        return -1;
       }
       ret = write(fd,buf,strlen(buf));
       close(fd);
@@ -1340,13 +1344,17 @@ int server_switch_to_config(wzd_config_t *config)
  * Initialize config and modules, and run the main loop: check for incoming
  * connections / ident connections, run cron jobs
  */
-void serverMainThreadProc(void *arg)
+int serverMainThreadProc(void *arg)
 {
   int ret;
   unsigned long max_wait_time;
   fd_set r_fds, w_fds, e_fds;
   fd_t maxfd;
   struct timeval tv;
+#if defined(WIN32) 
+  WSADATA wsaData;
+  int nCode;
+#endif
 
 #ifndef WIN32
   /* catch broken pipe ! */
@@ -1357,12 +1365,14 @@ void serverMainThreadProc(void *arg)
 #endif
 #endif /* _MSC_VER */
 
+#ifndef WIN32
   signal(SIGINT,interrupt);
   signal(SIGTERM,interrupt);
-#ifndef WIN32
 /*  signal(SIGKILL,interrupt);*/ /* SIGKILL signal is uncatchable */
 
   signal(SIGHUP,server_restart);
+#else
+  SetConsoleCtrlHandler( (PHANDLER_ROUTINE) interrupt,  TRUE ) ;
 #endif
 
 #ifdef SIGSYS
@@ -1407,6 +1417,14 @@ void serverMainThreadProc(void *arg)
 #endif
 #endif /* _WIN32 */
 
+#ifdef WIN32
+  /* Start Winsock up */
+  if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
+    out_log(LEVEL_CRITICAL,"Error initializing winsock2\n");
+    return -1;
+  }
+#endif
+
   /******** init shm *******/
   /* do this _before_ loading config, config can use it ! */
   vars_shm_init();
@@ -1432,7 +1450,8 @@ void serverMainThreadProc(void *arg)
   if (server_switch_to_config(mainConfig))
   {
     out_log(LEVEL_CRITICAL,"ERROR: couldn't switch to config, aborting !\n");
-    serverMainThreadExit(-1);
+    serverMainThreadCleanup(-1);
+    return -1;
   }
 
 
@@ -1528,12 +1547,13 @@ void serverMainThreadProc(void *arg)
       if (errno == EINTR) continue; /* retry */
       if (errno == EBADF) {
         out_log(LEVEL_CRITICAL,"FATAL Bad file descriptor\n");
-        serverMainThreadExit(-1);
+        serverMainThreadCleanup(-1);
+        return -1;
       }
       out_log(LEVEL_CRITICAL,"select failed (%s) :%s:%d\n",
         strerror(errno), __FILE__, __LINE__);
-      serverMainThreadExit(-1);
-      /* we abort, so we never returns */
+      serverMainThreadCleanup(-1);
+      return -1;
 #if 0
     case 0: /* timeout */
       /* check for timeout logins */
@@ -1558,7 +1578,8 @@ void serverMainThreadProc(void *arg)
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
   } else
     out_log(LEVEL_INFO,"Backend commited\n");
-  serverMainThreadExit(0);
+  serverMainThreadCleanup(0);
+  return 0;
 }
 
 /** \deprecated ! use \ref cfg_free */
@@ -1583,7 +1604,7 @@ static void free_config(wzd_config_t * config)
   wzd_free(mainConfig);
 }
 
-void serverMainThreadExit(int retcode)
+void serverMainThreadCleanup(int retcode)
 {
   static int finished = 0;
 
@@ -1594,8 +1615,11 @@ void serverMainThreadExit(int retcode)
   out_log(LEVEL_HIGH,"Server exiting, retcode %d\n",retcode);
 
   /* ignore standard signals from now, we are exiting */
-#ifndef _MSC_VER
+#ifndef WIN32
   signal(SIGINT,SIG_IGN);
+#else
+  /* Disable console handler */
+  SetConsoleCtrlHandler( (PHANDLER_ROUTINE) interrupt,  FALSE ) ;
 #endif
 
   crontab_stop();
@@ -1666,7 +1690,7 @@ void serverMainThreadExit(int retcode)
   hook_free_protocols();
   module_free(&mainConfig->module);
   /** \todo XXX close ALL backends */
-  backend_close(mainConfig->backends->filename);
+  if (mainConfig->backends != NULL) backend_close(mainConfig->backends->filename);
   cronjob_free(&mainConfig->crontab);
   section_free(&mainConfig->section_list);
   vfs_free(&mainConfig->vfs);
@@ -1694,7 +1718,7 @@ void serverMainThreadExit(int retcode)
 
   wzd_debug_fini();
 
-#if defined(_MSC_VER)
+#if defined(WIN32)
   WSACleanup();
 #endif
 
@@ -1712,8 +1736,6 @@ void serverMainThreadExit(int retcode)
 
   wzd_mutex_unlock(end_mutex);
   wzd_mutex_destroy(end_mutex);
-
-  exit (retcode);
 }
 
 /*! @} */

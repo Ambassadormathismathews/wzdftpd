@@ -95,10 +95,12 @@ int nt_service_unregister(void);
 int nt_service_start(void);
 int nt_service_stop(void);
 int nt_is_service(void);
-void SvcDebugOut(LPSTR string, DWORD status);
-VOID MyServiceStart(DWORD argc, LPSTR *argv);
+
+VOID UpdateSCM( DWORD dwCurrentState , DWORD dwWaitHint , DWORD dwWin32ExitCode );
+VOID MyServiceRun(DWORD argc, LPSTR *argv);
 VOID MyServiceCtrlHandler(DWORD opcode);
-DWORD MyServiceInitialization(DWORD argc, LPSTR *argv, DWORD *specificError);
+
+void SvcDebugOut(const char *fmt,...);
 
 SERVICE_STATUS              service_status;
 SERVICE_STATUS_HANDLE       service_status_handle;
@@ -117,6 +119,7 @@ typedef enum {
 
 char configfile_name[256];
 int stay_foreground=0;
+static int ntservice=0;
 static wzd_arg_command_t start_command=CMD_NONE;
 
 static const char * config_files[] = {
@@ -277,6 +280,11 @@ int main_parse_args(int argc, char **argv)
         optindex++;
         continue;
       }
+      if (!strcmp(argv[optindex],"-service")) {
+        ntservice = 1;
+        optindex++;
+        continue;
+      }
       break;
     }
   }
@@ -292,21 +300,9 @@ int main(int argc, char **argv)
   pid_t forkresult;
   wzd_config_t * config;
   wzd_configfile_t * cf;
-#if defined(WIN32)
-  WSADATA wsaData;
-  int nCode;
-#endif
 
   wzd_debug_init();
 
-#if defined(WIN32)
-  /* Start Winsock up */
-  if ((nCode = WSAStartup(MAKEWORD(2, 0), &wsaData)) != 0) {
-    out_err(LEVEL_CRITICAL,"Error initializing winsock2 %s:%d\n",
-      __FILE__, __LINE__);
-    exit(-1);
-  }
-#endif
 
 #if 0
   fprintf(stderr,"--------------------------------------\n");
@@ -516,11 +512,10 @@ int main(int argc, char **argv)
 #if defined(DEBUG) || !defined(WIN32)
   ret = runMainThread(argc,argv);
 #else
-  if (nt_is_service())
+  if (ntservice)
   {
-    SERVICE_TABLE_ENTRY         DispatchTable[] = 
-    {
-      { "wzdftpd", (LPSERVICE_MAIN_FUNCTION)MyServiceStart },
+    SERVICE_TABLE_ENTRY DispatchTable[] = {
+      { "wzdftpd", (LPSERVICE_MAIN_FUNCTION)MyServiceRun },
       { NULL, NULL }
     };
     if (!StartServiceCtrlDispatcher(DispatchTable))
@@ -537,47 +532,48 @@ int main(int argc, char **argv)
 
 #ifdef WIN32
 
-VOID MyServiceStart(DWORD argc, LPSTR *argv)
+/** \brief Report the status to the service manager */
+VOID UpdateSCM(DWORD dwCurrentState, DWORD dwWaitHint, DWORD dwWin32ExitCode)
 {
   DWORD status;
-  DWORD specificError;
 
   service_status.dwServiceType = SERVICE_WIN32;
-  service_status.dwCurrentState = SERVICE_START_PENDING;
-  service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_PAUSE_CONTINUE;
-  service_status.dwWin32ExitCode = 0;
+  service_status.dwCurrentState = dwCurrentState;
+  service_status.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+  service_status.dwWin32ExitCode = dwWin32ExitCode;
   service_status.dwServiceSpecificExitCode = 0;
   service_status.dwCheckPoint = 0;
-  service_status.dwWaitHint = 0;
+  service_status.dwWaitHint = dwWaitHint;
 
-  service_status_handle = RegisterServiceCtrlHandler(
-    "wzdftpd",
-    (LPHANDLER_FUNCTION)MyServiceCtrlHandler);
+  /* report status */
+  if (!SetServiceStatus(service_status_handle, &service_status)){
+    status = GetLastError();
+    SvcDebugOut(" [wzdftpd] SetServiceStatus %d error %d\n",dwCurrentState,GetLastError() );
+  }
+}
 
-  if (service_status_handle == (SERVICE_STATUS_HANDLE)0) {
-    SvcDebugOut( "[wzdftpd] RegisterServiceCtrlHandler error = %d\n", GetLastError());
+VOID MyServiceRun(DWORD argc, LPSTR *argv)
+{
+  int ret;
+ 
+  service_status_handle = RegisterServiceCtrlHandler(  "wzdftpd",  (LPHANDLER_FUNCTION)MyServiceCtrlHandler);
+  if (!service_status_handle){
+    SvcDebugOut( "[wzdftpd] RegisterServiceCtrlHandler error = %d\n", GetLastError() );
     return;
   }
 
-  /* initialization goes here */
-  status = MyServiceInitialization(argc,argv,&specificError);
-
-  /* handle error code */
-
-  /* report running status */
-  service_status.dwCurrentState = SERVICE_RUNNING;
-  service_status.dwCheckPoint = 0;
-  service_status.dwWaitHint = 0;
-
-  if (!SetServiceStatus(service_status_handle, &service_status))
-  {
-    status = GetLastError();
-    SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
-  }
-
+  /* report start pending status */
+  UpdateSCM( SERVICE_START_PENDING , 0 , 0 );
+  
+  /* Actually there should pass some time/stuff between reporting the pending and running status */
+  UpdateSCM( SERVICE_RUNNING , 0 , 0 );
   /* This is where the service does its work */
-  SvcDebugOut(" [wzdftpd] returning to main thread\n",0);
-  runMainThread(argc,argv);
+  SvcDebugOut("[wzdftpd] Going to run main thread\n");
+  ret = runMainThread(argc,argv);
+
+  SvcDebugOut("[wzdftpd] Reported SERVICE_STOPPED\n");
+  /* report stopped status */
+  UpdateSCM( SERVICE_STOPPED , 0, 0 );
 }
 
 VOID MyServiceCtrlHandler(DWORD opcode)
@@ -592,20 +588,8 @@ VOID MyServiceCtrlHandler(DWORD opcode)
       break;
     case SERVICE_CONTROL_STOP:
       mainConfig->serverstop = 1;
-
-      service_status.dwCurrentState = SERVICE_STOPPED;
-      service_status.dwWin32ExitCode = 0;
-      service_status.dwServiceSpecificExitCode = 0;
-      service_status.dwCheckPoint = 0;
-      service_status.dwWaitHint = 0;
-
-      if (!SetServiceStatus(service_status_handle, &service_status))
-      {
-        status = GetLastError();
-        SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
-      }
+      UpdateSCM( SERVICE_STOP_PENDING , 5000 , 0 );
       SvcDebugOut(" [wzdftpd] exiting\n",0);
-
       return;
     case SERVICE_CONTROL_INTERROGATE:
       /* fall through to send current status */
@@ -616,43 +600,10 @@ VOID MyServiceCtrlHandler(DWORD opcode)
   }
 
   /* send current status */
-  if (!SetServiceStatus(service_status_handle,&service_status))
-  {
+  if (!SetServiceStatus(service_status_handle,&service_status)) {
     status = GetLastError();
     SvcDebugOut(" [wzdftpd] SetServiceStatus error %ld\n",status);
   }
-}
-
-DWORD MyServiceInitialization(DWORD argc, LPSTR *argv, DWORD *specificError)
-{
-  specificError = 0;
-  return 0;
-}
-
-int nt_is_service(void)
-{
-  SC_HANDLE schService, schSCManager;
-  int is_service;
-
-  /* obtain a handler to the SC Manager database */
-  schSCManager = OpenSCManager(
-      NULL,     /* local machine */
-      NULL,     /* ServicesActive database */
-      SC_MANAGER_ALL_ACCESS); /* full access rights */
-
-  if (schSCManager == NULL) return -1;
-
-  schService = OpenService(
-      schSCManager,             /* SCManager database */
-      "wzdftpd",                /* name of service */
-      SERVICE_ALL_ACCESS);
-
-  is_service = (schService != NULL);
-
-  CloseServiceHandle(schService);
-  CloseServiceHandle(schSCManager);
-
-  return is_service;
 }
 
 int nt_service_register(void)
@@ -680,7 +631,7 @@ int nt_service_register(void)
   GetModuleFileName(NULL,buffer,sizeof(buffer));
   binaryPathName = buffer;
 
-  snprintf(startcmd,MAX_PATH,"%s -f \"%s\"",binaryPathName,config_fullpath);
+  snprintf(startcmd,MAX_PATH,"%s -f \"%s\" -service",binaryPathName,config_fullpath);
 
   schService = CreateService(
       schSCManager,             /* SCManager database */
@@ -702,9 +653,6 @@ int nt_service_register(void)
     CloseServiceHandle(schSCManager);
     return -1;
   }
-
-
-
 
   CloseServiceHandle(schService);
   CloseServiceHandle(schSCManager);
@@ -931,10 +879,15 @@ int nt_service_stop(void)
   return 0;
 }
 
-void SvcDebugOut(LPSTR string, DWORD status)
+void SvcDebugOut(const char *fmt,...)
 {
-  CHAR buffer[1024];
-  snprintf(buffer,1024,string,status);
+  va_list argptr;
+  char buffer[4096];
+
+  va_start(argptr,fmt);
+  vsnprintf(buffer,1024,fmt,argptr);
+  va_end(argptr);
+
   OutputDebugStringA(buffer);
 }
 
