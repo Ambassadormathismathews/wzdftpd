@@ -115,7 +115,10 @@ int sfv_create(const char * sfv_file)
   dir = dir_open(dirname,context);
   wzd_free(dirname);
 
-  if(!dir) return -1;
+  if(!dir) {
+    free(directory);
+    return -1;
+  }
 
   /* Loop trough dir */
   while ( (file = dir_read(dir,context)) ){
@@ -161,6 +164,7 @@ int sfv_create(const char * sfv_file)
     count_entries++;
   } /* while dir_read */
 
+  free(directory);
   dir_close(dir);
 
   /* Close with NULL pointer */
@@ -172,14 +176,14 @@ int sfv_create(const char * sfv_file)
     char buffer[2048];
     int fd_sfv;
     fd_sfv = open(sfv_file,O_CREAT | O_WRONLY | O_TRUNC,0644);
-    
+
     i=0;
     while (sfv.comments[i]) {
       write(fd_sfv,sfv.comments[i],strlen(sfv.comments[i]));
       write(fd_sfv,"\n",1);
       i++;
     }
-    
+
     i=0;
     while (sfv.sfv_list[i]) {
       if (snprintf(buffer,2047,"%s %lx\n",sfv.sfv_list[i]->filename,
@@ -191,7 +195,7 @@ int sfv_create(const char * sfv_file)
       }
       i++;
     }
-    
+
     close(fd_sfv);
   }
 

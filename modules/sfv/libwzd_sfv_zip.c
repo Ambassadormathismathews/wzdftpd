@@ -146,11 +146,12 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
     free(dirbuffer);
   }
   
+  dir_close(dir);
+  
   stats->files_ok=count_ok;
   stats->files_total=files_total;
   stats->size_total=size_total;
 
-  dir_close(dir);
   return 0;
 }
 
