@@ -987,7 +987,7 @@ fprintf(stderr,"Received signal %d\n",signum);
     out_log(LEVEL_CRITICAL,"Could not commit changes to backend !\n");
   }
   serverMainThreadCleanup(0);
-  /* XXX should we exit after ? */
+  exit (0);
 }
 
 
@@ -1387,7 +1387,7 @@ int serverMainThreadProc(void *arg)
     sigset_t oldmask, newmask;
     sigfillset(&newmask);
     ret = pthread_sigmask(SIG_BLOCK,&newmask,&oldmask);
-    WZD_ASSERT_VOID( ret == 0 );
+    WZD_ASSERT( ret == 0 );
   }
 #endif
 
@@ -1498,7 +1498,7 @@ int serverMainThreadProc(void *arg)
     sigset_t oldmask, newmask;
     sigfillset(&newmask);
     ret = pthread_sigmask(SIG_UNBLOCK,&newmask,&oldmask);
-    WZD_ASSERT_VOID( ret == 0 );
+    WZD_ASSERT( ret == 0 );
   }
 #endif
 

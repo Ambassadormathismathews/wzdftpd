@@ -104,6 +104,8 @@ void SvcDebugOut(const char *fmt,...);
 
 SERVICE_STATUS              service_status;
 SERVICE_STATUS_HANDLE       service_status_handle;
+
+static int ntservice=0;
 #endif
 
 typedef enum {
@@ -119,7 +121,6 @@ typedef enum {
 
 char configfile_name[256];
 int stay_foreground=0;
-static int ntservice=0;
 static wzd_arg_command_t start_command=CMD_NONE;
 
 static const char * config_files[] = {
