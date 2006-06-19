@@ -114,6 +114,8 @@
 
 #define BUFFER_LEN	4096
 
+static int check_tls_forced(wzd_context_t * context);
+
 /*************** identify_token **********************/
 
 #define STRTOINT(a,b,c,d) (((a)<<24) + ((b)<<16) + ((c)<<8) + (d))
@@ -3283,6 +3285,7 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
  * E_USER_DELETED if user has been deleted
  * E_USER_NUMLOGINS if user has reached num_logins
  * E_USER_CLOSED if site is closed and user is not a siteop
+ * E_USER_TLSFORCED if user must use SSL/TLS
  * E_GROUP_NUMLOGINS if user has reached group num_logins
  */
 int do_user(const char *username, wzd_context_t * context)
@@ -3371,6 +3374,10 @@ int do_user(const char *username, wzd_context_t * context)
     }
     free(num_logins);
   }
+
+  /* Check for TLS enforce here, before pass was sent to server */
+  if (check_tls_forced(context))
+    return E_USER_TLSFORCED;
 
   return E_OK;
 }
@@ -3656,6 +3663,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       case E_USER_IDONTEXIST: /* i don't exist, probably a problem with backend */
         ret = send_message_with_args(501,context,"Mama says I don't exist ! (problem with backend ?)");
         return 1;
+      case E_USER_TLSFORCED: /* user must use SSL/TLS */
+        ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
+        return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
         ret = send_message_with_args(421,context,"Too many connections for your group");
         return 1;
@@ -3696,11 +3706,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return 1;
       }
 #endif
-      /* check if user must be connected in tls mode */
-      if (check_tls_forced(context)) {
-        ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
-        return 1;
-      }
       return 0; /* user + pass ok */
       break;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
