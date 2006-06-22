@@ -165,7 +165,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     if (!entry) { /* not listed in permission file */
 
       /* if entry is a directory, we must query dir for more infos */
-      strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
+      wzd_strncpy(ptr, dir_filename, WZD_MAX_PATH- (ptr-buffer_file));
       if (fs_file_lstat(buffer_file,&st)) {
         /* we have a big problem here ! */
         out_err(LEVEL_HIGH,"lstat(%s) FAILED ! (errno: %d %s)\n",dir_filename,errno,strerror(errno));
@@ -179,14 +179,14 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
          */
         entry = file_stat(buffer_file, context);
         if (entry) { /* we correct the name (currently .) */
-          strncpy(entry->filename, dir_filename, sizeof(entry->filename));
+          wzd_strncpy(entry->filename, dir_filename, sizeof(entry->filename));
         }
       }
 
       if (!entry) {
         entry = wzd_malloc(sizeof(struct wzd_file_t));
 
-        strncpy(entry->filename,dir_filename,sizeof(entry->filename));
+        wzd_strncpy(entry->filename,dir_filename,sizeof(entry->filename));
         entry->owner[0] = '\0';
         entry->group[0] = '\0';
         entry->permissions = mainConfig->umask; /** \todo FIXME default permission */
@@ -229,7 +229,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
         vfs = vfs->next_vfs;
         continue;
       }
-      strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
+      wzd_strncpy(buffer_vfs,ptr,WZD_MAX_PATH);
       wzd_free(ptr);
       if (DIRNCMP(buffer_vfs,name,strlen(name))==0)
       { /* ok, we have a candidate. Now check if user is allowed to see it */
@@ -244,7 +244,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
             entry->permissions = mainConfig->umask;
             entry->acl = NULL;
           }
-          strncpy(entry->filename,ptr,sizeof(entry->filename));
+          wzd_strncpy(entry->filename,ptr,sizeof(entry->filename));
           entry->kind = FILE_VFS;
           entry->data = wzd_strdup(vfs->physical_dir);
           entry->next_file = NULL;

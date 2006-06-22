@@ -1822,7 +1822,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   file = NULL;
 
   /* find the dir containing the perms file */
-  strncpy(perm_filename,filename,WZD_MAX_PATH);
+  wzd_strncpy(perm_filename,filename,WZD_MAX_PATH);
   length = strlen(perm_filename);
   if (length >1 && perm_filename[length-1]=='/')
     perm_filename[--length] = '\0';
@@ -1866,7 +1866,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
     ++length;
     perm_filename[length-1] = '/';
   }
-  strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
+  wzd_strncpy(perm_filename+length,HARD_PERMFILE,neededlength);
 
   if ( ! readPermFile(perm_filename,&file_list) ) {
     /* we have a permission file */
