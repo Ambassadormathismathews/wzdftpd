@@ -53,6 +53,7 @@
 #endif
 
 #include <libwzd-auth/wzd_md5crypt.h>
+#include <libwzd-base/strpcpy.h>
 
 #include "wzd_structs.h"
 #include "wzd_misc.h"
@@ -71,6 +72,8 @@
 static int _format_date(time_t time, char * buffer, size_t length);
 
 static int list_match(char *,char *);
+
+static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, char * buffer, wzd_context_t * context);
 
 int list_call_wrapper(fd_t sock, wzd_context_t *context, const char *line, char *buffer, size_t *buffer_len,
     int callback(fd_t,wzd_context_t*,char *))
@@ -125,7 +128,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
   dirname = wzd_strdup(directory);
   REMOVE_TRAILING_SLASH(dirname);
 
-  strncpy(buffer,directory,WZD_MAX_PATH);
+  wzd_strncpy(buffer,directory,WZD_MAX_PATH);
   if (buffer[length-1] != '/') {
     buffer[length++] = '/';
     buffer[length] = '\0';
@@ -152,7 +155,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
     if (mask && !list_match(file->filename,mask)) continue;
 
     if (format & LIST_TYPE_SHORT) {
-      strncpy(line,file->filename,WZD_MAX_PATH);
+      wzd_strncpy(line,file->filename,WZD_MAX_PATH);
       strncat(line,"\r\n",WZD_MAX_PATH);
       if (list_call_wrapper(sock,context,line,send_buffer,&send_buffer_len,callback)) break;
       continue;
@@ -166,7 +169,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
         ptr_to_buffer = (char*)file->data;
         break;
       default:
-        strncpy(buffer_ptr,file->filename,WZD_MAX_PATH-(buffer_ptr-buffer));
+        wzd_strncpy(buffer_ptr,file->filename,WZD_MAX_PATH-(buffer_ptr-buffer));
         ptr_to_buffer = buffer;
         break;
     }
@@ -210,7 +213,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
         snprintf(buffer_name,sizeof(buffer_name)-1,"%s -> (INEXISTANT FILE) %s",file->filename, (char*)file->data);
       }
     } else {
-      strncpy(buffer_name,file->filename,sizeof(buffer_name)-1);
+      wzd_strncpy(buffer_name,file->filename,sizeof(buffer_name)-1);
       if (strlen(file->filename)<sizeof(buffer_name)) buffer_name[strlen(file->filename)]='\0';
       else buffer_name[sizeof(buffer_name)-1] = '\0';
     }
@@ -225,7 +228,7 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
         {
           out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", buffer_name);
         }
-        strncpy(buffer_name, line, sizeof(buffer_name));
+        wzd_strncpy(buffer_name, line, sizeof(buffer_name));
       }
     }
 #endif
@@ -259,242 +262,110 @@ int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directo
 }
 
 
-/* filename must be an ABSOLUTE path */
-int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t * context)
+/* filename must be an ABSOLUTE path
+ * return a newly allocated string
+ */
+char * mlst_single_file(const char *filename, wzd_context_t * context)
 {
-  struct wzd_file_t * file_info;
+  struct wzd_file_t * file;
   char *ptr;
   fs_filestat_t s;
-  wzd_string_t *temp;
-  const char *type;
+  int ret;
+  char * str_buffer;
 
-  if (!filename  || !buffer) return -1;
+  if (!filename) return NULL;
 
   ptr = strrchr(filename,'/');
-  if (!ptr) return -1;
+  if (!ptr) return NULL;
   if (ptr+1 != '\0') ptr++;
 
   /** \bug this kills VFS */
 /*  if (fs_file_lstat(filename,&s)) return -1;*/
 
-  temp = str_allocate();
+  file = file_stat(filename,context);
+  if (file == NULL) return NULL;
 
-  str_sprintf(buffer,"");
+  /** \bug file_stat sets the filename to ".", so we must overwrite it */
+  wzd_strncpy(file->filename,filename,sizeof(file->filename));
 
-  /* XXX build info */
-  file_info = file_stat(filename,context);
-
-  /* Type=... */
-  if (file_info && file_info->kind != FILE_NOTSET) {
-    switch (file_info->kind) {
-      case FILE_REG:
-        type = "file"; break;
-      case FILE_DIR:
-        if (strcmp(ptr,".")==0) type = "cdir";
-        else if (strcmp(ptr,"..")==0) type = "pdir";
-        else type = "dir";
-        break;
-      case FILE_LNK:
-        type = "OS.unix=slink"; break;
-      case FILE_VFS:
-        type = "OS.wzdftpd=vfs"; break;
-      default:
-        type = "unknown"; break;
-    }
-  } else {
-    switch (s.mode & S_IFMT) {
-      case S_IFREG:
-        type = "file"; break;
-      case S_IFDIR:
-        if (strcmp(ptr,".")==0) type = "cdir";
-        else if (strcmp(ptr,"..")==0) type = "pdir";
-        else type = "dir";
-        break;
-#ifndef WIN32
-      case S_IFLNK:
-        type = "OS.unix=slink"; break;
-#endif
-      default:
-        type = "unknown"; break;
-    }
-  }
-  str_sprintf(temp,"Type=%s;",type);
-  str_append(buffer,str_tochar(temp));
-
-  /* Size=... */
-  {
-    str_sprintf(temp,"Size=%" PRIu64 ";",s.size);
-    str_append(buffer,str_tochar(temp));
+  ret = fs_file_lstat(filename,&s);
+  if (ret) {
+    out_log(LEVEL_HIGH,"ERROR while stat'ing file %s, ignoring\n",filename);
+    return NULL;
   }
 
-  /* Modify=... */
-  {
-    char tm[32];
-    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s.mtime));
-
-    str_sprintf(temp,"Modify=%s;",tm);
-    str_append(buffer,str_tochar(temp));
+  if (file->kind == 0) {
+    if (S_ISDIR(s.mode)) file->kind = FILE_DIR;
+    if (S_ISLNK(s.mode)) file->kind = FILE_LNK;
+    if (S_ISREG(s.mode)) file->kind = FILE_REG;
   }
 
-  /* Perm=... */
-  {
-    unsigned long perms;
+  str_buffer = wzd_malloc(HARD_LS_BUFFERSIZE);
 
-    perms = file_getperms(file_info, context);
+  mlst_format_line(file,&s,str_buffer,context);
 
-    str_sprintf(temp,"Perm=");
-    if (file_info && file_info->kind == FILE_REG) {
-      if (perms & RIGHT_STOR) str_append(temp,"a");
-      if (perms & RIGHT_RETR) str_append(temp,"r");
-      if (perms & RIGHT_STOR) str_append(temp,"w");
-    }
-    if (file_info && file_info->kind == FILE_DIR) {
-      if (perms & RIGHT_STOR) str_append(temp,"c");
-      if (perms & RIGHT_CWD) str_append(temp,"e");
-      if (perms & RIGHT_LIST) str_append(temp,"l");
-      if (perms & RIGHT_MKDIR) str_append(temp,"m");
-      if (perms & RIGHT_STOR) str_append(temp,"p");
-    }
-    if (perms & RIGHT_DELE) str_append(temp,"d");
-    if (perms & RIGHT_RNFR) str_append(temp,"f");
-
-    str_append(temp,";");
-    str_append(buffer,str_tochar(temp));
-  }
-
-  /* Unique=... 
-   *
-   * we use MD5 hash as unique value (not completely satisfying, but works !
-   * 
-   * note: MD5 algorithm needs at least (2*sizeof(digest)+1) input data to work,
-   * so we pad input to at least 33 bytes
-   */
-  {
-    char digest[128];
-    char input[128];
-
-    memset(digest,0,sizeof(digest));
-
-    /* we need at least 33 bytes of input */
-    strncpy(input,ptr,sizeof(input));
-    if (strlen(input) < 33) {
-      memset(input+strlen(input),66,33-strlen(input));
-    }
-
-    md5_hash_r(input, digest, strlen(input));
-
-    str_sprintf(temp,"Unique=%s;",digest);
-    str_append(buffer,str_tochar(temp));
-  }
-
-  /* End, append name */
-  str_append(buffer," ");
-  str_append(buffer,ptr);
-
-  free_file_recursive(file_info);
-  str_deallocate(temp);
-
-  return 0;
+  return str_buffer;
 }
 
 int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
     wzd_context_t * context)
 {
+  char send_buffer[HARD_LS_BUFFERSIZE];
+  char str_buffer[HARD_LS_BUFFERSIZE];
+  size_t send_buffer_len;
   struct wzd_dir_t * dir;
   struct wzd_file_t * file;
-  unsigned long watchdog=0;
-  char buffer[WZD_MAX_PATH+1], * ptr_to_buffer;
+  fs_filestat_t s;
+  char buffer[WZD_MAX_PATH+1];
+  char * ptr;
   size_t length;
-  wzd_string_t * str;
-  char send_buffer[HARD_LS_BUFFERSIZE];
-  size_t send_buffer_len;
-  const char * dir_filename;
+  int ret;
 
   if (!dirname || strlen(dirname)<1) return 1;
-  dir = dir_open(dirname,context);
-  if (!dir) return 0;
 
-  /* ensure buffer is / terminated */
-  strncpy(buffer, dirname, sizeof(buffer)-1);
-  ptr_to_buffer = buffer + strlen(buffer) - 1;
-  if (*ptr_to_buffer != '/') {
-    ptr_to_buffer++;
-    *ptr_to_buffer = '/';
-    *(ptr_to_buffer+1) = '\0';
-  }
-  ptr_to_buffer++;
+  dir = dir_open(dirname, context);
+  if (dir == NULL) return E_PARAM_INVALID;
 
-  length = sizeof(buffer) - (ptr_to_buffer - buffer) - 1;
-
-  str = str_allocate();
   memset(send_buffer,0,HARD_LS_BUFFERSIZE);
   send_buffer_len = 0;
 
-  /* current dir */
-  {
-    strncpy(ptr_to_buffer, ".", length);
+  wzd_strncpy(buffer,dirname,WZD_MAX_PATH);
+  length = strlen(buffer);
+  if (buffer[length-1]!='/') buffer[length++] = '/';
 
-    if (mlst_single_file(buffer, str, context)) {
-      out_log(LEVEL_HIGH, "error during mlst_single_file %s\n", buffer);
-    }
-    str_append(str,"\r\n");
-    if (list_call_wrapper(sock, context, str_tochar(str), send_buffer, &send_buffer_len, callback)) {
-      out_log(LEVEL_HIGH, "error during list_call_wrapper %s\n", str_tochar(str));
-    }
+  ptr = buffer + length; /* points to the terminating \0 */
 
-    *ptr_to_buffer = '\0';
-  }
+  while ( (file = dir_read(dir,context)) != NULL ) {
+    /* for a VFS, we stat() the destination */
+    if (file->kind == FILE_VFS) wzd_strncpy(ptr,file->data,WZD_MAX_PATH-length);
+    else wzd_strncpy(ptr,file->filename,WZD_MAX_PATH-length);
 
-  /** \todo send info on parent dir ? */
-
-  while ( (file = dir_read(dir,context)) )
-  {
-    if (watchdog++ > 65535) {
-      out_log(LEVEL_HIGH, "watchdog: detected infinite loop in list()\n");
-
-      break;
-    }
-
-/*    dir_filename = fs_fileinfo_getname(finfo);*/
-    dir_filename = file->filename;
-
-    if (strcmp(dir_filename,".")==0 ||
-        strcmp(dir_filename,"..")==0 ||
-        is_hidden_file(dir_filename) )
+    ret = fs_file_lstat(buffer,&s);
+    if (ret) {
+      out_log(LEVEL_HIGH,"ERROR while stat'ing file %s, ignoring\n",buffer);
       continue;
-
-    strncpy(ptr_to_buffer, dir_filename, length);
-
-    if (mlst_single_file(buffer, str, context)) {
-      out_log(LEVEL_HIGH, "error during mlst_single_file (%s)\n", buffer);
-
-      break;
     }
 
-#ifdef HAVE_UTF8
-    if (context->connection_flags & CONNECTION_UTF8)
-    {
-      /* first, check that line is not already valid UTF-8 */
-      if ( !str_is_valid_utf8(str) ) {
-        /* use line as a temp buffer */
-        if (str_local_to_utf8(str, local_charset()))
-        {
-          out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", str_tochar(str));
-        }
-      }
+    if (file->kind == 0) {
+      if (S_ISDIR(s.mode)) file->kind = FILE_DIR;
+      if (S_ISLNK(s.mode)) file->kind = FILE_LNK;
+      if (S_ISREG(s.mode)) file->kind = FILE_REG;
     }
-#endif
 
-    str_append(str,"\r\n");
-    if (list_call_wrapper(sock, context, str_tochar(str), send_buffer, &send_buffer_len, callback)) break;
 
+    mlst_format_line(file,&s,str_buffer,context);
+
+    strcat(str_buffer,"\r\n"); /* TODO check size */
+    if (list_call_wrapper(sock, context, str_buffer, send_buffer, &send_buffer_len, callback)) {
+      out_log(LEVEL_HIGH, "error during list_call_wrapper %s\n", str_buffer);
+    }
 
   }
+
   /* flush buffer ! */
   list_call_wrapper(sock, context, NULL, send_buffer, &send_buffer_len, callback);
 
   dir_close(dir);
-  str_deallocate(str);
 
   return 0;
 }
@@ -569,5 +440,162 @@ static int _format_date(time_t t, char * buffer, size_t length)
   buffer[b++] = '\0';
 
   return 0;
+}
+
+/** \warning no check is done on buffer overflow XXX */
+static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, char * buffer, wzd_context_t * context)
+{
+  char *ptr, *buffer_end;
+  wzd_string_t *temp;
+  const char *type;
+
+  if (!file_info || !s || !buffer) return NULL;
+
+  temp = str_allocate();
+  buffer[0] = '\0';
+  buffer_end = buffer;
+
+  ptr = file_info->filename;
+
+  /* Type=... */
+  if (file_info && file_info->kind != FILE_NOTSET) {
+    switch (file_info->kind) {
+      case FILE_REG:
+        type = "file"; break;
+      case FILE_DIR:
+        if (strcmp(ptr,".")==0) type = "cdir";
+        else if (strcmp(ptr,"..")==0) type = "pdir";
+        else type = "dir";
+        break;
+      case FILE_LNK:
+        type = "OS.unix=slink"; break;
+      case FILE_VFS:
+        type = "OS.wzdftpd=vfs"; break;
+      default:
+        type = "unknown"; break;
+    }
+  } else {
+    switch (s->mode & S_IFMT) {
+      case S_IFREG:
+        type = "file"; break;
+      case S_IFDIR:
+        if (strcmp(ptr,".")==0) type = "cdir";
+        else if (strcmp(ptr,"..")==0) type = "pdir";
+        else type = "dir";
+        break;
+#ifndef WIN32
+      case S_IFLNK:
+        type = "OS.unix=slink"; break;
+#endif
+      default:
+        type = "unknown"; break;
+    }
+  }
+  buffer_end = strpcpy(buffer_end,"Type=");
+  buffer_end = strpcpy(buffer_end,type);
+  buffer_end = strpcpy(buffer_end,";");
+
+  /* Size=... */
+  {
+    str_sprintf(temp,"Size=%" PRIu64 ";",s->size);
+    buffer_end = strpcpy(buffer_end,str_tochar(temp));
+  }
+
+  /* Modify=... */
+  {
+    char tm[32];
+    strftime(tm,sizeof(tm),"%Y%m%d%H%M%S",gmtime(&s->mtime));
+
+    buffer_end = strpcpy(buffer_end,"Modify=");
+    buffer_end = strpcpy(buffer_end,tm);
+    buffer_end = strpcpy(buffer_end,";");
+  }
+
+  /* Perm=... */
+  {
+    unsigned long perms;
+    char perm_buf[64];
+    size_t length=0;
+
+    perms = file_getperms(file_info, context);
+
+    str_sprintf(temp,"Perm=");
+    if (file_info && file_info->kind == FILE_REG) {
+      if (perms & RIGHT_STOR) perm_buf[length++] = 'a';
+      if (perms & RIGHT_RETR) perm_buf[length++] = 'r';
+      if (perms & RIGHT_STOR) perm_buf[length++] = 'w';
+    }
+    if (file_info && file_info->kind == FILE_DIR) {
+      if (perms & RIGHT_STOR) perm_buf[length++] = 'c';
+      if (perms & RIGHT_CWD)  perm_buf[length++] = 'e';
+      if (perms & RIGHT_LIST) perm_buf[length++] = 'l';
+      if (perms & RIGHT_MKDIR) perm_buf[length++] = 'm';
+      if (perms & RIGHT_STOR) perm_buf[length++] = 'p';
+    }
+    if (perms & RIGHT_DELE) perm_buf[length++] = 'd';
+    if (perms & RIGHT_RNFR) perm_buf[length++] = 'f';
+
+    perm_buf[length++] = ';';
+    perm_buf[length++] = '0';
+    buffer_end = strpcpy(buffer_end,perm_buf);
+  }
+
+  /* Unique=... 
+   *
+   * we use MD5 hash as unique value (not completely satisfying, but works !
+   * 
+   * note: MD5 algorithm needs at least (2*sizeof(digest)+1) input data to work,
+   * so we pad input to at least 33 bytes
+   *
+   * FIXME this is really slow !
+   */
+  {
+    char digest[128];
+    char input[128];
+
+    memset(digest,0,sizeof(digest));
+
+    /* we need at least 33 bytes of input */
+    strncpy(input,ptr,sizeof(input));
+    if (strlen(input) < 33) {
+      memset(input+strlen(input),66,33-strlen(input));
+    }
+
+    md5_hash_r(input, digest, strlen(input));
+
+    buffer_end = strpcpy(buffer_end,"Unique=");
+    buffer_end = strpcpy(buffer_end,digest);
+    buffer_end = strpcpy(buffer_end,";");
+  }
+
+  /* End, append name */
+  buffer_end = strpcpy(buffer_end," ");
+
+  /* if ptr is not valid UTF-8, convert it */
+#ifdef HAVE_UTF8
+    if (context->connection_flags & CONNECTION_UTF8)
+    {
+      /* first, check that line is not already valid UTF-8 */
+      if ( !utf8_valid(ptr,strlen(ptr)) ) {
+        char * utf_buf;
+        size_t length;
+
+        length = strlen(ptr) + 30; /* we allocate more, small security */
+        utf_buf = wzd_malloc(length);
+        if (local_charset_to_utf8(ptr, utf_buf, length, local_charset())) {
+          out_log(LEVEL_NORMAL,"Error during UTF-8 conversion for %s\n", ptr);
+        }
+        buffer_end = strpcpy(buffer_end,utf_buf);
+        free(utf_buf);
+      }
+      else
+        buffer_end = strpcpy(buffer_end,ptr);
+    } else
+#endif
+      buffer_end = strpcpy(buffer_end,ptr);
+
+  str_deallocate(temp);
+
+  return buffer;
 }
 

@@ -34,8 +34,10 @@ int list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wz
 int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
 int list_match(char *,char *);
 
-/* filename must be an ABSOLUTE path */
-int mlst_single_file(const char *filename, wzd_string_t * buffer, wzd_context_t * context);
+/* filename must be an ABSOLUTE path
+ * return a newly allocated string
+ */
+char * mlst_single_file(const char *filename, wzd_context_t * context);
 
 int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
     wzd_context_t * context);

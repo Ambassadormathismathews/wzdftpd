@@ -3,6 +3,9 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- convert dir_open and others to process one file at a time (to reduce memory usage
+  and allow stream processing in do_mlsd)
+'********'
 - recode site backend
 '********'
 - lower noise when using syslog

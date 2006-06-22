@@ -1061,7 +1061,7 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   char * path;
-  wzd_string_t * str;
+  char * str;
 
   user = GetUserByID(context->userid);
 
@@ -1091,16 +1091,15 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     wzd_free(path);
     return E_PARAM_INVALID;
   }
+  REMOVE_TRAILING_SLASH(path);
 
-  str = str_allocate();
-  if (mlst_single_file(path, str, context)) {
+  if ( (str = mlst_single_file(path, context)) == NULL) {
     ret = send_message_with_args(501,context,"Error occured");
     wzd_free(path);
-    str_deallocate(str);
     return E_PARAM_INVALID;
   }
 
-  str_append(str,"\r\n");
+  strcat(str,"\r\n"); /* TODO check size */
 
 
   {
@@ -1110,7 +1109,7 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     str_deallocate(buffer);
   }
 
-  send_message_raw(str_tochar(str),context);
+  send_message_raw(str,context);
 
   ret = send_message_raw("250 End\r\n",context);
 
@@ -1118,6 +1117,7 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   context->state = STATE_UNKNOWN;
 
   wzd_free(path);
+  wzd_free(str);
 
   return E_OK;
 }

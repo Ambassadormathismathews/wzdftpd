@@ -1827,7 +1827,7 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   if (length >1 && perm_filename[length-1]=='/')
     perm_filename[--length] = '\0';
   ptr = strrchr(perm_filename,'/');
-  if (!ptr || *(ptr+1)=='\0') return NULL;
+  if (ptr == NULL) return NULL;
 
   if (!fs_file_lstat(filename,&s)) {
     if (S_ISDIR(s.mode)) { /* isdir */
@@ -1877,6 +1877,20 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
   }
 
   if (!file && nx) return NULL;
+
+  if (file == NULL) { /* create minimal struct */
+    /** \bug XXX FIXME we should not allocate anything here, since this will be a memory leak */
+    file = wzd_malloc(sizeof(struct wzd_file_t));
+
+    wzd_strncpy(file->filename,stripped_filename,sizeof(file->filename));
+    file->owner[0] = '\0';
+    file->group[0] = '\0';
+    file->permissions = mainConfig->umask; /** \todo FIXME default permission */
+    file->acl = NULL;
+    file->kind = FILE_NOTSET;
+    file->data = NULL;
+    file->next_file = NULL;
+  }
 
   if (file) {
     if (S_ISDIR(s.mode)) file->kind = FILE_DIR;
