@@ -15,7 +15,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.7.0"
+  !define VER_DISPLAY "0.7.99-alpha1"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -457,6 +457,14 @@ Section "!$(CAPT_MainSec)" MainSec
   ;-----------------------------------
   
   ;Starts with wzd.cfg file
+  ;Replace @WZD_VERSION@ by $VER_DISPLAY
+  Push "@WZD_VERSION@"
+  Push "${VER_DISPLAY}"
+  Push all
+  Push all
+  Push "$INSTDIR\wzd.cfg"
+  Call AdvReplaceInFile
+  
   ;Replace @e_localstatedir@/log/@PACKAGE@/ by $INSTDIR\logs
   Push "@e_localstatedir@/log/@PACKAGE@/"
   Push "$INSTDIR\logs\"

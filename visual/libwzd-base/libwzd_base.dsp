@@ -101,6 +101,10 @@ SOURCE="..\..\libwzd-base\stack.c"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-base\strpcpy.c"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-base\wzd_strlcat.c"
 # End Source File
 # Begin Source File
@@ -130,6 +134,10 @@ SOURCE="..\..\libwzd-base\stack.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-base\stdint.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-base\strpcpy.h"
 # End Source File
 # Begin Source File
 
