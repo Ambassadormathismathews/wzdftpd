@@ -72,7 +72,7 @@
 #define DL_PREFIX
 #endif
 
-
+#include <libwzd-base/strpcpy.h>
 
 #include "wzd_structs.h"
 
