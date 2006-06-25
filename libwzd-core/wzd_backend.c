@@ -245,6 +245,11 @@ int backend_close(const char *backend)
 
   if (!backend || !mainConfig->backends) return 1;
 
+  if (backend_inuse(backend) > 0) {
+    out_log(LEVEL_NORMAL,"Attempting to close backend %s while in use\n",backend);
+    return 1;
+  }
+
   /* step 1: check that backend == mainConfig->backend.name */
   if (strcmp(backend,mainConfig->backends->filename)!=0) return 1;
 
@@ -270,14 +275,14 @@ int backend_close(const char *backend)
     if (ret) {
 #ifdef WIN32
       ret = GetLastError();
-      out_log(LEVEL_INFO," Could not close backend %s (handled %lu)\n Error %d %s\n",
+      out_log(LEVEL_INFO," Could not close backend %s (handle %lu)\n Error %d %s\n",
           tempname,mainConfig->backends->handle, ret,strerror(ret));
-      backend_clear_struct(mainConfig->backends);
 #else
       out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
           tempname,mainConfig->backends->handle);
       out_log(LEVEL_INFO," Error '%s'\n",dlerror());
 #endif
+      backend_clear_struct(mainConfig->backends);
 
       free(tempname);
       return 1;
@@ -602,27 +607,37 @@ int backend_commit_changes(const char *backend)
   return -1;
 }
 
+/** \brief Check if a backend is currently used
+ * \return The number of users connected currently using this backend
+ */
 int backend_inuse(const char *backend)
 {
   int count;
   ListElmt * elmnt;
   wzd_context_t * context;
+  u16_t backend_id = 0;
+  wzd_user_t * user;
   /* unusually, if backend is not loaded it is not in use ... so no error here */
-  if (!mainConfig->backends->handle) {
+  if (mainConfig->backends==NULL || mainConfig->backends->handle==NULL)
     return -1;
-  }
-  /* TODO we should check here that if someone is loggued he is using the
-   * specific backend
-   */
 
-  /* count user logged */
+  /* find backend id */
+  if (strcmp(backend,mainConfig->backends->b->name)==0)
+    backend_id = mainConfig->backends->b->backend_id;
+
+  if (backend_id == 0) return -1;
+
+  /* count user logged in */
   count = 0;
   for (elmnt=list_head(context_list); elmnt != NULL; elmnt = list_next(elmnt)) {
     context = list_data(elmnt);
     if (context->magic == CONTEXT_MAGIC) {
-      count++;
+      user = GetUserByID(context->userid);
+      if (user->backend_id == backend_id)
+        count++;
     }
   }
+
   return count;
 }
 

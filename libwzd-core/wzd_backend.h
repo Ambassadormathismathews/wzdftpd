@@ -171,6 +171,9 @@ int backend_mod_group(const char *backend, gid_t gid, wzd_group_t * group, unsig
 
 int backend_commit_changes(const char *backend);
 
+/** \brief Check if a backend is currently used
+ * \return The number of users connected currently using this backend
+ */
 int backend_inuse(const char *backend);
 
 #ifndef STRINGIFY
