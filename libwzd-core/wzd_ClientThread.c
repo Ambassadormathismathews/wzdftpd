@@ -557,46 +557,32 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   snprintf(allowed,WZD_MAX_PATH,"%s/",user->rootpath);
 
   /* deny retrieve to permissions file */
-  if (is_hidden_file(path)) {
+  if (is_hidden_file(path))
     return E_FILE_FORBIDDEN;
-  }
 
   REMOVE_TRAILING_SLASH(path);
-
-  {
-    char tmppath[WZD_MAX_PATH];
-
-    wzd_strncpy(tmppath,path,WZD_MAX_PATH); /* length _MUST_ be tested */
-    /* remove trailing / */
-#if 0
-    ret = _checkPerm(tmppath,RIGHT_CWD,user); /** \bug checkpath_new already checks for RIGHT_CWD */
-
-    if (ret) { /* no access */
-      return E_NOPERM;
-    }
-#endif
-  }
-
 
   if (!fs_file_stat(path,&buf)) {
     if (S_ISDIR(buf.mode)) {
       char buffer[WZD_MAX_PATH], buffer2[WZD_MAX_PATH];
+      /** \todo remove this check, checkpath_new only returns absolute paths */
       if (wanted_path[0] == '/') { /* absolute path */
-        strncpy(buffer,wanted_path,WZD_MAX_PATH);
+        wzd_strncpy(buffer,wanted_path,WZD_MAX_PATH);
       } else {
-        strncpy(buffer,context->currentpath,WZD_MAX_PATH);
+        wzd_strncpy(buffer,context->currentpath,WZD_MAX_PATH);
         if (buffer[strlen(buffer)-1] != '/')
           strlcat(buffer,"/",WZD_MAX_PATH);
         strlcat(buffer,wanted_path,WZD_MAX_PATH);
       }
       stripdir(buffer,buffer2,WZD_MAX_PATH-1);
 /*out_err(LEVEL_INFO,"DIR: %s NEW DIR: %s\n",buffer,buffer2);*/
-      strncpy(context->currentpath,buffer2,WZD_MAX_PATH-1);
+      wzd_strncpy(context->currentpath,buffer2,WZD_MAX_PATH-1);
     }
     else return E_NOTDIR;
   }
   else return E_FILE_NOEXIST;
 
+  /** \todo Aren't we stripping the same buffer as 10 lines before ?! */
   ptr = stripdir(context->currentpath,path,sizeof(path));
   if (ptr) {
     wzd_strncpy(context->currentpath,path,WZD_MAX_PATH-1);
@@ -845,7 +831,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       else param = param+n;
     }
 
-    strncpy(cmd,param,sizeof(cmd));
+    wzd_strncpy(cmd,param,sizeof(cmd));
     if (cmd[0] != '\0' && cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
 
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
@@ -860,8 +846,6 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
         ptr = strrchr(cmd,'/');
         strncpy(cmd,ptr+1,WZD_MAX_PATH);
         *ptr = '\0';
-//	strncpy(cmd,strrchr(cmd,'/')+1,2048);
-//	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
         strncpy(mask,cmd,sizeof(mask));
         cmd[0] = '\0';
@@ -1212,7 +1196,7 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       else param = param+n;
     }
 
-    strncpy(cmd,param,sizeof(cmd));
+    wzd_strncpy(cmd,param,sizeof(cmd));
     if (cmd[strlen(cmd)-1]=='/') cmd[strlen(cmd)-1]='\0';
 
     if (strrchr(cmd,'*') || strrchr(cmd,'?')) /* wildcards */
@@ -1227,8 +1211,6 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
         ptr = strrchr(cmd,'/');
         strncpy(cmd,ptr+1,WZD_MAX_PATH);
         *ptr = '\0';
-//	strncpy(cmd,strrchr(cmd,'/')+1,2048);
-//	*strrchr(cmd,'/') = '\0';
       } else { /* simple wildcard */
         strncpy(mask,cmd,sizeof(mask));
         cmd[0] = '\0';

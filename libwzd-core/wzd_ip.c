@@ -429,6 +429,7 @@ int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *
     error = getaddrinfo(hostname,NULL,NULL,&result);
     if (error) {
       out_log(LEVEL_NORMAL,"Error using getaddrinfo: %s\n",gai_strerror(error));
+      *ip = NULL;
       return -1;
     }
     out_err(LEVEL_FLOOD,"Family: %d\n",result->ai_family);

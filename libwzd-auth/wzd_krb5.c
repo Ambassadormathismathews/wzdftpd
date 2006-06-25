@@ -42,7 +42,7 @@
 #if defined(HAVE_KRB5)
 
 #include <krb5.h>
-#include <gssapi.h>
+#include <gssapi/gssapi.h>
 
 static void gss_log_errors (unsigned int level, int maj_stat, int min_stat);
 

@@ -376,9 +376,10 @@ char * vfs_replace_cookies(const char * path, wzd_context_t * context)
 
 /*************** checkpath ***************************/
 
-char *stripdir(char * dir, char *buf, int maxlen)
+char *stripdir(const char * dir, char *buf, int maxlen)
 {
-  char * in, * out;
+  const char * in;
+  char * out;
   char * last;
   int ldots;
 
@@ -574,14 +575,14 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   else
 #endif
   {
-    strncpy(syspath, user->rootpath, WZD_MAX_PATH);
+    wzd_strncpy(syspath, user->rootpath, WZD_MAX_PATH);
     sys_offset = strlen(syspath);
   }
 
   /* if wanted_path is relative */
   if (wanted_path[0] != '/') {
 
-    strncpy(ftppath, context->currentpath, WZD_MAX_PATH);
+    wzd_strncpy(ftppath, context->currentpath, WZD_MAX_PATH);
     ptr_ftppath = ftppath + strlen(ftppath) - 1;
     if (*ptr_ftppath != '/') {
       *++ptr_ftppath = '/';
@@ -598,7 +599,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
 
     ret = checkpath_new(ftppath, syspath, context);
     if (!ret || ret == E_FILE_NOEXIST)
-      strncpy(path, syspath, WZD_MAX_PATH);
+      wzd_strncpy(path, syspath, WZD_MAX_PATH);
     free(syspath); free(ftppath);
     return ret;
 
@@ -608,7 +609,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     if (syspath[sys_offset-1] == '/' && sys_offset > 2)
       syspath[--sys_offset] = '\0';
   } else { /* wanted_path is absolute */
-    strncpy(ftppath, wanted_path, WZD_MAX_PATH);
+    wzd_strncpy(ftppath, wanted_path, WZD_MAX_PATH);
 
     path_simplify(ftppath); /** \todo check that \ref path_simplify works as expected */
   }
@@ -642,13 +643,16 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     {
       /* we have finished ? */
 
-      strncpy(path, syspath, WZD_MAX_PATH);
+      wzd_strncpy(path, syspath, WZD_MAX_PATH);
       free(ftppath);
       free(syspath);
       return 0;
     }
+    if (*ptr == '\0')
+      rpart = ptr; /* if empty, point to the last 0 */
+    else
+      rpart = ptr+1;
     *ptr = '\0';
-    rpart = ptr+1;
 
 /*    out_err(LEVEL_INFO,"   %s | %s\n",lpart,rpart);*/
 
@@ -731,7 +735,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
         if (!rpart || *rpart=='\0') {
           /* we return the 'what it would have been' path anyway, so it can be used */
           strcpy(syspath+sys_offset, lpart);
-          strncpy(path, syspath, WZD_MAX_PATH);
+          wzd_strncpy(path, syspath, WZD_MAX_PATH);
           ret = E_FILE_NOEXIST;
         } else {
           ret = E_WRONGPATH;
@@ -769,7 +773,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
     ptr_ftppath = rpart;
   }
 
-  strncpy(path, syspath, WZD_MAX_PATH);
+  wzd_strncpy(path, syspath, WZD_MAX_PATH);
   free(ftppath);
   free(syspath);
   return 0;

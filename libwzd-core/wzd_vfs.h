@@ -25,7 +25,7 @@
 #ifndef __WZD_VFS_H__
 #define __WZD_VFS_H__
 
-char *stripdir(char * dir, char *buf, int maxlen);
+char *stripdir(const char * dir, char *buf, int maxlen);
 int checkpath(const char *wanted_path, char *path, wzd_context_t *context);
 int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context);
 int test_path(const char *trial_path, wzd_context_t *context);

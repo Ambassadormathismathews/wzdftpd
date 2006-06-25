@@ -112,7 +112,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     { free(perm_file_name); free(_dir->dirname); free(_dir); return NULL; }
   free(perm_file_name);
 
-  strncpy(buffer_file, name, WZD_MAX_PATH);
+  wzd_strncpy(buffer_file, name, WZD_MAX_PATH);
   length = strlen(buffer_file);
   if (length > 1 && buffer_file[length-1] != '/')
   { buffer_file[length] = '/'; buffer_file[++length] = '\0'; }
