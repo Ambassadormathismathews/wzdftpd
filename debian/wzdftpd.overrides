@@ -1,1 +1,2 @@
+wzdftpd: package-name-doesnt-match-sonames libwzd0 libwzd-core0
 wzdftpd: package-name-doesnt-match-sonames libwzd-core0 libwzd0

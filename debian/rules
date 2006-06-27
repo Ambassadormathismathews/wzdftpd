@@ -44,7 +44,7 @@ endif
 config.status: patch-stamp configure
 	dh_testdir
 	# Add here commands to configure the package.
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam
+	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam --with-zeroconf --enable-avahi
 
 
 #Architecture 
@@ -161,7 +161,10 @@ binary-common:
 	# Avoid wzdftpd dependancy on wzdftpd (thanks to dh_shlibdeps)
 	sed -i -e 's/, wzdftpd (= [0-9.-]*)//' $(CURDIR)/debian/wzdftpd.substvars
 	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd.substvars
+	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-back-pgsql.substvars
+	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-mod-avahi.substvars
 	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-mod-perl.substvars
+	sed -i -e 's/, wzdftpd//' $(CURDIR)/debian/wzdftpd-mod-tcl.substvars
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb --destdir=$(DESTDIR)

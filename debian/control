@@ -2,8 +2,8 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@cpe.fr>
-Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, docbook-utils, dpatch
-Standards-Version: 3.6.2
+Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, docbook-utils, dpatch, libavahi-client-dev (>= 0.6.0)
+Standards-Version: 3.7.2
 
 Package: wzdftpd
 Architecture: any
@@ -33,21 +33,28 @@ Description: MySQL backend for wzdftpd
 
 Package: wzdftpd-back-pgsql
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Suggests: postgresql
 Description: PostgreSQL backend for wzdftpd
  This package provides the PostgreSQL backend for wzdftpd.
 
+Package: wzdftpd-mod-avahi
+Architecture: any
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Description: Zeroconf module for wzdftpd
+ This package provides the necessary files to enable zeroconf support in
+ wzdftpd, using the Avahi module.
+
 Package: wzdftpd-mod-tcl
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Description: TCL module for wzdftpd
  This package provides the necessary files to run TCL plugins in wzdftpd,
  in the TCL module.
 
 Package: wzdftpd-mod-perl
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
 Description: Perl module for wzdftpd
  This package provides the necessary files to run Perl plugins in wzdftpd,
  in the Perl module.
