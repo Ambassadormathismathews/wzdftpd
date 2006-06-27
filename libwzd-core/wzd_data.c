@@ -85,6 +85,7 @@ void update_last_file(wzd_context_t * context)
   context->last_file.token = context->current_action.token;
 }
 
+/** \brief Close data connection (if opened) */
 void data_close(wzd_context_t * context)
 {
   int ret;
@@ -101,6 +102,37 @@ out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context-
   context->datafd = -1;
   context->pasvsock = -1;
   context->state = STATE_UNKNOWN;
+}
+
+/** \brief End current transfer if any, close data connection and send event
+ */
+void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
+{
+  file_close(context->current_action.current_file, context);
+  FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
+
+  out_xferlog(context,end_ok /* complete */);
+  update_last_file(context);
+
+  context->current_action.current_file = -1;
+  context->current_action.bytesnow = 0;
+  context->state = STATE_COMMAND;
+  data_close(context);
+
+/*      limiter_free(context->current_limiter);
+      context->current_limiter = NULL;*/
+
+  {
+    u32_t event_id = (is_upload) ? EVENT_POSTUPLOAD : EVENT_POSTDOWNLOAD;
+    unsigned int reply_code = (end_ok) ? 226 : 426;
+    wzd_user_t * user = GetUserByID(context->userid);
+    wzd_string_t * event_args = str_allocate();
+
+    /** \todo Find a way to indicate if transfer was ok in event */
+    str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+    event_send(mainConfig->event_mgr, event_id, reply_code, event_args, context);
+    str_deallocate(event_args);
+  }
 }
 
 int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
@@ -179,19 +211,10 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 #endif
         ret = (context->write_fct)(context->datafd,context->data_buffer,(unsigned int)n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
-        /* XXX error/timeout sending data */
-        file_close(context->current_action.current_file, context);
-        FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
-        context->current_action.current_file = -1;
-        context->current_action.bytesnow = 0;
-        context->current_action.token = TOK_UNKNOWN;
-        data_close(context);
-        ret = send_message(426,context);
-        out_err(LEVEL_INFO,"Send 426 message returned %d\n",ret);
-        /*	limiter_free(context->current_limiter);
-                context->current_limiter = NULL;*/
+        /* error/timeout sending data */
+        data_end_transfer(0 /* is_upload */, 0 /* end_ok */, context);
+
         context->idle_time_start = time(NULL);
-        context->state = STATE_COMMAND;
         return 1;
       }
       context->current_action.bytesnow += n;
@@ -204,28 +227,13 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
         user->credits -= n;
       context->idle_time_data_start = server_time;
     } else { /* end */
-      file_close(context->current_action.current_file, context);
-      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR)");
+      send_message_raw("226- command ok\r\n",context);
 
-      out_xferlog(context,1 /* complete */);
-      update_last_file(context);
-
-      context->current_action.current_file = -1;
-      context->current_action.bytesnow = 0;
-      context->state = STATE_COMMAND;
-      data_close(context);
+      data_end_transfer(0 /* is_upload */, 1 /* end_ok */, context);
 
 /*      limiter_free(context->current_limiter);
       context->current_limiter = NULL;*/
 
-      /* send message header */
-      send_message_raw("226- command ok\r\n",context);
-      {
-        wzd_string_t * event_args = str_allocate();
-        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
-        event_send(mainConfig->event_mgr, EVENT_POSTDOWNLOAD, 226, event_args, context);
-        str_deallocate(event_args);
-      }
       ret = send_message(226,context);
 #ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
@@ -259,36 +267,19 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         user->credits += (user->ratio * n);
       context->idle_time_data_start = server_time;
     } else { /* consider it is finished */
-      file_unlock(context->current_action.current_file);
-      file_close(context->current_action.current_file,context);
-      FD_UNREGISTER(context->current_action.current_file,"Client file (STOR)");
-
-      out_xferlog(context,1 /* complete */);
-      update_last_file(context);
-      /* we increment the counter of uploaded files at the end
-       * of the upload
-       */
-      user->stats.files_ul_total++;
-
-      context->current_action.current_file = -1;
-      context->current_action.bytesnow = 0;
-      context->state = STATE_COMMAND;
-      data_close(context);
-/*      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;*/
-
-      /* send message header */
       send_message_raw("226- command ok\r\n",context);
-      {
-        wzd_string_t * event_args = str_allocate();
-        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
-        event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 226, event_args, context);
-        str_deallocate(event_args);
-      }
+
+      file_unlock(context->current_action.current_file);
+      data_end_transfer(1 /* is_upload */, 1 /* end_ok */, context);
+
       ret = send_message(226,context);
 #ifdef DEBUG
       out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 #endif
+      /* we increment the counter of uploaded files at the end
+       * of the upload
+       */
+      user->stats.files_ul_total++;
 
       /* user will be invalidated */
       backend_mod_user(mainConfig->backends->filename, user->uid, user, _USER_BYTESUL | _USER_CREDITS);

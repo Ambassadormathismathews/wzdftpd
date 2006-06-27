@@ -372,11 +372,7 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
 
   /* close opened files */
   if (context->current_action.current_file != (fd_t)-1) {
-    file_unlock(context->current_action.current_file);
-    file_close(context->current_action.current_file,context);
-    FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
-    /** \todo XXX call POST_UPLOAD hooks ?!! */
-    context->current_action.current_file = -1;
+    data_end_transfer( (context->current_action.token == TOK_STOR) /* is_upload */, 0 /* end_ok */, context);
   }
 
   {
@@ -565,7 +561,6 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   if (!fs_file_stat(path,&buf)) {
     if (S_ISDIR(buf.mode)) {
       char buffer[WZD_MAX_PATH], buffer2[WZD_MAX_PATH];
-      /** \todo remove this check, checkpath_new only returns absolute paths */
       if (wanted_path[0] == '/') { /* absolute path */
         wzd_strncpy(buffer,wanted_path,WZD_MAX_PATH);
       } else {
@@ -582,7 +577,6 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   }
   else return E_FILE_NOEXIST;
 
-  /** \todo Aren't we stripping the same buffer as 10 lines before ?! */
   ptr = stripdir(context->currentpath,path,sizeof(path));
   if (ptr) {
     wzd_strncpy(context->currentpath,path,WZD_MAX_PATH-1);

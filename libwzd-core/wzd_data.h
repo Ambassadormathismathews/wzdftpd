@@ -25,7 +25,12 @@
 #ifndef __WZD_DATA__
 #define __WZD_DATA__
 
+/** \brief Close data connection (if opened) */
 void data_close(wzd_context_t * context);
+
+/** \brief End current transfer if any, close data connection and send event
+ */
+void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context);
 
 /* sets the correct fds and return the highest fd that was set or -1 */
 int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde);
