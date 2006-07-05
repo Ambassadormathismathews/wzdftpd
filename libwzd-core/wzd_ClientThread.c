@@ -3221,22 +3221,29 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /*************** do_pass *****************************/
 
-/* return E_OK if ok, E_PASS_REJECTED if wrong pass, E_LOGIN_NO_HOME if ok but homedir does not exist */
+/** return E_OK if ok
+ * E_USER_REJECTED if user does not exist
+ * E_PASS_REJECTED if wrong pass
+ * E_USER_DELETED if user has been deleted
+ * E_LOGIN_NO_HOME if ok but homedir does not exist */
 int do_pass(const char *username, const char * pass, wzd_context_t * context)
 {
 /*  char buffer[4096];*/
   int ret;
   wzd_user_t * user;
 
-  user = NULL;
+  user = GetUserByID(context->userid);
+  if (user == NULL) return E_USER_REJECTED;
 
-  ret = backend_validate_pass(username,pass,user,&context->userid);
+  /* check if user have been deleted */
+  if (user->flags && strchr(user->flags,FLAG_DELETED))
+    return E_USER_DELETED;
+
+  ret = backend_validate_pass(username,pass,NULL,&context->userid);
   if (ret) {
     /* pass was not accepted */
     return E_PASS_REJECTED;
   }
-
-  user = GetUserByID(context->userid);
 
   /* normalize rootpath */
 
@@ -3385,7 +3392,13 @@ static int do_user_ip(const char *username, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-  if (!user) return E_USER_IDONTEXIST;
+  if (!user) {
+    int reject_nonexistant = 0;
+    if (CFG_GET_OPTION(mainConfig,CFG_OPT_REJECT_UNKNOWN_USERS))
+      reject_nonexistant = 1;
+    if (!reject_nonexistant) return E_OK;
+    return E_USER_IDONTEXIST;
+  }
 
 #if defined(IPV6_SUPPORT)
   if (context->family == WZD_INET6) {
@@ -3630,10 +3643,17 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       ret = do_user(token,context);
       switch (ret) {
+      case E_OK:
+        break;
       case E_USER_REJECTED: /* user was not accepted */
         if (!reject_nonexistant)
           break;
         ret = send_message_with_args(421,context,"User rejected");
+        return 1;
+      case E_USER_DELETED: /* user exists but was deleted */
+        if (!reject_nonexistant)
+          break;
+        ret = send_message_with_args(421,context,"User deleted");
         return 1;
       case E_USER_NUMLOGINS: /* too many logins */
         ret = send_message_with_args(421,context,"Too many connections with your login");
@@ -3649,6 +3669,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
         ret = send_message_with_args(421,context,"Too many connections for your group");
+        return 1;
+      default:
+        ret = send_message_with_args(421,context,"User rejected (unknown error)");
         return 1;
       }
       /* validate ip for user */
@@ -3672,13 +3695,24 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return 1;
       }
       ret = do_pass(username,token,context);
-      if (ret==E_PASS_REJECTED) { /* pass was not accepted */
+      switch (ret) {
+      case E_OK:
+        break;
+      case E_USER_REJECTED: /* user was not accepted */
+        ret = send_message_with_args(421,context,"User rejected");
+        return 1;
+      case E_PASS_REJECTED:
         ret = send_message_with_args(421,context,"Password rejected");
-        return E_PASS_REJECTED;
-      }
-      if (ret==E_USER_NO_HOME) { /* pass is ok, could not chdir */
+        return 1;
+      case E_USER_DELETED: /* user exists but was deleted */
+        ret = send_message_with_args(421,context,"User deleted");
+        return 1;
+      case E_USER_NO_HOME: /* pass is ok, could not chdir */
         ret = send_message_with_args(421,context,"Could not go to my home directory !");
-        return E_USER_NO_HOME;
+        return 1;
+      default:
+        ret = send_message_with_args(421,context,"User rejected (unknown error)");
+        return 1;
       }
       /* IF SSL, we should check HERE if the connection has been switched to tls or not */
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
