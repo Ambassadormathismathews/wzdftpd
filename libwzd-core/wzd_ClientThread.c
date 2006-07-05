@@ -361,6 +361,10 @@ unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
  */
 void client_die(wzd_context_t * context)
 {
+#ifdef DEBUG
+  out_log(LEVEL_FLOOD,"client_die(context = %p)\n",context);
+#endif
+
   if (context == NULL) return;
 
   if (context->magic != CONTEXT_MAGIC) {
@@ -427,7 +431,8 @@ int check_timeout(wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-  if (!user) return 0; /* Hmm humm XXX FIXME */
+  WZD_ASSERT( user != NULL);
+  if (user == NULL) return 0;
 
   /* reset global ul/dl counters */
   mainConfig->global_ul_limiter.bytes_transfered = 0;
@@ -3870,12 +3875,14 @@ void * clientThreadProc(void *arg)
         (groupname)?groupname:"No Group",
         user ? user->tagline : "unknown"
         );
-#if defined (WIN32) || !defined(WZD_MULTITHREAD)
+#if defined (WIN32)
     client_die(context);
-#endif /* WZD_MULTITHREAD */
+#else
     /* on other platforms, the cleanup function will be executed
      * using pthread_cleanup_pop
      */
+    pthread_exit(NULL);
+#endif /* WIN32 */
     return NULL;
   }
 
