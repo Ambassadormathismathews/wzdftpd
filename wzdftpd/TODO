@@ -8,8 +8,6 @@
 '********'
 - recode site backend
 '********'
-- lower noise when using syslog
-'********'
 - add the sockaddr* structs for local and remote part to the context
 - use this structs to guess the data port (and ip ?)
 '********'

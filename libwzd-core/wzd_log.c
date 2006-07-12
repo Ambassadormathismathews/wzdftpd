@@ -223,19 +223,19 @@ void out_log(int level,const char *fmt,...)
       prior = LOG_INFO;
       switch (level) {
         case LEVEL_CRITICAL:
-          prior = LOG_ALERT;
-          break;
-        case LEVEL_HIGH:
-          prior = LOG_CRIT;
-          break;
-        case LEVEL_NORMAL:
           prior = LOG_ERR;
           break;
+        case LEVEL_HIGH:
+          prior = LOG_ERR;
+          break;
+        case LEVEL_NORMAL:
+          prior = LOG_NOTICE;
+          break;
         case LEVEL_INFO:
-          prior = LOG_WARNING;
+          prior = LOG_INFO;
           break;
         case LEVEL_FLOOD:
-          prior = LOG_INFO;
+          prior = LOG_DEBUG;
           break;
         default:
           break;
