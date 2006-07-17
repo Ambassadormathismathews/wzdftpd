@@ -359,8 +359,6 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
 
   username = str_tok(param," \t\r\n");
 
-  /* TODO read backend */
-
   if (username) { /* case 1: name was given */
     /* check if user exists */
     user = GetUserByName(str_tochar(username));
@@ -385,13 +383,18 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
       }
     }
 
+    /** \bug XXX check if user is connected, and if yes, kick him */
+
     /* commit changes to backend */
     backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
+
+    ret = send_message_with_args(200,context,"User purged");
+    return 0;
   } else { /* if (username) */
-    /* TODO iterate users and purge those marked as deleted */
+    /* iterate users and purge those marked as deleted */
     unsigned int i;
     int * uid_list;
-    uid_list = (int*)backend_get_user(-2);
+    uid_list = (int*)backend_get_user(GET_USER_LIST);
 
     if (uid_list)
     {
@@ -407,6 +410,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
               continue;
             }
           }
+          /** \bug XXX check if user is connected, and if yes, kick him */
           /* commit changes to backend */
           backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
         }
@@ -417,7 +421,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
     return 0;
   } /* if (username) */
 
-  ret = send_message_with_args(200,context,"User purged");
+  ret = send_message_with_args(501,context,"Something wrong happened");
   return 0;
 }
 
@@ -1281,31 +1285,27 @@ int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
  */
 int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
 {
-  wzd_string_t *_username;
-  const char *username, *test_username;
+  wzd_string_t *username;
   int ret;
   int found = 0;
-  wzd_user_t user;
-  int uid;
+  wzd_user_t *user;
 
-  _username = str_tok(param," \t\r\n");
-  if (!_username) {
+  username = str_tok(param," \t\r\n");
+  if (!username) {
     ret = send_message_with_args(501,context,"Usage: site kick <user>");
     return 0;
   }
-  username = str_tochar(_username);
   /* check if user  exists */
-  if ( backend_find_user(username,&user,&uid) ) {
+  user = GetUserByName(str_tochar(username));
+  str_deallocate(username);
+  if ( user == NULL ) {
     ret = send_message_with_args(501,context,"User does not exist");
-    str_deallocate(_username);
     return 0;
   }
 
   /* preliminary check: i can't kill myself */
-  test_username = GetUserByID(context->userid)->username;
-  if (strcmp(username,test_username)==0) {
+  if (user->uid == context->userid) {
     ret = send_message_with_args(501,context,"My religion forbids me suicide !");
-    str_deallocate(_username);
     return 0;
   }
 
@@ -1316,10 +1316,9 @@ int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
     for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
       loop_context = list_data(elmnt);
       if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
-        test_username = GetUserByID(loop_context->userid)->username;
-        if (strcmp(username,test_username)==0) {
+        if (user->uid == loop_context->userid) {
           found = 1;
-          kill_child_new(loop_context->pid_child,context);
+          kill_child(loop_context->pid_child,context);
         }
       }
     } /* for all contexts */
@@ -1327,7 +1326,6 @@ int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
   if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
-  str_deallocate(_username);
   return 0;
 }
 
@@ -1718,3 +1716,4 @@ static void _flags_simplify(char *flags, size_t length)
     }
   }
 }
+

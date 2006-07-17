@@ -1641,6 +1641,7 @@ void serverMainThreadCleanup(int retcode)
     {
       if ((loop_context = list_data(elmnt)))
         loop_context->exitclient = 1;
+        /** \todo use pthread_kill() */
     }
   }
 #endif
