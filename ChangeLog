@@ -1,3 +1,7 @@
+2006-07-18  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: segfault when running site purge with online users
+
 2006-05-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: moving ip list to a dynamic list

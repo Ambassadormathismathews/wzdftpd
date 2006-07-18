@@ -956,7 +956,7 @@ int kill_child(unsigned long pid, wzd_context_t * context)
 #endif
 
   /* preliminary check: i can't kill myself */
-  if (pid==context->pid_child) return 1;
+  if (context != NULL && pid==context->pid_child) return 1;
 
   /* checks that pid is really one of the users */
   for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
@@ -984,7 +984,7 @@ int kill_child_new(unsigned long pid, wzd_context_t * context)
   int found=0;
 
   /* preliminary check: i can't kill myself */
-  if (pid==context->pid_child) return 1;
+  if (context != NULL && pid==context->pid_child) return 1;
 
   /* checks that pid is really one of the users */
   for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))

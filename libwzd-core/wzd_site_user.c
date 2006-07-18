@@ -54,6 +54,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_crontab.h"
 #include "wzd_fs.h"
 #include "wzd_group.h"
 #include "wzd_log.h"
@@ -71,6 +72,8 @@
 
 static int _user_changeflags(wzd_user_t * user, const char *newflags);
 static void _flags_simplify(char *flags, size_t length);
+
+static int _kick_and_purge(void);
 
 
 
@@ -368,9 +371,13 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
       return 0;
     }
 
-    /* unmark user as deleted */
     if ( (ptr = strchr(user->flags,FLAG_DELETED)) == NULL ) {
       ret = send_message_with_args(501,context,"User is not marked as deleted");
+      return 0;
+    }
+
+    if ( user->uid == context->userid ) {
+      ret = send_message_with_args(501,context,"Can't purge myself while logged. Use another user or try site purge without argument");
       return 0;
     }
 
@@ -383,41 +390,30 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
       }
     }
 
-    /** \bug XXX check if user is connected, and if yes, kick him */
+    /* check if user is connected, and if yes, kick him */
+    {
+      ListElmt * elmnt;
+      wzd_context_t * loop_context;
+      for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
+        loop_context = list_data(elmnt);
+        if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
+          if (loop_context->userid == user->uid) {
+            kill_child(loop_context->pid_child,context);
+          }
+        }
+      }
+    }
+
 
     /* commit changes to backend */
     backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
 
     ret = send_message_with_args(200,context,"User purged");
     return 0;
-  } else { /* if (username) */
-    /* iterate users and purge those marked as deleted */
-    unsigned int i;
-    int * uid_list;
-    uid_list = (int*)backend_get_user(GET_USER_LIST);
+  } else { /* purge all users */
+    ret = cronjob_add_once(&mainConfig->crontab,_kick_and_purge,"fn:_kick_and_purge",time(NULL)+3);
 
-    if (uid_list)
-    {
-      for (i=0; uid_list[i] >= 0; i++)
-      {
-        user = GetUserByID(uid_list[i]);
-        if (user && user->flags && strchr(user->flags,FLAG_DELETED))
-        {
-          /* gadmin ? */
-          if (is_gadmin)
-          {
-            if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
-              continue;
-            }
-          }
-          /** \bug XXX check if user is connected, and if yes, kick him */
-          /* commit changes to backend */
-          backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
-        }
-      }
-      wzd_free (uid_list);
-    } /* if (uid_list) */
-    ret = send_message_with_args(200,context,"All deleted users have been purged");
+    ret = send_message_with_args(200,context,"All deleted users will be purged");
     return 0;
   } /* if (username) */
 
@@ -1715,5 +1711,47 @@ static void _flags_simplify(char *flags, size_t length)
       l--;
     }
   }
+}
+
+/** \brief iterate users and purge those marked as deleted, kicking them if logged
+ * One important thing is that a deleted user can't login if deleted,
+ * otherwise we have a race condition here
+ */
+static int _kick_and_purge(void)
+{
+  unsigned int i;
+  int * uid_list;
+  wzd_user_t * user;
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
+
+  uid_list = (int*)backend_get_user(GET_USER_LIST);
+  if (uid_list == NULL) return -1;
+
+  out_log(LEVEL_FLOOD,"DEBUG calling _kick_and_purge\n");
+
+  /* step 1: kick all deleted users */
+  for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
+    loop_context = list_data(elmnt);
+    if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
+      user = GetUserByID(loop_context->userid);
+      if (user && user->flags && strchr(user->flags,FLAG_DELETED)) {
+        kill_child(loop_context->pid_child,NULL /* context */);
+      }
+    }
+  }
+
+  /* step 2: purge all deleted users */
+  for (i=0; uid_list[i] >= 0; i++) {
+    user = GetUserByID(uid_list[i]);
+
+    if (user && user->flags && strchr(user->flags,FLAG_DELETED)) {
+      /* commit changes to backend */
+      backend_mod_user(mainConfig->backends->filename,user->uid,NULL,_USER_ALL);
+    }
+  }
+  wzd_free (uid_list);
+
+  return 0;
 }
 
