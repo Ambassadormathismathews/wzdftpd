@@ -42,6 +42,11 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
     const char * minutes, const char * hours, const char * day_of_month,
     const char * month, const char * day_of_week);
 
+/** \brief Add job to be run once, at a specified time
+ * This is similar to the at (1) command
+ */
+int cronjob_add_once(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command, time_t date);
+
 void cronjob_free(wzd_cronjob_t ** crontab);
 
 int cronjob_run(wzd_cronjob_t ** crontab);

@@ -80,6 +80,9 @@ static int _crontab_insert_sorted(wzd_cronjob_t * job, wzd_cronjob_t ** crontab)
   return 0;
 }
 
+/** If \a minutes is the special string "ONCE", then return 0, meaning that the cron job
+ * should not be re-scheduled
+ */
 static time_t cronjob_find_next_exec_date(time_t start,
     const char * minutes, const char * hours, const char * day_of_month,
     const char * month, const char * day_of_week)
@@ -87,6 +90,8 @@ static time_t cronjob_find_next_exec_date(time_t start,
   time_t t = start;
   struct tm * ltm;
   int num_minutes, num_hours, num_day_of_month, num_month;
+
+  if (strcmp(minutes,"ONCE")==0) return 0;
 
   if (minutes[0]!='*')
     num_minutes=strtol(minutes,NULL,10);
@@ -229,11 +234,58 @@ int cronjob_add(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command,
   return ret;
 }
 
+/** \brief Add job to be run once, at a specified time
+ * This is similar to the at (1) command
+ */
+int cronjob_add_once(wzd_cronjob_t ** crontab, int (*fn)(void), const char * command, time_t date)
+{
+  wzd_cronjob_t *new;
+  int ret;
+
+  if (!fn && !command) return 1;
+/*  if (fn && command) return 1;*/ /* why ?! This forbis to provide a description of functions */
+
+#ifdef WZD_DBG_CRONTAB
+  out_err(LEVEL_HIGH,"adding job (once) %s\n",command);
+#endif
+
+  new = malloc(sizeof(wzd_cronjob_t));
+  new->hook = malloc(sizeof(struct _wzd_hook_t));
+  new->hook->mask = EVENT_CRONTAB;
+  new->hook->opt = NULL;
+  new->hook->hook = fn;
+  new->hook->external_command = command?strdup(command):NULL;
+  new->hook->next_hook = NULL;
+  strncpy(new->minutes,"ONCE",32);
+  new->hours[0] = '\0';
+  new->day_of_month[0] = '\0';
+  new->month[0] = '\0';
+  new->day_of_week[0] = '\0';
+  new->next_run = date;
+  new->next_cronjob = NULL;
+
+#ifdef WZD_DBG_CRONTAB
+  {
+    time_t now;
+    (void)time(&now);
+    out_err(LEVEL_CRITICAL,"Now: %s",ctime(&now));
+    out_err(LEVEL_CRITICAL,"Next run: %s",ctime(&new->next_run));
+  }
+#endif
+
+  WZD_MUTEX_LOCK(SET_MUTEX_CRONTAB);
+  ret = _crontab_insert_sorted(new,crontab);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_CRONTAB);
+
+  return ret;
+}
+
 int cronjob_run(wzd_cronjob_t ** crontab)
 {
   wzd_cronjob_t * job = *crontab;
   time_t now;
   int ret;
+  wzd_cronjob_t * jobs_to_free = NULL;
 
   (void)time(&now);
 
@@ -261,18 +313,31 @@ int cronjob_run(wzd_cronjob_t ** crontab)
     job = job->next_cronjob;
   }
 
-  while ( (*crontab)->next_run == 0 ) {
+  while ( (*crontab) && (*crontab)->next_run == 0 ) {
     job = *crontab;
     *crontab = job->next_cronjob;
     job->next_run = cronjob_find_next_exec_date(now,job->minutes,job->hours,
         job->day_of_month, job->month, job->day_of_week);
+    if (job->next_run != 0) {
 #ifdef WZD_DBG_CRONTAB
-    out_err(LEVEL_CRITICAL,"Next run (%s): %s",job->hook->external_command,ctime(&job->next_run));
+      out_err(LEVEL_FLOOD,"Next run (%s): %s\n",job->hook->external_command,ctime(&job->next_run));
 #endif
-    _crontab_insert_sorted(job,crontab);
+      _crontab_insert_sorted(job,crontab);
+    } else {
+#ifdef WZD_DBG_CRONTAB
+      out_err(LEVEL_FLOOD,"Scheduling job (%s) for removal\n",job->hook->external_command);
+#endif
+      /* we can't call cronjob_free now because it also locks SET_MUTEX_CRONTAB */
+      job->next_cronjob = jobs_to_free;
+      jobs_to_free = job;
+    }
   }
 
   WZD_MUTEX_UNLOCK(SET_MUTEX_CRONTAB);
+
+  /* call cronjob_free now because it also locks SET_MUTEX_CRONTAB */
+  cronjob_free(&jobs_to_free);
+
   return 0;
 }
 
@@ -351,7 +416,7 @@ static void * _crontab_thread_fund(void *param) {
 #ifndef WIN32
     sleep(1);
 #else
-	Sleep(1000);
+    Sleep(1000);
 #endif
 
     cronjob_run(param);

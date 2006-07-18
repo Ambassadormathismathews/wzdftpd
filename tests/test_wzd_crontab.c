@@ -158,6 +158,13 @@ int main(int argc, char *argv[])
 
   cronjob_free(&crontab);
 
+  fprintf(stdout,"Testing cronjob_add_once\n");
+  now = time(NULL);
+  ret = cronjob_add_once(&crontab, test_callback, "fn:test_callback", now);
+  cronjob_run(&crontab);
+
+  cronjob_free(&crontab);
+
   if (c1 != C1) {
     fprintf(stderr, "c1 nuked !\n");
     return -1;
