@@ -171,11 +171,11 @@ int WZD_MODULE_INIT(void)
     }
     if (logdir) {
       int fd;
-	  const char * filename;
+      const char * filename;
 
       wzd_string_t *str = str_allocate();
       str_sprintf(str,"%s/%s", logdir, PERL_ERRORLOGNAME);
-	  filename = str_tochar(str);
+      filename = str_tochar(str);
 #ifndef WIN32
       fd = open(filename,O_CREAT|O_WRONLY,S_IRUSR | S_IWUSR);
 #else
@@ -298,7 +298,8 @@ static int perl_hook_protocol(const char *file, const char *args)
   wzd_context_t * context;
   wzd_user_t * user;
   unsigned int reply_code;
-  SV * perl_args;
+  SV * perl_args, *retval;
+  int ret;
 
   current_context = context = GetMyContext();
   user = GetUserByID(context->userid);
@@ -312,13 +313,19 @@ static int perl_hook_protocol(const char *file, const char *args)
     sv_setpv(perl_args, args);
   }
 
+  retval = get_sv("wzd::return",FALSE);
+  if (retval) sv_setpv(retval,0);
+
   execute_perl(newSVpvn("Embed::load", 11), file);
 
 /*  SvREFCNT_dec(perl_args);*/ /* NO !! this will segfault on second call ! */
 
+  retval = get_sv("wzd::return",FALSE);
+  if (retval) ret = SvIV(retval);
+
   current_context = NULL;
 
-  return 0;
+  return ret;
 }
 
 static void do_perl_help(wzd_context_t * context)
@@ -377,7 +384,7 @@ static PerlInterpreter * perl_init(void)
 "}\n"
   };
 
-  char * perl_args[] = { "", "-e", "0", "-w" };
+  char * perl_args[] = { "", "-e", "0" };
   PerlInterpreter * interp = NULL;
 
   interp = perl_alloc();
@@ -446,7 +453,7 @@ static int execute_perl( SV *function, const char *args)
       str_sprintf(str,"Error in %s: %s\n",args,SvPV_nolen(ERRSV));
       write(perl_fd_errlog,str_tochar(str),strlen(str_tochar(str)));
     }
-    POPs; /* remove undef from the top of the stack */
+    sv = POPs; /* remove undef from the top of the stack */
   }
   else if (count != 1) {
     /* error, we expected only 1 value */
