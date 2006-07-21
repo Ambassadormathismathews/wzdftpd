@@ -12,7 +12,7 @@ dnl Defines WZD_CFLAGS, WZD_LIBS  WZD_VERSION
 dnl
 
 dnl WZD_TEST_VERSION(AVAILABLE-VERSION, NEEDED-VERSION [, ACTION-IF-OKAY [, ACTION-IF-NOT-OKAY]])
-AC_DEFUN(WZD_TEST_VERSION, [
+AC_DEFUN([WZD_TEST_VERSION], [
 
 # Determine which version number is greater. Prints 2 to stdout if	
 # the second number is greater, 1 if the first number is greater,	
@@ -57,7 +57,7 @@ function vercmp(ver1, ver2,    ver1arr, ver2arr,			\
     fi
 ])
 
-AC_DEFUN(AM_PATH_WZD,
+AC_DEFUN([AM_PATH_WZD],
 [
 AC_ARG_WITH(wzd-prefix,[  --with-wzd-prefix=PFX  Prefix where wzdftpd is installed (optional)],
 	wzd_config_prefix="$withval", wzd_config_prefix="")
