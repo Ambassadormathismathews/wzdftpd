@@ -403,6 +403,7 @@ int module_check(const char *filename)
   char * error;
   fs_filestat_t st;
   int ret;
+  int mode = DL_ARG;
 
   if (!filename || filename[0]=='\0') return -1;
 #ifndef _MSC_VER
@@ -426,8 +427,13 @@ int module_check(const char *filename)
     return -1;
   }
 
+#ifdef RTLD_GLOBAL
+  mode |= RTLD_GLOBAL;
+#else
+  out_log(LEVEL_NORMAL,"WARNING Can't make loaded symbols global on this platform while loading %s\n",path);
+#endif
   /* test dlopen */
-  handle = dlopen(path,DL_ARG);
+  handle = dlopen(path,mode);
   if (!handle) {
     out_err(LEVEL_HIGH,"Could not dlopen module '%s'\n",filename);
     out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
@@ -509,6 +515,7 @@ int module_load(wzd_module_t *module)
   int ret;
   char * filename;
   fcn_module_init f_init;
+  int mode = DL_ARG;
 #ifdef DEBUG
   char * error;
 #endif
@@ -529,7 +536,13 @@ int module_load(wzd_module_t *module)
     strcpy(path+2,filename);
   }
 
-  handle = dlopen(path,DL_ARG);
+#ifdef RTLD_GLOBAL
+  mode |= RTLD_GLOBAL;
+#else
+  out_log(LEVEL_NORMAL,"WARNING Can't make loaded symbols global on this platform while loading %s\n",path);
+#endif
+  /* test dlopen */
+  handle = dlopen(path,mode);
   if (!handle) return -1;
 
   f_init = (fcn_module_init)dlsym(handle,DL_PREFIX STR_MODULE_INIT);
