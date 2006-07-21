@@ -1,3 +1,7 @@
+2006-07-21  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: add event PREMKDIR when a directory will be created
+
 2006-07-18  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: segfault when running site purge with online users

@@ -1351,6 +1351,20 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     out_err(LEVEL_FLOOD,"Making directory '%s' (%d)\n",buffer,ret);
 #endif
 
+  {
+    wzd_string_t * event_args = str_allocate();
+    str_sprintf(event_args,"%s %s",user->username,buffer);
+    ret = event_send(mainConfig->event_mgr, EVENT_PREMKDIR, 0, event_args, context);
+    str_deallocate(event_args);
+  }
+
+  if (ret != EVENT_OK && ret != EVENT_BREAK) {
+    out_log(LEVEL_NORMAL, "Mkdir denied by hook (returned %d)\n", ret);
+    ret = send_message_with_args(501,context,"Mkdir denied");
+    return E_XFER_REJECTED;
+  }
+
+
   if (buffer[strlen(buffer)-1]=='/')
     buffer[strlen(buffer)-1]='\0';
 
