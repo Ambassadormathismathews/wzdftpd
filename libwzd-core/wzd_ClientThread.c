@@ -4164,6 +4164,12 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         cookie_parse_buffer(str_tochar(command->external_command), user, group, context, buffer_command, sizeof(buffer_command));
         chop(buffer_command);
 
+        /* add arguments given on CLI to event */
+        if (str_length(command_buffer)>0) {
+          strlcat(buffer_command, " ", sizeof(buffer_command));
+          strlcat(buffer_command, str_tochar(command_buffer), sizeof(buffer_command));
+        }
+
         ret = event_exec(buffer_command,context);
       }
       str_deallocate(token);
