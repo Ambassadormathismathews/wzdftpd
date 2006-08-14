@@ -496,7 +496,7 @@ int check_timeout(wzd_context_t * context)
         log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
             user->username,
             inet_str,
-            delay
+            (int)delay
             );
       }
       kill_child_new(context->pid_child,context);
@@ -523,7 +523,7 @@ int check_timeout(wzd_context_t * context)
           log_message("TIMEOUT","%s (%s) timed out after being idle %d seconds",
               user->username,
               inet_str,
-              delay
+              (int)delay
               );
         }
         context->exitclient = 1;
@@ -1701,7 +1701,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   if (port < mainConfig->pasv_low_range || port > mainConfig->pasv_high_range)
   {
     out_log(LEVEL_HIGH, "PASV: found port out of range !! (%d not in [%d , %d])\n",
-        mainConfig->pasv_low_range, mainConfig->pasv_high_range);
+        port, mainConfig->pasv_low_range, mainConfig->pasv_high_range);
   }
 
 

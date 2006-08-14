@@ -103,13 +103,28 @@ int log_set_syslog(unsigned int level, int syslog_value);
 int xferlog_open(const char *filename, unsigned int filemode);
 void xferlog_close(int fd);
 
-void out_log(int level,const char *fmt,...);
-void out_err(int level, const char *fmt,...);
+void out_log(int level,const char *fmt,...)
+#ifdef __GNUC__
+  __attribute__((__format__(printf,2,3)))
+#endif
+;
+
+void out_err(int level, const char *fmt,...)
+#ifdef __GNUC__
+  __attribute__((__format__(printf,2,3)))
+#endif
+;
+
 void out_xferlog(wzd_context_t * context, int is_complete);
 
-void log_message(const char *event, const char *fmt, ...);
+void log_message(const char *event, const char *fmt, ...)
+#ifdef __GNUC__
+  __attribute__((__format__(printf,2,3)))
+#endif
+;
 
 int str2loglevel(const char *s);
+
 const char * loglevel2str(int l);
 
 #endif /* __WZD_LOG__ */

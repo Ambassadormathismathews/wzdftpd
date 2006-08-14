@@ -180,7 +180,7 @@ int wpgsql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 
   registered_group = group_get_by_id(gid);
   if (registered_group) {
-    out_log(LEVEL_INFO,"WARNING: group %s is not present in DB but already registered\n");
+    out_log(LEVEL_INFO,"WARNING: group %s is not present in DB but already registered\n",group->groupname);
     return -1;
   }
 

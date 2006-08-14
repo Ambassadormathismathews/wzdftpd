@@ -261,7 +261,7 @@ int backend_close(const char *backend)
     ret = (*fini_fcn)();
     if (ret) {
       out_log(LEVEL_CRITICAL,"Backend %s reported errors on exit (handle %lu)\n",
-          backend,mainConfig->backends->handle);
+          backend,(unsigned long)mainConfig->backends->handle);
 /*      return 1;*/
     }
   }
@@ -279,7 +279,7 @@ int backend_close(const char *backend)
           tempname,mainConfig->backends->handle, ret,strerror(ret));
 #else
       out_log(LEVEL_INFO,"Could not close backend %s (handle %lu)\n",
-          tempname,mainConfig->backends->handle);
+          tempname,(unsigned long)mainConfig->backends->handle);
       out_log(LEVEL_INFO," Error '%s'\n",dlerror());
 #endif
       backend_clear_struct(mainConfig->backends);

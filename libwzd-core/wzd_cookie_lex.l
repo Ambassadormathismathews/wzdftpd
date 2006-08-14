@@ -788,12 +788,12 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       }
 
       size = wzd_cache_getsize(fp);
-	  if (size > INT_MAX) {
-	    out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",size);
-		wzd_cache_close(fp);
-		break;
-	  }
-	  i = (unsigned int)size;
+      if (size > INT_MAX) {
+        out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",__FILE__,__LINE__,size);
+        wzd_cache_close(fp);
+        break;
+      }
+      i = (unsigned int)size;
       tmpbuf = wzd_malloc(i+1);
       if (wzd_cache_read(fp, tmpbuf, i) != (int)i) {
 #ifdef WZD_DBG_COOKIES
@@ -1294,13 +1294,13 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         }
         sz64 = wzd_cache_getsize(file);
         if (sz64 > INT_MAX) {
-	      out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",sz64);
-		  wzd_cache_close(file);
-		  cookie_ptr = NULL;
-		  cookie_length = 0;
-		  break;
-	    }
-	    size = (unsigned int)sz64;
+          out_log(LEVEL_HIGH,"%s:%d can't allocate %" PRIu64 " bytes for a file, aborting\n",__FILE__,__LINE__,sz64);
+              wzd_cache_close(file);
+              cookie_ptr = NULL;
+              cookie_length = 0;
+              break;
+        }
+        size = (unsigned int)sz64;
         if (size >= out_buffer_len) { /* is it a good condition ? */
 #ifdef WZD_DBG_COOKIES
           out_err(LEVEL_HIGH,"buffer truncated !");

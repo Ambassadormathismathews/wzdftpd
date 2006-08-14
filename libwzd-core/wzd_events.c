@@ -270,7 +270,7 @@ event_reply_t event_exec(const char * commandline, wzd_context_t * context)
       ret = _event_exec_shell(buffer,context);
     }
   }
-  
+
 
   wzd_free(buffer);
 

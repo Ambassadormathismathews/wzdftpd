@@ -108,7 +108,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
                                 GSS_C_NT_HOSTBASED_SERVICE,
                                 &(*data)->server);
     if (GSS_ERROR(maj_stat)) {
-      out_log(LEVEL_HIGH,"auth_gssapi_init: error importing name '%s@%s':\n",service,hostname);
+      out_log(LEVEL_HIGH,"auth_gssapi_init: error importing name '%s@%s':\n",*service,hostname);
       gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
       return -1;
     }
@@ -235,7 +235,7 @@ int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t
   }
 
   if(GSS_ERROR(maj_stat)) {
-    out_log(LEVEL_HIGH,"gss_accept_sec_context error (%lx,%lx):\n",maj_stat,min_stat);
+    out_log(LEVEL_HIGH,"gss_accept_sec_context error (%lx,%lx):\n",(unsigned long)maj_stat,(unsigned long)min_stat);
     gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
     return -1;
   }
@@ -273,7 +273,7 @@ int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_
                          &cflags,
                          &quality);
   if (maj_stat != GSS_S_COMPLETE) {
-    out_log(LEVEL_HIGH,"gss_unwrap error (%lx,%lx):\n",maj_stat,min_stat);
+    out_log(LEVEL_HIGH,"gss_unwrap error (%lx,%lx):\n",(unsigned long)maj_stat,(unsigned long)min_stat);
     gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
     return -1;
   }

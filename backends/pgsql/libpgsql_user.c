@@ -235,7 +235,7 @@ int wpgsql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 
   registered_user = user_get_by_id(uid);
   if (registered_user) {
-    out_log(LEVEL_INFO,"WARNING: user %s is not present in DB but already registered\n");
+    out_log(LEVEL_INFO,"WARNING: user %s is not present in DB but already registered\n",user->username);
     return -1;
   }
 

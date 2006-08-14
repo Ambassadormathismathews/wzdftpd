@@ -1185,11 +1185,11 @@ int server_switch_to_config(wzd_config_t *config)
       /* do we change gid ? */
       if (getlib_server_gid() != getegid())
       {
-        out_log(LEVEL_INFO,"Giving up root rights for group %ld (current gid %ld)\n",getlib_server_gid(),getgid());
+        out_log(LEVEL_INFO,"Giving up root rights for group %ld (current gid %ld)\n",(long)getlib_server_gid(),(long)getgid());
         setgid(getlib_server_gid());
       }
 
-      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",getlib_server_uid(),getuid());
+      out_log(LEVEL_INFO,"Giving up root rights for user %ld (current uid %ld)\n",(long)getlib_server_uid(),(long)getuid());
       setuid(getlib_server_uid());
     }
   }
