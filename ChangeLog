@@ -1,3 +1,7 @@
+2006-07-24  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: add event WIPE after a file has been wiped
+
 2006-07-21  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: add event PREMKDIR when a directory will be created

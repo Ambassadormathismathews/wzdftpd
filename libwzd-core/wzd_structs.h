@@ -266,8 +266,10 @@ enum event_id_t {
   EVENT_PRERMDIR      = 0x00000400,
   EVENT_RMDIR         = 0x00000800,
 
-  EVENT_PREDELE       = 0x00004000,
-  EVENT_DELE          = 0x00008000,
+  EVENT_PREDELE       = 0x00001000,
+  EVENT_DELE          = 0x00002000,
+  EVENT_PREWIPE       = 0x00004000,
+  EVENT_WIPE          = 0x00008000,
 
   EVENT_SITE          = 0x00010000,
   EVENT_CRONTAB       = 0x00100000,

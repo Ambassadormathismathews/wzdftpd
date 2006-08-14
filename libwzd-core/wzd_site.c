@@ -123,8 +123,8 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   }
 #endif
   /* prints some stats */
-  out_err(LEVEL_INFO,"# Connections: %d\n",mainConfig->stats.num_connections);
-  out_err(LEVEL_INFO,"# Childs     : %d\n",mainConfig->stats.num_childs);
+  out_err(LEVEL_INFO,"# Connections: %ld\n",mainConfig->stats.num_connections);
+  out_err(LEVEL_INFO,"# Childs     : %ld\n",mainConfig->stats.num_childs);
   ret = 0;
 
   out_err(LEVEL_INFO,"sizeof(wzd_context_t) = %d\n", sizeof(wzd_context_t));
@@ -803,7 +803,7 @@ int do_site_invite(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
       path, /* ftp-absolute path */
       user->username,
       (group->groupname)?group->groupname:"No Group",
-      ircnick);
+      str_tochar(ircnick));
 
   ret = send_message_with_args(200,context,"SITE INVITE command ok");
   str_deallocate(ircnick);
@@ -2130,6 +2130,15 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
         return 1;
       }
     }
+
+    {
+      wzd_string_t * event_args = str_allocate();
+      wzd_user_t * user = GetUserByID(context->userid);
+      str_sprintf(event_args,"%s %s",user->username,str_tochar(filename));
+      event_send(mainConfig->event_mgr, EVENT_WIPE, 200, event_args, context);
+      str_deallocate(event_args);
+    }
+
     str_deallocate(filename);
   }
   while ( (filename = str_read_token(command_line)) );
