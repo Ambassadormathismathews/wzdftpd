@@ -969,18 +969,29 @@ static XS(XS_wzd_vars_group)
   dXSARGS;
 
   if (!current_context) XSRETURN_UNDEF;
-  if (items < 3) XSRETURN_UNDEF;
+  if (items < 2) XSRETURN_UNDEF;
 
   /** \todo print error message */
   if ( ! SvPOK(ST(0)) )
     XSRETURN_UNDEF;
   if ( ! SvPOK(ST(1)) )
     XSRETURN_UNDEF;
-  if ( ! SvPOK(ST(2)) )
-    XSRETURN_UNDEF;
 
   command = SvPV_nolen(ST(0));
   groupname = SvPV_nolen(ST(1));
+
+  if (!strcmp(command,"new")) { /* new user creation */
+    ret = vars_group_new(groupname,getlib_mainConfig());
+    /** \todo handle return */
+    if (!ret)
+      XSRETURN_PV("command ok");
+    else
+      XSRETURN_UNDEF;
+  }
+  
+  if (items < 3) XSRETURN_UNDEF;
+  if ( ! SvPOK(ST(2)) )
+    XSRETURN_UNDEF;
   text = SvPV_nolen(ST(2));
 
   if (!strcmp(command,"get")) {
@@ -998,13 +1009,6 @@ static XS(XS_wzd_vars_group)
     ret = vars_group_set(groupname,text,(void*)value,sizeof(buffer),getlib_mainConfig());
     if (!ret)
       XSRETURN_PV(buffer);
-    else
-      XSRETURN_UNDEF;
-  } else if (!strcmp(command,"new")) { /* new user creation */
-    ret = vars_group_new(groupname,getlib_mainConfig());
-    /** \todo handle return */
-    if (!ret)
-      XSRETURN_PV("command ok");
     else
       XSRETURN_UNDEF;
   }
