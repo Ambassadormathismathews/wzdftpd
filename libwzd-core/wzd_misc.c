@@ -832,7 +832,12 @@ unsigned long right_text2word(const char * text)
 }
 
 
-/** dst can be composed of wildcards */
+/** \brief Compare strings \a src and \a dst
+ *
+ * dst can be composed of wildcards
+ *
+ * \return 1 if string matches, otherwise 0
+ */
 int my_str_compare(const char * src, const char *dst)
 {
   const char * ptr_src;

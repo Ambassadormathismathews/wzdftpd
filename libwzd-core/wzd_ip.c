@@ -292,7 +292,7 @@ int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)
 
 /** \brief Check if ip is allowed by list.
  *
- * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
+ * \returns 1 if allowed, 0 if denied, -1 on error or if not found
  */
 int ip_list_check(struct wzd_ip_list_t *list, const char *ip)
 {
@@ -314,33 +314,36 @@ int ip_list_check(struct wzd_ip_list_t *list, const char *ip)
 
 /** \brief Check if ip is allowed by list, comparing \a ident if present
  *
- * \returns: 1 if allowed, 0 if denied, -1 on error or if not found
+ * \returns 1 if allowed, 0 if denied, -1 on error or if not found
  */
 int ip_list_check_ident(struct wzd_ip_list_t *list, const char *ip, const char * ident)
 {
   struct wzd_ip_list_t * current_ip;
-  char * ptr_test;
-  const char * ptr_ip;
   char buffer[1024];
+  const char * ptr;
+  const char * ident_ref, * ip_ref;
 
-  if (ident != NULL)
-    snprintf(buffer,sizeof(buffer)-1,"%s@%s",ident,ip);
-  else
-    strncpy(buffer,ip,sizeof(buffer)-1);
+  for (current_ip = list; current_ip != NULL; current_ip = current_ip->next_ip) {
+    ip_ref = current_ip->regexp;
 
-  current_ip = list;
-  while (current_ip) {
-    ptr_ip = buffer;
-    /* if we do not have an ident to check, then any is accepted */
-    if (ident != NULL && strchr(current_ip->regexp,'@')==NULL)
-      ptr_ip = ip;
-    ptr_test = current_ip->regexp;
-    if (*ptr_test == '\0') return -1; /* ip has length 0 ! */
+    if ( (ptr = strchr(current_ip->regexp,'@'))!=NULL ) {
+      /* split regexp into ident_ref and ip_ref */
+      ip_ref = ptr+1;
+      strncpy(buffer,current_ip->regexp,(ptr-current_ip->regexp));
+      buffer[ptr-current_ip->regexp] = '\0';
+      ident_ref = buffer;
+      /* Check ident and exit if different */
+      if (ident == NULL) {
+        /* if ident is NULL, we can still accept it if ident_ref is the wildcard * */
+        if (strcmp(ident_ref,"*")!=0) continue;
+      } else {
+        if (my_str_compare(ident,ident_ref)!=1) continue;
+      }
+    }
 
-    if (ip_compare(ptr_ip,ptr_test)==1) return current_ip->is_allowed;
-
-    current_ip = current_ip->next_ip;
-  } /* while current_ip */
+    /* if the ident check is ok, check the ip */
+    if (ip_compare(ip,ip_ref)==1) return current_ip->is_allowed;
+  }
 
   return -1;
 }
