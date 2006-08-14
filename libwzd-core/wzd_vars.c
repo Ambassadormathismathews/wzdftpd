@@ -481,7 +481,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_user(config->backends->filename,user->uid,user,_USER_ALL);
+  ret = backend_mod_user(config->backends->filename,0,user,_USER_CREATE);
 
   if (ret) { /* problem adding user */
     user_free(user);
@@ -645,7 +645,7 @@ int vars_group_new(const char *groupname, wzd_config_t * config)
   strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH-1);
 
   /* add it to backend */
-  ret = backend_mod_group(config->backends->filename,newgroup->gid/* XXX find new gid */,newgroup,_GROUP_ALL);
+  ret = backend_mod_group(config->backends->filename,0,newgroup,_GROUP_CREATE);
 
   if (ret) { /* problem adding group */
     group_free(newgroup);
