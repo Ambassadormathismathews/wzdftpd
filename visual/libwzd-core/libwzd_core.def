@@ -126,7 +126,6 @@ EXPORTS
 	inet_ntop
 	inet_pton
 	init_default_messages
-	ip_add
 	ip_add_check
 	ip_create
 	ip_free

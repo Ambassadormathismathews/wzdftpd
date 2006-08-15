@@ -230,35 +230,6 @@ int ip_compare(const char * ip, const char * pattern)
 }
 
 
-/** IP allowing */
-int ip_add(struct wzd_ip_list_t **list, const char *newip)
-{
-  struct wzd_ip_list_t * new_ip_t, *insert_point;
-
-  /* of course this should never happen :) */
-  if (list == NULL) return -1;
-
-  if (strlen(newip) < 1) return -1;
-  if (strlen(newip) >= MAX_IP_LENGTH) return -1; /* upper limit for an hostname */
-
-  new_ip_t = malloc(sizeof(struct wzd_ip_list_t));
-  new_ip_t->regexp = wzd_strndup(newip,MAX_IP_LENGTH);
-  new_ip_t->next_ip = NULL;
-
-  /* tail insertion, be aware that order is important */
-  insert_point = *list;
-  if (insert_point == NULL) {
-    *list = new_ip_t;
-  } else {
-    while (insert_point->next_ip != NULL)
-      insert_point = insert_point->next_ip;
-
-    insert_point->next_ip = new_ip_t;
-  }
-
-  return 0;
-}
-
 /** \brief Add a new ip to be checked when user logs in
  */
 int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed)

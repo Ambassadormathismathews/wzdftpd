@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   }
 #endif
 
-  /* ip_add */
+  /* ip_add_check */
   /* ip_inlist */
   /* ip_free */
 

@@ -50,9 +50,6 @@ void ip_free(wzd_ip_t * ip);
 /* IP comparison */
 int ip_compare(const char * src, const char *dst);
 
-/* IP allowing */
-int ip_add(struct wzd_ip_list_t **list, const char *newip);
-
 /** \brief Add a new ip to be checked when user logs in
  */
 int ip_add_check(struct wzd_ip_list_t **list, const char *newip, int is_allowed);
