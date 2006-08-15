@@ -444,6 +444,7 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   return ret;
 }
 
+/** \todo XXX share code with wzd_site_user.c ! */
 int vars_user_new(const char *username, const char *pass, const char *groupname, wzd_config_t * config)
 {
   wzd_user_t * user, *test_user;
@@ -479,6 +480,10 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   strncpy(user->username, username, HARD_USERNAME_LENGTH-1);
   strncpy(user->userpass, pass, MAX_PASS_LENGTH-1);
   strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
+  if (group != NULL) {
+    user->groups[0] = group->gid;
+    if (user->groups[0]) user->group_num = 1;
+  }
 
   /* add it to backend */
   ret = backend_mod_user(config->backends->filename,0,user,_USER_CREATE);
