@@ -480,6 +480,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   strncpy(user->username, username, HARD_USERNAME_LENGTH-1);
   strncpy(user->userpass, pass, MAX_PASS_LENGTH-1);
   strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
+  user->userperms=0xffffffff;
   if (group != NULL) {
     user->groups[0] = group->gid;
     if (user->groups[0]) user->group_num = 1;
