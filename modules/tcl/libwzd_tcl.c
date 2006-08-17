@@ -90,6 +90,7 @@ static int tcl_fd_errlog=-1;
 #define TCL_CURRENT_USER "wzd_current_user"
 #define TCL_REPLY_CODE  "wzd_reply_code"
 #define TCL_HAS_REPLIED "wzd_replied"
+#define TCL_WZD_RETURN "wzd_return"
 #define TCL_ERRORLOGNAME "tclerr.log"
 
 #define WZDOUT  ((ClientData)1)
@@ -371,6 +372,7 @@ static int tcl_hook_protocol(const char *file, const char *args)
   wzd_user_t * user;
   unsigned int reply_code;
   Tcl_Interp * slave = NULL;
+  char * ptr;
 
   current_context = context = GetMyContext();
   user = GetUserByID(context->userid);
@@ -390,6 +392,7 @@ static int tcl_hook_protocol(const char *file, const char *args)
   else
     Tcl_SetVar(slave,TCL_ARGS,"",TCL_GLOBAL_ONLY);
   Tcl_SetVar(slave,TCL_CURRENT_USER,user->username,TCL_GLOBAL_ONLY);
+  Tcl_SetVar(slave,TCL_WZD_RETURN,"",TCL_GLOBAL_ONLY);
 
   ret = Tcl_EvalFile(slave, file);
 
@@ -397,6 +400,7 @@ static int tcl_hook_protocol(const char *file, const char *args)
   current_context = NULL;
   Tcl_UnsetVar(slave,TCL_ARGS,TCL_GLOBAL_ONLY);
   Tcl_UnsetVar(slave,TCL_CURRENT_USER,TCL_GLOBAL_ONLY);
+#if 0
   s = Tcl_GetVar(slave,TCL_HAS_REPLIED,TCL_GLOBAL_ONLY);
 #if 0
   if (!s || *s!='1') {
@@ -406,6 +410,14 @@ static int tcl_hook_protocol(const char *file, const char *args)
       send_message_with_args(200,context,"TCL command ok");
   }
 #endif
+#endif
+
+  s = Tcl_GetVar(slave,TCL_WZD_RETURN,TCL_GLOBAL_ONLY);
+  if (s != NULL && *s != '\0') {
+    ret = strtoul(s,&ptr,0);
+    if (*ptr!='\0') return 0; /** \todo log invalid return code ? */
+    return ret;
+  }
 
   return 0;
 }
