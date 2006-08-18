@@ -24,6 +24,10 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -34,7 +38,11 @@
 # include <security/pam_appl.h>
 #endif
 
-#include <security/pam_misc.h>
+#ifdef HAVE_OPENPAM_H
+# include <security/openpam.h>
+#elif defined (HAVE_PAM_MISC_H)
+# include <security/pam_misc.h>
+#endif
 
 #include <pwd.h>
 #include <grp.h>

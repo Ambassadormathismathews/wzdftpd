@@ -43,7 +43,11 @@
 # include <security/pam_appl.h>
 #endif
 
-#include <security/pam_misc.h>
+#ifdef HAVE_OPENPAM_H
+# include <security/openpam.h>
+#elif defined (HAVE_PAM_MISC_H)
+# include <security/pam_misc.h>
+#endif
 
 #include "wzd_auth.h"
 
