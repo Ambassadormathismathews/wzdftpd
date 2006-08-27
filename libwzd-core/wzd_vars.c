@@ -444,56 +444,24 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   return ret;
 }
 
-/** \todo XXX share code with wzd_site_user.c ! */
 int vars_user_new(const char *username, const char *pass, const char *groupname, wzd_config_t * config)
 {
-  wzd_user_t * user, *test_user;
-  wzd_group_t *group;
-  unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
-  char *homedir;
-  int ret;
+  wzd_user_t * newuser;
+  int err;
 
   if (!username || !groupname || !config) return -1;
 
-  test_user = GetUserByName(username);
-  if (test_user) return 1; /* user exists with same name */
-
-  if (groupname) {
-    group = GetGroupByName(groupname);
-  }
-  if (!group) return 2;
-
-  homedir = group->defaultpath;
-  ratio = group->ratio;
-
-  /* check if homedir exist */
-  {
-    fs_filestat_t s;
-    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
-      return 3;
-    }
-  }
-
-  /* create new user */
-  user = user_allocate();
-
-  strncpy(user->username, username, HARD_USERNAME_LENGTH-1);
-  strncpy(user->userpass, pass, MAX_PASS_LENGTH-1);
-  strncpy(user->rootpath,homedir,WZD_MAX_PATH-1);
-  user->userperms=0xffffffff;
-  if (group != NULL) {
-    user->groups[0] = group->gid;
-    if (user->groups[0]) user->group_num = 1;
-  }
+  newuser = user_create(username,pass,groupname,NULL,config,&err);
+  if (newuser == NULL) return err;
 
   /* add it to backend */
-  ret = backend_mod_user(config->backends->filename,0,user,_USER_CREATE);
+  err = backend_mod_user(config->backends->filename,0,newuser,_USER_CREATE);
 
-  if (ret) { /* problem adding user */
-    user_free(user);
+  if (err) { /* problem adding user */
+    user_free(newuser);
   }
 
-  return ret ? 1 : 0;
+  return err ? 1 : 0;
 }
 
 int vars_group_get(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
@@ -615,49 +583,20 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
 
 int vars_group_new(const char *groupname, wzd_config_t * config)
 {
-  char *homedir;
-  int ret;
+  int err;
   wzd_group_t * newgroup;
 
-  /* check if group already exists */
-  if ( GetGroupByName(groupname) ) {
-    return 1;
-  }
-
-  /* FIXME rootpath */
-  homedir = "";
-#if 0
-  mygroup = GetGroupByID(me->groups[0]);
-  if (mygroup) {
-    homedir = mygroup->defaultpath;
-  } else {
-    homedir = me->rootpath;
-  }
-  /* check if homedir exist */
-  {
-    fs_filestat_t s;
-    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
-      ret = send_message_with_args(501,context,"Homedir does not exist");
-      str_deallocate(groupname);
-      return 1;
-    }
-  }
-#endif
-
-  /* create new group */
-  newgroup = group_allocate();
-
-  strncpy(newgroup->groupname,groupname,HARD_GROUPNAME_LENGTH-1);
-  strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH-1);
+  newgroup = group_create(groupname,NULL,config,&err);
+  if (newgroup == NULL) return err;
 
   /* add it to backend */
-  ret = backend_mod_group(config->backends->filename,0,newgroup,_GROUP_CREATE);
+  err = backend_mod_group(config->backends->filename,0,newgroup,_GROUP_CREATE);
 
-  if (ret) { /* problem adding group */
+  if (err) { /* problem adding group */
     group_free(newgroup);
   }
 
-  return (ret) ? 1 : 0;
+  return (err) ? 1 : 0;
 }
 
 

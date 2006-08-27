@@ -49,6 +49,8 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_fs.h"
+#include "wzd_group.h"
 #include "wzd_ip.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
@@ -102,6 +104,68 @@ void user_free(wzd_user_t * user)
 
   ip_list_free(user->ip_list);
   wzd_free(user);
+}
+
+/** \brief Create a new user, giving default parameters
+ * \return The new user, or NULL. If \a err is provided, set it to
+ * the error code.
+ */
+wzd_user_t * user_create(const char * username, const char * pass, const char * groupname, wzd_context_t * context, wzd_config_t * config, int * err)
+{
+  wzd_user_t * newuser;
+  wzd_group_t * group = NULL;
+  const char * homedir;
+  unsigned int ratio;
+
+  WZD_ASSERT_RETURN( username != NULL, NULL );
+  if (username == NULL) {
+    if (err) *err = E_PARAM_NULL;
+    return NULL;
+  }
+
+  if (strlen(username) == 0 || strlen(username) >= HARD_USERNAME_LENGTH) {
+    if (err) *err = E_PARAM_BIG;
+    return NULL;
+  }
+
+  if (GetUserByName(username) != NULL) {
+    if (err) *err = E_PARAM_EXIST;
+    return NULL;
+  }
+
+  if (groupname)
+    group = GetGroupByName(groupname);
+
+  if (groupname == NULL) {
+    if (err) *err = E_PARAM_NULL;
+    return NULL;
+  }
+
+  homedir = group->defaultpath;
+  ratio = group->ratio;
+
+  /* check if homedir exist */
+  {
+    fs_filestat_t s;
+    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
+      out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating user %s)\n",homedir,username);
+    }
+  }
+
+  /* create new user */
+  newuser = user_allocate();
+
+  strncpy(newuser->username, username, HARD_USERNAME_LENGTH-1);
+  strncpy(newuser->userpass, pass, MAX_PASS_LENGTH-1);
+  strncpy(newuser->rootpath, homedir, WZD_MAX_PATH-1);
+  newuser->userperms=0xffffffff;
+  newuser->group_num=0;
+  if (group != NULL) {
+    newuser->groups[0] = group->gid;
+    if (newuser->groups[0] != INVALID_USER) newuser->group_num = 1;
+  }
+
+  return newuser;
 }
 
 /** \brief Register a user to the main server

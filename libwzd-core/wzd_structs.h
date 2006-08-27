@@ -53,6 +53,7 @@ typedef enum {
   E_PARAM_NULL,		/**< parameter is NULL */
   E_PARAM_BIG,		/**< parameter is too long */
   E_PARAM_INVALID,	/**< parameter is invalid */
+  E_PARAM_EXIST,	/**< parameter already exist */
 
   E_WRONGPATH,		/**< path is invalid */
 

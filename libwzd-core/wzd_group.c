@@ -49,10 +49,12 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_fs.h"
 #include "wzd_group.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
+#include "wzd_user.h"
 
 #include "wzd_debug.h"
 
@@ -100,6 +102,72 @@ void group_free(wzd_group_t * group)
 
   ip_list_free(group->ip_list);
   wzd_free(group);
+}
+
+/** \brief Create a new group, giving default parameters
+ * \return The new group, or NULL. If \a err is provided, set it to
+ * the error code.
+ */
+wzd_group_t * group_create(const char * groupname, wzd_context_t * context, wzd_config_t * config, int * err)
+{
+  wzd_group_t * newgroup;
+  const char * homedir;
+
+  WZD_ASSERT_RETURN( groupname != NULL, NULL );
+  if (groupname == NULL) {
+    if (err) *err = E_PARAM_NULL;
+    return NULL;
+  }
+
+  if (strlen(groupname) == 0 || strlen(groupname) >= HARD_GROUPNAME_LENGTH) {
+    if (err) *err = E_PARAM_BIG;
+    return NULL;
+  }
+
+  if (GetGroupByName(groupname) != NULL) {
+    if (err) *err = E_PARAM_EXIST;
+    return NULL;
+  }
+
+  /* homedir */
+  if (context != NULL) {
+    wzd_user_t * me;
+
+    me = GetUserByID(context->userid);
+    if (me != NULL && me->group_num > 0) {
+      wzd_group_t * mygroup = GetGroupByID(me->groups[0]);
+      homedir = mygroup->defaultpath;
+    } else {
+      homedir = me->rootpath;
+    }
+
+    /* check if homedir exist */
+    {
+      fs_filestat_t s;
+      if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
+        out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating group %s)\n",homedir,groupname);
+      }
+    }
+  } else {
+    out_log(LEVEL_HIGH,"WARNING could not get a default homedir for new group %s\n",groupname);
+    /** \todo use a config parameter or a default group to get the
+     * default path ?
+     */
+    homedir = "";
+  }
+
+  if (strlen(homedir) >= WZD_MAX_PATH) {
+    out_log(LEVEL_HIGH,"ERROR homedir is too long (>= %d chars) while creating group %s\n",WZD_MAX_PATH,groupname);
+    if (err) *err = E_PARAM_BIG;
+    return NULL;
+  }
+
+  /* finally, create the new group */
+  newgroup = group_allocate();
+  strncpy(newgroup->groupname,groupname,HARD_GROUPNAME_LENGTH);
+  strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH);
+
+  return newgroup;
 }
 
 /** \brief Register a group to the main server

@@ -89,13 +89,12 @@ void do_site_help_adduser(wzd_context_t * context)
 int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *password, *groupname, *ip=NULL;
-  const char * homedir;
   int ret;
-  wzd_user_t *user, *me;
+  wzd_user_t *newuser, *me;
   wzd_group_t * group=NULL;
   int i;
-  unsigned int ratio = 3; /* TODO XXX FIXME default ratio value hardcoded */
   short is_gadmin;
+  int err;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -112,8 +111,6 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
     return 0;
   }
 
-  /* check users limit -> backend will do that !! */
-
   groupname = str_tok(command_line," \t\r\n");
   group = GetGroupByName(str_tochar(groupname));
 
@@ -122,12 +119,6 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 
   groupname = NULL;
 
-  /* check if user already exists */
-  if ( GetUserByName(str_tochar(username)) ) {
-    ret = send_message_with_args(501,context,"User already exists");
-    str_deallocate(username); str_deallocate(password); str_deallocate(ip);
-    return 0;
-  }
   /* find user group or take current user */
   if (!group) {
     if (me && me->group_num>0) {
@@ -158,55 +149,41 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
       return 0;
     }
   }
-  if (group) {
-    homedir = group->defaultpath;
-    ratio = group->ratio;
-  } else {
-    /* XXX FIXME we should abort here */
-    ret = send_message_with_args(501,context,"I can't find a default_home in your groups - contact the sysadmin");
+
+  newuser = user_create(str_tochar(username),str_tochar(password),(group)?group->groupname:NULL,context,mainConfig,&err);
+  if (newuser == NULL) {
+    switch(err) {
+      case E_PARAM_NULL:
+      case E_PARAM_BIG:
+        err = send_message_with_args(501,context,"Invalid name or parameter");
+        break;
+      case E_PARAM_EXIST:
+        err = send_message_with_args(501,context,"A user already exist with this name");
+        break;
+      default:
+        err = send_message_with_args(501,context,"Error while adding user");
+        break;
+    };
     str_deallocate(username); str_deallocate(password); str_deallocate(ip);
     return 0;
   }
-  /* check if homedir exist */
-  {
-    fs_filestat_t s;
-    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
-      ret = send_message_with_args(501,context,"Homedir does not exist");
-      str_deallocate(username); str_deallocate(password); str_deallocate(ip);
-      return 0;
-    }
-  }
-
-  /* create new user */
-  user = user_allocate();
-
-  strncpy(user->username,str_tochar(username),HARD_USERNAME_LENGTH);
-  strncpy(user->userpass,str_tochar(password),MAX_PASS_LENGTH);
-  strncpy(user->rootpath,homedir,WZD_MAX_PATH);
-  user->group_num=0;
-  if (group) {
-    user->groups[0] = group->gid;
-    if (user->groups[0]) user->group_num=1;
-  }
-  user->userperms=0xffffffff;
-  user->ratio = ratio;
 
   i = 0;
   if (ip) {
-    ret = ip_add_check(&user->ip_list, str_tochar(ip), 1 /* is_allowed */);
+    ret = ip_add_check(&newuser->ip_list, str_tochar(ip), 1 /* is_allowed */);
     str_deallocate(ip);
   };
   while ( (ip = str_tok(command_line," \t")) ) {
-    ret = ip_add_check(&user->ip_list, str_tochar(ip), 1 /* is_allowed */);
+    ret = ip_add_check(&newuser->ip_list, str_tochar(ip), 1 /* is_allowed */);
     str_deallocate(ip);
   }
 
   /* add it to backend */
-  ret = backend_mod_user(mainConfig->backends->filename,0,user,_USER_CREATE);
+  ret = backend_mod_user(mainConfig->backends->filename,0,newuser,_USER_CREATE);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem adding user");
-    user_free(user);
+    user_free(newuser);
   } else {
     if (is_gadmin) me->user_slots--; /* decrement user slots counter */
     ret = send_message_with_args(200,context,"User added");

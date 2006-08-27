@@ -63,6 +63,12 @@ void user_init_struct(wzd_user_t * user);
  */
 void user_free(wzd_user_t * user);
 
+/** \brief Create a new user, giving default parameters
+ * \return The new user, or NULL. If \a err is provided, set it to
+ * the error code.
+ */
+wzd_user_t * user_create(const char * username, const char * pass, const char * groupname, wzd_context_t * context, wzd_config_t * config, int * err);
+
 /** \brief Register a user to the main server
  * \return The uid of the registered user, or -1 on error
  */

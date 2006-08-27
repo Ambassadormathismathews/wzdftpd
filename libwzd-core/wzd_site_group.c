@@ -84,10 +84,9 @@ void do_site_help_grpadd(wzd_context_t * context)
 int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t *groupname;
-  char *homedir;
-  int ret;
+  int err;
   wzd_user_t *me;
-  wzd_group_t *mygroup=NULL, *newgroup;
+  wzd_group_t *newgroup;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -98,57 +97,43 @@ int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
     do_site_help_grpadd(context);
     return 0;
   }
-  /* TODO read backend */
-
-  /* check if group already exists */
-  if ( GetGroupByName(str_tochar(groupname)) ) {
-    ret = send_message_with_args(501,context,"Group already exists");
-    str_deallocate(groupname);
-    return 0;
-  }
-
-  /* backend will do that */
-  /* check groups limit */
 
   /* Gadmin ? */
   if (is_gadmin)
   {
-    ret = send_message_with_args(501,context,"Gadmins can't add groups !");
+    err = send_message_with_args(501,context,"Gadmins can't add groups !");
     str_deallocate(groupname);
     return 0;
   }
-  mygroup = GetGroupByID(me->groups[0]);
-  if (mygroup) {
-    homedir = mygroup->defaultpath;
-  } else {
-    homedir = me->rootpath;
-  }
-  /* check if homedir exist */
-  {
-    fs_filestat_t s;
-    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
-      ret = send_message_with_args(501,context,"Homedir does not exist");
-      str_deallocate(groupname);
-      return 0;
+
+  newgroup = group_create(str_tochar(groupname),context,mainConfig,&err);
+  if (newgroup == NULL) {
+    switch (err) {
+      case E_PARAM_NULL:
+      case E_PARAM_BIG:
+        err = send_message_with_args(501,context,"Invalid name or parameter");
+        break;
+      case E_PARAM_EXIST:
+        err = send_message_with_args(501,context,"A group already exist with this name");
+        break;
+      default:
+        err = send_message_with_args(501,context,"Error while adding group");
+        break;
     }
+    str_deallocate(groupname);
+    return 0;
   }
-
-  /* create new group */
-  newgroup = group_allocate();
-
-  strncpy(newgroup->groupname,str_tochar(groupname),sizeof(newgroup->groupname));
-  strncpy(newgroup->defaultpath,homedir,WZD_MAX_PATH);
 
   /* add it to backend */
-  ret = backend_mod_group(mainConfig->backends->filename,0,newgroup,_GROUP_CREATE);
+  err = backend_mod_group(mainConfig->backends->filename,0,newgroup,_GROUP_CREATE);
 
   str_deallocate(groupname);
 
-  if (ret) {
-    ret = send_message_with_args(501,context,"Problem adding group");
+  if (err) {
+    err = send_message_with_args(501,context,"Problem adding group");
     group_free(newgroup);
   } else {
-    ret = send_message_with_args(200,context,"Group added");
+    err = send_message_with_args(200,context,"Group added");
     /* do not free group, it is stored in registry */
   }
   return 0;

@@ -53,6 +53,12 @@ void group_init_struct(wzd_group_t * group);
  */
 void group_free(wzd_group_t * group);
 
+/** \brief Create a new group, giving default parameters
+ * \return The new group, or NULL. If \a err is provided, set it to
+ * the error code.
+ */
+wzd_group_t * group_create(const char * groupname, wzd_context_t * context, wzd_config_t * config, int * err);
+
 /** \brief Register a group to the main server
  * \return The gid of the registered group, or -1 on error
  */
