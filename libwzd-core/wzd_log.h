@@ -74,7 +74,15 @@ void log_close(int fd);
  */
 void log_fini(void);
 
+/** \brief Open log file descriptor, and set mainConfig->logfile
+ * to the corresponding FILE *
+ * \deprecated Use \ref log_open
+ */
 int log_open_old(const char *filename, int filemode);
+
+/** \brief Close logfile opened using \ref log_open_old
+ * \deprecated Use \ref log_close
+ */
 void log_close_old(void);
 
 /** \brief Get file descriptor asociated to log level
@@ -99,32 +107,57 @@ int log_set(unsigned int level, int fd);
  */
 int log_set_syslog(unsigned int level, int syslog_value);
 
-/* Opens file of type xferlog and returns file descriptor if ok */
+/** \brief Open file of type xferlog and returns file descriptor if ok
+ */
 int xferlog_open(const char *filename, unsigned int filemode);
+
+/** \brief Close xferlog file opened using \ref xferlog_open
+ */
 void xferlog_close(int fd);
 
+/** \brief Send message to the server logger
+ */
 void out_log(int level,const char *fmt,...)
 #ifdef __GNUC__
   __attribute__((__format__(printf,2,3)))
 #endif
 ;
 
+/** \brief Send message to the server error stream
+ * \note This function does nothing in release mode
+ */
 void out_err(int level, const char *fmt,...)
 #ifdef __GNUC__
   __attribute__((__format__(printf,2,3)))
 #endif
 ;
 
+/** \brief Automatically create and send the message in xferlog format
+ * after a file transfer has been completed or interrupted.
+ */
 void out_xferlog(wzd_context_t * context, int is_complete);
 
+/** \brief Format in a standard way and send message to the server logger
+ * using LEVEL_NORMAL
+ *
+ * A newline is appended.
+ */
 void log_message(const char *event, const char *fmt, ...)
 #ifdef __GNUC__
   __attribute__((__format__(printf,2,3)))
 #endif
 ;
 
+/** \brief Convert a string containing the log level name ("lowest", "flood", etc.)
+ * into the corresponding constant (LEVEL_LOWEST)
+ * \return The constant, or -1 on error
+ */
 int str2loglevel(const char *s);
 
+/** \brief Convert a standard log level (LEVEL_LOWEST) into the
+ * corresponding string ("lowest")
+ * \return The constant string, or an empty string ("") on error
+ */
 const char * loglevel2str(int l);
 
 #endif /* __WZD_LOG__ */
