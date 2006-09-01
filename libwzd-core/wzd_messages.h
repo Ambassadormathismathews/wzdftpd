@@ -43,6 +43,10 @@ int send_message_raw(const char *msg, wzd_context_t * context);
  *
  * This will replace all previous functions to send messages
  */
-int send_message_formatted(int code, wzd_context_t * context, const char * format, ...);
+int send_message_formatted(int code, wzd_context_t * context, const char * format, ...)
+#ifdef __GNUC__
+  __attribute__((__format__(printf,3,4)))
+#endif
+;
 
 #endif /* __WZD_MESSAGES__ */

@@ -312,6 +312,7 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
 {
   char send_buffer[HARD_LS_BUFFERSIZE];
   char str_buffer[HARD_LS_BUFFERSIZE];
+  char * ptr_to_buffer;
   size_t send_buffer_len;
   struct wzd_dir_t * dir;
   struct wzd_file_t * file;
@@ -337,10 +338,13 @@ int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_contex
 
   while ( (file = dir_read(dir,context)) != NULL ) {
     /* for a VFS, we stat() the destination */
-    if (file->kind == FILE_VFS) wzd_strncpy(ptr,file->data,WZD_MAX_PATH-length);
-    else wzd_strncpy(ptr,file->filename,WZD_MAX_PATH-length);
+    if (file->kind == FILE_VFS) ptr_to_buffer = file->data;
+    else {
+      wzd_strncpy(ptr,file->filename,WZD_MAX_PATH-length);
+      ptr_to_buffer = buffer;
+    }
 
-    ret = fs_file_lstat(buffer,&s);
+    ret = fs_file_lstat(ptr_to_buffer,&s);
     if (ret) {
       out_log(LEVEL_HIGH,"ERROR while stat'ing file %s, ignoring\n",buffer);
       continue;
