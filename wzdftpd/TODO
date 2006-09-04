@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- support ipv6 addresses enclosed in [] (RFC2732)
+'********'
 - convert dir_open and others to process one file at a time (to reduce memory usage
   and allow stream processing in do_mlsd)
 '********'

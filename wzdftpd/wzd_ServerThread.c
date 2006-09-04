@@ -500,6 +500,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 {
   unsigned char remote_host[16];
   unsigned int remote_port;
+  int localport;
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
   unsigned char userip[16];
   fd_t newsock, fd_ident;
@@ -516,6 +517,8 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
     return -1;
   }
   FD_REGISTER(newsock,"Client control socket");
+
+  localport = socket_get_local_port(newsock);
 
   memcpy(userip,remote_host,16);
 
@@ -567,6 +570,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   context->state = STATE_CONNECTING;
   context->controlfd = newsock;
   context->family = family;
+  context->localport = localport;
   time (&context->login_time);
 
   memcpy(context->hostip,userip,sizeof(context->hostip));

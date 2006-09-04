@@ -566,7 +566,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   return sock;
 }
 
-/* Returns the local/remote port for the socket. */
+/** \brief Returns the local/remote port for the socket. */
 int get_sock_port(int sock, int local)
 {
 #if !defined(WIN32) && !defined(__sun__)

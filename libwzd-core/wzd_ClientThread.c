@@ -689,7 +689,7 @@ int waitconnect(wzd_context_t * context)
     /** \todo TODO XXX FIXME check ipv4 IP at this point ! */
 
     ret = send_message(150,context); /* about to open data connection */
-    sock = socket_connect(context->dataip,context->datafamily,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->controlfd,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       ret = send_message(425,context);
       return -1;
@@ -713,7 +713,7 @@ int waitconnect(wzd_context_t * context)
     /** \todo TODO XXX FIXME check ipv6 IP at this point ! */
 
     ret = send_message(150,context); /* about to open data connection */
-    sock = socket_connect(context->dataip,context->datafamily,context->dataport,mainConfig->port-1,context->controlfd,HARD_XFER_TIMEOUT);
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->controlfd,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       out_log(LEVEL_FLOOD,"Error establishing PORT connection: %s (%d)\n",strerror(errno),errno);
       ret = send_message(425,context);

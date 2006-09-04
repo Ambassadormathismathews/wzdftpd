@@ -376,6 +376,7 @@ struct wzd_context_t {
 
   net_family_t  family; /**< \brief IPv4 or IPv6 */
   unsigned char	hostip[16];
+  int           localport;
   wzd_ip_t      * peer_ip;
   char          * ident;
   connection_state_t state;
