@@ -33,28 +33,28 @@ Description: MySQL backend for wzdftpd
 
 Package: wzdftpd-back-pgsql
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}
 Suggests: postgresql
 Description: PostgreSQL backend for wzdftpd
  This package provides the PostgreSQL backend for wzdftpd.
 
 Package: wzdftpd-mod-avahi
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}
 Description: Zeroconf module for wzdftpd
  This package provides the necessary files to enable zeroconf support in
  wzdftpd, using the Avahi module.
 
 Package: wzdftpd-mod-tcl
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}
 Description: TCL module for wzdftpd
  This package provides the necessary files to run TCL plugins in wzdftpd,
  in the TCL module.
 
 Package: wzdftpd-mod-perl
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}
 Description: Perl module for wzdftpd
  This package provides the necessary files to run Perl plugins in wzdftpd,
  in the Perl module.
