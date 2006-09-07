@@ -282,6 +282,12 @@ int sfv_hook_rmdir(unsigned long event_id, const char * username, const char *di
 int WZD_MODULE_INIT (void)
 {
 /*  printf("WZD_MODULE_INIT\n");*/
+
+  if( get_all_params(&SfvConfig) ){
+    out_log(LEVEL_CRITICAL,"module sfv: failed to load parameters, check config\n");
+    return -1;
+  }
+
   event_connect_function(getlib_mainConfig()->event_mgr,EVENT_PREUPLOAD,sfv_event_preupload,NULL);
   event_connect_function(getlib_mainConfig()->event_mgr,EVENT_POSTUPLOAD,sfv_event_postupload,NULL);
   event_connect_function(getlib_mainConfig()->event_mgr,EVENT_RMDIR,sfv_event_rmdir,NULL);
@@ -299,11 +305,6 @@ int WZD_MODULE_INIT (void)
     }
   }
   
-  if( get_all_params(&SfvConfig) ){
-    out_log(LEVEL_CRITICAL,"module sfv: failed to load parameters, check config\n");
-    return -1;
-  }
-
   out_log(LEVEL_INFO,"INFO module SFV loaded\n");
   return 0;
 }
