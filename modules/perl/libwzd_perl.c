@@ -313,7 +313,7 @@ static int perl_hook_protocol(const char *file, const char *args)
     sv_setpv(perl_args, args);
   }
 
-  retval = get_sv("wzd::return",FALSE);
+  retval = get_sv("wzd::return",TRUE);
   if (retval) sv_setpv(retval,0);
 
   execute_perl(newSVpvn("Embed::load", 11), file);

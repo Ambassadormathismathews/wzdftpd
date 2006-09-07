@@ -3,6 +3,8 @@
 	* bugfix: random characters in MLSD (Closes: #0046)
 	* bugfix: provides Type in MLSD, even for VFS (Really Closes: #0042)
 	* bugfix: segfault in RMDIR when using SFV module without all needed parameters
+	* bugfix: PREMKDIR event always denies MKD unless $wzd::return is set
+	explicitly (Perl module, Closes: #0043)
 
 2006-09-04  Pierre Chifflier  <pollux@cpe.fr>
 
