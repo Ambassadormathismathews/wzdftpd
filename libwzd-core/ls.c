@@ -472,9 +472,14 @@ static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, 
         else type = "dir";
         break;
       case FILE_LNK:
+        /** \todo file destination type */
         type = "OS.unix=slink"; break;
       case FILE_VFS:
-        type = "OS.wzdftpd=vfs"; break;
+        if ((s->mode & S_IFMT) == S_IFDIR)
+          type = "dir;OS.wzdftpd=vfs";
+        else
+          type = "file;OS.wzdftpd=vfs";
+        break;
       default:
         type = "unknown"; break;
     }
@@ -489,6 +494,7 @@ static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, 
         break;
 #ifndef WIN32
       case S_IFLNK:
+        /** \todo file destination type */
         type = "OS.unix=slink"; break;
 #endif
       default:
@@ -540,7 +546,7 @@ static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, 
     if (perms & RIGHT_RNFR) perm_buf[length++] = 'f';
 
     perm_buf[length++] = ';';
-    perm_buf[length++] = '0';
+    perm_buf[length++] = '\0';
     buffer_end = strpcpy(buffer_end,perm_buf);
   }
 
