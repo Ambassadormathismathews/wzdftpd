@@ -40,6 +40,7 @@
 #endif
 
 #include "libwzd.h"
+#include "libwzd_err.h"
 #include "libwzd_pv.h"
 
 #include "libwzd_socket.h"
@@ -60,13 +61,13 @@
 #include <string.h>
 #include <sys/types.h>
 
-int socket_connect(const char *host, int port, const char *user, const char *pass);
-int socket_disconnect(void);
-int socket_read(char *buffer, int length);
-int socket_write(const char *buffer, int length);
-int socket_is_secure(void);
+static int socket_connect4(const char *host, int port, const char *user, const char *pass);
+static int socket_disconnect(void);
+static int socket_read(char *buffer, int length);
+static int socket_write(const char *buffer, int length);
+static int socket_is_secure(void);
 
-int socket_tls_switch(void);
+static int socket_tls_switch(void);
 
 
 int server_try_socket(void)
@@ -79,11 +80,16 @@ int server_try_socket(void)
   if (!tls_init()) _config->options &= ~OPTION_TLS;
 
   _config->connector.mode = CNT_SOCKET;
-  _config->connector.connect = &socket_connect;
+  /** \todo create a wrapper function to detect if _config->host is IPv6, if it has
+   * multiples addresses etc. and try to connect in order.
+   */
+  _config->connector.connect = &socket_connect4;
   _config->connector.disconnect = &socket_disconnect;
   _config->connector.read = &socket_read;
   _config->connector.write = &socket_write;
   _config->connector.is_secure = &socket_is_secure;
+
+  _config->state = STATE_CONNECTING;
 
   /* connected */
   _config->sock = _config->connector.connect(_config->host,_config->port,_config->user,_config->pass);
@@ -104,7 +110,10 @@ int server_try_socket(void)
 #if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
   if ( !(_config->options & OPTION_NOTLS) ) {
     ret = socket_tls_switch();
-    if (ret < 0 && OPTION_TLS) goto server_try_socket_abort; /* abort only if TLS was forced */
+    if (ret < 0 && OPTION_TLS) {
+      err_store("Could not switch to TLS");
+      goto server_try_socket_abort; /* abort only if TLS was forced */
+    }
   }
 #endif /* HAVE_GNUTLS */
 
@@ -140,24 +149,27 @@ int server_try_socket(void)
 
   /* go into ghost mode ? */
 
+  _config->state = STATE_OK;
 
   return _config->sock;
 
 server_try_socket_abort:
 #ifdef DEBUG
-  printf("error (last message was: [%s]\n",buffer?buffer:"(null)");
+  if (buffer != NULL)
+    fprintf(stderr,"last message was: [%s]\n",buffer);
 #endif
   free(buffer);
   _config->connector.disconnect();
   _config->connector.disconnect = NULL;
   _config->connector.read = NULL;
   _config->connector.write = NULL;
+  _config->state = STATE_NONE;
   return -1;
 }
 
 
 
-int socket_connect(const char *host, int port, const char *user, const char *pass)
+static int socket_connect4(const char *host, int port, const char *user, const char *pass)
 {
   struct sockaddr_in sai;
   struct hostent* host_info;
@@ -200,7 +212,7 @@ int socket_connect(const char *host, int port, const char *user, const char *pas
   return sock;
 }
 
-int socket_disconnect(void)
+static int socket_disconnect(void)
 {
   if (!_config) return -1;
 
@@ -227,7 +239,7 @@ int socket_disconnect(void)
  * the end_seq should be constructed only at first loop (we should separate
  * the first loop from multi-line case ?)
  */
-int socket_read(char *buffer, int length)
+static int socket_read(char *buffer, int length)
 {
   unsigned int offset=0;
   int ret=0;
@@ -246,7 +258,13 @@ int socket_read(char *buffer, int length)
 #endif
     ret = read( _config->sock, buffer+offset, length-offset );
 
-    if (ret < 0) return -1;
+    if (ret < 0) {
+      /** \todo detect if connection was close, and either
+       * 1/ try to reopen it
+       * 2/ set _config->state to STATE_ERROR
+       */
+      return -1;
+    }
 
     /* end ? */
     if (ret < 4) continue;
@@ -279,7 +297,7 @@ int socket_read(char *buffer, int length)
  * This function should ensure command is really RFC-compliant
  * (one ligne only, ended with \r\n)
  */
-int socket_write(const char *buffer, int length)
+static int socket_write(const char *buffer, int length)
 {
   char * send_buffer;
   int ret;
@@ -294,23 +312,24 @@ int socket_write(const char *buffer, int length)
 #if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
   if (_config->options & OPTION_TLS) {
     ret = tls_write(send_buffer, length);
-    free(send_buffer);
-    return ret;
-  }
+  } else
 #endif
-
   ret = write(_config->sock, send_buffer, length);
+  /** \todo detect if connection was close, and either
+   * 1/ try to reopen it
+   * 2/ set _config->state to STATE_ERROR
+   */
   free(send_buffer);
   return ret;
 }
 
-int socket_is_secure(void)
+static int socket_is_secure(void)
 {
   if (!_config) return 0; /* NOT secure */
   return ( (_config->options & OPTION_TLS) ? 1 : 0 );
 }
 
-int socket_tls_switch(void)
+static int socket_tls_switch(void)
 {
   char * buffer;
   int ret;

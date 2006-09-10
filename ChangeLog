@@ -1,3 +1,6 @@
+2006-09-11  Pierre Chifflier  <pollux@cpe.fr>
+	* feature: enhance libwzd: better error handling, inline documentation
+
 2006-09-07  Pierre Chifflier  <pollux@cpe.fr>
 
 	* bugfix: random characters in MLSD (Closes: #0046)

@@ -5,6 +5,7 @@ libwzd_ladir = ${prefix}/include/wzdftpd
 
 libwzd_la_HEADERS = \
 	libwzd.h \
+	libwzd_err.h \
 	libwzd_pv.h \
 	libwzd_socket.h \
 	libwzd_tls.h
@@ -12,6 +13,7 @@ libwzd_la_HEADERS = \
 libwzd_la_SOURCES = \
 	${libwzd_la_HEADERS} \
 	libwzd.c \
+	libwzd_err.c \
 	libwzd_socket.c \
 	libwzd_tls.c
 

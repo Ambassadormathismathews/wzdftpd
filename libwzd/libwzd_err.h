@@ -24,67 +24,50 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-/** \file libwzd_pv.h
- *  \brief Routines and structures restricted only to libwzd
+/** \file libwzd_err.h
+ *  \brief Error handling routines
  */
 
-#ifndef __LIBWZD_PV__
-#define __LIBWZD_PV__
+#ifndef __LIBWZD_ERR__
+#define __LIBWZD_ERR__
 
 /*! \addtogroup libwzd
  *  @{
  */
 
-enum connection_mode {
-  CNT_NONE=0,
-  CNT_NAMEDPIPE,
-  CNT_UNIXSOCKET,
-  CNT_SOCKET,
-};
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-enum connection_state {
-  STATE_NONE=0,
-  STATE_CONNECTING,
-  STATE_OK,
-  STATE_WAITING,
-};
+/** \brief Initialise error handling routines and buffers.
+ */
+int err_init(void);
 
-struct libwzd_connector {
-  enum connection_mode mode;
-  int (*connect)(const char*,int,const char*,const char*);
-  int (*disconnect)(void);
-  int (*read)(char *,int);
-  int (*write)(const char *,int);
-  int (*is_secure)(void);
-};
+/** \brief Free error handling buffers
+ */
+void err_fini(void);
 
-#define OPTION_TLS      0x00000010L     /* force tls */
-#define OPTION_NOTLS    0x00000100L     /* prevent using tls */
+/** \brief Store error message
+ */
+void err_store(const char *msg);
 
-struct libwzd_config {
-  char * host;
-  int port;
-  char * user;
-  char * pass; /**< \bug we should avoid storing that in clear */
-  int sock;
-  struct libwzd_connector connector;
-  enum connection_state state;
-  unsigned long options;
-};
+typedef int (*err_hook_t)(const char *);
 
+/** \brief Change callback when an error message is stored
+ */
+void err_set_hook(err_hook_t new_hook);
 
-extern struct libwzd_config * _config;
+/** \todo write following functions:
+ * Set hook when connection has been closed (on error or not)
+ * Store error message (with format)
+ * Get Error message(s)
+ */
 
-
-/* some awfull things coming from win32 */
-#ifdef WIN32
-
-#define close           _close
-#define snprintf        _snprintf
-
-#endif /* WIN32 */
+#ifdef	__cplusplus
+} /* extern "C" */
+#endif
 
 /*! @} */
 
-#endif /* __LIBWZD_PV__ */
+#endif /* __LIBWZD_ERR__ */
 

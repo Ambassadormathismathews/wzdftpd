@@ -35,6 +35,7 @@
 #include "../libwzd-base/wzd_strtok_r.h"
 
 #include "libwzd.h"
+#include "libwzd_err.h"
 #include "libwzd_pv.h"
 
 #include "libwzd_socket.h"
@@ -62,22 +63,18 @@ static unsigned long _options = 0;
 
 
 
-/* wzd_parse_args
- *
- * parse command line arguments to detect libwzd-specific switches
- *
- * TODO we should find a way for user application to add arguments,
- * using hooks
+/** \brief parse command line arguments to detect libwzd-specific switches
  */
 int wzd_parse_args(int argc, const char **argv)
 {
   int optindex;
   int opt;
-  int val;
   int i;
   int found;
   int option_is_long;
   const char * optarg=NULL;
+  unsigned long ul;
+  char * ptr;
 
   struct option_t {
     char * long_option;
@@ -155,8 +152,9 @@ int wzd_parse_args(int argc, const char **argv)
         }
         break;
       case 'p':
-        val = atoi(optarg); /* FIXME no test ... */
-        _port = val;
+        ul = strtoul(optarg,&ptr,0);
+        if (ptr!=NULL && *ptr != '\0') return -1;
+        _port = (int)ul;
         break;
       case 's':
         _options |= OPTION_TLS;
@@ -167,6 +165,65 @@ int wzd_parse_args(int argc, const char **argv)
     }
   }
 
+  return 0;
+}
+
+/** \brief Set username for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_username(const char * username)
+{
+  if (_config && _config->state != STATE_NONE) return -1;
+  if (_user) free(_user);
+  _user = NULL;
+  if (username) _user = strdup(username);
+  return 0;
+}
+
+/** \brief Set password for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_password(const char * password)
+{
+  if (_config && _config->state != STATE_NONE) return -1;
+  if (_pass) free(_pass);
+  _pass = NULL;
+  if (password) _pass = strdup(password);
+  return 0;
+}
+
+/** \brief Set hostname for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_hostname(const char * hostname)
+{
+  if (_config && _config->state != STATE_NONE) return -1;
+  if (_host) free(_host);
+  _host = NULL;
+  if (hostname) _host = strdup(hostname);
+  return 0;
+}
+
+/** \brief Set port for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_port(int port)
+{
+  if (_config && _config->state != STATE_NONE) return -1;
+  _port = port;
+  return 0;
+}
+
+/** \brief Set TLS policy for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_tls_policy(int use_tls)
+{
+  if (_config && _config->state != STATE_NONE) return -1;
+  if (use_tls)
+    _options |= OPTION_TLS;
+  else
+    _options |= OPTION_NOTLS;
   return 0;
 }
 
@@ -192,6 +249,9 @@ int wzd_init(void)
 {
   /* 0- init structs */
   if (_config != NULL) return -1; /* init already done */
+
+  err_init();
+
   _config = malloc(sizeof(struct libwzd_config));
   memset(_config,0,sizeof(struct libwzd_config));
   _config->host = (_host) ? _host : "localhost";
@@ -199,11 +259,6 @@ int wzd_init(void)
   _config->user = (_user) ? _user : "wzdftpd";
   _config->pass = (_pass) ? _pass : "wzdftpd";
   _config->options = _options;
-
-  /* 1- connect to server */
-  if (_connect_server()<0) { free(_config); _config=NULL; return -1; }
-
-  /* 2- fill static struct ? */
 
   return 0;
 }
@@ -226,6 +281,23 @@ int wzd_fini(void)
     _config = NULL;
   }
 
+  err_fini();
+
+  return 0;
+}
+
+/** \brief Connect to server
+ * \return The file descriptor, or -1
+ */
+int wzd_connect(void)
+{
+  if (!_config) return -1;
+
+  /* 1- connect to server */
+  if (_connect_server()<0) { free(_config); _config=NULL; return -1; }
+
+  /* 2- fill static struct ? */
+
   return 0;
 }
 
@@ -241,7 +313,11 @@ wzd_reply_t * wzd_send_message(const char *message, int msg_length)
   if (!_config->connector.read || !_config->connector.write) return NULL;
   if (!message) return NULL;
 
-  /* check connection status ? */
+  /* check connection status */
+  if (_config->state != STATE_OK) {
+    err_store("wzd_send_message: connection is not ready");
+    return NULL;
+  }
 
   /* ensure last bytes of message are \r\n ? */
 

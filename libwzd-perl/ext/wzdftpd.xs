@@ -22,32 +22,28 @@ wzd_init(host="localhost",port=21,user="wzdftpd",pass="wzdftpd")
     const char *	pass
   CODE:
   {
-    const char * 	horrible_tab[64];
-    unsigned int	horrible_index=0;
-    char 		intbuf[64];
-    /* call wzd_parse_ags */
-    horrible_tab[horrible_index++] = "wzdftpd.xs";
-    if (host) {
-      horrible_tab[horrible_index++] = "-h";
-      horrible_tab[horrible_index++] = host;
-    }
-    if (port) {
-      snprintf(intbuf,sizeof(intbuf),"%d",port);
-      horrible_tab[horrible_index++] = "-p";
-      horrible_tab[horrible_index++] = intbuf;
-    }
-    if (user) {
-      horrible_tab[horrible_index++] = "-u";
-      horrible_tab[horrible_index++] = user;
-    }
-    if (pass) {
-      horrible_tab[horrible_index++] = "-w";
-      horrible_tab[horrible_index++] = pass;
-    }
-    horrible_tab[horrible_index] = NULL;
-    wzd_parse_args(horrible_index,horrible_tab);
+    int ok=1;
 
-    RETVAL = (!wzd_init());
+    ok = wzd_init();
+
+    if (ok && host) {
+      if (wzd_set_hostname(host)<0) ok = 0;
+    }
+    if (ok && port) {
+      if (wzd_set_port(port)<0) ok = 0;
+    }
+    if (ok && user) {
+      if (wzd_set_username(user)<0) ok = 0;
+    }
+    if (ok && pass) {
+      if (wzd_set_password(pass)<0) ok = 0;
+    }
+
+    if (ok) {
+      RETVAL = (!wzd_connect());
+    } else {
+      RETVAL = 0;
+    }
   }
   OUTPUT:
     RETVAL
@@ -71,7 +67,7 @@ wzd_send_message(message)
     if (!reply)
       XSRETURN_UNDEF;
 
-      
+
     for (i=0; reply->data[i]!=NULL; i++) {
       XPUSHs(sv_2mortal(newSVpv(reply->data[i],strlen(reply->data[i]))));
     }

@@ -49,28 +49,57 @@ void wzd_free_reply(wzd_reply_t *reply);
 
 
 
-/* wzd_parse_args
- *
- * parse command line arguments to detect libwzd-specific switches
+/** \brief parse command line arguments to detect libwzd-specific switches
  */
 int wzd_parse_args(int argc, const char **argv);
 
-/* wzd_init: connect to server
+/** \brief Set username for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_username(const char * username);
+
+/** \brief Set password for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_password(const char * password);
+
+/** \brief Set hostname for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_hostname(const char * hostname);
+
+/** \brief Set port for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_port(int port);
+
+/** \brief Set TLS policy for connection
+ * \note Can only be called before connecting.
+ */
+int wzd_set_tls_policy(int use_tls);
+
+/** \brief Initialize libwzd
  * 
- * parameters are still being defined
- *
+ * \note parameters are still being defined
  */
 int wzd_init(void);
 
+/** \brief Close connection and free memory used by libwzd
+ */
 int wzd_fini(void);
 
-/* wzd_send_message
+/** \brief Connect to server
+ * \return The file descriptor, or -1
+ */
+int wzd_connect(void);
+
+/* \brief Send \a buffer to server
  * 
- * buffer must be one-line, without CR or LF
+ * \a buffer must be one-line, without CR or LF
  */
 wzd_reply_t * wzd_send_message(const char *buffer, int length);
 
-/* TODO missing functions:
+/* \todo missing functions:
  *
  * - disconnect
  * - send_command(const char *)

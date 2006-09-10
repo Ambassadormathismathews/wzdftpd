@@ -13,9 +13,12 @@ int main(int argc, const char **argv)
 
   wzd_parse_args(argc,argv);
   ret = wzd_init();
+
+  ret = wzd_connect();
   if (ret < 0) {
-    printf("Could not connect to server !\n");
-    exit (1);
+    fprintf(stderr,"Could not connect to server\n");
+    wzd_fini();
+    exit(-1);
   }
 
   reply = wzd_send_message(msg,strlen(msg));
