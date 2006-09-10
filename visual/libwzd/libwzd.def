@@ -2,6 +2,7 @@ LIBRARY LIBWZD
 
 EXPORTS
 	wzd_init
+	wzd_connect
 	wzd_fini
 	wzd_free_reply
 	wzd_parse_args

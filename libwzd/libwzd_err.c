@@ -53,7 +53,7 @@ static int _err_max = 0;
 static int _err_default_hook(const char *s);
 static int _err_call_hook(void);
 
-static inline int _err_set_minimum_size(int s);
+static int _err_set_minimum_size(int s);
 
 static err_hook_t _err_hook = _err_default_hook;
 
@@ -102,7 +102,7 @@ void err_set_hook(err_hook_t new_hook)
   _err_hook = new_hook;
 }
 
-static inline int _err_set_minimum_size(int s)
+static int _err_set_minimum_size(int s)
 {
   char * ptr;
 

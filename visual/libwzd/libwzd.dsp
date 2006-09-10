@@ -102,6 +102,10 @@ SOURCE=.\libwzd.def
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\libwzd\libwzd_err.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\libwzd\libwzd_socket.c
 # End Source File
 # Begin Source File
@@ -115,6 +119,10 @@ SOURCE=..\..\libwzd\libwzd_tls.c
 # Begin Source File
 
 SOURCE=..\..\libwzd\libwzd.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\libwzd\libwzd_err.h
 # End Source File
 # Begin Source File
 
