@@ -192,6 +192,7 @@ int write_single_group(FILE * file, const wzd_group_t * group)
     fprintf(file,"max_ul_speed=%u\n",group->max_ul_speed);
   if (group->max_dl_speed)
     fprintf(file,"max_dl_speed=%u\n",group->max_dl_speed);
+  fprintf(file,"rights=0x%lx\n",group->groupperms);
   if (strlen(group->tagline)>0)
     fprintf(file,"tagline=%s\n",group->tagline);
   fprintf(file,"gid=%d\n",group->gid);
@@ -457,6 +458,10 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       }
       group->ratio = num;
     } /* else if (strcmp("ratio",... */
+    else if (strcmp("rights",varname)==0) {
+      num = strtoul(value, &ptr, 0);
+      group->groupperms = num;
+    }
     else if (strcmp("max_dl_speed",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
