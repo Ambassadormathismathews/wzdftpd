@@ -713,6 +713,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
           /** \bug this comparison is false */
           if (DIRNCMP(buffer_vfs,syspath,strlen(syspath))==0)
           { /* ok, we have a candidate. Now check if user is allowed to see it */
+            if (!vfs_match_perm(vfs->target,user)) { vfs = vfs->next_vfs; continue; }
             ptr = buffer_vfs + strlen(syspath);
             /* bingo, vfs */
             /* we overwrite syspath ! */

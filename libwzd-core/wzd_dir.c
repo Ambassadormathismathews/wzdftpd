@@ -214,6 +214,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
 
   /* add vfs entries */
   {
+    wzd_user_t * user = GetUserByID(context->userid);
     char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
     while (vfs)
     {
@@ -233,6 +234,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
       wzd_free(ptr);
       if (DIRNCMP(buffer_vfs,name,strlen(name))==0)
       { /* ok, we have a candidate. Now check if user is allowed to see it */
+        if (!vfs_match_perm(vfs->target,user)) { vfs = vfs->next_vfs; continue; }
         ptr = buffer_vfs + strlen(name) + vfs_pad;
         if (strchr(ptr,'/')==NULL) {
           /* read vfs permissions, set to default if no permissions set */
