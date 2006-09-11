@@ -114,7 +114,11 @@ int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
   groupname = str_tok(command_line," \t\r\n");
   group = GetGroupByName(str_tochar(groupname));
 
-  if (!group) ip = groupname; /* it is not a valid group, assume it is an ip */
+  if (group == NULL) {
+    ret = send_message_with_args(501,context,"Invalid group name");
+    str_deallocate(groupname);
+    return 0;
+  }
   else { str_deallocate(groupname); groupname = NULL; }
 
   groupname = NULL;
