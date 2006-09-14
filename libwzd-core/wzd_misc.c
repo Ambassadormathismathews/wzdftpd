@@ -429,6 +429,24 @@ int safe_rename(const char *src, const char *dst)
 {
   int ret;
 
+#ifdef WIN32
+  /* Quote from MSDN documentation:
+   * However, you cannot use rename to move a directory. Directories can be renamed, but not moved.
+   * I'm just sick of all this crap
+   */
+  {
+    fs_filestat_t s;
+
+    if (fs_file_lstat(src,&s)) return -1;
+
+    /** \todo kill all users in this path, windows does not allow moving an opened file */
+    if (S_ISDIR(s.mode)) {
+      ret = _int_rename(src,dst);
+      return ret;
+    }
+  }
+#endif
+
   ret = rename(src,dst);
   if (ret == -1 && errno == EXDEV)
   {
