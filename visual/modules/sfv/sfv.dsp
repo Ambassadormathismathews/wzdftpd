@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386
-# ADD LINK32 ../../Release/libwzd_core.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /machine:I386 /out:"Release/libwzd_sfv.dll"
+# ADD LINK32 ../../Release/libwzd_core.lib ../../gnu_regex/release/gnu_regex.lib /nologo /dll /machine:I386 /out:"Release/libwzd_sfv.dll"
 
 !ELSEIF  "$(CFG)" == "sfv - Win32 Debug"
 
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 ../../Debug/libwzd_core.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /dll /debug /machine:I386 /out:"Debug/libwzd_sfv.dll" /pdbtype:sept
+# ADD LINK32 ../../Debug/libwzd_core.lib ../../gnu_regex/debug/gnu_regex.lib /nologo /dll /debug /machine:I386 /out:"Debug/libwzd_sfv.dll" /pdbtype:sept
 
 !ENDIF 
 
@@ -169,10 +169,6 @@ SOURCE=..\..\..\modules\sfv\minizip\unzip.c
 SOURCE=..\..\..\modules\sfv\minizip\unzip.h
 # End Source File
 # End Group
-# Begin Source File
-
-SOURCE=..\..\gnu_regex_dist\gnu_regex.lib
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\zlib\lib\zdll.lib

@@ -46,7 +46,7 @@
 #include <direct.h>
 #include <io.h>
 
-#include "../../visual/gnu_regex_dist/regex.h"
+#include "../../visual/gnu_regex/regex.h"
 #else
 #include <dirent.h>
 #include <sys/types.h>

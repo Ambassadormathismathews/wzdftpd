@@ -51,7 +51,7 @@
 #ifdef WIN32
 #include <winsock2.h>
 
-#include "../visual/gnu_regex_dist/regex.h"
+#include "../visual/gnu_regex/regex.h"
 #else
 #include <unistd.h>
 
