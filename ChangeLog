@@ -1,4 +1,10 @@
+2006-09-17  Pierre Chifflier  <pollux@cpe.fr>
+
+	* bugfix: trying to learn to windows how to move files and directories
+	(Closes: #0051)
+
 2006-09-11  Pierre Chifflier  <pollux@cpe.fr>
+
 	* feature: enhance libwzd: better error handling, inline documentation
 	* bugfix: read/write group permissions in backend plaintext
 	* bugfix: hide VFS entries to users/groups not listed in VFS permissions

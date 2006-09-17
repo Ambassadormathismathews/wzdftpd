@@ -408,14 +408,30 @@ static int _int_rename(const char * src, const char *dst)
   if (S_ISREG(s.mode)) {
     char buffer[32768];
     int fd_from, fd_to;
+    size_t sz;
+    int mode;
+
+#ifdef WIN32
+    /* since we can't move directories on windows, we can get here while
+     * trying to move files on the same device. So we just try to rename them
+     * before copy/remove, since renaming is much faster !
+     */
+    ret = rename(src,dst);
+    if (ret == 0) return 0;
+    mode = _O_BINARY;
+#endif
 
     /* FIXME XXX would it be wise to test functions return values ? :-P */
-    fd_from = open(src,O_RDONLY);
-    fd_to = open(dst,O_CREAT | O_WRONLY); /* XXX will overwite existing files */
-    while ( (ret=read(fd_from,buffer,sizeof(buffer))) > 0)
-    {
-      ret = write(fd_to,buffer,ret);
-    }
+    fd_from = open(src,O_RDONLY | mode);
+    if (fd_from < 0) return -1;
+    fd_to = open(dst,O_CREAT | O_WRONLY | mode,0666); /** \fixme this will overwite existing files */
+    if (fd_to < 0) { close(fd_from); return -1; }
+    do {
+      sz = read(fd_from,buffer,sizeof(buffer));
+      if (sz > 0) {
+        ret = write(fd_to,buffer,sz);
+      }
+    } while (sz > 0);
     close(fd_from);
     close(fd_to);
     unlink(src);
