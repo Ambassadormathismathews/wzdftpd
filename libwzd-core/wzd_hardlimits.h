@@ -26,7 +26,7 @@
 #define __WZD_HARD_LIMITS__
 
 #ifdef HAVE_CONFIG_H
-# include "../config.h"
+# include "config.h"
 #endif
 
 #define	DEFAULT_SERVER_TICK	1L

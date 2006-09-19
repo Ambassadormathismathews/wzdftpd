@@ -34,7 +34,7 @@
 #define __WZD_ALL__
 
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 
 #include <stdio.h>
@@ -113,7 +113,7 @@
 #else /* WZD_USE_PCH */
 
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 
 #endif /* WZD_USE_PCH */

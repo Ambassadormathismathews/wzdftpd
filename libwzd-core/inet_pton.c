@@ -22,7 +22,7 @@
 #ifndef WZD_USE_PCH
 
 #ifdef HAVE_CONFIG_H
-#include "../config.h"
+#include "config.h"
 #endif
 
 #if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))

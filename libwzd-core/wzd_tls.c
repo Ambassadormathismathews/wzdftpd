@@ -27,7 +27,7 @@
 #include "wzd_all.h"
 
 #ifdef HAVE_CONFIG_H
-# include "../config.h"
+# include "config.h"
 #endif
 
 #ifdef HAVE_OPENSSL
