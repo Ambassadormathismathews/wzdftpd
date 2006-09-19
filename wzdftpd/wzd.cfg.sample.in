@@ -239,7 +239,7 @@ site_vfsdel = +O
 [sfv]
 progressmeter = [WzD] - %3d%% Complete - [WzD]
 del_progressmeter = \[.*] - ...% Complete - \[WzD]
-incomplete_indicator = ../(incomplete)-%0
+incomplete_indicator = ../(incomplete)-%releasename
 other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
 
 [plaintext]
