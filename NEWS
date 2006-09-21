@@ -1,5 +1,14 @@
    NEWS file for wzdftpd
 
+0.8.0: September 7 2006
+
+New events have been added (WIPE, PREMKDIR), and the scripts are now able to
+deny a transfer. Users and groups management has been rewritten and
+enhanced. SQL backends support auto-reconnection if interrupted.
+Many bugs were fixed, particularly for MLSD and SITE vars commands.
+Documentation has been removed from package, the documentation is now
+located on the wiki: http://www.wzdftpd.net/wiki/
+
 0.7.0: April 24 2006
 
 Enable IPv6 and MLSD by default, add new options to reject users at connection

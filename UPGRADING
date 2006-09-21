@@ -1,6 +1,10 @@
+0.8.0:
+
+SFV module: replace %0 in parameters by %releasename
+
 0.7.1:
 
-Moved Zerconf specific parameters to its own config section. This section
+Moved Zeroconf specific parameters to its own config section. This section
 is named [ZEROCONF]. Possible parameters are: zeroconf_port = 8021,
 zeroconf_name = foobar, zeroconf_username = wzdftpd, zeroconf_password = wzdftpd
 zeroconf_path = /tmp.
