@@ -16,7 +16,10 @@
 use strict;
 use Config::IniFiles;
 
-my $debug = 0; # set to 1 to get verbose output
+# Set non non-zero to get verbose output
+# 1: script general actions, version transitions
+# 2: modifications on keys
+my $debug = 0;
 
 
 
@@ -94,24 +97,39 @@ sub move_parameter
   my ($section,$param,$newsection,$newparam) = @_;
 
   if ($section ne $newsection) {
+    print "Adding section $newsection\n" if ($debug > 1);
     $cfg->AddSection ( $newsection ) unless $cfg->SectionExists ( $newsection );
   }
   if ($cfg->val( $newsection, $newparam )) {
+    print "Replacing value [$newsection]:$newparam = ". $cfg->val( $section, $param ) . "\n" if ($debug > 1);
     $cfg->setval($newsection, $newparam, $cfg->val( $section, $param ));
   } else {
+    print "Adding value [$newsection]:$newparam = ". $cfg->val( $section, $param ) . "\n" if ($debug > 1);
     $cfg->newval($newsection, $newparam, $cfg->val( $section, $param ));
   }
+  print "Deleting [$section]:$param\n" if ($debug > 1);
   $cfg->delval($section,$param);
 }
 
 sub update_071
 {
   my ($old_version) = @_;
+  my $value;
 
   print "Upgrading zeroconf parameters\n" if $debug;
   # check if we have zeroconf_name or zeroconf_test
   move_parameter('GLOBAL','zeroconf_name','ZEROCONF','zeroconf_name');
   move_parameter('GLOBAL','zeroconf_port','ZEROCONF','zeroconf_port');
+
+  print "Upgrading sfv parameters\n" if $debug;
+  move_parameter('GLOBAL','param_sfv_progressmeter','sfv','progressmeter');
+  move_parameter('GLOBAL','param_sfv_del_progressmeter','sfv','del_progressmeter');
+  move_parameter('GLOBAL','param_sfv_incomplete_indicator','sfv','incomplete_indicator');
+  move_parameter('GLOBAL','param_sfv_other_completebar','sfv','other_completebar');
+  if ( ($value=$cfg->val('sfv','incomplete_indicator')) ) {
+    $value =~ s/%0/%releasename/;
+    $cfg->setval('sfv', 'incomplete_indicator', $value);
+  }
 
   update_version($old_version,$transition_state{$old_version}[1]);
   return $transition_state{$old_version}[1];
