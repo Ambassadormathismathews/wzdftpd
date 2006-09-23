@@ -15,7 +15,7 @@
 
 ;--------------------------------
 ;Constants
-  !define VER_DISPLAY "0.7.99-alpha1"
+  !define VER_DISPLAY "0.7.99-rc1"
   !define FILE_ROOT "..\files\"
   !define PROG_NAME "wzdftpd"
   !define LICENSE_FILE "LICENSE.TXT"
@@ -315,7 +315,7 @@ Var INI_VALUE
   LangString DESC_MainSec ${LANG_GERMAN} "Hauptprogramm und alle erforderlichen Dateien. Umfasst den Backend Quelltext."
   LangString DESC_TCLSec ${LANG_GERMAN} "Optionales TCL-Modul."
   LangString DESC_PerlSec ${LANG_GERMAN} "Optionales Perl-Modul."
-  LangString DESC_PerlSec ${LANG_GERMAN} "Optionales Zeroconf-Modul."
+  LangString DESC_ZeroconfSec ${LANG_GERMAN} "Optionales Zeroconf-Modul."
   LangString DESC_MySQLSec ${LANG_GERMAN} "Optionales MySQL Backend."
   LangString DESC_pgSQLSec ${LANG_GERMAN} "Optionales PostgreSQL Backend."
   LangString DESC_DevelopSec ${LANG_GERMAN} "Installiert alle Header-Dateien und Bibliotheken , die von Entwicklern benötigt werden."
@@ -481,7 +481,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_localstatedir@/log/@PACKAGE@/ by $INSTDIR\logs
-  Push "@e_localstatedir@/log/@PACKAGE@/"
+  Push "@localstatedir@/log/@PACKAGE@/"
   Push "$INSTDIR\logs\"
   Push all
   Push all
@@ -489,7 +489,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_localstatedir@/log/@PACKAGE@/ by $INSTDIR\logs
-  Push "@e_localstatedir@/log/@PACKAGE@"
+  Push "@localstatedir@/log/@PACKAGE@"
   Push "$INSTDIR\logs"
   Push all
   Push all
@@ -497,7 +497,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
 
   ;Replace @e_datadir@/@PACKAGE@/backends/ by $INSTDIR\backends
-  Push "@e_datadir@/@PACKAGE@/backends/"
+  Push "@datadir@/@PACKAGE@/backends/"
   Push '"$INSTDIR\backends\'
   Push all
   Push all
@@ -505,7 +505,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_datadir@/@PACKAGE@/modules/ by $INSTDIR\backends
-  Push "@e_datadir@/@PACKAGE@/modules/"
+  Push "@datadir@/@PACKAGE@/modules/"
   Push "$INSTDIR\modules\"
   Push all
   Push all
@@ -513,7 +513,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
 
   ;Replace @e_datadir@/@PACKAGE@/ by $INSTDIR
-  Push "@e_datadir@/@PACKAGE@/"
+  Push "@datadir@/@PACKAGE@/"
   Push "$INSTDIR\"
   Push all
   Push all
@@ -521,7 +521,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_sysconfdir@\user by $INSTDIR
-  Push "@e_sysconfdir@/users"
+  Push "@sysconfdir@/users"
   Push "$INSTDIR\users"
   Push all
   Push all
@@ -529,7 +529,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_sysconfdir@/wzd.pem by $INSTDIR
-  Push "@e_sysconfdir@/wzd.pem"
+  Push "@sysconfdir@/wzd.pem"
   Push "$INSTDIR\wzd.pem"
   Push all
   Push all
@@ -537,7 +537,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
 
   ;Replace @e_sysconfdir@ by $INSTDIR
-  Push "@e_sysconfdir@/"
+  Push "@sysconfdir@/"
   Push "$INSTDIR\etc\"
   Push all
   Push all
@@ -586,7 +586,7 @@ Section "!$(CAPT_MainSec)" MainSec
   Call AdvReplaceInFile
   
   ;Replace @e_datadir@/@PACKAGE@/modules/ by $INSTDIR\modules
-  Push "@e_datadir@/@PACKAGE@/modules/"
+  Push "@datadir@/@PACKAGE@/modules/"
   Push "$INSTDIR\modules\"
   Push all
   Push all
