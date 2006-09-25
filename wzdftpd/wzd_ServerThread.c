@@ -105,6 +105,8 @@
 
 #include <libwzd-core/wzd_debug.h>
 
+#include "wzd_version.h"
+
 /************ PROTOTYPES ***********/
 int serverMainThreadProc(void *arg);
 void serverMainThreadCleanup(int);
