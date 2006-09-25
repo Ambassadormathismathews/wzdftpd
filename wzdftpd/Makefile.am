@@ -12,7 +12,7 @@ wzdftpd_DEPENDENCIES = ../libwzd-core/libwzd_core.la
 wzdftpd_LDADD = ../libwzd-core/libwzd_core.la
 wzdftpd_LDFLAGS = $(WZD_SSL_LIBS) @CRYPT_FLAGS@ @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @DL_FLAGS@
 
-AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@ -DWZD_DEFAULT_CONF=\"$(sysconfdir)/$(PACKAGE)/wzd.cfg\"
+AM_CPPFLAGS = -I$(top_srcdir) $(WZD_SSL_INCLUDES) -DWZD_MULTITHREAD -D_REENTRANT @PTHREAD_CFLAGS@
 
 dist_sysconf_DATA = wzd.cfg.sample wzd.pem \
 	file_ginfo.txt  file_help.txt   file_swho.txt \

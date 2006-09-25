@@ -92,6 +92,8 @@
 
 #endif /* WZD_USE_PCH */
 
+#include "wzd_version.h"
+
 extern int serverstop;
 extern time_t server_start;
 
@@ -1911,7 +1913,7 @@ int do_site_version(wzd_string_t * ignored, wzd_string_t * command_line, wzd_con
 {
   char str[256];
   snprintf(str,256,"%s build %s (%s)",
-      WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
+      WZD_VERSION_LONG,WZD_BUILD_NUM,WZD_BUILD_OPTS);
   send_message_with_args(200,context,str);
   return 0;
 }

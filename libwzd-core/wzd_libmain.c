@@ -40,6 +40,8 @@
 
 #endif /* WZD_USE_PCH */
 
+#include "wzd_version.h"
+
 wzd_config_t *  mainConfig;
 List * context_list;
 static uid_t _wzd_server_uid;
@@ -69,12 +71,12 @@ time_t          server_time;
 
 const char * wzd_get_version(void)
 {
-  return VERSION;
+  return WZD_VERSION;
 }
 
 const char * wzd_get_version_long(void)
 {
-  return WZD_VERSION_STR;
+  return WZD_VERSION_LONG;
 }
 
 wzd_config_t * getlib_mainConfig(void)

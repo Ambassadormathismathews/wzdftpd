@@ -134,7 +134,7 @@ typedef struct {
 /************ PUBLIC **************/
 int runMainThread(int argc, char **argv)
 {
-  const char * build_version = WZD_VERSION_STR;
+  const char * build_version = WZD_VERSION_LONG;
   int ret;
 
   out_log(LEVEL_FLOOD,"DEBUG Checking library version\n");
@@ -145,7 +145,7 @@ int runMainThread(int argc, char **argv)
    */
   if (strcmp(build_version,wzd_get_version_long()) != 0) {
     out_log(LEVEL_CRITICAL,"FATAL wzdftpd was NOT compiled for this library version\n");
-    out_log(LEVEL_CRITICAL,"FATAL   wzdftpd:     [%s]\n",WZD_VERSION_STR);
+    out_log(LEVEL_CRITICAL,"FATAL   wzdftpd:     [%s]\n",WZD_VERSION_LONG);
     out_log(LEVEL_CRITICAL,"FATAL   libwzd-core: [%s]\n",wzd_get_version_long());
 
     exit (-1);
@@ -1521,7 +1521,7 @@ int serverMainThreadProc(void *arg)
   /** \todo load stats ! */
   reset_stats(&mainConfig->stats);
 
-  out_log(LEVEL_HIGH,"%s started (build %s)\n",WZD_VERSION_STR,WZD_BUILD_NUM);
+  out_log(LEVEL_HIGH,"%s started (build %s)\n",WZD_VERSION_LONG,WZD_BUILD_NUM);
 
   /* now waiting for a connection */
   out_log(LEVEL_FLOOD,"Waiting for connections (main)\n");

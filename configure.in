@@ -280,18 +280,25 @@ AH_TEMPLATE([WZD_BUILD_NUM],
             [Build number.])
 
 
-AC_DEFINE_UNQUOTED(WZD_VERSION_STR,"$PACKAGE_NAME $ac_cv_build_alias mt $PACKAGE_VERSION")
-
-AH_TEMPLATE([WZD_VERSION_STR],
+WZD_VERSION_LONG="$PACKAGE_NAME $ac_build_alias mt $PACKAGE_VERSION"
+AC_DEFINE_UNQUOTED(WZD_VERSION_LONG,"$WZD_VERSION_LONG")
+AH_TEMPLATE([WZD_VERSION_LONG],
             [Version string])
+
+# we assume that $sysconfdir is always equal to $prefix/etc
+WZD_DEFAULT_CONF="$prefix/etc/$PACKAGE_NAME/wzd.cfg"
+AC_DEFINE_UNQUOTED(WZD_DEFAULT_CONF,"$WZD_DEFAULT_CONF")
+AH_TEMPLATE([WZD_DEFAULT_CONF],
+            [Default configuration file])
 
 AC_SUBST(CRYPT_FLAGS)
 AC_SUBST(DL_FLAGS)
 AC_SUBST(PTHREAD_FLAGS)
-AC_SUBST(VERSION)
 AC_SUBST(WZD_BUILD_NUM)
 AC_SUBST(WZD_BUILD_OPTS)
-AC_SUBST(WZD_VERSION_STR)
+AC_SUBST(WZD_DEFAULT_CONF)
+AC_SUBST(WZD_VERSION)
+AC_SUBST(WZD_VERSION_LONG)
 
 AC_CONFIG_FILES([Makefile
 		 ac-helpers/Makefile
@@ -327,7 +334,8 @@ AC_CONFIG_FILES([Makefile
                  tools/sitewho/Makefile
 		 wzd-config
 		 wzdftpd/Makefile
-		 wzdftpd.pc])
+		 wzdftpd.pc
+		 wzd_version.h])
 
 AC_CONFIG_COMMANDS([default], [
 	chmod +x wzd-config

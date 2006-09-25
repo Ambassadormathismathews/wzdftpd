@@ -89,6 +89,8 @@
 
 #include <libwzd-core/wzd_debug.h>
 
+#include "wzd_version.h"
+
 #ifdef WIN32
 int nt_service_register(void);
 int nt_service_unregister(void);
@@ -135,7 +137,7 @@ static const char * config_files[] = {
 
 void display_usage(void)
 {
-  fprintf(stderr,"%s build %s (%s)\n", WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
+  fprintf(stderr,"%s build %s (%s)\n", WZD_VERSION_LONG,WZD_BUILD_NUM,WZD_BUILD_OPTS);
   fprintf(stderr, "\nusage: wzdftpd [arguments]\n");
   fprintf(stderr,"\narguments:\r\n");
 #ifdef HAVE_GETOPT_LONG
@@ -214,7 +216,7 @@ int main_parse_args(int argc, char **argv)
       break;
     case 'V':
       fprintf(stderr,"%s build %s (%s)\n",
-          WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
+          WZD_VERSION_LONG,WZD_BUILD_NUM,WZD_BUILD_OPTS);
       exit (0);
     }
   }
