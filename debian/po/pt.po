@@ -1,26 +1,25 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Portuguese translation of wzdftpd's debconf messages.
+# This file is distributed under the same license as the wzdftpd package.
+# Luísa Lourenço <kikentai@gmail.com>, 2006.
 #
-#, fuzzy
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: wzdftpd 0.7.2-4\n"
 "Report-Msgid-Bugs-To: chifflier@cpe.fr\n"
 "POT-Creation-Date: 2006-09-28 09:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Last-Translator: Luísa Lourenço <kikentai@gmail.com>\n"
+"Language-Team: Native Portuguese <traduz@debianpt.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Type: note
 #. Description
 #: ../wzdftpd.templates:1001
 msgid "Upgrading"
-msgstr ""
+msgstr "A actualizar"
 
 #. Type: note
 #. Description
@@ -29,6 +28,8 @@ msgid ""
 "The format of the config file has changed in version 0.6.0, and is not "
 "compatible with previous version."
 msgstr ""
+"O formato do ficheiro de configuração mudou na versão 0.6.0, e não é "
+"compatível com a versão anterior."
 
 #. Type: note
 #. Description
@@ -37,3 +38,5 @@ msgid ""
 "You must create a new config file. See /usr/share/doc/wzdftpd/examples for "
 "an example."
 msgstr ""
+"Tem de criar um novo ficheiro de configuração. Veja /usr/share/doc/wzdftpd/"
+"examples para um exemplo."
