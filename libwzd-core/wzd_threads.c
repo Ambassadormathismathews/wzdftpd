@@ -40,7 +40,7 @@
 
 #ifdef WIN32
 #define _WIN32_WINNT    0x500
-#include <windows.h>
+#include <winsock2.h>
 #else
 #include <unistd.h>
 

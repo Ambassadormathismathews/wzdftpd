@@ -1,0 +1,21 @@
+SET(auth_SOURCES
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_auth.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_auth.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_base64.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_base64.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_crypt.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_crypt.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_krb5.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_krb5.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_md5.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_md5.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_md5crypt.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_md5crypt.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_pam.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_pam.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_sha1.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_sha1.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_sha1_hash.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_tls.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-auth/wzd_tls.h
+	)

@@ -396,7 +396,6 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
   if (context->pasvsock != (fd_t)-1) {
     socket_close(context->pasvsock);
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-/*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = -1;
   }
   if (context->datafd != (fd_t)-1) {

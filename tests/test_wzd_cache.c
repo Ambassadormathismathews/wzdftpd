@@ -25,10 +25,14 @@ int main(int argc, char *argv[])
 
   wzd_debug_init();
 
-  srcdir = getenv("srcdir");
-  if (srcdir == NULL) {
-    fprintf(stderr, "Environment variable $srcdir not found, aborting\n");
-    return 1;
+  if (argc > 1) {
+    srcdir = argv[1];
+  } else {
+    srcdir = getenv("srcdir");
+    if (srcdir == NULL) {
+      fprintf(stderr, "Environment variable $srcdir not found, aborting\n");
+      return 1;
+    }
   }
 
   /* Compare output from wzd_cache and standard FILE functions */

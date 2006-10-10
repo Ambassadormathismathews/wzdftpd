@@ -1,0 +1,2 @@
+SUBDIRS(siteconfig siteuptime sitewho)
+

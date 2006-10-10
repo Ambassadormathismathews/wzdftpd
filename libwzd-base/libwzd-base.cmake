@@ -1,0 +1,15 @@
+SET(base_SOURCES
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/dlist.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/dlist.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/hash.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/hash.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/list.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/list.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/stack.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/strpcpy.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/strpcpy.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strlcat.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strlcat.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strtok_r.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strtok_r.h
+	)

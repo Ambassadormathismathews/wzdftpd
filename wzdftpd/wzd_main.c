@@ -255,7 +255,7 @@ int main_parse_args(int argc, char **argv)
       }
       if (!strcmp(argv[optindex],"-V")) {
         fprintf(stderr,"%s build %s (%s)\n",
-            WZD_VERSION_STR,WZD_BUILD_NUM,WZD_BUILD_OPTS);
+            WZD_VERSION_LONG,WZD_BUILD_NUM,WZD_BUILD_OPTS);
         exit (0);
       }
       if (!strcmp(argv[optindex],"-si")) {

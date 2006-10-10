@@ -429,6 +429,12 @@ int tls_auth (const char *type, wzd_context_t * context)
   char * tls_cipher_list;
   wzd_string_t * str;
 
+  WZD_ASSERT(mainConfig->tls_ctx != NULL);
+  if (mainConfig->tls_ctx == NULL) {
+    out_log(LEVEL_CRITICAL,"tls_auth (%d): TLS was NOT initialized, but we're trying to auth a client !\n",__LINE__);
+    return -1;
+  }
+
 #if 0
   if (!type || type[0]==0) return 1;
 
@@ -1293,3 +1299,26 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
 }
 
 #endif /* HAVE_GNUTLS */
+
+#if !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS)
+
+#include "wzd_structs.h"
+#include "wzd_log.h"
+
+int tls_auth (const char *type, wzd_context_t * context)
+{
+  return -1;
+}
+
+int tls_init(void)
+{
+  return -1;
+}
+
+int tls_exit(void)
+{
+  return -1;
+}
+
+#endif /* !defined(HAVE_OPENSSL) && !defined(HAVE_GNUTLS) */
+

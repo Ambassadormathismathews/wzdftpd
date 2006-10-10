@@ -49,6 +49,10 @@
 
 #endif /* __CYGWIN__ && WINSOCK_SUPPORT */
 
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
+
 #ifndef WIN32
 # include <sys/types.h>
 # include <sys/ipc.h>

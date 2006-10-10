@@ -1,6 +1,8 @@
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset */
-#include <pthread.h>
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+#endif
 
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_group.h>
@@ -104,7 +106,11 @@ void fake_context(void)
   context->magic = CONTEXT_MAGIC;
   context->userid = f_user->uid;
   context->write_fct = (write_fct_t)fake_write_function;
+#ifndef WIN32
   context->thread_id = pthread_self();
+#else
+  context->thread_id = 1;
+#endif
 
   strcpy(context->currentpath, "/");
 

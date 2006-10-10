@@ -155,7 +155,7 @@ size_t strlcat(char *dst, const char *src, size_t size);
 
 #include <libwzd-base/list.h>
 #include <libwzd-base/hash.h>
-#include <libwzd-base/wzd_strtok_r.h>
+/*#include <libwzd-base/wzd_strtok_r.h>*/
 
 #include "wzd_string.h"
 

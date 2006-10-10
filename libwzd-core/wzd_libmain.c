@@ -236,6 +236,8 @@ int context_remove(List * context_list, wzd_context_t * context)
   ListElmt * elmnt;
   void * data;
 
+  out_log(LEVEL_FLOOD,"DEBUG removing context %p from list\n",context);
+
   if (!context_list->head) return -1;
   wzd_mutex_lock(server_mutex);
 

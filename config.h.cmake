@@ -1,0 +1,22 @@
+#cmakedefine HAVE_DL_H 1
+#cmakedefine HAVE_ICONV 1
+#cmakedefine HAVE_INTTYPES_H 1
+#cmakedefine HAVE_LANGINFO_CODESET 1
+#cmakedefine HAVE_LIMITS_H 1
+#cmakedefine HAVE_MALLOC_H 1
+#cmakedefine HAVE_PTHREAD 1
+#cmakedefine HAVE_STDINT_H 1
+#cmakedefine HAVE_SYS_MOUNT_H 1
+#cmakedefine HAVE_SYS_STATVFS_H 1
+#cmakedefine HAVE_SYS_TYPES_H 1
+#cmakedefine HAVE_UTIME_H 1
+#cmakedefine HAVE_WCHAR_H 1
+
+#cmakedefine HAVE_INET_NTOA 1
+#cmakedefine HAVE_INET_NTOP 1
+#cmakedefine HAVE_INET_PTON 1
+#cmakedefine HAVE_STRLCAT 1
+#cmakedefine HAVE_STRPTIME 1
+#cmakedefine HAVE_STRTOK_R 1
+#cmakedefine HAVE_STRTOULL 1
+#cmakedefine HAVE_STATVFS 1

@@ -1,0 +1,6 @@
+LIBRARY LIBWZD_PLAINTEXT
+
+EXPORTS
+	wzd_backend_init
+	wzd_backend_version
+	wzd_backend_name

@@ -34,17 +34,6 @@
 #else /* WZD_USE_PCH */
 #endif /*WZD_USE_PCH */
 
-#ifdef WIN32
-# include <windows.h>
-#endif
-
-#include "wzd_structs.h"
-
-#include "wzd_log.h"
-#include "wzd_utf8.h"
-
-#include "wzd_debug.h"
-
 #ifdef HAVE_WCHAR_H
 # include <wchar.h>
 #endif
@@ -58,6 +47,17 @@ typedef void * iconv_t;
 #if HAVE_LANGINFO_CODESET
 # include <langinfo.h>
 #endif
+
+#ifdef WIN32
+# include <winsock2.h>
+#endif
+
+#include "wzd_structs.h"
+
+#include "wzd_log.h"
+#include "wzd_utf8.h"
+
+#include "wzd_debug.h"
 
 
 #ifdef BSD

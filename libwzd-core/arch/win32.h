@@ -32,10 +32,6 @@
 #if defined (WIN32)
 
 
-/* Server version */
-#define VERSION "0.8.0"
-
-
 #if defined(_MSC_VER)
 
 #ifdef LIBWZD_EXPORTS
@@ -153,64 +149,6 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 # define gettimeofday  win32_gettimeofday
 #endif
 
-/*********************** VERSION **************************/
-#ifdef WZD_MULTIPROCESS
-# define WZD_MP  "mp "
-# define SUBVERS_MP "process"
-#else /* WZD_MULTIPROCESS */
-#ifdef WZD_MULTITHREAD
-# define WZD_MP  "mt "
-# define SUBVERS_MP "threads"
-#else
-# define WZD_MP  "up "
-# define SUBVERS_MP "uni"
-#endif /* WZD_MULTITHREAD */
-#endif /* WZD_MULTIPROCESS */
-
-#if defined (DEBUG)
-# define SUBVERS_DEBUG ",debug"
-#else
-# define SUBVERS_DEBUG ",release"
-#endif
-
-#if defined(IPV6_SUPPORT)
-# define SUBVERS_IPV6 ",ipv6"
-#else
-# define SUBVERS_IPV6
-#endif
-
-#if defined(HAVE_OPENSSL)
-# define SUBVERS_TLS  ",ssl"
-#elif defined(HAVE_GNUTLS)
-# define SUBVERS_TLS  ",tls"
-#else
-# define SUBVERS_TLS
-#endif
-
-#if defined (_MSC_VER)
-# define SUBVERS_COMPILER ",visual"
-#else
-# define SUBVERS_COMPILER ",mingw"
-#endif
-
-
-#ifndef WZD_BUILD_OPTS
-# define WZD_BUILD_OPTS SUBVERS_MP SUBVERS_DEBUG SUBVERS_IPV6 SUBVERS_TLS SUBVERS_COMPILER
-#endif
-
-#ifndef WZD_BUILD_NUM
-#define  WZD_BUILD_NUM __DATE__
-#endif
-
-#ifndef WZD_VERSION_STR
-#define WZD_VERSION_STR "wzdftpd i386-pc-windows " WZD_MP VERSION
-#endif
-
-#ifndef WZD_DEFAULT_CONF
-#define WZD_DEFAULT_CONF "wzd-win32.cfg"
-#endif
-
-
 
 /* windows 2000 only */
 #if defined(WINVER) && (WINVER < 0x0501)
@@ -226,9 +164,6 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 
 /* visual specific definitions */
 #if defined(_MSC_VER)
-
-/* windows have wchar.h */
-#define HAVE_WCHAR_H
 
 /* visual c++ and the c99 .. a long story ! */
 #ifndef INT_MAX

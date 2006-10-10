@@ -18,10 +18,14 @@ int main(int argc, char *argv[])
   char * srcdir = NULL;
   unsigned long c2 = C2;
 
-  srcdir = getenv("srcdir");
-  if (srcdir == NULL) {
-    fprintf(stderr, "Environment variable $srcdir not found, aborting\n");
-    return 1;
+  if (argc > 1) {
+    srcdir = argv[1];
+  } else {
+    srcdir = getenv("srcdir");
+    if (srcdir == NULL) {
+      fprintf(stderr, "Environment variable $srcdir not found, aborting\n");
+      return 1;
+    }
   }
 
   snprintf(input1,sizeof(input1)-1,"%s/%s",srcdir,file1);
