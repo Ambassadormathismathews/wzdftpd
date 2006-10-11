@@ -57,6 +57,19 @@
 #include "wzd_debug.h"
 
 
+/** @brief SSL connection objects */
+struct wzd_ssl_t {
+  SSL *         obj;
+  SSL *         data_ssl;
+  ssl_fd_mode_t ssl_fd_mode;
+};
+
+
+
+void tls_context_init(wzd_context_t * context)
+{
+  context->ssl = wzd_malloc(sizeof(struct wzd_ssl_t));
+}
 
 /*************** tls_auth_setfd_set *********************/
 
@@ -64,11 +77,14 @@ void tls_auth_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
   unsigned int socket;
 
-  socket = SSL_get_fd(context->ssl.obj);
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->ssl != NULL);
 
-  if (context->ssl.ssl_fd_mode == TLS_READ)
+  socket = SSL_get_fd(context->ssl->obj);
+
+  if (context->ssl->ssl_fd_mode == TLS_READ)
     FD_SET(socket,r);
-  else if (context->ssl.ssl_fd_mode == TLS_WRITE)
+  else if (context->ssl->ssl_fd_mode == TLS_WRITE)
     FD_SET(socket,w);
 }
 
@@ -78,11 +94,14 @@ void tls_auth_data_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
   unsigned int socket;
 
-  socket = SSL_get_fd(context->ssl.data_ssl);
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->ssl != NULL);
 
-  if (context->ssl.ssl_fd_mode == TLS_READ)
+  socket = SSL_get_fd(context->ssl->data_ssl);
+
+  if (context->ssl->ssl_fd_mode == TLS_READ)
     FD_SET(socket,r);
-  else if (context->ssl.ssl_fd_mode == TLS_WRITE)
+  else if (context->ssl->ssl_fd_mode == TLS_WRITE)
     FD_SET(socket,w);
 }
 
@@ -313,14 +332,17 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
   fd_set fd_r, fd_w;
   struct timeval tv;
 
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->ssl != NULL);
+
   /* FIXME bad conception of parameters ... */
   if (sock == context->controlfd)
   {
-    ssl = context->ssl.obj;
+    ssl = context->ssl->obj;
   }
   else
   {
-    ssl = context->ssl.data_ssl;
+    ssl = context->ssl->data_ssl;
     /* XXX we assume that if sock != context->controlfd, then we have datas ... */
   }
   do {
@@ -372,11 +394,14 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
   fd_set fd_r, fd_w;
   struct timeval tv;
 
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->ssl != NULL);
+
   /* FIXME bad conception of parameters ... */
   if (sock == context->controlfd)
-    ssl = context->ssl.obj;
+    ssl = context->ssl->obj;
   else
-    ssl = context->ssl.data_ssl;
+    ssl = context->ssl->data_ssl;
     /* XXX we assume that if sock != context->controlfd, then we have datas ... */
 
   WZD_ASSERT( ssl != NULL );
@@ -459,13 +484,13 @@ int tls_auth (const char *type, wzd_context_t * context)
     }
   }
 
-  context->ssl.obj = SSL_new(mainConfig->tls_ctx);
-  if (context->ssl.obj == NULL) {
+  context->ssl->obj = SSL_new(mainConfig->tls_ctx);
+  if (context->ssl->obj == NULL) {
     out_log(LEVEL_CRITICAL,"SSL_new failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
     return 1;
   }
-  SSL_set_cipher_list(context->ssl.obj,tls_cipher_list);
-  ret = SSL_set_fd(context->ssl.obj,context->controlfd);
+  SSL_set_cipher_list(context->ssl->obj,tls_cipher_list);
+  ret = SSL_set_fd(context->ssl->obj,context->controlfd);
   if (ret != 1) {
     out_log(LEVEL_CRITICAL,"SSL_set_fd failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
     return 1;
@@ -484,7 +509,7 @@ int tls_auth_cont(wzd_context_t * context)
 {
 /* non blocking test */
 #if 1
-  SSL * ssl = context->ssl.obj;
+  SSL * ssl = context->ssl->obj;
   unsigned int fd;
   int ret, status, sslerr;
   fd_set fd_r, fd_w;
@@ -513,7 +538,7 @@ int tls_auth_cont(wzd_context_t * context)
       ret = 1;
       break;
     } else {
-      context->ssl.ssl_fd_mode = TLS_NONE;
+      context->ssl->ssl_fd_mode = TLS_NONE;
       FD_ZERO(&fd_r);
       FD_ZERO(&fd_w);
       tv.tv_usec = 0;
@@ -521,15 +546,15 @@ int tls_auth_cont(wzd_context_t * context)
       switch (sslerr) {
       case SSL_ERROR_WANT_READ:
         FD_SET(fd,&fd_r);
-        context->ssl.ssl_fd_mode = TLS_READ;
+        context->ssl->ssl_fd_mode = TLS_READ;
         break;
       case SSL_ERROR_WANT_WRITE:
         FD_SET(fd,&fd_w);
-        context->ssl.ssl_fd_mode = TLS_WRITE;
+        context->ssl->ssl_fd_mode = TLS_WRITE;
         break;
       default:
         out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
-          ERR_error_string(SSL_get_error(context->ssl.obj,status),NULL));
+          ERR_error_string(SSL_get_error(context->ssl->obj,status),NULL));
         out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
             ERR_error_string(ERR_get_error(),NULL));
         return 1;
@@ -547,7 +572,7 @@ int tls_auth_cont(wzd_context_t * context)
     return -1;
   }
 
-  context->ssl.data_ssl = NULL;
+  context->ssl->data_ssl = NULL;
 
   /* set read/write functions */
   context->read_fct = (read_fct_t)tls_read;
@@ -598,15 +623,15 @@ int tls_init_datamode(int sock, wzd_context_t * context)
   char * tls_cipher_list;
   wzd_string_t * str;
 
-  if (!context->ssl.data_ssl) {
-    context->ssl.data_ssl = SSL_new(mainConfig->tls_ctx);
+  if (!context->ssl->data_ssl) {
+    context->ssl->data_ssl = SSL_new(mainConfig->tls_ctx);
   }
   else {
     out_log(LEVEL_CRITICAL,"tls_init_datamode: this should NOT be happening\n");
     return 1;
   }
 
-  if (!context->ssl.data_ssl) {
+  if (!context->ssl->data_ssl) {
     out_log(LEVEL_CRITICAL,"SSL_new error\n");
     return 1;
   }
@@ -622,7 +647,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     }
   }
 
-  SSL_set_cipher_list(context->ssl.data_ssl, tls_cipher_list);
+  SSL_set_cipher_list(context->ssl->data_ssl, tls_cipher_list);
 
 #if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
   {
@@ -632,7 +657,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 #else
   fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
-  if (SSL_set_fd(context->ssl.data_ssl, sock) != 1)
+  if (SSL_set_fd(context->ssl->data_ssl, sock) != 1)
   /* FIXME PORT ? */
     out_log(LEVEL_CRITICAL,"SSL_set_fd error\n");
 
@@ -643,7 +668,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 
 int tls_auth_data_cont(wzd_context_t * context)
 {
-  SSL * ssl = context->ssl.data_ssl;
+  SSL * ssl = context->ssl->data_ssl;
   int status, sslerr;
   fd_set fd_r, fd_w;
   struct timeval tv;
@@ -665,7 +690,7 @@ int tls_auth_data_cont(wzd_context_t * context)
 
     if (status==1) {
       out_err(LEVEL_INFO,"Data connection successfully switched to ssl mode\n");
-      context->ssl.data_mode = TLS_PRIV;
+      context->tls_data_mode = TLS_PRIV;
       return 0;
     } else {
       FD_ZERO(&fd_r);
@@ -704,12 +729,12 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
 
 int tls_close_data(wzd_context_t * context)
 {
-  if (context->ssl.data_ssl) {
-    if (SSL_shutdown(context->ssl.data_ssl)==0)
-      SSL_shutdown(context->ssl.data_ssl);
-    SSL_free(context->ssl.data_ssl);
+  if (context->ssl->data_ssl) {
+    if (SSL_shutdown(context->ssl->data_ssl)==0)
+      SSL_shutdown(context->ssl->data_ssl);
+    SSL_free(context->ssl->data_ssl);
   }
-  context->ssl.data_ssl = NULL;
+  context->ssl->data_ssl = NULL;
 
   return 0;
 }
@@ -719,14 +744,21 @@ int tls_close_data(wzd_context_t * context)
 int tls_free(wzd_context_t * context)
 {
   tls_close_data(context);
-  if (context->ssl.obj) {
-    if (SSL_shutdown(context->ssl.obj)==0)
-      SSL_shutdown(context->ssl.obj);
-    SSL_free(context->ssl.obj);
+  if (context->ssl->obj) {
+    if (SSL_shutdown(context->ssl->obj)==0)
+      SSL_shutdown(context->ssl->obj);
+    SSL_free(context->ssl->obj);
   }
-  context->ssl.obj = NULL;
+  context->ssl->obj = NULL;
 
   return 0;
+}
+
+void * ssl_get_obj(wzd_context_t * context)
+{
+  if (context && context->ssl) return context->ssl->obj;
+
+  return NULL;
 }
 
 #endif /* HAVE_OPENSSL */
@@ -812,6 +844,10 @@ int tls_dh_params_regenerate(void)
   out_log(LEVEL_INFO,"- Regenerated %d bits Diffie-Hellman key for TLS.\n", DH_BITS);
 
   return 0;
+}
+
+void tls_context_init(wzd_context_t * context)
+{
 }
 
 int tls_init(void)
@@ -1304,6 +1340,10 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+
+void tls_context_init(wzd_context_t * context)
+{
+}
 
 int tls_auth (const char *type, wzd_context_t * context)
 {

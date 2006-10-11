@@ -239,6 +239,7 @@ EXPORTS
 	symlink_remove
 	time_to_str
 	tls_auth
+	tls_context_init
 	tls_exit
 	tls_init
 	user_allocate

@@ -198,6 +198,8 @@ static void context_init(wzd_context_t * context)
   context->current_action.token = TOK_UNKNOWN;
   memset(&context->last_file,0,sizeof(context->last_file));
 
+  tls_context_init(context);
+
   context->peer_ip = ip_create();
 
   context->tls_role = TLS_SERVER_MODE;
@@ -900,7 +902,7 @@ static void server_login_accept(wzd_context_t * context)
     }
     context->connection_flags |= CONNECTION_TLS;
   }
-  context->ssl.data_mode = TLS_CLEAR;
+  context->tls_data_mode = TLS_CLEAR;
 #endif
 
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_CHECKIP_LOGIN)) {

@@ -306,30 +306,13 @@ typedef struct {
 
 /*************************** TLS **************************/
 
-#ifndef HAVE_OPENSSL
-# define SSL     void
-# define SSL_CTX void
-#else
-# include <openssl/ssl.h>
-# include <openssl/rand.h>
-# include <openssl/err.h>
-#endif
-
-typedef enum { TLS_CLEAR, TLS_PRIV } ssl_data_t; /* data modes */
+typedef enum { TLS_CLEAR, TLS_PRIV } tls_data_mode_t; /* data modes */
 
 typedef enum { TLS_SERVER_MODE=0, TLS_CLIENT_MODE } tls_role_t;
 
 typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t;
 
 typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t;
-
-/** @brief SSL connection objects */
-typedef struct {
-  SSL *         obj;
-  ssl_data_t    data_mode;
-  SSL *         data_ssl;
-  ssl_fd_mode_t ssl_fd_mode;
-} wzd_ssl_t;
 
 typedef struct {
   void * session;
@@ -384,6 +367,7 @@ struct wzd_context_t {
   fd_t          controlfd;
   fd_t          datafd;
   data_mode_t   datamode;
+  tls_data_mode_t    tls_data_mode;
   net_family_t  datafamily; /**< \brief IPv4 or IPv6 */
   unsigned long	pid_child;
   unsigned long	thread_id;
@@ -407,7 +391,7 @@ struct wzd_context_t {
   time_t        login_time;
   time_t	idle_time_start;
   time_t	idle_time_data_start;
-  wzd_ssl_t   	ssl;
+  struct wzd_ssl_t * ssl;
   wzd_tls_t   	tls;
   tls_role_t    tls_role; /**< \brief TLS role: server or client */
   struct _auth_gssapi_data_t * gssapi_data;
@@ -472,7 +456,8 @@ struct wzd_config_t {
   unsigned int  data_buffer_length; /**< size of buffer used for transfers. This has a great impact on performances */
   unsigned long	server_opts;
   wzd_server_stat_t	stats;
-  SSL_CTX *	tls_ctx;
+/*  SSL_CTX *	tls_ctx;*/ /** \todo XXX casting with void* is bad ... use correct type ? */
+  void * tls_ctx;
   tls_type_t	tls_type;
   CHTBL          * commands_list;
   wzd_site_fct_t	* site_list;

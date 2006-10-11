@@ -91,7 +91,7 @@ void data_close(wzd_context_t * context)
   int ret;
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_PRIV)
+  if (context->tls_data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
 #ifdef DEBUG
@@ -205,7 +205,7 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
     n = file_read(context->current_action.current_file,context->data_buffer,mainConfig->data_buffer_length);
     if (n>0) {
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-      if (context->ssl.data_mode == TLS_CLEAR)
+      if (context->tls_data_mode == TLS_CLEAR)
         ret = clear_write(context->datafd,context->data_buffer,(size_t)n,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
@@ -248,7 +248,7 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
     break;
   case TOK_STOR:
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-      if (context->ssl.data_mode == TLS_CLEAR)
+      if (context->tls_data_mode == TLS_CLEAR)
         n = clear_read(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
       else
 #endif

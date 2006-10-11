@@ -609,7 +609,7 @@ int waitaccept(wzd_context_t * context)
   {
     wzd_user_t * user;
     user = GetUserByID(context->userid);
-    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->ssl.data_mode != TLS_PRIV) {
+    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->tls_data_mode != TLS_PRIV) {
       send_message_with_args(501,context,"Your class must use encrypted data connections");
       return -1;
     }
@@ -641,7 +641,7 @@ int waitaccept(wzd_context_t * context)
   }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_PRIV) {
+  if (context->tls_data_mode == TLS_PRIV) {
     int ret;
     ret = tls_init_datamode(sock, context);
     if (ret) {
@@ -676,7 +676,7 @@ int waitconnect(wzd_context_t * context)
   {
     wzd_user_t * user;
     user = GetUserByID(context->userid);
-    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->ssl.data_mode != TLS_PRIV) {
+    if (user && strchr(user->flags,FLAG_TLS_DATA) && context->tls_data_mode != TLS_PRIV) {
       send_message_with_args(501,context,"Your class must use encrypted data connections");
       return -1;
     }
@@ -695,7 +695,7 @@ int waitconnect(wzd_context_t * context)
     }
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-    if (context->ssl.data_mode == TLS_PRIV) {
+    if (context->tls_data_mode == TLS_PRIV) {
       ret = tls_init_datamode(sock, context);
       if (ret) {
         send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
@@ -762,7 +762,7 @@ int list_callback(fd_t sock, wzd_context_t * context, char *line)
   } while (!FD_ISSET(sock,&fds));
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_CLEAR)
+  if (context->tls_data_mode == TLS_CLEAR)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
   else
 #endif
@@ -932,7 +932,7 @@ printf("path: '%s'\n",path);
   wzd_free(path);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_PRIV)
+  if (context->tls_data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
   ret = socket_close(sock);
@@ -1024,7 +1024,7 @@ int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   wzd_free(path);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
-  if (context->ssl.data_mode == TLS_PRIV)
+  if (context->tls_data_mode == TLS_PRIV)
     ret = tls_close_data(context);
 #endif
   ret = socket_close(sock);
@@ -1158,7 +1158,7 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   const char *param;
   wzd_user_t * user;
   enum list_type_t listtype;
-  ssl_data_t old_data_mode;
+  tls_data_mode_t old_data_mode;
 
   user = GetUserByID(context->userid);
 
@@ -1268,8 +1268,8 @@ printf("path: '%s'\n",path);
   if (strlen(mask)==0) strcpy(mask,"*");
 
   /* \todo XXX FIXME horrible workaround to avoid sending clear data inside ssl stream */
-  old_data_mode = context->ssl.data_mode;
-  context->ssl.data_mode = (context->connection_flags & CONNECTION_TLS) ? TLS_PRIV : TLS_CLEAR;
+  old_data_mode = context->tls_data_mode;
+  context->tls_data_mode = (context->connection_flags & CONNECTION_TLS) ? TLS_PRIV : TLS_CLEAR;
 
   send_message_raw("213-Status of .:\r\n",context);
   send_message_raw("total 0\r\n",context);
@@ -1280,7 +1280,7 @@ printf("path: '%s'\n",path);
 
   context->idle_time_start = time(NULL);
   context->state = STATE_UNKNOWN;
-  context->ssl.data_mode = old_data_mode;
+  context->tls_data_mode = old_data_mode;
 
   wzd_free(path);
 
@@ -2854,9 +2854,9 @@ int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   arg = str_tochar(param);
   /** \todo TOK_PROT: if user is NOT in TLS mode, insult him */
   if (strcasecmp("P",arg)==0)
-    context->ssl.data_mode = TLS_PRIV;
+    context->tls_data_mode = TLS_PRIV;
   else if (strcasecmp("C",arg)==0)
-    context->ssl.data_mode = TLS_CLEAR;
+    context->tls_data_mode = TLS_CLEAR;
   else {
     ret = send_message_with_args(550,context,"PROT","must be C or P");
     return E_PARAM_INVALID;
@@ -3756,9 +3756,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         break;
       }
       if (strcasecmp(token,"SSL")==0 || mainConfig->tls_type == TLS_IMPLICIT)
-        context->ssl.data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
+        context->tls_data_mode = TLS_PRIV; /* SSL must have encrypted data connection */
       else
-        context->ssl.data_mode = TLS_CLEAR;
+        context->tls_data_mode = TLS_CLEAR;
       if (mainConfig->tls_type != TLS_IMPLICIT) {
         ret = send_message_with_args(234, context, token);
       }
@@ -3780,9 +3780,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       /** \todo PROT: if user is NOT in TLS mode, insult him */
       token = strtok_r(NULL,"\r\n",&ptr);
       if (strcasecmp("P",token)==0)
-        context->ssl.data_mode = TLS_PRIV;
+        context->tls_data_mode = TLS_PRIV;
       else if (strcasecmp("C",token)==0)
-        context->ssl.data_mode = TLS_CLEAR;
+        context->tls_data_mode = TLS_CLEAR;
       else {
         ret = send_message_with_args(550,context,"PROT","must be C or P");
         break;

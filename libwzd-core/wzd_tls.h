@@ -25,6 +25,8 @@
 #ifndef __WZD_TLS__
 #define __WZD_TLS__
 
+void tls_context_init(wzd_context_t * context);
+
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 
 int tls_init(void);
@@ -39,6 +41,10 @@ int tls_auth_data_cont(wzd_context_t * context);
 
 int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+
+#ifdef HAVE_OPENSSL
+  void * ssl_get_obj(wzd_context_t * context);
+#endif
 
 #ifdef HAVE_GNUTLS
 int tls_dh_params_regenerate(void);

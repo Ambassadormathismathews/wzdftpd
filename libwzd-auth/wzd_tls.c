@@ -36,7 +36,13 @@
 #include <libwzd-core/wzd_log.h> /* out_log */
 #include <libwzd-core/wzd_misc.h> /* GetMyContext */
 
+#include <libwzd-core/wzd_tls.h> /* ssl_get_obj */
+
 #if defined(HAVE_OPENSSL)
+
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 /* check certificates, etc. */
 /* use SSL_get_verify_result */
@@ -55,7 +61,7 @@ int check_certificate(const char *user, const char *data)
   /* is connection switched to TLS ? */
   if ( !(context->connection_flags & CONNECTION_TLS) ) return 0;
 
-  client_cert = SSL_get_peer_certificate(context->ssl.obj);
+  client_cert = SSL_get_peer_certificate(ssl_get_obj(context));
   fprintf(stderr, "[%p] = SSL_get_peer_certificate(...)\n", client_cert);
 
   if (!client_cert) return 0; /* no client cert */
@@ -63,7 +69,7 @@ int check_certificate(const char *user, const char *data)
   /* return codes are documented in verify(1)
    * or /usr/include/openssl/x509_vfy.h
    */
-  status = SSL_get_verify_result(context->ssl.obj);
+  status = SSL_get_verify_result(ssl_get_obj(context));
   fprintf(stderr, "[%d] = SSL_get_verify_result(...)\n", status);
   if (status) goto ssl_check_exit_1;
 
