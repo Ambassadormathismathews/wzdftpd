@@ -7,3 +7,8 @@ EXPORTS
 	wzd_free_reply
 	wzd_parse_args
 	wzd_send_message
+	wzd_set_hostname
+	wzd_set_password
+	wzd_set_port
+	wzd_set_tls_policy
+	wzd_set_username
