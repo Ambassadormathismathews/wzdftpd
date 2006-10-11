@@ -22,6 +22,7 @@ INCLUDE(${WZDFTPD_SOURCE_DIR}/libwzd-base/libwzd-base.cmake)
 
 SET(wzd_pub_HEADERS
 	libwzd.h
+	libwzd_codes.h
 	libwzd_err.h
 	libwzd_socket.h
 	libwzd_tls.h
@@ -30,6 +31,7 @@ SET(wzd_pub_HEADERS
 add_library (libwzd SHARED
 	${base_SOURCES}
 	libwzd.c
+	libwzd_codes.c
 	libwzd_err.c
 	libwzd_pv.h
 	libwzd_socket.c

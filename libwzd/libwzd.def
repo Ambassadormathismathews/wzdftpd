@@ -12,3 +12,4 @@ EXPORTS
 	wzd_set_port
 	wzd_set_tls_policy
 	wzd_set_username
+	wzd_split_reply_code

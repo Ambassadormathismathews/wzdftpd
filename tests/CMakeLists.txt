@@ -15,6 +15,16 @@ MACRO (ADD_WZD_TEST _test_name _test_source)
 TARGET_LINK_LIBRARIES (${_test_name} libwzd_core testcommon)
 ENDMACRO (ADD_WZD_TEST _test_name _test_source)
 
+MACRO (ADD_LIBWZD_TEST _test_name _test_source)
+  ADD_EXECUTABLE (${_test_name} ${_test_source})
+  IF (${ARGC} GREATER 2)
+    ADD_TEST (${_test_name} ${_test_name} ${ARGN})
+  ELSE (${ARGC} GREATER 2)
+    ADD_TEST (${_test_name} ${_test_name})
+  ENDIF (${ARGC} GREATER 2)
+TARGET_LINK_LIBRARIES (${_test_name} libwzd testcommon)
+ENDMACRO (ADD_LIBWZD_TEST _test_name _test_source)
+
 
 ADD_DEFINITIONS (-DHAVE_CONFIG_H)
 
@@ -28,6 +38,8 @@ SET(testcommon_SOURCES
 ADD_LIBRARY(testcommon ${testcommon_SOURCES})
 
 ADD_WZD_TEST(test_list test_list.c)
+
+ADD_LIBWZD_TEST(test_libwzd_codes test_libwzd_codes.c)
 
 ADD_WZD_TEST(test_wzd_action test_wzd_action.c)
 ADD_WZD_TEST(test_wzd_backend test_wzd_backend.c)
