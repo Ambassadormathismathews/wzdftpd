@@ -9,6 +9,7 @@
 #cmakedefine HAVE_SYS_MOUNT_H 1
 #cmakedefine HAVE_SYS_STATVFS_H 1
 #cmakedefine HAVE_SYS_TYPES_H 1
+#cmakedefine HAVE_UNISTD_H 1
 #cmakedefine HAVE_UTIME_H 1
 #cmakedefine HAVE_WCHAR_H 1
 

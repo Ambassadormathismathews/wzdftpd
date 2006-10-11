@@ -40,6 +40,10 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include <fcntl.h> /* O_RDONLY */
 
 #include <ctype.h> /* isspace */
