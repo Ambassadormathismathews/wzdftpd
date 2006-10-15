@@ -34,7 +34,10 @@
 
 #include "wzd_libmain.h"
 #include "wzd_log.h"
+#include "wzd_messages.h"
 #include "wzd_mutex.h"
+#include "wzd_tls.h"
+#include "wzd_ClientThread.h"
 
 #include "wzd_debug.h"
 
@@ -264,6 +267,40 @@ int context_remove(List * context_list, wzd_context_t * context)
   return -1;
 }
 
+/** \brief Allocate a new context */
+wzd_context_t * context_alloc(void)
+{
+  return wzd_malloc(sizeof(wzd_context_t));
+}
+
+/** \brief Initialize a context struct */
+void context_init(wzd_context_t * context)
+{
+  WZD_ASSERT_VOID(context != NULL);
+  if (context == NULL) return;
+
+  memset(context,0,sizeof(wzd_context_t));
+  context->controlfd = -1;
+  context->datafd = -1;
+  context->pasvsock = -1;
+  context->userid = (unsigned int)-1;
+  context->thread_id = (unsigned long)-1;
+  context->state = STATE_UNKNOWN;
+  context->datamode = DATA_PORT;
+  context->current_action.current_file = -1;
+  context->current_action.token = TOK_UNKNOWN;
+  memset(&context->last_file,0,sizeof(context->last_file));
+
+  tls_context_init(context);
+  context->reply = reply_alloc();
+
+  context->peer_ip = ip_create();
+
+  context->tls_role = TLS_SERVER_MODE;
+  context->read_fct = (read_fct_t)clear_read;
+  context->write_fct = (write_fct_t)clear_write;
+}
+
 /** \brief Frees a context
  */
 void context_free(wzd_context_t * context)
@@ -273,6 +310,7 @@ void context_free(wzd_context_t * context)
   wzd_free(context->ssl); context->ssl = NULL;
   wzd_free(context->ident); context->ident = NULL;
   wzd_free(context->data_buffer); context->data_buffer = NULL;
+  reply_free(context->reply);
   str_deallocate(context->current_action.command);
   ip_free(context->peer_ip);
   wzd_free(context);

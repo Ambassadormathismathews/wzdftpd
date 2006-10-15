@@ -44,6 +44,7 @@
 #include <fcntl.h> /* O_RDONLY */
 
 #include "wzd_structs.h"
+#include "wzd_messages.h"
 #include "wzd_misc.h"
 #include "wzd_log.h"
 
@@ -139,13 +140,13 @@ const char * getMessage(int code, int *must_free)
     fp = wzd_cache_open(ptr+1,O_RDONLY,0644);
     if (!fp) return DEFAULT_MSG;
     sz64 = wzd_cache_getsize(fp);
-	if (sz64 > INT_MAX) {
+    if (sz64 > INT_MAX) {
       out_log(LEVEL_HIGH,"%s:%d couldn't allocate " PRIu64 " bytes for message %d\n",__FILE__,__LINE__,code);
-	  wzd_cache_close(fp);
-	  *must_free = 0;
-	  return NULL;
-	}
-	filesize = (unsigned int) sz64;
+      wzd_cache_close(fp);
+      *must_free = 0;
+      return NULL;
+    }
+    filesize = (unsigned int) sz64;
     file_buffer = wzd_malloc(filesize+1);
     if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize ) {
       wzd_free(file_buffer);
@@ -206,7 +207,7 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 #ifdef DEBUG
   out_err(LEVEL_FLOOD,"<thread %ld> ->ML %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,str_tochar(str),strlen(str_tochar(str)),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->controlfd,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
 
   str_deallocate(str);
   return 0;
@@ -267,14 +268,23 @@ int send_message_formatted(int code, wzd_context_t * context, const char * forma
 
   if (*(it+1) == NULL) { /* one line */
     out_log(LEVEL_FLOOD, "send_message_formatted UL -> [%d %s]\n", code, str_tochar(*it));
+    str_prepend_printf(*it,"%.3d ",code);
+    str_append(*it,"\r\n");
+    ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
   } else { /* multi-line */
     out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d-%s]\n", code, str_tochar(*it));
     it++;
     for (; *it; it++) {
       if (*(it+1) == NULL) { /* last line */
         out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d %s]\n", code, str_tochar(*it));
+        str_prepend_printf(*it,"%.3d ",code);
+        str_append(*it,"\r\n");
+        ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
       } else {
         out_log(LEVEL_FLOOD, "send_message_formatted ML -> [ %s]\n", str_tochar(*it));
+        str_prepend_printf(*it,"%.3d-",code);
+        str_append(*it,"\r\n");
+        ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
       }
     }
   }
@@ -284,3 +294,113 @@ int send_message_formatted(int code, wzd_context_t * context, const char * forma
   str_deallocate_array(str_list);
   return 0;
 }
+
+/** \brief Allocate memory for a struct wzd_reply_t */
+struct wzd_reply_t * reply_alloc(void)
+{
+  struct wzd_reply_t * reply;
+
+  reply = wzd_malloc(sizeof(struct wzd_reply_t));
+  reply->code = 0;
+  reply->_reply = NULL;
+  reply->sent = 0;
+
+  return reply;
+}
+
+/** \brief Free memory used by struct wzd_reply_t */
+void reply_free(struct wzd_reply_t * reply)
+{
+  WZD_ASSERT_VOID(reply != NULL);
+  if (reply == NULL) return;
+
+  wzd_free(reply->_reply);
+  wzd_free(reply);
+}
+
+/** \brief Clear the stored reply */
+void reply_clear(wzd_context_t * context)
+{
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->reply != NULL);
+
+  if (context == NULL) return;
+  if (context->reply == NULL) return;
+
+  context->reply->code = 0;
+  /* re-use allocated string if any */
+  if (context->reply->_reply != NULL)
+    str_erase(context->reply->_reply,0,-1);
+  else
+    context->reply->_reply = str_allocate();
+  context->reply->sent = 0;
+}
+
+/** \brief Set the current reply code */
+void reply_set_code(wzd_context_t * context, int code)
+{
+  WZD_ASSERT_VOID(context != NULL);
+  WZD_ASSERT_VOID(context->reply != NULL);
+
+  context->reply->code = code;
+}
+
+/** \brief Get the current reply code */
+int reply_get_code(wzd_context_t * context)
+{
+  WZD_ASSERT(context != NULL);
+  WZD_ASSERT(context->reply != NULL);
+
+  return context->reply->code;
+}
+
+/** \brief Add a message to the stored reply */
+int reply_push(wzd_context_t * context, const char * s)
+{
+  WZD_ASSERT(context != NULL);
+  WZD_ASSERT(context->reply != NULL);
+  WZD_ASSERT(s != NULL);
+
+  if (context == NULL ||
+      context->reply == NULL ||
+      s == NULL)
+    return -1;
+
+  if (context->reply->_reply == NULL) {
+    context->reply->_reply = STR(s);
+  } else {
+    str_append(context->reply->_reply,s);
+  }
+
+  return 0;
+}
+
+/** \brief Send formatted reply to client.
+ *
+ * \a code must be set
+ */
+int reply_send(wzd_context_t * context)
+{
+  int ret;
+
+  WZD_ASSERT(context != NULL);
+  WZD_ASSERT(context->reply != NULL);
+
+  if (context == NULL ||
+      context->reply == NULL)
+    return -1;
+
+  if (context->reply->code <= 0) return -1;
+
+  if (context->reply->sent != 0) {
+    out_log(LEVEL_NORMAL,"WARNING reply already sent, discarding second (or more) reply\n");
+    return -1;
+  }
+
+  ret = send_message_formatted(context->reply->code,context,str_tochar(context->reply->_reply));
+
+  context->reply->sent++;
+
+  return 0;
+}
+

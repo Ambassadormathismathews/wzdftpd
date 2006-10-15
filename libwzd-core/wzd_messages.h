@@ -49,4 +49,34 @@ int send_message_formatted(int code, wzd_context_t * context, const char * forma
 #endif
 ;
 
+struct wzd_reply_t {
+  int code; /**< the current reply code, or 0 if no reply is set */
+  wzd_string_t * _reply;
+  int sent; /**< 1 if the reply has already been sent */
+};
+
+/** \brief Allocate memory for a struct wzd_reply_t */
+struct wzd_reply_t * reply_alloc(void);
+
+/** \brief Free memory used by struct wzd_reply_t */
+void reply_free(struct wzd_reply_t * reply);
+
+/** \brief Clear the stored reply */
+void reply_clear(wzd_context_t * context);
+
+/** \brief Set the current reply code */
+void reply_set_code(wzd_context_t * context, int code);
+
+/** \brief Get the current reply code */
+int reply_get_code(wzd_context_t * context);
+
+/** \brief Add a message to the stored reply */
+int reply_push(wzd_context_t * context, const char * s);
+
+/** \brief Send formatted reply to client.
+ *
+ * \a code must be set
+ */
+int reply_send(wzd_context_t * context);
+
 #endif /* __WZD_MESSAGES__ */

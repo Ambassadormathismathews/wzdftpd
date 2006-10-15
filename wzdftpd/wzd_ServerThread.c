@@ -184,35 +184,13 @@ static void server_ip_free(void * p);
 static int check_ip_before_login(wzd_context_t * context);
 
 
-static void context_init(wzd_context_t * context)
-{
-  memset(context,0,sizeof(wzd_context_t));
-  context->controlfd = -1;
-  context->datafd = -1;
-  context->pasvsock = -1;
-  context->userid = (unsigned int)-1;
-  context->thread_id = (unsigned long)-1;
-  context->state = STATE_UNKNOWN;
-  context->datamode = DATA_PORT;
-  context->current_action.current_file = -1;
-  context->current_action.token = TOK_UNKNOWN;
-  memset(&context->last_file,0,sizeof(context->last_file));
-
-  tls_context_init(context);
-
-  context->peer_ip = ip_create();
-
-  context->tls_role = TLS_SERVER_MODE;
-  context->read_fct = (read_fct_t)clear_read;
-  context->write_fct = (write_fct_t)clear_write;
-}
-
 static wzd_context_t * context_find_free(List * context_list)
 {
   wzd_context_t * context=NULL;
 
   wzd_mutex_lock(server_mutex);
-  context = wzd_malloc(sizeof(wzd_context_t));
+  context = context_alloc();
+  if (context == NULL) return NULL;
   context_init(context);
   if (list_ins_next(context_list, NULL, context))
   {

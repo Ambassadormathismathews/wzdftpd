@@ -182,7 +182,14 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
 
   out_err(LEVEL_CRITICAL,"Ret: %d\n",ret);
 
+/*
   ret = send_message_with_args(200,context,"TEST command ok");
+  */
+
+  reply_push(context,"TEST command ok");
+  reply_set_code(context,200);
+  reply_send(context);
+
   return 0;
 }
 

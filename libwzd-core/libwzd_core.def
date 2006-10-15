@@ -55,7 +55,9 @@ EXPORTS
 	config_new
 	config_set_value
 	config_to_data
+	context_alloc
 	context_free
+	context_init
 	context_list
 	cookie_parse_buffer
 	cronjob_add
@@ -187,6 +189,11 @@ EXPORTS
 	regcomp
 	regexec
 	regfree
+	reply_clear
+	reply_get_code
+	reply_push
+	reply_send
+	reply_set_code
 	right_text2word	
 	safe_rename
 	section_add

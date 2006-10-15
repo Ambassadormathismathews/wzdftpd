@@ -85,6 +85,12 @@ const char * wzd_get_version_long(void);
 /** \brief remove a context from the list */
 int context_remove(List * context_list, wzd_context_t * context);
 
+/** \brief Allocate a new context */
+wzd_context_t * context_alloc(void);
+
+/** \brief Initialize a context struct */
+void context_init(wzd_context_t * context);
+
 /** \brief Frees a context
  */
 void context_free(wzd_context_t * context);

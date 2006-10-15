@@ -4106,6 +4106,9 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
 out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,str_tochar(command_buffer));
 #endif
 
+    /* reset current reply */
+    reply_clear(context);
+
     /* 2. get next token */
     token = str_tok(command_buffer, " \t\r\n");
 
@@ -4173,6 +4176,11 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
       }
       str_deallocate(token);
       str_deallocate(command_buffer);
+
+
+      /** \todo When all functions use reply_push, test reply and send error if -1 */
+      ret = reply_send(context);
+
       continue;
     } else {
       ret = send_message(502,context);

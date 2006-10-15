@@ -392,6 +392,7 @@ struct wzd_context_t {
   time_t	idle_time_start;
   time_t	idle_time_data_start;
   struct wzd_ssl_t * ssl;
+  struct wzd_reply_t * reply;
   wzd_tls_t   	tls;
   tls_role_t    tls_role; /**< \brief TLS role: server or client */
   struct _auth_gssapi_data_t * gssapi_data;
