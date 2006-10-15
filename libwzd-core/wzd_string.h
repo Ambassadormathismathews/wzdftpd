@@ -124,6 +124,10 @@ int str_sprintf(wzd_string_t *str, const char *format, ...);
  */
 int str_vsprintf(wzd_string_t *str, const char *format, va_list ap);
 
+/** \brief Prepend formatted output to string
+ */
+int str_prepend_printf(wzd_string_t *str, const char *format, ...);
+
 /** \brief Append formatted output to string
  */
 int str_append_printf(wzd_string_t *str, const char *format, ...);

@@ -555,6 +555,71 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
   return result;
 }
 
+/** \brief Prepend formatted output to string
+ */
+int str_prepend_printf(wzd_string_t *str, const char *format, ...)
+{
+  va_list argptr;
+  int result;
+  char * buffer = NULL;
+  size_t length = 0;
+
+  if (!str) return -1;
+  if (!format) return -1;
+
+  if (!str->buffer)
+    _str_set_min_size(str,str->length + strlen(format)+1);
+
+  va_start(argptr,format); /* note: ansi compatible version of va_start */
+
+#ifndef WIN32
+  result = vsnprintf(buffer, 0, format, argptr);
+  if (result < 0) return result;
+  result++;
+  if ((unsigned int)result >= length)
+  {
+    buffer = wzd_malloc( result + 1 );
+    va_end(argptr);
+    va_start(argptr,format); /* note: ansi compatible version of va_start */
+    result = vsnprintf(buffer, result, format, argptr);
+  }
+  length = result;
+#else /* WIN32 */
+  /* windows is crap, once again
+   * vsnprintf does not return the number that should be been allocated,
+   * it always return -1 if the buffer is not large enough
+   */
+  length = strlen(format)+1;
+  buffer = wzd_malloc(length);
+  result = vsnprintf(buffer, length, format, argptr);
+  while (result < 0)
+  {
+    if (length >= 1024000) {
+      return -1;
+    }
+    wzd_free(buffer);
+    length = length + (length >> 2) + 20;
+    buffer = wzd_malloc(length);
+    va_end(argptr);
+    va_start(argptr,format); /* note: ansi compatible version of va_start */
+    result = vsnprintf(buffer, length-1, format, argptr);
+  }
+  length = result;
+  buffer[length] = '\0';
+  if ((u32_t)result == length) {
+   _str_set_min_size(str, result+1);
+  }
+#endif
+
+  va_end (argptr);
+
+  str_prepend(str, buffer);
+  if (buffer) wzd_free(buffer);
+
+  return str->length;
+}
+
+
 /** \brief Append formatted output to string
  */
 int str_append_printf(wzd_string_t *str, const char *format, ...)
