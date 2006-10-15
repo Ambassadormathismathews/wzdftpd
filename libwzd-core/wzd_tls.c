@@ -69,6 +69,7 @@ struct wzd_ssl_t {
 void tls_context_init(wzd_context_t * context)
 {
   context->ssl = wzd_malloc(sizeof(struct wzd_ssl_t));
+  memset(context->ssl,0,sizeof(struct wzd_ssl_t));
 }
 
 /*************** tls_auth_setfd_set *********************/
