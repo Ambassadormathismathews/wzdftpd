@@ -8,6 +8,7 @@
 #cmakedefine HAVE_PTHREAD 1
 #cmakedefine HAVE_STDINT_H 1
 #cmakedefine HAVE_SYS_MOUNT_H 1
+#cmakedefine HAVE_SYS_PARAM_H 1
 #cmakedefine HAVE_SYS_STATVFS_H 1
 #cmakedefine HAVE_SYS_TYPES_H 1
 #cmakedefine HAVE_UNISTD_H 1

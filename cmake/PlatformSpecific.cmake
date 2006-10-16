@@ -5,9 +5,9 @@ IF(WIN32)
 ENDIF(WIN32)
 
 # Use this on platforms where dlopen() is in -ldl
-IF (NOT WIN32)
+IF (HAVE_LDL)
   SET(EXTRA_LIBS "dl")
-ENDIF (NOT WIN32)
+ENDIF (HAVE_LDL)
 
 IF (CMAKE_COMPILER_IS_GNUCC)
   SET(CMAKE_C_FLAGS_DEBUG "-Wall ${CMAKE_C_FLAGS_DEBUG}")
