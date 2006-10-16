@@ -60,6 +60,10 @@ if (OPENSSL_FOUND)
   set(libwzd_LIBS ${libwzd_LIBS} ${OPENSSL_LIBRARIES})
 endif (OPENSSL_FOUND)
 
+if (CRYPTO_FOUND)
+  set(libwzd_LIBS ${libwzd_LIBS} ${CRYPTO_LIBRARIES})
+endif (CRYPTO_FOUND)
+
 if (GNUTLS_FOUND)
   set(libwzd_LIBS ${libwzd_LIBS} ${GNUTLS_LIBRARIES})
 endif (GNUTLS_FOUND)

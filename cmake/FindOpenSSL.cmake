@@ -48,12 +48,22 @@ else (OPENSSL_INCLUDE_DIR AND OPENSSL_LIBRARIES)
       /usr/lib
       /usr/local/lib
    )
+   FIND_LIBRARY(CRYPTO_LIBRARIES crypto
+      PATHS
+      /usr/lib
+      /usr/local/lib
+   )
 
   endif(WIN32 AND MSVC)
 
   if (OPENSSL_INCLUDE_DIR AND OPENSSL_LIBRARIES)
      set(OPENSSL_FOUND TRUE)
   endif (OPENSSL_INCLUDE_DIR AND OPENSSL_LIBRARIES)
+
+  if (CRYPTO_LIBRARIES)
+     set(CRYPTO_FOUND TRUE)
+     message(STATUS "Found libcrypto: ${CRYPTO_LIBRARIES}")
+  endif (CRYPTO_LIBRARIES)
 
   if (OPENSSL_FOUND)
      if (NOT OpenSSL_FIND_QUIETLY)
