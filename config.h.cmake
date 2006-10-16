@@ -13,6 +13,7 @@
 #cmakedefine HAVE_UTIME_H 1
 #cmakedefine HAVE_WCHAR_H 1
 
+#cmakedefine HAVE_BACKTRACE 1
 #cmakedefine HAVE_INET_NTOA 1
 #cmakedefine HAVE_INET_NTOP 1
 #cmakedefine HAVE_INET_PTON 1
