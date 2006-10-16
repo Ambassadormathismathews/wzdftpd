@@ -71,8 +71,10 @@
 #ifndef WIN32
 #include <unistd.h>
 #include <pthread.h>
+#endif
 
-
+#ifndef HAVE_STRTOK_R
+# include "libwzd-base/wzd_strtok_r.h"
 #endif
 
 #include "wzd_structs.h"
@@ -1308,11 +1310,11 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   path = wzd_malloc(WZD_MAX_PATH+1);
   buffer = wzd_malloc(WZD_MAX_PATH+1);
 
+  user = GetUserByID(context->userid);
+
   if ( !(user->userperms & RIGHT_MKDIR) ) { ret = E_NOPERM; goto label_error_mkdir; }
 
   if (strcmp(param,"/")==0) { ret = E_WRONGPATH; goto label_error_mkdir; }
-
-  user = GetUserByID(context->userid);
 
   if (param[0] != '/') {
     strcpy(cmd,".");

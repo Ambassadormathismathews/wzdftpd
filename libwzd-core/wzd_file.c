@@ -117,6 +117,10 @@ typedef struct
 #include <dirent.h>
 #endif
 
+#ifndef HAVE_STRTOK_R
+# include "libwzd-base/wzd_strtok_r.h"
+#endif
+
 #include <fcntl.h> /* O_RDONLY */
 
 #include "wzd_structs.h"

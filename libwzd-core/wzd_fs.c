@@ -50,6 +50,7 @@
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+#include "wzd_utf8.h"
 
 #include "wzd_fs.h"
 

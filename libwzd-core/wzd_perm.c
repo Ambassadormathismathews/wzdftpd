@@ -42,6 +42,10 @@
 #include <arpa/inet.h>
 #endif
 
+#ifndef HAVE_STRTOK_R
+# include "libwzd-base/wzd_strtok_r.h"
+#endif
+
 #include "wzd_structs.h"
 
 #include "wzd_group.h"

@@ -45,6 +45,9 @@
 # include "wzd_utf8.h"
 #endif
 
+#ifndef HAVE_STRTOK_R
+# include "libwzd-base/wzd_strtok_r.h"
+#endif
 
 #include "wzd_debug.h"
 
