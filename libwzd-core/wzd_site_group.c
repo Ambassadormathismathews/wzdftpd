@@ -625,7 +625,7 @@ int do_site_grpkill(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
       user = GetUserByID(loop_context->userid);
       if (strcmp(me->username,user->username) && is_user_in_group(user,group->gid)) {
         found=1;
-        kill_child(loop_context->pid_child,context);
+        kill_child_new(loop_context->pid_child,context);
       }
     }
   }

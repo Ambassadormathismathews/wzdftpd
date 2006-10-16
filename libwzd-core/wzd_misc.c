@@ -985,7 +985,7 @@ void win_normalize(char * s, unsigned int length, unsigned int lower)
 
 
 /* \return 0 if ok, -1 if error, 1 if trying to kill myself */
-int kill_child(unsigned long pid, wzd_context_t * context)
+int kill_child_signal(unsigned long pid, wzd_context_t * context)
 {
   ListElmt * elmnt;
   wzd_context_t * loop_context;

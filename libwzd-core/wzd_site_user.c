@@ -379,7 +379,7 @@ int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_conte
         loop_context = list_data(elmnt);
         if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
           if (loop_context->userid == user->uid) {
-            kill_child(loop_context->pid_child,context);
+            kill_child_signal(loop_context->pid_child,context);
           }
         }
       }
@@ -1238,7 +1238,7 @@ int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
     return 0;
   }
 
-  switch(kill_child(pid,context)) {
+  switch(kill_child_new(pid,context)) {
   case 0:
     ret = send_message_with_args(200,context,"KILL signal sent");
     break;
@@ -1295,7 +1295,7 @@ int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
       if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
         if (user->uid == loop_context->userid) {
           found = 1;
-          kill_child(loop_context->pid_child,context);
+          kill_child_new(loop_context->pid_child,context);
         }
       }
     } /* for all contexts */
@@ -1717,7 +1717,7 @@ static int _kick_and_purge(void)
     if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
       user = GetUserByID(loop_context->userid);
       if (user && user->flags && strchr(user->flags,FLAG_DELETED)) {
-        kill_child(loop_context->pid_child,NULL /* context */);
+        kill_child_signal(loop_context->pid_child,NULL /* context */);
       }
     }
   }

@@ -46,9 +46,21 @@ void chop(char *s);
 
 int split_filename(const char *filename, char *path, char *stripped_filename, int pathlen, unsigned int filelen);
 
-/** send exit signal to a child */
-int kill_child(unsigned long pid, wzd_context_t * context);
-/** send exit signal to a child */
+/** \brief Kill child using a signal
+ *
+ * Child is killed instantly (this function should not be used for self)
+ * If the client is inside a function, it is stopped immediatly,
+ * maybe creating some problems.
+ */
+int kill_child_signal(unsigned long pid, wzd_context_t * context);
+
+/** \brief Kill child
+ *
+ * A message is sent to the client thread, telling it to exit nicely on
+ * the next loop iteration.
+ * If the client is inside a function, it will exit after the function
+ * is finished.
+ */
 int kill_child_new(unsigned long pid, wzd_context_t * context);
 
 /* returns system ip on specifed interface (e.g eth0) */
