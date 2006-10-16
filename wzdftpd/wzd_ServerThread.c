@@ -988,7 +988,8 @@ uid_t get_server_uid(void)
 
 void server_crashed(int signum)
 {
-  printf("Server has crashed of signal %d\n",signum);
+  out_log(LEVEL_CRITICAL,"Server has crashed of signal %d\n",signum);
+  dump_backtrace();
 #ifdef DEBUG
 #ifndef WZD_DBG_NOABORT
   printf("I'll try to dump current memory to a core file (in the current dir)\n");

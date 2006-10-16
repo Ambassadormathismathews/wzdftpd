@@ -90,6 +90,9 @@ void fd_dump(void);
 /** try to print the backtrace */
 void dump_backtrace(void);
 
+/** \brief Check current context for corruptions */
+int check_context(wzd_context_t * context);
+
 #ifdef DEBUG
 
 /* debug file cache */

@@ -47,6 +47,7 @@
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+#include "wzd_misc.h"
 
 #endif /* WZD_USE_PCH */
 
@@ -125,25 +126,25 @@ void * wzd_realloc(void * ptr, size_t size)
   return (void*)realloc(ptr, size);
 }
 
-/** Copy memory area. The memory areas may overlap. */
+/** \brief Copy memory area. The memory areas may overlap. */
 void * wzd_memmove(void * dst, const void * src, size_t size)
 {
   return memmove(dst,src,size);
 }
 
-/* Free memory allocated by wzd_malloc */
+/** \brief Free memory allocated by wzd_malloc */
 void wzd_free(void *ptr)
 {
   free(ptr);
 }
 
-/** Copy with allocation */
+/** \brief Copy with allocation */
 char * wzd_strdup(const char *s)
 {
   return strdup(s);
 }
 
-/** Copy with allocation, at most \n bytes */
+/** \brief Copy with allocation, at most \a n bytes */
 char * wzd_strndup(const char *s, size_t n)
 {
 #ifdef HAVE_STRNDUP
@@ -306,3 +307,28 @@ void dump_backtrace(void)
   }
 #endif
 }
+
+/** \brief Check current context for corruptions */
+int check_context(wzd_context_t * context)
+{
+  if (GetMyContext() != context)
+  {
+    out_err(LEVEL_CRITICAL,"CRITICAL GetMyContext does not match context !\n");
+    out_err(LEVEL_CRITICAL,"CRITICAL GetMyContext %p\n",GetMyContext());
+    out_err(LEVEL_CRITICAL,"CRITICAL context      %p\n",context);
+    return 1;
+  }
+  if (!context->magic == CONTEXT_MAGIC)
+  {
+    out_err(LEVEL_CRITICAL,"CRITICAL context->magic is invalid, context may be corrupted\n");
+    return 1;
+  }
+  if (context->controlfd == (fd_t)-1 || !fd_is_valid(context->controlfd)) {
+    out_err(LEVEL_CRITICAL,"Trying to set invalid sockfd (%d) %s:%d\n",
+        context->controlfd,__FILE__,__LINE__);
+    return 1;
+  }
+
+  return 0;
+}
+

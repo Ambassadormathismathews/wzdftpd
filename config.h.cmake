@@ -1,4 +1,5 @@
 #cmakedefine HAVE_DL_H 1
+#cmakedefine HAVE_EXECINFO_H 1
 #cmakedefine HAVE_ICONV 1
 #cmakedefine HAVE_INTTYPES_H 1
 #cmakedefine HAVE_LANGINFO_CODESET 1

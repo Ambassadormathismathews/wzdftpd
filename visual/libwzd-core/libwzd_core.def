@@ -69,6 +69,7 @@ EXPORTS
 	dir_close
 	dir_open
 	dir_read
+	dump_backtrace
 	encrypt
 	event_connect_function
 	event2str

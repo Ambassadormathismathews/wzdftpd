@@ -1308,11 +1308,11 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   path = wzd_malloc(WZD_MAX_PATH+1);
   buffer = wzd_malloc(WZD_MAX_PATH+1);
 
-  user = GetUserByID(context->userid);
-
   if ( !(user->userperms & RIGHT_MKDIR) ) { ret = E_NOPERM; goto label_error_mkdir; }
 
   if (strcmp(param,"/")==0) { ret = E_WRONGPATH; goto label_error_mkdir; }
+
+  user = GetUserByID(context->userid);
 
   if (param[0] != '/') {
     strcpy(cmd,".");
@@ -3985,16 +3985,10 @@ void * clientThreadProc(void *arg)
   while (!context->exitclient) {
     user = GetUserByID(context->userid);
 #ifdef DEBUG
-    if (GetMyContext() != context)
-    {
-      out_err(LEVEL_CRITICAL,"GetMyContext does not match context !\n");
-      out_err(LEVEL_CRITICAL,"GetMyContext %p\n",GetMyContext());
-      out_err(LEVEL_CRITICAL,"context      %p\n",context);
-    }
-    if (!context->magic == CONTEXT_MAGIC || sockfd != context->controlfd)
-    {
-      out_err(LEVEL_CRITICAL,"Omar m'a tuer !\n");
-      out_err(LEVEL_CRITICAL,"sock %d\n",sockfd);
+    if (check_context(context) != 0) {
+      out_log(LEVEL_CRITICAL,"CRITICAL check_context failed\n");
+      context->exitclient = 1;
+      break;
     }
 #endif /* DEBUG */
     save_errno = 666;
@@ -4003,14 +3997,6 @@ void * clientThreadProc(void *arg)
     FD_ZERO(&fds_w);
     FD_ZERO(&efds);
     /* set control fd */
-#ifdef DEBUG
-    if (sockfd == (fd_t)-1 || !fd_is_valid(sockfd)) {
-      out_err(LEVEL_CRITICAL,"Trying to set invalid sockfd (%d) %s:%d\n",
-          sockfd,__FILE__,__LINE__);
-      context->exitclient=1;
-      break;
-    }
-#endif
     FD_SET(sockfd,&fds_r);
     FD_SET(sockfd,&efds);
     /* set data fd */
