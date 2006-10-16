@@ -177,7 +177,7 @@ static STACK_OF(X509_NAME) * _tls_init_ca_list(const char *ca_file, const char *
   /*
    * Cleanup
    */
-  sk_X509_NAME_set_cmp_func(ca_list, NULL);
+  (void)sk_X509_NAME_set_cmp_func(ca_list, NULL);
 
   return ca_list;
 }
@@ -333,8 +333,8 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
   fd_set fd_r, fd_w;
   struct timeval tv;
 
-  WZD_ASSERT_VOID(context != NULL);
-  WZD_ASSERT_VOID(context->ssl != NULL);
+  WZD_ASSERT(context != NULL);
+  WZD_ASSERT(context->ssl != NULL);
 
   /* FIXME bad conception of parameters ... */
   if (sock == context->controlfd)
@@ -395,8 +395,8 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
   fd_set fd_r, fd_w;
   struct timeval tv;
 
-  WZD_ASSERT_VOID(context != NULL);
-  WZD_ASSERT_VOID(context->ssl != NULL);
+  WZD_ASSERT(context != NULL);
+  WZD_ASSERT(context->ssl != NULL);
 
   /* FIXME bad conception of parameters ... */
   if (sock == context->controlfd)
@@ -556,7 +556,7 @@ int tls_auth_cont(wzd_context_t * context)
       default:
         out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,sslerr,
           ERR_error_string(SSL_get_error(context->ssl->obj,status),NULL));
-        out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %d : %s\n",status,ERR_get_error(),
+        out_log(LEVEL_HIGH,"Error accepting connection: ret %d error code %ld : %s\n",status,ERR_get_error(),
             ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }
