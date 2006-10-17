@@ -12,6 +12,11 @@ IF(AVAHI_FOUND)
   ENDIF (AVAHI_SUPPORT_THREADEDPOLL)
 ENDIF(AVAHI_FOUND)
 
+IF(HOWL_FOUND)
+  ADD_DEFINITIONS(-DUSE_HOWL)
+  SET(CMAKE_C_FLAGS "${HOWL_C_FLAGS} ${CMAKE_C_FLAGS}")
+ENDIF(HOWL_FOUND)
+
 ADD_LIBRARY (libwzd_zeroconf SHARED
 	libwzd_avahi.c libwzd_avahi.h
 	libwzd_bonjour.c libwzd_bonjour.h
@@ -25,5 +30,13 @@ if (CYGWIN OR NOT WIN32)
 endif (CYGWIN OR NOT WIN32)
 
 SET(libwzd_zeroconf_LIBS libwzd_core)
+
+IF(AVAHI_FOUND)
+  MACRO_ADD_LINK_FLAGS(libwzd_zeroconf "${AVAHI_LIBS}")
+ENDIF(AVAHI_FOUND)
+
+IF(HOWL_FOUND)
+  MACRO_ADD_LINK_FLAGS(libwzd_zeroconf "${HOWL_LIBS}")
+ENDIF(HOWL_FOUND)
 
 TARGET_LINK_LIBRARIES (libwzd_zeroconf ${zeroconf_LIBS})
