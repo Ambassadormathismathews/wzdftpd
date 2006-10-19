@@ -12,10 +12,14 @@ ENDIF(PERL_EXTRA_C_FLAGS)
 
 LINK_DIRECTORIES (${WZDFTPD_BINARY_DIR}/modules/perl)
 
+SET(libwzd_perl_SOURCES libwzd_perl.c)
+
 ADD_LIBRARY (libwzd_perl SHARED
-	libwzd_perl.c
+	${libwzd_perl_SOURCES}
 	perl.def
 	)
+
+SET_SOURCE_FILES_PROPERTIES(${libwzd_perl_SOURCES} COMPILE_FLAGS "${PERL_EXTRA_C_FLAGS}")
 
 if (CYGWIN OR NOT WIN32)
   SET_TARGET_PROPERTIES(libwzd_perl PROPERTIES PREFIX "")
