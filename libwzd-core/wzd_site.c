@@ -2111,7 +2111,7 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   firstarg = str_read_token(command_line);
   if (!firstarg) {
     do_site_help("wipe",context);
-    return 1;
+    return E_PARAM_NULL;
   }
   /* check if wiping is recursive */
   if ( strcasecmp(str_tochar(firstarg),"-r")==0 ) {
@@ -2120,7 +2120,7 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
     filename = str_read_token(command_line);
     if( !filename) {
       do_site_help("wipe",context);
-      return 1;
+      return E_PARAM_INVALID;
     }
   }
   else
@@ -2129,15 +2129,33 @@ int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
   do
   {
     /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
-    if (!checkpath(str_tochar(filename),buffer,context))
+    if (checkpath_new(str_tochar(filename),buffer,context) != 0)
     {
-      /* wipe file | if_recursive dir/file */
-      ret = do_internal_wipe(buffer,context);
-      if (ret) {
-        ret = send_message_with_args(501,context,"WIPE failed");
-        str_deallocate(filename);
-        return 1;
-      }
+      ret = send_message_with_args(501,context,"File does not exist");
+      str_deallocate(filename);
+      return E_FILE_NOEXIST;
+    }
+
+    {
+      wzd_string_t * event_args = str_allocate();
+      wzd_user_t * user = GetUserByID(context->userid);
+      str_sprintf(event_args,"%s %s",user->username,str_tochar(filename));
+      ret = event_send(mainConfig->event_mgr, EVENT_PREWIPE, 0, event_args, context);
+      str_deallocate(event_args);
+    }
+    if (ret != EVENT_OK && ret != EVENT_BREAK) {
+      out_log(LEVEL_NORMAL, "Wipe denied by hook (returned %d)\n", ret);
+      ret = send_message_with_args(501,context,"Wipe denied");
+      str_deallocate(filename);
+      return E_COMMAND_FAILED;
+    }
+
+    /* wipe file | if_recursive dir/file */
+    ret = do_internal_wipe(buffer,context);
+    if (ret) {
+      ret = send_message_with_args(501,context,"WIPE failed");
+      str_deallocate(filename);
+      return E_COMMAND_FAILED;
     }
 
     {

@@ -1,3 +1,7 @@
+2006-10-19  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: add event WIPE and PREWIPE
+
 2006-09-23  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- svn commit TAG: rel-0-8-0

@@ -91,6 +91,8 @@ struct event_entry_t event_tab[] = {
   { EVENT_RMDIR, "RMDIR" },
   { EVENT_DELE, "DELE" },
   { EVENT_SITE, "SITE" },
+  { EVENT_WIPE, "WIPE" },
+  { EVENT_PREWIPE, "PREWIPE" },
   { 0, NULL },
 };
 
