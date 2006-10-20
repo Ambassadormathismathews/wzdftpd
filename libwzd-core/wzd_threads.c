@@ -42,6 +42,7 @@
 /* visual c++ 6 and prior must include files in a different order */
 # define _WIN32_WINNT    0x500
 # if (defined(_MSC_VER) && (_MSC_VER <= 1200))
+#  include <winsock2.h>
 #  include <windows.h>
 # else
 #  include <winsock2.h>

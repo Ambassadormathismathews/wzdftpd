@@ -43,6 +43,7 @@
 /* visual c++ 6 and prior must include files in a different order */
 # define _WIN32_WINNT    0x500
 # if (defined(_MSC_VER) && (_MSC_VER <= 1200))
+#  include <winsock2.h>
 #  include <windows.h>
 # else
 #  include <winsock2.h>
@@ -64,7 +65,6 @@
 #include <windows.h>
 #endif
 #endif /* WZD_USE_PCH */
-
 
 struct _wzd_mutex_t {
 #ifndef WIN32
@@ -141,7 +141,8 @@ int wzd_mutex_trylock(wzd_mutex_t * mutex)
 #ifndef WIN32
     return pthread_mutex_trylock(&mutex->_mutex);
 #else
-    return TryEnterCriticalSection(&mutex->_mutex);
+    EnterCriticalSection(&mutex->_mutex);
+	return 0;
 #endif
   }
   return 1;
@@ -161,4 +162,3 @@ int wzd_mutex_unlock(wzd_mutex_t * mutex)
   }
   return 1;
 }
-
