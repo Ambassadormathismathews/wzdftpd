@@ -788,7 +788,10 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+  if ( !(user->userperms & RIGHT_LIST) ) {
+    ret = send_message_with_args(550,context,"LIST","No access");
+    return E_NOPERM;
+  }
 
   if (!str_checklength(arg, 0, WZD_MAX_PATH-10))
   {
@@ -1165,7 +1168,11 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   user = GetUserByID(context->userid);
 
   /* stat has the same behaviour as LIST */
-  if ( !(user->userperms & RIGHT_LIST) ) return E_NOPERM;
+  if ( !(user->userperms & RIGHT_LIST) ) {
+    ret = send_message_with_args(550,context,"LIST","No access");
+    return E_NOPERM;
+  }
+
 
   if (!str_checklength(arg, 1, WZD_MAX_PATH-10))
   {
@@ -2015,7 +2022,10 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   param = str_tochar(arg);
   user = GetUserByID(context->userid);
 
-  if ( !(user->userperms & RIGHT_RETR) ) return E_NOPERM;
+  if ( !(user->userperms & RIGHT_RETR) ) {
+    ret = send_message_with_args(550,context,"RETR","No access");
+    return E_NOPERM;
+  }
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
@@ -2195,7 +2205,10 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-  if ( !(user->userperms & RIGHT_STOR) ) return E_NOPERM;
+  if ( !(user->userperms & RIGHT_STOR) ) {
+    ret = send_message_with_args(550,context,"STOR","No access");
+    return E_NOPERM;
+  }
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
