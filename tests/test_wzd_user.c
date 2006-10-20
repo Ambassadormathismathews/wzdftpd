@@ -5,6 +5,8 @@
 
 #include "test_common.h"
 
+#include <libwzd-core/wzd_debug.h>
+
 #define C1 0x12345678
 #define C2 0x9abcdef0
 
