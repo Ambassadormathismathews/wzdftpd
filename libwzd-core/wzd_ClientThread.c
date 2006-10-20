@@ -2098,7 +2098,7 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
+    ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
 
@@ -2271,7 +2271,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
+    ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
 
@@ -2403,7 +2403,7 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
     /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
-      ret = send_message_with_args(501,context,"Go away bastard");
+      ret = send_message_with_args(501,context,"Forbidden");
       return E_FILE_FORBIDDEN;
     }
 
@@ -2558,7 +2558,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
-      ret = send_message_with_args(501,context,"Go away bastard");
+      ret = send_message_with_args(501,context,"Forbidden");
       return E_FILE_FORBIDDEN;
     }
 
@@ -2716,7 +2716,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
+    ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
 
@@ -3003,7 +3003,7 @@ int do_rnfr(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
+    ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
 
@@ -3046,7 +3046,7 @@ int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(501,context,"Go away bastard");
+    ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
   context->current_action.token = TOK_UNKNOWN;
@@ -3146,7 +3146,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
-      ret = send_message_with_args(501,context,"Go away bastard");
+      ret = send_message_with_args(501,context,"Forbidden");
       return E_FILE_FORBIDDEN;
     }
 
@@ -3230,7 +3230,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
     if (is_hidden_file(path)) {
-      ret = send_message_with_args(501,context,"Go away bastard");
+      ret = send_message_with_args(501,context,"Forbidden");
       return E_FILE_FORBIDDEN;
     }
 
