@@ -103,8 +103,11 @@ char * create_filepath(const char *dir, const char * file){
 static int get_all_params(wzd_sfv_config * SfvConfig)
 {
   const char * ptr;
+  int b, err;
 
   SfvConfig->incomplete_symlink=0; /* default: false */
+  b = config_get_boolean (mainConfig->cfg_file, "sfv", "create_symlinks", &err);
+  if (err == CF_OK) SfvConfig->incomplete_symlink = b;
 
   ptr = config_get_value (mainConfig->cfg_file, "sfv", "progressmeter");
   if (ptr == NULL) {

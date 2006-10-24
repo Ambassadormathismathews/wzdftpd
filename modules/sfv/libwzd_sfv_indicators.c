@@ -210,7 +210,7 @@ char *c_incomplete_indicator(const char * indicator, const char * currentdir, wz
   }
   *ptr_out = '\0';
 
-  out = wzd_malloc(length+1);
+  out = malloc(length+1);
   strncpy(out,buffer,length+1);
   if (out[strlen(out)-1]=='/') out[strlen(out)-1]='\0';
 
@@ -231,7 +231,6 @@ char *c_complete_indicator(const char * indicator, const char * currentdir, wzd_
   char ctrl[10];
   char output[2048];
   char * buffer;
-  int files_ok=stats->files_ok;
   int files_total=stats->files_total;
   double size_total=stats->size_total;
 

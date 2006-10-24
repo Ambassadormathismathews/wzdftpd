@@ -241,6 +241,7 @@ progressmeter = [WzD] - %3d%% Complete - [WzD]
 del_progressmeter = \[.*] - ...% Complete - \[WzD]
 incomplete_indicator = ../(incomplete)-%releasename
 other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
+create_symlinks = false
 
 [plaintext]
 param = @sysconfdir@/users

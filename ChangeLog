@@ -1,3 +1,9 @@
+2006-10-24  Pierre Chifflier  <pollux@cpe.fr>
+
+	* feature: add config variable [sfv] create_symlinks to create
+	symbolic links for incomplete files (Closes: #0055)
+	* bugfix: segfault when removing incomplete indicator on windows [sfv]
+
 2006-10-19  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: add event WIPE and PREWIPE
