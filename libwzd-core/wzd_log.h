@@ -135,7 +135,7 @@ void out_err(int level, const char *fmt,...)
 /** \brief Automatically create and send the message in xferlog format
  * after a file transfer has been completed or interrupted.
  */
-void out_xferlog(wzd_context_t * context, int is_complete);
+void out_xferlog(struct wzd_context_t * context, int is_complete);
 
 /** \brief Format in a standard way and send message to the server logger
  * using LEVEL_NORMAL

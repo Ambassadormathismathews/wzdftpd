@@ -47,6 +47,7 @@ EXPORTS
 	commands_init
 	commands_set_permission
 	config_free
+	config_get_boolean
 	config_get_integer
 	config_get_string
 	config_get_string_list

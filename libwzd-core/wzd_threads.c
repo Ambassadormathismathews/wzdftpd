@@ -39,21 +39,16 @@
 #include <sys/types.h>
 
 #ifdef WIN32
-/* visual c++ 6 and prior must include files in a different order */
 # define _WIN32_WINNT    0x500
-# if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-#  include <winsock2.h>
-#  include <windows.h>
-# else
-#  include <winsock2.h>
-# endif
+# include <windows.h>
 #else
 #include <unistd.h>
 
 #include <signal.h>
 #endif
 
-#include "wzd_structs.h"
+struct wzd_context_t;
+
 #include "wzd_log.h"
 #include "wzd_threads.h"
 
@@ -141,7 +136,7 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
   {
     out_log(LEVEL_CRITICAL, "Thread join failed.");
     CloseHandle(thread->_t);
-	  
+
     return -1;
   }
   CloseHandle(thread->_t);

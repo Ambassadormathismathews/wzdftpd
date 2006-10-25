@@ -91,7 +91,7 @@ void fd_dump(void);
 void dump_backtrace(void);
 
 /** \brief Check current context for corruptions */
-int check_context(wzd_context_t * context);
+int check_context(struct wzd_context_t * context);
 
 #ifdef DEBUG
 

@@ -40,21 +40,15 @@
 #include <sys/types.h>
 
 #ifdef WIN32
-/* visual c++ 6 and prior must include files in a different order */
 # define _WIN32_WINNT    0x500
-# if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-#  include <winsock2.h>
-#  include <windows.h>
-# else
-#  include <winsock2.h>
-# endif
+# include <windows.h>
 #else
 #include <unistd.h>
 #include <pthread.h>
 #endif
 
-#include "wzd_structs.h"
-#include "wzd_log.h"
+struct wzd_context_t;
+
 #include "wzd_mutex.h"
 
 #include "wzd_debug.h"
@@ -97,7 +91,7 @@ wzd_mutex_t * wzd_mutex_create(unsigned long key)
   InitializeCriticalSection(&m->_mutex);
   ret = 0;
 #endif
-  
+
   if (ret) { wzd_free(m); return NULL; }
 
   return m;
@@ -141,8 +135,8 @@ int wzd_mutex_trylock(wzd_mutex_t * mutex)
 #ifndef WIN32
     return pthread_mutex_trylock(&mutex->_mutex);
 #else
-    EnterCriticalSection(&mutex->_mutex);
-	return 0;
+    TryEnterCriticalSection(&mutex->_mutex);
+    return 0;
 #endif
   }
   return 1;
