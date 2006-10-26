@@ -22,7 +22,7 @@ ratio=3
 gid=1
 
 privgroup	anonymous
-max_idle_time=10
+max_idle_time=600
 default_home=/home
 gid=2
 
@@ -58,7 +58,7 @@ bytes_dl_total=10
 num_logins=1
 flags=OIstH
 
-name=guest
+name=anonymous
 pass=%
 home=/tmp
 uid=200
