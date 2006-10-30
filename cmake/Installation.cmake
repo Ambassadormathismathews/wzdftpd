@@ -23,3 +23,10 @@ SET(PACKAGE "wzdftpd")
 SET(localstatedir "${CMAKE_INSTALL_PREFIX}/var")
 SET(datadir "${CMAKE_INSTALL_PREFIX}/share")
 SET(sysconfdir "${CONF_INSTALL_PATH}")
+
+IF(WIN32)
+  SET(WZD_DEFAULT_CONF "wzd-win32.cfg")
+ELSE(WIN32)
+  SET(WZD_DEFAULT_CONF "${CONF_INSTALL_PATH}/wzd.cfg")
+ENDIF(WIN32)
+

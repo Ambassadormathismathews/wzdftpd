@@ -26,12 +26,6 @@ ELSE (DATE)
   SET(WZD_BUILD_NUM "unknown")
 ENDIF (DATE)
 
-IF(WIN32)
-SET(WZD_DEFAULT_CONF "wzd-win32.cfg")
-ELSE(WIN32)
-SET(WZD_DEFAULT_CONF "/etc/wzdftpd/wzd.cfg")
-ENDIF(WIN32)
-
 
 add_subdirectory(cmake)
 
