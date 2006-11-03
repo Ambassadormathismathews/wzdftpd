@@ -162,8 +162,6 @@ int runMainThread(int argc, char **argv)
 
 static wzd_mutex_t * end_mutex = NULL;
 
-static void free_config(wzd_config_t * config);
-
 static List server_ip_list;
 static List server_ident_list;
 static int server_add_ident_candidate(fd_t socket_accept_fd);
@@ -1303,7 +1301,7 @@ int server_switch_to_config(wzd_config_t *config)
       snprintf(buf,64,"%ld\n",(unsigned long)getpid());
       if (fd==-1) {
         out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
-        free_config(config);
+        cfg_free(config);
         return -1;
       }
       ret = write(fd,buf,strlen(buf));
@@ -1567,28 +1565,6 @@ int serverMainThreadProc(void *arg)
     out_log(LEVEL_INFO,"Backend commited\n");
   serverMainThreadCleanup(0);
   return 0;
-}
-
-/** \deprecated ! use \ref cfg_free */
-static void free_config(wzd_config_t * config)
-{
-/*  limiter_free(mainConfig->limiter_ul);
-  limiter_free(mainConfig->limiter_dl);*/
-
-  if (mainConfig->xferlog_fd >= 0)
-    xferlog_close(mainConfig->xferlog_fd);
-
-  if (CFG_GET_OPTION(mainConfig,CFG_OPT_USE_SYSLOG)) {
-#ifndef WIN32
-    closelog();
-#endif
-  }
-  wzd_free(mainConfig->logfilename);
-  wzd_free(mainConfig->config_filename);
-  wzd_free(mainConfig->pid_file);
-  wzd_free(mainConfig->dir_message);
-
-  wzd_free(mainConfig);
 }
 
 void serverMainThreadCleanup(int retcode)
