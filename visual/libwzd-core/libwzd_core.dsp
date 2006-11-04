@@ -243,6 +243,10 @@ SOURCE="..\..\libwzd-core\wzd_perm.c"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-core\wzd_protocol.c"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-core\wzd_ratio.c"
 # End Source File
 # Begin Source File
@@ -416,6 +420,10 @@ SOURCE="..\..\libwzd-core\wzd_mutex.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_perm.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_protocol.h"
 # End Source File
 # Begin Source File
 

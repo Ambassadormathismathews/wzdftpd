@@ -57,6 +57,7 @@ SET(libwzd_core_pub_HEADERS
 	wzd_mod.h
 	wzd_mutex.h
 	wzd_perm.h
+	wzd_protocol.h
 	wzd_ratio.h
 	wzd_section.h
 	wzd_shm.h
@@ -108,6 +109,7 @@ add_library (libwzd_core SHARED
 	wzd_mod.c
 	wzd_mutex.c
 	wzd_perm.c
+	wzd_protocol.c
 	wzd_ratio.c
 	wzd_section.c
 	wzd_shm.c
