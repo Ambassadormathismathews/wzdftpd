@@ -24,3 +24,4 @@
 #cmakedefine HAVE_STRTOK_R 1
 #cmakedefine HAVE_STRTOULL 1
 #cmakedefine HAVE_STATVFS 1
+#cmakedefine HAVE_STAT64 1

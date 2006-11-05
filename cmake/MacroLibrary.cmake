@@ -17,3 +17,5 @@ INCLUDE(MacroEnsureOutOfSourceBuild)
 #INCLUDE(MacroLogFeature)
 
 INCLUDE(MacroCreateLibtoolFile)
+
+INCLUDE(CheckCCompilerFlag)

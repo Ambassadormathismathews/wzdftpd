@@ -66,6 +66,14 @@ ADD_DEFINITIONS(-DWZD_MULTITHREAD)
 # Disallow in-source build
 macro_ensure_out_of_source_build("wzdftpd requires an out of source build. Please create a separate build directory and run 'cmake path_to_wzdftpd [options]' there.")
 
+# Add definitions before running Configure checks, or stat64()
+# will not be detected
+SET(FLAGS_64 "-D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64")
+CHECK_C_COMPILER_FLAG(${FLAGS_64} HAVE_FLAGS_64)
+if (HAVE_FLAGS_64)
+  ADD_DEFINITIONS(-D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64)
+endif (HAVE_FLAGS_64)
+
 # create config.h
 include(ConfigureChecks)
 
