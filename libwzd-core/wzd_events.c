@@ -297,7 +297,7 @@ static event_reply_t _event_print_file(const char *filename, wzd_context_t * con
   }
   sz64 = wzd_cache_getsize(fp);
   if (sz64 > INT_MAX) {
-    out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
+    out_log(LEVEL_HIGH,"%s:%d couldn't allocate %" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
     wzd_cache_close(fp);
     send_message_raw("200 Internal error\r\n",context);
     return EVENT_ERROR;

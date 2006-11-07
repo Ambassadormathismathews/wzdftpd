@@ -1184,7 +1184,7 @@ void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *gro
   }
   sz64 = wzd_cache_getsize(fp);
   if (sz64 > INT_MAX) {
-    out_log(LEVEL_HIGH,"%s:%d couldn't allocate" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
+    out_log(LEVEL_HIGH,"%s:%d couldn't allocate %" PRIu64 "bytes for file %s\n",__FILE__,__LINE__,sz64,filename);
     wzd_cache_close(fp);
     send_message_with_args(501,context,"Internal error (see log)");
     return;
