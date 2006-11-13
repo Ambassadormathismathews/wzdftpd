@@ -51,6 +51,8 @@ int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr);
 
 int wzd_thread_join(wzd_thread_t * thread, void ** thread_return);
 
+/** \brief Cancel thread by sending a signal */
+int wzd_thread_cancel(wzd_thread_t * thread);
 
 
 /* platform dependant types */

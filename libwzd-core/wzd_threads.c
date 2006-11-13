@@ -144,3 +144,15 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
   return 0;
 #endif
 }
+/** \brief Cancel thread by sending a signal */
+int wzd_thread_cancel(wzd_thread_t * thread)
+{
+#ifndef WIN32
+  return pthread_cancel(thread->_t);
+#else
+  /** \todo use pthread_kill() equivalent for windows */
+  out_log(LEVEL_CRITICAL, "Not Yet Implemented : wzd_thread_cancel\n");
+  return -1;
+#endif
+}
+

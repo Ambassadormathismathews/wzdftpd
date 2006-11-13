@@ -1602,9 +1602,13 @@ void serverMainThreadCleanup(int retcode)
     wzd_context_t * loop_context;
     for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
-      if ((loop_context = list_data(elmnt)))
+      if ((loop_context = list_data(elmnt))) {
+        wzd_thread_cancel(loop_context->pid_child);
+#ifdef WIN32
+        /** \todo remove this when wzd_thread_cancel is implemented on windows */
         loop_context->exitclient = 1;
-        /** \todo use pthread_kill() */
+#endif
+      }
     }
   }
 #endif
