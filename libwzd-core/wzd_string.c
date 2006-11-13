@@ -180,6 +180,7 @@ wzd_string_t * str_dup(const wzd_string_t *src)
   if (src->buffer) {
     memcpy(dst->buffer,src->buffer,src->length);
     dst->buffer[src->length] = '\0';
+    dst->length = src->length;
   }
 
   return dst;
