@@ -32,12 +32,28 @@
  * @{
  */
 
+struct ftp_command_t {
+  wzd_string_t * command_name;
+  wzd_string_t * args;
+
+  wzd_command_t * command;
+};
+
+/** \brief Free memory used by a \a ftp_command_t structure */
+void free_ftp_command(struct ftp_command_t * command);
+
 /** \brief Fast token identification function.
  *
  * Converts the string into an integer and return the corresponding
  * identifier. Luckily, all FTP commands are no more than 4 characters.
  */
-int identify_token(char *token);
+int identify_token(const char *token);
+
+/** \brief Parse and identify FTP command
+ *
+ * \note Input string is modified.
+ */
+struct ftp_command_t * parse_ftp_command(wzd_string_t * s);
 
 /** @} */
 

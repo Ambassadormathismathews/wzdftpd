@@ -2717,7 +2717,7 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
   char buffer[WZD_BUFFER_LEN];
   wzd_string_t * str;
 
-  cmd = identify_token((char*)str_tochar(name));
+  cmd = identify_token(str_tochar(name));
   switch (cmd) {
     case TOK_PWD:
       context->resume = 0;
@@ -3798,7 +3798,7 @@ void * clientThreadProc(void *arg)
   wzd_user_t * user;
   wzd_command_t * command;
   wzd_string_t * command_buffer;
-  wzd_string_t * token;
+  struct ftp_command_t * ftp_command;
 #ifndef _MSC_VER
   int oldtype;
 #endif
@@ -4023,55 +4023,23 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
     /* reset current reply */
     reply_clear(context);
 
-    /* 2. get next token */
-    token = str_tok(command_buffer, " \t\r\n");
+    /* parse and identify command */
+    ftp_command = parse_ftp_command(command_buffer);
 
-    if (!token)
-      command = NULL;
-    else
-    {
-      command = commands_find(mainConfig->commands_list,token);
-    }
+    if (ftp_command != NULL) {
+      command = ftp_command->command;
 
-    if (command) {
-      /* if command is SITE,
-       * get next command, and strcat it with a _
-       */
-      if (command->id == TOK_SITE) {
-        wzd_string_t * site_command;
-        wzd_command_t * command_real;
-
-        site_command = str_tok(command_buffer," \t");
-        if (site_command) {
-          str_append(str_append(token,"_"),str_tochar(site_command));
-          str_tolower(token);
-          str_deallocate(site_command);
-        }
-
-        command_real = commands_find(mainConfig->commands_list,token);
-        if (command_real) command = command_real;
-
-        /** For SITE commands, the default permission (if not specified)
-         * is to ALLOW users to use command, unless restricted !
-         */
-        if (command_real && commands_check_permission(command_real,context)) {
-          ret = send_message_with_args(501,context,"Permission Denied");
-          str_deallocate(token);
-          str_deallocate(command_buffer);
-          continue;
-        }
-      }
-      /** For base FTP commands, the default permission (if not specified)
+      /** For FTP commands, the default permission (if not specified)
        * is to ALLOW users to use command, unless restricted !
        */
       if (command->perms && commands_check_permission(command,context)) {
         ret = send_message_with_args(501,context,"Permission Denied");
-        str_deallocate(token);
         str_deallocate(command_buffer);
         continue;
       }
+
       if (command->command)
-        ret = (*(command->command))(token,command_buffer,context);
+        ret = (*(command->command))(ftp_command->command_name,command_buffer,context);
       else { /* external command */
         char buffer_command[4096];
         wzd_group_t * group = NULL;
@@ -4081,27 +4049,21 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
         chop(buffer_command);
 
         /* add arguments given on CLI to event */
-        if (str_length(command_buffer)>0) {
+        if (str_length(ftp_command->args)>0) {
           strlcat(buffer_command, " ", sizeof(buffer_command));
-          strlcat(buffer_command, str_tochar(command_buffer), sizeof(buffer_command));
+          strlcat(buffer_command, str_tochar(ftp_command->args), sizeof(buffer_command));
         }
 
         ret = event_exec(buffer_command,context);
       }
-      str_deallocate(token);
-      str_deallocate(command_buffer);
-
 
       /** \todo When all functions use reply_push, test reply and send error if -1 */
       ret = reply_send(context);
-
-      continue;
-    } else {
+    } else { /* no command found */
       ret = send_message(502,context);
+      str_deallocate(command_buffer);
     }
-
-    str_deallocate(token);
-    str_deallocate(command_buffer);
+    free_ftp_command(ftp_command);
 
   } /* while (!exitclient) */
 

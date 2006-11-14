@@ -29,9 +29,15 @@
 #ifndef WZD_USE_PCH
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "wzd_structs.h"
+
+#include "wzd_commands.h"
+#include "wzd_log.h"
+#include "wzd_misc.h" /* ascii_lower */
+#include "wzd_protocol.h"
 
 #include "wzd_debug.h"
 
@@ -41,21 +47,47 @@
 /** \brief Convert a 4-character string to an integer */
 #define STRTOINT(a,b,c,d) (((a)<<24) + ((b)<<16) + ((c)<<8) + (d))
 
+
+/** \brief Allocate memory for a ftp_command_t structure */
+struct ftp_command_t * alloc_ftp_command(void)
+{
+  struct ftp_command_t * command;
+
+  command = wzd_malloc(sizeof(struct ftp_command_t));
+  memset(command,0,sizeof(struct ftp_command_t));
+
+  return command;
+}
+
+/** \brief Free memory used by a \a ftp_command_t structure */
+void free_ftp_command(struct ftp_command_t * command)
+{
+  if (command == NULL) return;
+
+  str_deallocate(command->command_name);
+  str_deallocate(command->args);
+
+  wzd_free(command);
+}
+
+
 /** \brief Fast token identification function.
  *
  * Converts the string into an integer and return the corresponding
  * identifier. Luckily, all FTP commands are no more than 4 characters.
  */
-int identify_token(char *token)
+int identify_token(const char *token)
 {
   unsigned int length;
+  char buf[4];
   if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
-  ascii_lower(token,length);
+  memcpy(buf,token,4);
+  ascii_lower(buf,length);
 
   /* TODO order the following by probability order */
   if (length <= 4) {
-    switch ( STRTOINT(token[0],token[1],token[2],token[3]) ) {
+    switch ( STRTOINT(buf[0],buf[1],buf[2],buf[3]) ) {
       case STRTOINT('h','e','l','p'): return TOK_HELP;
       case STRTOINT('u','s','e','r'): return TOK_USER;
       case STRTOINT('p','a','s','s'): return TOK_PASS;
@@ -114,14 +146,79 @@ int identify_token(char *token)
    * we should return TOK_PREPARE_SPECIAL_CMD or smthing like this
    * and wait the next command
    */
-  if (strcmp("\xff\xf2",token)==0)
+  if (strcmp("\xff\xf2",buf)==0)
     return TOK_NOTHING;
-  if (strcmp("\xff\xf4\xff\xf2",token)==0)
+  if (strcmp("\xff\xf4\xff\xf2",buf)==0)
     return TOK_NOTHING;
-  if (strcmp("\xff\xf4",token)==0) /* telnet IP */
+  if (strcmp("\xff\xf4",buf)==0) /* telnet IP */
     return TOK_NOTHING;
-  if (strcmp("\xff",token)==0) /* telnet SYNCH */
+  if (strcmp("\xff",buf)==0) /* telnet SYNCH */
     return TOK_NOTHING;
   return TOK_UNKNOWN;
+}
+
+/** \brief Parse and identify FTP command
+ *
+ * \note Input string is modified.
+ */
+struct ftp_command_t * parse_ftp_command(wzd_string_t * s)
+{
+  struct ftp_command_t * ftp_command = NULL;
+  wzd_string_t * token;
+  wzd_command_t * command;
+
+  /** \todo ensure that command is FTP-compliant */
+out_log(LEVEL_FLOOD,"DEBUG parse_ftp_command(\"%s\")\n",str_tochar(s));
+  token = str_tok(s," ");
+  if (token == NULL) {
+    out_log(LEVEL_NORMAL,"FTP Protocol Error empty command received, ignoring\n");
+    return NULL;
+  }
+
+  command = commands_find(mainConfig->commands_list,token);
+
+  if (command == NULL) {
+    if (str_length(s) > 0)
+      out_log(LEVEL_NORMAL,"WARNING unknown command received \"%s %s\"\n",str_tochar(token),str_tochar(s));
+    else
+      out_log(LEVEL_NORMAL,"WARNING unknown command received \"%s\"\n",str_tochar(token));
+    str_deallocate(token);
+    return NULL;
+  }
+
+  if (command->id == TOK_SITE) {
+    wzd_string_t * site_command;
+    wzd_command_t * command_real;
+
+    site_command = str_tok(s," \t");
+    if (site_command == NULL) {
+      /** \todo command is "site" without arguments. Return site help ? */
+      out_log(LEVEL_NORMAL,"WARNING received site command without arguments\n");
+      str_deallocate(token);
+      return NULL;
+    }
+    str_append(str_append(token,"_"),str_tochar(site_command));
+    str_tolower(token);
+    command_real = commands_find(mainConfig->commands_list,token);
+    if (command_real) command = command_real;
+    str_deallocate(site_command);
+  }
+
+  if (command == NULL) {
+    if (str_length(s) > 0)
+      out_log(LEVEL_NORMAL,"WARNING could not parse command \"%s %s\"\n",str_tochar(token),str_tochar(s));
+    else
+      out_log(LEVEL_NORMAL,"WARNING could not parse command \"%s\"\n",str_tochar(token));
+    str_deallocate(token);
+    return NULL;
+  }
+
+  ftp_command = alloc_ftp_command();
+
+  ftp_command->command_name = token;
+  ftp_command->args = s;
+  ftp_command->command = command;
+
+  return ftp_command;
 }
 
