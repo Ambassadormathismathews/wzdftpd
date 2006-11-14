@@ -42,6 +42,14 @@ wzd_string_t * str_fromchar(const char *str);
 
 #define STR(x) str_fromchar((x))
 
+/** returns a pointer to a new string pointing to \a str
+ *
+ * \note \a str must not be freed, you must use str_deallocate() on the result
+ */
+wzd_string_t * str_fromchar_raw(char *str);
+
+#define STR_RAW(x) str_fromchar_raw((x))
+
 /** returns a pointer to the data contained in the string str.
  * These data must NOT be modified !
  */
