@@ -44,6 +44,8 @@
 #endif /* WZD_USE_PCH */
 
 
+static int _basic_check_ftp(const char * command);
+
 /** \brief Convert a 4-character string to an integer */
 #define STRTOINT(a,b,c,d) (((a)<<24) + ((b)<<16) + ((c)<<8) + (d))
 
@@ -167,11 +169,16 @@ struct ftp_command_t * parse_ftp_command(wzd_string_t * s)
   wzd_string_t * token;
   wzd_command_t * command;
 
-  /** \todo ensure that command is FTP-compliant */
 out_log(LEVEL_FLOOD,"DEBUG parse_ftp_command(\"%s\")\n",str_tochar(s));
+
+  if (_basic_check_ftp(str_tochar(s)) != 0) {
+    out_log(LEVEL_NORMAL,"FTP Error while decoding \"%s\"\n",str_tochar(s));
+    return NULL;
+  }
+
   token = str_tok(s," ");
   if (token == NULL) {
-    out_log(LEVEL_NORMAL,"FTP Protocol Error empty command received, ignoring\n");
+    out_log(LEVEL_NORMAL,"FTP Error empty command received, ignoring\n");
     return NULL;
   }
 
@@ -222,3 +229,32 @@ out_log(LEVEL_FLOOD,"DEBUG parse_ftp_command(\"%s\")\n",str_tochar(s));
   return ftp_command;
 }
 
+/** \brief Run basic tests on RFC compliance on input string
+ *
+ * \return 0 if ok
+ */
+static int _basic_check_ftp(const char * command)
+{
+  const char *p = command;
+
+  if (command == NULL) return -1;
+
+  /* find first space position */
+  while (*p && *p != ' ')
+    p++;
+
+  if ( (p - command) > 4 ) {
+    out_log(LEVEL_INFO,"FTP warning: first token is more than 4 characters\n");
+    return 1;
+  }
+
+  if (*p == '\0') /* only one token */
+    return 0;
+
+  if (*(p+1) == ' ') {
+    out_log(LEVEL_INFO,"FTP Warning: only one space allowed after first token\n");
+    return 1;
+  }
+
+  return 0;
+}

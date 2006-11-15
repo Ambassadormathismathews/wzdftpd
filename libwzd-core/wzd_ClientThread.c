@@ -4034,12 +4034,12 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
        */
       if (command->perms && commands_check_permission(command,context)) {
         ret = send_message_with_args(501,context,"Permission Denied");
-        str_deallocate(command_buffer);
+        free_ftp_command(ftp_command);
         continue;
       }
 
       if (command->command)
-        ret = (*(command->command))(ftp_command->command_name,command_buffer,context);
+        ret = (*(command->command))(ftp_command->command_name,ftp_command->args,context);
       else { /* external command */
         char buffer_command[4096];
         wzd_group_t * group = NULL;
