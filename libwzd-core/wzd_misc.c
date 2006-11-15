@@ -785,8 +785,7 @@ wzd_mutex_unlock(mutex);
 
 void limiter_free(wzd_bw_limiter *l)
 {
-  if (l)
-    free(l);
+  free(l);
 }
 
 /** \brief Read file, replace cookies and send it to client

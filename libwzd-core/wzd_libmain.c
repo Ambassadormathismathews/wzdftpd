@@ -310,6 +310,7 @@ void context_free(wzd_context_t * context)
   wzd_free(context->ssl); context->ssl = NULL;
   wzd_free(context->ident); context->ident = NULL;
   wzd_free(context->data_buffer); context->data_buffer = NULL;
+  wzd_free(context->control_buffer); context->control_buffer = NULL;
   reply_free(context->reply);
   str_deallocate(context->current_action.command);
   ip_free(context->peer_ip);

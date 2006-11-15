@@ -3898,7 +3898,7 @@ void * clientThreadProc(void *arg)
   /* update last login time */
   time(&user->last_login);
 
-  buffer = malloc(WZD_BUFFER_LEN);
+  context->control_buffer = buffer = malloc(WZD_BUFFER_LEN);
 
   /* get value for server tick */
   max_wait_time = config_get_integer(mainConfig->cfg_file, "GLOBAL", "client tick", &ret);
@@ -4067,9 +4067,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
 
   } /* while (!exitclient) */
 
-/*	Sleep(2000);*/
-
-  free(buffer);
 
 #ifdef WZD_MULTITHREAD
 #ifndef WIN32

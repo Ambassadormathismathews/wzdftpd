@@ -385,6 +385,7 @@ struct wzd_context_t {
   wzd_action_t	current_action;
   struct last_file_t	last_file;
   char          * data_buffer;
+  char          * control_buffer;
 /*  wzd_bw_limiter * current_limiter;*/
   wzd_bw_limiter current_ul_limiter;
   wzd_bw_limiter current_dl_limiter;
