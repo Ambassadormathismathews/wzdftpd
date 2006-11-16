@@ -211,8 +211,11 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 #endif
         ret = (context->write_fct)(context->datafd,context->data_buffer,(unsigned int)n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
+/*        out_log(LEVEL_INFO,"INFO error or timeout sending data\n");*/
         /* error/timeout sending data */
         data_end_transfer(0 /* is_upload */, 0 /* end_ok */, context);
+
+        ret = send_message(426,context);
 
         context->idle_time_start = time(NULL);
         return 1;

@@ -538,8 +538,9 @@ int waitaccept(wzd_context_t * context)
 
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
-      FD_UNREGISTER(sock,"Client PASV socket");
-      socket_close(sock);
+      FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+      socket_close(context->pasvsock);
+      context->pasvsock = -1;
       send_message_with_args(501,context,"PASV timeout");
       return -1;
     }
@@ -549,8 +550,9 @@ int waitaccept(wzd_context_t * context)
   if (sock == (fd_t)-1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
-    FD_UNREGISTER(sock,"Client PASV socket");
-    socket_close(sock);
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
     send_message_with_args(501,context,"PASV timeout");
     return -1;
   }
@@ -560,6 +562,7 @@ int waitaccept(wzd_context_t * context)
     int ret;
     ret = tls_init_datamode(sock, context);
     if (ret) {
+      out_err(LEVEL_INFO,"WARNING TLS data negotiation failed with client %s:%d.\n",__FILE__,__LINE__);
       FD_UNREGISTER(context->pasvsock,"Client PASV socket");
       socket_close(context->pasvsock);
       context->pasvsock = -1;

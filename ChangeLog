@@ -1,3 +1,7 @@
+2006-11-16  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: send reply 426 when data connection times out (Closes: #0062)
+
 2006-11-13  Pierre Chifflier  <pollux@cpe.fr>
 
 	* feature: kill clients instantly when exiting
