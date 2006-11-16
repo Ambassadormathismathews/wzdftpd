@@ -1679,7 +1679,7 @@ void serverMainThreadCleanup(int retcode)
   log_fini();
 
   /* free(mainConfig); */
-  unlink(mainConfig->pid_file);
+  if (mainConfig->pid_file) unlink(mainConfig->pid_file);
   cfg_free(mainConfig);
   mainConfig = NULL;
   server_mutex_set_fini();
