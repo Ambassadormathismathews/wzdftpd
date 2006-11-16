@@ -51,6 +51,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_configfile.h"
 #include "wzd_group.h"
 #include "wzd_ip.h"
 #include "wzd_log.h"
@@ -593,5 +594,36 @@ int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *l
   }
 #endif
   return -1;
+}
+
+/** \brief Test if remote peer is known as a BNC
+ *
+ * \return 1 if peer is a BNC
+ */
+int ip_is_bnc(const char * remote, wzd_config_t * config)
+{
+  wzd_string_t ** bnc_list;
+  wzd_string_t * bnc;
+  int errcode;
+  int i;
+
+  WZD_ASSERT(config != NULL);
+  WZD_ASSERT(remote != NULL);
+
+  if (!config || !remote) return 0;
+
+  bnc_list = config_get_string_list (config->cfg_file, "GLOBAL", "bnc_list", &errcode);
+  if (!bnc_list) return 0;
+
+  for (i=0; bnc_list[i] != NULL; i++) {
+    bnc = bnc_list[i];
+    if (ip_compare(remote,str_tochar(bnc)) == 1) { /* found */
+      str_deallocate_array(bnc_list);
+      return 1;
+    }
+  }
+
+  str_deallocate_array(bnc_list);
+  return 0;
 }
 

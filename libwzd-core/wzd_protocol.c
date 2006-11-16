@@ -127,6 +127,7 @@ int identify_token(const char *token)
       case STRTOINT('a','l','l','o'): return TOK_ALLO;
       case STRTOINT('r','n','f','r'): return TOK_RNFR;
       case STRTOINT('r','n','t','o'): return TOK_RNTO;
+      case STRTOINT('i','d','n','t'): return TOK_IDNT;
       /* IPv6 */
       case STRTOINT('e','p','s','v'): return TOK_EPSV;
       case STRTOINT('e','p','r','t'): return TOK_EPRT;

@@ -362,6 +362,7 @@ struct wzd_context_t {
   int           localport;
   wzd_ip_t      * peer_ip;
   char          * ident;
+  char          * idnt_address;
   connection_state_t state;
   unsigned char	exitclient;
   fd_t          controlfd;

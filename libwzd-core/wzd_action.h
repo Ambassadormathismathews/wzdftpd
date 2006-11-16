@@ -90,6 +90,8 @@ typedef enum {
 
   TOK_MODA,
 
+  TOK_IDNT,
+
   TOK_SITE_ADDIP=64,
   TOK_SITE_ADDUSER,
   TOK_SITE_BACKEND,

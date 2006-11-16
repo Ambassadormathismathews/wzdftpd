@@ -182,6 +182,7 @@ static void server_ip_free(void * p);
 static int check_ip_before_login(wzd_context_t * context);
 
 
+
 static wzd_context_t * context_find_free(List * context_list)
 {
   wzd_context_t * context=NULL;
@@ -554,6 +555,13 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   time (&context->login_time);
 
   memcpy(context->hostip,userip,sizeof(context->hostip));
+
+  /* check if peer ip is a BNC. If yes, skip ident check */
+  if (ip_is_bnc(inet_buf, mainConfig)==1) {
+    out_log(LEVEL_FLOOD,"DEBUG connection from BNC %s\n",inet_buf);
+    server_login_accept(context);
+    return 0;
+  }
 
   /* check if ident lookups are disabled */
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_IDENT)) {

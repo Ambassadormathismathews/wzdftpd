@@ -134,6 +134,7 @@ EXPORTS
 	ip_create
 	ip_free
 	ip_inlist
+	ip_is_bnc
 	ip_list_check
 	ip_list_check_ident
 	ip_list_free

@@ -90,4 +90,10 @@ int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *
  */
 int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *length);
 
+/** \brief Test if remote peer is known as a BNC
+ *
+ * \return 1 if peer is a BNC
+ */
+int ip_is_bnc(const char * remote, wzd_config_t * config);
+
 #endif /* __WZD_IP_H__ */

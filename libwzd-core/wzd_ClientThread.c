@@ -3745,6 +3745,54 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         str_deallocate(s2);
       }
       break;
+    case TOK_IDNT:
+      {
+        char * ident, * address;
+        char ip[INET6_ADDRSTRLEN];
+
+        if (context->idnt_address != NULL) {
+          out_log(LEVEL_INFO,"WARNING mutiple IDNT commands\n");
+          ret = send_message_with_args(530,context,"Multiple IDNT commands");
+          return 1;
+        }
+
+#if defined(IPV6_SUPPORT)
+        if (context->family == WZD_INET6) {
+          inet_ntop(AF_INET6,context->hostip,ip,INET6_ADDRSTRLEN);
+        } else
+#endif
+        {
+          inet_ntop(AF_INET,context->hostip,ip,INET_ADDRSTRLEN);
+        }
+
+        if (ip_is_bnc(ip, mainConfig)!=1) {
+          out_log(LEVEL_INFO,"WARNING IDNT command received from a non-BNC (%s)\n",ip);
+          ret = send_message_with_args(530,context,"Permission denied");
+          return 1;
+        }
+
+        ident = strtok_r(NULL,"@",&ptr);
+        address = strtok_r(NULL,":",&ptr);
+
+        if (!ident || !address || (ptr && strlen(ptr)==0) ) {
+          ret = send_message_with_args(501,context,"Syntax error");
+          return 1;
+        }
+
+        /* XXX optional: check if hostname is valid */
+        ret = iptohostname(address,WZD_INET_NONE,NULL,NULL);
+        if (ret != 0) {
+          out_log(LEVEL_NORMAL,"WARNING Invalid hostname passed to IDNT (received %s)\n",address);
+          ret = send_message_with_args(501,context,"IDNT FAILED");
+          return 1;
+        }
+
+        context->ident = strdup(ident);
+        context->idnt_address = strdup(address);
+
+        /* bnc doesn't expect any reply */
+      }
+      break;
     default:
       out_log(LEVEL_INFO,"Invalid login sequence: '%s'\n",buffer);
       ret = send_message_with_args(530,context,"Invalid login sequence");

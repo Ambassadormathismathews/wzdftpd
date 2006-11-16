@@ -1,6 +1,8 @@
 2006-11-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: send reply 426 when data connection times out (Closes: #0062)
+	* feature: add support for IDNT command, and bnc_list configuration
+	command (used by bnc)
 
 2006-11-13  Pierre Chifflier  <pollux@cpe.fr>
 
