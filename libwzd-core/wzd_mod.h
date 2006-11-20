@@ -35,10 +35,23 @@ typedef enum {
 /* free hook list */
 void hook_free(wzd_hook_t **hook_list);
 
-/* register a new hook */
-int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook);
-int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command);
-int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const char *command);
+/** \brief register a new hook
+ * \deprecated use \ref event_connect_function
+ */
+int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook)
+#ifdef __GNUC__
+  __attribute__ ((deprecated))
+#endif
+;
+
+/** \brief register a new hook to an external command
+ * \deprecated use \ref event_connect_external
+ */
+int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command)
+#ifdef __GNUC__
+  __attribute__ ((deprecated))
+#endif
+;
 
 
 typedef struct protocol_handler_t protocol_handler_t;
@@ -64,7 +77,12 @@ protocol_handler_t * hook_check_protocol(const char *str);
 /** remove hook from list */
 int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook);
 
-int hook_call_external(wzd_hook_t *hook, unsigned int code);
+/** \deprecated Use \ref event_exec */
+int hook_call_external(wzd_hook_t *hook, unsigned int code)
+#ifdef __GNUC__
+  __attribute__ ((deprecated))
+#endif
+;
 
 unsigned int hook_get_current_reply_code(void);
 

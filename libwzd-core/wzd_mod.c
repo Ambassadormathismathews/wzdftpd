@@ -239,36 +239,6 @@ int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *c
   return 0;
 }
 
-int hook_add_custom_command(wzd_hook_t ** hook_list, const char *name, const char *command)
-{
-  wzd_hook_t * current_hook, * new_hook;
-
-  new_hook = malloc(sizeof(wzd_hook_t));
-  if (!new_hook) return 1;
-
-  new_hook->mask = EVENT_SITE;
-  new_hook->hook = NULL;
-  new_hook->opt = strdup(name);
-  new_hook->external_command = strdup(command);
-  new_hook->next_hook = NULL;
-
-  current_hook = *hook_list;
-
-  if (!current_hook) {
-    *hook_list = new_hook;
-    return 0;
-  }
-
-  while (current_hook->next_hook) {
-    current_hook = current_hook->next_hook;
-  }
-
-  current_hook->next_hook = new_hook;
-
-  return 0;
-
-}
-
 /** remove hook from list */
 int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook)
 {
