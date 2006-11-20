@@ -56,8 +56,8 @@ struct wzd_popen_t {
   int fdr;
 };
 
-wzd_popen_t * my_popen(const char * command);
-event_reply_t my_pclose(wzd_popen_t * p);
+wzd_popen_t * wzd_popen(const char * command);
+event_reply_t wzd_pclose(wzd_popen_t * p);
 
 #endif /* WIN32 */
 

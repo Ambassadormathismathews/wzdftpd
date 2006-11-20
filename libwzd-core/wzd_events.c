@@ -349,7 +349,7 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
   char buffer[1024];
   int ret;
 
-  p = my_popen(commandline);
+  p = wzd_popen(commandline);
   if (!p) {
 /*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
     out_log(LEVEL_INFO,"Failed command: '%s'\n",commandline);
@@ -361,7 +361,7 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
     send_message_raw(buffer,context);
   }
   fclose(file);
-  ret = my_pclose(p);
+  ret = wzd_pclose(p);
 
   return ret;
 }
@@ -420,7 +420,7 @@ void _cleanup_shell_command(char * buffer, size_t length)
 
 #ifndef WIN32
 
-wzd_popen_t * my_popen(const char * command)
+wzd_popen_t * wzd_popen(const char * command)
 {
   int p[2]; /* pipe contains: read,write */
   int child_pid;
@@ -466,7 +466,7 @@ wzd_popen_t * my_popen(const char * command)
   return ret;
 }
 
-event_reply_t my_pclose(wzd_popen_t * p)
+event_reply_t wzd_pclose(wzd_popen_t * p)
 {
   int pid;
   int status;
