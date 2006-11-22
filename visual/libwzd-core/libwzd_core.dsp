@@ -223,6 +223,10 @@ SOURCE="..\..\libwzd-core\wzd_log.c"
 # End Source File
 # Begin Source File
 
+SOURCE="..\..\libwzd-core\wzd_login.c"
+# End Source File
+# Begin Source File
+
 SOURCE="..\..\libwzd-core\wzd_messages.c"
 # End Source File
 # Begin Source File
@@ -400,6 +404,10 @@ SOURCE="..\..\libwzd-core\wzd_libmain.h"
 # Begin Source File
 
 SOURCE="..\..\libwzd-core\wzd_log.h"
+# End Source File
+# Begin Source File
+
+SOURCE="..\..\libwzd-core\wzd_login.h"
 # End Source File
 # Begin Source File
 

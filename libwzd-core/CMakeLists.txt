@@ -52,6 +52,7 @@ SET(libwzd_core_pub_HEADERS
 	wzd_ip.h
 	wzd_libmain.h
 	wzd_log.h
+	wzd_login.h
 	wzd_messages.h
 	wzd_misc.h
 	wzd_mod.h
@@ -104,6 +105,7 @@ add_library (libwzd_core SHARED
 	wzd_ip.c
 	wzd_libmain.c
 	wzd_log.c
+	wzd_login.c
 	wzd_messages.c
 	wzd_misc.c
 	wzd_mod.c

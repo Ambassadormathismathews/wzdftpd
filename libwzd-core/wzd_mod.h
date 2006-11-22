@@ -66,12 +66,17 @@ struct protocol_handler_t {
 };
 
 
-/** registers a new protocol-like handler for hooks.
+/** \brief registers a new protocol-like handler for hooks.
  * ex: tcl:/path/to/file
  */
 int hook_add_protocol(const char *signature, unsigned int sig_len, fcn_handler handler);
+
+/** \brief Free memory used by registered protocols */
 void hook_free_protocols(void);
 
+/** \brief Check if string starts with a known protocol
+ * \return The protocol handler if ok
+ */
 protocol_handler_t * hook_check_protocol(const char *str);
 
 /** remove hook from list */

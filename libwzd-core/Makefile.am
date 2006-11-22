@@ -27,6 +27,7 @@ libwzd_core_la_HEADERS = \
 	wzd_ip.h         \
 	wzd_libmain.h    \
 	wzd_log.h        \
+	wzd_login.h      \
 	wzd_messages.h   \
 	wzd_misc.h       \
 	wzd_mod.h        \
@@ -76,6 +77,7 @@ libwzd_core_la_SOURCES = \
 	wzd_ip.c         \
 	wzd_libmain.c    \
 	wzd_log.c        \
+	wzd_login.c      \
 	wzd_messages.c   \
 	wzd_misc.c       \
 	wzd_mod.c        \

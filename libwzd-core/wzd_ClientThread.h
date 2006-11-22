@@ -62,6 +62,8 @@ void client_die(wzd_context_t * context);
 
 
 
+int do_chdir(const char * wanted_path, wzd_context_t *context);
+
 int do_type(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_port(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_pasv(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);

@@ -3,7 +3,13 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- cleanup code:
+    - remove hook_call_custom() and related functions (wzd_mod.c) / OK
+    - hook_call_external() is used only in crontab ?!
+    - replace hook_add with event_connect in modules Perl and TCL
+'********'
 - support ipv6 addresses enclosed in [] (RFC2732)
+- support CIDR notations
 '********'
 - convert dir_open and others to process one file at a time (to reduce memory usage
   and allow stream processing in do_mlsd)
@@ -12,10 +18,6 @@
 '********'
 - add the sockaddr* structs for local and remote part to the context
 - use this structs to guess the data port (and ip ?)
-'********'
-- cleanup code:
-    - remove hook_call_custom() and related functions (wzd_mod.c) / OK
-    - hook_call_external() is used only in crontab ?!
 '********'
 - write unit tests for dirs/files access
 - add function to recurse directories / vfs / ... and apply function, like
