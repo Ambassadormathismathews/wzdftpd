@@ -1147,7 +1147,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           bytes_to_unit(&val,&c);
           snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
         } else
-          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,total);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"grouptotal_dl");
@@ -1189,7 +1189,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           bytes_to_unit(&val,&c);
           snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
         } else
-          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,total);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"grouptotal_ul");
@@ -1402,7 +1402,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
             bytes_to_unit(&val,&c);
             snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
           } else
-            snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+            snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,total);
         } else
           snprintf(internalbuffer,IBUFSIZE,"unlimited");
       }
@@ -1813,7 +1813,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           bytes_to_unit(&val,&c);
           snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
         } else
-          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,total);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usertotal_dl");
@@ -1837,7 +1837,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
           bytes_to_unit(&val,&c);
           snprintf(internalbuffer,IBUFSIZE,"%.2f %c",val,c);
         } else
-          snprintf(internalbuffer,IBUFSIZE,"%lld",total);
+          snprintf(internalbuffer,IBUFSIZE,"%" PRIu64,total);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usertotal_ul");
