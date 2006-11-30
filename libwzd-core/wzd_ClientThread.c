@@ -2114,6 +2114,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   const char *param;
+  unsigned long open_flags;
 
   param = str_tochar(arg);
 
@@ -2215,7 +2216,14 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   if (strcasecmp(str_tochar(name),"appe")==0)
     context->resume = (unsigned long)-1;
 
-  if ((fd=file_open(path,O_WRONLY|O_CREAT,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
+  open_flags = O_WRONLY|O_CREAT;
+  /** If we don't resume a previous upload, we have to truncate the current file
+   * or we won't be able to overwrite a file by a smaller one
+   */
+  if (context->resume == 0)
+    open_flags |= O_TRUNC;
+
+  if ((fd=file_open(path,open_flags,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
 /*    socket_close(sock);*/
     return E_FILE_NOEXIST;

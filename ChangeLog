@@ -1,3 +1,7 @@
+2006-11-30  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: truncate file when overwriting (Closes: #0065)
+
 2006-11-16  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: send reply 426 when data connection times out (Closes: #0062)
