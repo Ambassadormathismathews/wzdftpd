@@ -108,6 +108,7 @@ out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context-
  */
 void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
 {
+  file_unlock(context->current_action.current_file);
   file_close(context->current_action.current_file, context);
   FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
 
@@ -119,8 +120,7 @@ void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
   context->state = STATE_COMMAND;
   data_close(context);
 
-/*      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;*/
+  context->current_action.token = TOK_UNKNOWN;
 
   {
     u32_t event_id = (is_upload) ? EVENT_POSTUPLOAD : EVENT_POSTDOWNLOAD;
@@ -145,6 +145,10 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
 
   switch (action) {
   case TOK_RETR:
+    if (context->state != STATE_XFER) {
+      out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is RETR. Please report me to authors\n");
+      return -1;
+    }
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
@@ -154,6 +158,10 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
     return context->datafd;
     break;
   case TOK_STOR:
+    if (context->state != STATE_XFER) {
+      out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is STOR. Please report me to authors\n");
+      return -1;
+    }
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);

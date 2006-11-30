@@ -2105,6 +2105,14 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_stor *****************************/
+/** \brief Store file on the FTP server
+ *
+ * Check permissions, open a data connection and stores data
+ * in a file on the server. If the file does not exist, it is created,
+ * otherwise it depends if a resume marker was received (see REST).
+ *
+ * The corresponding FTP commands are STOR (RFC959 p29) and APPE (RFC959 p29)
+ */
 int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
@@ -2126,7 +2134,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
 
 /* TODO FIXME send all error or any in this function ! */
-  /* we must have a data connetion */
+  /* we must have a data connection */
   if ((context->pasvsock == (fd_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return E_NO_DATA_CTX;
@@ -2163,26 +2171,6 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   strlcat(path,param,WZD_MAX_PATH);
 
   /* TODO call checkpath again ? see do_mkdir */
-
-#if 0
-  /* TODO understand !!! */
-  /* BUGFIX */
-  if ((ret=readlink(path,path2,sizeof(path2)-1)) >= 0) {
-    path2[ret] = '\0';
-    out_err(LEVEL_FLOOD,"Link is:  %s %d ... checking\n",path2,ret);
-    strcpy(path,path2);
-    if (strrchr(path2,'/')) {
-      *(param=strrchr(path2,'/'))='\0';
-      param++;
-
-      if (checkpath_new(path2,path,context)) return 1;
-      if (path[strlen(path)-1] != '/') strcat(path,"/");
-      strlcat(path,param,WZD_MAX_PATH);
-      out_err(LEVEL_FLOOD,"Resolved: %s\n",path);
-    }
-  }
-  /* END OF BUGFIX */
-#endif /* 0 */
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
@@ -2225,7 +2213,6 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if ((fd=file_open(path,open_flags,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
-/*    socket_close(sock);*/
     return E_FILE_NOEXIST;
   }
   FD_REGISTER(fd,"Client file (STOR)");
@@ -2257,7 +2244,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   context->datafd = sock;
 
-  /* sets owner */
+  /* set owner */
   {
     const char *groupname=NULL;
     if (user->group_num > 0) {
@@ -2283,23 +2270,13 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   context->idle_time_data_start = context->current_action.tm_start = time(NULL);
   gettimeofday(&context->current_action.tv_start,NULL);
 
-/*  if (user->max_ul_speed)
-    context->current_limiter = limiter_new(user->max_ul_speed);
-  else
-    context->current_limiter = NULL;*/
-
-/*  if (user->max_ul_speed)
-  {*/
-    context->current_ul_limiter.maxspeed = user->max_ul_speed;
-    context->current_ul_limiter.bytes_transfered = 0;
+  context->current_ul_limiter.maxspeed = user->max_ul_speed;
+  context->current_ul_limiter.bytes_transfered = 0;
 #ifndef WIN32 /* FIXME VISUAL */
-    gettimeofday(&context->current_ul_limiter.current_time,NULL);
+  gettimeofday(&context->current_ul_limiter.current_time,NULL);
 #else
-    _ftime(&context->current_ul_limiter.current_time);
+  _ftime(&context->current_ul_limiter.current_time);
 #endif
-/*  }
-  else
-    context->current_ul_limiter.maxspeed = 0;*/
 
   context->resume=0;
   context->idle_time_start = time(NULL);
@@ -2496,6 +2473,13 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_abor *****************************/
+/** \brief Abort current transfer
+ *
+ * Abort current service command and any associated transfer of data.
+ * The command connection is not closed, but the data connection is closed.
+ *
+ * The corresponding FTP command is ABOR (RFC959 p30)
+ */
 int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
@@ -2503,8 +2487,6 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-/*      if (context->pid_child) kill(context->pid_child,SIGTERM);
-      context->pid_child = 0;*/
   if (context->pasvsock != (fd_t)-1 && context->datafd != context->pasvsock) {
     socket_close(context->pasvsock);
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
@@ -2514,49 +2496,11 @@ int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     /* transfer aborted, we should send a 426 */
     ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
-#if 0
-    /** \bug FIXME XXX TODO
-     * the two following sleep(5) are MANDATORY
-     * the reason is unknown, but seems to be link to network
-     * (not lock)
-     * Perhaps it was due to the missing 426 reply ?
-     */
-#ifndef _MSC_VER
-    sleep(1);
-#else
-    Sleep(1000);
-#endif
-#endif /* 0 */
+
     if (context->current_action.token == TOK_STOR || context->current_action.token == TOK_RETR) {
-      file_unlock(context->current_action.current_file);
-      file_close(context->current_action.current_file,context);
-      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
-      if (context->current_action.token == TOK_STOR) {
-        /* send events here allow sfv checker to mark file as bad if
-         * partially uploaded
-         */
-        {
-          wzd_string_t * event_args = str_allocate();
-          str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
-          ret = event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context);
-          str_deallocate(event_args);
-        }
-      }
+      data_end_transfer((context->current_action.token == TOK_STOR) ? 1:0 /* is_upload */, 0 /* end_ok */, context);
     }
-    context->current_action.current_file = -1;
-    context->current_action.bytesnow = 0;
-    context->current_action.token = TOK_UNKNOWN;
-    context->state = STATE_COMMAND;
-    data_close(context);
-    if (context->pasvsock != (fd_t)-1)
-      context->pasvsock = -1;
-#if 0
-#ifndef _MSC_VER
-    sleep(1);
-#else
-    Sleep(1000);
-#endif
-#endif /* 0 */
+
   }
   ret = send_message(226,context);
   return E_OK;
@@ -2618,7 +2562,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   u64_t file_size;
   wzd_user_t * user, * owner;
 
-  if (!str_checklength(param,1,WZD_MAX_PATH-1) || checkpath_new(str_tochar(param),path,context)) {
+  if (!str_checklength(param,1,WZD_MAX_PATH-1)) {
     ret = send_message_with_args(501,context,"Syntax error");
     return E_PARAM_INVALID;
   }
@@ -2632,6 +2576,11 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   if ( !(user->userperms & RIGHT_DELE) ) {
     ret = send_message_with_args(501,context,"Permission denied");
     return E_NOPERM;
+  }
+
+  if (checkpath_new(str_tochar(param),path,context)) {
+    ret = send_message_with_args(501,context,"Permission denied or inexistant file");
+    return E_FILE_NOEXIST;
   }
 
   if (path[strlen(path)-1]=='/') path[strlen(path)-1]='\0';
