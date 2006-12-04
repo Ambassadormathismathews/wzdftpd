@@ -96,4 +96,10 @@ int iptohostname(const char *ip, net_family_t family, char **hostname, size_t *l
  */
 int ip_is_bnc(const char * remote, wzd_config_t * config);
 
+/** \brief Return our own ip
+ *
+ * \a buffer must be at least 16 bytes long
+ */
+unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer);
+
 #endif /* __WZD_IP_H__ */

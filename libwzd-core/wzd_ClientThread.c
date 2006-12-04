@@ -225,47 +225,6 @@ int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned i
   return done;
 }
 
-/*************** getmyip *****************************/
-
-/** \brief Return our own ip
- *
- * \a buffer must be at least 16 bytes long
- */
-unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
-{
-  struct sockaddr_in sa;
-  unsigned int size;
-
-#if defined(IPV6_SUPPORT)
-  if (family == WZD_INET6) {
-    struct sockaddr_in6 sa6;
-
-    size = sizeof(struct sockaddr_in6);
-    memset(buffer,0,16);
-    if (getsockname(sock,(struct sockaddr *)&sa6,&size)!=-1)
-    {
-      memcpy(buffer,&sa6.sin6_addr,16);
-    } else { /* failed, using localhost */
-      out_log(LEVEL_CRITICAL,"getmyip: could not get my own ip !\n");
-      return NULL;
-    }
-
-    return buffer;
-  }
-#endif /* IPV6_SUPPORT */
-  size = sizeof(struct sockaddr_in);
-  memset(buffer,0,16);
-  if (getsockname(sock,(struct sockaddr *)&sa,&size)!=-1)
-  {
-    memcpy(buffer,&sa.sin_addr,4);
-  } else { /* failed, using localhost */
-    out_log(LEVEL_CRITICAL,"getmyip: could not get my own ip !\n");
-    return NULL;
-  }
-
-  return buffer;
-}
-
 /***************** client_die ************************/
 /** \brief Cleanup code
  *
