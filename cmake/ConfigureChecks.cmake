@@ -3,6 +3,7 @@
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckLibraryExists)
+INCLUDE(CheckTypeSize)
 
 CHECK_INCLUDE_FILES ("execinfo.h" HAVE_EXECINFO_H)
 CHECK_INCLUDE_FILES ("stdint.h" HAVE_STDINT_H)
@@ -19,6 +20,15 @@ CHECK_INCLUDE_FILES ("sys/param.h;sys/mount.h" HAVE_SYS_MOUNT_H)
 CHECK_INCLUDE_FILES ("sys/statvfs.h" HAVE_SYS_STATVFS_H)
 
 CHECK_INCLUDE_FILES ("pthread.h" HAVE_PTHREAD)
+
+CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
+if (NOT HAVE_SIZEOF_SIZE_T)
+  MESSAGE(FATAL_ERROR "size_t is not present on this architecture - aborting")
+endif (NOT HAVE_SIZEOF_SIZE_T)
+MESSAGE(STATUS "DEBUG size_t is ${SIZEOF_SIZE_T}")
+
+CHECK_TYPE_SIZE("off_t" SIZEOF_OFF_T)
+MESSAGE(STATUS "DEBUG off_t is ${SIZEOF_OFF_T}")
 
 CHECK_FUNCTION_EXISTS("backtrace" HAVE_BACKTRACE)
 CHECK_FUNCTION_EXISTS("inet_ntoa" HAVE_INET_NTOA)

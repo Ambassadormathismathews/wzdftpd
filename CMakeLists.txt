@@ -68,10 +68,11 @@ macro_ensure_out_of_source_build("wzdftpd requires an out of source build. Pleas
 
 # Add definitions before running Configure checks, or stat64()
 # will not be detected
-SET(FLAGS_64 "-D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64")
+SET(FLAGS_64 "-D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64 -D_FILE_OFFSET_BITS=64")
 CHECK_C_COMPILER_FLAG(${FLAGS_64} HAVE_FLAGS_64)
 if (HAVE_FLAGS_64)
-  ADD_DEFINITIONS(-D_LARGEFILE64_SOURCE -D__USE_FILE_OFFSET64)
+  ADD_DEFINITIONS(${FLAGS_64})
+  SET(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${FLAGS_64}")
 endif (HAVE_FLAGS_64)
 
 # create config.h
