@@ -23,9 +23,10 @@ my $debug = 0;
 
 
 
-my $latest_version = "0.8.0";
+my $latest_version = "0.8.1";
 my %transition_state = (
-        "0.8.0" => [\&up_to_date, $latest_version],
+        "0.8.1" => [\&up_to_date, $latest_version],
+        "0.8.0" => [\&update_nothing, "0.8.1"],
         "0.7.1" => [\&update_071, "0.8.0"],
         "0.7.0" => [\&update_nothing,"0.7.1"],
         undef => [\&update_impossible,undef]

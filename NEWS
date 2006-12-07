@@ -1,5 +1,13 @@
    NEWS file for wzdftpd
 
+0.8.1: December 7 2006
+
+The most important change is the migration to cmake (although it is NOT
+mandatory, autoconf is still supported). Some bugs were fixed to avoid
+problems with data connection on timeout, or when a file is overwritten by
+a smaller one.
+Added support for BNC (using IDNT), and events WIPE and PREWIPE.
+
 0.8.0: September 7 2006
 
 New events have been added (WIPE, PREMKDIR), and the scripts are now able to
