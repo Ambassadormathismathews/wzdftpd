@@ -274,7 +274,7 @@ AM_CONDITIONAL([USE_BONJOUR], [test "$enable_bonjour" = "yes"])
 AM_CONDITIONAL([USE_AVAHI], [test "$enable_avahi" = "yes"])
 AM_CONDITIONAL([USE_HOWL], [test "$enable_howl" = "yes"])
 
-WZD_BUILD_NUM="`date +\"%Y%m%d\"`"
+WZD_BUILD_NUM="`date +%Y%m%d`"
 AC_DEFINE_UNQUOTED(WZD_BUILD_NUM,"$WZD_BUILD_NUM")
 AH_TEMPLATE([WZD_BUILD_NUM],
             [Build number.])

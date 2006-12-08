@@ -74,6 +74,9 @@
 
 static int check_tls_forced(wzd_context_t * context);
 
+#if defined (HAVE_KRB5)
+static int do_login_gssapi(wzd_context_t * context);
+#endif
 
 /*************** do_user *****************************/
 /** \brief Check username
