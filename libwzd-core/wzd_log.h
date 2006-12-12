@@ -148,6 +148,17 @@ void log_message(const char *event, const char *fmt, ...)
 #endif
 ;
 
+struct memory_log_t {
+  int size; /**< number of messages kept */
+  char ** data;
+};
+
+/** \brief Return a pointer to the log buffer (last log messages, stored in memory)
+ *
+ * The structure must not be changed or freed
+ */
+struct memory_log_t * get_log_buffer(void);
+
 /** \brief Convert a string containing the log level name ("lowest", "flood", etc.)
  * into the corresponding constant (LEVEL_LOWEST)
  * \return The constant, or -1 on error

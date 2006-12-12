@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <time.h>
 
@@ -64,6 +65,10 @@
 
 #endif /* WZD_USE_PCH */
 
+static struct memory_log_t _static_log;
+
+static void _buffer_push(const char *);
+
 struct wzd_log_entry_t {
   int fd;
   int syslog;
@@ -79,6 +84,10 @@ int log_init(void)
     _log_channels[i].fd = -1;
     _log_channels[i].syslog = 0;
   }
+
+  _static_log.size = 100; /* last 100 messages */
+  _static_log.data = malloc(_static_log.size * sizeof(char*));
+  memset(_static_log.data,0,_static_log.size * sizeof(char*));
 
   return 0;
 }
@@ -120,6 +129,12 @@ void log_fini(void)
       FD_UNREGISTER(fd,"Log");
       close(fd);
     }
+
+  for (i=0; i<_static_log.size; i++) {
+    free(_static_log.data[i]);
+  }
+  free(_static_log.data);
+  _static_log.size = 0;
 }
 
 /* NOTE we are forced to open log in lib, because of win32
@@ -215,6 +230,8 @@ void out_log(int level,const char *fmt,...)
       write(_log_channels[level].fd, datestr, strlen(datestr));
       write(_log_channels[level].fd, buffer, strlen(buffer));
     }
+
+    _buffer_push(buffer);
 
 #ifndef _WIN32
     if (_log_channels[level].syslog)
@@ -463,5 +480,33 @@ const char * loglevel2str(int l)
   case LEVEL_CRITICAL: return "critical";
   }
   return "";
+}
+
+static void _buffer_push(const char *str)
+{
+  int i;
+  char * old;
+
+  for (i=0; i<_static_log.size; i++) {
+    if (_static_log.data[i] == NULL) {
+      _static_log.data[i] = strdup(str);
+      return;
+    }
+  }
+
+  /* circular buffer is full. Clear last entry and rotate buffer */
+  old = _static_log.data[0];
+  memmove(_static_log.data, _static_log.data + 1, (_static_log.size-1)*sizeof(char*));
+  _static_log.data[_static_log.size - 1] = strdup(str);
+  free(old);
+}
+
+/** \brief Return a pointer to the log buffer (last log messages, stored in memory)
+ *
+ * The structure must not be changed or freed
+ */
+struct memory_log_t * get_log_buffer(void)
+{
+  return (&_static_log);
 }
 

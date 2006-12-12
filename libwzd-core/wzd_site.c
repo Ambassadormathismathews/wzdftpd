@@ -1506,6 +1506,56 @@ int do_site_sections(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
   return 0;
 }
 
+/** \brief Show last log messages (10 by default)
+ */
+int do_site_showlog(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+{
+  int i;
+  struct memory_log_t * log = get_log_buffer();
+  wzd_string_t * buffer = str_allocate();
+  int lines_to_show = 10;
+  int offset = 0;
+  char *ptr;
+  unsigned long ul;
+
+  /* check if we have an argument (the number of lines to display) */
+  if (str_length(command_line) > 0) {
+    ul = strtoul(str_tochar(command_line),&ptr,10);
+    if (ptr != NULL && *ptr == '\0' && ul < (long)log->size) {
+      lines_to_show = (int)ul;
+
+      /* change offset to match the last line to display */
+      for (i=log->size-1; i>=0; i--) {
+        if (log->data[i] != NULL) {
+          offset = i;
+          break;
+        }
+      }
+      /* then go back to print the correct number of lines */
+      offset -= lines_to_show;
+      if (offset < 0) offset = 0;
+
+    } else {
+      lines_to_show = log->size;
+    }
+  }
+
+  /* send header */
+  send_message_raw("200-\r\n",context);
+
+  for (i=offset; i<offset+lines_to_show; i++) {
+    if (log->data[i] != NULL) {
+      str_sprintf(buffer, " %s", log->data[i]);
+      send_message_raw(str_tochar(buffer),context);
+    }
+  }
+
+  send_message_raw("200 \r\n",context);
+  str_deallocate(buffer);
+
+  return 0;
+}
+
 /********************* do_site_unlock **********************/
 /** unlock: file1 [file2 ...]
  */

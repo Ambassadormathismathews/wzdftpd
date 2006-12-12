@@ -152,6 +152,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
+      return -1;
     }
     FD_SET(context->datafd,fdw);
     FD_SET(context->datafd,fde);
@@ -165,6 +166,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
     if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
+      return -1;
     }
     FD_SET(context->datafd,fdr);
     FD_SET(context->datafd,fde);

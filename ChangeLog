@@ -1,3 +1,7 @@
+2006-12-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new command SITE SHOWLOG, to display the most recent log messages
+
 2006-12-07  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* --- svn commit TAG: rel-0-8-1

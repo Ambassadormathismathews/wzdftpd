@@ -47,6 +47,11 @@ int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
 int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context);
 int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_sections(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+
+/** \brief Show last log messages (10 by default)
+ */
+int do_site_showlog(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
+
 int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * context);
 int do_site_unlock(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);

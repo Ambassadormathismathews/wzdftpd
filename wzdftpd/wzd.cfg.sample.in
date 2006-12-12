@@ -202,6 +202,7 @@ site_rules = *
 site_rusage = +O
 site_savecfg = +O
 site_sections = +O
+site_showlog = +O
 site_shutdown = +O
 site_su = +O
 site_swho = +O
