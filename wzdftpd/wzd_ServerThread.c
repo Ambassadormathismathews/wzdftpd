@@ -1309,7 +1309,6 @@ int server_switch_to_config(wzd_config_t *config)
       snprintf(buf,64,"%ld\n",(unsigned long)getpid());
       if (fd==-1) {
         out_log(LEVEL_CRITICAL,"Unable to open pid file %s: %s\n",config->pid_file,strerror(errno));
-        cfg_free(config);
         return -1;
       }
       ret = write(fd,buf,strlen(buf));
