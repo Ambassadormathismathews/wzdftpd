@@ -4,6 +4,7 @@ usr/sbin
 etc
 usr/share/man/man1
 var/log/wzdftpd
+var/run/wzdftpd
 usr/lib/wzdftpd/backends
 usr/lib/wzdftpd/modules
 usr/share/lintian/overrides

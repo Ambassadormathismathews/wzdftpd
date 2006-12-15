@@ -71,10 +71,12 @@ fi
 # 	if [ ! -d $PID_DIR ]; then
 # 	  mkdir $PID_DIR
 # 	fi
-# 	if (id ftp >/dev/null 2>/dev/null) ; then
-# 	  chown ftp $PID_DIR
-# 	fi
-#
+	if [ -d $PID_DIR ]; then
+ 	  if (id ftp >/dev/null 2>/dev/null) ; then
+ 	    chown ftp $PID_DIR
+	  fi
+ 	fi
+
 
 case "$1" in
     configure)

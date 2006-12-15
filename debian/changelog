@@ -1,6 +1,9 @@
-wzdftpd (0.8.1-1) unstable; urgency=low
+wzdftpd (0.8.1-1) unstable; urgency=high
 
   * New upstream release
+  * Fix double free on exit if pid_file does not exist (Closes: #403080)
+  * urgency=high because of the above bug
+  * Create directory /var/run/wzdftpd to store pid file
 
  -- Pierre Chifflier <chifflier@cpe.fr>  Thu,  7 Dec 2006 10:31:28 +0100
 
