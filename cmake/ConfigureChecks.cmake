@@ -22,9 +22,9 @@ CHECK_INCLUDE_FILES ("sys/statvfs.h" HAVE_SYS_STATVFS_H)
 CHECK_INCLUDE_FILES ("pthread.h" HAVE_PTHREAD)
 
 CHECK_TYPE_SIZE("size_t" SIZEOF_SIZE_T)
-if (NOT HAVE_SIZEOF_SIZE_T)
-  MESSAGE(FATAL_ERROR "size_t is not present on this architecture - aborting")
-endif (NOT HAVE_SIZEOF_SIZE_T)
+#if (NOT HAVE_SIZEOF_SIZE_T)
+#  MESSAGE(FATAL_ERROR "size_t is not present on this architecture - aborting")
+#endif (NOT HAVE_SIZEOF_SIZE_T)
 MESSAGE(STATUS "DEBUG size_t is ${SIZEOF_SIZE_T}")
 
 CHECK_TYPE_SIZE("off_t" SIZEOF_OFF_T)
