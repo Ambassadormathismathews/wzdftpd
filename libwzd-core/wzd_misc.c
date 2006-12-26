@@ -339,6 +339,7 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
     if (f_free) *f_free = df.avail_clusters * df.sectors_per_cluster;
     if (f_bsize) *f_bsize = df.bytes_per_sector;
     if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
+    return 0;
   }
 #endif
 
