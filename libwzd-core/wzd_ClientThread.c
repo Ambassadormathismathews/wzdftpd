@@ -117,6 +117,12 @@
 
 #define BUFFER_LEN	4096
 
+
+static int test_fxp(const char * remote_ip, net_family_t family, wzd_context_t * context);
+
+static int fxp_is_denied(wzd_user_t * user);
+
+
 /*************** clear_read **************************/
 
 /** \brief Non-blocking read function
@@ -477,10 +483,11 @@ int waitaccept(wzd_context_t * context)
   fd_t sock;
   unsigned char remote_host[16];
   unsigned int remote_port;
+  wzd_user_t * user;
+
+  user = GetUserByID(context->userid);
 
   {
-    wzd_user_t * user;
-    user = GetUserByID(context->userid);
     if (user && strchr(user->flags,FLAG_TLS_DATA) && context->tls_data_mode != TLS_PRIV) {
       send_message_with_args(501,context,"Your class must use encrypted data connections");
       return -1;
@@ -513,6 +520,20 @@ int waitaccept(wzd_context_t * context)
     send_message_with_args(501,context,"PASV timeout");
     return -1;
   }
+
+  if (fxp_is_denied(user) && test_fxp((const char*)remote_host,context->datafamily,context) != 0) {
+    memset(context->dataip,0,16);
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+    socket_close(sock);
+    sock = -1;
+    send_message_with_args(501,context,"FXP not allowed");
+    return -1;
+  }
+
+  /** \todo check destination port for security: >= 1024 */
+
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->tls_data_mode == TLS_PRIV) {
@@ -1458,6 +1479,7 @@ int do_port(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   int a0,a1,a2,a3;
   unsigned int p1, p2;
   int ret;
+  wzd_user_t * user;
 
   if (context->pasvsock != (fd_t)-1) {
     socket_close(context->pasvsock);
@@ -1478,6 +1500,16 @@ int do_port(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
   context->dataip[1] = (unsigned char)a1;
   context->dataip[2] = (unsigned char)a2;
   context->dataip[3] = (unsigned char)a3;
+
+  user = GetUserByID(context->userid);
+
+  if (fxp_is_denied(user) && test_fxp((const char*)context->dataip,WZD_INET4,context) != 0) {
+    memset(context->dataip,0,16);
+    ret = send_message_with_args(501,context,"FXP not allowed");
+    return E_NOPERM;
+  }
+
+  /** \todo check destination port for security: >= 1024 */
 
   context->dataport = ((p1&0xff)<<8) | (p2&0xff);
   context->datafamily = WZD_INET4;
@@ -1643,6 +1675,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   struct in_addr addr4;
   struct in6_addr addr6;
   char * param, * orig_param;
+  wzd_user_t * user;
 
   if (context->pasvsock != (fd_t)-1) {
     socket_close(context->pasvsock);
@@ -1694,8 +1727,8 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
 
   /* resolve net_addr to context->dataip */
-  switch (net_prt - '0') {
-  case WZD_INET4:
+  switch (net_prt) {
+  case '1':
     if ( (ret=inet_pton(AF_INET,net_addr,&addr4)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
@@ -1703,8 +1736,9 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       return E_PARAM_INVALID;
     }
     memcpy(context->dataip,(const char *)&addr4.s_addr,4);
+    context->datafamily = WZD_INET4;
     break;
-  case WZD_INET6:
+  case '2':
     if ( (ret=inet_pton(AF_INET6,net_addr,&addr6)) <= 0 )
     {
       ret = send_message_with_args(501,context,"Invalid host");
@@ -1712,6 +1746,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       return E_PARAM_INVALID;
     }
     memcpy(context->dataip,addr6.s6_addr,16);
+    context->datafamily = WZD_INET6;
     break;
   default:
     ret = send_message_with_args(501,context,"Invalid protocol");
@@ -1719,11 +1754,20 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     return E_PARAM_INVALID;
   }
 
-
   context->dataport = tcp_port;
-  context->datafamily = net_prt - '0';
 
-  free(param);
+  user = GetUserByID(context->userid);
+
+  if (fxp_is_denied(user) && test_fxp((const char*)context->dataip,context->datafamily,context) != 0) {
+    memset(context->dataip,0,16);
+    ret = send_message_with_args(501,context,"FXP not allowed");
+    free(orig_param);
+    return E_NOPERM;
+  }
+
+  /** \todo check destination port for security: >= 1024 */
+
+  free(orig_param);
   ret = send_message_with_args(200,context,"Command okay");
 #else /* defined(IPV6_SUPPORT) */
   send_message(502,context);
@@ -3356,4 +3400,26 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,s
   return NULL;
 }
 
+/** \brief Test if remote address is different from the connected client (i.e,
+ * if client is trying to transfer files to use site-to-site transfer)
+ *
+ * \return 1 if transfer is FXP
+ */
+static int test_fxp(const char * remote_ip, net_family_t family, wzd_context_t * context)
+{
+  switch (family) {
+    case WZD_INET4:
+      return (memcmp(remote_ip,context->hostip,4) != 0);
+    case WZD_INET6:
+      return (memcmp(remote_ip,context->hostip,16) != 0);
+    default:
+      out_log(LEVEL_HIGH,"ERROR test_fxp called with invalid family\n");
+  };
+  return -1;
+}
+
+static int fxp_is_denied(wzd_user_t * user)
+{
+  return (strchr(user->flags,FLAG_FXP_DISABLE) != NULL);
+}
 

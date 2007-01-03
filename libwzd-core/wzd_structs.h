@@ -210,8 +210,10 @@ struct wzd_backend_def_t {
 
 enum wzd_flag_t {
   FLAG_ANONYMOUS = 'A', /**< anonymous users cannot modify filesystem */
+  FLAG_COLOR = '5',     /**< enable use of colors */
   FLAG_DELETED = 'D',
   FLAG_FULLPATH = 'f',  /**< show the complete path to the user */
+  FLAG_FXP_DISABLE = 'F',  /**< disable site-to-site transfer */
   FLAG_GADMIN = 'G',
   FLAG_HIDDEN = 'H',
   FLAG_ULTRAHIDDEN = 'h',
@@ -221,7 +223,6 @@ enum wzd_flag_t {
   FLAG_SITEOP = 'O',
   FLAG_SEE_IP = 's',
   FLAG_SEE_HOME = 't',
-  FLAG_COLOR = '5',     /**< enable use of colors */
 };
 
 /************************ MODULES *************************/

@@ -1,3 +1,7 @@
+2007-01-03  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* feature: new flag F, to deny site-to-site transfer for a user
+
 2006-12-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* feature: new command SITE SHOWLOG, to display the most recent log messages
