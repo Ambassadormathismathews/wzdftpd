@@ -206,7 +206,8 @@ int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_cod
         }
       } else {
         if (params) {
-          strlcat(fixed_args," ",sizeof(fixed_args));
+          if (fixed_args[0] != '\0')
+            strlcat(fixed_args," ",sizeof(fixed_args));
           strlcat(fixed_args,buffer_args,sizeof(fixed_args));
         }
       }
