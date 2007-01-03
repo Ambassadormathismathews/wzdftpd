@@ -71,6 +71,7 @@
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
 #include <libwzd-core/wzd_configfile.h> /* server configuration */
+#include <libwzd-core/wzd_events.h>
 #include <libwzd-core/wzd_libmain.h>
 #include <libwzd-core/wzd_messages.h>
 #include <libwzd-core/wzd_file.h> /* file_mkdir, file_stat */
@@ -106,7 +107,7 @@ static int execute_perl( SV *function, const char *args);
 static void xs_init(pTHX);
 
 /***** EVENT HOOKS *****/
-static int perl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
+static event_reply_t perl_event_logout(const char * args);
 
 static int do_site_perl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context);
 
@@ -219,7 +220,7 @@ int WZD_MODULE_INIT(void)
     }
   }
 
-  hook_add(&getlib_mainConfig()->hook,EVENT_LOGOUT,(void_fct)&perl_hook_logout);
+  event_connect_function(getlib_mainConfig()->event_mgr,EVENT_LOGOUT,perl_event_logout,NULL);
   hook_add_protocol("perl:",5,&perl_hook_protocol);
   out_log(LEVEL_INFO,"PERL module loaded\n");
   return 0;
@@ -271,12 +272,12 @@ static int do_site_perl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
   return 0;
 }
 
-/** \bug this code is not reentrant, be carefull with _perl_set_slave ! */
-static int perl_hook_logout(unsigned long event_id, wzd_context_t * context, const char *username)
+/** \bug XXX race condition, be carefull with _perl_set_slave ! */
+static event_reply_t perl_event_logout(const char * args)
 {
   int i;
+  wzd_context_t * context = GetMyContext();
 
-  /* we need to create one, find a free slave */
   for (i=0; i<MAX_SLAVES; i++)
   {
     if ( _slaves[i].is_allocated && _slaves[i].context == context )
@@ -290,7 +291,7 @@ static int perl_hook_logout(unsigned long event_id, wzd_context_t * context, con
     }
   }
 
-  return 0;
+  return EVENT_OK;
 }
 
 static int perl_hook_protocol(const char *file, const char *args)

@@ -69,6 +69,7 @@
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
+#include <libwzd-core/wzd_events.h>
 #include <libwzd-core/wzd_configfile.h> /* server configuration */
 #include <libwzd-core/wzd_file.h> /* file_mkdir, file_stat */
 #include <libwzd-core/wzd_libmain.h>
@@ -132,7 +133,7 @@ static Tcl_ChannelType channel_type =
 };
 
 /***** EVENT HOOKS *****/
-static int tcl_hook_logout(unsigned long event_id, wzd_context_t *context, const char *username);
+static event_reply_t tcl_event_logout(const char * args);
 
 static int do_site_tcl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *context);
 
@@ -278,7 +279,7 @@ int WZD_MODULE_INIT(void)
     }
   }
 
-  hook_add(&getlib_mainConfig()->hook,EVENT_LOGOUT,(void_fct)&tcl_hook_logout);
+  event_connect_function(getlib_mainConfig()->event_mgr,EVENT_LOGOUT,tcl_event_logout,NULL);
   hook_add_protocol("tcl:",4,&tcl_hook_protocol);
   out_log(LEVEL_INFO,"TCL module loaded\n");
   return 0;
@@ -347,9 +348,10 @@ static int do_site_tcl(wzd_string_t *name, wzd_string_t *param, wzd_context_t *c
   return 0;
 }
 
-static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, const char *username)
+static event_reply_t tcl_event_logout(const char * args)
 {
   Tcl_Interp * slave = NULL;
+  wzd_context_t * context = GetMyContext();
 
   char buffer[64];
   snprintf(buffer, 64, "%p", context);
@@ -361,7 +363,7 @@ static int tcl_hook_logout(unsigned long event_id, wzd_context_t * context, cons
     Tcl_Release(slave);
   }
 
-  return 0;
+  return EVENT_OK;
 }
 
 static int tcl_hook_protocol(const char *file, const char *args)
