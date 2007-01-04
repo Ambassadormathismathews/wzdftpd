@@ -68,7 +68,6 @@ return:
 */
 int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char *directory, wzd_sfv_file * sfv )
 {
-  float percent=0.f;
   char *dirbuffer;
   int file,bad,missing;
   size_t dirlen, filelen;
@@ -87,7 +86,7 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
     filelen = strlen(sfv->sfv_list[i]->filename);
     dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .missing or .bad*/
     if(!dirbuffer) continue;
-    
+
     memset(dirbuffer,0,dirlen+filelen+15);
     strncpy(dirbuffer,directory,dirlen);
     if (dirbuffer[dirlen-1] != '/') strcat(dirbuffer,"/");
@@ -100,13 +99,13 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
     missing=stat(dirbuffer,&s);
     strncpy(dirbuffer+filelen,".bad",10);
     bad=stat(dirbuffer,&s);
-    
+
     /* file is found and ok */
     if ( !file && missing && bad ) {
       size_total += (cur_st_size / 1024.);
       count_ok++;
     }
-    
+
     else if ( file ) {
       /* else file is not found */
       if ( !bad ) {
@@ -123,11 +122,11 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
     free(dirbuffer);
     i++;
   }
-  
+
   stats->files_ok=count_ok;
   stats->files_total=total_count;
   stats->size_total=size_total;
-  
+
   return 0;
 }
 
@@ -348,7 +347,7 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
         status=-1;
         break;
       }
-      
+
       /* sfv file found, check if file is in sfv */
       i = 0;
       while (sfv->sfv_list[i]){
@@ -427,7 +426,7 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
   if (sfv_file) {
       log_message("SFV","Got SFV %s. Expecting %d file(s).\"", sfv_file,  num_files );
    }
-   
+
   {
     wzd_release_stats stats;
     memset(&stats,0,sizeof(wzd_release_stats) );
@@ -452,10 +451,10 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
   unsigned long real_crc;
   int ret;
   char * sfv_dir;
-  
+
   ret = sfv_find_sfv(filename,&sfv,&entry);
   if(ret!=0) return -1; /* Dont process if no sfv is found */
-  
+
 #ifdef DEBUG
   out_err(LEVEL_NORMAL,"sfv_hook_postupload user %d file %s, crc %08lX OK\n",context->userid,filename,entry->crc);
 #endif
@@ -466,7 +465,7 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
     sfv_free(&sfv);
     return -1;
   }
-  
+
   sfv_check_create(filename,entry);
 
   sfv_dir = path_getdirname(filename);
