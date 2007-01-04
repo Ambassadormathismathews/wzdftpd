@@ -244,9 +244,6 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 
       data_end_transfer(0 /* is_upload */, 1 /* end_ok */, context);
 
-/*      limiter_free(context->current_limiter);
-      context->current_limiter = NULL;*/
-
       ret = send_message(226,context);
 #ifdef DEBUG
 out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
@@ -280,7 +277,15 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
         user->credits += (user->ratio * n);
       context->idle_time_data_start = server_time;
     } else { /* consider it is finished */
+      off_t current_position;
+
       send_message_raw("226- command ok\r\n",context);
+
+      /** If we don't resume a previous upload, we have to truncate the current file
+       * or we won't be able to overwrite a file by a smaller one
+       */
+      current_position = lseek(context->current_action.current_file,0,SEEK_CUR);
+      ftruncate(context->current_action.current_file,current_position);
 
       file_unlock(context->current_action.current_file);
       data_end_transfer(1 /* is_upload */, 1 /* end_ok */, context);

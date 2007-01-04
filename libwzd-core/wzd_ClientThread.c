@@ -2208,21 +2208,14 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     context->resume = (unsigned long)-1;
 
   open_flags = O_WRONLY|O_CREAT;
-  /** If we don't resume a previous upload, we have to truncate the current file
-   * or we won't be able to overwrite a file by a smaller one
-   */
-  if (context->resume == 0)
-    open_flags |= O_TRUNC;
 
-  if ((fd=file_open(path,open_flags,RIGHT_STOR,context))==-1) { /* XXX allow access to files being uploaded ? */
+  if ((fd=file_open(path,open_flags,RIGHT_STOR,context))==-1) {
     ret = send_message_with_args(501,context,"nonexistant file or permission denied");
     return E_FILE_NOEXIST;
   }
   FD_REGISTER(fd,"Client file (STOR)");
 
   if (context->pasvsock == (fd_t)-1) { /* PORT ! */
-
-    /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
     if (sock == (fd_t)-1) {
       file_close(fd,context);
@@ -2230,11 +2223,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       /* note: reply is done in waitconnect() */
       return E_CONNECTTIMEOUT;
     }
-
   } else { /* PASV ! */
-    /* FIXME */
-/*    sprintf(cmd, "150 Opening BINARY data connection for '%s'.\r\n",
-      param);*/
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) == (fd_t)-1) {
       file_close(fd,context);
