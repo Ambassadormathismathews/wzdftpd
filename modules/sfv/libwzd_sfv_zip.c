@@ -68,6 +68,7 @@
 /***** ZIP/DIZ CHECK FUNCTIONS *****/
 
 /** parse dir to calculate zip with diz release stats
+-> also manages .bad and .missing
 return:
 -1 on error
 0 no error
@@ -103,28 +104,28 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
   while ( (file = dir_read(dir,context)) ){
     filelen = strlen(file->filename);
     if (filelen<5) continue;
-    
+
     ptr=strrchr(file->filename,'.');
     if (ptr){
       if ( strcasecmp(ptr,".zip") ) continue;
     } else continue;
-    
+
     dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .missing or .bad*/
     if(!dirbuffer) continue;
-    
+
     memset(dirbuffer,0,dirlen+filelen+15);
     strncpy(dirbuffer,directory,dirlen);
     if (dirbuffer[dirlen-1] != '/') strcat(dirbuffer,"/");
     strncat(dirbuffer,file->filename,filelen);
     filelen=strlen(dirbuffer);
-    
+
     curfile=stat(dirbuffer,&s);
     if(!curfile) cur_st_size=(unsigned long) s.st_size;
     strncpy(dirbuffer+filelen,".missing",10);
     missing=stat(dirbuffer,&s);
     strncpy(dirbuffer+filelen,".bad",10);
     bad=stat(dirbuffer,&s);
-    
+
     /* file is found and ok */
     if ( !curfile && missing && bad ) {
       size_total += (cur_st_size / 1024.);
@@ -145,9 +146,9 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
     }
     free(dirbuffer);
   }
-  
+
   dir_close(dir);
-  
+
   stats->files_ok=count_ok;
   stats->files_total=files_total;
   stats->size_total=size_total;
@@ -172,7 +173,7 @@ unsigned long GetDizFileTotalCount(char * dizbuffer)
 
   ret = regcomp(&reg_format, "([0-9xXo0]+)/([0-9o0]+)", REG_EXTENDED);
   if(ret) return 0;
-  
+
   ptr=dizbuffer;
   ret = regexec(&reg_format,ptr,3,regmatch,0);
   while(!ret){
@@ -192,7 +193,7 @@ unsigned long GetDizFileTotalCount(char * dizbuffer)
     if(ptr==NULL) break;
     ret = regexec(&reg_format,ptr,3,regmatch,0);
   }
-  /* DbgPrint("num_files %d\n",num_files); */
+
   regfree(&reg_format);
   return num_files;
 }
@@ -211,6 +212,9 @@ int sfv_check_zip(const char *zip_file, wzd_context_t *context, unsigned long * 
   int err;
   unz_file_info finfo;
   unzFile zf;
+
+  /* init files total with 0 */
+  *files_total=0;
 
   /* Open zip file */
   zf =unzOpen(zip_file);
@@ -236,7 +240,7 @@ int sfv_check_zip(const char *zip_file, wzd_context_t *context, unsigned long * 
       unzClose(zf);
       return -1;
     }
-    
+
     if(!strcasecmp(filename_inzip,"file_id.diz") ){
       /* Found .diz file, get files total */
       char * dizfile=malloc(finfo.uncompressed_size+1);
@@ -263,13 +267,13 @@ int sfv_check_zip(const char *zip_file, wzd_context_t *context, unsigned long * 
         }
       } while (err > 0);
     }
-    
+
     err=unzCloseCurrentFile(zf);
     if(err!=UNZ_OK){
       unzClose(zf);
       return -1;
     }
-    
+
     err=unzGoToNextFile(zf);
     if (err != UNZ_OK && err !=UNZ_END_OF_LIST_OF_FILE) {
       unzClose(zf);
@@ -283,10 +287,10 @@ int sfv_check_zip(const char *zip_file, wzd_context_t *context, unsigned long * 
 
 int sfv_process_zip(const char *zip_file, wzd_context_t *context)
 {
-  int ret;
 #ifdef HAVE_ZLIB
+  int ret;
   struct stat s;
-  unsigned long files_total;
+  unsigned long files_total=0;
   char * directory;
   char * filebuffer;
   size_t len;
@@ -308,21 +312,34 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
   }
   free(filebuffer);
 
-  directory = path_getdirname(zip_file);
-  if(!directory) return -1;
+  /* no file count found, abort */
+  if (files_total==0) return -1;
 
-  if(files_total!=0){
+  directory = path_getdirname(zip_file);
+  if(directory) {
     wzd_release_stats stats;
+    char * incomplete;
+
+    /* create incomplete indicator */
+    incomplete = c_incomplete_indicator(SfvConfig.incomplete_indicator,directory,context);
+    /* create empty file|dir / symlink ? */
+    if (incomplete){
+      if(SfvConfig.incomplete_symlink)
+        symlink_create(directory, incomplete);
+      else
+        close(creat(incomplete,0600) );
+      free(incomplete);
+    }
+
+    /* update status bar */
     memset(&stats,0,sizeof(wzd_release_stats) );
     sfv_diz_update_release_and_get_stats( &stats , directory, files_total );
     sfv_update_completebar(&stats, directory, context) ;
-  }
-  wzd_free(directory);
 
-#else
-  ret=0;
+    free(directory);
+  }
 #endif
-  return ret;
+  return 0;
 }
 
 
@@ -350,10 +367,14 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
   }
   wzd_cache_close(fp);
 
-  stripped_dirname=path_getdirname(diz_file);
+  /* no file count found in diz file, abort */
+  if(num_files==0) return -1;
 
+  stripped_dirname=path_getdirname(diz_file);
   if (stripped_dirname){
+    wzd_release_stats stats;
     char * incomplete;
+
     incomplete = c_incomplete_indicator(SfvConfig.incomplete_indicator,stripped_dirname,context);
     /* create empty file|dir / symlink ? */
     if (incomplete){
@@ -363,6 +384,12 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
         close(creat(incomplete,0600) );
       free(incomplete);
     }
+
+    /* update status bar */
+    memset(&stats,0,sizeof(wzd_release_stats) );
+    sfv_diz_update_release_and_get_stats( &stats , stripped_dirname, num_files );
+    sfv_update_completebar(&stats, stripped_dirname , context);
+
     /* warn user that we await xx files */
     log_message("DIZ","\"%s\" \"Got DIZ %s. Expecting %d file(s).\"",stripped_dirname,stripped_dirname,num_files );
     free(stripped_dirname);

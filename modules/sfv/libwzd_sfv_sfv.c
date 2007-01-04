@@ -61,6 +61,7 @@
 /***** SFV CHECK FUNCTIONS *****/
 
 /** parse dir to calculate sfv release stats
+-> also manages .bad and .missing
 return:
 -1 on error
 0 no error
