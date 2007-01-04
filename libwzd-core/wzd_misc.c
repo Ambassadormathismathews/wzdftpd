@@ -1155,5 +1155,41 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 
     return 0;
 }
+
+
+/** We can't use _chsize() since it is limited to 2Gb files, nor _chsize_s()
+ * which does not exist on all versions of the platform SDK.
+ */
+int win32_ftruncate(int fd, __int64 length)
+{
+  HANDLE handle = (HANDLE)_get_osfhandle(fd);
+  __int64 offset, offset_set;
+  __int32 offset_hi, length_hi;
+  int res;
+
+  /* save file pointer */
+  offset_hi = 0;
+  offset = SetFilePointer(handle, 0, &offset_hi, FILE_CURRENT);
+  if (offset == INVALID_SET_FILE_POINTER)
+    return -1;
+
+  /* extend or truncate */
+  length_hi = (__int32)(length >> 32);
+  offset_set = SetFilePointer(handle, (__int32)(length & 0xFFFFFFFF), &length_hi, FILE_BEGIN);
+  if (offset_set == INVALID_SET_FILE_POINTER)
+    return -1;
+
+  res = SetEndOfFile(handle);
+  if (res == FALSE)
+    return -1;
+
+  /* restore file pointer */
+  offset_set = SetFilePointer(handle, (__int32)(offset & 0xFFFFFFFF), &offset_hi, FILE_BEGIN);
+  if (offset_set == INVALID_SET_FILE_POINTER)
+    return -1;
+
+  return res;
+}
+
 #endif /* WIN32 */
 

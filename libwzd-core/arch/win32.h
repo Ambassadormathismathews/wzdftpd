@@ -112,6 +112,9 @@
 #define dlsym(handle,symbol)	GetProcAddress(handle,symbol)
 #define dlerror()				"Not supported on win32"
 
+#define ftruncate(fd,pos)	win32_ftruncate((fd),(__int64)(pos))
+int win32_ftruncate(int fd, __int64 length);
+
 #define readlink(path,buf,bufsiz)	(-1)
 #define symlink(oldpath,newpath)	(-1)
 
@@ -159,6 +162,12 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 #define in6_addr in_addr6 /* funny ! */
 #define socklen_t	unsigned int
 
+#endif
+
+/** Some microsoft compilers lack this definition.
+ */
+#ifndef INVALID_SET_FILE_POINTER
+# define INVALID_SET_FILE_POINTER ((DWORD)-1)
 #endif
 
 
