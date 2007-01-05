@@ -31,6 +31,13 @@ struct wzd_ip_list_t {
   struct wzd_ip_list_t * next_ip;
 };
 
+enum host_type_t {
+  HT_UNKNOWN = 0,
+  HT_HOSTNAME,
+  HT_IPV4_ADDRESS,
+  HT_IPV6_REFERENCE
+};
+
 typedef enum {
   WZD_INET_NONE = 0,
   WZD_INET4     = 2,  /* AF_INET */
@@ -101,5 +108,9 @@ int ip_is_bnc(const char * remote, wzd_config_t * config);
  * \a buffer must be at least 16 bytes long
  */
 unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer);
+
+/** \brief Parse string and return host object or NULL
+ */
+wzd_ip_t * ip_parse_host(const char *host);
 
 #endif /* __WZD_IP_H__ */

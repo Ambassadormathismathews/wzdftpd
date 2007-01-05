@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #include "wzd_structs.h"
 
@@ -68,8 +69,17 @@
 struct _wzd_ip_t {
   net_family_t family;
 
+  enum host_type_t type;
+  unsigned int netmask;
+
   char raw[MAX_NUMERIC_IP_LEN];
 };
+
+
+static int string_is_hostname(const char * s);
+static int string_is_ipv4(const char * s);
+static int string_is_ipv6(const char * s);
+
 
 /** \brief Allocate and initialize a new \a wzd_ip_t struct
  */
@@ -87,7 +97,6 @@ wzd_ip_t * ip_create(void)
  */
 void ip_free(wzd_ip_t * ip)
 {
-  WZD_ASSERT_VOID(ip != NULL);
   wzd_free(ip);
 }
 
@@ -664,5 +673,127 @@ unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
   }
 
   return buffer;
+}
+
+/** \brief Parse string and return host object or NULL
+ */
+wzd_ip_t * ip_parse_host(const char *host)
+{
+  wzd_ip_t * ip = NULL;
+  char * ptr;
+  char * slash;
+  char * text = NULL, * start = NULL;
+  enum host_type_t type = HT_UNKNOWN;
+  unsigned int netmask = 0;
+
+  if (host == NULL) return NULL;
+
+  if (*host == '\0') return NULL;
+
+  ptr = start = text = strdup(host);
+
+  if ((slash=strchr(text,'/')) != NULL) {
+    if (*(slash+1) == '\0') {
+      out_log(LEVEL_NORMAL,"ERROR netmask can't be empty (input text: %s)\n",host);
+      free(text); return NULL;
+    }
+    netmask = strtoul(slash+1,&ptr,10);
+    if (*ptr != '\0') {
+      out_log(LEVEL_NORMAL,"ERROR invalid netmask (input text: %s)\n",host);
+      free(text); return NULL;
+    }
+    *slash = '\0';
+    ptr = text;
+  }
+
+  if (*ptr == '[') { /* try IPv6 reference */
+    while (*ptr && *ptr != ']') ptr++;
+    if (*ptr == '\0') return NULL; /* malformed IPv6 reference */
+    *ptr = '\0';
+    start = text+1;
+
+    if (!string_is_ipv6(ptr)) {
+      out_log(LEVEL_NORMAL,"ERROR invalid IPv6 address (input text: %s)\n",host);
+      free(text); return NULL;
+    }
+
+    type = HT_IPV6_REFERENCE;
+  } else { /* hostname, or IPv4 address */
+    if (string_is_ipv4(text)) {
+      type = HT_IPV4_ADDRESS;
+    }
+    else if (string_is_hostname(text)) {
+      type = HT_HOSTNAME;
+      if (netmask != 0) {
+        out_log(LEVEL_NORMAL,"ERROR netmask specified with a hostname ! (input text: %s)\n",host);
+        free(text); return NULL;
+      }
+    }
+    else {
+      out_log(LEVEL_NORMAL,"ERROR invalid address (input text: %s)\n",host);
+      free(text); return NULL;
+    }
+  }
+
+  ip = ip_create();
+
+  ip->type = type;
+  wzd_strncpy(ip->raw,start,sizeof(ip->raw));
+  ip->netmask = netmask;
+  free(text);
+
+  return ip;
+}
+
+
+
+
+/** \brief Check if string is a numeric IPv4 address
+ * \return 1 if assertion is true
+ *
+ * \note actually, this is a very limited check
+ */
+static int string_is_ipv4(const char * s)
+{
+  while (*s != '\0') {
+    if (*s != '.' && !isdigit(*s)) return 0;
+    s++;
+  }
+
+  return 1;
+}
+
+/** \brief Check if string is a numeric IPv6 address
+ * \return 1 if assertion is true
+ *
+ * \note actually, this is a very limited check
+ */
+static int string_is_ipv6(const char * s)
+{
+  while (*s != '\0') {
+    if (*s != ':' && !isxdigit(*s)) return 0;
+    s++;
+  }
+
+  return 1;
+}
+
+/** \brief Check if string is a host name
+ * \return 1 if assertion is true
+ *
+ * Accepted host names are:
+ * [:alnum:] ([alnum] | . | -)*
+ */
+static int string_is_hostname(const char * s)
+{
+  if (*s == '\0' || !isalnum(*s)) return 0;
+  s++;
+
+  while (*s != '\0') {
+    if (!isalnum(*s) && *s != '-' && *s != '.') return 0;
+    s++;
+  }
+
+  return 1;
 }
 

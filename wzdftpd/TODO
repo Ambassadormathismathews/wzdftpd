@@ -6,7 +6,7 @@
 - cleanup code:
     - remove hook_call_custom() and related functions (wzd_mod.c) / OK
     - hook_call_external() is used only in crontab ?!
-    - replace hook_add with event_connect in modules Perl and TCL
+    - replace hook_add with event_connect in modules Perl and TCL / OK
 '********'
 - support ipv6 addresses enclosed in [] (RFC2732)
 - support CIDR notations

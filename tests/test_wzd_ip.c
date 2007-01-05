@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
     net_family_t family = WZD_INET_NONE;
     int ret;
 
+    out_buffer = NULL;
     hostname = "www.kame.net";
     ret = hostnametoip(hostname,&out_buffer,&out_length,&family);
     if (ret != 0) {
@@ -111,6 +112,26 @@ int main(int argc, char *argv[])
   }
 
   /* iptohostname */
+
+  /* ip_parse_host */
+  {
+    wzd_ip_t * ip;
+
+    ip = ip_parse_host("[123]");
+    ip_free(ip);
+    ip = ip_parse_host("1.2.3.4");
+    ip_free(ip);
+    ip = ip_parse_host("localhost.localdomain");
+    ip_free(ip);
+    ip = ip_parse_host("1.2.3.4/24");
+    ip_free(ip);
+
+    /* tests which should fail properly */
+    ip = ip_parse_host("1:2");
+    ip = ip_parse_host("1.2.3.4/");
+    ip = ip_parse_host("1.2.3.4/a");
+    ip = ip_parse_host("localhost.localdomain/22");
+  }
 
 
   if (c1 != C1) {

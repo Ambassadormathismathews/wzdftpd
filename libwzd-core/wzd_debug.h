@@ -96,6 +96,7 @@ int check_context(struct wzd_context_t * context);
 #ifdef DEBUG
 
 /* debug file cache */
+/*#define ENABLE_CACHE*/
 /*#define WZD_DBG_CACHE*/
 
 /* debug users/groups cache */
