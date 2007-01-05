@@ -78,7 +78,7 @@ struct wzd_internal_cache_t  {
   int fd;
 
   unsigned long filename_hash;
-  u64_t datasize;
+  off_t datasize;
   time_t mtime;
   unsigned short use;
 
@@ -88,7 +88,7 @@ struct wzd_internal_cache_t  {
 };
 
 struct wzd_cache_t {
-  u64_t current_location;
+  off_t current_location;
 
   wzd_internal_cache_t * cache;
 };
@@ -113,9 +113,9 @@ static wzd_internal_cache_t * _cache_find(unsigned long hash)
 }
 #endif /* ENABLE_CACHE */
 
-u64_t wzd_cache_getsize(wzd_cache_t *c)
+off_t wzd_cache_getsize(wzd_cache_t *c)
 {
-  if (!c) return (unsigned int)-1;
+  if (c == NULL) return -1;
   return c->cache->datasize;
 }
 
@@ -126,9 +126,9 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   wzd_internal_cache_t * c;
   fs_filestat_t s;
   unsigned long hash;
-  unsigned long ret;
-  unsigned int length;
-  u64_t l64;
+  size_t ret;
+  size_t length;
+  size_t size;
   int fd;
 
   if (!file) return NULL;
@@ -153,7 +153,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
     close(fd);
     FD_UNREGISTER(fd,"Cached file");
     /* detect if file has changed */
-    if ((unsigned long)s.size != c->datasize || s.mtime > c->mtime) {
+    if (s.size != c->datasize || s.mtime > c->mtime) {
       /* REFRESH */
       /* need refresh */
 /*      out_err(LEVEL_FLOOD,"cache entry need refresh\n");*/
@@ -189,16 +189,16 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   c->mtime = s.mtime;
   cache->cache = c;
   cache->current_location = 0;
-  l64 = s.size;
-  if (l64 > MAX_CACHE_FILE_LEN) {
-    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
+  size = s.size;
+  if (size > MAX_CACHE_FILE_LEN) {
+    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%d bytes)\n",size);
     c->data = NULL;
     c->datasize = 0;
   } else {
-    length = (unsigned int)l64;
+    length = size;
     c->data = malloc(length+1);
-    if ( (ret=(unsigned long)read(fd,c->data,length)) != length ) {
-      out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",ret,length);
+    if ( (ret=read(fd,c->data,length)) != length ) {
+      out_err(LEVEL_FLOOD,"Read only %d bytes on %d required\n",ret,length);
     }
     c->data[length] = '\0';
     c->datasize = length;
@@ -258,7 +258,7 @@ wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags
   wzd_cache_t * cache;
   fs_filestat_t s;
   unsigned long hash;
-  u64_t length, ret;
+  size_t length, ret;
   int fd;
 
   hash = compute_hashval(file,strlen(file));
@@ -288,13 +288,13 @@ wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags
   length = s.size;
   c->use++;
   if (length > MAX_CACHE_FILE_LEN) {
-    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",length);
+    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%d bytes)\n",length);
     c->data = NULL;
     c->datasize = 0;
   } else {
-    c->data = malloc((unsigned int)length);
+    c->data = malloc(length);
     if ( (ret=read(fd,c->data,length)) != length ) {
-      out_err(LEVEL_FLOOD,"Read only %ld bytes\n",ret);
+      out_err(LEVEL_FLOOD,"Read only %d bytes\n",ret);
     }
     c->datasize = length;
     /* we can close the fd here */
@@ -384,9 +384,9 @@ void wzd_cache_update(const char *file)
  *
  * we do not need to lock SET_MUTEX_CACHE as this function is reentrant
  */
-int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
+ssize_t wzd_cache_read(wzd_cache_t * c, void *buf, size_t count)
 {
-  int ret;
+  ssize_t ret;
   wzd_internal_cache_t * cache;
   cache = c->cache;
 /*  out_err(LEVEL_FLOOD,"cache read\n");*/
@@ -397,16 +397,16 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
     if ( (c->current_location+count) <= cache->datasize ) {
       memcpy(buf,cache->data + c->current_location,count);
       c->current_location += count;
-      return (int)count;
+      return count;
     }
     memcpy(buf,cache->data + c->current_location,cache->datasize-c->current_location);
     c->current_location = cache->datasize;
-    return (int)(cache->datasize-c->current_location);
+    return cache->datasize-c->current_location;
   } else { /* not in cache */
 #endif
     /* update current_location */
     if (c) {
-      ret = (int)read( cache->fd, buf, count );
+      ret = read( cache->fd, buf, count );
       if (ret>0) c->current_location += ret;
       return ret;
     }
@@ -416,10 +416,10 @@ int wzd_cache_read(wzd_cache_t * c, void *buf, unsigned int count)
   return -1;
 }
 
-int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
+ssize_t wzd_cache_write(wzd_cache_t * c, void *buf, size_t count)
 {
 #ifdef ENABLE_CACHE
-  int ret;
+  ssize_t ret;
 #endif
 
   wzd_internal_cache_t * cache;
@@ -435,7 +435,7 @@ int wzd_cache_write(wzd_cache_t * c, void *buf, unsigned int count)
       out_err(LEVEL_INFO,"Trying to write a cached file - stupid !\n");
       return -1;
     }
-    ret = (int)write( cache->fd, buf, count );
+    ret = write( cache->fd, buf, count );
     if (ret>0) c->current_location += ret;
     return ret;
   }
