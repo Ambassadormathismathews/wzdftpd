@@ -1,3 +1,7 @@
+2007-01-12  Pierre Chifflier  <pollux@wzdftpd.net>
+
+	* bugfix: really use loglevel to suppress messages
+
 2007-01-04  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: truncate file after upload (and not when opening). This

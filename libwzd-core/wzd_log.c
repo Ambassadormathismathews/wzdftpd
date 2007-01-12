@@ -215,6 +215,9 @@ void out_log(int level,const char *fmt,...)
   /* new logging code */
   if (level >= MAX_LOG_CHANNELS) return;
 
+  /* don't log events when log level is lower than threshold */
+  if (mainConfig && level < mainConfig->loglevel) return;
+
   /* create timestamp */
   timeval = time(NULL);
   ntime = localtime( &timeval );
