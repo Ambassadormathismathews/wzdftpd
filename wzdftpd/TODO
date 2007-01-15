@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- feature: warn if protocol is not recognized (wzd_events.c)
+'********'
 - cleanup code:
     - remove hook_call_custom() and related functions (wzd_mod.c) / OK
     - hook_call_external() is used only in crontab ?!

@@ -238,10 +238,10 @@ static void _event_free(wzd_event_t * event)
 event_reply_t event_exec(const char * commandline, wzd_context_t * context)
 {
   int ret;
-  char * buffer;
+  char buffer[1024];
   protocol_handler_t * proto;
 
-  buffer = wzd_strdup(commandline);
+  wzd_strncpy(buffer,commandline,sizeof(buffer));
 
   if (buffer[0] == '!') { /* print the corresponding file */
     ret = _event_print_file(buffer+1, context);
@@ -257,7 +257,6 @@ event_reply_t event_exec(const char * commandline, wzd_context_t * context)
       if (command[0] == '"' || command[0] == '\'') {
         args = strchr(command+1,command[0]);
         if (!args) { /* unbalanced quotes */
-          wzd_free(buffer);
           return EVENT_ERROR;
         }
         command++;
@@ -270,14 +269,16 @@ event_reply_t event_exec(const char * commandline, wzd_context_t * context)
       ret = (*proto->handler)(command,args);
     } else {
       /* call external command */
-      _cleanup_shell_command(buffer, strlen(buffer));
+      _cleanup_shell_command(buffer, sizeof(buffer));
       out_log(LEVEL_INFO,"INFO calling external command [%s]\n",buffer);
       ret = _event_exec_shell(buffer,context);
+      if (ret != 0) {
+        reply_set_code(context,501);
+        reply_push(context,"Error during external command");
+      }
     }
   }
 
-
-  wzd_free(buffer);
 
   return ret;
 }
@@ -373,31 +374,34 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
 {
   FILE * file;
   char buffer[1024];
-  char * clean_command;
+  char clean_command[1024];
   int ret = EVENT_OK;
 
-  clean_command = strdup(commandline);
-  _cleanup_shell_command(clean_command,strlen(clean_command));
+  wzd_strncpy(clean_command,commandline,sizeof(commandline));
+  _cleanup_shell_command(clean_command,sizeof(clean_command));
 
   file = _popen(clean_command,"r");
   if (file == NULL) {
 /*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
     out_log(LEVEL_INFO,"Failed command: '%s'\n",clean_command);
-    free(clean_command);
     return EVENT_ERROR;
   }
   while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
   {
     send_message_raw(buffer,context);
   }
-  _pclose(file);
-  free(clean_command);
+  ret = _pclose(file);
 
   return ret;
 }
 
 #endif /* WIN32 */
 
+/** \brief Parse string and escape characters
+ *
+ * \note length should *not* be the length of the string, but the allocated
+ * size (or it will be truncated)
+ */
 void _cleanup_shell_command(char * buffer, size_t length)
 {
   const char * specials = "$|;!`()'\"#,:*?{}[]&<>~";
