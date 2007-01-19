@@ -44,6 +44,8 @@ typedef enum {
 
   SET_MUTEX_USER,
 
+  SET_MUTEX_COOKIE_PARSER,
+
   SET_MUTEX_NUM /* must be last */
 } wzd_set_mutext_t;
 

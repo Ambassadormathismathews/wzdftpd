@@ -81,6 +81,7 @@
 #include "wzd_vfs.h"
 
 #include "wzd_debug.h"
+#include "wzd_libmain.h"
 
 typedef enum {
   COOKIE=257,
@@ -201,6 +202,8 @@ wzd_group_t * current_group=NULL;
 wzd_context_t * current_context=NULL;
 wzd_vfs_t * current_vfs=NULL;
 
+static int cookie_parse_buffer_r(const char *buffer, wzd_user_t * user, wzd_group_t * group,
+  wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len);
 %}
 
 DIGIT [0-9]
@@ -421,6 +424,18 @@ void get_cookie_format(const char *cookie, int * padding)
 int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group,
 wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
 {
+  int ret;
+
+  WZD_MUTEX_LOCK(SET_MUTEX_COOKIE_PARSER);
+  ret = cookie_parse_buffer_r(buffer,user,group,context,out_buffer,out_buffer_len);
+  WZD_MUTEX_UNLOCK(SET_MUTEX_COOKIE_PARSER);
+
+  return ret;
+}
+
+static int cookie_parse_buffer_r(const char *buffer, wzd_user_t * user, wzd_group_t * group,
+wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len)
+{
   wzd_user_t * me = NULL;
   char send_buffer[MAX_SEND_BUFFERSIZE];
   char internalbuffer[IBUFSIZE];
@@ -458,6 +473,7 @@ if (!buffer) return -1;
 #endif
     return -1;
   }
+
   if (cookie_include_stack_ptr)
     include_stack[cookie_include_stack_ptr] = YY_CURRENT_BUFFER;
   cookie_include_stack_ptr++;
@@ -556,7 +572,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       if (condition[0] == '+') {
         WZD_ASSERT( (current_user != NULL) );
         if (current_user && current_user->flags && strchr(user->flags,condition[1]))
-          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+          cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
       }
       free(tmpbuf);
     }
@@ -650,9 +666,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
                 continue;
             }
             if (out_buffer)
-              cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+              cookie_parse_buffer_r(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
             else
-              cookie_parse_buffer(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,0);
+              cookie_parse_buffer_r(tmpbuf,loop_user,current_group,current_context,out_buffer_ptr,0);
           }
         }
         current_user = user;
@@ -676,9 +692,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
                && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                continue;
               if (out_buffer)
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                cookie_parse_buffer_r(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
-                cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+                cookie_parse_buffer_r(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
             }
           }
           current_user = user;
@@ -697,9 +713,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
             current_group = loop_group;
             if (loop_group && loop_group->groupname[0] != '\0') {
               if (out_buffer)
-                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                cookie_parse_buffer_r(tmpbuf,current_user,loop_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
               else
-                cookie_parse_buffer(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
+                cookie_parse_buffer_r(tmpbuf,current_user,loop_group,context,out_buffer_ptr,0);
             }
           }
           current_group = group;
@@ -728,9 +744,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
                     && strcmp(loop_user->username,me->username)!=0) /* do not hide to self ! */
                   continue;
                 if (out_buffer)
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+                  cookie_parse_buffer_r(tmpbuf,loop_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
                 else
-                  cookie_parse_buffer(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
+                  cookie_parse_buffer_r(tmpbuf,loop_user,current_group,context,out_buffer_ptr,0);
               }
             }
             wzd_free(uid_list);
@@ -744,9 +760,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         while(current_vfs)
         {
           if (out_buffer)
-            cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+            cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
           else
-            cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+            cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
           current_vfs = current_vfs->next_vfs;
         }
       } /* allvfs */
@@ -837,7 +853,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       }
 
       if (out_buffer) {
-        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+        cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
 
         i = strlen(out_buffer_ptr);
         if (send_buffer_ptr + i >= sizeof(send_buffer)) {
@@ -848,7 +864,7 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         send_buffer_ptr += i;
       }
       else
-        cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+        cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
 
       wzd_free(tmpbuf);
 
@@ -1317,9 +1333,9 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
         wzd_cache_close(file);
 
         if (out_buffer)
-          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
+          cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,out_buffer_len+(out_buffer_ptr - out_buffer));
         else
-          cookie_parse_buffer(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
+          cookie_parse_buffer_r(tmpbuf,current_user,current_group,context,out_buffer_ptr,0);
 
         wzd_free(tmpbuf);
 

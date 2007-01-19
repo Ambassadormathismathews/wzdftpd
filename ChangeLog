@@ -2,6 +2,7 @@
 
 	* bugfix: use group default perms when creating user (Closes: #0058)
 	* bugfix: don't loop indefinitely if no PASV port was found (Closes: #0068)
+	* bugfix: make code to parse cookies threadsafe (Closes: #0067)
 	* feature: add option "disable core" to prevent creating core dump on crash
 
 2007-01-12  Pierre Chifflier  <pollux@wzdftpd.net>
