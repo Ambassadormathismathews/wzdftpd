@@ -131,6 +131,8 @@ add_subdirectory (modules)
 add_subdirectory (libwzd)
 add_subdirectory (tools)
 
+add_subdirectory (man)
+
 IF (WITH_TESTS)
   ENABLE_TESTING()
 
