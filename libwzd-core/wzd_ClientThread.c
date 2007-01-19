@@ -1607,9 +1607,15 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 
     if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
     port++; /* retry with next port */
+
     if (port >= mainConfig->pasv_high_range)
-      port = mainConfig->pasv_low_range;
-    /** \bug this could create an infinite loop */
+    {
+      /* Rather than loop again, bail out.  This avoids an infinite loop,
+         which happens if pasvsock is bad for some reason.  pasvsock
+         shouldn't be bad (that would be a bug), but there's no reason
+         to make things worse and go into an infinite loop. */
+      return E_NO_DATA_CTX;
+    }
   }
   if (port < mainConfig->pasv_low_range || port > mainConfig->pasv_high_range)
   {

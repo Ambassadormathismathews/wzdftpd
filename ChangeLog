@@ -1,6 +1,7 @@
 2007-01-19  Pierre Chifflier  <pollux@wzdftpd.net>
 
 	* bugfix: use group default perms when creating user (Closes: #0058)
+	* bugfix: don't loop indefinitely if no PASV port was found (Closes: #0068)
 
 2007-01-12  Pierre Chifflier  <pollux@wzdftpd.net>
 
