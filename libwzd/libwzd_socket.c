@@ -67,7 +67,9 @@ static int socket_read(char *buffer, int length);
 static int socket_write(const char *buffer, int length);
 static int socket_is_secure(void);
 
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
 static int socket_tls_switch(void);
+#endif
 
 
 int server_try_socket(void)
@@ -329,6 +331,7 @@ static int socket_is_secure(void)
   return ( (_config->options & OPTION_TLS) ? 1 : 0 );
 }
 
+#if defined(HAVE_GNUTLS) || defined(HAVE_OPENSSL)
 static int socket_tls_switch(void)
 {
   char * buffer;
@@ -367,3 +370,5 @@ socket_tls_switch_abort:
   _config->options &= ~OPTION_TLS;
   return -1;
 }
+#endif
+
