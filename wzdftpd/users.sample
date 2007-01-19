@@ -14,16 +14,19 @@
 privgroup	admin
 ip_allowed=127.0.0.1
 default_home=/home
+rights=0xffffffff
 gid=0
 
 privgroup	users
 default_home=/home
+rights=0xffffffff
 ratio=3
 gid=1
 
 privgroup	anonymous
 max_idle_time=600
 default_home=/home
+rights=0xffffffff
 gid=2
 
 # users definitions

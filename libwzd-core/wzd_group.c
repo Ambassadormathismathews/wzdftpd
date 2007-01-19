@@ -92,6 +92,7 @@ void group_init_struct(wzd_group_t * group)
   memset(group,0,sizeof(wzd_group_t));
 
   group->gid = (gid_t)-1;
+  group->groupperms = 0xffffffff;
 }
 
 /** \brief Free memory used by a \a group structure

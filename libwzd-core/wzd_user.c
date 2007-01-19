@@ -143,6 +143,7 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
 
   homedir = group->defaultpath;
   ratio = group->ratio;
+  newuser->userperms = group->groupperms;
 
   /* check if homedir exist */
   {
@@ -158,7 +159,6 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
   strncpy(newuser->username, username, HARD_USERNAME_LENGTH-1);
   strncpy(newuser->userpass, pass, MAX_PASS_LENGTH-1);
   strncpy(newuser->rootpath, homedir, WZD_MAX_PATH-1);
-  newuser->userperms=0xffffffff;
   newuser->group_num=0;
   if (group != NULL) {
     newuser->groups[0] = group->gid;
