@@ -358,11 +358,22 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
     return EVENT_ERROR;
   }
   file = fdopen(p->fdr,"r");
-  while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
+
+  if (file != NULL)
   {
-    send_message_raw(buffer,context);
+    while (fgets(buffer,sizeof(buffer)-1,file) != NULL)
+    {
+      send_message_raw(buffer,context);
+    }
+    fclose(file);
   }
-  fclose(file);
+  else
+  {
+      send_message_raw("fopen failed in exec_shell\r\n",context);
+      snprintf(buffer, sizeof(buffer)-1, "fopen returned errno=%d\r\n", errno);
+      send_message_raw(buffer,context);
+  }
+
   ret = wzd_pclose(p);
 
   return ret;
