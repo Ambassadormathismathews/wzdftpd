@@ -14,11 +14,11 @@ int main(int argc, char *argv[])
   unsigned long c2 = C2;
 
   printf("Size of structs:\n");
-  printf("  wzd_config_t:       %d\n", sizeof(wzd_config_t));
-  printf("  wzd_context_t:      %d\n", sizeof(wzd_context_t));
-  printf("  wzd_backend_t:      %d\n", sizeof(wzd_backend_t));
-  printf("  wzd_user_t:         %d\n", sizeof(wzd_user_t));
-  printf("  wzd_group_t:        %d\n", sizeof(wzd_group_t));
+  printf("  wzd_config_t:       %d\n", (int)sizeof(wzd_config_t));
+  printf("  wzd_context_t:      %d\n", (int)sizeof(wzd_context_t));
+  printf("  wzd_backend_t:      %d\n", (int)sizeof(wzd_backend_t));
+  printf("  wzd_user_t:         %d\n", (int)sizeof(wzd_user_t));
+  printf("  wzd_group_t:        %d\n", (int)sizeof(wzd_group_t));
 
 
   if (c1 != C1) {
