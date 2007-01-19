@@ -19,7 +19,9 @@ add_executable (wzdftpd wzd_main.c
 # Link the executable to the libwzd-core library.
 target_link_libraries (wzdftpd libwzd_core ${EXTRA_LIBS})
 
-SET_TARGET_PROPERTIES(wzdftpd PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+IF (NOT SKIP_INSTALL_RPATH)
+  SET_TARGET_PROPERTIES(wzdftpd PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF (NOT SKIP_INSTALL_RPATH)
 
 INSTALL(TARGETS wzdftpd RUNTIME DESTINATION sbin)
 
