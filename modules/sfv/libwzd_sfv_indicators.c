@@ -242,7 +242,7 @@ char *c_complete_indicator(const char * indicator, const char * currentdir, wzd_
     if (*indicator == '-' && isdigit(*(indicator + 1))) indicator += 2;
     while (isdigit(*indicator)) indicator++;
     if ( m != indicator ) {
-      sprintf(ctrl, "%.*s", indicator - m, m);
+      snprintf(ctrl, sizeof(ctrl), "%.*s", (int)(indicator - m), m);
       val1 = atoi(ctrl);
       } else {
       val1 = 0;
@@ -254,7 +254,7 @@ char *c_complete_indicator(const char * indicator, const char * currentdir, wzd_
       if (*indicator == '-' && isdigit(*(indicator + 1))) indicator += 2;
       while (isdigit(*indicator)) indicator++;
       if ( m != indicator ) {
-        sprintf(ctrl, "%.*s", indicator - m, m);
+        snprintf(ctrl, sizeof(ctrl), "%.*s", (int)(indicator - m), m);
         val2 = atoi(ctrl);
         } else {
         val2 = 0;
