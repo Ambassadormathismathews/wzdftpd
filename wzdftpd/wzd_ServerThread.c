@@ -1338,7 +1338,7 @@ int server_switch_to_config(wzd_config_t *config)
  */
 int serverMainThreadProc(void *arg)
 {
-  int ret;
+  int ret, err;
   unsigned long max_wait_time;
   fd_set r_fds, w_fds, e_fds;
   fd_t maxfd;
@@ -1394,19 +1394,8 @@ int serverMainThreadProc(void *arg)
   }
 #endif /* POSIX */
 
-#ifndef _WIN32
-#if defined(DEBUG) && !defined(__CYGWIN__)
+#if defined(DEBUG) && !defined(WIN32)
   signal(SIGSEGV,server_crashed);
-#else
-  {
-    struct rlimit rlim;
-
-    /* no core file ! */
-    getrlimit(RLIMIT_CORE, &rlim);
-    rlim.rlim_cur = 0;
-    setrlimit(RLIMIT_CORE, &rlim);
-  }
-#endif
 #endif /* _WIN32 */
 
 #ifdef WIN32
@@ -1446,7 +1435,19 @@ int serverMainThreadProc(void *arg)
     return -1;
   }
 
+#ifndef WIN32
+  ret = config_get_boolean(mainConfig->cfg_file, "GLOBAL", "disable core", &err);
+  if (err == CF_OK && (ret)) {
+    struct rlimit rlim;
 
+    out_log(LEVEL_INFO,"INFO disabling core files\n");
+
+    /* no core file ! */
+    getrlimit(RLIMIT_CORE, &rlim);
+    rlim.rlim_cur = 0;
+    setrlimit(RLIMIT_CORE, &rlim);
+  }
+#endif
 
   /* clear ident list */
   list_init(&server_ident_list, free);
