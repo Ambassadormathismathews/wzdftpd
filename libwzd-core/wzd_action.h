@@ -172,6 +172,7 @@ struct last_file_t {
     time_t	time;
     struct timeval tv;
     u64_t	size;
+    u32_t crc;
     unsigned int token;
 };
 

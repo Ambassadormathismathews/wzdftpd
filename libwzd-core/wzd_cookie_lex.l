@@ -133,6 +133,7 @@ typedef enum {
   COOKIE_GROUPTOTAL_UL,
   COOKIE_GROUPTOTAL_UL2,
 
+  COOKIE_LASTFILECRC,
   COOKIE_LASTFILENAME,
   COOKIE_LASTFILESIZE,
   COOKIE_LASTFILESPEED,
@@ -353,6 +354,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_GROUP}total_ul2	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL2;
 <sc_cook>{C_GROUP}total_ul	BEGIN(INITIAL); return COOKIE_GROUPTOTAL_UL;
 
+<sc_cook>{C_LASTFILE}crc	BEGIN(INITIAL); return COOKIE_LASTFILECRC;
 <sc_cook>{C_LASTFILE}name	BEGIN(INITIAL); return COOKIE_LASTFILENAME;
 <sc_cook>{C_LASTFILE}size	BEGIN(INITIAL); return COOKIE_LASTFILESIZE;
 <sc_cook>{C_LASTFILE}speed	BEGIN(INITIAL); return COOKIE_LASTFILESPEED;
@@ -1214,6 +1216,15 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       convert=0;
       break;
 /*** LAST FILE cookies ***/
+    case COOKIE_LASTFILECRC:
+      get_cookie_format(yytext,&padding);
+      if (context)
+        snprintf(internalbuffer,IBUFSIZE,"%08x",(context->last_file.name[0]!='\0')?context->last_file.crc:0);
+      else
+        snprintf(internalbuffer,IBUFSIZE,"crc");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_LASTFILENAME:
       get_cookie_format(yytext,&padding);
       if (context) {

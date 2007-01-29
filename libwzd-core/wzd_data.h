@@ -41,4 +41,12 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
 /* send or retr data */
 int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set *fdw);
 
+/** \brief run local transfer loop for RETR
+ */
+int do_local_retr(wzd_context_t * context);
+
+/** \brief run local transfer loop for STOR
+ */
+int do_local_stor(wzd_context_t * context);
+
 #endif /* __WZD_DATA__ */

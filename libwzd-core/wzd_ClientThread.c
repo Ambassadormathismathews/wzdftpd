@@ -2110,6 +2110,9 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   context->resume=0;
   context->idle_time_start = time(NULL);
 
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL))
+    ret = do_local_retr(context);
+
   return E_OK;
 }
 
@@ -2278,6 +2281,9 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   context->resume=0;
   context->idle_time_start = time(NULL);
+
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL))
+    ret = do_local_stor(context);
 
   return E_OK;
 }

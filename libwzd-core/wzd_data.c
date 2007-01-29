@@ -59,6 +59,8 @@
 #include "wzd_misc.h"
 #include "wzd_ClientThread.h"
 #include "wzd_messages.h"
+#include "wzd_configfile.h"
+#include "wzd_crc32.h"
 #include "wzd_events.h"
 #include "wzd_file.h"
 #include "wzd_libmain.h"
@@ -310,3 +312,202 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 
   return 0;
 }
+
+/** \brief run local transfer loop for RETR
+ */
+int do_local_retr(wzd_context_t * context)
+{
+  struct timeval tv;
+  fd_set fds_w;
+  int ret, err;
+  ssize_t count;
+  int file = context->current_action.current_file;
+  int maxfd = context->datafd;
+  wzd_user_t * user = GetUserByID(context->userid);
+  int exit_ok = 0;
+  write_fct_t write_fct;
+  unsigned long crc = 0;
+  int auto_crc = 0;
+
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
+  if (context->tls_data_mode == TLS_CLEAR)
+    write_fct = clear_write;
+  else
+#endif
+    write_fct = context->write_fct;
+
+  context->last_file.crc = 0;
+  ret = config_get_boolean(mainConfig->cfg_file, "GLOBAL", "auto crc", &err);
+  if (err == CF_OK && (ret)) {
+    auto_crc = 1;
+  }
+
+  do {
+    FD_ZERO(&fds_w);
+
+    FD_SET(context->datafd,&fds_w);
+
+    tv.tv_sec=30; tv.tv_usec=0L;
+
+    ret = select(maxfd+1,NULL,&fds_w,NULL,&tv);
+
+    if (ret > 0) {
+      count = read(file, context->data_buffer, mainConfig->data_buffer_length);
+      if (count > 0) {
+        ret = (write_fct)(context->datafd,context->data_buffer,(size_t)count,0,0,context);
+
+        if (ret <= 0) goto _local_retr_exit;
+
+        context->current_action.bytesnow += count;
+
+        limiter_add_bytes(&mainConfig->global_dl_limiter,limiter_mutex,count,0);
+        limiter_add_bytes(&context->current_dl_limiter,limiter_mutex,count,0);
+
+        /* compute incremental crc32 for later use */
+        if (auto_crc) calc_crc32_buffer( context->data_buffer, &crc, count);
+
+        user->stats.bytes_dl_total += count;
+        if (user->ratio)
+          user->credits -= count;
+        context->idle_time_data_start = server_time;
+      } else {
+        exit_ok = 1;
+        goto _local_retr_exit;
+      }
+    } else {
+      out_log(LEVEL_HIGH,"do_local_retr select returned %d\n",ret);
+      goto _local_retr_exit;
+    }
+  } while (1);
+
+_local_retr_exit:
+  if (exit_ok) { /* send header */
+    send_message_raw("226- command ok\r\n",context);
+    context->last_file.crc = crc;
+  }
+
+  data_end_transfer(0 /* is_upload */, exit_ok /* end_ok */, context);
+
+  if (exit_ok) {
+    ret = send_message(226,context);
+  } else {
+    ret = send_message(426,context);
+  }
+
+  /* user will be invalidated */
+  backend_mod_user(mainConfig->backends->filename, user->uid, user, _USER_BYTESDL | _USER_CREDITS);
+
+  context->current_action.token = TOK_UNKNOWN;
+  context->idle_time_start = server_time;
+
+  return 0;
+}
+
+/** \brief run local transfer loop for STOR
+ */
+int do_local_stor(wzd_context_t * context)
+{
+  struct timeval tv;
+  fd_set fds_r;
+  int ret, err;
+  ssize_t count;
+  int file = context->current_action.current_file;
+  int maxfd = context->datafd;
+  wzd_user_t * user = GetUserByID(context->userid);
+  int exit_ok = 0;
+  read_fct_t read_fct;
+  unsigned long crc = 0;
+  int auto_crc = 0;
+
+#if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
+  if (context->tls_data_mode == TLS_CLEAR)
+    read_fct = clear_read;
+  else
+#endif
+    read_fct = context->read_fct;
+
+  context->last_file.crc = 0;
+  ret = config_get_boolean(mainConfig->cfg_file, "GLOBAL", "auto crc", &err);
+  if (err == CF_OK && (ret)) {
+    auto_crc = 1;
+  }
+
+  do {
+    FD_ZERO(&fds_r);
+
+    FD_SET(context->datafd,&fds_r);
+
+    tv.tv_sec=30; tv.tv_usec=0L;
+
+    ret = select(maxfd+1,&fds_r,NULL,NULL,&tv);
+
+    if (ret > 0) {
+      count = (read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,0,context);
+      if (count > 0) {
+        ret = write(file, context->data_buffer, count);
+
+        if (ret <= 0) goto _local_stor_exit;
+        if (ret != count) {
+          out_log(LEVEL_HIGH,"ERROR short write (%d bytes instead of %d)\n",(int)ret,(int)count);
+          goto _local_stor_exit;
+        }
+
+        context->current_action.bytesnow += count;
+
+        limiter_add_bytes(&mainConfig->global_ul_limiter,limiter_mutex,count,0);
+        limiter_add_bytes(&context->current_ul_limiter,limiter_mutex,count,0);
+
+        /* compute incremental crc32 for later use */
+        if (auto_crc) calc_crc32_buffer( context->data_buffer, &crc, count);
+
+        user->stats.bytes_ul_total += count;
+        if (user->ratio)
+          user->credits += (user->ratio * ret);
+        context->idle_time_data_start = server_time;
+      } else {
+        exit_ok = 1;
+        goto _local_stor_exit;
+      }
+    } else {
+      out_log(LEVEL_HIGH,"do_local_stor select returned %d\n",ret);
+      goto _local_stor_exit;
+    }
+  } while (1);
+
+_local_stor_exit:
+  if (exit_ok) { /* send header */
+    off_t current_position;
+
+    send_message_raw("226- command ok\r\n",context);
+    context->last_file.crc = crc;
+
+    /** If we don't resume a previous upload, we have to truncate the current file
+     * or we won't be able to overwrite a file by a smaller one
+     */
+    current_position = lseek(context->current_action.current_file,0,SEEK_CUR);
+    ftruncate(context->current_action.current_file,current_position);
+
+    /* we increment the counter of uploaded files at the end
+     * of the upload
+     */
+    user->stats.files_ul_total++;
+  }
+
+  file_unlock(context->current_action.current_file);
+  data_end_transfer(1 /* is_upload */, exit_ok /* end_ok */, context);
+
+  if (exit_ok) {
+    ret = send_message(226,context);
+  } else {
+    ret = send_message(426,context);
+  }
+
+  /* user will be invalidated */
+  backend_mod_user(mainConfig->backends->filename, user->uid, user, _USER_BYTESUL | _USER_CREDITS);
+
+  context->current_action.token = TOK_UNKNOWN;
+  context->idle_time_start = server_time;
+
+  return 0;
+}
+
