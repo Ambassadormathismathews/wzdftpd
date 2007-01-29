@@ -7,6 +7,9 @@
 
 config version = @WZD_VERSION@
 
+# enable experimental or untested code (default: false)
+#experimental = true
+
 # backup config when saving changes (default: false)
 backup config = true
 

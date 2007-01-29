@@ -220,6 +220,11 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
   if (err == CF_OK && (ret))
     CFG_SET_OPTION(cfg,CFG_OPT_DYNAMIC_IP);
 
+  /* EXPERIMENTAL */
+  ret = config_get_boolean(file, "GLOBAL", "experimental", &err);
+  if (err == CF_OK && (ret))
+    CFG_SET_OPTION(cfg,CFG_OPT_EXPERIMENTAL);
+
   /* HIDE_DOTTED_FILES */
   ret = config_get_boolean(file, "GLOBAL", "hide_dotted_files", &err);
   if (err == CF_OK && (ret))
