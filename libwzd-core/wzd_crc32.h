@@ -30,4 +30,9 @@
  */
 int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, unsigned long length );
 
+/* Calculates the 32-bit checksum of buffer, and stores the result
+ * in crc. Returns 0 on success, nonzero on error.
+ */
+int calc_crc32_buffer( const char *buffer, unsigned long *crc, unsigned long length );
+
 #endif /* __WZD_CRC32__ */

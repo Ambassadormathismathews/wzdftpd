@@ -78,7 +78,8 @@ static unsigned long crcs[256]={ 0x00000000,0x77073096,0xEE0E612C,0x990951BA,
 /* Calculates the 32-bit checksum of fname, and stores the result
  * in crc. Returns 0 on success, nonzero on error.
  */
-int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, unsigned long length ) {
+int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, unsigned long length )
+{
     FILE *in;           /* input file */
     unsigned char *buf; /* pointer to the input buffer */
     size_t i, j, len;   /* buffer positions*/
@@ -109,3 +110,26 @@ int calc_crc32( const char *fname, unsigned long *crc, unsigned long startpos, u
     *crc = (~tmpcrc & 0xFFFFFFFF); /* postconditioning */
     return 0;
 }
+
+/* Calculates the 32-bit checksum of buffer, and stores the result
+ * in crc. Returns 0 on success, nonzero on error.
+ */
+int calc_crc32_buffer( const char *buffer, unsigned long *crc, unsigned long length )
+{
+    size_t j, len;   /* buffer positions*/
+    int k;              /* generic integer */
+    unsigned long tmpcrc=0xFFFFFFFF;
+
+    tmpcrc = (~*crc & 0xFFFFFFFF); /* stay on the 4 LSB */
+
+    len = MIN(length,BUFSIZ);
+
+    /* loop through the buffer and calculate CRC */
+    for(j=0; j<length; j++) {
+      k=(tmpcrc ^ buffer[j]) & 0x000000FFL;
+      tmpcrc=((tmpcrc >> 8) & 0x00FFFFFFL) ^ crcs[k];
+    }
+    *crc = (~tmpcrc & 0xFFFFFFFF); /* postconditioning */
+    return 0;
+}
+
