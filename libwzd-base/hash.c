@@ -171,6 +171,8 @@ int chtbl_lookup(const CHTBL *htab, const void *key, void **data)
   CHTBL_Elmnt *entry;
   unsigned int index;
 
+  if (key == NULL) return -1;
+
   index = htab->h(key) % htab->containers;
 
   for (element=list_head(&htab->table[index]); element != NULL; element = list_next(element))
