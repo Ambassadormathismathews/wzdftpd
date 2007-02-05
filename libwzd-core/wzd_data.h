@@ -49,4 +49,12 @@ int do_local_retr(wzd_context_t * context);
  */
 int do_local_stor(wzd_context_t * context);
 
+/** \brief Create thread for data transfer (RETR)
+ */
+int data_start_thread_retr(wzd_context_t * context);
+
+/** \brief Create thread for data transfer (STOR)
+ */
+int data_start_thread_stor(wzd_context_t * context);
+
 #endif /* __WZD_DATA__ */

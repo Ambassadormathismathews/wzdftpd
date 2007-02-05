@@ -101,6 +101,7 @@
 #include "wzd_site.h"
 #include "wzd_string.h"
 #include "wzd_socket.h"
+#include "wzd_threads.h"
 #include "wzd_tls.h"
 #include "wzd_user.h"
 #include "wzd_utf8.h"
@@ -2110,8 +2111,17 @@ int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   context->resume=0;
   context->idle_time_start = time(NULL);
 
-  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL))
-    ret = do_local_retr(context);
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL)) {
+    if (context->transfer_thread != NULL) {
+      out_log(LEVEL_HIGH,"ERROR a transfer thread is already started\n");
+      data_end_transfer(0 /* is_upload */, 0 /* end_ok */, context);
+      ret = send_message(426,context);
+      return E_XFER_PROGRESS;
+    }
+    context->is_transferring = 1;
+    ret = data_start_thread_retr(context);
+/*    ret = do_local_retr(context);*/
+  }
 
   return E_OK;
 }
@@ -2282,8 +2292,17 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   context->resume=0;
   context->idle_time_start = time(NULL);
 
-  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL))
-    ret = do_local_stor(context);
+  if (CFG_GET_OPTION(mainConfig,CFG_OPT_EXPERIMENTAL)) {
+    if (context->transfer_thread != NULL) {
+      out_log(LEVEL_HIGH,"ERROR a transfer thread is already started\n");
+      data_end_transfer(0 /* is_upload */, 0 /* end_ok */, context);
+      ret = send_message(426,context);
+      return E_XFER_PROGRESS;
+    }
+    context->is_transferring = 1;
+    ret = data_start_thread_stor(context);
+/*    ret = do_local_stor(context);*/
+  }
 
   return E_OK;
 }
@@ -3239,6 +3258,25 @@ void * clientThreadProc(void *arg)
       break;
     }
 #endif /* DEBUG */
+
+    /* check for finished transfers
+     * Remember that this will be checked every max_wait_time seconds
+     * (default: DEFAULT_CLIENT_TICK = 10), so at this point the transfer
+     * can be finished while the thread is waiting to be joined
+     */
+    if (context->transfer_thread != NULL &&
+        context->is_transferring == 0) {
+      void * return_value;
+
+      out_log(LEVEL_FLOOD,"DEBUG waiting for transfer thread\n");
+
+      wzd_thread_join(context->transfer_thread,&return_value);
+      context->transfer_thread = NULL;
+
+      free(context->transfer_thread);
+      context->transfer_thread = NULL;
+    }
+
     save_errno = 666;
     /* 1. read */
     FD_ZERO(&fds_r);
@@ -3248,7 +3286,9 @@ void * clientThreadProc(void *arg)
     FD_SET(sockfd,&fds_r);
     FD_SET(sockfd,&efds);
     /* set data fd */
-    ret = data_set_fd(context,&fds_r,&fds_w,&efds);
+    if (context->transfer_thread == NULL) {
+      ret = data_set_fd(context,&fds_r,&fds_w,&efds);
+    }
     if ((signed)sockfd > ret) ret = sockfd;
 
     tv.tv_sec=max_wait_time; tv.tv_usec=0L;
@@ -3279,7 +3319,9 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     FD_ISSET(sockfd,&efds),FD_ISSET(context->datafd,&efds));*/
 /*      continue;*/
     }
-    ret = data_check_fd(context,&fds_r,&fds_w,&efds);
+    if (context->transfer_thread == NULL) {
+      ret = data_check_fd(context,&fds_r,&fds_w,&efds);
+    }
     if (ret == -1) {
       /* we had an error reading data connection */
       /** \todo should be remove data descriptors and so ? */

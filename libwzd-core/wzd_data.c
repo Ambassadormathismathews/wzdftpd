@@ -34,6 +34,7 @@
 #include <io.h>
 #endif
 #else
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -67,6 +68,7 @@
 #include "wzd_mod.h"
 #include "wzd_data.h"
 #include "wzd_socket.h"
+#include "wzd_threads.h"
 #include "wzd_user.h"
 
 #include "wzd_debug.h"
@@ -399,6 +401,8 @@ _local_retr_exit:
 
   context->current_action.token = TOK_UNKNOWN;
   context->idle_time_start = server_time;
+  context->is_transferring = 0;
+  out_log(LEVEL_HIGH,"DEBUG transfer thread exiting\n");
 
   return 0;
 }
@@ -507,6 +511,37 @@ _local_stor_exit:
 
   context->current_action.token = TOK_UNKNOWN;
   context->idle_time_start = server_time;
+  context->is_transferring = 0;
+
+  return 0;
+}
+
+/** \brief Create thread for data transfer (RETR)
+ */
+int data_start_thread_retr(wzd_context_t * context)
+{
+  wzd_thread_t * thread;
+  int ret;
+
+  thread = malloc(sizeof(wzd_thread_t));
+  ret = wzd_thread_create(thread, NULL, do_local_retr, context);
+
+  context->transfer_thread = thread;
+
+  return 0;
+}
+
+/** \brief Create thread for data transfer (STOR)
+ */
+int data_start_thread_stor(wzd_context_t * context)
+{
+  wzd_thread_t * thread;
+  int ret;
+
+  thread = malloc(sizeof(wzd_thread_t));
+  ret = wzd_thread_create(thread, NULL, do_local_stor, context);
+
+  context->transfer_thread = thread;
 
   return 0;
 }

@@ -374,6 +374,9 @@ struct wzd_context_t {
   unsigned long	pid_child;
   unsigned long	thread_id;
 
+  union wzd_thread_t * transfer_thread;
+  u8_t          is_transferring;
+
   fd_t          pasvsock;
   read_fct_t    read_fct;
   write_fct_t   write_fct;
