@@ -75,6 +75,11 @@
 #define INET6_ADDRSTRLEN 46
 #endif
 
+/** \todo XXX FIXME remove this line and use correct types !!!!
+ * this is used to convert char* to struct in6_addr
+ */
+#define PORCUS_CAST(x) ( ((struct in6_addr*)(x)) )
+
 #include <libwzd-core/wzd_structs.h>
 
 #include <libwzd-core/wzd_misc.h>
@@ -224,20 +229,31 @@ void reset_stats(wzd_server_stat_t * stats)
 }
 
 /** \return 1 if ip is ok, 0 if ip is denied, -1 if ip is not in list or on error */
-static int global_check_ip_allowed(unsigned char *userip)
+static int global_check_ip_allowed(unsigned char *userip, net_family_t family)
 {
-  char ip[INET6_ADDRSTRLEN];
+  char ipv6[INET6_ADDRSTRLEN] = {0};
+  char ipv4[INET_ADDRSTRLEN] = {0};
+  int ret = -1;
 
   /** \warning If no ip was specified (ok or denied), then the default is to allow */
   if (mainConfig->login_pre_ip_checks == NULL) return 1;
 
-#if !defined(IPV6_SUPPORT)
-  inet_ntop(AF_INET,userip,ip,INET_ADDRSTRLEN);
-#else
-  inet_ntop(AF_INET6,userip,ip,INET6_ADDRSTRLEN);
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    inet_ntop(AF_INET6,userip,ipv6,INET6_ADDRSTRLEN);
+    ret = ip_list_check(mainConfig->login_pre_ip_checks,ipv6);
+    if (ret == 0 && IN6_IS_ADDR_V4MAPPED(PORCUS_CAST(userip))) {
+      inet_ntop(AF_INET,userip,ipv4,INET_ADDRSTRLEN);
+      ret = ip_list_check(mainConfig->login_pre_ip_checks,ipv4);
+    }
+  } else
 #endif
+  {
+    inet_ntop(AF_INET,userip,ipv4,INET_ADDRSTRLEN);
+    ret = ip_list_check(mainConfig->login_pre_ip_checks,ipv4);
+  }
 
-  return ip_list_check(mainConfig->login_pre_ip_checks,ip);
+  return ret;
 }
 
 void server_rebind(const char *new_ip, unsigned int new_port)
@@ -515,7 +531,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   }
 
   /* Here we check IP BEFORE starting session */
-  if (global_check_ip_allowed(userip)<=0) { /* IP was rejected */
+  if (global_check_ip_allowed(userip, family)<=0) { /* IP was rejected */
     /* close socket without warning ! */
     socket_close(newsock);
     FD_UNREGISTER(newsock,"Client socket");
