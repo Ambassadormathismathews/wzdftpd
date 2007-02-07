@@ -25,7 +25,7 @@ ENDIF (NOT MAN_INSTALL_PATH)
 # set variables for replacement in wzd.cfg.sample
 SET(PACKAGE "wzdftpd")
 SET(localstatedir "${CMAKE_INSTALL_PREFIX}/var")
-SET(datadir "${CMAKE_INSTALL_PREFIX}/share")
+SET(datadir "${CMAKE_INSTALL_PREFIX}/lib")
 SET(sysconfdir "${CONF_INSTALL_PATH}")
 
 IF(WIN32)

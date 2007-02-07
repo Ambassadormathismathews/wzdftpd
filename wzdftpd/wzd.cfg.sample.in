@@ -44,7 +44,7 @@ pasv_high_range  = 3000
 # unix only: file where pid of server will be stored
 # (default: /var/run/wzdftpd.pid)
 # this is used by init.d script
-#pid_file = @datadir@/@PACKAGE@/wzdftpd.pid
+#pid_file = @localstatedir@/run/@PACKAGE@/wzdftpd.pid
 
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
