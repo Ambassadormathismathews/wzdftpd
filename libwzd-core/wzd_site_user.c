@@ -257,6 +257,7 @@ int do_site_deluser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 
   /* commit changes to backend */
   backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
+  backend_commit_changes(mainConfig->backends->filename);
 
   ret = send_message_with_args(200,context,"User deleted");
   return 0;
