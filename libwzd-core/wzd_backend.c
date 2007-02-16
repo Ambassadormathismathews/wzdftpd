@@ -330,6 +330,11 @@ wzd_user_t * backend_get_user(uid_t userid)
 }
 
 
+/** \brief Search for user with name \a name in backends
+ *
+ * If an user is found, its uid is stored in \a userid. If \a user is not NULL,
+ * the structure is copied (and should be freed using free() )
+ */
 int backend_find_user(const char *name, wzd_user_t * user, int * userid)
 {
   int ret;
@@ -439,6 +444,11 @@ wzd_group_t * backend_get_group(gid_t groupid)
   return NULL;
 }
 
+/** \brief Search for group with name \a name in backends
+ *
+ * If a group is found, its gid is stored in \a groupid. If \a group is not NULL,
+ * the structure is copied (and should be freed using free() )
+ */
 int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
 {
   int ret;
@@ -531,6 +541,8 @@ gid_t GetGroupIDByName(const char *name)
 }
 
 
+/** \brief Check if \a name is a defined in backend, and retrieve the associated structure
+ */
 int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
 {
   uid_t ret;
@@ -562,6 +574,8 @@ int backend_validate_login(const char *name, wzd_user_t * user, uid_t * userid)
   return -1;
 }
 
+/** \brief Check user and password, and retrieve associated structure
+ */
 int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, uid_t * userid)
 {
   uid_t ret;
@@ -593,6 +607,8 @@ int backend_validate_pass(const char *name, const char *pass, wzd_user_t *user, 
   return -1;
 }
 
+/** \brief Commit changes to backend
+ */
 int backend_commit_changes(const char *backend)
 {
   wzd_backend_t * b;
@@ -641,7 +657,15 @@ int backend_inuse(const char *backend)
   return count;
 }
 
-/* if user does not exist, add it */
+/** \brief Send user modifications to backend
+ *
+ * The modified user is identified by the backend and the \a uid.
+ * \a mod_type is used to determine which values are changed, and the new values
+ * are taken from the structure \a user.
+ *
+ * If the user does not exist, the backend will add it. If \a user is NULL, the user
+ * is deleted.
+ */
 int backend_mod_user(const char *backend, uid_t uid, wzd_user_t * user, unsigned long mod_type)
 {
   int ret;
@@ -694,7 +718,15 @@ int backend_mod_user(const char *backend, uid_t uid, wzd_user_t * user, unsigned
   return ret;
 }
 
-/* if group does not exist, add it */
+/** \brief Send group modifications to backend
+ *
+ * The modified group is identified by the backend and the \a gid.
+ * \a mod_type is used to determine which values are changed, and the new values
+ * are taken from the structure \a group.
+ *
+ * If the group. does not exist, the backend will add it. If \a group. is NULL, the group.
+ * is deleted.
+ */
 int backend_mod_group(const char *backend, gid_t gid, wzd_group_t * group, unsigned long mod_type)
 {
   int ret;
