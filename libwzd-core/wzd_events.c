@@ -384,12 +384,12 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
 static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t * context)
 {
   FILE * file;
-  char buffer[1024];
-  char clean_command[1024];
+  char buffer[WZD_BUFFER_LEN];
+  char clean_command[WZD_MAX_PATH];
   int ret = EVENT_OK;
 
-  wzd_strncpy(clean_command,commandline,sizeof(commandline));
-  _cleanup_shell_command(clean_command,sizeof(clean_command));
+  wzd_strncpy(clean_command,commandline,WZD_MAX_PATH);
+  _cleanup_shell_command(clean_command,WZD_MAX_PATH);
 
   file = _popen(clean_command,"r");
   if (file == NULL) {
