@@ -141,6 +141,9 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
     return NULL;
   }
 
+  /* create new user */
+  newuser = user_allocate();
+
   homedir = group->defaultpath;
   ratio = group->ratio;
   newuser->userperms = group->groupperms;
@@ -152,9 +155,6 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
       out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating user %s)\n",homedir,username);
     }
   }
-
-  /* create new user */
-  newuser = user_allocate();
 
   strncpy(newuser->username, username, HARD_USERNAME_LENGTH-1);
   strncpy(newuser->userpass, pass, MAX_PASS_LENGTH-1);
