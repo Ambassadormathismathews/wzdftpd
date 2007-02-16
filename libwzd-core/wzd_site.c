@@ -129,9 +129,6 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   out_err(LEVEL_INFO,"# Childs     : %ld\n",mainConfig->stats.num_childs);
   ret = 0;
 
-  out_err(LEVEL_INFO,"sizeof(wzd_context_t) = %d\n", sizeof(wzd_context_t));
-  out_err(LEVEL_INFO,"sizeof(wzd_user_t) = %d\n", sizeof(wzd_user_t));
-
   fd_dump();
 
 #if 0
@@ -1473,7 +1470,7 @@ int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 
   written = write(fd, str_tochar(data), length);
   if (written != length) {
-    out_log(LEVEL_HIGH,"ERROR Could not save config (written %d bytes instead of %d\n",written,length);
+    out_log(LEVEL_HIGH,"ERROR Could not save config (written %ld bytes instead of %ld\n",(long)written,(long)length);
   }
   close(fd);
 

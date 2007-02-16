@@ -180,7 +180,7 @@ int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 
     if (mod_type & _USER_CREDITS)
 #ifndef WIN32
-      APPEND_STRING_TO_QUERY("credits='%llu' ", user->credits, query, query_length, mod, modified);
+      APPEND_STRING_TO_QUERY("credits='%" PRIu64 "' ", user->credits, query, query_length, mod, modified);
 #else
       APPEND_STRING_TO_QUERY("credits='%I64u' ", user->credits, query, query_length, mod, modified);
 #endif
