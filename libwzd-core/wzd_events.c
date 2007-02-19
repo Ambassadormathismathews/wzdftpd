@@ -415,7 +415,11 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
  */
 void _cleanup_shell_command(char * buffer, size_t length)
 {
+#ifndef WIN32
   const char * specials = "$|;!`()'\"#,:*?{}[]&<>~";
+#else
+  const char * specials = "$|;!`()'\"#,*?{}[]&<>~";
+#endif
   size_t i,j;
   char * buf2;
 
