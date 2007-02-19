@@ -101,9 +101,29 @@ struct wzd_backend_t {
 #define _GROUP_CREATE           0x01000000
 
 
+/** \brief Get backend version
+ */
 char *backend_get_version(wzd_backend_def_t *backend);
+
+/** \brief Get backend name
+ *
+ * \note This is generally the short name of the backend (for ex, pgsql), and
+ * is different from the name defined in the config (the shared library name).
+ */
 char *backend_get_name(wzd_backend_def_t *backend);
 
+/** \brief Validate backend by checking needed functions, and if a specific version is required
+ *
+ * \param backend The shared library file name
+ * \param pred A predicate (for ex, >=)
+ * \param version The version to be compared, by the predicate, to the backend version
+ *
+ * \return
+ * - a newly allocated structure for the backend, or
+ * - NULL if some functions are missing (check logs for details)
+ *
+ * \note Actually, \a pred and \a version are ignored
+ */
 wzd_backend_def_t * backend_validate(const char *backend, const char *pred, const char *version);
 
 /** \brief Register backend
@@ -119,8 +139,27 @@ struct wzd_backend_def_t * backend_register(const char * filename, backend_init_
  */
 int backend_init(wzd_backend_def_t * backend);
 
+/** \brief Close backend and associated resources
+ *
+ * Call backend exit function (if defined), mark backend as closed, and
+ * unloads shared library if present.
+ *
+ * \note The backend structure must still be removed from list
+ *
+ * \return
+ * - 0 if ok
+ * - 1 if an error occurred
+ */
 int backend_close(const char *backend);
 
+/** \brief Reload backend
+ *
+ * \param backend The backend (short) name
+ *
+ * \return
+ * - 0 if ok
+ * - 1 if an error occurred (the backend may be in inconsistant state)
+ */
 int backend_reload(const char *backend);
 
 enum { INVALID_USER = (uid_t)-1, GET_USER_LIST = (uid_t)-2 };
@@ -213,13 +252,52 @@ int backend_inuse(const char *backend);
 #define BACKEND_VERSION(v) const char * wzd_backend_version = STRINGIFY(v)
 
 
-/* wrappers to user list */
-
+/** \brief Get user identified by \a id from backend
+ *
+ * \param id The uid of the user
+ *
+ * \return A wzd_user_t structure, or NULL if not found
+ */
 wzd_user_t * GetUserByID(uid_t id);
+
+/** \brief Get user identified by \a name from backend
+ *
+ * \param name The name of the user
+ *
+ * \return A wzd_user_t structure, or NULL if not found
+ */
 wzd_user_t * GetUserByName(const char *name);
+
+/** \brief Get group identified by \a id from backend
+ *
+ * \param id The gid of the group
+ *
+ * \return A wzd_group_t structure, or NULL if not found
+ */
 wzd_group_t * GetGroupByID(gid_t id);
+
+/** \brief Get group identified by \a name from backend
+ *
+ * \param name The name of the group
+ *
+ * \return A wzd_group_t structure, or NULL if not found
+ */
 wzd_group_t * GetGroupByName(const char *name);
+
+/** \brief Get user ID identified by \a name from backend
+ *
+ * \param name The name of the user
+ *
+ * \return The unique identifier of the user, or -1 if not found
+ */
 uid_t GetUserIDByName(const char *name);
+
+/** \brief Get group ID identified by \a name from backend
+ *
+ * \param name The name of the group
+ *
+ * \return The unique identifier of the group, or -1 if not found
+ */
 gid_t GetGroupIDByName(const char *name);
 
 

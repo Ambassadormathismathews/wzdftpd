@@ -80,6 +80,8 @@ static int _trigger_user_max_dl(wzd_user_t * user);
 static int _trigger_user_max_ul(wzd_user_t * user);
 
 
+/** \brief Get backend version
+ */
 char *backend_get_version(wzd_backend_def_t *backend)
 {
   char ** version_found;
@@ -92,6 +94,11 @@ char *backend_get_version(wzd_backend_def_t *backend)
   return (*version_found);
 }
 
+/** \brief Get backend name
+ *
+ * \note This is generally the short name of the backend (for ex, pgsql), and
+ * is different from the name defined in the config (the shared library name).
+ */
 char *backend_get_name(wzd_backend_def_t *backend)
 {
   char ** backend_name;
@@ -104,6 +111,8 @@ char *backend_get_name(wzd_backend_def_t *backend)
   return (*backend_name);
 }
 
+/** \brief Initialize a newly allocated wzd_backend_def_t structure
+ */
 static void backend_clear_struct(wzd_backend_def_t *backend)
 {
   if (backend->param) {
@@ -122,6 +131,18 @@ static void backend_clear_struct(wzd_backend_def_t *backend)
   backend->b = NULL;
 }
 
+/** \brief Validate backend by checking needed functions, and if a specific version is required
+ *
+ * \param backend The shared library file name
+ * \param pred A predicate (for ex, >=)
+ * \param version The version to be compared, by the predicate, to the backend version
+ *
+ * \return
+ * - a newly allocated structure for the backend, or
+ * - NULL if some functions are missing (check logs for details)
+ *
+ * \note Actually, \a pred and \a version are ignored
+ */
 wzd_backend_def_t * backend_validate(const char *backend, const char *pred, const char *version)
 {
   fs_filestat_t st;
@@ -238,6 +259,17 @@ struct wzd_backend_def_t * backend_register(const char * filename, backend_init_
   return def;
 }
 
+/** \brief Close backend and associated resources
+ *
+ * Call backend exit function (if defined), mark backend as closed, and
+ * unloads shared library if present.
+ *
+ * \note The backend structure must still be removed from list
+ *
+ * \return
+ * - 0 if ok
+ * - 1 if an error occurred
+ */
 int backend_close(const char *backend)
 {
   int (*fini_fcn)(void) = NULL;
@@ -297,6 +329,16 @@ int backend_close(const char *backend)
   return 0;
 }
 
+/** \brief Reload backend
+ *
+ * \todo backend_reload is not yet implemented
+ *
+ * \param backend The backend (short) name
+ *
+ * \return
+ * - 0 if ok
+ * - 1 if an error occurred (the backend may be in inconsistant state)
+ */
 int backend_reload(const char *backend)
 {
   int ret;
@@ -313,6 +355,16 @@ int backend_reload(const char *backend)
   return 1;
 }
 
+/**
+ * \brief Get user informations
+ * \param userid The user id, or the special value (uid_t)-2
+ *
+ * Search backend for user with the corresponding uid and return the corresponding struct.
+ *
+ * If the argument is -2, this function returns an array of uid (ended with -1) containing
+ * the list of all known users (you have to cast the return to a (uid_t *) to use it). You must
+ * free the returned array using wzd_free().
+ */
 wzd_user_t * backend_get_user(uid_t userid)
 {
   wzd_backend_t * b;
@@ -363,7 +415,12 @@ int backend_find_user(const char *name, wzd_user_t * user, int * userid)
   return ret;
 }
 
-/** wrappers to user list */
+/** \brief Get user identified by \a id from backend
+ *
+ * \param id The uid of the user
+ *
+ * \return A wzd_user_t structure, or NULL if not found
+ */
 wzd_user_t * GetUserByID(uid_t id)
 {
   wzd_user_t *user;
@@ -389,6 +446,12 @@ wzd_user_t * GetUserByID(uid_t id)
   return user;
 }
 
+/** \brief Get user identified by \a name from backend
+ *
+ * \param name The name of the user
+ *
+ * \return A wzd_user_t structure, or NULL if not found
+ */
 wzd_user_t * GetUserByName(const char *name)
 {
   uid_t uid;
@@ -417,6 +480,12 @@ out_err(LEVEL_CRITICAL,"GetUserByName %s\n",name);
   return NULL;
 }
 
+/** \brief Get user ID identified by \a name from backend
+ *
+ * \param name The name of the user
+ *
+ * \return The unique identifier of the user, or -1 if not found
+ */
 uid_t GetUserIDByName(const char *name)
 {
   wzd_user_t * user;
@@ -431,6 +500,16 @@ uid_t GetUserIDByName(const char *name)
 
 
 
+/**
+ * \brief Get group informations
+ * \param groupid The group id, or the special value (gid_t)-2
+ *
+ * Search backend for group with the corresponding gid and return the corresponding struct.
+ *
+ * If the argument is -2, this function returns an array of gid (ended with -1) containing
+ * the list of all known groups (you have to cast the return to a (gid_t *) to use it). You must
+ * free the returned array using wzd_free().
+ */
 wzd_group_t * backend_get_group(gid_t groupid)
 {
   wzd_backend_t * b;
@@ -478,7 +557,12 @@ int backend_find_group(const char *name, wzd_group_t * group, int * groupid)
 }
 
 
-/** wrappers to Group list */
+/** \brief Get group identified by \a id from backend
+ *
+ * \param id The gid of the group
+ *
+ * \return A wzd_group_t structure, or NULL if not found
+ */
 wzd_group_t * GetGroupByID(gid_t id)
 {
   wzd_group_t * group = NULL;
@@ -502,6 +586,12 @@ wzd_group_t * GetGroupByID(gid_t id)
   return group;
 }
 
+/** \brief Get group identified by \a name from backend
+ *
+ * \param name The name of the group
+ *
+ * \return A wzd_group_t structure, or NULL if not found
+ */
 wzd_group_t * GetGroupByName(const char *name)
 {
   gid_t gid;
@@ -530,6 +620,12 @@ wzd_group_t * GetGroupByName(const char *name)
   return NULL;
 }
 
+/** \brief Get group ID identified by \a name from backend
+ *
+ * \param name The name of the group
+ *
+ * \return The unique identifier of the group, or -1 if not found
+ */
 gid_t GetGroupIDByName(const char *name)
 {
   wzd_group_t * group;
