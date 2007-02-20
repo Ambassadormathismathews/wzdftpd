@@ -61,7 +61,17 @@ struct wzd_context_t;
 #endif
 #endif /* WZD_USE_PCH */
 
-/* thread creation */
+/** \brief Create a new thread
+ *
+ * This function create a new thread, using native threads on Windows and pthreads
+ * elsewhere. The new thread is started immediatly, unless specific attributes
+ * have been defined.
+ *
+ * \param[out] thread location where the new thread id will be stored
+ * \param[in] attr thread specific attributes
+ * \param[in] start_routine the function to execute in the new thread
+ * \param[in] arg an argument to be passed to start_routine
+ */
 int wzd_thread_create(wzd_thread_t * thread, wzd_thread_attr_t * attr, void * (start_routine)(void *), void * arg)
 {
 #ifndef WIN32
@@ -97,6 +107,12 @@ int wzd_thread_create(wzd_thread_t * thread, wzd_thread_attr_t * attr, void * (s
 #endif
 }
 
+/** \brief Initialize an empty wzd_thread_attr_t structure
+ *
+ * \param[out] attr pointer to the new attributes structure
+ *
+ * \return 0 if ok
+ */
 int wzd_thread_attr_init(wzd_thread_attr_t * attr)
 {
 #ifndef WIN32
@@ -107,6 +123,12 @@ int wzd_thread_attr_init(wzd_thread_attr_t * attr)
 #endif
 }
 
+/** \brief Free resources used by a wzd_thread_attr_t structure
+ *
+ * \param[in] attr pointer to the attributes structure
+ *
+ * \return 0 if ok
+ */
 int wzd_thread_attr_destroy(wzd_thread_attr_t * attr)
 {
 #ifndef WIN32
@@ -117,6 +139,16 @@ int wzd_thread_attr_destroy(wzd_thread_attr_t * attr)
 #endif
 }
 
+/** \brief Set thread attribute to detachable state
+ *
+ * Resources used by a detached thread are freed immediatly when
+ * the thread exits, and wzd_thread_join can't be used to get the
+ * return code.
+ *
+ * \param[in] attr attributes structure
+ *
+ * \return 0 if ok
+ */
 int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr)
 {
 #ifndef WIN32
@@ -126,6 +158,16 @@ int wzd_thread_attr_set_detached(wzd_thread_attr_t * attr)
 #endif
 }
 
+/** \brief Wait for termination of another thread
+ *
+ * Wait indefinitly, until thread terminates. The return code is stored
+ * in thread_return, and the thread can be freed after.
+ *
+ * \param[in] thread the thread id to wait for
+ * \param[out] thread_return the return value of thread
+ *
+ * \return 0 if ok
+ */
 int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
 {
 #ifndef WIN32
@@ -144,7 +186,11 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return)
   return 0;
 #endif
 }
-/** \brief Cancel thread by sending a signal */
+
+/** \brief Cancel thread by sending a signal
+ *
+ * \param[in] thread the thread to cancel
+ */
 int wzd_thread_cancel(wzd_thread_t * thread)
 {
 #ifndef WIN32
