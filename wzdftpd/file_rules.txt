@@ -1,5 +1,5 @@
 .----------------------------------------------------------------------------.
-|                        >   S i T e    R u L e S    <                       |
+|                        >   S i t e    R u l e s    <                       |
 .----------------------------------------------------------------------------.
 |                                                                            |
 |                                                                            |
@@ -12,10 +12,8 @@
 | No | General                                                       | Nuke  |
 .----.---------------------------------------------------------------.-------.
 | 01 | Inactive users get deleted after 60 days                      |   x3  |
-| 02 | Only Original Release_Dir_Names allowed, *lamers rules off*   |   x1  |
-| 03 | NO spaces/accents in Dir Names,                               |   x1  |
-| 04 | Dont leave empty directories                                  |   75  |
-| 05 | Upload SFV & NFO, Always upload SFV First                     |   x2  |
-| 06 | NO DUPE / INT                                                 |   x3  |
-|    | NO Betas, Build or Release Candidates (NOT EVEN WINDOWS!)     |   x2  |
+| 02 | NO spaces/accents in Dir Names,                               |   x1  |
+| 03 | Dont leave empty directories                                  |   75  |
+| 04 | Upload SFV & NFO, Always upload SFV First                     |   x2  |
+| 05 | NO DUPE / INT                                                 |   x3  |
 .----------------------------------------------------------------------------.
