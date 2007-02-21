@@ -49,6 +49,12 @@
 
 #endif /* WZD_USE_PCH */
 
+/** \brief Get credits for user
+ *
+ * \param[in] user user definition
+ *
+ * \return The ratio, as a 64 bits unsigned integer
+ */
 u64_t ratio_get_credits(wzd_user_t * user)
 {
   if (!user->ratio) return (u64_t)-1;
@@ -56,6 +62,16 @@ u64_t ratio_get_credits(wzd_user_t * user)
   return user->credits;
 }
 
+/** \brief Check if user is allowed to perform a download
+ *
+ * \param[in] path The file to be downloaded
+ * \param[in] context The context of the client
+ *
+ * \return
+ * - 0 if user if allowed to download the file
+ * - 1 if user if not allowed to download the file
+ * - -1 if an error occured
+ */
 int ratio_check_download(const char *path, wzd_context_t *context)
 {
   wzd_user_t * me;
