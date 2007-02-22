@@ -61,6 +61,20 @@ struct wzd_context_t;
 #endif
 #endif /* WZD_USE_PCH */
 
+#ifdef HAVE_PTHREAD
+
+struct thread_key_t {
+  pthread_key_t key;
+};
+
+#else /* HAVE_PTHREAD */
+
+struct thread_key_t {
+  DWORD tls_id;
+};
+
+#endif /* HAVE_PTHREAD*/
+
 /** \brief Create a new thread
  *
  * This function create a new thread, using native threads on Windows and pthreads
@@ -199,6 +213,80 @@ int wzd_thread_cancel(wzd_thread_t * thread)
   /** \todo use pthread_kill() equivalent for windows */
   out_log(LEVEL_CRITICAL, "Not Yet Implemented : wzd_thread_cancel\n");
   return -1;
+#endif
+}
+
+/** \brief Allocate a new thread-local storage
+ *
+ * If a TLS is already allocated, do nothing
+ *
+ * \return
+ * - a unique identifier to a thread specific data area (TSD) if ok
+ * - NULL on error
+ */
+struct thread_key_t * wzd_tls_allocate()
+{
+  struct thread_key_t * thread_key = NULL;
+  if (thread_key != NULL) {
+    thread_key = malloc(sizeof(struct thread_key_t));
+#ifdef HAVE_PTHREAD
+    {
+      int ret;
+      ret = pthread_key_create(&thread_key->key,NULL);
+    }
+#else
+    thread_key->key = TlsAlloc();
+#endif
+  }
+  return thread_key;
+}
+
+/** \brief Free thread-local storage
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+int wzd_tls_free(struct thread_key_t * thread_key)
+{
+  int ret;
+  if (thread_key != NULL) {
+#ifdef HAVE_PTHREAD
+    ret = pthread_key_delete(thread_key->key);
+#else
+    ret = TlsFree(thread_key->key);
+#endif
+    free(thread_key);
+    thread_key = NULL;
+  }
+  return 0;
+}
+
+/** \brief Store value in TLS
+ *
+ * \param[in] thread_key key to TSD
+ * \param[in] data_ptr pointer to the data which will be duplicated for the thread
+ * \return 0 if ok
+ */
+int wzd_tls_setspecific(struct thread_key_t * thread_key, const void * data_ptr)
+{
+#ifdef HAVE_PTHREAD
+  return pthread_setspecific(thread_key->key,data_ptr);
+#else
+  return TlsSetValue(thread_key->key,data_ptr);
+#endif
+}
+
+/** \brief Get value from TLS
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+void * wzd_tls_getspecific(struct thread_key_t * thread_key)
+{
+#ifdef HAVE_PTHREAD
+  return pthread_getspecific(thread_key->key);
+#else
+  return TlsSetValue(thread_key->key);
 #endif
 }
 

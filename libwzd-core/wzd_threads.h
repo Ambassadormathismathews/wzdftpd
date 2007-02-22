@@ -100,6 +100,39 @@ int wzd_thread_join(wzd_thread_t * thread, void ** thread_return);
 int wzd_thread_cancel(wzd_thread_t * thread);
 
 
+/** \brief Allocate a new thread-local storage
+ *
+ * If a TLS is already allocated, do nothing
+ *
+ * \return
+ * - a unique identifier to a thread specific data area (TSD) if ok
+ * - NULL on error
+ */
+struct thread_key_t * wzd_tls_allocate();
+
+/** \brief Free thread-local storage
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+int wzd_tls_free(struct thread_key_t * thread_key);
+
+/** \brief Store value in TLS
+ *
+ * \param[in] thread_key key to TSD
+ * \param[in] data_ptr pointer to the data which will be duplicated for the thread
+ * \return 0 if ok
+ */
+int wzd_tls_setspecific(struct thread_key_t * thread_key, const void * data_ptr);
+
+/** \brief Get value from TLS
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+void * wzd_tls_getspecific(struct thread_key_t * thread_key);
+
+
 /* platform dependant types */
 
 union wzd_thread_attr_t {
