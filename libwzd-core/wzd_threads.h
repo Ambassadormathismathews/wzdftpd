@@ -117,6 +117,13 @@ struct thread_key_t * wzd_tls_allocate();
  */
 int wzd_tls_free(struct thread_key_t * thread_key);
 
+/** \brief Free thread-local storage but not key
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+int wzd_tls_remove(struct thread_key_t * thread_key);
+
 /** \brief Store value in TLS
  *
  * \param[in] thread_key key to TSD

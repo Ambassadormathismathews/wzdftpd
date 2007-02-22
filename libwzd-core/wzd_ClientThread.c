@@ -123,6 +123,8 @@ static int test_fxp(const char * remote_ip, net_family_t family, wzd_context_t *
 
 static int fxp_is_denied(wzd_user_t * user);
 
+static struct thread_key_t * _key_context = NULL;
+
 
 /*************** clear_read **************************/
 
@@ -293,6 +295,9 @@ out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
   socket_close(context->controlfd);
   FD_UNREGISTER(context->controlfd,"Client socket");
   context->controlfd = -1;
+
+  wzd_tls_free(_key_context);
+  _key_context = NULL;
 
   context_remove(context_list,context);
 }
@@ -3198,6 +3203,7 @@ void * clientThreadProc(void *arg)
 #else
   context->thread_id = pthread_self();
 #endif
+ _tls_store_context(context);
 
   out_log(LEVEL_INFO,"Client speaking to socket %d\n",sockfd);
 #ifndef WIN32
@@ -3464,5 +3470,55 @@ static int test_fxp(const char * remote_ip, net_family_t family, wzd_context_t *
 static int fxp_is_denied(wzd_user_t * user)
 {
   return (strchr(user->flags,FLAG_FXP_DISABLE) != NULL);
+}
+
+/** \brief Store context in Thread Local Store (TLS)
+ *
+ * \param[in] context Client context
+ * \return 0 if ok
+ */
+int _tls_store_context(wzd_context_t * context)
+{
+  if (_key_context == NULL) {
+    _key_context = wzd_tls_allocate();
+    if (_key_context == NULL) return -1;
+  }
+
+  if (wzd_tls_setspecific(_key_context, context) != 0) {
+    out_log(LEVEL_HIGH,"ERROR Could not store context in TLS\n");
+    wzd_tls_free(_key_context);
+    _key_context = NULL;
+    return -1;
+  }
+  return 0;
+}
+
+/** \brief Get current context from Thread Local Storage (TLS)
+ *
+ * \return
+ * - a valid wzd_context_t structure if found
+ * - NULL if the value was not found in TLS
+ */
+wzd_context_t * _tls_get_context(void)
+{
+  if (_key_context != NULL)
+    return wzd_tls_getspecific(_key_context);
+
+  return NULL;
+}
+
+/** \brief Remove current context from Thread Local Storage (TLS)
+ *
+ * This is used by threads to release properly TLS resources used
+ * to store context pointer.
+ *
+ * \return 0 if ok
+ */
+int _tls_remove_context(void)
+{
+  if (_key_context != NULL)
+    return wzd_tls_remove(_key_context);
+
+  return 0;
 }
 

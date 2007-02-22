@@ -99,4 +99,28 @@ int do_help(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
 int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 
+/** \brief Get current context from Thread Local Storage (TLS)
+ *
+ * \return
+ * - a valid wzd_context_t structure if found
+ * - NULL if the value was not found in TLS
+ */
+wzd_context_t * _tls_get_context(void);
+
+/** \brief Store context in Thread Local Store (TLS)
+ *
+ * \param[in] context Client context
+ * \return 0 if ok
+ */
+int _tls_store_context(wzd_context_t * context);
+
+/** \brief Remove current context from Thread Local Storage (TLS)
+ *
+ * This is used by threads to release properly TLS resources used
+ * to store context pointer.
+ *
+ * \return 0 if ok
+ */
+int _tls_remove_context(void);
+
 #endif /* __WZD_CLIENT_THREAD__ */

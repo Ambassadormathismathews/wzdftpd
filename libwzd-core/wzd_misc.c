@@ -96,6 +96,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_ClientThread.h"
 #include "wzd_fs.h"
 #include "wzd_libmain.h"
 #include "wzd_log.h"
@@ -1090,6 +1091,14 @@ void * GetMyContext(void)
   ListElmt * elmnt;
   wzd_context_t * context=NULL;
 
+  /* first, try to get value from TLS */
+  context = _tls_get_context();
+  if (context != NULL) {
+    WZD_ASSERT_RETURN(context->magic == CONTEXT_MAGIC, NULL);
+    return context;
+  }
+
+  /* if not found, try iterating through context list */
 #ifdef WIN32
   unsigned long thread_id;
 

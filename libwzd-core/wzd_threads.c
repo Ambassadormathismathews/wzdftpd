@@ -227,21 +227,37 @@ int wzd_thread_cancel(wzd_thread_t * thread)
 struct thread_key_t * wzd_tls_allocate()
 {
   struct thread_key_t * thread_key = NULL;
-  if (thread_key != NULL) {
-    thread_key = malloc(sizeof(struct thread_key_t));
+  thread_key = malloc(sizeof(struct thread_key_t));
 #ifdef HAVE_PTHREAD
-    {
-      int ret;
-      ret = pthread_key_create(&thread_key->key,NULL);
-    }
-#else
-    thread_key->key = TlsAlloc();
-#endif
+  {
+    int ret;
+    ret = pthread_key_create(&thread_key->key,NULL);
   }
+#else
+  thread_key->key = TlsAlloc();
+#endif
   return thread_key;
 }
 
-/** \brief Free thread-local storage
+/** \brief Free thread-local storage but not key
+ *
+ * \param[in] thread_key key to TSD
+ * \return 0 if ok
+ */
+int wzd_tls_remove(struct thread_key_t * thread_key)
+{
+  int ret;
+  if (thread_key != NULL) {
+#ifdef HAVE_PTHREAD
+    ret = pthread_key_delete(thread_key->key);
+#else
+    ret = TlsFree(thread_key->key);
+#endif
+  }
+  return 0;
+}
+
+/** \brief Free thread-local storage and key
  *
  * \param[in] thread_key key to TSD
  * \return 0 if ok
@@ -286,7 +302,7 @@ void * wzd_tls_getspecific(struct thread_key_t * thread_key)
 #ifdef HAVE_PTHREAD
   return pthread_getspecific(thread_key->key);
 #else
-  return TlsSetValue(thread_key->key);
+  return TlsGetValue(thread_key->key);
 #endif
 }
 

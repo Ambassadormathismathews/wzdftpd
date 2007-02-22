@@ -331,6 +331,8 @@ int do_local_retr(wzd_context_t * context)
   unsigned long crc = 0;
   int auto_crc = 0;
 
+  _tls_store_context(context);
+
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->tls_data_mode == TLS_CLEAR)
     write_fct = clear_write;
@@ -402,6 +404,7 @@ _local_retr_exit:
   context->current_action.token = TOK_UNKNOWN;
   context->idle_time_start = server_time;
   context->is_transferring = 0;
+
   out_log(LEVEL_HIGH,"DEBUG transfer thread exiting\n");
 
   return 0;
@@ -422,6 +425,8 @@ int do_local_stor(wzd_context_t * context)
   read_fct_t read_fct;
   unsigned long crc = 0;
   int auto_crc = 0;
+
+  _tls_store_context(context);
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->tls_data_mode == TLS_CLEAR)
