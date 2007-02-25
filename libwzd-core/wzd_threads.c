@@ -70,7 +70,7 @@ struct thread_key_t {
 #else /* HAVE_PTHREAD */
 
 struct thread_key_t {
-  DWORD tls_id;
+  DWORD key;
 };
 
 #endif /* HAVE_PTHREAD*/

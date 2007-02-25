@@ -1100,30 +1100,34 @@ void * GetMyContext(void)
 
   /* if not found, try iterating through context list */
 #ifdef WIN32
-  unsigned long thread_id;
-
-  thread_id = (unsigned long)GetCurrentThreadId();
-  /* TODO search context list and cleanup context */
-  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
-    context = list_data(elmnt);
-    if (context && context->magic == CONTEXT_MAGIC && context->thread_id == thread_id) {
-      return context;
+    unsigned long thread_id;
+
+    thread_id = (unsigned long)GetCurrentThreadId();
+    /* TODO search context list and cleanup context */
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+    {
+      context = list_data(elmnt);
+      if (context && context->magic == CONTEXT_MAGIC && context->thread_id == thread_id) {
+        return context;
+      }
     }
   }
 #else /* WIN32 */
-  pthread_t thread_id;
-
-  if (!context_list) return NULL;
-
-  thread_id = pthread_self();
-  /* TODO search context list and cleanup context */
-  for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
   {
-    context = list_data(elmnt);
-    if (context && context->magic == CONTEXT_MAGIC &&
-      pthread_equal((pthread_t)context->thread_id,thread_id)) {
-        return context;
+    pthread_t thread_id;
+
+    if (!context_list) return NULL;
+
+    thread_id = pthread_self();
+    /* TODO search context list and cleanup context */
+    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+    {
+      context = list_data(elmnt);
+      if (context && context->magic == CONTEXT_MAGIC &&
+        pthread_equal((pthread_t)context->thread_id,thread_id)) {
+          return context;
+      }
     }
   }
 #endif /* WIN32 */
