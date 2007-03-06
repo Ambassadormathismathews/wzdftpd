@@ -350,7 +350,7 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
   FILE * file;
   char buffer[1024];
   int ret;
-
+  
   p = wzd_popen(commandline);
   if (!p) {
 /*    out_log(LEVEL_HIGH,"Hook '%s': unable to popen\n",hook->external_command);*/
@@ -416,9 +416,9 @@ static event_reply_t _event_exec_shell(const char * commandline, wzd_context_t *
 void _cleanup_shell_command(char * buffer, size_t length)
 {
 #ifndef WIN32
-  const char * specials = "$|;!`()'\"#,:*?{}[]&<>~";
+  const char * specials = "$|;!`()'#,:*?{}[]&<>~";
 #else
-  const char * specials = "$|;!`()'\"#,*?{}[]&<>~";
+  const char * specials = "$|;!`()'#,*?{}[]&<>~";
 #endif
   size_t i,j;
   char * buf2;
@@ -514,38 +514,121 @@ event_reply_t wzd_pclose(wzd_popen_t * p)
   return retcode;
 }
 
+static int _argv_chr_is_escape(const char *string, int pos)
+{
+  if (pos > 0) if (string[pos - 1] == '\\') return 1;
+  return 0;
+}
+
+static void _argv_init(char ***argv, int *argc)
+{
+  *argc = 0;
+  *argv = malloc(sizeof(char *));
+  *argv[*argc] = NULL;
+}
+
+static void _argv_add(char ***argv, int *argc, char *str)
+{
+  *argv = realloc(*argv, (*argc + 2) * sizeof(char *));
+  (*argv)[(*argc)++] = str;
+  (*argv)[*argc] = NULL;
+}
+
+static void _argv_add_char(char **string, const char* str, int pos)
+{
+  int len=0;
+
+  /** \fixme XXX work needed: do not realloc for each character, allocate buffer big
+   * enough (size can not be greater to WZD_MAX_PATH)
+   */
+
+  /* first call, first alloc */
+  if (*string == NULL) {
+    *string=malloc(sizeof(char));
+    (*string)[0] = '\0';
+  }
+  len = strlen(*string);
+  
+  /* check if '\' is escape */
+  if (! _argv_chr_is_escape(str, pos) && str[pos] == '\\')
+    return;
+
+  /* check if '\' is escape by an already escape '\' */
+  if ( _argv_chr_is_escape(str, pos-1) && _argv_chr_is_escape(str, pos) &&
+       str[pos] == '\\')
+    return;
+
+  /* realloc && add */
+  *string = realloc(*string, (len + 2) * sizeof(char));
+  (*string)[len] = str[pos];
+  (*string)[len+1] = '\0';
+}
+
+static void _argv_parse(const char *command, char ***argv)
+{
+  int i, argc;
+
+  char *token=NULL;
+  int found_end=0;
+  int found_quote=0;
+
+  if (! command) return;
+ 
+  /* init argv */
+  _argv_init(argv, &argc);
+
+  for(i=0; command[i] != '\0'; i++) {
+    found_end=0;
+
+    /* check for quote */
+    if ( ! _argv_chr_is_escape(command, i) && command[i] == '"') {
+      if ( ! found_quote) {
+        found_quote = 1;
+        continue; /* ignore the quote */
+      }
+      found_end=1;
+      found_quote=0;
+    }
+
+    /* check for space or tabulation */
+    if ((command[i] == '\t' || command[i] == ' ')) {
+      if ( token && ! found_quote ) {
+        found_end=1;
+      }
+      if ( ! token && ! found_quote ) {
+        continue; /* ignore space or tabulation */
+      }
+    }
+    
+    /* check if argument is finish && add it to argv */
+    if (found_end) {
+      _argv_add(argv, &argc, token);
+      token=NULL;
+      continue; /* ignore delim */
+    }
+    
+    /* add current char to token */
+    _argv_add_char(&token, command, i);
+  }
+  /* check if token is not empty => add to argv */
+  if (token) _argv_add(argv, &argc, token);
+}
+
 int my_spawn_nowait(const char * command)
 {
-  int argc;
-  char ** argv;
+  char ** argv = NULL;
   char ** envp;
-  char * str_command, * token;
   int ret = -1;
 
-  argc = 0;
-  argv = malloc(1024 * sizeof(char*));
-  str_command = strdup(command);
-  /** \todo if first character is a quote, read until quote
-   * and remove quotes from string
-   */
-  token = strtok(str_command," \t");
-
-  while (token) {
-    argv[argc++] = token;
-    /** \todo if first character is a quote, read until quote
-     * and remove quotes from string
-     */
-    token = strtok(NULL," \t");
-  }
-  argv[argc] = NULL;
+  /* parse argv */
+  _argv_parse(command, &argv);
 
   /** \todo get env ? Use env to store reply code */
   envp = NULL;
 
-  if (argc) {
+  if (argv[0]) {
     ret = execve(argv[0],argv,envp);
   }
-  free(str_command);
 
   return ret;
 }
