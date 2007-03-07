@@ -115,7 +115,7 @@ int changepass_cert(const char *pass, char *buffer, size_t len)
 /* check certificates, etc. */
 
 /* return 1 if certificate is validated */
-int check_certificate(const char *user, const char *data)
+int check_certificate(const char *user, UNUSED const char *data)
 {
   wzd_context_t * context;
   unsigned int status=0;

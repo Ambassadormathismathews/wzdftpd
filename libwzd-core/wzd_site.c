@@ -293,7 +293,7 @@ void do_site_help(const char *site_command, wzd_context_t * context)
 /********************* do_site_backend *********************/
 /** backend: close / reload / init / commit
  */
-int do_site_backend(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_backend(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * command, *name;
   int ret;
@@ -366,7 +366,7 @@ int do_site_backend(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 /** chacl: user mode file1 [file2 ...]
  */
 
-int do_site_chacl(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chacl(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   wzd_string_t * mode, *username, *filename;
@@ -429,7 +429,7 @@ int do_site_chacl(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 /** chgrp: group file1 [file2 ...]
  */
 
-int do_site_chgrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chgrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
   wzd_string_t * groupname, *filename;
@@ -472,7 +472,7 @@ int do_site_chgrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 /********************* do_site_chmod ***********************/
 /** chmod: mode file1 [file2 ...]
  */
-int do_site_chmod(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chmod(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
   char * endptr;
@@ -542,7 +542,7 @@ int do_site_chmod(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 /** chown: user file1 [file2 ...]
  */
 
-int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chown(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char * buffer;
   wzd_string_t * username, *filename;
@@ -588,7 +588,7 @@ int do_site_chown(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
  *   everyone can change their own password
  *   noone can change a siteops password except himself
  */
-int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chpass(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *new_pass;
   int ret;
@@ -663,7 +663,7 @@ int do_site_chpass(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 }
 
 /********************* do_site_checkperm *******************/
-int do_site_checkperm(wzd_string_t *ignored, wzd_string_t * commandline, wzd_context_t * context)
+int do_site_checkperm(UNUSED wzd_string_t *ignored, wzd_string_t * commandline, wzd_context_t * context)
 {
   unsigned long word;
   char * buffer;
@@ -729,7 +729,7 @@ int do_site_checkperm(wzd_string_t *ignored, wzd_string_t * commandline, wzd_con
 /** free sectionname
  */
 
-int do_site_free(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
+int do_site_free(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
   char * buffer;
   int ret;
@@ -785,7 +785,7 @@ int do_site_free(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
 /********************* do_site_invite **********************/
 /** invite: ircnick
  */
-int do_site_invite(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_invite(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * ircnick;
   int ret;
@@ -821,7 +821,7 @@ int do_site_invite(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   * link: remove linkname
   */
 
-int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_link(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer_dir[BUFFER_LEN], buffer_link[BUFFER_LEN];
   wzd_string_t * dirname, *linkname;
@@ -894,7 +894,7 @@ int do_site_link(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
  *       convert filename
  *       delete
  */
-int do_site_msg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
   wzd_string_t * command, * filename;
@@ -1042,7 +1042,7 @@ static int subcmp(const char * string, const char * substring)
  *        remove perm_name
  * XXX FIXME sort perms before sending !
  */
-int do_site_perm(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_perm(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 /*  int ret;*/
   wzd_string_t * command_name, * perm_name, * ptr;
@@ -1246,7 +1246,7 @@ void do_site_print_file_raw(const char *filename, wzd_context_t *context)
 
 /********************* do_site_reload **********************/
 
-int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context)
+int do_site_reload(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   pid_t pid;
@@ -1285,7 +1285,7 @@ int do_site_reload(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
 
 /********************* do_site_rusage **********************/
 
-int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * context)
+int do_site_rusage(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
 #ifndef WIN32
   int ret=0;
@@ -1405,7 +1405,7 @@ int do_site_rusage(wzd_string_t * ignored, wzd_string_t *param, wzd_context_t * 
 }
 
 /********************* do_site_savecfg *********************/
-int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_savecfg(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * data = NULL;
   size_t length = 0, written;
@@ -1483,7 +1483,7 @@ int do_site_savecfg(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 /********************* do_site_sections ******************/
 /** Print all sections
  */
-int do_site_sections(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_sections(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
   wzd_section_t * section;
   wzd_string_t * buffer = str_allocate();
@@ -1505,7 +1505,7 @@ int do_site_sections(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
 
 /** \brief Show last log messages (10 by default)
  */
-int do_site_showlog(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_showlog(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   int i;
   struct memory_log_t * log = get_log_buffer();
@@ -1557,7 +1557,7 @@ int do_site_showlog(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
 /** unlock: file1 [file2 ...]
  */
 
-int do_site_unlock(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_unlock(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[BUFFER_LEN];
   wzd_string_t * filename;
@@ -1597,7 +1597,7 @@ int do_site_unlock(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
 /** user username
  */
 
-int do_site_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_user(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   const char * username;
   int ret;
@@ -1644,7 +1644,7 @@ int do_site_user(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
  * change access time, modification time, modification of status of a file
  */
 
-int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_utime(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 #ifdef HAVE_STRPTIME
   extern char *strptime (__const char *__restrict __s,
@@ -1746,7 +1746,7 @@ int do_site_utime(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 
 /********************* do_site_vars *********************/
 
-int do_site_vars(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_vars(UNUSED wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   wzd_string_t *command, *varname, *value;
   char * buffer;
@@ -1809,7 +1809,7 @@ int do_site_vars(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context
 
 /****************** do_site_vars_group *******************/
 
-int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_vars_group(UNUSED wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   wzd_string_t *groupname, *command, *varname, *value;
   char * buffer;
@@ -1886,7 +1886,7 @@ int do_site_vars_group(wzd_string_t *ignored, wzd_string_t * command_line, wzd_c
 
 /****************** do_site_vars_user *******************/
 
-int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_vars_user(UNUSED wzd_string_t *ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   wzd_string_t *username, *command, *varname, *value;
   char * buffer;
@@ -1963,7 +1963,7 @@ int do_site_vars_user(wzd_string_t *ignored, wzd_string_t * command_line, wzd_co
 
 /********************* do_site_version *********************/
 
-int do_site_version(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_version(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t * param, wzd_context_t * context)
 {
   char str[256];
   snprintf(str,256,"%s build %s (%s)",
@@ -1976,7 +1976,7 @@ int do_site_version(wzd_string_t * ignored, wzd_string_t * command_line, wzd_con
 /** vfsadd |/home/vfsroot|/physical/path| +O =user
  */
 
-int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_vfsadd(UNUSED wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   char *vpath, *ppath, *target;
 /*  int i;*/
@@ -2062,7 +2062,7 @@ int do_site_vfsadd(wzd_string_t * ignored, wzd_string_t * command_line, wzd_cont
 /** vfsdel /home/vfsroot
  */
 
-int do_site_vfsdel(wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
+int do_site_vfsdel(UNUSED wzd_string_t * ignored, wzd_string_t * command_line, wzd_context_t * context)
 {
   int ret;
 
@@ -2146,7 +2146,7 @@ static int do_internal_wipe(const char *filename, wzd_context_t * context)
 /** wipe: [-r] file1 [file2 ...]
  */
 
-int do_site_wipe(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_wipe(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[WZD_MAX_PATH+1];
   wzd_string_t * firstarg, *filename;

@@ -81,7 +81,7 @@ void do_site_help_grpadd(wzd_context_t * context)
  *
  * grpadd &lt;group&gt; [&lt;backend&gt;]
  */
-int do_site_grpadd(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t *groupname;
   int err;
@@ -149,7 +149,7 @@ void do_site_help_grpdel(wzd_context_t * context)
  *
  * grpdel &lt;group&gt;
  */
-int do_site_grpdel(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpdel(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname;
   int ret;
@@ -232,7 +232,7 @@ void do_site_help_grpren(wzd_context_t * context)
  *
  * grpren oldname newname
  */
-int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpren(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname, *newgroupname;
   int ret;
@@ -293,7 +293,7 @@ int do_site_grpren(wzd_string_t *ignored, wzd_string_t *command_line, wzd_contex
   return 0;
 }
 
-int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_ginfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * str;
   wzd_string_t * groupname;
@@ -327,7 +327,7 @@ int do_site_ginfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
   return 0;
 }
 
-int do_site_gsinfo(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_gsinfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * str;
   wzd_string_t * groupname;
@@ -369,7 +369,7 @@ void do_site_help_grpaddip(wzd_context_t * context)
  *
  * grpaddip &lt;group&gt; &lt;ip&gt;
  */
-int do_site_grpaddip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname, *ip;
   int ret;
@@ -436,7 +436,7 @@ void do_site_help_grpdelip(wzd_context_t * context)
  *
  * grpdelip &lt;group&gt; &lt;slot_number&gt;
  */
-int do_site_grpdelip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * groupname, *ip;
@@ -531,7 +531,7 @@ void do_site_help_grpratio(wzd_context_t * context)
  *
  * grpratio group ratio
  */
-int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_ratio, *groupname;
@@ -594,7 +594,7 @@ int do_site_grpratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_cont
  *
  * grpkill group
  */
-int do_site_grpkill(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpkill(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   ListElmt * elmnt;
   wzd_context_t * loop_context;
@@ -658,7 +658,7 @@ void do_site_help_grpchange(wzd_context_t * context)
  *
  * grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * groupname, * field, * value;
@@ -809,7 +809,7 @@ void do_site_help_group(wzd_context_t * context)
 }
 
 /* regroup all group administration in one site command */
-int do_site_group(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_group(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
 
   wzd_string_t * cmd;

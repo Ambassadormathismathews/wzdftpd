@@ -53,6 +53,20 @@
 #include "arch/win32.h"
 
 
+#ifdef __GNUC__
+
+# if __GNUC__ > 3
+#  define UNUSED __attribute__((unused))
+# else
+#  define UNUSED
+# endif
+
+#else /* __GNUC__ */
+
+# define UNUSED
+
+#endif /* __GNUC__ */
+
 
 
 #ifndef _MSC_VER

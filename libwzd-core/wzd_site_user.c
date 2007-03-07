@@ -86,7 +86,7 @@ void do_site_help_adduser(wzd_context_t * context)
  *
  * adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;] [&lt;ip1&gt; &lt;ip2&gt; &lt;...&gt;]
  */
-int do_site_adduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_adduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *password, *groupname, *ip=NULL;
   int ret;
@@ -206,7 +206,7 @@ void do_site_help_deluser(wzd_context_t * context)
  *
  * deluser &lt;user&gt;
  */
-int do_site_deluser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_deluser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username;
   int ret;
@@ -272,7 +272,7 @@ void do_site_help_readduser(wzd_context_t * context)
  *
  * readduser &lt;user&gt;
  */
-int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_readduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * username;
@@ -331,7 +331,7 @@ int do_site_readduser(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
  *
  * purge [&lt;user&gt;] [&lt;backend&gt;]
  */
-int do_site_purgeuser(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
+int do_site_purgeuser(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_t * context)
 {
   wzd_string_t * username;
   int ret;
@@ -412,7 +412,7 @@ void do_site_help_addip(wzd_context_t * context)
  *
  * addip &lt;user&gt; &lt;ip1&gt; [&lt;ip2&gt; ...]
  */
-int do_site_addip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *ip;
   int ret;
@@ -486,7 +486,7 @@ void do_site_help_delip(wzd_context_t * context)
  *
  * ip can be replaced by the slot_number
  */
-int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_delip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr_ul;
   wzd_string_t * username, *ip;
@@ -580,7 +580,7 @@ int do_site_delip(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
  *
  * change color
  */
-int do_site_color(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
+int do_site_color(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
   wzd_user_t * me;
   char * src_ptr, *dst_ptr;
@@ -640,7 +640,7 @@ void do_site_help_change(wzd_context_t * context)
  *
  * change &lt;user&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_change(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * username, * field, * value;
@@ -910,7 +910,7 @@ void do_site_help_changegrp(wzd_context_t * context)
  *
  * changegrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
  */
-int do_site_changegrp(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, * group_name;
   unsigned long mod_type;
@@ -991,7 +991,7 @@ void do_site_help_chratio(wzd_context_t * context)
  *
  * chratio user ratio
  */
-int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr=NULL;
   wzd_string_t * str_ratio, *username;
@@ -1078,7 +1078,7 @@ int do_site_chratio(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
  *
  * flags &lt;user&gt; &lt;newflags&gt;
  */
-int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   wzd_string_t *newflags = NULL;
@@ -1151,7 +1151,7 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
  *
  * NOTE: you need to be siteop to change your idletime
  */
-int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   char *ptr;
@@ -1194,7 +1194,7 @@ int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
  *
  * tagline [&lt;tagline&gt;]
  */
-int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_tagline(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   int ret;
@@ -1227,7 +1227,7 @@ int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_conte
  *
  * kill &lt;pid&gt;
  */
-int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
+int do_site_kill(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_t * context)
 {
   char *ptr;
   int ret;
@@ -1261,7 +1261,7 @@ int do_site_kill(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
  *
  * kick &lt;user&gt;
  */
-int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t * context)
+int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_t * context)
 {
   wzd_string_t *username;
   int ret;
@@ -1312,7 +1312,7 @@ int do_site_kick(wzd_string_t *command_line, wzd_string_t *param, wzd_context_t 
  *
  * killpath &lt;path&gt;
  */
-int do_site_killpath(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_killpath(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *realpath;
   wzd_string_t *path;
@@ -1366,7 +1366,7 @@ void do_site_help_give(wzd_context_t * context)
  *
  * give user kbytes
  */
-int do_site_give(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_give, *username;
@@ -1450,7 +1450,7 @@ void do_site_help_take(wzd_context_t * context)
  *
  * take user kbytes
  */
-int do_site_take(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_take, *username;
@@ -1536,7 +1536,7 @@ void do_site_help_su(wzd_context_t * context)
  *
  * su user
  */
-int do_site_su(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t *username;
   int ret;
