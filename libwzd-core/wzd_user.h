@@ -118,4 +118,13 @@ uid_t user_find_free_uid(uid_t start);
  */
 int user_ip_add(wzd_user_t * user, const char * ip, int is_authorized);
 
+/** \brief List all users in a particular group, optionally filtered by a flag
+ *
+ * Optional: a flag can be specified where only users with this flag set will be returned (use 0 to ignore)
+ * \return
+ *  - a user list terminated by -1, must be freed with wzd_free()
+ *  - NULL if no group with that gid was found
+ */
+uid_t * group_list_users(gid_t gid, char flag /* optional */);
+
 #endif /* __WZD_USER_H__ */

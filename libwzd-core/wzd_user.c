@@ -344,7 +344,7 @@ uid_t * user_get_list(u16_t backend_id)
   int index;
   uid_t uid;
 
-  /** \todo XXX we should use locks (and be careful to avoid deadlocks) */
+/*  WZD_MUTEX_LOCK(SET_MUTEX_USER);*/
 
   /** \todo it would be better to get the real number of used uid */
   size = _max_uid;
@@ -359,6 +359,8 @@ uid_t * user_get_list(u16_t backend_id)
   }
   uid_list[index] = (uid_t)-1;
   uid_list[size] = (uid_t)-1;
+
+/*  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);*/
 
   return uid_list;
 }
@@ -396,4 +398,52 @@ int user_ip_add(wzd_user_t * user, const char * ip, int is_authorized)
   return ip_add_check(&user->ip_list, ip, is_authorized);
 }
 
+/** \brief List all users in a particular group, optionally filtered by a flag
+ *
+ * Optional: a flag can be specified where only users with this flag set will be returned (use 0 to ignore)
+ * \return
+ *  - a user list terminated by -1, must be freed with wzd_free()
+ *  - NULL if no group with that gid was found
+ */
+uid_t * group_list_users(gid_t gid, char flag /* optional */)
+{
+  uid_t * uid_list = NULL;
+  uid_t size;
+  int index;
+  uid_t uid;
+  int groups;
+
+  /* Check that the supplied gid is valid */
+  if (group_get_by_id(gid) == NULL)
+    return NULL;
+
+/*  WZD_MUTEX_LOCK(SET_MUTEX_USER);*/
+
+  /** \todo it would be better to get the real number of used uid */
+  size = _max_uid;
+
+  uid_list = (uid_t*)wzd_malloc((size+1)*sizeof(uid_t));
+  index = 0;
+  /* We don't need to lock the access since the _user_array can only grow */
+  for (uid=0; uid<size; uid++) {
+    if (_user_array[uid] != NULL && _user_array[uid]->uid != INVALID_USER) {
+      for (groups=0; groups<MAX_GROUPS_PER_USER; groups++) {
+        if (_user_array[uid]->groups[groups] == gid) {
+          /* Check if the user has a certain flag */
+          if (flag == 0 || strchr(_user_array[uid]->flags,flag)!=NULL) {
+            uid_list[index++] = _user_array[uid]->uid;
+            /* Found a match, stop cycling through groups list! */
+            groups = MAX_GROUPS_PER_USER;
+          }
+        }
+      }
+    }
+  }
+  uid_list[index] = (uid_t)-1;
+  uid_list[size] = (uid_t)-1;
+
+/*  WZD_MUTEX_UNLOCK(SET_MUTEX_USER);*/
+
+  return uid_list;
+}
 
