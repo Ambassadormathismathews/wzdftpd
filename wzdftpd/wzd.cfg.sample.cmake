@@ -74,6 +74,7 @@ backend = @datadir@/@PACKAGE@/backends/libwzd_plaintext.so > 124
 #backend = @datadir@/@PACKAGE@/backends/libwzd_mysql.so
 #backend = @datadir@/@PACKAGE@/backends/libwzd_pgsql.so
 #backend = @datadir@/@PACKAGE@/backends/libwzd_pam.so
+#backend = @datadir@/@PACKAGE@/backends/libwzd_sqlite.so
 
 # speed limits in bytes /sec (approx !)
 # 0 = no limit
@@ -255,6 +256,9 @@ param = @sysconfdir@/users
 
 [pgsql]
 #param = login:password@host:base
+
+[sqlite]
+#param = file.db
 
 [sections]
 # sections are used to define local server properties

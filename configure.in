@@ -166,6 +166,7 @@ WZD_LIB_KRB5  # disabled for release 0.6
 WZD_LIB_PAM
 WZD_LIB_PERL
 WZD_LIB_MYSQL
+WZD_LIB_SQLITE3
 WZD_LIB_ZEROCONF
 WZD_LIB_PGSQL
 WZD_LIB_TCL(8,3)
@@ -265,6 +266,7 @@ AH_TEMPLATE([WZD_BUILD_OPTS],
 
 AM_CONDITIONAL([HAVE_KRB5], [test "$wzd_have_krb5" = "yes"])
 AM_CONDITIONAL([HAVE_MYSQL], [test "$wzd_have_mysql" = "yes"])
+AM_CONDITIONAL([HAVE_SQLITE3], [test "$wzd_have_sqlite3" = "yes"])
 AM_CONDITIONAL([HAVE_PAM], [test "$wzd_have_pam" = "yes"])
 AM_CONDITIONAL([HAVE_PERL], [test "$wzd_have_perl" = "yes"])
 AM_CONDITIONAL([HAVE_PGSQL], [test "$wzd_have_pgsql" = "yes"])
@@ -305,6 +307,7 @@ AC_CONFIG_FILES([Makefile
                  backends/Makefile
                  backends/plaintext/Makefile
                  backends/mysql/Makefile
+		 backends/sqlite/Makefile
                  backends/pam/Makefile
                  backends/pgsql/Makefile
 		 init.d/Makefile
@@ -359,6 +362,7 @@ Here is a short summary of what I've found on your system :
 
   backends:
        MySQL:  $wzd_have_mysql
+       Sqlite3: $wzd_have_sqlite3
        PAM:    $wzd_have_pam
        PostgreSQL:  $wzd_have_pgsql
 

@@ -44,6 +44,7 @@ include (MacroLibrary)
 # so the checking for the software can be disabled via ccmake or -DWITH_<name>=OFF
 macro_optional_find_package(GnuTLS)
 macro_optional_find_package(MySQL)
+
 IF (GNUTLS_FOUND)
   MESSAGE(STATUS "GnuTLS was found, disabling OpenSSL check. Use -DWITH_GnuTLS=OFF to disable GnuTLS")
 ELSE (GNUTLS_FOUND)
@@ -51,6 +52,7 @@ ELSE (GNUTLS_FOUND)
 ENDIF (GNUTLS_FOUND)
 macro_optional_find_package(PerlDev)
 macro_optional_find_package(PostgreSQL)
+macro_optional_find_package(SQLite3)
 macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
 
