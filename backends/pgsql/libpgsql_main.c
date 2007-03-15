@@ -194,7 +194,7 @@ static int FCN_INIT(const char *arg)
   return 0;
 }
 
-static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
+static uid_t FCN_VALIDATE_LOGIN(const char *login, UNUSED wzd_user_t * _ignored)
 {
   wzd_user_t * user, * registered_user;
   uid_t reg_uid, uid;
@@ -234,7 +234,7 @@ static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
   return uid;
 }
 
-static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * _unused)
+static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, UNUSED wzd_user_t * _unused)
 {
   wzd_user_t * user;
 
@@ -258,7 +258,7 @@ static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t *
   return INVALID_USER;
 }
 
-static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
+static uid_t FCN_FIND_USER(const char *name, UNUSED wzd_user_t * _ignored)
 {
   wzd_user_t * user;
   uid_t reg_uid;
@@ -284,7 +284,7 @@ static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
   return user->uid;
 }
 
-static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * _ignored)
+static gid_t FCN_FIND_GROUP(const char *name, UNUSED wzd_group_t * _ignored)
 {
   wzd_group_t * group;
   gid_t reg_gid;
