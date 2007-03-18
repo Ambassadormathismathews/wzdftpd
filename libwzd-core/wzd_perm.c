@@ -68,13 +68,16 @@ const char * perm_tab[] = {
 };
 
 
-/***/
-
-wzd_command_perm_t * perm_create_empty_perm(void)
+/** \brief Create and initialize an empty permission structure
+ * \ return a newly allocated structure
+ */
+static wzd_command_perm_t * perm_create_empty_perm(void)
 {
   wzd_command_perm_t * perm;
 
   perm = malloc(sizeof(wzd_command_perm_t));
+  if (perm == NULL) return NULL;
+
   memset(perm->command_name,0,256);
   perm->entry_list = NULL;
   perm->next_perm = NULL;
@@ -82,21 +85,31 @@ wzd_command_perm_t * perm_create_empty_perm(void)
   return perm;
 }
 
-/***/
-
-wzd_command_perm_entry_t * perm_create_empty_entry(void)
+/** \brief Create and initialize an empty permission entry structure
+ * \ return a newly allocated structure
+ */
+static wzd_command_perm_entry_t * perm_create_empty_entry(void)
 {
   wzd_command_perm_entry_t * entry;
 
   entry = malloc(sizeof(wzd_command_perm_entry_t));
+  if (entry == NULL) return NULL;
+
   memset(entry->target,0,256);
   entry->next_entry = NULL;
 
   return entry;
 }
 
-/***/
 
+/** \brief Remove the permission structure associated with \a commandname from list
+ * \param[in] commandname command name
+ * \param[in,out] perm_list permission list
+ * \return
+ *  - 0 if ok
+ *  - 1 if the command was not found
+ *  - -1 on error
+ */
 int perm_remove(const char *commandname, wzd_command_perm_t ** perm_list)
 {
   wzd_command_perm_t * perm, * previous;
@@ -140,8 +153,9 @@ int perm_remove(const char *commandname, wzd_command_perm_t ** perm_list)
   return 1; /* not found */
 }
 
-/***/
-
+/** \brief Free \a perm and all contained structures recursively
+ * \param perm permission list
+ */
 void perm_free_recursive(wzd_command_perm_t * perm)
 {
   wzd_command_perm_t * perm_next;
@@ -161,25 +175,14 @@ void perm_free_recursive(wzd_command_perm_t * perm)
   } while (perm);
 }
 
-/***/
 
-int perm_is_valid_perm(const char *permname)
-{
-  int i=0;
-
-  while (perm_tab[i]) {
-    if (strncasecmp(permname,"site_",5)==0)
-      return 0;
-    if (strcasecmp(permname,perm_tab[i])==0)
-      return 0;
-    i++;
-  }
-
-  return 1;
-}
-
-/***/
-
+/** \brief Convert permission structure to printable string
+ * \note: result string will start with a space
+ * \param[in] perm A wzd_command_perm_t strcture
+ * \param[out] perm_buffer Output buffer
+ * \param[out] max_length Maximum number of bytes that can be written to output buffer
+ * \return 0 if ok
+ */
 int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_length)
 {
   char *perm_buffer_ptr;
@@ -214,8 +217,14 @@ int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_len
   return 0;
 }
 
-/***/
-
+/** \brief Find permission structure (create it if needed) for a command and return the structure
+ * \param[in] commandname the command name
+ * \param[in,out] perm_list permission list
+ * \return
+ *  - the permission structure if found
+ *  - a new structure if none was found
+ *  - NULL on error
+ */
 wzd_command_perm_t * perm_find_create(const char *commandname, wzd_command_perm_t ** perm_list)
 {
   wzd_command_perm_t * perm, * insert_point;
@@ -249,8 +258,13 @@ wzd_command_perm_t * perm_find_create(const char *commandname, wzd_command_perm_
   return perm;
 }
 
-/***/
-
+/** \brief Find permission structure for a command and return the structure
+ * \param[in] commandname the command name
+ * \param[in] perm_list permission list
+ * \return
+ *  - the permission structure if found
+ *  - NULL if not found
+ */
 wzd_command_perm_t * perm_find(const char *commandname, wzd_command_perm_t * perm_list)
 {
   wzd_command_perm_t * perm;
@@ -268,9 +282,16 @@ wzd_command_perm_t * perm_find(const char *commandname, wzd_command_perm_t * per
   return NULL;
 }
 
-/***/
-
-wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_command_perm_t * command_perm)
+/** \brief Find permission entry structure (create it if needed) applying for a command and a target, and return the structure
+ * \param[in] target the target name (user, group or flag)
+ * \param[in] cp the command type
+ * \param[in,out] command_perm the permission to check
+ * \return
+ *  - the permission entry if found
+ *  - a new entry if none was found
+ *  - NULL on error
+ */
+wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_cp_t cp, wzd_command_perm_t * command_perm)
 {
   wzd_command_perm_entry_t * entry, *insert_point;
 
@@ -278,13 +299,14 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
   if (!entry) {
     entry = command_perm->entry_list = perm_create_empty_entry();
     strncpy(entry->target,target,256);
+    entry->cp = cp;
     return entry;
   }
 
   /** \todo TODO compare entries with target (regexp powaa) and if same, simplify or warn */
 
   do {
-    if (strcasecmp(entry->target,target)==0) {
+    if (strcasecmp(entry->target,target)==0 && entry->cp == cp) {
       return entry;
     }
     entry = entry->next_entry;
@@ -293,6 +315,7 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
   /* not found, insert a new entry (tail insertion, order is important) */
   entry = perm_create_empty_entry();
   strncpy(entry->target,target,256);
+  entry->cp = cp;
   entry->next_entry = NULL;
   insert_point = command_perm->entry_list;
   if (insert_point == NULL) {
@@ -307,8 +330,14 @@ wzd_command_perm_entry_t * perm_find_create_entry(const char * target, wzd_comma
   return entry;
 }
 
-/***/
-
+/** \brief Find permission entry applying for a command and a target, and return the structure
+ * \param[in] target the target name (user, group or flag)
+ * \param[in] cp the command type
+ * \param[in] command_perm the permission to check
+ * \return
+ *  - the permission entry if found
+ *  - NULL if not found
+ */
 wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd_command_perm_t * command_perm)
 {
   wzd_command_perm_entry_t * entry;
@@ -337,8 +366,12 @@ wzd_command_perm_entry_t * perm_find_entry(const char * target, wzd_cp_t cp, wzd
   return NULL;
 }
 
-/***/
-
+/** \brief Create a new permission, parse entries, and add it to permission list
+ * \param[in] permname command name
+ * \param[in] permline text describing permissions
+ * \param[out] perm_list permission list
+ * \return 0 if ok
+ */
 int perm_add_perm(const char *permname, const char *permline, wzd_command_perm_t ** perm_list)
 {
   char * dyn_buffer;
@@ -399,8 +432,7 @@ out_err(LEVEL_HIGH,"Incorrect permission format: %s: %s\n",permname,token);
       *(--token)='!';
     if (token < dyn_buffer) out_err(LEVEL_HIGH,"token < dyn_buffer !! %s:%d\n",__FILE__,__LINE__);
     /* add entry */
-    perm_entry = perm_find_create_entry(token,command_perm);
-    perm_entry->cp = cp;
+    perm_entry = perm_find_create_entry(token,cp,command_perm);
 
     token = strtok_r(NULL," \t\r\n",&ptr);
   }
@@ -409,9 +441,16 @@ out_err(LEVEL_HIGH,"Incorrect permission format: %s: %s\n",permname,token);
   return 0;
 }
 
-/***/
-
-/** \return 0 if ok, 1 if denied, -1 otherwise */
+/** \brief Check if user is authorized to execute command
+ * \note the default choice is to \b deny execution if nothing specific was found
+ * \param[in] permname command name
+ * \param[in] context user context
+ * \param[in] perm_list permission list
+ * \return
+ *  - 0 if ok
+ *  - 1 if denied
+ *  - -1 on error
+ */
 int perm_check(const char *permname, const wzd_context_t * context, wzd_command_perm_t * perm_list)
 {
   wzd_command_perm_t * command_perm;
@@ -425,6 +464,15 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_command_
   return perm_check_perm(command_perm,context);
 }
 
+/** \brief Check if user is authorized to execute command
+ * \note the default choice is to \b deny execution if nothing specific was found
+ * \param[in] perm permission structure
+ * \param[in] context user context
+ * \return
+ *  - 0 if ok
+ *  - 1 if denied
+ *  - -1 on error
+ */
 int perm_check_perm(const wzd_command_perm_t *perm, const wzd_context_t * context)
 {
   wzd_command_perm_entry_t * entry;
