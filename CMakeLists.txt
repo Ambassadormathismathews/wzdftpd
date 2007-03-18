@@ -126,6 +126,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzdftpd/wzd.cfg.sample.cmake ${CMAKE_
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzdftpd.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzdftpd.pc @ONLY)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzd-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzd-config @ONLY)
 
+add_subdirectory (libwzd-base)
 add_subdirectory (libwzd-core)
 add_subdirectory (wzdftpd)
 add_subdirectory (backends)

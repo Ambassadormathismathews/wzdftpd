@@ -30,6 +30,8 @@ if(GNUTLS_FOUND)
   INCLUDE_DIRECTORIES(${GNUTLS_INCLUDE_DIR})
 endif(GNUTLS_FOUND)
 
+add_subdirectory (arch)
+
 SET(libwzd_core_pub_HEADERS
 	wzd_action.h
 	wzd_all.h
