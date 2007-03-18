@@ -14,5 +14,5 @@ Name: @PACKAGE@
 Description: A portable, modular, small and efficient ftp server
 Version: @WZD_VERSION@
 Requires:
-Libs: -lwzd-core @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @WZD_SSL_LIBS@
+Libs: -L${lib_dir} -lwzd_core @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ @WZD_SSL_LIBS@
 Cflags: -I${wzd_include_dir} @PTHREAD_CFLAGS@ @WZD_SSL_INCLUDES@
