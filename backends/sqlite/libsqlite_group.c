@@ -34,7 +34,6 @@
  */
 
 static int   libsqlite_group_next_id();
-static int   libsqlite_group_get_ref_by_id(gid_t gid);
 static gid_t libsqlite_group_get_id_by_name(const char *name);
 static void  libsqlite_group_get_ip(wzd_group_t *group);
 static void  libsqlite_group_update_ip(gid_t gid, wzd_group_t *group);
@@ -84,7 +83,7 @@ int libsqlite_group_exist_id(gid_t gid)
 
 /**
  * \brief retrieve the next group id. used in libsqlite_group_add.
- * \return an available group id, or INVALID_GROUP
+ * \return an available group id, or INVALID_GROUP on error.
  */
 static int libsqlite_group_next_id()
 {
@@ -113,11 +112,16 @@ static int libsqlite_group_next_id()
     }
   }
  
- sqlite3_finalize(stmt);
- libsqlite_close(&db);
+  sqlite3_finalize(stmt);
+  libsqlite_close(&db);
 
- if (max_gid == INVALID_GROUP) return INVALID_GROUP;
+  /* no group in table then it's the first.. */
+  if (max_gid == 0) return 0;
 
+  /* max_gid shoud be set > -1 it's an error */
+  if (max_gid == INVALID_GROUP) return INVALID_GROUP;
+
+  /* else max_gid + 1 */
   return ++max_gid;
 }
 
@@ -126,7 +130,7 @@ static int libsqlite_group_next_id()
  * \param gid the group id.
  * \return group reference in database or -1 on error.
  */
-static int libsqlite_group_get_ref_by_id(gid_t gid)
+int libsqlite_group_get_ref_by_id(gid_t gid)
 {
   int ret, ref=-1;
 

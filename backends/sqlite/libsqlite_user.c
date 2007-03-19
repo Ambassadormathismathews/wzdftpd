@@ -87,7 +87,7 @@ int libsqlite_user_exist_id(uid_t uid)
 
 /**
  * \brief Retrieve the next usable uid. used in INSERT query. (libsqlite_user_add)
- * \return an avialable uid or INVALID_USER.
+ * \return an avialable uid or INVALID_USER on error.
  */
 static uid_t libsqlite_user_next_id()
 {
@@ -119,8 +119,13 @@ static uid_t libsqlite_user_next_id()
  sqlite3_finalize(stmt);
  libsqlite_close(&db);
 
- if (max_uid == 0) return INVALID_USER;
+ /* no user in table then it's the first.. */
+ if (max_uid == 0) return 0;
 
+ /* max_uid shoud be set > -1 it's an error */
+ if (max_uid == INVALID_USER) return INVALID_USER;
+
+ /* else max_uid + 1 */
  return ++max_uid;
 }
 
@@ -782,7 +787,10 @@ static void libsqlite_user_update_group(uid_t uid, wzd_user_t *user)
 
   for(j=0; j < user->group_num; j++) { 
     query = sqlite3_mprintf("INSERT INTO ugr VALUES (%d, %d);",
-                            uref, user->groups[j]);
+                            uref,
+                            libsqlite_group_get_ref_by_id(user->groups[j])
+    );
+
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
       out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);

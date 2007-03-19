@@ -37,6 +37,7 @@
 int          libsqlite_group_exist_id(gid_t gid);
 
 gid_t        libsqlite_group_get_id_by_ref(int ref);
+int          libsqlite_group_get_ref_by_id(gid_t gid);
 
 wzd_group_t *libsqlite_group_get_by_id(gid_t gid);
 wzd_group_t *libsqlite_group_get_by_name(const char *name);
