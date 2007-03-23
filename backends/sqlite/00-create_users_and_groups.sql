@@ -4,7 +4,7 @@ INSERT INTO
     gref, gid, groupname,defaultpath,tagline
   ) 
   VALUES (
-    1, 1,'admin','/','admin group'
+    1, 0,'admin','/','admin group'
   );
 
 INSERT INTO 
@@ -14,7 +14,7 @@ INSERT INTO
     user_slots, leech_slots, perms, credits, last_login
   )
   VALUES (
-    1, 1, 'wzdftpd', 'wzdftpd', '/', 'Admin', "O", NULL, NULL, NULL, 
+    1, 0, 'wzdftpd', 'wzdftpd', '/', 'Admin', "O", NULL, NULL, NULL, 
     2, 0, NULL, NULL, 4294967295, NULL, NULL
   );
 

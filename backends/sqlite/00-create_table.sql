@@ -53,9 +53,9 @@ CREATE TABLE userip (
 
 CREATE TABLE stats (
   uref INTEGER NOT NULL PRIMARY KEY,
-  bytes_ul_total BIGINT default NULL,
-  bytes_dl_total BIGINT default NULL,
-  files_ul_total INTEGER default NULL,
-  files_dl_total INTEGER default NULL
+  bytes_ul_total BIGINT default 0,
+  bytes_dl_total BIGINT default 0,
+  files_ul_total INTEGER default 0,
+  files_dl_total INTEGER default 0
 );
 

@@ -43,49 +43,6 @@ static void  libsqlite_user_update_group(uid_t uid, wzd_user_t *user);
 static void  libsqlite_user_update_stats(uid_t uid, wzd_user_t *user);
 
 /**
- * \brief check if a user exist by uid
- * \param uid the user uid
- * \return 1 if exist, else 0.
- */
-int libsqlite_user_exist_id(uid_t uid)
-{
-  int ret;
-
-  uid_t sql_uid=INVALID_USER;
-
-  sqlite3 *db=NULL;
-  sqlite3_stmt *stmt=NULL;
-
-  db = libsqlite_open();
-  if (db == NULL) return 0;
-  
-  sqlite3_prepare(db, "SELECT uid FROM users WHERE uid = ?;", -1,
-                  &stmt, NULL);
-
-  sqlite3_bind_int(stmt, 1, uid);
-
-  while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
-    switch(ret) {
-      case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-        return 0;
-      case SQLITE_BUSY:
-        continue;
-      case SQLITE_ROW:
-        sql_uid = sqlite3_column_int(stmt, 0);
-        break;
-    }
-  }
- 
- sqlite3_finalize(stmt);
- libsqlite_close(&db);
-
- if (sql_uid != uid) return 0;
-
-  return 1;
-}
-
-/**
  * \brief Retrieve the next usable uid. used in INSERT query. (libsqlite_user_add)
  * \return an avialable uid or INVALID_USER on error.
  */
@@ -93,6 +50,7 @@ static uid_t libsqlite_user_next_id()
 {
   int ret;
 
+  int count=0;
   uid_t max_uid=INVALID_USER;
 
   sqlite3 *db=NULL;
@@ -101,7 +59,8 @@ static uid_t libsqlite_user_next_id()
   db = libsqlite_open();
   if (db == NULL) return INVALID_USER;
   
-  sqlite3_prepare(db, "SELECT MAX(uid) FROM users;", -1, &stmt, NULL);
+  sqlite3_prepare(db, "SELECT COUNT(uid), MAX(uid) FROM users;",
+                  -1, &stmt, NULL);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
@@ -111,7 +70,8 @@ static uid_t libsqlite_user_next_id()
       case SQLITE_BUSY:
         continue;
       case SQLITE_ROW:
-        max_uid = sqlite3_column_int(stmt, 0);
+        count = sqlite3_column_int(stmt, 0);
+        max_uid = sqlite3_column_int(stmt, 1);
         break;
     }
   }
@@ -120,7 +80,7 @@ static uid_t libsqlite_user_next_id()
  libsqlite_close(&db);
 
  /* no user in table then it's the first.. */
- if (max_uid == 0) return 0;
+ if (max_uid == 0 && count == 0) return 0;
 
  /* max_uid shoud be set > -1 it's an error */
  if (max_uid == INVALID_USER) return INVALID_USER;
@@ -499,27 +459,27 @@ void libsqlite_user_add(wzd_user_t *user)
   uref = libsqlite_user_get_ref_by_uid(user->uid);
   if (uref == -1) return;
 #ifndef WIN32
-  query = sqlite3_mprintf(
-    "INSERT INTO stats (                                               \
-      uref, bytes_ul_total, bytes_dl_total, files_ul_total,            \
-      files_dl_total                                                   \
-     ) VALUES (                                                        \
-      %d, %"PRId64", %"PRId64", %d, %d                                 \
-     );",
-     uref, user->stats.bytes_ul_total, user->stats.bytes_dl_total,
-     user->stats.files_ul_total, user->stats.files_dl_total
- );
+    query = sqlite3_mprintf(
+      "INSERT INTO stats (                                               \
+        uref, bytes_ul_total, bytes_dl_total, files_ul_total,            \
+        files_dl_total                                                   \
+       ) VALUES (                                                        \
+        %d, %"PRId64", %"PRId64", %d, %d                                 \
+       );",
+       uref, user->stats.bytes_ul_total, user->stats.bytes_dl_total,
+       user->stats.files_ul_total, user->stats.files_dl_total
+    );
 #else
-  query = sqlite3_mprintf(
-    "INSERT INTO stats (                                               \
-      uref, bytes_ul_total, bytes_dl_total, files_ul_total,            \
-      files_dl_total                                                   \
-     ) VALUES (                                                        \
-      %d, %I64u, %I64u, %d, %d                                         \
-     );",
-     uref, user->stats.bytes_ul_total, user->stats.bytes_dl_total,
-     user->stats.files_ul_total, user->stats.files_dl_total
-  );
+    query = sqlite3_mprintf(
+      "INSERT INTO stats (                                               \
+        uref, bytes_ul_total, bytes_dl_total, files_ul_total,            \
+        files_dl_total                                                   \
+       ) VALUES (                                                        \
+        %d, %I64u, %I64u, %d, %d                                         \
+       );",
+       uref, user->stats.bytes_ul_total, user->stats.bytes_dl_total,
+       user->stats.files_ul_total, user->stats.files_dl_total
+    );
 #endif /* WIN32 */
   out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
 
@@ -529,6 +489,9 @@ void libsqlite_user_add(wzd_user_t *user)
     out_log(SQLITE_LOG_CHANNEL, "Sqlite backend query error: %s\n", errmsg);
     goto error_sqlite_close;
   }
+
+  libsqlite_user_update_ip(user->uid, user);
+  libsqlite_user_update_group(user->uid, user);
 
 error_sqlite_close:
   libsqlite_close(&db);
@@ -552,11 +515,11 @@ void libsqlite_user_del(uid_t uid)
   if (!db) return;
 
   query = sqlite3_mprintf(
-    "DELETE FROM users WHERE uid = %d;                  \
+    "DELETE FROM users WHERE uref = %d;                  \
      DELETE FROM userip WHERE uref = %d;                \
      DELETE FROM ugr WHERE uref = %d;                   \
      DELETE FROM stats WHERE uref = %d",
-     uid, ref, ref, ref
+     ref, ref, ref, ref
   );
 
   sqlite3_exec(db, query, NULL, NULL, &errmsg);

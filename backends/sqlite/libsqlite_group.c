@@ -39,55 +39,13 @@ static void  libsqlite_group_get_ip(wzd_group_t *group);
 static void  libsqlite_group_update_ip(gid_t gid, wzd_group_t *group);
 
 /**
- * \brief check if group exist by id.
- * \param gid the group id.
- * \return 1 if user exist else 0.
- */
-int libsqlite_group_exist_id(gid_t gid)
-{
-  int ret;
-
-  gid_t sql_gid=INVALID_GROUP;
-
-  sqlite3 *db=NULL;
-  sqlite3_stmt *stmt=NULL;
-
-  db = libsqlite_open();
-  if (db == NULL) return 0;
-  
-  sqlite3_prepare(db, "SELECT gid FROM groups WHERE gid = ?;", -1,
-                  &stmt, NULL);
-
-  sqlite3_bind_int(stmt, 1, gid);
-
-  while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
-    switch(ret) {
-      case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-        return 0;
-      case SQLITE_BUSY:
-        continue;
-      case SQLITE_ROW:
-        sql_gid = sqlite3_column_int(stmt, 0);
-        break;
-    }
-  }
- 
-  sqlite3_finalize(stmt);
-  libsqlite_close(&db);
-
-  if (sql_gid != gid) return 0;
-
-  return 1;
-}
-
-/**
  * \brief retrieve the next group id. used in libsqlite_group_add.
  * \return an available group id, or INVALID_GROUP on error.
  */
 static int libsqlite_group_next_id()
 {
   int ret;
+  int count = 0;
 
   gid_t max_gid=INVALID_GROUP;
 
@@ -97,7 +55,8 @@ static int libsqlite_group_next_id()
   db = libsqlite_open();
   if (db == NULL) return INVALID_GROUP;
   
-  sqlite3_prepare(db, "SELECT MAX(gid) FROM groups;", -1, &stmt, NULL);
+  sqlite3_prepare(db, "SELECT COUNT(gid), MAX(gid) FROM groups;",
+                  -1, &stmt, NULL);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
@@ -107,7 +66,8 @@ static int libsqlite_group_next_id()
       case SQLITE_BUSY:
         continue;
       case SQLITE_ROW:
-        max_gid = sqlite3_column_int(stmt, 0);
+        count = sqlite3_column_int(stmt, 0);
+        max_gid = sqlite3_column_int(stmt, 1);
         break;
     }
   }
@@ -116,7 +76,7 @@ static int libsqlite_group_next_id()
   libsqlite_close(&db);
 
   /* no group in table then it's the first.. */
-  if (max_gid == 0) return 0;
+  if (max_gid == 0 && count == 0) return 0;
 
   /* max_gid shoud be set > -1 it's an error */
   if (max_gid == INVALID_GROUP) return INVALID_GROUP;
@@ -443,6 +403,8 @@ int libsqlite_group_add(wzd_group_t *group)
     return 0;
   }
   sqlite3_free(query);
+
+  libsqlite_group_update_ip(group->gid, group);
 
   libsqlite_close(&db);
   return 1;

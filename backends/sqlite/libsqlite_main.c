@@ -132,7 +132,7 @@ static int FCN_FINI(void)
   return 0;
 }
 
-static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
+static uid_t FCN_VALIDATE_LOGIN(const char *login, UNUSED wzd_user_t * _ignored)
 {
  
   out_log(SQLITE_LOG_CHANNEL, "Backend sqlite search for user '%s'\n", login);
@@ -140,7 +140,7 @@ static uid_t FCN_VALIDATE_LOGIN(const char *login, wzd_user_t * _ignored)
   return libsqlite_user_get_id_by_name(login);
 }
 
-static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, wzd_user_t * _ignored)
+static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, UNUSED wzd_user_t * _ignored)
 {
   wzd_user_t * user;
 
@@ -221,7 +221,7 @@ static wzd_group_t * FCN_GET_GROUP(gid_t gid)
   return group;
 }
 
-static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
+static uid_t FCN_FIND_USER(const char *name, UNUSED wzd_user_t * _ignored)
 {
   uid_t reg_uid;
   wzd_user_t *user=NULL;
@@ -246,7 +246,7 @@ static uid_t FCN_FIND_USER(const char *name, wzd_user_t * _ignored)
   return user->uid;
 }
 
-static gid_t FCN_FIND_GROUP(const char *name, wzd_group_t * _ignored)
+static gid_t FCN_FIND_GROUP(const char *name, UNUSED wzd_group_t * _ignored)
 {
   gid_t reg_gid;
   wzd_group_t *group = NULL;
@@ -288,8 +288,20 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 #endif /* CACHE */
     return 0;
   }
+
+  /* add */
+  if (mod_type & _USER_CREATE) {
+    libsqlite_user_add(user);
+#ifdef CACHE
+    reg_uid = user_register(user, BACKEND_ID);
+    if (reg_uid != user->uid) {
+      out_log(SQLITE_LOG_CHANNEL, "Sqlite backend can't registre on add\n");
+    }
+#endif /* CACHE */
+  }
+  
   /* update */
-  if (libsqlite_user_exist_id(uid)) {
+  else {
     libsqlite_user_update(uid, user, mod_type);
 #ifdef CACHE
     registered_user = user_get_by_id(user->uid);
@@ -303,16 +315,6 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
         return -1;
       }
     }
-#endif /* CACHE */
-  }
-  /* add */
-  else {
-    libsqlite_user_add(user);
-#ifdef CACHE
-  reg_uid = user_register(user, BACKEND_ID);
-  if (reg_uid != user->uid) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend can't registre on add\n");
-  }
 #endif /* CACHE */
   }
   return 0;
@@ -335,8 +337,21 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
     return 0;
   }
 
+  /* add */
+  if ( mod_type & _GROUP_CREATE) {
+    libsqlite_group_add(group);
+#ifdef CACHE
+    reg_gid = group_register(group, BACKEND_ID);
+    if (reg_gid != group->gid) {
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
+      group_free(group);
+      return -1;
+    }
+#endif /* CACHE */
+  }
+
   /* update */
-  if (libsqlite_group_exist_id(gid)) {
+  else {
     libsqlite_group_update(gid, group, mod_type);
 #ifdef CACHE
     registred_group = group_get_by_id(group->gid);
@@ -349,18 +364,6 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
         group_free(group);
         return -1;
       }
-    }
-#endif /* CACHE */
-  }
-  /* add */
-  else {
-    libsqlite_group_add(group);
-#ifdef CACHE
-    reg_gid = group_register(group, BACKEND_ID);
-    if (reg_gid != group->gid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
-      group_free(group);
-      return -1;
     }
 #endif /* CACHE */
   }

@@ -34,8 +34,6 @@
  * @{
  **/
 
-
-int          libsqlite_user_exist_id(uid_t uid);
 uid_t        libsqlite_user_get_id_by_name(const char *username);
 
 wzd_user_t  *libsqlite_user_get_by_id(uid_t uid);
