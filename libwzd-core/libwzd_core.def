@@ -184,7 +184,6 @@ EXPORTS
 	perm_add_perm
 	perm_check
 	perm_free_recursive
-	perm_is_valid_perm
 	perm_remove
 	print_file
 	read_token
