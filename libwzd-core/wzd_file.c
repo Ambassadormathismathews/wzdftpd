@@ -152,11 +152,23 @@ typedef struct
 
 /************ PRIVATE FUNCTIONS **************/
 
+/** \brief Get default permission for user
+ * \param[in] wanted_right action to be evaluated
+ * \param[in] user user definition
+ *
+ * \todo XXX this function is badly named, userperms is no more a default action, but more a permissions mask
+ *
+ * Default permissions are set by the userperms field of the user.
+ * \return 0 if user is allowed to perform action
+ */
 static int _default_perm(unsigned long wanted_right, wzd_user_t * user)
 {
   return (( wanted_right & user->userperms ) == 0);
 }
 
+/** \brief Free file list recursively
+ * \note locks SET_MUTEX_FILE_T
+ */
 void free_file_recursive(struct wzd_file_t * file)
 {
   struct wzd_file_t * next_file;
@@ -181,6 +193,13 @@ void free_file_recursive(struct wzd_file_t * file)
   WZD_MUTEX_UNLOCK(SET_MUTEX_FILE_T);
 }
 
+/** \brief Find file \a name in file list
+ * \param[in] name file name
+ * \param[in] first file list head
+ * \return
+ *  - file if found
+ *  - NULL if not found
+ */
 static struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
 {
   struct wzd_file_t *current=first;
@@ -197,6 +216,13 @@ static struct wzd_file_t * find_file(const char *name, struct wzd_file_t *first)
   return NULL;
 }
 
+/** \brief Remove file from linked list
+ * \param[in] name file name
+ * \param[in,out] file list head
+ * \return
+ *  - the removed item if found (which must be freed using free_file_recursive()
+ *  - NULL if not found
+ */
 static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **first)
 {
   struct wzd_file_t *current=*first,*prev,*removed;
@@ -231,6 +257,10 @@ static struct wzd_file_t * remove_file(const char *name, struct wzd_file_t **fir
   return NULL;
 }
 
+/** \brief Insert a new file structure in list, sorted by name
+ * \param[in] entry file definition
+ * \param[in,out] tab pointer to file list
+ */
 void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
 {
   struct wzd_file_t *it  = *tab;

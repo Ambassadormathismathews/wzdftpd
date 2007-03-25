@@ -118,7 +118,8 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
  */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
 
-/** Free the memory used by the linked list pointed by file.
+/** \brief Free file list recursively
+ * \note locks SET_MUTEX_FILE_T
  */
 void free_file_recursive(struct wzd_file_t * file);
 
