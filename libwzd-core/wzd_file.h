@@ -104,23 +104,20 @@ int file_force_unlock(const char *file);
 /* low-level func */
 int _checkPerm(const char *filename, unsigned long wanted_right, wzd_user_t *user);
 
+/** \brief Check if user is allowed to perform an action, given a file and the directory containing it */
 int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user);
 
 int _setPerm(const char *filename, const char *granted_user, const char *owner, const char *group, const char * rights, unsigned long perms, wzd_context_t * context);
 
-/** \brief Read the permission file and build linked list of files.
- */
+/** \brief Read permission file and decode it */
 int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles);
 
 void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab);
 
-/** \brief Copy a wzd_file_t object and all its data.
- */
+/** \brief Copy file structure and members */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur);
 
-/** \brief Free file list recursively
- * \note locks SET_MUTEX_FILE_T
- */
+/** \brief Free file list recursively */
 void free_file_recursive(struct wzd_file_t * file);
 
 /** \brief Get file status */

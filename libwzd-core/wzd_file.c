@@ -166,7 +166,7 @@ static int _default_perm(unsigned long wanted_right, wzd_user_t * user)
   return (( wanted_right & user->userperms ) == 0);
 }
 
-/** \brief Free file list recursively
+/** Free file list recursively
  * \note locks SET_MUTEX_FILE_T
  */
 void free_file_recursive(struct wzd_file_t * file)
@@ -306,8 +306,12 @@ void file_insert_sorted(struct wzd_file_t *entry, struct wzd_file_t **tab)
   return;
 }
 
-
-wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
+/** \brief Return ACL corresonding to \a username for \a file
+ * \param[in] username User name
+ * \param[in] file file structure
+ * \return The ACL structure, or NULL
+ */
+static wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
 {
   wzd_acl_line_t *current = file->acl;
 
@@ -323,7 +327,13 @@ wzd_acl_line_t * find_acl(const char * username, struct wzd_file_t * file)
   return NULL;
 }
 
-/** creation and tail insertion */
+/** \brief Create a structure for file \a name, set owner and group, and append it to list \a first
+ * \param[in] name file name
+ * \param[in] owner file owner
+ * \param[in] group file group
+ * \param[in,out] first file list
+ * \return a pointer to the new file structure
+ */
 static struct wzd_file_t * add_new_file(const char *name, const char *owner, const char *group, struct wzd_file_t **first)
 {
   struct wzd_file_t *current, *new_file;
@@ -352,8 +362,10 @@ static struct wzd_file_t * add_new_file(const char *name, const char *owner, con
   return new_file;
 }
 
-/* Please not that one field is changed: next_file is set to NULL to
- * avoid side effects.
+/** Copy file structure and members
+ * \param[in] file_cur file structure
+ * \return a newly allocated file structure copied from \a file_cur, or NULL
+ * \note one field is changed: next_file is set to NULL to avoid side effects.
  */
 struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
 {
@@ -391,8 +403,15 @@ struct wzd_file_t * file_deep_copy(struct wzd_file_t *file_cur)
   return new_file;
 }
 
-/** replace or add acl rule */
-void addAcl(const char *filename, const char *user, const char *rights, struct wzd_file_t * file)
+/** \brief Add new ACL for a file,user
+ * \param[in] filename file name
+ * \param[in] user
+ * \param[in] rights permission line
+ * \param[in,out] file file structure
+ * \todo return value on error
+ * \todo rename function to use common name standards
+ */
+static void addAcl(const char *filename, const char *user, const char *rights, struct wzd_file_t * file)
 {
   wzd_acl_line_t * acl_current, * acl_new;
 
@@ -427,7 +446,12 @@ void addAcl(const char *filename, const char *user, const char *rights, struct w
   WZD_MUTEX_UNLOCK(SET_MUTEX_ACL_T);
 }
 
-/** \todo should be "atomic" */
+/** Read permission file and decode it
+ * \param[in] permfile full path to permission file
+ * \param[out] pTabFiles address of linked list (which will be allocated) containing file permissions
+ * \return 0 if ok
+ * \todo should be "atomic"
+ */
 int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 {
   wzd_cache_t * fp;
@@ -509,7 +533,11 @@ int readPermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   return E_OK;
 }
 
-/** \todo should be "atomic" */
+/** \brief Write permission file
+ * \param[in] permfile permission file full path
+ * \param[in] pTabFiles address of linked list of permissions
+ * \return 0 if ok
+ */
 int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
 {
   char buffer[BUFFER_LEN];
@@ -581,8 +609,15 @@ int writePermFile(const char *permfile, struct wzd_file_t **pTabFiles)
   return 0;
 }
 
-/** dir MUST be / terminated
- * wanted_file MUST be a single file name !
+/** Check if user has a specific permission, given a file and the directory containing it
+ * \param[in] dir directory where \a file is stored. it MUST be / terminated
+ * \param[in] wanted_file file name
+ * \param[in] wanted_right permission to evaluate
+ * \param[in] user
+ * \return
+ *  - 0 if user is authorized to perform action
+ *  - 1 if user is not authorized
+ *  - -1 on error
  */
 int _checkFileForPerm(const char *dir, const char * wanted_file, unsigned long wanted_right, wzd_user_t * user)
 {
