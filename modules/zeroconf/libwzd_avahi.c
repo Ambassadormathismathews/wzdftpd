@@ -179,7 +179,8 @@ static void publish_reply(AvahiEntryGroup *g,
 {
   struct context *ctx = userdata;
 
-  assert(g == ctx->group);
+/* This can happen (see ticket #85)*/
+/*  assert(g == ctx->group);*/
 
   switch (state) {
 
