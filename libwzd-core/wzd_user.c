@@ -133,11 +133,15 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
     return NULL;
   }
 
-  if (groupname)
-    group = GetGroupByName(groupname);
-
   if (groupname == NULL) {
     if (err) *err = E_PARAM_NULL;
+    return NULL;
+  }
+
+  group = GetGroupByName(groupname);
+
+  if (group == NULL) {
+    if (err) *err = E_PARAM_INVALID;
     return NULL;
   }
 
