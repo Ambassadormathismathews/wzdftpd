@@ -49,7 +49,7 @@ static void register_stuff(struct context *ctx) {
   int txt_keys_size = 0;
   AvahiStringList* list = NULL;
 
-  if (ctx->client) return;
+  if (!ctx->client) return;
 
   if (!ctx->group) {
 
