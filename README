@@ -1,47 +1,129 @@
-#####
-##### README for wzdFTPd
-#####
+wzdftpd is a modular cross-platform multi-threaded FTP server which is in active development. You
+can run wzdftpd on Linux, Windows, FreeBSD or OpenBSD and it is entirely configurable online using
+SITE commands.
 
-General remarks:
-
-* This is not a program for beginners
-* This is a buggy program
-
-Notes:
-* If you want the sfv checker to work, archive files and sfv file
-    must have same prefix
+This program is free open source software. You can redistribute it and/or modify it under the terms
+of the GNU General Public License as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version. 
 
 
-Installation:
+Documentation / Support:
+========================
 
-* copy the config file and the executable in the install dir
-* copy AT LEAST one backend in the same dir
-* edit wzd.cfg
-  The file is commented, you shouldn't need help - if you need, install serv-u
-* run the .exe
-* login for the first time FROM LOCALHOST, user/pass: wzdftpd and create users
+The documentation is located on the website: http://www.wzdftpd.net
 
-HOOKS parameters:
+IRC
+===
 
-* all: first parameter is event id
-* all: second parameter is user context
+If there's something you just can't find out elsewhere, you want to give feedback directly to the
+authors or you're just bored, visit #wzdftpd on irc.freenode.net
 
-* login: username
-* logout: username
-* file_preupload: username, filename
-* file_postupload: username, filename
-* site: command, args
 
-MODULES:
 
-* fct WZD_MODULE_INIT is called at module load
-* fct WZD_MODULE_CLOSE is called at module unload
-* struct hook_table contains pairs (event_id,hook_fct) to trap events
-* fct WZD_MODULE_INIT is called _BEFORE_ registering hook_table
+Get Support
+===========
 
-Troubleshooting:
 
-* LOGIN
-  Q: Sometimes login seems to freeze, and some time later all seems to go normal
-  A: This is probably to a DNS lookup - it can be very long if you specified many
-    addresses il config file and in allowed ip/user.
+wzdftpd-users mailing list archives can be accessed at:
+        http://lists.sourceforge.net/mailman/listinfo/wzdftpd-users
+
+
+
+Quickstart:
+===========
+
+Linux (Debian)
+--------------
+Simply run apt-get install wzdftpd. Other packages are available: wzdftpd-mod-perl and wzdftpd-mode-tcl.
+
+Linux (rpm-based distros)
+-------------------------
+rpms are available on sourceforge. Download the rpms you want to install, and run rpm -ivh wzdftpd-0.4.3-1.i386.rpm
+
+FreeBSD
+-------
+wzdftpd is in the ports list, so you can install it in the usual way. More details are given in ChapterFreeBSD
+
+Windows
+-------
+Installer files are packaged on sourceforge. Download and execute the installer.
+
+
+
+First Configuration
+===================
+
+Basics
+------
+
+The configuration is stored into one single file, called wzd.cfg. The server itself is composed of
+one executable (wzdftpd) and one lib (libwzd_core). You should also have another shared lib, the
+backend (libwzd_plaintext). This module will manage all users and groups, and the backend plaintext
+uses a simple text file (users) to store all the information related to users and groups.
+
+Server Configuration
+--------------------
+
+Edit wzd.cfg with your favorite editor (it is a simple text file). This file should be commented
+and easy to understand, you can refer to the Config File Directives reference for the complete
+list.
+
+The important values you may want to change are the server port, the passive range, or the logs
+files location. Please also ensure the the server is allowed to write the pid file (config:
+pid_file).
+
+Once the server configuration is ok, you can start the server, wzdftpd provides an init.d script to
+control server: /etc/init.d/wzdftpd start
+
+Check that no error messages are displayed on screen, and that the process wzdftpd is running (ps ax
+| grep wzd should be enough). If the process is not present, check in wzdftpd's logs for details on
+error.
+
+Adding first users
+------------------
+
+The server should be running now. To add the first users, we'll connect using an ftp client (I have
+a preference for console-based ones, especially for site commands, but any client will be ok). The
+default login is wzdftpd, and the password is wzdftpd. You have to connect from the same host where
+the server is installed for the first time, this is a basic security precaution. ex:
+
+$ lftp -u wzdftpd localhost
+Password:
+lftp wzdftpd@localhost:~> site version
+200 wzdftpd i686-pc-linux-gnu mt 0.5.0 build 20041021 (threads,debug,ipv6,utf8)
+
+The site version command is not usefull, it is just here to check that the server is running, and
+that the login is ok.
+
+Before adding the new user, we have to set the home directory for the group users. Home directories,
+like some other properties, are inherited by users when created in a group, so we'll position the
+homedir now.
+
+lftp wzdftpd@localhost:/> site grpchange users homedir /home/ftp
+200 Group field change successfull
+lftp wzdftpd@localhost:/> site groups
+200-
+...
+| users | 1:3 | 0 | 0 | 0 | /home |
+...
+200
+
+Please also note that, by default, all users have an upload/download ratio of 1/3. If you want to
+remove the ratio, use the following:
+
+lftp wzdftpd@localhost:/> site grpchange users ratio 0
+200 Group field change successfull
+
+Adding a new user is done from the client, using the site adduser command:
+
+lftp wzdftpd@localhost:/> site adduser
+501 site adduser <user> <password> [<group>] [<ip1> <ip2> <...>]
+
+lftp wzdftpd@localhost:/> site adduser my_user my_pass users *@*
+200 User added
+
+The first command, site adduser without arguments, prints a small help message. Many commands are
+self-documented that way in wzdftpd. The second command adds a new user called my_user, with initial
+password my_pass. It also puts my_user in group users, and allows connection from any host (*@*),
+all in one command.
+
