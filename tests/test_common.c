@@ -101,7 +101,7 @@ void fake_context(void)
   wzd_debug_init();
 
   context = malloc(sizeof(wzd_context_t));
-  memset(context, 0, sizeof(wzd_context_t));
+  context_init(context);
 
   context->magic = CONTEXT_MAGIC;
   context->userid = f_user->uid;
