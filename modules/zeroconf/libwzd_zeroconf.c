@@ -190,7 +190,7 @@ int WZD_MODULE_INIT(void)
                     zeroconf_password,
                     zeroconf_path);
 #elif defined (USE_AVAHI)
-  assert(wzdftpd_port != 0); // the port should be defined in the config file
+  if (wzdftpd_port == 0) return 1; // the port should be defined in the config file
 
   ctx = av_zeroconf_setup(wzdftpd_port,
                           zeroconf_name,

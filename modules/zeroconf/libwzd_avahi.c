@@ -49,7 +49,7 @@ static void register_stuff(struct context *ctx) {
   int txt_keys_size = 0;
   AvahiStringList* list = NULL;
 
-  assert(ctx->client);
+  if (ctx->client) return;
 
   if (!ctx->group) {
 
@@ -179,8 +179,6 @@ static void publish_reply(AvahiEntryGroup *g,
 {
   struct context *ctx = userdata;
 
-/* This can happen (see ticket #85)*/
-/*  assert(g == ctx->group);*/
 
   switch (state) {
 
@@ -194,7 +192,7 @@ static void publish_reply(AvahiEntryGroup *g,
     /* Pick a new name for our service */
 
     n = avahi_alternative_service_name(ctx->name);
-    assert(n);
+    if (!n) break;
 
     avahi_free(ctx->name);
     ctx->name = n;
@@ -365,7 +363,7 @@ void* av_zeroconf_setup(unsigned long port,
    * config settings.
    */
   ctx = malloc(sizeof(struct context));
-  assert(ctx);
+  if (ctx == NULL) return NULL;
   ctx->client = NULL;
   ctx->group = NULL;
 #ifndef HAVE_AVAHI_THREADED_POLL
@@ -409,7 +407,7 @@ void* av_zeroconf_setup(unsigned long port,
     ctx->path = NULL;
   }
 
-  assert(strlen(ctx->name) > 0);
+  if (strlen(ctx->name) <= 0) return NULL;
 
 /* first of all we need to initialize our threading env */
 #ifdef HAVE_AVAHI_THREADED_POLL

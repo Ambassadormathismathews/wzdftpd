@@ -69,8 +69,8 @@ void* bo_zeroconf_setup(unsigned long port,
     name = strdup(service);
   }
 
-  assert(name);
-  assert(port);
+  if (!name) return NULL;
+  if (!port) return NULL;
 
 #ifdef HAVE_OSX_TIGER
   /* prepare text records */

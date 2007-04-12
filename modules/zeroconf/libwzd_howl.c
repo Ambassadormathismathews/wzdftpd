@@ -77,7 +77,7 @@ void* ho_zeroconf_setup(unsigned long port,
     name = strdup(service);
   }
 
-  assert(name);
+  if (!name) return;
 
   /* prepare text records */
   if (sw_text_record_init(&text_record) != SW_OKAY) {
