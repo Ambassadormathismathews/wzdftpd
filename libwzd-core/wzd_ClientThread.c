@@ -1312,7 +1312,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       section = section_find(mainConfig->section_list,cmd);
       if (section && !section_check_filter(section,ptr+1))
       {
-        out_err(LEVEL_FLOOD,"path %s does not match path-filter\n",path);
+        out_err(LEVEL_FLOOD,"path [%s] does not match path-filter\n",ptr+1);
         ret = send_message_with_args(553,context,"dirname does not match pathfilter");
         wzd_free(buffer);
         wzd_free(path);
