@@ -508,7 +508,7 @@ static uid_t * wzd_pgsql_get_user_list(void)
   char query[512];
   uid_t * uid_list;
   int index;
-  unsigned int i;
+  unsigned int i=0;
   int num_rows;
   PGresult * res;
 
@@ -536,7 +536,7 @@ static gid_t * wzd_pgsql_get_group_list(void)
   char query[512];
   gid_t * gid_list;
   int index;
-  unsigned int i;
+  unsigned int i=0;
   int num_rows;
   PGresult * res;
 

@@ -300,7 +300,7 @@ static int perl_hook_protocol(const char *file, const char *args)
   wzd_user_t * user;
   unsigned int reply_code;
   SV * perl_args, *retval;
-  int ret;
+  int ret = EVENT_ERROR;
 
   current_context = context = GetMyContext();
   user = GetUserByID(context->userid);
