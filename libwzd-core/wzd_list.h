@@ -22,13 +22,8 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#ifndef __LS__
-#define __LS__
-/*#define TEST*/
-
-#ifdef TEST
-#define OUT(x) fprintf(stdout,"%s\n",(x))
-#endif
+#ifndef __WZD_LIST__
+#define __WZD_LIST__
 
 int list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
 int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
@@ -42,4 +37,4 @@ char * mlst_single_file(const char *filename, wzd_context_t * context);
 int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
     wzd_context_t * context);
 
-#endif /* __LS__ */
+#endif /* __WZD_LIST__ */

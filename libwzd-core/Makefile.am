@@ -5,7 +5,6 @@ lib_LTLIBRARIES = libwzd_core.la
 libwzd_core_ladir = ${prefix}/include/wzdftpd/libwzd-core
 
 libwzd_core_la_HEADERS = \
-	ls.h             \
 	wzd_action.h     \
 	wzd_all.h        \
 	wzd_backend.h    \
@@ -26,6 +25,7 @@ libwzd_core_la_HEADERS = \
 	wzd_hardlimits.h \
 	wzd_ip.h         \
 	wzd_libmain.h    \
+	wzd_list.h       \
 	wzd_log.h        \
 	wzd_login.h      \
 	wzd_messages.h   \
@@ -55,7 +55,6 @@ libwzd_core_la_SOURCES = \
 	${libwzd_core_la_HEADERS} \
 	inet_ntop.c      \
 	inet_pton.c      \
-	ls.c             \
 	wzd_action.c     \
 	wzd_all.c        \
 	wzd_backend.c    \
@@ -76,6 +75,7 @@ libwzd_core_la_SOURCES = \
 	wzd_group.c      \
 	wzd_ip.c         \
 	wzd_libmain.c    \
+	wzd_list.c       \
 	wzd_log.c        \
 	wzd_login.c      \
 	wzd_messages.c   \

@@ -53,6 +53,7 @@ SET(libwzd_core_pub_HEADERS
 	wzd_hardlimits.h
 	wzd_ip.h
 	wzd_libmain.h
+	wzd_list.h
 	wzd_log.h
 	wzd_login.h
 	wzd_messages.h
@@ -85,7 +86,6 @@ add_library (libwzd_core SHARED
 	${auth_SOURCES}
 	inet_ntop.c
 	inet_pton.c
-	ls.c ls.h
 	wzd_action.c
 	wzd_all.c
 	wzd_backend.c
@@ -106,6 +106,7 @@ add_library (libwzd_core SHARED
 	wzd_group.c
 	wzd_ip.c
 	wzd_libmain.c
+	wzd_list.c
 	wzd_log.c
 	wzd_login.c
 	wzd_messages.c

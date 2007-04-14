@@ -93,6 +93,7 @@
 #include "wzd_file.h"
 #include "wzd_group.h"
 #include "wzd_libmain.h"
+#include "wzd_list.h"
 #include "wzd_login.h"
 #include "wzd_perm.h"
 #include "wzd_protocol.h"
@@ -105,7 +106,6 @@
 #include "wzd_tls.h"
 #include "wzd_user.h"
 #include "wzd_utf8.h"
-#include "ls.h"
 #include "wzd_ClientThread.h"
 
 #include <libwzd-auth/wzd_base64.h>

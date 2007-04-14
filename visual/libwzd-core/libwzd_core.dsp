@@ -102,7 +102,7 @@ SOURCE="..\..\libwzd-core\inet_pton.c"
 # End Source File
 # Begin Source File
 
-SOURCE="..\..\libwzd-core\ls.c"
+SOURCE="..\..\libwzd-core\wzd_list.c"
 # End Source File
 # Begin Source File
 
@@ -319,7 +319,7 @@ SOURCE="..\..\libwzd-core\wzd_vfs.c"
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE="..\..\libwzd-core\ls.h"
+SOURCE="..\..\libwzd-core\wzd_list.h"
 # End Source File
 # Begin Source File
 
