@@ -44,22 +44,22 @@ pasv_high_range  = 3000
 # unix only: file where pid of server will be stored
 # (default: /var/run/wzdftpd.pid)
 # this is used by init.d script
-#pid_file = @localstatedir@/run/@PACKAGE@/wzdftpd.pid
+#pid_file = @CMAKE_INSTALL_PREFIX@/@localstatedir@/run/@PACKAGE@/wzdftpd.pid
 
 # the name of the file in each dir that should be added to every answer
 dir_message = .message
 
 # log file for server activity
-logfile = @localstatedir@/log/@PACKAGE@/wzd.log
+logfile = @CMAKE_INSTALL_PREFIX@/@localstatedir@/log/@PACKAGE@/wzd.log
 
 # set to 0 if you do not want syslog (default: 1)
 #use_syslog = 0
 
 # log file for transfered files (default: do not log)
-xferlog = @localstatedir@/log/@PACKAGE@/xferlog
+xferlog = @CMAKE_INSTALL_PREFIX@/@localstatedir@/log/@PACKAGE@/xferlog
 
 # directory to store various log files
-logdir = @localstatedir@/log/@PACKAGE@
+logdir = @CMAKE_INSTALL_PREFIX@/@localstatedir@/log/@PACKAGE@
 
 # max number of child threads (default: 32)
 max_threads = 32
@@ -70,11 +70,11 @@ max_threads = 32
 # ONE BACKEND IS NEEDED !
 # backend name SHOULD NEVER contains spaces !
 #backend = plaintext > 123
-backend = @datadir@/@PACKAGE@/backends/libwzd_plaintext.so > 124
-#backend = @datadir@/@PACKAGE@/backends/libwzd_mysql.so
-#backend = @datadir@/@PACKAGE@/backends/libwzd_pgsql.so
-#backend = @datadir@/@PACKAGE@/backends/libwzd_pam.so
-#backend = @datadir@/@PACKAGE@/backends/libwzd_sqlite.so
+backend = @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/backends/libwzd_plaintext.so > 124
+#backend = @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/backends/libwzd_mysql.so
+#backend = @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/backends/libwzd_pgsql.so
+#backend = @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/backends/libwzd_pam.so
+#backend = @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/backends/libwzd_sqlite.so
 
 # speed limits in bytes /sec (approx !)
 # 0 = no limit
@@ -105,7 +105,7 @@ deny_access_files_uploaded = 1
 # TLS Options
 
 # Certificate (only used in ssl mode, otherwise ignored)
-tls_certificate = @sysconfdir@/wzd.pem
+tls_certificate = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/wzd.pem
 
 # Mode (default: explicit)
 #  explicit: server starts in clear mode, wait for "AUTH TLS" and then switch to ssl
@@ -123,9 +123,9 @@ tls_certificate = @sysconfdir@/wzd.pem
 # /TLS
 
 ##### SITE FILES
-sitefile_ginfo	= @sysconfdir@/file_ginfo.txt
-sitefile_group	= @sysconfdir@/file_group.txt
-sitefile_user	= @sysconfdir@/file_user.txt
+sitefile_ginfo	= @CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_ginfo.txt
+sitefile_group	= @CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_group.txt
+sitefile_user	= @CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_user.txt
 
 ##### INCLUSIONS
 # You can include other files
@@ -234,12 +234,12 @@ site_vfsdel = +O
 [modules]
 # modules are dynamic libraries
 # order *IS* important
-@datadir@/@PACKAGE@/modules/libwzd_debug.so = deny
-@datadir@/@PACKAGE@/modules/libwzd_test.so = deny
-@datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
-@datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
-@datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
-@datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_debug.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_test.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
 
 [sfv]
 progressmeter = [WzD] - %3d%% Complete - [WzD]
@@ -249,7 +249,7 @@ other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
 create_symlinks = false
 
 [plaintext]
-param = @sysconfdir@/users
+param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
 
 [mysql]
 #param = login:password@host:base
@@ -290,14 +290,14 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 [custom_commands]
 #my_free = ./free.sh
 # this defines the SITE RULES command, which prints the following file
-site_rules = !@sysconfdir@/file_rules.txt
+site_rules = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_rules.txt
 
-site_groups = !@sysconfdir@/file_groups.txt
-site_help = !@sysconfdir@/file_help.txt
-site_swho = !@sysconfdir@/file_swho.txt
-site_users = !@sysconfdir@/file_users.txt
-site_vfsls = !@sysconfdir@/file_vfs.txt
-site_who = !@sysconfdir@/file_who.txt
+site_groups = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_groups.txt
+site_help = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_help.txt
+site_swho = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_swho.txt
+site_users = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_users.txt
+site_vfsls = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_vfs.txt
+site_who = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_who.txt
 
 # first char is delimiter
 # format is e.g name = |/home/vfsroot|/physical/path|
