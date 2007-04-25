@@ -116,7 +116,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   fprintf(file,"name=%s\n",user->username);
   fprintf(file,"pass=%s\n",user->userpass);
   fprintf(file,"home=%s\n",user->rootpath);
-  fprintf(file,"uid=%d\n",user->uid);
+  fprintf(file,"uid=%u\n",user->uid);
   /* write ALL groups */
 
   if (user->group_num>0) {
@@ -161,9 +161,9 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   if (user->stats.files_dl_total)
     fprintf(file,"files_dl_total=%lu\n",user->stats.files_dl_total);
   if (user->ratio)
-    fprintf(file,"ratio=%d\n",user->ratio);
+    fprintf(file,"ratio=%u\n",user->ratio);
   if (user->num_logins)
-    fprintf(file,"num_logins=%d\n",user->num_logins);
+    fprintf(file,"num_logins=%u\n",user->num_logins);
   if (user->max_idle_time)
     fprintf(file,"max_idle_time=%u\n",user->max_idle_time);
   if (user->flags && strlen(user->flags)>0)
@@ -187,7 +187,7 @@ int write_single_group(FILE * file, const wzd_group_t * group)
   if (group->max_idle_time)
     fprintf(file,"max_idle_time=%u\n",group->max_idle_time);
   if (group->num_logins)
-    fprintf(file,"num_logins=%d\n",group->num_logins);
+    fprintf(file,"num_logins=%u\n",group->num_logins);
   if (group->max_ul_speed)
     fprintf(file,"max_ul_speed=%u\n",group->max_ul_speed);
   if (group->max_dl_speed)
@@ -195,14 +195,14 @@ int write_single_group(FILE * file, const wzd_group_t * group)
   fprintf(file,"rights=0x%lx\n",group->groupperms);
   if (strlen(group->tagline)>0)
     fprintf(file,"tagline=%s\n",group->tagline);
-  fprintf(file,"gid=%d\n",group->gid);
+  fprintf(file,"gid=%u\n",group->gid);
   for (current_ip = group->ip_list; current_ip != NULL; current_ip = current_ip->next_ip) {
     fprintf(file,"ip_allowed=%s\n",current_ip->regexp);
   }
   if (strlen(group->defaultpath)>0)
     fprintf(file,"default_home=%s\n",group->defaultpath);
   if (group->ratio)
-    fprintf(file,"ratio=%d\n",group->ratio);
+    fprintf(file,"ratio=%u\n",group->ratio);
   fprintf(file,"\n");
 
   return 0;
@@ -777,7 +777,7 @@ fprintf(stderr,"Entering section GROUPS\n");
       }
 
       if (++group_count >= group_count_max) {
-        snprintf(errbuf,sizeof(errbuf),"Too many groups: %d\n",group_count);
+        snprintf(errbuf,sizeof(errbuf),"Too many groups: %u\n",group_count);
         ERRLOG(errbuf);
         continue;
       }
@@ -839,7 +839,7 @@ fprintf(stderr,"Entering section USERS\n");
 
     if (strcmp("name",varname)==0) {
       if (++user_count >= user_count_max) {
-        snprintf(errbuf,sizeof(errbuf),"Too many users defined %d\n",user_count);
+        snprintf(errbuf,sizeof(errbuf),"Too many users defined %u\n",user_count);
         ERRLOG(errbuf);
         continue;
       }
