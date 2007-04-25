@@ -891,7 +891,7 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
     ret = send_message_with_args(200,context,"Change ok - You have set flags G and O, THIS IS NOT WHAT YOU WANT - repeat: THIS IS STUPID !!");
   }
   else
-    ret = send_message_with_args(200,context,"User field change successfull");
+    ret = send_message_with_args(200,context,"User field change successful");
 
   str_deallocate(field); str_deallocate(value);
 
@@ -976,7 +976,7 @@ int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
   /* commit to backend */
   backend_mod_user(mainConfig->backends->filename,user->uid,user,mod_type);
 
-  ret = send_message_with_args(200,context,"User field change successfull");
+  ret = send_message_with_args(200,context,"User field change successful");
   return 0;
 }
 
