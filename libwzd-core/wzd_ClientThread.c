@@ -765,7 +765,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if (param[0]=='/') param++;
   if (param[0]=='/') {
-    ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
+    ret = send_message_with_args(501,context,"Too many / in the path - is it a joke?");
     return E_PARAM_INVALID;
   }
 
@@ -783,7 +783,7 @@ printf("path before: '%s'\n",cmd);
 
   path = wzd_malloc(WZD_MAX_PATH+1);
   if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
-    ret = send_message_with_args(501,context,"invalid filter/path");
+    ret = send_message_with_args(501,context,"Invalid filter/path");
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -878,7 +878,7 @@ int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   path = wzd_malloc(WZD_MAX_PATH+1);
   if (checkpath_new(str_tochar(param),path,context)) {
-    ret = send_message_with_args(501,context,"invalid path");
+    ret = send_message_with_args(501,context,"Invalid path");
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -960,7 +960,7 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   if (!param || strlen(str_tochar(param))==0)
   {
-    ret = send_message_with_args(501,context,"usage: MLST filename");
+    ret = send_message_with_args(501,context,"Usage: MLST filename");
     return E_PARAM_BIG;
   }
 
@@ -974,14 +974,14 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   path = wzd_malloc(WZD_MAX_PATH+1);
   if (checkpath_new(str_tochar(param),path,context)) {
-    ret = send_message_with_args(550,context,"incorrect file name",str_tochar(param));
+    ret = send_message_with_args(550,context,"Incorrect file name ",str_tochar(param));
     wzd_free(path);
     return E_PARAM_INVALID;
   }
   REMOVE_TRAILING_SLASH(path);
 
   if ( (str = mlst_single_file(path, context)) == NULL) {
-    ret = send_message_with_args(501,context,"Error occured");
+    ret = send_message_with_args(501,context,"Error occurred");
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -1134,7 +1134,7 @@ int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if (param[0]=='/') param++;
   if (param[0]=='/') {
-    ret = send_message_with_args(501,context,"Too many / in the path - is it a joke ?");
+    ret = send_message_with_args(501,context,"Too many / in the path - is it a joke?");
     return E_PARAM_INVALID;
   }
 
@@ -1152,7 +1152,7 @@ printf("path before: '%s'\n",cmd);
 
   path = wzd_malloc(WZD_MAX_PATH + 1);
   if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
-    ret = send_message_with_args(501,context,"invalid filter/path");
+    ret = send_message_with_args(501,context,"Invalid filter/path");
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -1208,7 +1208,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if (!str_checklength(arg,1,WZD_MAX_PATH-1))
   {
-    ret = send_message_with_args(501,context,"invalid path");
+    ret = send_message_with_args(501,context,"Invalid path");
     return E_PARAM_INVALID;
   }
   param = str_tochar(arg);
@@ -1267,8 +1267,8 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
 
   if (ret != EVENT_OK && ret != EVENT_BREAK) {
-    out_log(LEVEL_NORMAL, "Mkdir denied by hook (returned %d)\n", ret);
-    ret = send_message_with_args(501,context,"Mkdir denied");
+    out_log(LEVEL_NORMAL, "MKDIR denied by hook (returned %d)\n", ret);
+    ret = send_message_with_args(501,context,"MKDIR denied");
     return E_XFER_REJECTED;
   }
 
@@ -1281,7 +1281,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     wzd_free(buffer);
     wzd_free(path);
     wzd_free(cmd);
-    ret = send_message_with_args(553,context,"forbidden !");
+    ret = send_message_with_args(553,context,"Forbidden!");
     return E_FILE_FORBIDDEN;
   }
 
@@ -1313,7 +1313,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       if (section && !section_check_filter(section,ptr+1))
       {
         out_err(LEVEL_FLOOD,"path [%s] does not match path-filter\n",ptr+1);
-        ret = send_message_with_args(553,context,"dirname does not match pathfilter");
+        ret = send_message_with_args(553,context,"Dirname does not match pathfilter");
         wzd_free(buffer);
         wzd_free(path);
         wzd_free(cmd);
@@ -1330,7 +1330,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   if (ret) {
     if (ret != E_NOPERM)
-      out_err(LEVEL_FLOOD,"mkdir returned %d (%s)\n",errno,strerror(errno));
+      out_err(LEVEL_FLOOD,"MKDIR returned %d (%s)\n",errno,strerror(errno));
     goto label_error_mkdir; /* keep current ret value for later use */
   } else {
     const char *groupname=NULL;
@@ -1340,7 +1340,7 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     file_chown(buffer,user->username,groupname,context);
 
     /* send message header */
-    send_message_raw("257- command ok\r\n",context);
+    send_message_raw("257- Command okay\r\n",context);
     {
       wzd_string_t * event_args = STR(buffer);
       event_send(mainConfig->event_mgr, EVENT_MKDIR, 257, event_args, context);
@@ -1373,9 +1373,9 @@ int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 label_error_mkdir:
   if (ret == E_NOPERM)
-    snprintf(buffer,WZD_MAX_PATH-1,"could not create dir: permission denied");
+    snprintf(buffer,WZD_MAX_PATH-1,"Could not create dir: permission denied");
   else
-    snprintf(buffer,WZD_MAX_PATH-1,"could not create dir '%s' (%d)",(param)?param:"(NULL)",ret);
+    snprintf(buffer,WZD_MAX_PATH-1,"Could not create dir '%s' (%d)",(param)?param:"(NULL)",ret);
   send_message_with_args(553,context,buffer);
   wzd_free(buffer);
   wzd_free(path);
@@ -1395,7 +1395,7 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 
   if (!str_checklength(arg,1,WZD_MAX_PATH-1))
   {
-    ret = send_message_with_args(501,context,"invalid path");
+    ret = send_message_with_args(501,context,"Invalid path");
     return E_PARAM_INVALID;
   }
   param = str_tochar(arg);
@@ -1415,13 +1415,13 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 
   /* deny retrieve to permissions file */
   if (is_hidden_file(path)) {
-    ret = send_message_with_args(553,context,"forbidden !");
+    ret = send_message_with_args(553,context,"Forbidden!");
     return E_FILE_FORBIDDEN;
   }
 
   if (fs_file_lstat(path,&s)) { ret = E_FILE_NOEXIST; goto label_error_rmdir; }
   if (!S_ISDIR(s.mode)) {
-    ret = send_message_with_args(553,context,"not a directory");
+    ret = send_message_with_args(553,context,"Not a directory");
     return E_NOTDIR;
   }
 
@@ -1429,18 +1429,18 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
   ret = file_rmdir(path,context);
 
   if (ret) {
-    out_err(LEVEL_FLOOD,"rmdir returned %d (%s)\n",errno,strerror(errno));
+    out_err(LEVEL_FLOOD,"RMDIR returned %d (%s)\n",errno,strerror(errno));
     ret = E_PARAM_INVALID; goto label_error_rmdir;
   } else {
     /* send message header */
-    send_message_raw("258- command ok\r\n",context);
+    send_message_raw("258- Command okay\r\n",context);
     {
       wzd_string_t * event_args = str_allocate();
       str_sprintf(event_args,"%s %s",user->username,path);
       event_send(mainConfig->event_mgr, EVENT_RMDIR, 258, event_args, context);
       str_deallocate(event_args);
     }
-    ret = send_message_with_args(258,context,param,"removed");
+    ret = send_message_with_args(258,context,param,"Removed");
 
     {
       const char *groupname=NULL;
@@ -1474,7 +1474,7 @@ int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
   return E_OK;
 
 label_error_rmdir:
-  snprintf(buffer,WZD_MAX_PATH-1,"could not delete dir '%s'",(param)?param:"(NULL)");
+  snprintf(buffer,WZD_MAX_PATH-1,"Could not delete dir '%s'",(param)?param:"(NULL)");
   send_message_with_args(553,context,buffer);
   return ret;
 }
@@ -2234,7 +2234,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   open_flags = O_WRONLY|O_CREAT;
 
   if ((fd=file_open(path,open_flags,RIGHT_STOR,context))==-1) {
-    ret = send_message_with_args(501,context,"nonexistant file or permission denied");
+    ret = send_message_with_args(501,context,"Nonexistant file or permission denied");
     return E_FILE_NOEXIST;
   }
   FD_REGISTER(fd,"Client file (STOR)");
@@ -2341,7 +2341,7 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
       return E_OK;
     }
   }
-  ret = send_message_with_args(501,context,"File inexistant or no access ?");
+  ret = send_message_with_args(501,context,"File inexistent or no access?");
   return E_FILE_NOEXIST;
 }
 
@@ -2496,7 +2496,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
       return E_OK;
     }
   }
-  ret = send_message_with_args(501,context,"File inexistant or no access ?");
+  ret = send_message_with_args(501,context,"File inexistent or no access?");
   return E_FILE_NOEXIST;
 }
 
@@ -2571,7 +2571,7 @@ int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       ret = send_message_with_args(550,context,param?param:"(null)","Negative on that, Houston (access denied)");
       break;
     default:
-      ret = send_message_with_args(550,context,param?param:"(null)","chdir FAILED");
+      ret = send_message_with_args(550,context,param?param:"(null)","CHDIR failed");
       break;
     }
     return E_OK;
@@ -2597,7 +2597,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
   if (!user) {
-    ret = send_message_with_args(501,context,"Mama says I don't exist !");
+    ret = send_message_with_args(501,context,"Mama says I don't exist!");
     return E_USER_IDONTEXIST;
   }
 
@@ -2625,7 +2625,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     return E_FILE_NOEXIST;
   }
   if (S_ISDIR(s.mode)) {
-    ret = send_message_with_args(501,context,"This is a directory !");
+    ret = send_message_with_args(501,context,"This is a directory!");
     return E_ISDIR;
   }
   if (S_ISREG(s.mode))
@@ -2663,7 +2663,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   }
 
   if (!ret) {
-    send_message_raw("250- command ok\r\n",context);
+    send_message_raw("250- Command okay\r\n",context);
     {
       wzd_string_t * event_args = STR(path);
       event_send(mainConfig->event_mgr, EVENT_DELE, 250, event_args, context);
@@ -2691,7 +2691,7 @@ int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
    */
   /* e.g: if RETR, open file to have it in cache ? */
 
-  ret = send_message_with_args(200,context,"Command OK");
+  ret = send_message_with_args(200,context,"Command okay");
   return E_OK;
 }
 
@@ -2747,7 +2747,7 @@ int do_pbsz(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   arg = str_tochar(param);
   /** \todo TOK_BSZ: if user is NOT in TLS mode, insult him */
   /** \todo TOK_BSZ: use argument */
-  ret = send_message_with_args(200,context,"PBSZ command OK");
+  ret = send_message_with_args(200,context,"PBSZ command okay");
   return E_OK;
 }
 #else
@@ -2775,7 +2775,7 @@ int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
     ret = send_message_with_args(550,context,"PROT","must be C or P");
     return E_PARAM_INVALID;
   }
-  ret = send_message_with_args(200,context,"PROT command OK");
+  ret = send_message_with_args(200,context,"PROT command okay");
   return E_OK;
 }
 #else
@@ -2932,11 +2932,11 @@ int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 
 
   if (!filename || strlen(str_tochar(filename))==0 || strlen(str_tochar(filename))>=WZD_MAX_PATH) {
-    ret = send_message_with_args(553,context,"RNTO","wrong file name ?");
+    ret = send_message_with_args(553,context,"RNTO","wrong file name?");
     return E_PARAM_INVALID;
   }
   if (context->current_action.token != TOK_RNFR) {
-    ret = send_message_with_args(553,context,"RNTO","send RNFR before !");
+    ret = send_message_with_args(553,context,"RNTO","send RNFR before!");
     return E_PARAM_INVALID;
   }
 
@@ -2956,7 +2956,7 @@ int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
   if (ret) {
     ret = send_message_with_args(550,context,"RNTO","command failed");
   } else {
-    ret = send_message_with_args(250,context,"RNTO"," command OK");
+    ret = send_message_with_args(250,context,"RNTO"," command okay");
     context->idle_time_start = time(NULL);
   }
   return E_OK;
@@ -3059,7 +3059,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       return E_OK;
     }
   }
-  ret = send_message_with_args(550,context,"XCRC","File inexistant or no access ?");
+  ret = send_message_with_args(550,context,"XCRC","File inexistent or no access?");
   return E_FILE_NOEXIST;
 }
 
@@ -3142,7 +3142,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
       return E_OK;
     }
   }
-  ret = send_message_with_args(550,context,"XMD5","File inexistant or no access ?");
+  ret = send_message_with_args(550,context,"XMD5","File inexistent or no access?");
   return E_FILE_NOEXIST;
 }
 
@@ -3232,7 +3232,7 @@ void * clientThreadProc(void *arg)
   user = GetUserByID(context->userid);
 
   /* user+pass ok */
-  send_message_raw("230-command ok\r\n",context);
+  send_message_raw("230- Command okay\r\n",context);
   {
     wzd_string_t * event_args = STR(user->username);
     event_send(mainConfig->event_mgr, EVENT_LOGIN, 230, event_args, context);

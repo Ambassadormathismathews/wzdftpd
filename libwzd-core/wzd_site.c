@@ -351,7 +351,7 @@ int do_site_backend(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
     if (ret) {
       ret = send_message_with_args(501,context,"Could not commit backend");
     } else {
-      ret = send_message_with_args(200,context,"Backend commited successfully");
+      ret = send_message_with_args(200,context,"Backend committed successfully");
     }
     str_deallocate(name);
     return 0;
@@ -385,7 +385,7 @@ int do_site_chacl(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   user = GetUserByName( str_tochar(username) );
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"User does not exists");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 1;
   }
   mode = str_tok(command_line," \t\r\n");
@@ -444,7 +444,7 @@ int do_site_chgrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   /* check that groupname exists */
   group=GetGroupByName(str_tochar(groupname));
   if ( !group ) {
-    ret = send_message_with_args(501,context,"Group does not exists");
+    ret = send_message_with_args(501,context,"Group does not exist");
     str_deallocate(groupname);
     return 1;
   }
@@ -557,7 +557,7 @@ int do_site_chown(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   /* check that username exists */
   user = GetUserByName(str_tochar(username));
   if ( !user ) {
-    ret = send_message_with_args(501,context,"User does not exists");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 1;
   }
 
@@ -616,7 +616,7 @@ int do_site_chpass(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
     str_deallocate(username);
     username = NULL;
     if ( !user ) {
-      ret = send_message_with_args(501,context,"User does not exists");
+      ret = send_message_with_args(501,context,"User does not exist");
       str_deallocate(username); str_deallocate(new_pass);
       return 1;
     }
@@ -705,7 +705,7 @@ int do_site_checkperm(UNUSED wzd_string_t *ignored, wzd_string_t * commandline, 
 
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(str_tochar(filename),buffer,context)) {
-    send_message_with_args(501,context,"file does not exist");
+    send_message_with_args(501,context,"File does not exist");
     str_deallocate(filename);
     free(buffer);
     return 1;
@@ -715,9 +715,9 @@ int do_site_checkperm(UNUSED wzd_string_t *ignored, wzd_string_t * commandline, 
 /*  buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
 
   if (_checkPerm(buffer,word,user)==0) {
-    wzd_strncpy(buffer,"right ok",WZD_MAX_PATH);
+    wzd_strncpy(buffer,"Right okay",WZD_MAX_PATH);
   } else {
-    wzd_strncpy(buffer,"refused",WZD_MAX_PATH);
+    wzd_strncpy(buffer,"Refused",WZD_MAX_PATH);
   }
 
   send_message_with_args(200,context,buffer);
@@ -752,7 +752,7 @@ int do_site_free(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_c
   buffer = malloc(WZD_MAX_PATH+1);
 
   if (checkpath_new(".",buffer,context)) {
-    send_message_with_args(501,context,". does not exist ?!");
+    send_message_with_args(501,context,". does not exist?!");
     free(buffer);
     return -1;
   }
@@ -811,7 +811,7 @@ int do_site_invite(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
       (group->groupname)?group->groupname:"No Group",
       str_tochar(ircnick));
 
-  ret = send_message_with_args(200,context,"SITE INVITE command ok");
+  ret = send_message_with_args(200,context,"SITE INVITE command okay");
   str_deallocate(ircnick);
   return 0;
 }
@@ -842,7 +842,7 @@ int do_site_link(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath_new(str_tochar(dirname),buffer_dir,context)) {
-    ret = send_message_with_args(501,context,"dirname is invalid");
+    ret = send_message_with_args(501,context,"Dirname is invalid");
     str_deallocate(command); str_deallocate(dirname);
     return 0;
   }
@@ -860,7 +860,7 @@ int do_site_link(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
       return 1;
     }
     if ( (ret = checkpath_new(str_tochar(linkname),buffer_link,context) ) && ret != E_FILE_NOEXIST) { /* of course it returns no_exist */
-      ret = send_message_with_args(501,context,"linkname is invalid");
+      ret = send_message_with_args(501,context,"Linkname is invalid");
       str_deallocate(command);
       str_deallocate(linkname);
       return 0;
@@ -880,7 +880,7 @@ int do_site_link(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     return 1;
   }
 
-  ret ? send_message_with_args(501,context,"command_failed") : send_message_with_args(200,context,"command ok");
+  ret ? send_message_with_args(501,context,"Command failed") : send_message_with_args(200,context,"Command okay");
   str_deallocate(command);
 
   return 0;
@@ -904,12 +904,12 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
   fs_filestat_t s;
 
   if (!mainConfig->dir_message) {
-    send_message_with_args(501,context,"no dir_message defined in config");
+    send_message_with_args(501,context,"No dir_message defined in config");
     return 1;
   }
 
   if (checkpath_new(".",msg_file,context)) {
-    send_message_with_args(501,context,". does not exist ?!");
+    send_message_with_args(501,context,". does not exist?!");
     return 1;
   } else {
     length = strlen(msg_file);
@@ -942,23 +942,23 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
     str_deallocate(filename);
     if (fs_file_stat(other_file,&s) || !S_ISREG(s.mode))
     {
-      send_message_with_args(501,context,"inexistant file, or not a regular file");
+      send_message_with_args(501,context,"Inexistant file, or not a regular file");
       return -1;
     }
     unlink(msg_file);
     if (!safe_rename(other_file,msg_file))
     {
-      send_message_with_args(200,context,"message file loaded");
+      send_message_with_args(200,context,"Message file loaded");
       return 0;
     }
-    send_message_with_args(501,context,"error while renaming file");
+    send_message_with_args(501,context,"Error while renaming file");
     return -1;
   }
   else if (strcasecmp(str_tochar(command),"delete")==0)
   {
     str_deallocate(command);
     unlink(msg_file);
-    send_message_with_args(200,context,"message file deleted");
+    send_message_with_args(200,context,"Message file deleted");
     return 0;
   }
   else if (strcasecmp(str_tochar(command),"new")==0)
@@ -970,7 +970,7 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
     str_deallocate(command);
     fp = fopen(msg_file,"w");
     if (!fp) {
-      send_message_with_args(501,context,"unable to open message file for writing");
+      send_message_with_args(501,context,"Unable to open message file for writing");
       return 1;
     }
     buf = str_tok(command_line,"\r\n");
@@ -982,12 +982,12 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
     length = strlen(str_tochar(buf));
     if (length != fwrite(str_tochar(buf),1,length,fp)) {
       fclose(fp);
-      send_message_with_args(501,context,"unable to write message");
+      send_message_with_args(501,context,"Unable to write message");
       str_deallocate(buf);
       return 1;
     }
     fclose(fp);
-    send_message_with_args(200,context,"message file written");
+    send_message_with_args(200,context,"Message file written");
     str_deallocate(buf);
     return 0;
   }
@@ -1000,7 +1000,7 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
     str_deallocate(command);
     fp = fopen(msg_file,"a");
     if (!fp) {
-      send_message_with_args(501,context,"unable to open message file for writing");
+      send_message_with_args(501,context,"Unable to open message file for writing");
       return 1;
     }
     buf = str_tok(command_line,"\r\n");
@@ -1012,12 +1012,12 @@ int do_site_msg(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_co
     length = strlen(str_tochar(buf));
     if (length != fwrite(str_tochar(buf),1,length,fp)) {
       fclose(fp);
-      send_message_with_args(501,context,"unable to write message");
+      send_message_with_args(501,context,"Unable to write message");
       str_deallocate(buf);
       return 1;
     }
     fclose(fp);
-    send_message_with_args(200,context,"message file written");
+    send_message_with_args(200,context,"Message file written");
     str_deallocate(buf);
     return 0;
   }
@@ -1121,8 +1121,8 @@ int do_site_perm(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
     str_deallocate(perm_name);
     str_deallocate(ptr);
-    if (ret) {send_message_with_args(501,context,"error changing permission"); return 1; }
-    send_message_with_args(200,context,"command ok, permission changed");
+    if (ret) {send_message_with_args(501,context,"Error changing permission"); return 1; }
+    send_message_with_args(200,context,"Command okay, permission changed");
     return -1;
   }
   else if (strcasecmp(str_tochar(command_name),"remove")==0)
@@ -1133,9 +1133,9 @@ int do_site_perm(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
       return 1;
     }
     if ( commands_delete_permission(mainConfig->commands_list,perm_name) )
-      send_message_with_args(501,context,"error, permission NOT deleted");
+      send_message_with_args(501,context,"Error, permission NOT deleted");
     else
-      send_message_with_args(200,context,"command ok, permission deleted");
+      send_message_with_args(200,context,"Command okay, permission deleted");
     str_deallocate(perm_name);
     return 0;
   }
@@ -1153,8 +1153,8 @@ int do_site_perm(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
     str_deallocate(perm_name);
     str_deallocate(ptr);
-    if (ret) {send_message_with_args(501,context,"error adding permission"); return 1; }
-    send_message_with_args(200,context,"command ok, permission changed");
+    if (ret) {send_message_with_args(501,context,"Error adding permission"); return 1; }
+    send_message_with_args(200,context,"Command okay, permission changed");
     return 0;
   }
 
@@ -1260,7 +1260,7 @@ int do_site_reload(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t *param, wz
   pid = getpid();
 #endif
   if (pid <2) {
-    ret = send_message_with_args(501,context,"ARG ! Getting invalid pid ?!");
+    ret = send_message_with_args(501,context,"ARG! Getting invalid pid?!");
     return 1;
   }
   out_log(LEVEL_CRITICAL,"Target pid: %d\n",pid);
@@ -1276,7 +1276,7 @@ int do_site_reload(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t *param, wz
 #else
   /* FIXME VISUAL : call server_restart explicitely ? */
   /*ret = send_message_with_args(501,context,"kill(getpid(),SIGHUP) not supported on visual ...");*/
-  ret = send_message_with_args(501, context, "restarting server, cross your fingers ...");
+  ret = send_message_with_args(501, context, "Restarting server, cross your fingers...");
   server_restart(SIGHUP);
   return 1;
 #endif
@@ -1399,7 +1399,7 @@ int do_site_rusage(UNUSED wzd_string_t * ignored, UNUSED wzd_string_t *param, wz
 
   send_message_raw("200 \r\n",context);
 #else /* _MSC_VER */
-  send_message_with_args(501,context,"can't be implemented on win32 !");
+  send_message_with_args(501,context,"Can't be implemented on win32!");
 #endif /* _MSC_VER */
   return 0;
 }
@@ -1586,7 +1586,7 @@ int do_site_unlock(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   while ( (filename = str_tok(command_line," \t\r\n")) );
 
   if (ret == 0) {
-    ret = send_message_with_args(200,context,"file(s) unlocked");
+    ret = send_message_with_args(200,context,"File(s) unlocked");
   } else {
     ret = send_message_with_args(501,context,"UNLOCK FAILED");
   }
@@ -1615,7 +1615,7 @@ int do_site_user(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
   }
   /* check that username exists */
   if ( backend_find_user(username,&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
   if ( strchr(user.flags,FLAG_ULTRAHIDDEN )&&
@@ -1623,13 +1623,13 @@ int do_site_user(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
        (strcmp(username,me->username)!=0)/* do not hide to self ! */
      ) {
     /* for siteops we could send a different message, like 'user is hidden' */
-    ret = send_message_with_args(501,context,"User does not exists");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
   str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_user",NULL);
   if (!str) {
-    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_user does not exists");
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_user does not exist");
     return 0;
   }
 
@@ -1726,7 +1726,7 @@ int do_site_utime(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   utime_buf.modtime = mktime(&tm_mtime);
   /* convert file to absolute path, remember _setPerm wants ABSOLUTE paths ! */
   if (checkpath(str_tochar(filename),buffer,context)) { /* path is NOT ok ! */
-    ret = send_message_with_args(501,context,"File does not exists");
+    ret = send_message_with_args(501,context,"File does not exist");
     str_deallocate(filename);
     return 1;
   }
@@ -1740,7 +1740,7 @@ int do_site_utime(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   ret = utime(buffer,&utime_buf);
 
-  ret = send_message_with_args(200,context,"UTIME command ok");
+  ret = send_message_with_args(200,context,"UTIME command okay");
   return 0;
 }
 
@@ -1772,7 +1772,7 @@ int do_site_vars(UNUSED wzd_string_t *ignored, wzd_string_t * command_line, wzd_
     ret = vars_get(str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_get");
     else
       send_message_with_args(200,context,buffer);
 
@@ -1792,16 +1792,16 @@ int do_site_vars(UNUSED wzd_string_t *ignored, wzd_string_t * command_line, wzd_
     ret = vars_set(str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_set");
     else
-      send_message_with_args(200,context,"command ok");
+      send_message_with_args(200,context,"Command okay");
 
     str_deallocate(varname);
     str_deallocate(value);
     return 0;
   }
 
-  send_message_with_args(200,context,"command ok");
+  send_message_with_args(200,context,"Command okay");
   str_deallocate(command);
   str_deallocate(varname);
   return 0;
@@ -1832,7 +1832,7 @@ int do_site_vars_group(UNUSED wzd_string_t *ignored, wzd_string_t * command_line
   group = GetGroupByName(str_tochar(groupname));
   str_deallocate(groupname);
   if ( !group ) {
-    send_message_with_args(501,context,"group does not exist");
+    send_message_with_args(501,context,"Group does not exist");
     str_deallocate(command);
     return 1;
   }
@@ -1850,7 +1850,7 @@ int do_site_vars_group(UNUSED wzd_string_t *ignored, wzd_string_t * command_line
     ret = vars_group_get(group->groupname,str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_group_get");
     else
       send_message_with_args(200,context,buffer);
 
@@ -1870,15 +1870,15 @@ int do_site_vars_group(UNUSED wzd_string_t *ignored, wzd_string_t * command_line
     ret = vars_group_set(group->groupname,str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_group_set");
     else
-      send_message_with_args(200,context,"command ok");
+      send_message_with_args(200,context,"Command okay");
     str_deallocate(value);
     str_deallocate(varname);
     return 0;
   }
 
-  send_message_with_args(200,context,"command ok");
+  send_message_with_args(200,context,"Command okay");
   str_deallocate(command);
   str_deallocate(varname);
   return 0;
@@ -1909,7 +1909,7 @@ int do_site_vars_user(UNUSED wzd_string_t *ignored, wzd_string_t * command_line,
   user = GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    send_message_with_args(501,context,"user does not exist");
+    send_message_with_args(501,context,"User does not exist");
     str_deallocate(command);
     return 1;
   }
@@ -1927,7 +1927,7 @@ int do_site_vars_user(UNUSED wzd_string_t *ignored, wzd_string_t * command_line,
     ret = vars_user_get(user->username,str_tochar(varname),buffer,1024,mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_user_get");
     else
       send_message_with_args(200,context,buffer);
 
@@ -1948,15 +1948,15 @@ int do_site_vars_user(UNUSED wzd_string_t *ignored, wzd_string_t * command_line,
     ret = vars_user_set(user->username,str_tochar(varname),str_tochar(value),strlen(str_tochar(value)),mainConfig);
 
     if (ret)
-      send_message_with_args(200,context,"an error occurred");
+      send_message_with_args(200,context,"An error occurred inside vars_user_set");
     else
-      send_message_with_args(200,context,"command ok");
+      send_message_with_args(200,context,"Command okay");
     str_deallocate(varname);
     str_deallocate(value);
     return 0;
   }
 
-  send_message_with_args(200,context,"command ok");
+  send_message_with_args(200,context,"Command okay");
   str_deallocate(varname);
   return 0;
 }
@@ -2051,7 +2051,7 @@ int do_site_vfsadd(UNUSED wzd_string_t * ignored, wzd_string_t * command_line, w
     snprintf( tmp, 80, "vfs %s already set", vpath );
     send_message_with_args(501,context,tmp);
   }  else
-    send_message_with_args(200,context,"VFSADD command ok");
+    send_message_with_args(200,context,"VFSADD command okay");
 
   free(vpath); free(ppath);
 
@@ -2078,7 +2078,7 @@ int do_site_vfsdel(UNUSED wzd_string_t * ignored, wzd_string_t * command_line, w
     snprintf( tmp, 80, "vfs %s does not exist", str_tochar(command_line) );
     send_message_with_args(501,context,tmp);
   } else
-    send_message_with_args(200,context,"VFSDEL command ok");
+    send_message_with_args(200,context,"VFSDEL command okay");
 
   return 0;
 }
@@ -2192,7 +2192,7 @@ int do_site_wipe(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     }
     if (ret != EVENT_OK && ret != EVENT_BREAK) {
       out_log(LEVEL_NORMAL, "Wipe denied by hook (returned %d)\n", ret);
-      ret = send_message_with_args(501,context,"Wipe denied");
+      ret = send_message_with_args(501,context,"WIPE denied");
       str_deallocate(filename);
       return E_COMMAND_FAILED;
     }

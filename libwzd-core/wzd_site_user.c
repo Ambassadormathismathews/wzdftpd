@@ -128,7 +128,7 @@ int do_site_adduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
     if (me && me->group_num>0) {
       group = GetGroupByID(me->groups[0]);
     } else {
-      ret = send_message_with_args(501,context,"You cannot add users due to your own groups");
+      ret = send_message_with_args(501,context,"You need to be a member of at least one group");
       str_deallocate(username); str_deallocate(password); str_deallocate(ip);
       return 0;
     }
@@ -162,7 +162,7 @@ int do_site_adduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
         err = send_message_with_args(501,context,"Invalid name or parameter");
         break;
       case E_PARAM_EXIST:
-        err = send_message_with_args(501,context,"A user already exist with this name");
+        err = send_message_with_args(501,context,"A user already exists with this name");
         break;
       default:
         err = send_message_with_args(501,context,"Error while adding user");
@@ -456,7 +456,7 @@ int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
     ret = ip_inlist(user->ip_list, str_tochar(ip));
     if (ret) {
-      ret = send_message_with_args(501,context,"ip is already included in list");
+      ret = send_message_with_args(501,context,"IP address is already included in list");
       str_deallocate(ip);
       return 0;
     }
@@ -470,7 +470,7 @@ int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   /* commit to backend */
   backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IP);
 
-  ret = send_message_with_args(200,context,"User ip(s) added");
+  ret = send_message_with_args(200,context,"User IP address(es) added");
   return 0;
 }
 
@@ -571,7 +571,7 @@ int do_site_delip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   /* commit to backend */
   backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IP);
-  ret = send_message_with_args(200,context,"User ip(s) removed");
+  ret = send_message_with_args(200,context,"User IP address(es) removed");
   return 0;
 }
 
@@ -602,12 +602,12 @@ int do_site_color(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
     ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_FLAGS);
-    ret = send_message_with_args(200,context,"color mode ON");
+    ret = send_message_with_args(200,context,"Color mode ON");
   } else {
     *dst_ptr='\0';
     memcpy(me->flags,new_flags,MAX_FLAGS_NUM);
     ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_FLAGS);
-    ret = send_message_with_args(200,context,"color mode OFF");
+    ret = send_message_with_args(200,context,"Color mode OFF");
   }
   return 0;
 }
@@ -858,7 +858,7 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   }
   /* bytes_ul and bytes_dl should never be changed ... */
   else {
-    ret = send_message_with_args(501,context,"field does not exist");
+    ret = send_message_with_args(501,context,"Field does not exist");
     str_deallocate(field); str_deallocate(value);
     return 0;
   }
@@ -888,7 +888,7 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   if ( (user->flags && strchr(user->flags,FLAG_GADMIN)) &&
       (user->flags && strchr(user->flags,FLAG_SITEOP)))
   {
-    ret = send_message_with_args(200,context,"Change ok - You have set flags G and O, THIS IS NOT WHAT YOU WANT - repeat: THIS IS STUPID !!");
+    ret = send_message_with_args(200,context,"Change okay - You have set flags G and O, THIS IS NOT WHAT YOU WANT - repeat: THIS IS STUPID !!");
   }
   else
     ret = send_message_with_args(200,context,"User field change successful");
@@ -928,7 +928,7 @@ int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"user does not exist");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
@@ -1019,7 +1019,7 @@ int do_site_chratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"user does not exist");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
@@ -1098,7 +1098,7 @@ int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"user does not exist");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
@@ -1163,13 +1163,13 @@ int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
   user = GetUserByID(context->userid);
   /* check if user exists */
   if ( !user ) {
-    ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
+    ret = send_message_with_args(501,context,"Mama says I don't exist?!");
     return 0;
   }
 
   if (command_line && strlen(str_tochar(command_line))>0) {
     if (!user->flags || !strchr(user->flags,FLAG_SITEOP)) {
-      ret = send_message_with_args(501,context,"You do not have the rights to do that !");
+      ret = send_message_with_args(501,context,"You do not have the rights to do that!");
       return 0;
     }
     idletime = strtoul(str_tochar(command_line),&ptr,0);
@@ -1180,7 +1180,7 @@ int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     user->max_idle_time = idletime;
     /* commit to backend */
     backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IDLE);
-    snprintf(buffer,1023,"%s","Command ok");
+    snprintf(buffer,1023,"%s","Command okay");
   } else { /* if (*command_line != '\0') */
 
     snprintf(buffer,1023,"Your idle time is %u",user->max_idle_time);
@@ -1204,7 +1204,7 @@ int do_site_tagline(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
   user = GetUserByID(context->userid);
   /* check if user exists */
   if ( !user ) {
-    ret = send_message_with_args(501,context,"Mama says I don't exist ?!");
+    ret = send_message_with_args(501,context,"Mama says I don't exist?!");
     return 0;
   }
 
@@ -1212,7 +1212,7 @@ int do_site_tagline(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
     strncpy(user->tagline,str_tochar(command_line),255);
     /* commit to backend */
     backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_TAGLINE);
-    snprintf(buffer,1023,"%s","Command ok");
+    snprintf(buffer,1023,"%s","Command okay");
   } else { /* if (*command_line != '\0') */
 
     snprintf(buffer,1023,"Your tagline is %s",user->tagline);
@@ -1244,13 +1244,13 @@ int do_site_kill(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
     ret = send_message_with_args(200,context,"KILL signal sent");
     break;
   case 1:
-    ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+    ret = send_message_with_args(501,context,"My religion forbids me suicide!");
     break;
   case -1:
     ret = send_message_with_args(501,context,"Invalid PID");
     break;
   default:
-    ret = send_message_with_args(501,context,"We should NOT have passed here - NEVER !");
+    ret = send_message_with_args(501,context,"We should NOT have passed here - NEVER!");
     break;
   }
 
@@ -1283,7 +1283,7 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
 
   /* preliminary check: i can't kill myself */
   if (user->uid == context->userid) {
-    ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+    ret = send_message_with_args(501,context,"My religion forbids me suicide!");
     return 0;
   }
 
@@ -1301,7 +1301,7 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
       }
     } /* for all contexts */
   }
-  if (!found) { ret = send_message_with_args(501,context,"User is not logged !"); }
+  if (!found) { ret = send_message_with_args(501,context,"User is not logged!"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
   return 0;
@@ -1335,13 +1335,13 @@ int do_site_killpath(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   switch (ret) {
     case E_FILE_NOEXIST:
-      ret = send_message_with_args(501,context,"path does not exist !");
+      ret = send_message_with_args(501,context,"Path does not exist!");
       break;
     case E_USER_IDONTEXIST:
-      ret = send_message_with_args(501,context,"Where am I ? My path does not exist !");
+      ret = send_message_with_args(501,context,"Where am I? My path does not exist!");
       break;
     case E_USER_ICANTSUICIDE:
-      ret = send_message_with_args(501,context,"My religion forbids me suicide !");
+      ret = send_message_with_args(501,context,"My religion forbids me suicide!");
       break;
     case E_USER_NOBODY:
       ret = send_message_with_args(200,context,"Nobody in this path");
@@ -1394,7 +1394,7 @@ int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"user does not exist");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
@@ -1422,7 +1422,7 @@ int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   /* check user credits */
   if (me->credits && me->credits < kbytes) {
-    ret = send_message_with_args(501,context,"You don't have enough credits !");
+    ret = send_message_with_args(501,context,"You don't have enough credits!");
     return 0;
   }
 
@@ -1478,7 +1478,7 @@ int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
-    ret = send_message_with_args(501,context,"user does not exist");
+    ret = send_message_with_args(501,context,"User does not exist");
     return 0;
   }
 
@@ -1506,7 +1506,7 @@ int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   /* check user credits */
   if (user->ratio==0) {
-    ret = send_message_with_args(501,context,"User has unlimited credits !");
+    ret = send_message_with_args(501,context,"User has unlimited credits!");
     return 0;
   }
 
@@ -1555,7 +1555,7 @@ int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
 
   /* check if user already exists */
   if ( backend_find_user(str_tochar(username),&user,&uid) ) {
-    ret = send_message_with_args(501,context,"User does not exists");
+    ret = send_message_with_args(501,context,"User does not exist");
     str_deallocate(username);
     return 0;
   }
@@ -1563,7 +1563,7 @@ int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
 
   /* for now, this command is strictly restricted to siteops */
   if (!me || !me->flags || !strchr(me->flags,FLAG_SITEOP)) {
-    ret = send_message_with_args(501,context,"You can't use this command, you are not siteop!");
+    ret = send_message_with_args(501,context,"You can't use this command, you are not a siteop!");
     return 0;
   }
 
@@ -1609,7 +1609,7 @@ int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
     else
       remote_host = h->h_name;
     log_message("DOPPEL","%s (%s) \"%s\" \"%s\" \"%s\"",
-        (remote_host)?remote_host:"no host !",
+        (remote_host)?remote_host:"no host!",
         inet_str,
         me->username,
         (groupname)?groupname:"No Group",
@@ -1618,9 +1618,9 @@ int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
   }
 
   if (ret) {
-    ret = send_message_with_args(501,context,"Command Failed");
+    ret = send_message_with_args(501,context,"Command failed");
   } else {
-    ret = send_message_with_args(200,context,"Command OK");
+    ret = send_message_with_args(200,context,"Command okay");
   }
   return 0;
 }

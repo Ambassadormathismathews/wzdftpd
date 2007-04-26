@@ -101,7 +101,7 @@ int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   /* Gadmin ? */
   if (is_gadmin)
   {
-    err = send_message_with_args(501,context,"Gadmins can't add groups !");
+    err = send_message_with_args(501,context,"Gadmins can't add groups!");
     str_deallocate(groupname);
     return 0;
   }
@@ -114,10 +114,10 @@ int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
         err = send_message_with_args(501,context,"Invalid name or parameter");
         break;
       case E_PARAM_EXIST:
-        err = send_message_with_args(501,context,"A group already exist with this name");
+        err = send_message_with_args(501,context,"A group already exists with this name");
         break;
       default:
-        err = send_message_with_args(501,context,"Error while adding group");
+        err = send_message_with_args(501,context,"Error occured while creating group");
         break;
     }
     str_deallocate(groupname);
@@ -130,7 +130,7 @@ int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   str_deallocate(groupname);
 
   if (err) {
-    err = send_message_with_args(501,context,"Problem adding group");
+    err = send_message_with_args(501,context,"Could not commit new group to backend");
     group_free(newgroup);
   } else {
     err = send_message_with_args(200,context,"Group added");
@@ -274,7 +274,7 @@ int do_site_grpren(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   if (is_gadmin)
   {
-    ret = send_message_with_args(501,context,"GAdmins can't do that !");
+    ret = send_message_with_args(501,context,"GAdmins can't do that!");
     str_deallocate(newgroupname);
     return 0;
   }
@@ -315,7 +315,7 @@ int do_site_ginfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_ginfo",NULL);
   if (!str) {
-    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_ginfo does not exists");
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_ginfo does not exist");
     return 0;
   }
 
@@ -349,7 +349,7 @@ int do_site_gsinfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   str = config_get_string(mainConfig->cfg_file,"GLOBAL","sitefile_group",NULL);
   if (!str) {
-    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_group does not exists");
+    ret = send_message_with_args(501,context,"File [GLOBAL] / sitefile_group does not exist");
     return 0;
   }
 
@@ -397,7 +397,7 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   /* GAdmin ? */
   if (is_gadmin)
   {
-    ret = send_message_with_args(501,context,"Gadmins can't do that !");
+    ret = send_message_with_args(501,context,"Gadmins can't do that!");
     return 0;
   }
 
@@ -409,7 +409,7 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   ret = ip_inlist(group->ip_list, str_tochar(ip));
   if (ret) {
-    ret = send_message_with_args(501,context,"ip is already included in list");
+    ret = send_message_with_args(501,context,"IP address is already included in list");
     str_deallocate(ip);
     return 0;
   }
@@ -420,7 +420,7 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   /* commit to backend */
   backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
 
-  ret = send_message_with_args(200,context,"Group ip added");
+  ret = send_message_with_args(200,context,"Group IP address added");
   return 0;
 }
 
@@ -471,7 +471,7 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   /* GAdmin ? */
   if (is_gadmin)
   {
-    ret = send_message_with_args(501,context,"Gadmins can't do that !");
+    ret = send_message_with_args(501,context,"Gadmins can't do that!");
     str_deallocate(ip);
     return 0;
   }
@@ -502,7 +502,7 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
       return 0;
     }
     backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
-    ret = send_message_with_args(200,context,"Group ip removed");
+    ret = send_message_with_args(200,context,"Group IP address removed");
     return 0;
   } /* if (*ptr=='\0') */
 
@@ -518,7 +518,7 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   /* commit to backend */
   backend_mod_group(mainConfig->backends->filename,group->gid,group,_GROUP_IP);
-  ret = send_message_with_args(200,context,"Group ip removed");
+  ret = send_message_with_args(200,context,"Group IP address removed");
 
   return 0;
 }
@@ -573,7 +573,7 @@ int do_site_grpratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   if (is_gadmin)
   {
-    ret = send_message_with_args(501,context,"GAdmins can't do that !");
+    ret = send_message_with_args(501,context,"GAdmins can't do that!");
     return 0;
   }
 
@@ -630,7 +630,7 @@ int do_site_grpkill(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
     }
   }
 
-  if (!found) { ret = send_message_with_args(501,context,"No member found !"); }
+  if (!found) { ret = send_message_with_args(501,context,"No member found!"); }
   else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
   return 0;
@@ -771,7 +771,7 @@ int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
   }
   else {
     str_deallocate(field); str_deallocate(value);
-    ret = send_message_with_args(501,context,"syntax error, unknow field");
+    ret = send_message_with_args(501,context,"Syntax error, unknown field");
     return 0;
   }
 

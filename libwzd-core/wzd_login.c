@@ -364,7 +364,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
-        ret = send_message_with_args(421,context,"Give me a user name !");
+        ret = send_message_with_args(421,context,"Give me a user name!");
         return 1;
       }
       ret = do_user(token,context);
@@ -388,10 +388,10 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = send_message_with_args(421,context,"Site is closed, try again later");
         return 1;
       case E_USER_IDONTEXIST: /* i don't exist, probably a problem with backend */
-        ret = send_message_with_args(501,context,"Mama says I don't exist ! (problem with backend ?)");
+        ret = send_message_with_args(501,context,"Mama says I don't exist! (problem with backend?)");
         return 1;
       case E_USER_TLSFORCED: /* user must use SSL/TLS */
-        ret = send_message_with_args(421,context,"User MUST connect in tls/ssl mode");
+        ret = send_message_with_args(421,context,"User MUST connect in TLS/SSL mode");
         return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
         ret = send_message_with_args(421,context,"Too many connections for your group");
@@ -417,7 +417,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
       }
       token = strtok_r(NULL,"\r\n",&ptr);
       if (!token) {
-        ret = send_message_with_args(421,context,"Give me a password !");
+        ret = send_message_with_args(421,context,"Give me a password!");
         return 1;
       }
       ret = do_pass(username,token,context);
@@ -434,7 +434,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = send_message_with_args(421,context,"User deleted");
         return 1;
       case E_USER_NO_HOME: /* pass is ok, could not chdir */
-        ret = send_message_with_args(421,context,"Could not go to my home directory !");
+        ret = send_message_with_args(421,context,"Could not go to my home directory!");
         return 1;
       default:
         ret = send_message_with_args(421,context,"User rejected (unknown error)");
@@ -500,7 +500,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = send_message_with_args(550,context,"PROT","must be C or P");
         break;
       }
-      ret = send_message_with_args(200,context,"PROT command OK");
+      ret = send_message_with_args(200,context,"PROT command okay");
       break;
 #else /* HAVE_OPENSSL */
     case TOK_AUTH:
@@ -565,7 +565,7 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         ret = iptohostname(address,WZD_INET_NONE,NULL,NULL);
         if (ret != 0) {
           out_log(LEVEL_NORMAL,"WARNING Invalid hostname passed to IDNT (received %s)\n",address);
-          ret = send_message_with_args(501,context,"IDNT FAILED");
+          ret = send_message_with_args(501,context,"IDNT failed");
           return 1;
         }
 
@@ -603,7 +603,7 @@ static int do_login_gssapi(wzd_context_t * context)
     return 1;
   }
 
-  ret = send_message_with_args(334, context, "waiting for ", "ADAT");
+  ret = send_message_with_args(334, context, "Waiting for ", "ADAT");
 
   while (1) {
     /* wait response */
@@ -733,9 +733,9 @@ int do_login(wzd_context_t * context)
       remote_host = inet_str;
     else
       remote_host = h->h_name;
-    out_log(LEVEL_INFO,"%s from %s\n",(ret)?"LOGIN FAILURE":"LOGIN OK",remote_host);
+    out_log(LEVEL_INFO,"%s from %s\n",(ret)?"LOGIN FAILURE":"LOGIN OKAY",remote_host);
     log_message( (ret)?"LOGIN_FAILED":"LOGIN" ,"%s (%s) \"%s\" \"%s\" \"%s\"",
-        (remote_host)?remote_host:"no host !",
+        (remote_host)?remote_host:"no host!",
         inet_str,
         user ? user->username : "unknown",
         (groupname)?groupname:"No Group",
