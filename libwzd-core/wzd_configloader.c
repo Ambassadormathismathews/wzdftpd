@@ -418,8 +418,12 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
 
   /* USE SYSLOG */
   ret = config_get_boolean(file, "GLOBAL", "use_syslog", &err);
-  if (err == CF_OK && (ret))
-    CFG_SET_OPTION(cfg,CFG_OPT_USE_SYSLOG);
+  if (err == CF_OK) {
+    if (ret)
+      CFG_SET_OPTION(cfg,CFG_OPT_USE_SYSLOG);
+    else
+      CFG_CLR_OPTION(cfg,CFG_OPT_USE_SYSLOG);
+  }
 
   /* XFERLOG */
   str = config_get_string(file, "GLOBAL", "xferlog", NULL);
