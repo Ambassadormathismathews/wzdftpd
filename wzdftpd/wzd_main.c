@@ -363,7 +363,7 @@ int main(int argc, char **argv)
           if (!ret) {
             int err;
 
-            out_err(LEVEL_FLOOD,"config: NEW format found\n");
+            out_err(LEVEL_INFO,"config: NEW format found [%s]\n",config_files[i]);
 
             config = cfg_store(cf,&err);
             if (config) {
@@ -421,7 +421,7 @@ int main(int argc, char **argv)
     if (!ret) {
       int err;
 
-      out_err(LEVEL_INFO,"config: NEW format found\n");
+      out_err(LEVEL_INFO,"config: NEW format found [%s]\n",config_files[i]);
 
       config = cfg_store(cf,&err);
       if (config) {
