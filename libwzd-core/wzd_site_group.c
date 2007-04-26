@@ -783,7 +783,7 @@ int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
   if (ret)
     ret = send_message_with_args(501,context,"Problem occured when committing");
   else
-    ret = send_message_with_args(200,context,"Group field change successfull");
+    ret = send_message_with_args(200,context,"Group field change successful");
 
   return 0;
 }

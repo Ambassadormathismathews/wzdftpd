@@ -2669,7 +2669,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
       event_send(mainConfig->event_mgr, EVENT_DELE, 250, event_args, context);
       str_deallocate(event_args);
     }
-    ret = send_message_with_args(250,context,"DELE"," command successfull");
+    ret = send_message_with_args(250,context,"DELE"," command successful");
 
     context->idle_time_start = time(NULL);
   } else
