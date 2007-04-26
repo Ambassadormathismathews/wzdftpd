@@ -297,7 +297,7 @@ int do_site_sfv(wzd_string_t *commandname, wzd_string_t *param, wzd_context_t *c
   sfv_init(&sfv);
 
   if (strcasecmp(command,"add")==0) {
-    ret = send_message_with_args(200,context,"Site SFV add successfull");
+    ret = send_message_with_args(200,context,"Site SFV add successful");
   }
   if (strcasecmp(command,"check")==0) {
     ret = sfv_check(buffer);
