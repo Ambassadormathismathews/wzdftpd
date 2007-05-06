@@ -46,7 +46,8 @@ Name: tools\sitewho; Description: site who; Types: full custom
 Source: @CMAKE_CURRENT_BINARY_DIR@/wzdftpd/release/wzdftpd.exe; DestDir: {app}; Components: core; BeforeInstall: StopExistingService
 Source: @CMAKE_CURRENT_BINARY_DIR@/libwzd/release/libwzd.dll; DestDir: {app}; Components: core
 Source: @CMAKE_CURRENT_BINARY_DIR@/libwzd-core/release/libwzd_core.dll; DestDir: {app}; Components: core
-Source: @CMAKE_CURRENT_BINARY_DIR@/wzdftpd/wzd.cfg.sample; DestDir: {app}; Components: core; Tasks: overwriteconfig
+Source: @CMAKE_CURRENT_BINARY_DIR@/wzdftpd/wzd.cfg.sample; DestDir: {app}; DestName: wzd.cfg; Components: core; Tasks: overwriteconfig; Flags: onlyifdoesntexist uninsneveruninstall
+Source: @CMAKE_CURRENT_SOURCE_DIR@/wzdftpd/wzd.pem; DestDir: {app}; Components: core; Flags: onlyifdoesntexist 
 Source: @CMAKE_CURRENT_SOURCE_DIR@/AUTHORS; DestDir: {app}; Components: core
 Source: @CMAKE_CURRENT_SOURCE_DIR@/ChangeLog; DestDir: {app}; Components: core
 Source: @CMAKE_CURRENT_SOURCE_DIR@/COPYING; DestDir: {app}; Components: core
