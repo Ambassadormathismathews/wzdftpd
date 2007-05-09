@@ -15,35 +15,35 @@ else (OPENSSL_INCLUDE_DIR AND OPENSSL_LIBRARIES)
   FIND_PATH(OPENSSL_INCLUDE_DIR openssl/ssl.h
      /usr/include/
      /usr/local/include/
-	 c:/program files/openssl/include/
-	 c:/openssl/include/
+     $ENV{ProgramFiles}/OpenSSL/include/
+     $ENV{SystemDrive}/OpenSSL/include/
   )
 
   if(WIN32 AND MSVC)
       # /MD and /MDd are the standard values - if somone wants to use
       # others, the libnames have to change here too
-	  # see http://www.openssl.org/support/faq.html#PROG2 for their meaning
+      # see http://www.openssl.org/support/faq.html#PROG2 for their meaning
 
       FIND_LIBRARY(SSL_EAY_DEBUG NAMES ssleay32MDd
-		PATHS
-		c:/program files/openssl/lib/VC/
-		c:/openssl/lib/VC/
-	  )
+        PATHS
+        $ENV{ProgramFiles}/OpenSSL/lib/VC/
+        $ENV{SystemDrive}/OpenSSL/lib/VC/
+      )
       FIND_LIBRARY(SSL_EAY_RELEASE NAMES ssleay32MD
-	  	PATHS
-		c:/program files/openssl/lib/VC/
-		c:/openssl/lib/VC/
-	  )
+        PATHS
+        $ENV{ProgramFiles}/OpenSSL/lib/VC/
+        $ENV{SystemDrive}/OpenSSL/lib/VC/
+      )
       FIND_LIBRARY(LIB_EAY_DEBUG NAMES libeay32MDd
-	  	PATHS
-		c:/program files/openssl/lib/VC/
-		c:/openssl/lib/VC/
-	  )
+        PATHS
+        $ENV{ProgramFiles}/OpenSSL/lib/VC/
+        $ENV{SystemDrive}/OpenSSL/lib/VC/
+      )
       FIND_LIBRARY(LIB_EAY_RELEASE NAMES libeay32MD
-	  	PATHS
-		c:/program files/openssl/lib/VC/
-		c:/openssl/lib/VC/
-	  )
+        PATHS
+        $ENV{ProgramFiles}/OpenSSL/lib/VC/
+        $ENV{SystemDrive}/OpenSSL/lib/VC/
+      )
 
       IF(MSVC_IDE)
         IF(SSL_EAY_DEBUG AND SSL_EAY_RELEASE)
