@@ -697,29 +697,55 @@ static void libsqlite_user_update_ip(uid_t uid, wzd_user_t *user)
   char *query=NULL;
   char *errmsg=NULL;
   sqlite3 *db=NULL;
-  struct wzd_ip_list_t *current_ip=NULL;
+
+  wzd_user_t *db_user=NULL;
+  struct wzd_ip_list_t *delete=NULL;
+  struct wzd_ip_list_t *add=NULL;
+  struct wzd_ip_list_t *curr;
 
   uref = libsqlite_user_get_ref_by_uid(uid);
   if (uref == -1) return;
 
   db = libsqlite_open();
   if (db == NULL) return;
-  
-  /** \todo don't take a shortway - real update ;) */
-  query = sqlite3_mprintf("DELETE userip WHERE uref=%d;", uref);
-  sqlite3_exec(db, query, NULL, NULL, NULL);
-  sqlite3_free(query);
+ 
+  /* retrieve list in db */
+  db_user = user_allocate();
+  db_user->uid = uid;
+  libsqlite_user_get_ip(db_user);
 
-  for(current_ip = user->ip_list; current_ip;
-      current_ip = current_ip->next_ip) {
-    query = sqlite3_mprintf("INSERT INTO userip (uref, ip) VALUES (%d, '%q');",
-                            uref, current_ip->regexp);
+  /* retrieve add && update list */
+  libsqlite_update_ip(db_user->ip_list, user->ip_list, &delete, &add);
+  user_free(db_user); 
+
+  /* delete */
+  for (curr = delete; curr; curr = curr->next_ip) {
+    query = sqlite3_mprintf("DELETE FROM userip WHERE uref=%d AND ip='%q';",
+                            uref, curr->regexp);
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
       out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+      errmsg = NULL;
     }
     sqlite3_free(query);
   }
+  
+  /* add */
+  for(curr = add; curr; curr = curr->next_ip) {
+    query = sqlite3_mprintf("INSERT INTO userip (uref, ip) VALUES (%d, '%q');",
+                            uref, curr->regexp);
+    sqlite3_exec(db, query, NULL, NULL, &errmsg);
+    if (errmsg) {
+      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+      errmsg = NULL;
+    }
+    sqlite3_free(query);
+  }
+  
+  ip_list_free(delete);
+  ip_list_free(add);
 
   libsqlite_close(&db);
 }

@@ -99,6 +99,52 @@ void libsqlite_add_to_query(char **query, char *format, ...)
   }
 }
 
+/**
+ * \brief function used to retrieve 3 lists for update, delete,
+ *                 and add in database
+ * \param curr_in_db list of ips currently in database.
+ * \param should_in_db list of ips should be in database.
+ * \param delete list of ips should be delete in database.
+ * \param add list of ips should be add in database.
+ */
+void
+libsqlite_update_ip(struct wzd_ip_list_t *db,
+                    struct wzd_ip_list_t *update,
+                    struct wzd_ip_list_t **delete,
+                    struct wzd_ip_list_t **add)
+{
+  unsigned int found;
+  struct wzd_ip_list_t *curr_db=NULL;
+  struct wzd_ip_list_t *curr_update=NULL;
+
+  /* search for deleted */
+  for(curr_db = db; curr_db; curr_db = curr_db->next_ip) {
+    found = 0; 
+    for(curr_update = update; curr_update; curr_update = curr_update->next_ip) {
+      if (strcmp(curr_db->regexp, curr_update->regexp) == 0) {
+        found = 1;
+      }
+    }
+    if (found == 0) {
+      ip_add_check(delete, curr_db->regexp, 1);
+    }
+  }
+  
+  /* search for added */
+  for(curr_update = update; curr_update; curr_update = curr_update->next_ip) {
+    found = 0;
+    for(curr_db = db; curr_db; curr_db = curr_db->next_ip) {
+      if (strcmp(curr_db->regexp, curr_update->regexp) == 0) {
+        found = 1;
+      }
+    }
+    if (found == 0) {
+      ip_add_check(add, curr_update->regexp, 1);
+    }
+  }
+}
+
+
 static int FCN_INIT(const char *arg)
 {
   struct stat st;

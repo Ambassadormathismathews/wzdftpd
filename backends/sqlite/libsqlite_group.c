@@ -497,30 +497,60 @@ void libsqlite_group_update(gid_t gid, wzd_group_t *group,
  */
 static void libsqlite_group_update_ip(gid_t gid, wzd_group_t *group)
 {
-  int ref;
+  int gref;
   sqlite3 *db=NULL;
   char *query=NULL;
-  struct wzd_ip_list_t *current_ip;
+  char *errmsg=NULL;
 
-  ref = libsqlite_group_get_ref_by_id(gid);
-  if (ref == -1) return;
+  wzd_group_t *db_group=NULL;
+  struct wzd_ip_list_t *delete=NULL;
+  struct wzd_ip_list_t *add=NULL;
+  struct wzd_ip_list_t *curr;
+
+  gref = libsqlite_group_get_ref_by_id(gid);
+  if (gref == -1) return;
 
   db = libsqlite_open();
   if (!db) return;
-  
-  /** \todo don't take a shortway - real update ;) */
-  query = sqlite3_mprintf("DELETE FROM groupip WHERE gref = %d;", ref);
-  sqlite3_exec(db, query, NULL, NULL, NULL);
-  sqlite3_free(query);
+ 
+  /* retrieve list in db */
+  db_group = group_allocate();
+  db_group->gid = gid;
+  libsqlite_group_get_ip(db_group);
 
-  for(current_ip = group->ip_list; current_ip;
-      current_ip = current_ip->next_ip) {
-    query = sqlite3_mprintf("INSERT INTO groupip (gref, ip) VALUES (%d, '%q');",
-                            ref, current_ip->regexp);
-    sqlite3_exec(db, query, NULL, NULL, NULL);
+  /* retrieve add && update list */
+  libsqlite_update_ip(db_group->ip_list, group->ip_list, &delete, &add);
+  group_free(db_group); 
+
+  /* delete */
+  for (curr = delete; curr; curr = curr->next_ip) {
+    query = sqlite3_mprintf("DELETE FROM groupip WHERE gref=%d AND ip='%q';",
+                            gref, curr->regexp);
+    sqlite3_exec(db, query, NULL, NULL, &errmsg);
+    if (errmsg) {
+      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+      errmsg = NULL;
+    }
     sqlite3_free(query);
   }
   
+  /* add */
+  for(curr = add; curr; curr = curr->next_ip) {
+    query = sqlite3_mprintf("INSERT INTO groupip (gref, ip) VALUES (%d, '%q');",
+                            gref, curr->regexp);
+    sqlite3_exec(db, query, NULL, NULL, &errmsg);
+    if (errmsg) {
+      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+      errmsg = NULL;
+    }
+    sqlite3_free(query);
+  }
+
+  ip_list_free(delete);
+  ip_list_free(add);
+
   libsqlite_close(&db);
 
   return;
