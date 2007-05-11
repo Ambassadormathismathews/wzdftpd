@@ -757,11 +757,13 @@ static void libsqlite_user_update_ip(uid_t uid, wzd_user_t *user)
  */
 static void libsqlite_user_update_group(uid_t uid, wzd_user_t *user)
 {
-  int uref;
-  unsigned int j;
+  int uref, gref;
+  unsigned int i, j, found;
   char *query=NULL;
   char *errmsg=NULL;
   sqlite3 *db=NULL;
+
+  wzd_user_t *db_user=NULL;
 
   uref = libsqlite_user_get_ref_by_uid(uid);
   if (uref == -1) return;
@@ -769,23 +771,56 @@ static void libsqlite_user_update_group(uid_t uid, wzd_user_t *user)
   db = libsqlite_open();
   if (db == NULL) return;
 
-  /** \todo don't take a shortway - real update ;)*/
-  query = sqlite3_mprintf("DELETE FROM ugr WHERE uref=%d;", uref);
-  sqlite3_exec(db, query, NULL, NULL, NULL);
-  sqlite3_free(query);
+  db_user = user_allocate();
+  db_user->uid = uid;
+  libsqlite_user_get_groups(db_user);
 
-  for(j=0; j < user->group_num; j++) { 
-    query = sqlite3_mprintf("INSERT INTO ugr VALUES (%d, %d);",
-                            uref,
-                            libsqlite_group_get_ref_by_id(user->groups[j])
-    );
-
-    sqlite3_exec(db, query, NULL, NULL, &errmsg);
-    if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+  /* search for deleted group */
+  for(i=0; i < db_user->group_num; i++) {
+    found = 0;
+    for(j=0; j < user->group_num; j++) {
+      if (db_user->groups[i] == user->groups[j]) {
+        found = 1;
+      }
+      if (found == 0) {
+        gref = libsqlite_group_get_ref_by_id(db_user->groups[i]);
+        query = sqlite3_mprintf("DELETE FROM ugr WHERE uref=%d AND gref=%d;",
+                                uref, gref);
+        sqlite3_exec(db, query, NULL, NULL, &errmsg);
+        if (errmsg) {
+          out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+          sqlite3_free(errmsg);
+          errmsg = NULL;
+        }
+        sqlite3_free(query);
+      }
     }
-    sqlite3_free(query);
   }
+
+  /* search for added group */
+  for(i=0; i < user->group_num; i++) { 
+    found = 0;
+    for(j=0; j < db_user->group_num; j++) {
+      if (user->groups[i] == db_user->groups[j]) {
+        found = 1;
+      }
+    }
+    
+    if (found == 0) {
+      gref = libsqlite_group_get_ref_by_id(user->groups[i]);
+      query = sqlite3_mprintf("INSERT INTO ugr VALUES (%d, %d);", uref, gref);
+
+      sqlite3_exec(db, query, NULL, NULL, &errmsg);
+      if (errmsg) {
+        out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+        sqlite3_free(errmsg);
+        errmsg = NULL;
+      }
+      sqlite3_free(query);
+    }
+  }
+
+  user_free(db_user);
 
   libsqlite_close(&db);
 }
