@@ -27,7 +27,7 @@ else(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARIES)
       /usr/lib/mysql
       /usr/local/lib/mysql
       $ENV{ProgramFiles}/MySQL/*/lib/opt
-      $ENV{SystemDrive}/MySQL/*/include
+      $ENV{SystemDrive}/MySQL/*/lib/opt
       )
 
   if(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARIES)
