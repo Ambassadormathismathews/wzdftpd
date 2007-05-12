@@ -432,13 +432,9 @@ int main(int argc, char **argv)
     config_free(cf);
     if (!ret) break;
   }
-  if (!config) {
-    fprintf(stderr,"FATAL: No valid config file found, aborting !\n");
-    exit(1);
-  }
-
 
   if (!config) {
+    fprintf(stderr,"FATAL: No valid config file found, aborting!\n");
     out_err(LEVEL_CRITICAL,"FATAL: Critical error loading config file, aborting\n");
     exit(1);
   }
