@@ -529,7 +529,6 @@ static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, 
 
     perms = file_getperms(file_info, context);
 
-    str_sprintf(temp,"Perm=");
     if (file_info && file_info->kind == FILE_REG) {
       if (perms & RIGHT_STOR) perm_buf[length++] = 'a';
       if (perms & RIGHT_RETR) perm_buf[length++] = 'r';
@@ -547,6 +546,7 @@ static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, 
 
     perm_buf[length++] = ';';
     perm_buf[length++] = '\0';
+    buffer_end = strpcpy(buffer_end,"Perm=");
     buffer_end = strpcpy(buffer_end,perm_buf);
   }
 
