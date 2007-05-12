@@ -14,15 +14,20 @@ SET(PERL_POSSIBLE_INCLUDE_PATHS
   /usr/lib/perl/5.8.1/CORE
   /usr/lib/perl/5.8.0/CORE
   /usr/lib/perl/5.8/CORE
+  $ENV{ProgramFiles}/Perl/lib/CORE
+  $ENV{SystemDrive}/Perl/lib/CORE
   )
 
 SET(PERL_POSSIBLE_LIB_PATHS
   /usr/lib
+  $ENV{ProgramFiles}/Perl/lib/CORE
+  $ENV{SystemDrive}/Perl/lib/CORE
   )
 
 SET(PERL_POSSIBLE_LIBRARY_NAME
   perl5.8.0
   perl5.8
+  perl58
   perl
   )
 
@@ -35,6 +40,8 @@ FIND_PROGRAM(PERL_EXECUTABLE
   PATHS
   /usr/bin
   /usr/local/bin
+  $ENV{ProgramFiles}/Perl/bin
+  $ENV{SystemDrive}/Perl/bin
   )
 
 IF(PERL_EXECUTABLE)
@@ -92,7 +99,7 @@ IF(PERL_EXECUTABLE)
 ENDIF(PERL_EXECUTABLE)
 
 FIND_LIBRARY(PERL_LIBRARY
-  NAMES ${PERL_POSSIBLE_LIBRARY_NAME} perl5.8.0
+  NAMES ${PERL_POSSIBLE_LIBRARY_NAME}
   PATHS ${PERL_POSSIBLE_LIB_PATHS}
   )
 
