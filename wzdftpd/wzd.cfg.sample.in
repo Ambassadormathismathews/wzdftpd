@@ -13,14 +13,6 @@ config version = @WZD_VERSION@
 # backup config when saving changes (default: false)
 backup config = true
 
-# dynamic ip (default: 0)
-# if you specify 1 here, the server will try to use your system to detect
-# ip changes
-# 0 desactivates checks
-# if you specify a canonical name, the server will use DNS lookups
-#dynamic_ip = xxx.myftp.org
-#dynamic_ip = 1
-
 # Listen port (default: 21)
 # IMPORTANT: under unix, you'll need privileges to bind to a system port
 # ( < 1024 )
@@ -325,3 +317,18 @@ site_who = !@sysconfdir@/file_who.txt
 [messages]
 #220 = my ftp server ready
 
+
+
+
+#############
+# NOTE: Configuration options defined below are currently not implemented
+# and therefore serve no purpose at the moment. They will be included in
+# a future release of wzdftpd.
+#############
+
+# dynamic ip (default: 0)
+# if you specify 1 here, the server will try to use your system to detect
+# ip changes. 0 deactivates these checks (if you have a static ip).
+# if you specify a canonical name, the server will use DNS lookups
+#dynamic_ip = xxx.myftp.org
+#dynamic_ip = 1
