@@ -782,8 +782,26 @@ printf("path before: '%s'\n",cmd);
 #endif*/
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if (checkpath_new(cmd,path,context) || !strncmp(mask,"..",2)) {
-    ret = send_message_with_args(501,context,"Invalid filter/path");
+  if ((ret = checkpath_new(cmd,path,context)) || !strncmp(mask,"..",2)) {
+    switch (ret) {
+    case E_NOTDIR:
+      /* return 501 for syntax error, see rfc3659 at section 7.2.1 */
+      ret = send_message_with_args(501,context,"Not a directory");
+      break;
+    case E_WRONGPATH:
+      ret = send_message_with_args(550,context,"LIST","Invalid path");
+      break;
+    case E_FILE_NOEXIST:
+      ret = send_message_with_args(550,context,"LIST","No such file or directory (no access?)");
+      break;
+    case E_FILE_FORBIDDEN:
+    case E_NOPERM:
+      ret = send_message_with_args(550,context,"LIST","Negative on that, Houston (access denied)");
+      break;
+    default:
+      ret = send_message_with_args(501,context,"LIST failed (syntax error?)");
+      break;
+    }
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -877,8 +895,26 @@ int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   }
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if (checkpath_new(str_tochar(param),path,context)) {
-    ret = send_message_with_args(501,context,"Invalid path");
+  if (ret = checkpath_new(str_tochar(param),path,context)) {
+    switch (ret) {
+    case E_NOTDIR:
+      /* return 501 for syntax error, see rfc3659 at section 7.2.1 */
+      ret = send_message_with_args(501,context,"Not a directory");
+      break;
+    case E_WRONGPATH:
+      ret = send_message_with_args(550,context,"MLSD","Invalid path");
+      break;
+    case E_FILE_NOEXIST:
+      ret = send_message_with_args(550,context,"MLSD","No such file or directory (no access?)");
+      break;
+    case E_FILE_FORBIDDEN:
+    case E_NOPERM:
+      ret = send_message_with_args(550,context,"MLSD","Negative on that, Houston (access denied)");
+      break;
+    default:
+      ret = send_message_with_args(501,context,"MLSD failed (syntax error?)");
+      break;
+    }
     wzd_free(path);
     return E_PARAM_INVALID;
   }
@@ -973,11 +1009,31 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   context->state = STATE_COMMAND;
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if (checkpath_new(str_tochar(param),path,context)) {
-    ret = send_message_with_args(550,context,"Incorrect file name ",str_tochar(param));
+  if (ret = checkpath_new(str_tochar(param),path,context)) {
+    switch (ret) {
+      /* \todo enable MLST command to work on files and not just directories */
+    case E_NOTDIR:
+      /* return 501 for syntax error, see rfc3659 at section 7.2.1 */
+      ret = send_message_with_args(501,context,"Not a directory");
+      break;
+    case E_WRONGPATH:
+      ret = send_message_with_args(550,context,"MLST","Invalid path");
+      break;
+    case E_FILE_NOEXIST:
+      ret = send_message_with_args(550,context,"MLST","No such file or directory (no access?)");
+      break;
+    case E_FILE_FORBIDDEN:
+    case E_NOPERM:
+      ret = send_message_with_args(550,context,"MLST","Negative on that, Houston (access denied)");
+      break;
+    default:
+      ret = send_message_with_args(501,context,"MLST failed (syntax error?)");
+      break;
+    }
     wzd_free(path);
     return E_PARAM_INVALID;
   }
+
   REMOVE_TRAILING_SLASH(path);
 
   if ( (str = mlst_single_file(path, context)) == NULL) {
@@ -2558,20 +2614,21 @@ int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   if ( (ret=do_chdir(param,context)) ) {
     switch (ret) {
     case E_NOTDIR:
-      ret = send_message_with_args(550,context,param?param:"(null)","Not a directory");
+      /* return 501 for syntax error, see rfc3659 at section 7.2.1 */
+      ret = send_message_with_args(501,context,param?param:"(null)","Not a directory");
       break;
     case E_WRONGPATH:
       ret = send_message_with_args(550,context,param?param:"(null)","Invalid path");
       break;
     case E_FILE_NOEXIST:
-      ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access ?)");
+      ret = send_message_with_args(550,context,param?param:"(null)","No such file or directory (no access?)");
       break;
     case E_FILE_FORBIDDEN:
     case E_NOPERM:
       ret = send_message_with_args(550,context,param?param:"(null)","Negative on that, Houston (access denied)");
       break;
     default:
-      ret = send_message_with_args(550,context,param?param:"(null)","CHDIR failed");
+      ret = send_message_with_args(501,context,param?param:"(null)","CWD failed (syntax error?)");
       break;
     }
     return E_OK;
@@ -3521,4 +3578,6 @@ int _tls_remove_context(void)
 
   return 0;
 }
+
+
 

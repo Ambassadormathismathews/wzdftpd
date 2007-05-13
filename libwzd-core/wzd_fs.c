@@ -156,7 +156,8 @@ int fs_dir_close(fs_dir_t * dir)
 {
   int ret = 0;
 
-  wzd_free(dir->finfo.name);
+  /* dir->finfo.name may not be allocated yet, so we have to double check */
+  if (dir->finfo.name) wzd_free(dir->finfo.name);
 
 #ifdef WIN32
   if (dir->handle != NULL && !FindClose(dir->handle))
@@ -206,6 +207,11 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
     eos[0] = '*';
     eos[1] = '\0';
     dir->handle = FindFirstFileW(dstname,&(dir->entry));
+    /* make sure that we actually have a valid handle */
+    if (dir->handle == INVALID_HANDLE_VALUE) {
+      free(dstname);
+      return -1;
+    }
     eos[0] = '\0';
 
     dir->first = 1;
@@ -241,8 +247,8 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
 #endif
 
 
-
-  wzd_free(dir->finfo.name);
+  /* sanity check to make sure dir->finfo.name is actually allocated */
+  if (dir->finfo.name) wzd_free(dir->finfo.name);
   dir->finfo.name = filename;
 
 
@@ -409,4 +415,7 @@ const char * fs_fileinfo_getname(fs_fileinfo_t * finfo)
 {
   return finfo->name;
 }
+
+
+
 

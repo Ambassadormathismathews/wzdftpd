@@ -558,6 +558,7 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
   unsigned int sys_offset;
   fs_filestat_t s;
   struct wzd_file_t * perm_list, * entry;
+  fs_dir_t * dir;
 
   WZD_ASSERT(context != NULL);
   if (context == NULL) return E_USER_IDONTEXIST;
@@ -769,14 +770,21 @@ int checkpath_new(const char *wanted_path, char *path, wzd_context_t *context)
         free(syspath);
         return E_NOPERM;
       }
-    } else
-    {
+    } else {
+      /* we've ended up with a file, and we want a directory or link... ignore & continue loop */
     }
 
 
     /* loop */
     ptr_ftppath = rpart;
   }
+
+  /* check to see if the file system allows us access to the returned path */
+  if (fs_dir_open(syspath,&dir)) {
+    free(syspath);
+    free(ftppath);
+    return E_NOPERM;
+  } else fs_dir_close(dir);
 
   wzd_strncpy(path, syspath, WZD_MAX_PATH);
   free(ftppath);
@@ -891,5 +899,8 @@ int killpath(const char *path, wzd_context_t * context)
 
   return E_OK;
 }
+
+
+
 
 
