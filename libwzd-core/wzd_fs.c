@@ -123,7 +123,6 @@ int fs_mkdir(const char * pathname, unsigned long mode, int * err)
  */
 int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
 {
-  int ret;
   int len;
 
   *newdir = wzd_malloc(sizeof(fs_dir_t));
@@ -139,12 +138,6 @@ int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
   if ( len && (*newdir)->dirname[len-1] != '/' ) {
     (*newdir)->dirname[len++] = '/';
     (*newdir)->dirname[len] = '\0';
-  }
-
-  ret = fs_dir_read(*newdir, NULL);
-  if (ret) {
-    fs_dir_close((*newdir));
-    return -1;
   }
 
   return 0;
