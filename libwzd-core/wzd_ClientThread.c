@@ -1649,7 +1649,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
 
   port = mainConfig->pasv_low_range; /* use pasv range min */
-  count = mainConfig->pasv_high_range - mainConfig->pasv_low_range;
+  count = mainConfig->pasv_high_range - mainConfig->pasv_low_range + 1;
 #ifndef WIN32
   port = port + (random()) % count; /* we try to change starting port for random */
 #else
