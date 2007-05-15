@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users (
   ratio INTEGER(10) default NULL,
   user_slots INTEGER(10) default NULL,
   leech_slots INTEGER(10) default NULL,
-  perms INTEGER(10) default NULL,
+  perms BIGINT default NULL,
   credits BIGINT default NULL,
   last_login INTEGER(10) default NULL
 );

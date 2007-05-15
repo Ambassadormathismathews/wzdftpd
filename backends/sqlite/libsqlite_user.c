@@ -259,7 +259,7 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
 	user->ratio = sqlite3_column_int(stmt, 10);
 	user->user_slots = sqlite3_column_int(stmt, 11);
 	user->leech_slots = sqlite3_column_int(stmt, 12);
-        user->userperms = sqlite3_column_int(stmt, 13);
+        user->userperms = (unsigned long) sqlite3_column_int64(stmt, 13);
 	user->last_login = sqlite3_column_int(stmt, 14);
 
 	libsqlite_user_get_ip(user);
@@ -594,7 +594,7 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
     separator = ',';
   }
   if (mod_type & _USER_PERMS) {
-    libsqlite_add_to_query(&query, "%c perms=%d ", separator, user->userperms);
+    libsqlite_add_to_query(&query, "%c perms=%lu ", separator, user->userperms);
     separator = ',';
   }
   if (mod_type & _USER_FLAGS) {
