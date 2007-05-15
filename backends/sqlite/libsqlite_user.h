@@ -41,9 +41,9 @@ wzd_user_t  *libsqlite_user_get_by_name(const char *username);
 
 uid_t       *libsqlite_user_get_list();
 
-void         libsqlite_user_add(wzd_user_t *user);
+int          libsqlite_user_add(wzd_user_t *user);
 void         libsqlite_user_del(uid_t uid);
-void         libsqlite_user_update(uid_t uid, wzd_user_t *user, 
+int          libsqlite_user_update(uid_t uid, wzd_user_t *user, 
                                    unsigned long mod_type);
 
 /** @} */

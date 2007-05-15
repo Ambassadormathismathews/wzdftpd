@@ -202,8 +202,7 @@ static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, UNUSED wzd_u
   if (strcmp(user->userpass,"%")==0)
     return user->uid; /* passworldless login */
 
-/*  if (check_auth(login, pass, user->userpass)==1) */
-  if (strcmp(user->userpass, pass) == 0)
+  if (check_auth(login, pass, user->userpass) == 1)
     return user->uid;
 
   return INVALID_USER;
@@ -337,7 +336,9 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 
   /* add */
   if (mod_type & _USER_CREATE) {
-    libsqlite_user_add(user);
+    if (libsqlite_user_add(user) == -1) {
+      return -1;
+    }
 #ifdef CACHE
     reg_uid = user_register(user, BACKEND_ID);
     if (reg_uid != user->uid) {
@@ -348,7 +349,9 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
   
   /* update */
   else {
-    libsqlite_user_update(uid, user, mod_type);
+    if (libsqlite_user_update(uid, user, mod_type) == -1) {
+      return -1;
+    }
 #ifdef CACHE
     registered_user = user_get_by_id(user->uid);
     if (registered_user) {

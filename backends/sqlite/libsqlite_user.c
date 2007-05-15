@@ -415,22 +415,29 @@ uid_t *libsqlite_user_get_list()
 /**
  * \brief add user to database.
  * \param user user struct used to fill tables
+ * \return -1 on error, else 0
  */
-void libsqlite_user_add(wzd_user_t *user)
+int libsqlite_user_add(wzd_user_t *user)
 {
   int uref;
   char *errmsg;
   char *query;
+  char passbuffer[MAX_PASS_LENGTH];
   sqlite3 *db=NULL;
 
   user->uid = libsqlite_user_next_id();
   if (user->uid == INVALID_USER) {
     out_log(SQLITE_LOG_CHANNEL, "Sqlite Backend could'nt get next uid.\n");
-    return;
+    return -1;
+  }
+  
+  if (changepass(user->username,user->userpass,passbuffer,MAX_PASS_LENGTH-1)) {
+    memset(user->userpass, 0, MAX_PASS_LENGTH);
+    return -1;
   }
 
   db = libsqlite_open();
-  if (! db) return;
+  if (! db) return -1;
 
   query = sqlite3_mprintf(
     "INSERT INTO users (                                                 \
@@ -441,7 +448,7 @@ void libsqlite_user_add(wzd_user_t *user)
          %d, '%q', '%q', '%q', '%q', 'q', %d, %lf, %lf, %d, %d, %d, %d,  \
          %d, %d, %d                                                      \
       );",
-    user->uid, user->username, user->userpass, user->rootpath,
+    user->uid, user->username, passbuffer, user->rootpath,
     user->tagline, user->flags, user->max_idle_time, user->max_ul_speed,
     user->max_dl_speed, user->num_logins, user->ratio, user->user_slots,
     user->leech_slots, user->userperms, user->credits, user->last_login
@@ -457,7 +464,7 @@ void libsqlite_user_add(wzd_user_t *user)
   }
 
   uref = libsqlite_user_get_ref_by_uid(user->uid);
-  if (uref == -1) return;
+  if (uref == -1) return -1;
 #ifndef WIN32
     query = sqlite3_mprintf(
       "INSERT INTO stats (                                               \
@@ -495,6 +502,7 @@ void libsqlite_user_add(wzd_user_t *user)
 
 error_sqlite_close:
   libsqlite_close(&db);
+  return 0;
 }
 
 /**
@@ -539,16 +547,18 @@ error_sqlite_close:
  * \param uid current table userid.
  * \param user user struct who containt modification.
  * \param mod_type flags on what was modified.
+ * \return -1 on error, else 0
  */
-void libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
+int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
 {
   char separator = ' ';
   char *query=NULL;
   char *errmsg=NULL;
+  char passbuffer[MAX_PASS_LENGTH];
   sqlite3 *db=NULL;
 
   db = libsqlite_open();
-  if (! db) return;
+  if (! db) return -1;
 
   libsqlite_add_to_query(&query, "UPDATE users SET");
 
@@ -557,7 +567,14 @@ void libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
     separator = ',';
   }
   if (mod_type & _USER_USERPASS) {
-    libsqlite_add_to_query(&query, "%c userpass='%q' ", separator, user->userpass);
+    if (changepass(user->username, user->userpass, passbuffer,
+                   MAX_PASS_LENGTH-1)) {
+      memset(user->userpass, 0, MAX_PASS_LENGTH);
+      free(query);
+      libsqlite_close(&db);
+      return -1;
+    }
+    libsqlite_add_to_query(&query, "%c userpass='%q' ", separator, passbuffer);
     separator = ',';
   }
   if (mod_type & _USER_ROOTPATH) {
@@ -639,6 +656,8 @@ void libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
 
   libsqlite_close(&db);
   sqlite3_free(query);
+
+  return 0;
 }
 
 /**

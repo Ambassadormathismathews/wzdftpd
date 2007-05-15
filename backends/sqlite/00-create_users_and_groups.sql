@@ -14,7 +14,7 @@ INSERT INTO
     user_slots, leech_slots, perms, credits, last_login
   )
   VALUES (
-    1, 0, 'wzdftpd', 'wzdftpd', '/', 'Admin', "O", NULL, NULL, NULL, 
+    1, 0, 'wzdftpd', 'wzufwPCZFYH/6', '/', 'Admin', "O", NULL, NULL, NULL, 
     2, 0, NULL, NULL, 4294967295, NULL, NULL
   );
 
