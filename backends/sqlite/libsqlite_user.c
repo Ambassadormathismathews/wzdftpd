@@ -431,7 +431,11 @@ int libsqlite_user_add(wzd_user_t *user)
     return -1;
   }
   
-  if (changepass(user->username,user->userpass,passbuffer,MAX_PASS_LENGTH-1)) {
+  if (strcmp(user->userpass, "%") == 0) {
+      strncpy(passbuffer, user->userpass, MAX_PASS_LENGTH - 1);
+  }
+  else if (changepass(user->username, user->userpass, passbuffer,
+           MAX_PASS_LENGTH-1)) {
     memset(user->userpass, 0, MAX_PASS_LENGTH);
     return -1;
   }
@@ -567,8 +571,11 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
     separator = ',';
   }
   if (mod_type & _USER_USERPASS) {
-    if (changepass(user->username, user->userpass, passbuffer,
-                   MAX_PASS_LENGTH-1)) {
+    if (strcmp(user->userpass, "%") == 0) {
+      strncpy(passbuffer, user->userpass, MAX_PASS_LENGTH - 1);
+    }
+    else if (changepass(user->username, user->userpass, passbuffer,
+                        MAX_PASS_LENGTH-1)) {
       memset(user->userpass, 0, MAX_PASS_LENGTH);
       free(query);
       libsqlite_close(&db);
