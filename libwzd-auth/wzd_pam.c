@@ -79,9 +79,7 @@ int checkpass_pam(const char *user, const char *pass)
     ret = pam_authenticate(pamh, 0);
     if (ret != PAM_SUCCESS)
     {
-#ifdef DEBUG
-      fprintf(stderr, "pam_authenticate error: %s\n", pam_strerror(pamh,ret));
-#endif
+      out_log(LEVEL_NORMAL, "pam_authenticate error: %s\n", pam_strerror(pamh,ret));
       return -1;
     }
     pam_end(pamh, PAM_SUCCESS);
@@ -183,7 +181,7 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 
       case PAM_PROMPT_ECHO_ON:
 #ifdef DEBUG
-        fprintf(stdout, "%s", m->msg);
+        out_err(LEVEL_DEBUG, "%s", m->msg);
         r->resp = (char*)malloc(PAM_MAX_RESP_SIZE);
         fgets(r->resp, PAM_MAX_RESP_SIZE-1, stdin);
 #endif
@@ -196,16 +194,12 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
         break;
 
       case PAM_ERROR_MSG:
-#ifdef DEBUG
-        fprintf(stderr, "%s\n", m->msg);
-#endif
+        out_log(LEVEL_NORMAL, "%s\n", m->msg);
         m++; r++;
         break;
 
       case PAM_TEXT_INFO:
-#ifdef DEBUG
-        fprintf(stderr, "%s\n", m->msg);
-#endif
+        out_log(LEVEL_INFO, "%s\n", m->msg);
         m++; r++;
         break;
 
