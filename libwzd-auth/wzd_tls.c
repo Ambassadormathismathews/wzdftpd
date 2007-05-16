@@ -62,7 +62,7 @@ int check_certificate(const char *user, const char *data)
   if ( !(context->connection_flags & CONNECTION_TLS) ) return 0;
 
   client_cert = SSL_get_peer_certificate(ssl_get_obj(context));
-  fprintf(stderr, "[%p] = SSL_get_peer_certificate(...)\n", client_cert);
+  out_log(LEVEL_FLOOD, "[%p] = SSL_get_peer_certificate(...)\n", client_cert);
 
   if (!client_cert) return 0; /* no client cert */
 
@@ -70,7 +70,7 @@ int check_certificate(const char *user, const char *data)
    * or /usr/include/openssl/x509_vfy.h
    */
   status = SSL_get_verify_result(ssl_get_obj(context));
-  fprintf(stderr, "[%d] = SSL_get_verify_result(...)\n", status);
+  out_log(LEVEL_FLOOD, "[%d] = SSL_get_verify_result(...)\n", status);
   if (status) goto ssl_check_exit_1;
 
   status = 0;
@@ -139,16 +139,16 @@ int check_certificate(const char *user, UNUSED const char *data)
   /* XXX use gnutls_certificate_verify_peers[2]? */
   ret = gnutls_certificate_verify_peers2(*session,&status);
 
-  fprintf(stderr, "[%d] = gnutls_certificate_verify_peers2({session},%d)\n",ret,status);
+  out_log(LEVEL_FLOOD, "[%d] = gnutls_certificate_verify_peers2({session},%d)\n",ret,status);
   /* GNUTLS_E_NO_CERTIFICATE_FOUND: -49 */
 
   if (ret == 0) { /* verification ok, now checking result */
     if (status & GNUTLS_CERT_INVALID) {
-      fprintf(stderr,"certificate is invalid: ");
-      if (status & GNUTLS_CERT_REVOKED) fprintf(stderr," revoked");
-      if (status & GNUTLS_CERT_SIGNER_NOT_FOUND) fprintf(stderr," signer not found");
-      if (status & GNUTLS_CERT_SIGNER_NOT_CA) fprintf(stderr," signer not a CA");
-      fprintf(stderr,"\n");
+      out_log(LEVEL_NORMAL,"certificate is invalid: ");
+      if (status & GNUTLS_CERT_REVOKED) out_log(LEVEL_NORMAL," revoked");
+      if (status & GNUTLS_CERT_SIGNER_NOT_FOUND) out_log(LEVEL_NORMAL," signer not found");
+      if (status & GNUTLS_CERT_SIGNER_NOT_CA) out_log(LEVEL_NORMAL," signer not a CA");
+      out_log(LEVEL_NORMAL,"\n");
       return 0;
     }
 
@@ -159,20 +159,20 @@ int check_certificate(const char *user, UNUSED const char *data)
       return 0;
 
     if (gnutls_x509_crt_init(&cert) < 0) {
-      out_err(LEVEL_HIGH,"error in initialization\n");
+      out_log(LEVEL_HIGH,"error in initialization\n");
       return 0;
     }
 
     cert_list = gnutls_certificate_get_peers(*session,&cert_list_size);
     if (cert_list==NULL) {
-      out_err(LEVEL_HIGH,"No certificate was found\n");
+      out_log(LEVEL_HIGH,"No certificate was found\n");
       gnutls_x509_crt_deinit(cert);
       return 0;
     }
 
     /* only check the first certificate in the chain */
     if (gnutls_x509_crt_import(cert,&cert_list[0],GNUTLS_X509_FMT_DER) < 0) {
-      out_err(LEVEL_HIGH,"Error parsing certificate\n");
+      out_log(LEVEL_HIGH,"Error parsing certificate\n");
       gnutls_x509_crt_deinit(cert);
       return 0;
     }
