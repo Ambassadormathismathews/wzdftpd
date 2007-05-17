@@ -22,13 +22,19 @@ else(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARIES)
       $ENV{SystemDrive}/MySQL/*/include
       )
 
+if(WIN32 AND MSVC)
+  find_library(MYSQL_LIBRARIES NAMES libmysql
+      PATHS
+      $ENV{ProgramFiles}/MySQL/*/lib/opt
+      $ENV{SystemDrive}/MySQL/*/lib/opt
+      )
+else(WIN32 AND MSVC)
   find_library(MYSQL_LIBRARIES NAMES mysqlclient
       PATHS
       /usr/lib/mysql
       /usr/local/lib/mysql
-      $ENV{ProgramFiles}/MySQL/*/lib/opt
-      $ENV{SystemDrive}/MySQL/*/lib/opt
       )
+endif(WIN32 AND MSVC)
 
   if(MYSQL_INCLUDE_DIR AND MYSQL_LIBRARIES)
     set(MYSQL_FOUND TRUE)

@@ -28,18 +28,10 @@ else(POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARIES)
       /usr/lib
       /usr/local/lib
       /usr/lib/postgresql
-      $ENV{ProgramFiles}/PostgreSQL/*/lib
-      $ENV{SystemDrive}/PostgreSQL/*/lib
+      $ENV{ProgramFiles}/PostgreSQL/*/lib/ms
+      $ENV{SystemDrive}/PostgreSQL/*/lib/ms
       )
       
-  # This is required to detect the .a extensions on the libraries for Windows
-  if(NOT POSTGRESQL_LIBRARIES)
-    find_path(POSTGRESQL_LIBRARIES libpq.a
-      $ENV{ProgramFiles}/PostgreSQL/*/lib
-      $ENV{SystemDrive}/PostgreSQL/*/lib
-      )
-  endif(NOT POSTGRESQL_LIBRARIES)
-
   if(POSTGRESQL_INCLUDE_DIR AND POSTGRESQL_LIBRARIES)
     set(POSTGRESQL_FOUND TRUE)
     message(STATUS "Found PostgreSQL: ${POSTGRESQL_INCLUDE_DIR}, ${POSTGRESQL_LIBRARIES}")

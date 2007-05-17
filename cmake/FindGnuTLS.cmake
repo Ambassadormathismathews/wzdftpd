@@ -9,7 +9,7 @@ IF(PKGCONFIG_FOUND)
     #do something with ${PKGCONFIG_LIBRARIES}
   ENDIF(CMAKE_PKGCONFIG_C_FLAGS)
 ELSE(PKGCONFIG_FOUND)
-  MESSAGE("Cannot find GnuTLS version 1.3.0 or above")
+  #MESSAGE("Cannot find GnuTLS version 1.3.0 or above")
 ENDIF(PKGCONFIG_FOUND)
 
 IF(GNUTLS_FOUND)

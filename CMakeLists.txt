@@ -59,7 +59,7 @@ macro_optional_find_package(Zeroconf)
 OPTION(WITH_IPV6 "enable IPv6 support" OFF)
 OPTION(WITH_UTF8 "enable UTF-8 support" ON)
 
-OPTION(WITH_TESTS "enable unit tests" ON)
+OPTION(WITH_TESTS "enable unit tests" OFF)
 
 find_package(Threads REQUIRED)
 ADD_DEFINITIONS(-DWZD_MULTITHREAD)
