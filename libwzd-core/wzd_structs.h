@@ -138,11 +138,6 @@ typedef struct limiter
   float current_speed;
 } wzd_bw_limiter;
 
-/*********************** SITE *****************************/
-
-/* opaque struct */
-typedef struct wzd_site_fct_t wzd_site_fct_t;
-
 /************************ VFS *****************************/
 typedef struct _wzd_vfs_t {
   char	* virtual_dir;
@@ -468,7 +463,6 @@ struct wzd_config_t {
   void * tls_ctx;
   tls_type_t	tls_type;
   CHTBL          * commands_list;
-  wzd_site_fct_t	* site_list;
   wzd_section_t		* section_list;
 
   wzd_bw_limiter	global_ul_limiter;

@@ -133,7 +133,7 @@ static struct thread_key_t * _key_context = NULL;
  * Try to read length bytes in non-blocking mode for timeout seconds
  * max. If timeout is null, performs a blocking read.
  */
-int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int clear_read(fd_t sock, char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -182,7 +182,7 @@ int clear_read(fd_t sock, char *msg, size_t length, int flags, unsigned int time
  * Try to write length bytes in non-blocking mode for timeout seconds
  * max. If timeout is null, performs a blocking write.
  */
-int clear_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int clear_write(fd_t sock, const char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -471,13 +471,6 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
   }
 
   return E_OK;
-}
-
-/*************** childtimeout ************************/
-
-void childtimeout(int nr)
-{
-  exit(0);
 }
 
 /*************** waitaccept **************************/
@@ -870,7 +863,7 @@ printf("path: '%s'\n",path);
 
 /*************** do_mlsd *****************************/
 
-int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
@@ -895,7 +888,8 @@ int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   }
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if (ret = checkpath_new(str_tochar(param),path,context)) {
+  ret = checkpath_new(str_tochar(param),path,context);
+  if (ret != 0) {
     switch (ret) {
     case E_NOTDIR:
       /* return 501 for syntax error, see rfc3659 at section 7.2.1 */
@@ -979,7 +973,7 @@ int do_mlsd(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 
 /*************** do_mlst *****************************/
 
-int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_mlst(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
@@ -1009,7 +1003,8 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
   context->state = STATE_COMMAND;
 
   path = wzd_malloc(WZD_MAX_PATH+1);
-  if (ret = checkpath_new(str_tochar(param),path,context)) {
+  ret = checkpath_new(str_tochar(param),path,context);
+  if (ret != 0) {
     switch (ret) {
       /* \todo enable MLST command to work on files and not just directories */
     case E_NOTDIR:
@@ -1066,7 +1061,7 @@ int do_mlst(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_opts *****************************/
-int do_opts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_opts(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   const char *ptr;
   int ret;
@@ -1109,7 +1104,7 @@ label_opts_error:
 
 /*************** do_stat *****************************/
 
-int do_stat(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_stat(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,n;
@@ -1254,7 +1249,7 @@ printf("path: '%s'\n",path);
 
 /*************** do_mkdir ****************************/
 
-int do_mkdir(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char  * cmd = NULL, * path = NULL;
   char * buffer = NULL;
@@ -1441,7 +1436,7 @@ label_error_mkdir:
 
 /*************** do_rmdir ****************************/
 
-int do_rmdir(wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
+int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
   fs_filestat_t s;
@@ -1536,7 +1531,7 @@ label_error_rmdir:
 }
 
 /*************** do_port *****************************/
-int do_port(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
+int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 {
   int a0,a1,a2,a3;
   unsigned int p1, p2;
@@ -1580,7 +1575,7 @@ int do_port(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 }
 
 /*************** do_pasv *****************************/
-int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
+int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t * context)
 {
   int ret;
   unsigned long addr;
@@ -1731,7 +1726,7 @@ int do_pasv(wzd_string_t *name, wzd_string_t *args, wzd_context_t * context)
 }
 
 /*************** do_eprt *****************************/
-int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_eprt(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
 #if defined(IPV6_SUPPORT)
   int ret;
@@ -1844,7 +1839,7 @@ int do_eprt(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_epsv *****************************/
-int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   unsigned int size,port;
@@ -1993,7 +1988,7 @@ int do_epsv(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
  * sends EVENT_PREDOWNLOAD, and opens file.
  * The real transfer is handled by data_execute().
  */
-int do_retr(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int fd;
@@ -2369,7 +2364,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_mdtm *****************************/
-int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_mdtm(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH], tm[32];
   fs_filestat_t s;
@@ -2402,7 +2397,7 @@ int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_size *****************************/
-int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_moda(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
 #ifdef HAVE_STRPTIME
   extern char *strptime (__const char *__restrict __s,
@@ -2524,7 +2519,7 @@ int do_moda(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_size *****************************/
-int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_size(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -2564,7 +2559,7 @@ int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
  *
  * The corresponding FTP command is ABOR (RFC959 p30)
  */
-int do_abor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_abor(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   wzd_user_t * user;
@@ -2639,7 +2634,7 @@ int do_cwd(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_dele *****************************/
-int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_dele(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2737,7 +2732,7 @@ int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_pret *****************************/
-int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_pret(UNUSED wzd_string_t *name, UNUSED wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
 
@@ -2753,7 +2748,7 @@ int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_print_message ********************/
-int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
+int do_print_message(UNUSED wzd_string_t *name, UNUSED wzd_string_t *filename, wzd_context_t * context)
 {
   int cmd;
   int ret;
@@ -2796,7 +2791,7 @@ int do_print_message(wzd_string_t *name, wzd_string_t *filename, wzd_context_t *
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_pbsz *****************************/
-int do_pbsz(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_pbsz(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   const char *arg;
@@ -2817,7 +2812,7 @@ int do_pbsz(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_prot *****************************/
-int do_prot(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_prot(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   const char *arg;
@@ -2845,7 +2840,7 @@ int do_prot(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
 /*************** do_sscn *****************************/
-int do_sscn(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_sscn(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
   const char *arg;
@@ -2873,7 +2868,7 @@ int do_sscn(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 #endif
 
 /*************** do_quit *****************************/
-int do_quit(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_quit(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
 
@@ -2911,7 +2906,7 @@ int do_quit(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_rest *****************************/
-int do_rest(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_rest(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
   u64_t ull;
@@ -2936,7 +2931,7 @@ int do_rest(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_rnfr *****************************/
-int do_rnfr(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
+int do_rnfr(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -2974,7 +2969,7 @@ int do_rnfr(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 }
 
 /*************** do_rnto *****************************/
-int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
+int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   int ret;
@@ -3020,7 +3015,7 @@ int do_rnto(wzd_string_t *name, wzd_string_t *filename, wzd_context_t * context)
 }
 
 /*************** do_type *****************************/
-int do_type(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_type(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   int ret;
 
@@ -3042,7 +3037,7 @@ int do_type(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 }
 
 /*************** do_xcrc *****************************/
-int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_xcrc(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -3121,7 +3116,7 @@ int do_xcrc(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_xmd5 *****************************/
-int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_xmd5(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char buffer[1024];
@@ -3204,7 +3199,7 @@ int do_xmd5(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 }
 
 /*************** do_help *****************************/
-int do_help(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
+int do_help(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t * context)
 {
   /* TODO maybe add HELP SITE? */
   send_message_with_args(214,context);

@@ -279,6 +279,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_grpratio",do_site_grpratio,NULL,TOK_SITE_GRPRATIO)) return -1;
   if (commands_add(_ctable,"site_grpren",do_site_grpren,NULL,TOK_SITE_GRPREN)) return -1;
   if (commands_add(_ctable,"site_gsinfo",do_site_gsinfo,NULL,TOK_SITE_GSINFO)) return -1;
+/*  if (commands_add(_ctable,"site_help",do_site_help,NULL,TOK_SITE_HELP)) return -1;*/
   if (commands_add(_ctable,"site_idle",do_site_idle,NULL,TOK_SITE_IDLE)) return -1;
   if (commands_add(_ctable,"site_invite",do_site_invite,NULL,TOK_SITE_INVITE)) return -1;
   if (commands_add(_ctable,"site_kick",do_site_kick,NULL,TOK_SITE_KICK)) return -1;
