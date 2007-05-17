@@ -57,13 +57,16 @@
 
 # if __GNUC__ > 3
 #  define UNUSED __attribute__((unused))
+#  define DEPRECATED __attribute__ ((__deprecated__))
 # else
 #  define UNUSED
+#  define DEPRECATED
 # endif
 
 #else /* __GNUC__ */
 
 # define UNUSED
+# define DEPRECATED
 
 #endif /* __GNUC__ */
 

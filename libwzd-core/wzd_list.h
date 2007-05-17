@@ -26,7 +26,7 @@
 #define __WZD_LIST__
 
 int list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
-int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
+int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *)) DEPRECATED;
 int list_match(char *,char *);
 
 /* filename must be an ABSOLUTE path
