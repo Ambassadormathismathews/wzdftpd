@@ -728,7 +728,7 @@ wzd_bw_limiter * limiter_new(int maxspeed)
   return l_new;
 }
 
-void limiter_add_bytes(wzd_bw_limiter *l, wzd_mutex_t * mutex, int byte_count, int force_check)
+void limiter_add_bytes(wzd_bw_limiter *l, wzd_mutex_t * mutex, int byte_count, UNUSED int force_check)
 {
 #ifndef WIN32 /* FIXME VISUAL */
   struct timeval tv;
@@ -1205,4 +1205,16 @@ int win32_ftruncate(int fd, __int64 length)
 }
 
 #endif /* WIN32 */
+
+#ifndef HAVE_STRERROR
+const char *strerror(int errnum)
+{
+  static char buf[1024];
+
+  snprintf(buf,1023,"Unknown error %d\n",errnum);
+  buf[1023] = '\0';
+
+  return buf;
+}
+#endif /* HAVE_STRERROR */
 

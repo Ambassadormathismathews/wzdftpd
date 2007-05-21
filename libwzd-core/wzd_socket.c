@@ -66,21 +66,6 @@
 static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen);
 static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen);
 
-/*************** ul2a ***********************************/
-
-char * ul2a(unsigned long q)
-{
-  static char host[64];
-
-  snprintf(host, 64, "%u.%u.%u.%u",
-    ((unsigned char *)&q)[0], /* assume network order */
-    ((unsigned char *)&q)[1],
-    ((unsigned char *)&q)[2],
-    ((unsigned char *)&q)[3]);
-
-  return host;
-}
-
 /*************** socket_make ****************************/
 
 int socket_getipbyname(const char *name, char *buffer, size_t length)
@@ -173,6 +158,7 @@ int socket_close(fd_t sock)
 
   return 0;
 #else
+  shutdown(sock,SHUT_RDWR);
   return close(sock);
 #endif
 }
@@ -195,9 +181,6 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
   socklen_t len = sizeof(struct sockaddr_in6);
 #else
   socklen_t len = sizeof(struct sockaddr_in);
-#endif
-#if 0
-  int i=0;
 #endif
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
@@ -762,7 +745,7 @@ static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
   }
 
   if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
-    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+    out_err(LEVEL_CRITICAL,"Could not create socket: %s (%s:%d)\n", strerror(errno), __FILE__, __LINE__);
     return -1;
   }
 
@@ -777,11 +760,7 @@ static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
   sai.sin_port = htons((unsigned short)*port); /* any port */
 
   if (bind(sock,(struct sockaddr *)&sai, sizeof(sai))==-1) {
-#ifdef __CYGWIN__
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
-#else
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
-#endif
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d: %s (%s:%d)\n", *port, strerror(errno), __FILE__, __LINE__);
     socket_close(sock);
     return -1;
   }
@@ -871,7 +850,7 @@ static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
   }
 
   if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1) {
-    out_err(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
+    out_err(LEVEL_HIGH,"Could not create IPv6 socket: %s (%s:%d)\n", strerror(errno), __FILE__, __LINE__);
     return -1;
   }
 
@@ -891,11 +870,7 @@ static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
 /*  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));*/
 
   if (bind(sock,(struct sockaddr *)&sai6, sizeof(sai6))==-1) {
-#ifdef __CYGWIN__
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d %s:%d\n", *port, __FILE__, __LINE__);
-#else
-    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d (error %s) %s:%d\n", *port, strerror(errno),__FILE__, __LINE__);
-#endif
+    out_log(LEVEL_CRITICAL,"Could not bind sock on port %d: %s (%s:%d)\n", *port, strerror(errno), __FILE__, __LINE__);
     socket_close(sock);
     return -1;
   }

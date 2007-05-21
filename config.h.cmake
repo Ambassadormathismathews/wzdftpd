@@ -19,6 +19,7 @@
 #cmakedefine HAVE_INET_NTOA 1
 #cmakedefine HAVE_INET_NTOP 1
 #cmakedefine HAVE_INET_PTON 1
+#cmakedefine HAVE_STRERROR 1
 #cmakedefine HAVE_STRLCAT 1
 #cmakedefine HAVE_STRPTIME 1
 #cmakedefine HAVE_STRTOK_R 1
