@@ -38,20 +38,12 @@ void hook_free(wzd_hook_t **hook_list);
 /** \brief register a new hook
  * \deprecated use \ref event_connect_function
  */
-int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook)
-#ifdef __GNUC__
-  __attribute__ ((deprecated))
-#endif
-;
+int hook_add(wzd_hook_t ** hook_list, unsigned long mask, void_fct hook) DEPRECATED;
 
 /** \brief register a new hook to an external command
  * \deprecated use \ref event_connect_external
  */
-int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command)
-#ifdef __GNUC__
-  __attribute__ ((deprecated))
-#endif
-;
+int hook_add_external(wzd_hook_t ** hook_list, unsigned long mask, const char *command) DEPRECATED;
 
 
 typedef struct protocol_handler_t protocol_handler_t;
@@ -83,11 +75,7 @@ protocol_handler_t * hook_check_protocol(const char *str);
 int hook_remove(wzd_hook_t **hook_list, unsigned long mask, void_fct hook);
 
 /** \deprecated Use \ref event_exec */
-int hook_call_external(wzd_hook_t *hook, unsigned int code)
-#ifdef __GNUC__
-  __attribute__ ((deprecated))
-#endif
-;
+int hook_call_external(wzd_hook_t *hook, unsigned int code) DEPRECATED;
 
 unsigned int hook_get_current_reply_code(void);
 
