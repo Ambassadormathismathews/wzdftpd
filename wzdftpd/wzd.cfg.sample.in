@@ -244,7 +244,17 @@ create_symlinks = false
 param = @sysconfdir@/users
 
 [mysql]
-#param = login:password@host:base
+# User, pass, host, port and db must be entered.
+#
+# If you wish to use SSL encrypted connections with your intended server,
+# first make sure it can receive such then use one of three ways to connect
+# to it.
+#
+#param = login:password@host:port/base
+#
+#param = login:password@host:port/base|ca-cert
+#param = login:password@host:port/base|client-cert|client-key
+#param = login:password@host:port/base|ca-cert|client-cert|client-key
 
 [pgsql]
 #param = login:password@host:base

@@ -56,10 +56,11 @@
 #include "libmysql.h"
 
 /*
+ * 125: change param: add port and ssl param.
  * 124: use users/group registry
  * 123: allow auto-reconnection if mysql server has gone for server 5.x
  */
-#define MYSQL_BACKEND_VERSION   124
+#define MYSQL_BACKEND_VERSION   125
 
 #define MYSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+16)
 
@@ -69,9 +70,15 @@ BACKEND_VERSION(MYSQL_BACKEND_VERSION);
 
 
 MYSQL mysql;
-static char *db_user, *db_passwd, *db_hostname, *db;
 
-/*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
+/* mysql connection params */
+static char *db_param;
+static char *db_user, *db_passwd, *db_hostname, *db;
+static char *db_path_ca, *db_path_cert, *db_path_key;
+static unsigned int db_port, db_ssl;
+
+
+/*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:port/table[ssl_options]) */
 static int wzd_parse_arg(const char *arg);
 
 /* get mysql value, in a more robust way than just a copy
@@ -115,23 +122,43 @@ void _wzd_mysql_error(const char *filename, const char  *func_name, int line)/*,
 static int wzd_parse_arg(const char *arg)
 {
   char *ptr;
-  char * buffer;
+  char *port;
 
   if (!arg) return -1;
 
-  ptr = buffer = strdup(arg); /** \todo free buffer at backend exit ! (small memory leak) */
+  ptr = db_param = strdup(arg);
 
-  db_user = strtok_r(buffer, ":", &ptr);
-  if (!db_user) { free(buffer); return -1; }
+  db_user = strtok_r(db_param, ":", &ptr);
+  if (!db_user) { free(db_param); db_param = NULL; return -1; }
 
   db_passwd = strtok_r(NULL,"@", &ptr);
-  if (!db_passwd) { free(buffer); return -1; }
+  if (!db_passwd) { free(db_param); db_param = NULL; return -1; }
+  
+  db_hostname = strtok_r(NULL, ":", &ptr);
+  if (!db_hostname) { free(db_param); db_param = NULL; return -1; }
 
-  db_hostname = strtok_r(NULL, ":\n", &ptr);
-  if (!db_hostname) { free(buffer); return -1; }
+  port = strtok_r(NULL, "/\n", &ptr);
+  if (!port) { free(db_param); db_param = NULL; return -1; }
+  db_port = (unsigned int) strtoll(port, NULL, 10);
 
-  db = strtok_r(NULL, "\n", &ptr);
-  if (!db) { free(buffer); return -1; }
+  db = strtok_r(NULL, "\n|", &ptr);
+  if (!db) { free(db_param); db_param = NULL; return -1; }
+
+  /* retrieve ssl params */
+  db_ssl = 0;
+  db_path_ca = strtok_r(NULL, "|", &ptr);
+  db_path_cert = strtok_r(NULL, "|\n", &ptr);
+  db_path_key = strtok_r(NULL, "|\n", &ptr);
+
+  
+  if (db_path_ca != NULL && db_path_cert != NULL && db_path_key == NULL) {
+    db_ssl = 1;
+    db_path_key = db_path_cert;
+    db_path_cert = db_path_ca;
+    db_path_ca = NULL;
+  } else if (db_path_ca != NULL) {
+    db_ssl = 1;
+  }
 
   return 0;
 }
@@ -144,7 +171,7 @@ static int FCN_INIT(const char *arg)
   if (arg == NULL) {
     out_log(MYSQL_LOG_CHANNEL, "%s(%s):%d no arguments given\n", __FILE__, __FUNCTION__, __LINE__);
     out_log(MYSQL_LOG_CHANNEL, "You MUST provide a parameter for the MySQL connection\n");
-    out_log(MYSQL_LOG_CHANNEL, "Add  param = user:pass@host:database in [mysql] section in your config file\n");
+    out_log(MYSQL_LOG_CHANNEL, "Add  param = user:pass@host:port/database[|[/path/to/ca][|][/path/to/client/cert|/path/to/clien/key]] in [mysql] section in your config file\n");
     out_log(MYSQL_LOG_CHANNEL, "See documentation for help\n");
     return -1;
   }
@@ -156,15 +183,32 @@ static int FCN_INIT(const char *arg)
 
   mysql_init(&mysql);
 
-  /** \todo XXX FIXME try using CLIENT_SSL for the last arg */
-  if (!mysql_real_connect(&mysql, db_hostname, db_user, db_passwd, db, 0, NULL, 0)) {
+#if defined(MYSQL_VERSION_ID) && (MYSQL_VERSION_ID >= 50000)
+  /* mysql_options should be called before mysql_real_connect */
+  mysql_options( &mysql, MYSQL_OPT_RECONNECT, &b );
+#endif
+
+  if (db_ssl == 1) { 
+    out_log(MYSQL_LOG_CHANNEL, "mysql set ssl: ca=%s, cert=%s, key=%s\n",
+            db_path_ca, db_path_cert, db_path_key);
+    mysql_ssl_set(&mysql, db_path_key, db_path_cert, db_path_ca, NULL, NULL);
+  }
+
+  if (!mysql_real_connect(&mysql, db_hostname, db_user, db_passwd, db, db_port, 
+                          NULL, 0)) {
     _wzd_mysql_error(__FILE__, __FUNCTION__, __LINE__);
     mysql_close(&mysql);
     return -1;
   }
 
 #if defined(MYSQL_VERSION_ID) && (MYSQL_VERSION_ID >= 50000)
-  mysql_options( &mysql, MYSQL_OPT_RECONNECT, &b );
+  if (mysql_get_ssl_cipher(&mysql) == NULL) {
+    out_log(MYSQL_LOG_CHANNEL, "mysql connection is not crypted.\n");
+    /* \TODO kill the connection if SSL is request by config ??!! */
+  } else {
+    out_log(MYSQL_LOG_CHANNEL, "mysql connection is crypted with: %s\n",
+            mysql_get_ssl_cipher(&mysql));
+  }
 #endif
 
   return 0;
@@ -292,6 +336,8 @@ static int  FCN_COMMIT_CHANGES(void)
 static int FCN_FINI(void)
 {
   mysql_close(&mysql);
+  
+  if (db_param != NULL) free(db_param);
 
   return 0;
 }
