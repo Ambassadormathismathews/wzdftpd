@@ -984,9 +984,9 @@ void interrupt(int signum)
   /* closing properly ?! */
 #ifdef DEBUG
 #if !defined(WIN32) && !defined(__sun__)
-fprintf(stderr,"Received signal %s\n",sys_siglist[signum]);
+out_err(LEVEL_NORMAL,"Received signal %s\n",sys_siglist[signum]);
 #else
-fprintf(stderr,"Received signal %d\n",signum);
+out_err(LEVEL_NORMAL,"Received signal %d\n",signum);
 #endif
 #endif
   /* commit backend changes */
