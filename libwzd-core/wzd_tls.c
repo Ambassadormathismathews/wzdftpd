@@ -967,11 +967,45 @@ int tls_auth (const char *type, wzd_context_t * context)
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
+  wzd_string_t * str;
+  char * tls_cipher_list;
 
 
   session = initialize_tls_session(GNUTLS_SERVER);
 
   gnutls_transport_set_ptr(session, (gnutls_transport_ptr) fd);
+
+  {
+    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
+    if (str) {
+      /** \bug FIXME memory leak here !! */
+      tls_cipher_list = strdup(str_tochar(str));
+      str_deallocate(str);
+    } else {
+      tls_cipher_list = "ALL";
+    }
+  }
+
+  /** \todo XXX parse TLS cipher names */
+  {
+    /** Note that the priority is set on the client. The server does not use
+     * the algorithm's priority except for disabling algorithms that were not
+     * specified.
+     */
+    const int cipherPriority[] =
+    {
+      GNUTLS_CIPHER_ARCFOUR_128,
+      GNUTLS_CIPHER_3DES_CBC,
+      GNUTLS_CIPHER_AES_128_CBC,
+      GNUTLS_CIPHER_AES_256_CBC,
+      GNUTLS_CIPHER_ARCFOUR_40,
+      GNUTLS_CIPHER_RC2_40_CBC,
+      GNUTLS_CIPHER_DES_CBC,
+      0
+    };
+
+    gnutls_cipher_set_priority(session, cipherPriority);
+  }
 
   /* ensure socket is non-blocking */
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
