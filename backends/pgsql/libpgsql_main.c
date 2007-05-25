@@ -56,14 +56,16 @@
 #include "libpgsql.h"
 
 /*
+ * 106: SSL support
  * 105: use users/group registry
  * 104: reconnect if connection with server was interrupted
  */
-#define PGSQL_BACKEND_VERSION   105
+#define PGSQL_BACKEND_VERSION   106
 
 #define PGSQL_LOG_CHANNEL       (RESERVED_LOG_CHANNELS+17)
 
 #define PGSQL_DEFAULT_PORT      5432
+#define PGSQL_DEFAULT_SSLMODE   "disable"
 
 /* IMPORTANT needed to check version */
 BACKEND_NAME(pgsql);
@@ -71,7 +73,9 @@ BACKEND_VERSION(PGSQL_BACKEND_VERSION);
 
 
 PGconn * pgconn = NULL;
-static char *db_user, *db_passwd, *db_hostname, *db;
+
+static char *db_param;
+static char *db_user, *db_passwd, *db_hostname, *db, *db_sslmode;
 static unsigned int db_port;
 
 /*static int wzd_parse_arg(const char *arg);*/ /* parse arg (login:password@hostname:table) */
@@ -121,29 +125,35 @@ void _wzd_pgsql_error(const char *filename, const char  *func_name, int line)
 static int wzd_parse_arg(const char *arg)
 {
   char *ptr, *str_port;
-  char * buffer;
 
   if (!arg) return -1;
 
-  ptr = buffer = strdup(arg); /** \todo free buffer at backend exit ! (small memory leak) */
+  ptr = db_param = strdup(arg); 
 
-  db_user = strtok_r(buffer, ":", &ptr);
-  if (!db_user) { free(buffer); return -1; }
+  db_user = strtok_r(db_param, ":", &ptr);
+  if (!db_user) { free(db_param); db_param = NULL; return -1; }
 
   db_passwd = strtok_r(NULL,"@", &ptr);
-  if (!db_passwd) { free(buffer); return -1; }
+  if (!db_passwd) { free(db_param); db_param = NULL; return -1; }
 
   db_hostname = strtok_r(NULL, ":\n", &ptr);
-  if (!db_hostname) { free(buffer); return -1; }
+  if (!db_hostname) { free(db_param); db_param = NULL; return -1; }
 
-  db = strtok_r(NULL, ":\n", &ptr);
-  if (!db) { free(buffer); return -1; }
+  str_port = strtok_r(NULL, "/", &ptr);
+  if (! str_port) { free(db_param); db_param = NULL; return -1; }
 
-  str_port = strtok_r(NULL, "\n", &ptr);
-  if (str_port) {
-    db_port = strtoul(str_port,NULL,0);
-  } else
+  db_port = strtoul(str_port,NULL,0);
+  if (db_port == 0) {
     db_port = PGSQL_DEFAULT_PORT;
+  }
+
+  db = strtok_r(NULL, "|\n", &ptr);
+  if (!db) { free(db_param); db_param = NULL; return -1; }
+
+  db_sslmode = strtok_r(NULL, "\n", &ptr);
+  if (!db_sslmode) {
+    db_sslmode = PGSQL_DEFAULT_SSLMODE; 
+  }
 
   return 0;
 }
@@ -156,7 +166,7 @@ static int FCN_INIT(const char *arg)
   if (arg == NULL) {
     out_log(PGSQL_LOG_CHANNEL, "%s(%s):%d no arguments given\n", __FILE__, __FUNCTION__, __LINE__);
     out_log(PGSQL_LOG_CHANNEL, "You MUST provide a parameter for the PostgreSQL connection\n");
-    out_log(PGSQL_LOG_CHANNEL, "Add  param = user:pass@host:database in [pgsql] section in your config file\n");
+    out_log(PGSQL_LOG_CHANNEL, "Add  param = user:pass@host:port/database[|sslmode] in [pgsql] section in your config file\n");
     out_log(PGSQL_LOG_CHANNEL, "See documentation for help\n");
     return -1;
   }
@@ -169,8 +179,8 @@ static int FCN_INIT(const char *arg)
   {
     wzd_string_t * str = str_allocate();
 
-    str_sprintf(str,"host=%s port=%u dbname=%s user=%s password=%s",
-        db_hostname, db_port, db, db_user, db_passwd);
+    str_sprintf(str,"host=%s port=%u dbname=%s user=%s password=%s sslmode=%s",
+        db_hostname, db_port, db, db_user, db_passwd, db_sslmode);
 
     pgconn = PQconnectdb(str_tochar(str));
 
@@ -181,7 +191,10 @@ static int FCN_INIT(const char *arg)
     out_log(PGSQL_LOG_CHANNEL,"PG: could not connect to database %s on %s\n",db,db_hostname);
     out_log(PGSQL_LOG_CHANNEL,"PG: please check connections and tables status\n");
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    if (pgconn) PQfinish(pgconn);
+    if (pgconn != NULL) {
+      PQfinish(pgconn);
+      pgconn = NULL;
+    }
     return -1;
   }
 
@@ -191,7 +204,7 @@ static int FCN_INIT(const char *arg)
     out_log(PGSQL_LOG_CHANNEL,"PG: could not find expected data in database %s on %s\n",db,db_hostname);
     out_log(PGSQL_LOG_CHANNEL,"PG: please check connections and tables status\n");
     _wzd_pgsql_error(__FILE__, __FUNCTION__, __LINE__);
-    PQfinish(pgconn);
+    PQfinish(pgconn); pgconn = NULL;
     return -1;
   }
   PQclear(res);
@@ -324,7 +337,8 @@ static int  FCN_COMMIT_CHANGES(void)
 
 static int FCN_FINI(void)
 {
-  PQfinish(pgconn);
+  if (pgconn != NULL) PQfinish(pgconn);
+  if (db_param != NULL) free(db_param);
 
   return 0;
 }

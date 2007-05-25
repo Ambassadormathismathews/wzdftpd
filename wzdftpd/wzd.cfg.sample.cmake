@@ -244,11 +244,11 @@ create_symlinks = false
 param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
 
 [mysql]
-# User, pass, host, port and db must be entered.
+# User, pass, host, port(0=default) and db must be entered.
 #
 # If you wish to use SSL encrypted connections with your intended server,
-# first make sure it can receive such then use one of three ways to connect
-# to it.
+# first make sure it can receive such requests, then use one of three ways
+# to connect to it.
 #
 #param = login:password@host:port/base
 #
@@ -257,7 +257,14 @@ param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
 #param = login:password@host:port/base|ca-cert|client-cert|client-key
 
 [pgsql]
-#param = login:password@host:base
+# User, pass, host, port(0=default) and db must be entered.
+#
+# The last parameter is used for SSL connection and is optional.
+# It can have the values disable, allow, prefer, require.
+# The default option is disable.
+#
+#param = login:password@host:port/base
+#param = login:password@host:port/base|sslmode
 
 [sqlite]
 #param = file.db
