@@ -188,24 +188,30 @@ static uid_t FCN_VALIDATE_LOGIN(const char *login, UNUSED wzd_user_t * _ignored)
 
 static uid_t FCN_VALIDATE_PASS(const char *login, const char *pass, UNUSED wzd_user_t * _ignored)
 {
+  uid_t ret;
   wzd_user_t * user;
 
   user = libsqlite_user_get_by_name(login);
-  if (user == NULL) return INVALID_USER;
+  if (user == NULL) goto error; 
 
   if (strlen(user->userpass) == 0) {
     out_log(SQLITE_LOG_CHANNEL,"WARNING: empty password field whould not be allowed !\n");
     out_log(SQLITE_LOG_CHANNEL,"WARNING: you should run: UPDATE users SET userpass='%%' WHERE userpass is NULL\n");
-    return user->uid; /* passworldless login */
+    goto success; /* password less login */
   }
 
   if (strcmp(user->userpass,"%")==0)
-    return user->uid; /* passworldless login */
+    goto success; /* password less login */
 
   if (check_auth(login, pass, user->userpass) == 1)
-    return user->uid;
+    goto success;
 
+ error:
   return INVALID_USER;
+ success:
+  ret = user->uid;
+  user_free(user);
+  return ret;
 }
   
 static wzd_user_t * FCN_GET_USER(uid_t uid)
