@@ -140,7 +140,6 @@ static int wzd_parse_arg(const char *arg)
   port = strtok_r(NULL, "/\n", &ptr);
   if (!port) { free(db_param); db_param = NULL; return -1; }
   db_port = strtoul(port, NULL, 0);
-  printf("port:%d\n", db_port);
 
   db = strtok_r(NULL, "\n|", &ptr);
   if (!db) { free(db_param); db_param = NULL; return -1; }
