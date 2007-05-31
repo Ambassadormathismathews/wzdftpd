@@ -11,10 +11,11 @@ IF(SQLITE3_FOUND)
 ENDIF(SQLITE3_FOUND)
 
 ADD_LIBRARY (libwzd_sqlite SHARED
-	libsqlite_main.c
-	libsqlite_user.c
-	libsqlite_group.c
-	)
+  libsqlite_main.c
+  libsqlite_user.c
+  libsqlite_group.c
+  libsqlite.def
+)
 
 if (CYGWIN OR NOT WIN32)
   SET_TARGET_PROPERTIES(libwzd_sqlite PROPERTIES PREFIX "")
