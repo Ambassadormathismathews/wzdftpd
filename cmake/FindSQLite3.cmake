@@ -18,12 +18,28 @@ else(SQLITE3_INCLUDE_DIR AND SQLITE3_LIBRARIES)
   find_path(SQLITE3_INCLUDE_DIR sqlite3.h
       /usr/include
       /usr/local/include
+      $ENV{ProgramFiles}/SQLite/include
+      $ENV{SystemDrive}/SQLite/include
+      $ENV{ProgramFiles}/SQLite
+      $ENV{SystemDrive}/SQLite
+      $ENV{ProgramFiles}/SQLite3/include
+      $ENV{SystemDrive}/SQLite3/include
+      $ENV{ProgramFiles}/SQLite3
+      $ENV{SystemDrive}/SQLite3
       )
 
   find_library(SQLITE3_LIBRARIES NAMES sqlite3
       PATHS
       /usr/lib
       /usr/local/lib
+      $ENV{ProgramFiles}/SQLite/lib
+      $ENV{SystemDrive}/SQLite/lib
+      $ENV{ProgramFiles}/SQLite
+      $ENV{SystemDrive}/SQLite
+      $ENV{ProgramFiles}/SQLite3/lib
+      $ENV{SystemDrive}/SQLite3/lib
+      $ENV{ProgramFiles}/SQLite3
+      $ENV{SystemDrive}/SQLite3
       )
 
   if(SQLITE3_INCLUDE_DIR AND SQLITE3_LIBRARIES)
