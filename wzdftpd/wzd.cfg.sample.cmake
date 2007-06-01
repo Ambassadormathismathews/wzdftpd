@@ -267,7 +267,7 @@ param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
 #param = login:password@host:port/base|sslmode
 
 [sqlite]
-#param = file.db
+#param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users.db
 
 [sections]
 # sections are used to define local server properties

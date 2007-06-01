@@ -267,7 +267,7 @@ param = @sysconfdir@/users
 #param = login:password@host:port/base|require
 
 [sqlite]
-#param = file.db
+#param = @sysconfdir@/users.db
 
 [sections]
 # sections are used to define local server properties
