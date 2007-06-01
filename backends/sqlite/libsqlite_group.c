@@ -296,8 +296,8 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
         group->groupperms = sqlite3_column_int(stmt, 3);
         group->max_idle_time = sqlite3_column_int(stmt, 4);
         group->num_logins = sqlite3_column_int(stmt, 5);
-        group->max_ul_speed = sqlite3_column_double(stmt, 6);
-        group->max_dl_speed = sqlite3_column_double(stmt, 7);
+        group->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 6);
+        group->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 7);
         group->ratio = sqlite3_column_int(stmt, 8);
 
         libsqlite_group_get_ip(group);
@@ -387,7 +387,7 @@ int libsqlite_group_add(wzd_group_t *group)
          gid, groupname, defaultpath, tagline, groupperms,            \
          max_idle_time, num_logins, max_ul_speed, max_dl_speed, ratio \
       ) VALUES (                                                      \
-         %d, '%q', '%q', '%q', %d, %d, %d, %d, %d, %d                 \
+         %d, '%q', '%q', '%q', %d, %d, %d, %u, %u, %d                 \
       );",
     group->gid, group->groupname, group->defaultpath, group->tagline,
     group->groupperms, group->max_idle_time, group->num_logins,
@@ -453,11 +453,11 @@ void libsqlite_group_update(gid_t gid, wzd_group_t *group,
     separator = ',';
   }
   if (mod_type & _GROUP_MAX_ULS) {
-    libsqlite_add_to_query(&query, "%c max_ul_speed = %f", separator, group->max_ul_speed);
+    libsqlite_add_to_query(&query, "%c max_ul_speed = %u", separator, group->max_ul_speed);
     separator = ',';
   }
   if (mod_type & _GROUP_MAX_DLS) {
-    libsqlite_add_to_query(&query, "%c max_dl_speed = %f", separator, group->max_dl_speed);
+    libsqlite_add_to_query(&query, "%c max_dl_speed = %u", separator, group->max_dl_speed);
     separator = ',';
   }
   if (mod_type & _GROUP_NUMLOGINS) {

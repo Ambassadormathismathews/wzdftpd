@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS groups (
   groupperms INTEGER(10) default NULL,
   max_idle_time INTEGER(10) default NULL,
   num_logins INTEGER(5) default NULL,
-  max_ul_speed DOUBLE default NULL,
-  max_dl_speed DOUBLE default NULL,
+  max_ul_speed BIGINT default NULL,
+  max_dl_speed BIGINT default NULL,
   ratio INTEGER(10) default NULL
 ); 
 
@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS users (
   tagline TEXT default NULL,
   flags TEXT default NULL,
   max_idle_time INTEGER(10) default NULL,
-  max_ul_speed DOUBLE default NULL,
-  max_dl_speed DOUBLE default NULL,
+  max_ul_speed BIGINT default NULL,
+  max_dl_speed BIGINT default NULL,
   num_logins INTEGER(5) default NULL,
   ratio INTEGER(10) default NULL,
   user_slots INTEGER(10) default NULL,

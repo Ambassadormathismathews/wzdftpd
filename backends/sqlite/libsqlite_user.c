@@ -252,8 +252,8 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
         _TXT_CPY(user->flags, (char *) sqlite3_column_text(stmt, 4), MAX_FLAGS_NUM);
 
 	user->max_idle_time = sqlite3_column_int(stmt, 5);
-	user->max_ul_speed = sqlite3_column_double(stmt, 6);
-	user->max_dl_speed = sqlite3_column_double(stmt, 7);
+	user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 6);
+	user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 7);
 	user->num_logins = sqlite3_column_int(stmt, 8);
 	user->credits = sqlite3_column_int64(stmt, 9);
 	user->ratio = sqlite3_column_int(stmt, 10);
@@ -449,7 +449,7 @@ int libsqlite_user_add(wzd_user_t *user)
         max_ul_speed, max_dl_speed, num_logins, ratio, user_slots,       \
         leech_slots, perms, credits, last_login                          \
       ) VALUES (                                                         \
-         %d, '%q', '%q', '%q', '%q', 'q', %d, %lf, %lf, %d, %d, %d, %d,  \
+         %d, '%q', '%q', '%q', '%q', '%q', %d, %u, %u, %d, %d, %d, %d,  \
          %d, %d, %d                                                      \
       );",
     user->uid, user->username, passbuffer, user->rootpath,
@@ -609,11 +609,11 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
     separator = ',';
   }
   if (mod_type & _USER_MAX_ULS) {
-    libsqlite_add_to_query(&query, "%c max_ul_speed=%lf ", separator, user->max_ul_speed);
+    libsqlite_add_to_query(&query, "%c max_ul_speed=%u ", separator, user->max_ul_speed);
     separator = ',';
   }
   if (mod_type & _USER_MAX_DLS) {
-    libsqlite_add_to_query(&query, "%c max_dl_speed=%lf ",separator, user->max_dl_speed);
+    libsqlite_add_to_query(&query, "%c max_dl_speed=%u ",separator, user->max_dl_speed);
     separator = ',';
   }
   if (mod_type & _USER_NUMLOGINS) {
