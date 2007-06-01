@@ -249,7 +249,8 @@ int main_parse_args(int argc, char **argv)
         optindex++;
         continue;
       }
-      if (!strcmp(argv[optindex],"-h")) {
+      if (!strcmp(argv[optindex],"-h") || !strcmp(argv[optindex],"--help")
+		  || !strcmp(argv[optindex],"/?") || !strcmp(argv[optindex],"-?")) {
         display_usage();
         exit (0);
       }
