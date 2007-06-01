@@ -21,7 +21,7 @@ if (CYGWIN OR NOT WIN32)
   SET_TARGET_PROPERTIES(libwzd_sqlite PROPERTIES PREFIX "")
 endif (CYGWIN OR NOT WIN32)
 
-SET(libwzdsqlite_LIBS libwzd_core)
+SET(libwzd_sqlite_LIBS libwzd_core)
 
 IF(SQLITE3_FOUND)
   SET(libwzd_sqlite_LIBS ${libwzd_sqlite_LIBS} ${SQLITE3_LIBRARIES})
