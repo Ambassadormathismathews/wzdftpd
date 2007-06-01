@@ -52,6 +52,8 @@
 #include <winsock2.h>
 
 #include "../visual/gnu_regex/regex.h"
+
+#include <Windows.h>
 #else
 #include <unistd.h>
 
@@ -304,6 +306,12 @@ int main(int argc, char **argv)
   pid_t forkresult;
   wzd_config_t * config;
   wzd_configfile_t * cf;
+
+  /* register wzdftpd mutex so the installer/other programs can check if wzdftpd is active */
+#ifdef WIN32
+  CreateMutex(NULL,FALSE,"wzdftpdIsActive");
+  CreateMutex(NULL,FALSE,"Global\\wzdftpdIsActive");
+#endif
 
   wzd_debug_init();
 
