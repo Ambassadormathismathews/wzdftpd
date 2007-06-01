@@ -1,5 +1,0 @@
-0.5.x to 0.6.0
-
-ALTER TABLE users ALTER userpass TYPE character varying(48);
-
-
