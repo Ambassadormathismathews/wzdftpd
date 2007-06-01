@@ -228,7 +228,7 @@ site_vfsdel = +O
 # order *IS* important
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_debug.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_test.so = deny
-@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_sfv.so = allow
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_sfv.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
