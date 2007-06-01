@@ -562,25 +562,36 @@ static void libsqlite_group_update_ip(gid_t gid, wzd_group_t *group)
  */
 void libsqlite_group_del(gid_t gid)
 {
-  int i;
-  char *errmsg;
+  int gref;
   char *query;
+  char *errmsg=NULL;
   sqlite3 *db=NULL;
+
+  gref = libsqlite_group_get_ref_by_id(gid);
+  if (gref == -1) return;
 
   db = libsqlite_open();
   if (! db) return;
 
-  char *query_tab[] = {
-    "DELETE FROM groups WHERE gid=%d;",
-    "DELETE FROM ugr WHERE gid=%d",
-    NULL,
-  };
-
-  for (i=0; query_tab[i]; i++) {
-    query = sqlite3_mprintf(query_tab[i], gid);
-    sqlite3_exec(db, query, NULL, NULL, &errmsg);
-    sqlite3_free(query);
+  /* delete group in group table */
+  query = sqlite3_mprintf("DELETE FROM groups WHERE gref=%d;", gref);
+  sqlite3_exec(db, query, NULL, NULL, &errmsg);
+  if (errmsg != NULL) {
+    out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s", errmsg);
+    sqlite3_free(errmsg);
+    errmsg = NULL;
   }
+  sqlite3_free(query);
+  
+  /* delete group in group table */
+  query = sqlite3_mprintf("DELETE FROM ugr WHERE gref=%d;", gref);
+  sqlite3_exec(db, query, NULL, NULL, &errmsg);
+  if (errmsg != NULL) {
+    out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s", errmsg);
+    sqlite3_free(errmsg);
+    errmsg = NULL;
+  }
+  sqlite3_free(query);
 
   libsqlite_close(&db);
 
