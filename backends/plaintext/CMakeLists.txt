@@ -18,3 +18,5 @@ endif (CYGWIN OR NOT WIN32)
 target_link_libraries (libwzd_plaintext libwzd_core)
 
 INSTALL(TARGETS libwzd_plaintext DESTINATION ${BACKENDS_INSTALL_PATH})
+
+INSTALL(FILES ${WZDFTPD_BINARY_DIR}/users.sample DESTINATION ${CONF_INSTALL_PATH})

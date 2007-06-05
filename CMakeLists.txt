@@ -125,6 +125,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzd_version.h.cmake ${CMAKE_CURRENT_B
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzdftpd/wzd.cfg.sample.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzdftpd/wzd.cfg.sample)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzdftpd.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzdftpd.pc @ONLY)
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/wzd-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzd-config @ONLY)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/backends/plaintext/users.sample.cmake ${CMAKE_CURRENT_BINARY_DIR}/users.sample @ONLY)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/visual/Installer/wzdftpd.iss.cmake ${CMAKE_CURRENT_BINARY_DIR}/wzdftpd.iss @ONLY)
 
