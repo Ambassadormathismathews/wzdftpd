@@ -73,11 +73,12 @@ ELSE (NOT WIN32)
   ENDIF (NOT MAN_INSTALL_PATH)
 ENDIF (NOT WIN32)
 
-# set variables for replacement in wzd.cfg.sample
+# set variables for replacement in wzd.cfg.sample and users.sample
 SET(PACKAGE "wzdftpd")
 SET(localstatedir "var")
 SET(datadir "lib")
 SET(sysconfdir "${CONF_INSTALL_PATH}")
+SET(ftproot "home")
 
 IF(WIN32)
   SET(WZD_DEFAULT_CONF "wzd-win32.cfg")
