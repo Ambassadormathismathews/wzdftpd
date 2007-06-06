@@ -535,7 +535,7 @@ int tls_auth_cont(wzd_context_t * context)
     status = SSL_accept(ssl);
     sslerr = SSL_get_error(ssl,status);
     if (status == 1) {
-      out_log(LEVEL_FLOOD,"control connection succesfully switched to ssl (cipher: %s)\n",SSL_get_cipher(ssl));
+      out_log(LEVEL_INFO,"control connection succesfully switched to ssl (cipher: %s)\n",SSL_get_cipher(ssl));
       ret = 1;
       break;
     } else {
@@ -690,7 +690,7 @@ int tls_auth_data_cont(wzd_context_t * context)
     sslerr = SSL_get_error(ssl,status);
 
     if (status==1) {
-      out_err(LEVEL_INFO,"Data connection successfully switched to ssl mode\n");
+      out_log(LEVEL_INFO,"Data connection succesfully switched to ssl (cipher: %s)\n",SSL_get_cipher(ssl));
       context->tls_data_mode = TLS_PRIV;
       return 0;
     } else {
@@ -1108,6 +1108,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
   do {
     ret = gnutls_handshake(session);
     if (ret == 0) {
+      out_log(LEVEL_FLOOD,"Data connection succesfully switched to ssl (cipher: %s)\n",gnutls_cipher_get_name(gnutls_cipher_get(session)));
       break;
     }
     if (gnutls_error_is_fatal(ret)) {
