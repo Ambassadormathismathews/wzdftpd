@@ -114,6 +114,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 
                                         ORG_CPPFLAGS="$CPPFLAGS"
                                         ORG_LDFLAGS="$LDFLAGS"
+                                        ORG_LIBS="$LIBS"
                                         CPPFLAGS="$WZD_AVAHI_CFLAGS $CPPFLAGS"
                                         LDFLAGS="$WZD_AVAHI_LIBS $LDFLAGS"
 
@@ -130,6 +131,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 
                                         CPPFLAGS="$ORG_CPPFLAGS"
                                         LDFLAGS="$ORG_LDFLAGS"
+                                        LIBS="$ORG_LIBS"
                         fi
                 fi
                 if test "$enable_howl" = yes ; then
@@ -154,6 +156,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 
                                         ORG_CPPFLAGS="$CPPFLAGS"
                                         ORG_LDFLAGS="$LDFLAGS"
+                                        ORG_LIBS="$LIBS"
                                         CPPFLAGS="$WZD_HOWL_CFLAGS $CPPFLAGS"
                                         LDFLAGS="$WZD_HOWL_LIBS $LDFLAGS"
 
@@ -163,6 +166,7 @@ AC_DEFUN([WZD_LIB_ZEROCONF],
 
                                         CPPFLAGS="$ORG_CPPFLAGS"
                                         LDFLAGS="$ORG_LDFLAGS"
+                                        LIBS="$ORG_LIBS"
                         fi
                 fi
         fi
