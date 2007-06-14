@@ -39,6 +39,10 @@ struct ftp_command_t {
   wzd_command_t * command;
 };
 
+/** \brief Remove extra characters from FTP command line
+ */
+void cleanup_ftp_command(char * buffer, size_t length);
+
 /** \brief Free memory used by a \a ftp_command_t structure */
 void free_ftp_command(struct ftp_command_t * command);
 

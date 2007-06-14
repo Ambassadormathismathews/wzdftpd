@@ -1897,7 +1897,7 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 /*  out_err(LEVEL_CRITICAL,"PASV_IP: %d.%d.%d.%d\n",
       pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3]);*/
 
-  while (port < mainConfig->pasv_high_range) { /* use pasv range max */
+  while (port <= mainConfig->pasv_high_range) { /* use pasv range max */
 #if !defined(IPV6_SUPPORT)
     memset(&sai,0,size);
 
@@ -1929,6 +1929,13 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
 #endif /* IPV6_SUPPORT */
     port++; /* retry with next port */
+  }
+  if (port > mainConfig->pasv_high_range) {
+    out_log(LEVEL_CRITICAL,"EPSV: could not find any available port for binding");
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+    ret = send_message(425,context);
+    return E_NO_DATA_CTX;
   }
 
 
@@ -3414,20 +3421,9 @@ out_err(LEVEL_CRITICAL,"read %d %d write %d %d error %d %d\n",FD_ISSET(sockfd,&f
     /* this replace the memset (bzero ?) some lines before */
     buffer[ret] = '\0';
 
-    if (buffer[0]=='\0') continue;
+    cleanup_ftp_command(buffer,ret);
 
-    if (buffer[0]=='\xff') {
-      const char * ptr = buffer;
-      char * ptr2;
-      /* skip telnet characters */
-      while (*ptr != '\0' &&
-          ((unsigned char)*ptr == 255 || (unsigned char)*ptr == TELNET_IP || (unsigned char)*ptr == TELNET_SYNCH))
-        ptr++;
-      /* TODO replace this by a working memmove or copy characters directly */
-      ptr2 = strdup(ptr);
-      wzd_strncpy(buffer,ptr2,WZD_BUFFER_LEN-1);
-      free(ptr2);
-    }
+    if (buffer[0]=='\0') continue;
 
     command_buffer = STR(buffer);
 

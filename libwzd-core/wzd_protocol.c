@@ -43,6 +43,9 @@
 
 #endif /* WZD_USE_PCH */
 
+#define TELNET_SYNCH    242
+#define TELNET_IP       244
+
 
 static int _basic_check_ftp(const char * command);
 
@@ -158,6 +161,33 @@ int identify_token(const char *token)
   if (strcmp("\xff",buf)==0) /* telnet SYNCH */
     return TOK_NOTHING;
   return TOK_UNKNOWN;
+}
+
+/** \brief Remove extra characters from FTP command line
+ */
+void cleanup_ftp_command(char * buffer, size_t length)
+{
+  char * ptr;
+
+  /* Force buffer to end with a 0, to ensure we won't have problems later with unterminated strings */
+  buffer[length-1] = '\0';
+
+  if (buffer[0]=='\xff') {
+    char * ptr2;
+
+    ptr = buffer;
+    /* skip telnet characters */
+    while (*ptr != '\0' &&
+        ((unsigned char)*ptr == 255 || (unsigned char)*ptr == TELNET_IP || (unsigned char)*ptr == TELNET_SYNCH))
+      ptr++;
+    /* TODO replace this by a working memmove or copy characters directly */
+    ptr2 = strdup(ptr);
+    wzd_strncpy(buffer,ptr2,WZD_BUFFER_LEN-1);
+    free(ptr2);
+  }
+
+  ptr = strpbrk(buffer,"\r\n");
+  if (ptr != NULL) *ptr = '\0';
 }
 
 /** \brief Parse and identify FTP command
