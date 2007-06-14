@@ -1930,7 +1930,7 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 #endif /* IPV6_SUPPORT */
     port++; /* retry with next port */
   }
-  if (port > mainConfig->pasv_high_range) {
+  if (port > mainConfig->pasv_high_range || port >= 65536) {
     out_log(LEVEL_CRITICAL,"EPSV: could not find any available port for binding");
     socket_close(context->pasvsock);
     context->pasvsock = -1;
@@ -1938,16 +1938,8 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
     return E_NO_DATA_CTX;
   }
 
-
-  if (port >= 65536) {
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
-    ret = send_message(425,context);
-    return E_NO_DATA_CTX;
-  }
-
   if (listen(context->pasvsock,1)<0) {
-    out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
+    out_log(LEVEL_CRITICAL,"EPSV: could not listen on port %d: errno %d error %s\n",port,errno,strerror(errno));
     socket_close(context->pasvsock);
     context->pasvsock = -1;
     ret = send_message(425,context);
