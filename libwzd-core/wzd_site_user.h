@@ -51,6 +51,16 @@ int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_
 int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
 /* help functions */
-int do_site_help_adduser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_adduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_deluser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_readduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_addip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_delip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_changegrp(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_su(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
 
 #endif /* __WZD_SITE_USER__ */

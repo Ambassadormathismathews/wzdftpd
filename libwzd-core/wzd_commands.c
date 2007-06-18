@@ -249,26 +249,26 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"mic",do_mic,NULL,TOK_MIC)) return -1;
 #endif
 
-  if (commands_add(_ctable,"site_addip",do_site_addip,NULL,TOK_SITE_ADDIP)) return -1;
+  if (commands_add(_ctable,"site_addip",do_site_addip,do_site_help_addip,TOK_SITE_ADDIP)) return -1;
   if (commands_add(_ctable,"site_adduser",do_site_adduser,do_site_help_adduser,TOK_SITE_ADDUSER)) return -1;
   if (commands_add(_ctable,"site_backend",do_site_backend,NULL,TOK_SITE_BACKEND)) return -1;
   if (commands_add(_ctable,"site_chacl",do_site_chacl,NULL,TOK_SITE_CHACL)) return -1;
-  if (commands_add(_ctable,"site_change",do_site_change,NULL,TOK_SITE_CHANGE)) return -1;
-  if (commands_add(_ctable,"site_changegrp",do_site_changegrp,NULL,TOK_SITE_CHANGEGRP)) return -1;
+  if (commands_add(_ctable,"site_change",do_site_change,do_site_help_change,TOK_SITE_CHANGE)) return -1;
+  if (commands_add(_ctable,"site_changegrp",do_site_changegrp,do_site_help_changegrp,TOK_SITE_CHANGEGRP)) return -1;
   if (commands_add(_ctable,"site_checkperm",do_site_checkperm,NULL,TOK_SITE_CHECKPERM)) return -1;
   if (commands_add(_ctable,"site_chgrp",do_site_chgrp,NULL,TOK_SITE_CHGRP)) return -1;
   if (commands_add(_ctable,"site_chmod",do_site_chmod,NULL,TOK_SITE_CHMOD)) return -1;
   if (commands_add(_ctable,"site_chown",do_site_chown,NULL,TOK_SITE_CHOWN)) return -1;
   if (commands_add(_ctable,"site_chpass",do_site_chpass,NULL,TOK_SITE_CHPASS)) return -1;
-  if (commands_add(_ctable,"site_chratio",do_site_chratio,NULL,TOK_SITE_CHRATIO)) return -1;
+  if (commands_add(_ctable,"site_chratio",do_site_chratio,do_site_help_chratio,TOK_SITE_CHRATIO)) return -1;
   if (commands_add(_ctable,"site_close",do_site,NULL,TOK_SITE_CLOSE)) return -1;
   if (commands_add(_ctable,"site_color",do_site_color,NULL,TOK_SITE_COLOR)) return -1;
-  if (commands_add(_ctable,"site_delip",do_site_delip,NULL,TOK_SITE_DELIP)) return -1;
-  if (commands_add(_ctable,"site_deluser",do_site_deluser,NULL,TOK_SITE_DELUSER)) return -1;
+  if (commands_add(_ctable,"site_delip",do_site_delip,do_site_help_delip,TOK_SITE_DELIP)) return -1;
+  if (commands_add(_ctable,"site_deluser",do_site_deluser,do_site_help_deluser,TOK_SITE_DELUSER)) return -1;
   if (commands_add(_ctable,"site_flags",do_site_flags,NULL,TOK_SITE_FLAGS)) return -1;
   if (commands_add(_ctable,"site_free",do_site_free,NULL,TOK_SITE_FREE)) return -1;
   if (commands_add(_ctable,"site_ginfo",do_site_ginfo,NULL,TOK_SITE_GINFO)) return -1;
-  if (commands_add(_ctable,"site_give",do_site_give,NULL,TOK_SITE_GIVE)) return -1;
+  if (commands_add(_ctable,"site_give",do_site_give,do_site_help_give,TOK_SITE_GIVE)) return -1;
   if (commands_add(_ctable,"site_group",do_site_group,NULL,TOK_SITE_GROUP)) return -1;
   if (commands_add(_ctable,"site_grpadd",do_site_grpadd,NULL,TOK_SITE_GRPADD)) return -1;
   if (commands_add(_ctable,"site_grpaddip",do_site_grpaddip,NULL,TOK_SITE_GRPADDIP)) return -1;
@@ -289,7 +289,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_msg",do_site_msg,NULL,TOK_SITE_MSG)) return -1;
   if (commands_add(_ctable,"site_perm",do_site_perm,NULL,TOK_SITE_PERM)) return -1;
   if (commands_add(_ctable,"site_purge",do_site_purgeuser,NULL,TOK_SITE_PURGE)) return -1;
-  if (commands_add(_ctable,"site_readd",do_site_readduser,NULL,TOK_SITE_READD)) return -1;
+  if (commands_add(_ctable,"site_readd",do_site_readduser,do_site_help_readduser,TOK_SITE_READD)) return -1;
   if (commands_add(_ctable,"site_reload",do_site_reload,NULL,TOK_SITE_RELOAD)) return -1;
   if (commands_add(_ctable,"site_reopen",do_site,NULL,TOK_SITE_REOPEN)) return -1;
   if (commands_add(_ctable,"site_rusage",do_site_rusage,NULL,TOK_SITE_RUSAGE)) return -1;
@@ -297,9 +297,9 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_sections",do_site_sections,NULL,TOK_SITE_SECTIONS)) return -1;
   if (commands_add(_ctable,"site_showlog",do_site_showlog,NULL,TOK_SITE_SHOWLOG)) return -1;
   if (commands_add(_ctable,"site_shutdown",do_site,NULL,TOK_SITE_SHUTDOWN)) return -1;
-  if (commands_add(_ctable,"site_su",do_site_su,NULL,TOK_SITE_SU)) return -1;
+  if (commands_add(_ctable,"site_su",do_site_su,do_site_help_su,TOK_SITE_SU)) return -1;
   if (commands_add(_ctable,"site_tagline",do_site_tagline,NULL,TOK_SITE_TAGLINE)) return -1;
-  if (commands_add(_ctable,"site_take",do_site_take,NULL,TOK_SITE_TAKE)) return -1;
+  if (commands_add(_ctable,"site_take",do_site_take,do_site_help_take,TOK_SITE_TAKE)) return -1;
 #ifdef DEBUG
   if (commands_add(_ctable,"site_test",do_site_test,NULL,TOK_SITE_TEST)) return -1;
 #endif

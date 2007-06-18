@@ -196,16 +196,17 @@ int do_site_adduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
   return 0;
 }
 
-void do_site_help_deluser(wzd_context_t * context)
+int do_site_help_deluser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site deluser <user> [<backend>]");
+  send_message_with_args(501,context,"site deluser <user>");
+  return 0;
 }
 
 /** site deluser: delete user
  *
  * deluser &lt;user&gt;
  */
-int do_site_deluser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_deluser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username;
   int ret;
@@ -218,10 +219,8 @@ int do_site_deluser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_deluser(context);
-    return 0;
+    return do_site_help_deluser(cname,command_line,context);
   }
-  /* TODO read backend */
 
   /* check if user already exists */
   user = GetUserByName(str_tochar(username));
@@ -262,16 +261,17 @@ int do_site_deluser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
   return 0;
 }
 
-void do_site_help_readduser(wzd_context_t * context)
+int do_site_help_readduser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site readduser <user> [<backend>]");
+  send_message_with_args(501,context,"site readduser <user>");
+  return 0;
 }
 
 /** site readduser: undelete user
  *
  * readduser &lt;user&gt;
  */
-int do_site_readduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_readduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * username;
@@ -285,8 +285,7 @@ int do_site_readduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_readduser(context);
-    return 0;
+    return do_site_help_readduser(cname,command_line,context);
   }
 
   /* check if user exists */
@@ -328,7 +327,7 @@ int do_site_readduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 
 /** site purge: delete user permanently
  *
- * purge [&lt;user&gt;] [&lt;backend&gt;]
+ * purge [&lt;user&gt;]
  */
 int do_site_purgeuser(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_t * context)
 {
@@ -402,16 +401,17 @@ int do_site_purgeuser(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_con
   return 0;
 }
 
-void do_site_help_addip(wzd_context_t * context)
+int do_site_help_addip(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site addip <user> <ip1> [<ip2> ...]");
+  return 0;
 }
 
 /** site addip: adds an ip to a user
  *
  * addip &lt;user&gt; &lt;ip1&gt; [&lt;ip2&gt; ...]
  */
-int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_addip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *ip;
   int ret;
@@ -423,8 +423,7 @@ int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_addip(context);
-    return 0;
+    return do_site_help_addip(cname,command_line,context);
   }
 
   /* check if user  exists */
@@ -437,8 +436,7 @@ int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   ip = str_tok(command_line," \t\r\n");
   if (!ip) {
-    do_site_help_addip(context);
-    return 0;
+    return do_site_help_addip(cname,command_line,context);
   }
 
   /* GAdmin ? */
@@ -473,10 +471,11 @@ int do_site_addip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   return 0;
 }
 
-void do_site_help_delip(wzd_context_t * context)
+int do_site_help_delip(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-Usage: site delip <user> <ip1> [<ip2> ...]\r\n",context);
   send_message_raw("501  ip can be replaced by the slot_number (get it with site user <user>)\r\n",context);
+  return 0;
 }
 
 /** site delip: removes ip from user
@@ -485,7 +484,7 @@ void do_site_help_delip(wzd_context_t * context)
  *
  * ip can be replaced by the slot_number
  */
-int do_site_delip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_delip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr_ul;
   wzd_string_t * username, *ip;
@@ -499,8 +498,7 @@ int do_site_delip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_delip(context);
-    return 0;
+    return do_site_help_delip(cname,command_line,context);
   }
   /* check if user  exists */
   user = GetUserByName(str_tochar(username));
@@ -521,8 +519,7 @@ int do_site_delip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 
   ip = str_tok(command_line," \t\r\n");
   if (!ip) {
-    do_site_help_delip(context);
-    return 0;
+    return do_site_help_delip(cname,command_line,context);
   }
 
   do {
@@ -612,7 +609,7 @@ int do_site_color(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, wzd_
 }
 
 
-void do_site_help_change(wzd_context_t * context)
+int do_site_help_change(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-site change <user> <field> <value>\r\n",context);
   send_message_raw("field can be one of:\r\n",context);
@@ -633,13 +630,15 @@ void do_site_help_change(wzd_context_t * context)
   send_message_raw(" leech_slots changes allowed leech slots (for GAdmins)\r\n",context);
 
   send_message_raw("501 site change aborted\r\n",context);
+
+  return 0;
 }
 
 /** site change: change a field for a user
  *
  * change &lt;user&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * username, * field, * value;
@@ -658,8 +657,7 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_change(context);
-    return 0;
+    return do_site_help_change(cname,command_line,context);
   }
   /* check if user  exists */
   strncpy(old_username,str_tochar(username),HARD_USERNAME_LENGTH);
@@ -672,14 +670,12 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   }
   field = str_tok(command_line," \t\r\n");
   if (!field) {
-    do_site_help_change(context);
-    return 0;
+    return do_site_help_change(cname,command_line,context);
   }
   value = str_tok(command_line,"\r\n");
   if (!value) {
-    do_site_help_change(context);
     str_deallocate(field);
-    return 0;
+    return do_site_help_change(cname,command_line,context);
   }
 
   uid = user->uid;
@@ -897,19 +893,21 @@ int do_site_change(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   return 0;
 }
 
-void do_site_help_changegrp(wzd_context_t * context)
+int do_site_help_changegrp(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-site changegrp <user> <group1> [<group2> ...]\r\n",context);
   send_message_raw(" Add user to group, or remove it if already in group\r\n",context);
 
   send_message_raw("501 site changegrp aborted\r\n",context);
+
+  return 0;
 }
 
 /** site changegrp: add/remove user from group
  *
  * changegrp &lt;user&gt; &lt;group1&gt; [&lt;group2&gt; ...]
  */
-int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_changegrp(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, * group_name;
   unsigned long mod_type;
@@ -919,8 +917,7 @@ int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_changegrp(context);
-    return 0;
+    return do_site_help_changegrp(cname,command_line,context);
   }
 
   /* check if user exists */
@@ -933,8 +930,7 @@ int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 
   group_name = str_tok(command_line," \t\r\n");
   if (!group_name) {
-    do_site_help_changegrp(context);
-    return 0;
+    return do_site_help_changegrp(cname,command_line,context);
   }
 
   /* find modification type */
@@ -981,16 +977,17 @@ int do_site_changegrp(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 
 
 
-void do_site_help_chratio(wzd_context_t * context)
+int do_site_help_chratio(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site chratio <user> <ratio>");
+  return 0;
 }
 
 /** site chratio: change user ratio
  *
  * chratio user ratio
  */
-int do_site_chratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr=NULL;
   wzd_string_t * str_ratio, *username;
@@ -1004,14 +1001,12 @@ int do_site_chratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_chratio(context);
-    return 0;
+    return do_site_help_chratio(cname,command_line,context);
   }
   str_ratio = str_tok(command_line," \t\r\n");
   if (!str_ratio) {
-    do_site_help_chratio(context);
     str_deallocate(username);
-    return 0;
+    return do_site_help_chratio(cname,command_line,context);
   }
 
   /* check if user exists */
@@ -1025,8 +1020,7 @@ int do_site_chratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
   ratio = strtoul(str_tochar(str_ratio),&ptr,0);
 
   if (*ptr!='\0') {
-    do_site_help_chratio(context);
-    return 0;
+    return do_site_help_chratio(cname,command_line,context);
   }
   str_deallocate(str_ratio);
 
@@ -1356,16 +1350,17 @@ int do_site_killpath(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   return 0;
 }
 
-void do_site_help_give(wzd_context_t * context)
+int do_site_help_give(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site give <user> <kbytes>");
+  return 0;
 }
 
 /** site give: gives credits to user
  *
  * give user kbytes
  */
-int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_give, *username;
@@ -1379,14 +1374,12 @@ int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_give(context);
-    return 0;
+    return do_site_help_give(cname,command_line,context);
   }
   str_give = str_tok(command_line," \t\r\n");
   if (!str_give) {
-    do_site_help_give(context);
     str_deallocate(username);
-    return 0;
+    return do_site_help_give(cname,command_line,context);
   }
 
   /* check if user exists */
@@ -1399,9 +1392,8 @@ int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   kbytes = strtoull(str_tochar(str_give),&ptr,0);
   if (*ptr!='\0') {
-    do_site_help_give(context);
     str_deallocate(str_give);
-    return 0;
+    return do_site_help_give(cname,command_line,context);
   }
   str_deallocate(str_give);
   kbytes *= 1024;
@@ -1440,16 +1432,17 @@ int do_site_give(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
   return 0;
 }
 
-void do_site_help_take(wzd_context_t * context)
+int do_site_help_take(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site take <user> <kbytes>");
+  return 0;
 }
 
 /** site take: removes credits to user
  *
  * take user kbytes
  */
-int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_take, *username;
@@ -1463,14 +1456,12 @@ int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_take(context);
-    return 0;
+    return do_site_help_take(cname,command_line,context);
   }
   str_take = str_tok(command_line," \t\r\n");
   if (!str_take) {
-    do_site_help_take(context);
     str_deallocate(username);
-    return 0;
+    return do_site_help_take(cname,command_line,context);
   }
 
   /* check if user exists */
@@ -1483,9 +1474,8 @@ int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
   kbytes = strtoull(str_tochar(str_take),&ptr,0);
   if (*ptr!='\0') {
-    do_site_help_take(context);
     str_deallocate(str_take);
-    return 0;
+    return do_site_help_take(cname,command_line,context);
   }
   str_deallocate(str_take);
   kbytes *= 1024;
@@ -1526,16 +1516,17 @@ int do_site_take(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 }
 
 
-void do_site_help_su(wzd_context_t * context)
+int do_site_help_su(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site su <user>");
+  return 0;
 }
 
 /** site su: become another user
  *
  * su user
  */
-int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_su(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t *username;
   int ret;
@@ -1548,8 +1539,7 @@ int do_site_su(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_su(context);
-    return 0;
+    return do_site_help_su(cname,command_line,context);
   }
 
   /* check if user already exists */
