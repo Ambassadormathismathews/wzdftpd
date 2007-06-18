@@ -50,4 +50,7 @@ int do_site_flags(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context
 int do_site_idle(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 int do_site_tagline(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
+/* help functions */
+int do_site_help_adduser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context);
+
 #endif /* __WZD_SITE_USER__ */

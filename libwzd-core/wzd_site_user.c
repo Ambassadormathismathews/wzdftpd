@@ -77,16 +77,17 @@ static int _kick_and_purge(void);
 
 
 
-void do_site_help_adduser(wzd_context_t * context)
+int do_site_help_adduser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site adduser <user> <password> [<group>] [<ip1> <ip2> <...>]");
+  return 0;
 }
 
 /** site adduser: adds a new user
  *
  * adduser &lt;user&gt; &lt;password&gt; [&lt;group&gt;] [&lt;ip1&gt; &lt;ip2&gt; &lt;...&gt;]
  */
-int do_site_adduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_adduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * username, *password, *groupname, *ip=NULL;
   int ret;
@@ -101,14 +102,12 @@ int do_site_adduser(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
-    do_site_help_adduser(context);
-    return 0;
+    return do_site_help_adduser(cname,command_line,context);
   }
   password = str_tok(command_line," \t\r\n");
   if (!password) {
-    do_site_help_adduser(context);
     str_deallocate(username);
-    return 0;
+    return do_site_help_adduser(cname,command_line,context);
   }
 
   groupname = str_tok(command_line," \t\r\n");
