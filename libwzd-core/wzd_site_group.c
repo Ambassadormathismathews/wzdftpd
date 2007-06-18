@@ -72,16 +72,17 @@ void do_site_help(const char *site_command, wzd_context_t * context);
 
 
 
-void do_site_help_grpadd(wzd_context_t * context)
+int do_site_help_grpadd(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site grpadd <group> [<backend>]");
+  return 0;
 }
 
 /** site grpadd: adds a new group
  *
  * grpadd &lt;group&gt; [&lt;backend&gt;]
  */
-int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpadd(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t *groupname;
   int err;
@@ -94,8 +95,7 @@ int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpadd(context);
-    return 0;
+    return do_site_help_grpadd(cname,command_line,context);
   }
 
   /* Gadmin ? */
@@ -139,9 +139,10 @@ int do_site_grpadd(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   return 0;
 }
 
-void do_site_help_grpdel(wzd_context_t * context)
+int do_site_help_grpdel(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site grpdel <group> [<backend>]");
+  return 0;
 }
 
 
@@ -149,7 +150,7 @@ void do_site_help_grpdel(wzd_context_t * context)
  *
  * grpdel &lt;group&gt;
  */
-int do_site_grpdel(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpdel(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname;
   int ret;
@@ -169,8 +170,7 @@ int do_site_grpdel(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpdel(context);
-    return 0;
+    return do_site_help_grpdel(cname,command_line,context);
   }
   /* TODO read backend */
 
@@ -224,15 +224,16 @@ int do_site_grpdel(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   return 0;
 }
 
-void do_site_help_grpren(wzd_context_t * context)
+int do_site_help_grpren(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site grpren <groupname> <newgroupname>");
+  return 0;
 }
 /** site grpren: rename group
  *
  * grpren oldname newname
  */
-int do_site_grpren(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpren(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname, *newgroupname;
   int ret;
@@ -246,14 +247,12 @@ int do_site_grpren(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpren(context);
-    return 0;
+    return do_site_help_grpren(cname,command_line,context);
   }
   newgroupname = str_tok(command_line," \t\r\n");
   if (!newgroupname) {
-    do_site_help_grpren(context);
     str_deallocate(groupname);
-    return 0;
+    return do_site_help_grpren(cname,command_line,context);
   }
 
   /* check if group exists */
@@ -360,16 +359,17 @@ int do_site_gsinfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   return 0;
 }
 
-void do_site_help_grpaddip(wzd_context_t * context)
+int do_site_help_grpaddip(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site grpaddip <group> <ip>");
+  return 0;
 }
 
 /** site grpaddip: adds an ip to a group
  *
  * grpaddip &lt;group&gt; &lt;ip&gt;
  */
-int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpaddip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   wzd_string_t * groupname, *ip;
   int ret;
@@ -382,8 +382,7 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpaddip(context);
-    return 0;
+    return do_site_help_grpaddip(cname,command_line,context);
   }
 
   /* check if group exists */
@@ -403,8 +402,7 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   ip = str_tok(command_line," \t\r\n");
   if (!ip) {
-    do_site_help_grpaddip(context);
-    return 0;
+    return do_site_help_grpaddip(cname,command_line,context);
   }
 
   ret = ip_inlist(group->ip_list, str_tochar(ip));
@@ -424,10 +422,11 @@ int do_site_grpaddip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   return 0;
 }
 
-void do_site_help_grpdelip(wzd_context_t * context)
+int do_site_help_grpdelip(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-Usage: site grpdelip <group> <ip>\r\n",context);
   send_message_raw("501  or: site grpdelip <grp> <slot_number> (get it with site gsinfo <group>)\r\n",context);
+  return 0;
 }
 
 /** site grpdelip: removes ip from group
@@ -436,7 +435,7 @@ void do_site_help_grpdelip(wzd_context_t * context)
  *
  * grpdelip &lt;group&gt; &lt;slot_number&gt;
  */
-int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpdelip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * groupname, *ip;
@@ -451,8 +450,7 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpdelip(context);
-    return 0;
+    return do_site_help_grpdelip(cname,command_line,context);
   }
   /* check if group exists */
   group=GetGroupByName(str_tochar(groupname));
@@ -464,8 +462,7 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   ip = str_tok(command_line," \t\r\n");
   if (!ip) {
-    do_site_help_grpdelip(context);
-    return 0;
+    return do_site_help_grpdelip(cname,command_line,context);
   }
 
   /* GAdmin ? */
@@ -523,15 +520,17 @@ int do_site_grpdelip(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
   return 0;
 }
 
-void do_site_help_grpratio(wzd_context_t * context)
+int do_site_help_grpratio(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_with_args(501,context,"site grpratio <group> <ratio>");
+  return 0;
 }
+
 /** site grpratio: change group ratio
  *
  * grpratio group ratio
  */
-int do_site_grpratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * str_ratio, *groupname;
@@ -546,8 +545,7 @@ int do_site_grpratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpratio(context);
-    return 0;
+    return do_site_help_grpratio(cname,command_line,context);
   }
   /* check if group exists */
   group=GetGroupByName(str_tochar(groupname));
@@ -559,15 +557,13 @@ int do_site_grpratio(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, w
 
   str_ratio = str_tok(command_line," \t\r\n");
   if (!str_ratio) {
-    do_site_help_grpratio(context);
-    return 0;
+    return do_site_help_grpratio(cname,command_line,context);
   }
 
   ratio = strtoul(str_tochar(str_ratio),&ptr,0);
   if (*ptr!='\0') {
-    do_site_help_grpratio(context);
     str_deallocate(str_ratio);
-    return 0;
+    return do_site_help_grpratio(cname,command_line,context);
   }
   str_deallocate(str_ratio);
 
@@ -637,7 +633,7 @@ int do_site_grpkill(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wz
 }
 
 
-void do_site_help_grpchange(wzd_context_t * context)
+int do_site_help_grpchange(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-site grpchange <group> <field> <value>\r\n",context);
   send_message_raw("field can be one of:\r\n",context);
@@ -652,13 +648,15 @@ void do_site_help_grpchange(wzd_context_t * context)
   send_message_raw(" num_logins  changes maximum simultaneous logins allowed\r\n",context);
 
   send_message_raw("501 site grpchange aborted\r\n",context);
+
+  return 0;
 }
 
 /** site grpchange: change a field for a group
  *
  * grpchange &lt;group&gt; &lt;field&gt; &lt;value&gt;
  */
-int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_grpchange(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr;
   wzd_string_t * groupname, * field, * value;
@@ -671,25 +669,21 @@ int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
   me = GetUserByID(context->userid);
 
   if (!command_line) {
-    do_site_help_grpchange(context);
-    return 0;
+    return do_site_help_grpchange(cname,command_line,context);
   }
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
-    do_site_help_grpchange(context);
-    return 0;
+    return do_site_help_grpchange(cname,command_line,context);
   }
   field = str_tok(command_line," \t\r\n");
   if (!field) {
-    do_site_help_grpchange(context);
     str_deallocate(groupname);
-    return 0;
+    return do_site_help_grpchange(cname,command_line,context);
   }
   value = str_tok(command_line,"\r\n");
   if (!value) {
-    do_site_help_grpchange(context);
     str_deallocate(groupname); str_deallocate(field);
-    return 0;
+    return do_site_help_grpchange(cname,command_line,context);
   }
 
   /* check if group exists */
@@ -789,7 +783,7 @@ int do_site_grpchange(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, 
 }
 
 
-void do_site_help_group(wzd_context_t * context)
+int do_site_help_group(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
   send_message_raw("501-site group <action> ...\r\n",context);
   send_message_raw("action can be one of:\r\n",context);
@@ -806,10 +800,12 @@ void do_site_help_group(wzd_context_t * context)
   send_message_raw(" list       list all existing groups\r\n",context);
   send_message_raw("use site <action> for specific action help\r\n",context);
   send_message_raw("501 site group aborted\r\n",context);
+
+  return 0;
 }
 
 /* regroup all group administration in one site command */
-int do_site_group(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_group(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
 
   wzd_string_t * cmd;
@@ -819,8 +815,7 @@ int do_site_group(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   cmd = str_tok(command_line," \t\r\n");
 
   if( cmd == NULL ) {
-    do_site_help_group(context);
-    return 0;
+    return do_site_help_group(cname,command_line,context);
   }
 
   if(strcmp("info", str_tochar(cmd)) == 0) {

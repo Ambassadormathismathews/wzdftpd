@@ -42,17 +42,16 @@ int do_site_grpchange(wzd_string_t *ignored, wzd_string_t *command_line, wzd_con
 
 int do_site_grpkill(wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context);
 
-#if 0
-int do_site_kick(char *command_line, wzd_context_t * context);
-int do_site_kill(char *command_line, wzd_context_t * context);
 
-int do_site_chgrp(char *command_line, wzd_context_t * context);
+/* Help commands */
+int do_site_help_grpadd(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpdel(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpren(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpaddip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpdelip(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_grpchange(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
+int do_site_help_group(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context);
 
-int do_site_change(char *command_line, wzd_context_t * context);
-
-int do_site_flags(char *command_line, wzd_context_t * context);
-int do_site_idle(char *command_line, wzd_context_t * context);
-int do_site_tagline(char *command_line, wzd_context_t * context);
-#endif
 
 #endif /* __WZD_SITE_GROUP__ */
