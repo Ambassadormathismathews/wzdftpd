@@ -250,7 +250,7 @@ int commands_add_defaults(CHTBL * _ctable)
 #endif
 
   if (commands_add(_ctable,"site_addip",do_site_addip,NULL,TOK_SITE_ADDIP)) return -1;
-  if (commands_add(_ctable,"site_adduser",do_site_adduser,NULL,TOK_SITE_ADDUSER)) return -1;
+  if (commands_add(_ctable,"site_adduser",do_site_adduser,do_site_help_adduser,TOK_SITE_ADDUSER)) return -1;
   if (commands_add(_ctable,"site_backend",do_site_backend,NULL,TOK_SITE_BACKEND)) return -1;
   if (commands_add(_ctable,"site_chacl",do_site_chacl,NULL,TOK_SITE_CHACL)) return -1;
   if (commands_add(_ctable,"site_change",do_site_change,NULL,TOK_SITE_CHANGE)) return -1;
@@ -279,7 +279,7 @@ int commands_add_defaults(CHTBL * _ctable)
   if (commands_add(_ctable,"site_grpratio",do_site_grpratio,NULL,TOK_SITE_GRPRATIO)) return -1;
   if (commands_add(_ctable,"site_grpren",do_site_grpren,NULL,TOK_SITE_GRPREN)) return -1;
   if (commands_add(_ctable,"site_gsinfo",do_site_gsinfo,NULL,TOK_SITE_GSINFO)) return -1;
-/*  if (commands_add(_ctable,"site_help",do_site_help,NULL,TOK_SITE_HELP)) return -1;*/
+  if (commands_add(_ctable,"site_help",do_site_help_command,NULL,TOK_SITE_HELP)) return -1;
   if (commands_add(_ctable,"site_idle",do_site_idle,NULL,TOK_SITE_IDLE)) return -1;
   if (commands_add(_ctable,"site_invite",do_site_invite,NULL,TOK_SITE_INVITE)) return -1;
   if (commands_add(_ctable,"site_kick",do_site_kick,NULL,TOK_SITE_KICK)) return -1;
