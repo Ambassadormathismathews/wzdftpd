@@ -20,8 +20,8 @@ backup config = true
 
 # PASV range (default: 1025->65536)
 # specify this iff you want to get a specific range
-pasv_low_range = 2500
-pasv_high_range  = 3000
+pasv_low_range = 1024
+pasv_high_range  = 65535
 #pasv_ip = 62.xxx.xxx.xxx
 #pasv_ip = 134.xxx.xx.xx
 
@@ -94,6 +94,8 @@ deny_access_files_uploaded = 1
 # lowest, flood, info, normal, high, critical
 #loglevel = lowest
 
+# help file location
+help_file = @sysconfdir@/file_help.txt
 # TLS Options
 
 # Certificate (only used in ssl mode, otherwise ignored)
@@ -302,7 +304,6 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 site_rules = !@sysconfdir@/file_rules.txt
 
 site_groups = !@sysconfdir@/file_groups.txt
-site_help = !@sysconfdir@/file_help.txt
 site_swho = !@sysconfdir@/file_swho.txt
 site_users = !@sysconfdir@/file_users.txt
 site_vfsls = !@sysconfdir@/file_vfs.txt

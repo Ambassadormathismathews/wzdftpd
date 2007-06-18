@@ -20,8 +20,8 @@ backup config = true
 
 # PASV range (default: 1025->65536)
 # specify this iff you want to get a specific range
-pasv_low_range = 2500
-pasv_high_range  = 3000
+pasv_low_range = 1024
+pasv_high_range  = 65535
 #pasv_ip = 62.xxx.xxx.xxx
 #pasv_ip = 134.xxx.xx.xx
 
@@ -93,6 +93,9 @@ deny_access_files_uploaded = 1
 # can be one of (in order):
 # lowest, flood, info, normal, high, critical
 #loglevel = lowest
+
+# help file location
+help_file = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_help.txt
 
 # TLS Options
 
@@ -302,7 +305,6 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 site_rules = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_rules.txt
 
 site_groups = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_groups.txt
-site_help = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_help.txt
 site_swho = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_swho.txt
 site_users = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_users.txt
 site_vfsls = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_vfs.txt

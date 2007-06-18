@@ -28,6 +28,9 @@
 int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context);
 void do_site_help(const char *site_command, wzd_context_t * context);
 
+/** \brief Display help */
+int do_site_help_command(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context);
+
 void do_site_print_file(const char *filename, wzd_user_t *user, wzd_group_t *group, wzd_context_t *context);
 
 

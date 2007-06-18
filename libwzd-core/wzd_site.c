@@ -60,6 +60,7 @@
 
 #include "wzd_structs.h"
 
+#include "wzd_commands.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_messages.h"
@@ -186,6 +187,50 @@ int do_site_test(wzd_string_t *command, wzd_string_t *param, wzd_context_t * con
   reply_push(context,"TEST command ok");
   reply_set_code(context,200);
   reply_send(context);
+
+  return 0;
+}
+
+/** Display generic help (controlled by the "help_file" config variable).
+ *
+ * If an argument is provided, the specific help function for this command is called. The help
+ * function must have been registered when calling \ref commands_add
+ */
+int do_site_help_command(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * context)
+{
+  wzd_string_t *argument, *str;
+  wzd_command_t * c;
+
+  argument = str_tok(command_line," \t\r\n");
+
+  if (argument) {
+    str_prepend(argument,"site_");
+    c = commands_find(mainConfig->commands_list,argument);
+    if (c == NULL) {
+      reply_push(context,"command does not exist");
+      reply_set_code(context,501);
+      return 0;
+    }
+
+    if (c->help_function == NULL) {
+      reply_push(context,"command does not provide help");
+      reply_set_code(context,200);
+      return 0;
+    }
+
+    return (c->help_function)(command,command_line,context);
+  }
+
+  /* generic help */
+  str = config_get_string(mainConfig->cfg_file,"GLOBAL","help_file",NULL);
+  if (str != NULL) {
+    do_site_print_file_raw(str_tochar(str),context);
+    str_deallocate(str);
+    return 0;
+  }
+
+  reply_push(context,"command ok");
+  reply_set_code(context,200);
 
   return 0;
 }
