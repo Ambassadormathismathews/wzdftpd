@@ -49,6 +49,9 @@
 # include <security/pam_misc.h>
 #endif
 
+#include <libwzd-core/wzd_structs.h> /* struct wzd_context_t */
+#include <libwzd-core/wzd_log.h> /* out_log */
+
 #include "wzd_auth.h"
 
 typedef struct
