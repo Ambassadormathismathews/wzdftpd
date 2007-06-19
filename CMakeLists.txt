@@ -57,6 +57,7 @@ macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
 
 OPTION(WITH_IPV6 "enable IPv6 support" OFF)
+OPTION(WITH_PAM "enable PAM support" ON)
 OPTION(WITH_UTF8 "enable UTF-8 support" ON)
 
 OPTION(WITH_TESTS "enable unit tests" OFF)
@@ -109,6 +110,13 @@ if (WITH_IPV6)
   SET(WZD_BUILD_OPTS  ${WZD_BUILD_OPTS} "ipv6")
   ADD_DEFINITIONS(-DIPV6_SUPPORT)
 endif (WITH_IPV6)
+
+if (WITH_PAM)
+  message(STATUS "Configuring for PAM")
+  ADD_DEFINITIONS(-DHAVE_PAM)
+  SET(PAM_LIBRARIES "pam")
+  SET(PAM_FOUND TRUE)
+endif (WITH_PAM)
 
 if (WITH_UTF8)
   message(STATUS "Configuring for UTF-8")

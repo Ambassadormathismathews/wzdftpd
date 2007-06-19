@@ -5,7 +5,11 @@
 #cmakedefine HAVE_LANGINFO_CODESET 1
 #cmakedefine HAVE_LIMITS_H 1
 #cmakedefine HAVE_MALLOC_H 1
+#cmakedefine HAVE_PAM_MISC_H 1
+#cmakedefine HAVE_PAM_PAM_APPL_H 1
 #cmakedefine HAVE_PTHREAD 1
+#cmakedefine HAVE_SECURITY_PAM_APPL_H 1
+#cmakedefine HAVE_SECURITY_PAM_MISC_H 1
 #cmakedefine HAVE_STDINT_H 1
 #cmakedefine HAVE_SYS_MOUNT_H 1
 #cmakedefine HAVE_SYS_PARAM_H 1

@@ -1,5 +1,7 @@
 # must be included before PlatformSpecific
 
+SET(CMAKE_REQUIRED_INCLUDES "/usr/include;/usr/local/include")
+
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckLibraryExists)
@@ -43,6 +45,16 @@ CHECK_FUNCTION_EXISTS("strtok_r" HAVE_STRTOK_R)
 CHECK_FUNCTION_EXISTS("strtoull" HAVE_STRTOULL)
 CHECK_FUNCTION_EXISTS("statvfs" HAVE_STATVFS)
 CHECK_FUNCTION_EXISTS("stat64" HAVE_STAT64)
+
+# PAM
+IF (WITH_PAM)
+CHECK_INCLUDE_FILES ("security/pam_appl.h" HAVE_SECURITY_PAM_APPL_H)
+CHECK_INCLUDE_FILES ("pam/pam_appl.h" HAVE_PAM_PAM_APPL_H)
+CHECK_INCLUDE_FILES ("security/pam_misc.h" HAVE_SECURITY_PAM_MISC_H)
+CHECK_INCLUDE_FILES ("security/openpam.h" HAVE_OPENPAM_H)
+
+CHECK_LIBRARY_EXISTS("pam" "pam_set_item" "" HAVE_LPAM)
+ENDIF (WITH_PAM)
 
 # unicode
 IF (WITH_UTF8)

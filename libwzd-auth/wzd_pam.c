@@ -29,6 +29,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <errno.h>
@@ -184,7 +185,7 @@ static int su_conv(int num_msg, const struct pam_message **msg, struct pam_respo
 
       case PAM_PROMPT_ECHO_ON:
 #ifdef DEBUG
-        out_err(LEVEL_DEBUG, "%s", m->msg);
+        out_err(LEVEL_NORMAL, "%s", m->msg);
         r->resp = (char*)malloc(PAM_MAX_RESP_SIZE);
         fgets(r->resp, PAM_MAX_RESP_SIZE-1, stdin);
 #endif

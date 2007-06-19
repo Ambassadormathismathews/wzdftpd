@@ -164,6 +164,10 @@ if (GNUTLS_FOUND)
   set(libwzd_core_LIBS ${libwzd_core_LIBS} ${GNUTLS_LIBRARIES})
 endif (GNUTLS_FOUND)
 
+if (PAM_FOUND)
+  set(libwzd_core_LIBS ${libwzd_core_LIBS} ${PAM_LIBRARIES})
+endif (PAM_FOUND)
+
 TARGET_LINK_LIBRARIES(libwzd_core ${libwzd_core_LIBS})
 
 
