@@ -113,9 +113,9 @@ endif (WITH_IPV6)
 
 if (WITH_PAM)
   message(STATUS "Configuring for PAM")
-  ADD_DEFINITIONS(-DHAVE_PAM)
-  SET(PAM_LIBRARIES "pam")
-  SET(PAM_FOUND TRUE)
+  if (PAM_FOUND)
+    ADD_DEFINITIONS(-DHAVE_PAM)
+  endif (PAM_FOUND)
 endif (WITH_PAM)
 
 if (WITH_UTF8)
