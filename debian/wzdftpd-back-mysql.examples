@@ -1,2 +1,3 @@
-backends/mysql/tables.sql
-backends/mysql/dropall.sql
+backends/mysql/mysql_database_create.sql
+backends/mysql/mysql_database_drop.sql
+backends/mysql/mysql_tables_create.sql

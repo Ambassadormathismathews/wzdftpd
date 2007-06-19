@@ -1,7 +1,8 @@
+usr/include/*
+usr/bin/wzd-config
 usr/lib/libwzd*a
 usr/lib/libwzd.so
 usr/lib/libwzd_core.so
-usr/include/*
-usr/bin/wzd-config
-usr/lib/aclocal/wzd.m4
+usr/lib/pkgconfig/wzdftpd.pc
+usr/share/aclocal/wzd.m4
 usr/share/man/man1/wzd-config.1

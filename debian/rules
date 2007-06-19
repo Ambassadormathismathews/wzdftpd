@@ -21,8 +21,10 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 upstreamversion=$(shell dpkg-parsechangelog | grep Version | head -1 | sed -e 's/Version: //g')
 
+EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON
+CMAKE_PREFIX = -DCMAKE_INSTALL_PREFIX="/usr"
 
-include /usr/share/dpatch/dpatch.make
+#include /usr/share/dpatch/dpatch.make
 
 ifndef DESTDIR
 DESTDIR=..
@@ -43,39 +45,34 @@ ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
 
-config.status: patch-stamp configure
-	dh_testdir
-	# Add here commands to configure the package.
-	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam --with-zeroconf --enable-avahi
+#config.status: patch-stamp configure
+#	dh_testdir
+#	# Add here commands to configure the package.
+#	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam --with-zeroconf --enable-avahi
 
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" build/Makefile
+	touch configure-stamp
 
 #Architecture 
 build: build-arch
 
 build-arch: build-arch-stamp
-build-arch-stamp:  config.status
+build-arch-stamp: configure-stamp
 
 	# Add here commands to compile the arch part of the package.
-	$(MAKE) 
+	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)"
 	touch build-arch-stamp
 
-clean: clean-patched unpatch
-
-clean-patched:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-arch-stamp  #CONFIGURE-STAMP#
 
-	-$(MAKE) -C doc clean
-
 	# Add here commands to clean up after the build process.
 	-$(MAKE) distclean
-ifneq "$(wildcard /usr/share/misc/config.sub)" ""
-	cp -f /usr/share/misc/config.sub config.sub
-endif
-ifneq "$(wildcard /usr/share/misc/config.guess)" ""
-	cp -f /usr/share/misc/config.guess config.guess
-endif
 	dh_clean
 
 install: install-arch
@@ -88,29 +85,28 @@ install-arch:
 
 	# Add here commands to install the arch part of the package into 
 	# debian/tmp.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" PREFIX="$(CURDIR)/debian/tmp/usr" install
+	# we don't need those files
+	rm -f $(CURDIR)/debian/tmp/usr/share/doc/wzdftpd/COPYING
+	rm -f $(CURDIR)/debian/tmp/usr/share/doc/wzdftpd/INSTALL
 
 	# TODO since we install in standard dir, the following is becoming
 	# useless ??
 
-	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
-	install -m 644 wzdftpd/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
-	install -m 644 wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	install -m 755 -d debian/wzdftpd/usr/share/doc/wzdftpd/examples ;
+	#install -m 644 wzdftpd/users.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+	#install -m 644 wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/doc/wzdftpd/examples ;\
+
+	mv debian/tmp/usr/etc debian/tmp/
 
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/files ;\
 	mv debian/tmp/etc/wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
 	mv debian/tmp/etc/wzdftpd/users.sample debian/wzdftpd/usr/share/wzdftpd/files
 
-	# we don't need them, and dh_install complains !
-	# so i remove them (was proposed on #debian-devel)
-	rm debian/tmp/usr/lib/wzdftpd/modules/libwzd_*.a
-	rm debian/tmp/usr/lib/wzdftpd/modules/libwzd_*.la
-	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.a
-	rm debian/tmp/usr/lib/wzdftpd/backends/libwzd*.la
-
 	install -p -o root -g root -m 644 $(CURDIR)/debian/wzdftpd.overrides $(CURDIR)/debian/wzdftpd/usr/share/lintian/overrides/wzdftpd
 
 	dh_install -s --list-missing --sourcedir=debian/tmp
+
 # Must not depend on anything. This is to be called by
 # binary-arch/binary-indep
 # in another 'make' thread.
@@ -124,7 +120,6 @@ binary-common:
 #	dh_installmenu
 	dh_installdebconf	
 #	dh_installlogrotate	
-#	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
 	dh_installinit
@@ -143,6 +138,10 @@ binary-common:
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb --destdir=$(DESTDIR)
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
 
 # Build architecture dependant packages using the common target.
 binary-arch: build-arch install-arch

@@ -1,3 +1,3 @@
-backends/pgsql/createusers.sql
-backends/pgsql/dropall.sql
-backends/pgsql/tables.sql
+backends/pgsql/pgsql_database_create.sql
+backends/pgsql/pgsql_database_drop.sql
+backends/pgsql/pgsql_tables_create.sql
