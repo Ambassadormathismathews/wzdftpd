@@ -21,7 +21,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 upstreamversion=$(shell dpkg-parsechangelog | grep Version | head -1 | sed -e 's/Version: //g')
 
-EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON
+EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON -DWITH_PAM=ON
 CMAKE_PREFIX = -DCMAKE_INSTALL_PREFIX="/usr"
 
 #include /usr/share/dpatch/dpatch.make
@@ -54,14 +54,14 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# The first pass is used to create the configuration file
-	$(MAKE) build/Makefile PREFIX=/usr
+	$(MAKE) build/Makefile EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" PREFIX=/usr
 	# save the files
 	cp build/users.sample build/wzdftpd/wzd.cfg.sample .
 	# fix the paths in the file ..
 	sed -i -e 's+/usr/etc+/etc+g' \
 	       -e 's+/usr/var+/var+g' \
 	  wzd.cfg.sample
-	$(MAKE) CFLAGS="$(CFLAGS)" build/Makefile
+	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" CFLAGS="$(CFLAGS)" build/Makefile
 	touch configure-stamp
 
 #Architecture 
@@ -71,7 +71,7 @@ build-arch: build-arch-stamp
 build-arch-stamp: configure-stamp
 
 	# Add here commands to compile the arch part of the package.
-	$(MAKE) CFLAGS="$(CFLAGS)"
+	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" CFLAGS="$(CFLAGS)"
 	touch build-arch-stamp
 
 clean:

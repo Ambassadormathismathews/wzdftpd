@@ -47,7 +47,7 @@ package: ../$(DISTNAME).tar.gz
 	rm -rf tmp/$(DISTNAME)
 
 porcus: build/Makefile
-	make -j $(NJOBS) PREFIX=/home/pollux/DEL-CMAKE EXTRA_CMAKE_FLAGS="-DDEBUG=1 -DWITH_IPV6=ON -DWITH_GnuTLS=ON -DCMAKE_VERBOSE_MAKEFILE=0  -DCMAKE_C_FLAGS=\"-W -Wall -Wextra -Wno-unused-parameter\"" install
+	make -j $(NJOBS) PREFIX=/home/pollux/DEL-CMAKE EXTRA_CMAKE_FLAGS="-DDEBUG=1 -DWITH_IPV6=ON -DWITH_GnuTLS=ON -DWITH_PAM=ON -DCMAKE_VERBOSE_MAKEFILE=0  -DCMAKE_C_FLAGS=\"-W -Wall -Wextra -Wno-unused-parameter\"" install
 
 release:
 	@if test -f ../$(DISTNAME).tar.gz ; then echo $(DISTNAME).tar.gz exists, not overwritting ; exit 1; fi

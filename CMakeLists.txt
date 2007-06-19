@@ -57,7 +57,7 @@ macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
 
 OPTION(WITH_IPV6 "enable IPv6 support" OFF)
-OPTION(WITH_PAM "enable PAM support" ON)
+OPTION(WITH_PAM "enable PAM support" OFF)
 OPTION(WITH_UTF8 "enable UTF-8 support" ON)
 
 OPTION(WITH_TESTS "enable unit tests" OFF)
