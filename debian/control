@@ -2,7 +2,7 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <chifflier@inl.fr>
-Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, dpatch, libavahi-client-dev (>= 0.6.0)
+Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, dpatch, libavahi-client-dev (>= 0.6.0), cmake (>= 2.4.5)
 Standards-Version: 3.7.2
 
 Package: wzdftpd
