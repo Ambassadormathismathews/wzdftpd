@@ -999,8 +999,10 @@ int tls_auth (const char *type, wzd_context_t * context)
       GNUTLS_CIPHER_AES_128_CBC,
       GNUTLS_CIPHER_AES_256_CBC,
       GNUTLS_CIPHER_ARCFOUR_40,
+#if ( (LIBGNUTLS_VERSION_MAJOR > 1) || (LIBGNUTLS_VERSION_MINOR >= 3) )
       GNUTLS_CIPHER_RC2_40_CBC,
       GNUTLS_CIPHER_DES_CBC,
+#endif
       0
     };
 
