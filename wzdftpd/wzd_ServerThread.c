@@ -1655,11 +1655,11 @@ void serverMainThreadCleanup(int retcode)
         if (child_count == 0) { ok=1; break; }
         out_log(LEVEL_FLOOD,"Found %d child threads, waiting ..\n",child_count);
 #ifndef WIN32
-        usleep(300000);
+        usleep(1000000);
 #else
-        Sleep(300);
+        Sleep(1000);
 #endif
-        if (++loop_count > 10) { /* maximum wait time: ~ 3s */
+        if (++loop_count > 20) { /* maximum wait time: ~ 20s */
           out_log(LEVEL_INFO,"Still %d childs .. exiting anyway\n",child_count);
           break;
         }
