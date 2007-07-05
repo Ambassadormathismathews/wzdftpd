@@ -80,7 +80,7 @@ clean:
 	rm -f build-arch-stamp  #CONFIGURE-STAMP#
 
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || $(MAKE) distclean
+	[ ! -f Makefile ] || [ ! -f build/Makefile ] || $(MAKE) distclean
 	dh_clean
 
 install: install-arch
