@@ -12,7 +12,7 @@ AC_PREREQ(2.53)
 
 m4_define([wzd_major_version], [0])
 m4_define([wzd_minor_version], [8])
-m4_define([wzd_micro_version], [1])
+m4_define([wzd_micro_version], [2])
 m4_define([wzd_real_version],
           [wzd_major_version.wzd_minor_version.wzd_micro_version])
 m4_define([wzd_version], [wzd_real_version])
