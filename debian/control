@@ -26,7 +26,7 @@ Description: A portable, modular, small and efficient ftp server
 
 Package: wzdftpd-back-mysql
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}, wzdftpd (= ${binary:Version})
 Suggests: mysql-server
 Description: MySQL backend for wzdftpd
  This package provides the MySQL backend for wzdftpd.
@@ -61,7 +61,7 @@ Description: Perl module for wzdftpd
 
 Package: wzdftpd-dev
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${Source-Version})
+Depends: ${shlibs:Depends}, wzdftpd (= ${binary:Version})
 Section: libdevel
 Description: Development files for wzdftpd
  This package provides all needed files to develop extensions for wzdftpd.
