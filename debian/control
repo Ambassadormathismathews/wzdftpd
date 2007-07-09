@@ -26,7 +26,7 @@ Description: A portable, modular, small and efficient ftp server
 
 Package: wzdftpd-back-mysql
 Architecture: any
-Depends: ${shlibs:Depends}, wzdftpd (= ${binary:Version})
+Depends: ${shlibs:Depends}
 Suggests: mysql-server
 Description: MySQL backend for wzdftpd
  This package provides the MySQL backend for wzdftpd.
@@ -40,7 +40,7 @@ Description: PostgreSQL backend for wzdftpd
 
 Package: wzdftpd-mod-avahi
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, wzdftpd (= ${binary:Version})
 Description: Zeroconf module for wzdftpd
  This package provides the necessary files to enable zeroconf support in
  wzdftpd, using the Avahi module.
