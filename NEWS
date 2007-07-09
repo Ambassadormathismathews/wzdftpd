@@ -1,5 +1,27 @@
    NEWS file for wzdftpd
 
+0.8.2: July 9 2007
+
+New features
+
+    * SQLite backend has been added
+    * Brand new Windows installer
+    * Extra SITE HELP documentation added for various commands
+    * SQL backends can connect to SQL servers using TLS encryption 
+
+Bugfixes
+
+    * Lots of spelling errors and ambiguities have been corrected in server responses
+    * Event triggers now work correctly on Windows when specifying full paths for the scripts
+    * First entry in a directory list is now correctly sent to the client
+    * MLST/MLSD command was missing the PERM= field
+    * Can now set the passive port range to just one port without the server crashing
+    * syslog output now works correctly
+    * Users can no longer CWD into a directory they don't have list/read permissions for
+    * Cookies code is now thread-safe, fixing some stability issues
+    * Dozens of other bugfixes and stability improvements
+    * Server will no longer randomly crash when using the "site shutdown" command
+
 0.8.1: December 7 2006
 
 The most important change is the migration to cmake (although it is NOT
