@@ -11,7 +11,7 @@ DEBUG = 0
 ### Build Options
 # 0 mean the component is disabled, 1 means that it is automatically detected
 
-WITH_IPV6 = 1
+WITH_IPV6 = 0
 WITH_PAM = 0
 WITH_UTF8 = 1
 
