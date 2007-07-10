@@ -11,12 +11,12 @@ AC_PREREQ(2.53)
 # unstable branch: increment micro, interface_age is always 0
 
 m4_define([wzd_major_version], [0])
-m4_define([wzd_minor_version], [8])
-m4_define([wzd_micro_version], [2])
+m4_define([wzd_minor_version], [9])
+m4_define([wzd_micro_version], [0])
 m4_define([wzd_real_version],
           [wzd_major_version.wzd_minor_version.wzd_micro_version])
 m4_define([wzd_version], [wzd_real_version])
-m4_define([wzd_interface_age], [1])
+m4_define([wzd_interface_age], [0])
 m4_define([wzd_binary_age],
           [m4_eval(100 * wzd_minor_version + wzd_micro_version)])
 
