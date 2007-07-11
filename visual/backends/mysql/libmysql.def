@@ -1,6 +1,0 @@
-LIBRARY LIBWZD_MYSQL
-
-EXPORTS
-	wzd_backend_version
-	wzd_backend_name
-	wzd_backend_init
