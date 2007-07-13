@@ -34,7 +34,7 @@
 
 #ifdef WIN32
 #include <winsock2.h>
-#include "../visual/gnu_regex/regex.h"
+#include "../gnu_regex/regex.h"
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -54,7 +54,7 @@
 
 #else /* WZD_USE_PCH */
 #ifdef _MSC_VER
-#include "../visual/gnu_regex/regex.h"
+#include "../gnu_regex/regex.h"
 #else
 #include <regex.h>
 #endif

@@ -33,7 +33,7 @@
 #include <direct.h>
 #include <io.h>
 
-#include "../../visual/gnu_regex/regex.h"
+#include "../../gnu_regex/regex.h"
 #else
 #include <dirent.h>
 #include <sys/types.h>

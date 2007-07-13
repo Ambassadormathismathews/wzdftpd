@@ -36,7 +36,7 @@
 #include <sys/time.h>
 #include <regex.h>
 #else
-#include "../../visual/gnu_regex/regex.h"
+#include "../../gnu_regex/regex.h"
 #endif
 
 #include <libwzd-auth/wzd_auth.h>
