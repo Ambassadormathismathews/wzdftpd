@@ -26,7 +26,7 @@ EXTRA_CMAKE_FLAGS += -DWITH_TESTS=$(WITH_TESTS)
 
 ### generic flags
 ifneq ($(CFLAGS),)
-EXTRA_CMAKE_FLAGS += -DCMAKE_C_FLAGS="\"$(CFLAGS)\""
+EXTRA_CMAKE_FLAGS += -DCMAKE_C_FLAGS="$(CFLAGS)"
 endif
 
 ifneq ($(PREFIX),)
