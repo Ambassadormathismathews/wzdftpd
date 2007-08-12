@@ -597,12 +597,14 @@ int do_site_chown(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   username = str_tok(command_line," \t\r\n");
   if (!username) {
     do_site_help("chown",context);
+    str_deallocate(username);
     return 1;
   }
   /* check that username exists */
   user = GetUserByName(str_tochar(username));
   if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exist");
+    str_deallocate(username);
     return 1;
   }
 
