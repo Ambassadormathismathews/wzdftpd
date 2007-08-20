@@ -250,10 +250,8 @@ struct wzd_backend_def_t * backend_register(const char * filename, backend_init_
 
   def = wzd_malloc(sizeof(wzd_backend_def_t));
   memset(def,0,sizeof(wzd_backend_def_t));
-  if (handle != NULL) {
-    def->handle = handle;
-    def->filename = wzd_strdup(filename);
-  }
+  def->handle = handle;
+  def->filename = wzd_strdup(filename);
   def->b = b;
 
   return def;
