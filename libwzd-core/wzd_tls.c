@@ -315,6 +315,13 @@ int tls_exit(void)
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
     return 0;
   }
+  EVP_cleanup();
+  CRYPTO_cleanup_all_ex_data();
+
+  ERR_clear_error();
+  ERR_remove_state();
+
+  ERR_free_strings();
 
   SSL_CTX_free(mainConfig->tls_ctx);
   return 0;
