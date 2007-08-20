@@ -759,6 +759,8 @@ int tls_free(wzd_context_t * context)
   }
   context->ssl->obj = NULL;
 
+  ERR_remove_state(0);
+  ERR_clear_error();
   return 0;
 }
 
