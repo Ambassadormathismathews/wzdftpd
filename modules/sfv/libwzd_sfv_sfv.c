@@ -60,6 +60,42 @@
 
 /***** SFV CHECK FUNCTIONS *****/
 
+
+/** inits an sfv struct */
+void sfv_init(wzd_sfv_file *sfv)
+{
+  sfv->comments = NULL;
+  sfv->sfv_list = NULL;
+}
+
+/** frees contents of a sfv structure */
+void sfv_free(wzd_sfv_file *sfv)
+{
+  int i;
+
+  if(sfv->comments){
+    for(i=0;sfv->comments[i];i++){
+      free(sfv->comments[i]);
+      sfv->comments[i] = NULL;
+    }
+    free( sfv->comments );
+    sfv->comments = NULL;
+  }
+
+  if(sfv->sfv_list){
+    for(i=0;sfv->sfv_list[i];i++){
+      free(sfv->sfv_list[i]->filename);
+      sfv->sfv_list[i]->filename = NULL;
+      free(sfv->sfv_list[i]);
+      sfv->sfv_list[i] = NULL;
+    }
+    free( sfv->sfv_list );
+    sfv->sfv_list = NULL;
+  }
+  
+}
+
+
 /** parse dir to calculate sfv release stats
 -> also manages .bad and .missing
 return:
@@ -131,13 +167,6 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
 }
 
 
-/** inits an sfv struct */
-void sfv_init(wzd_sfv_file *sfv)
-{
-  sfv->comments = NULL;
-  sfv->sfv_list = NULL;
-}
-
 /** create / remove ".missing" / ".bad" depending on the result of the test */
 int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
 {
@@ -187,31 +216,7 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
   return 0;
 }
 
-/** frees contents of a sfv structure */
-void sfv_free(wzd_sfv_file *sfv)
-{
-  int i;
 
-  i=0;
-  if(sfv->comments){
-    while (sfv->comments[i]){
-      free(sfv->comments[i]);
-      sfv->comments[i] = NULL;
-      i++;
-    }
-  }
-
-  i=0;
-  if(sfv->sfv_list){
-    while (sfv->sfv_list[i]){
-      free(sfv->sfv_list[i]->filename);
-      sfv->sfv_list[i]->filename = NULL;
-      free(sfv->sfv_list[i]);
-      sfv->sfv_list[i] = NULL;
-      i++;
-    }
-  }
-}
 
 /** reads sfv file */
 int sfv_read(const char *filename, wzd_sfv_file *sfv)
@@ -226,7 +231,8 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
 
   if (stat(filename,&st) < 0) return -1;
   if (!S_ISREG(st.st_mode)) return -1;
-  if ((fp=wzd_cache_open(filename,O_RDONLY,0644)) == NULL) return -1;
+  if ((fp=wzd_cache_open(filename,O_RDONLY,0644)) == NULL)
+    return -1;
 
   sfv->comments = malloc(50*sizeof(char*));
   sfv->sfv_list = malloc(50*sizeof(wzd_sfv_entry*));
@@ -277,7 +283,6 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   sfv->sfv_list[count_entries] = NULL;
 
   wzd_cache_close(fp);
-
   return 0;
 }
 
@@ -288,6 +293,8 @@ file must be an ABSOLUTE path to a file
  -1 if error
 0 if sfv found and file present in sfv, and put crc
 1 if no sfv found or sfv found but file not present
+
+NOTE: on success an sfv_free( of wzd_sfv_file *sfv is needed afterwards
  */
 int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entry)
 {
@@ -303,7 +310,8 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
 
   /* Get the dirname */
   sfv_dir = path_getdirname(filename);
-  if (!sfv_dir) return -1;
+  if (!sfv_dir) 
+    return -1;
 
   /* Get the current filename */
   stripped_filename = path_getbasename(filename, NULL);
@@ -316,7 +324,6 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
   dir = dir_open(dirname,context);
   wzd_free(dirname);
   if (!dir){
-    free(dirname);
     free(sfv_dir);
     return -1;
   }
@@ -326,9 +333,11 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
   /* Loop trough dir */
   while ( (file = dir_read(dir,context)) ) {
     len = strlen(file->filename);
-    if (len<5) continue;
+    if (len<5) 
+      continue;
     ptr=strrchr(file->filename,'.');
-    if (!ptr) continue;
+    if (!ptr) 
+      continue;
     if (!strcasecmp(ptr,".sfv")){ /* sfv found */
       int i;
       char * sfv_file=NULL;
@@ -349,24 +358,24 @@ int sfv_find_sfv(const char * filename, wzd_sfv_file *sfv, wzd_sfv_entry ** entr
       }
 
       /* sfv file found, check if file is in sfv */
-      i = 0;
-      while (sfv->sfv_list[i]){
+      for (i=0; sfv->sfv_list[i]; i++){
         if (DIRCMP(stripped_filename,sfv->sfv_list[i]->filename)==0) {
           *entry = sfv->sfv_list[i];
           status=0;
           break;
         }
-        i++;
       }
-      if (status==0) break;
-      sfv_free(sfv);
+      if (status==0) 
+        break;
     }
   } /* while dir_read */
+
+  if(status!=0)
+    sfv_free(sfv);
 
   dir_close(dir);
   free(stripped_filename);
   free(sfv_dir);
-
   return status;
 }
 
@@ -397,6 +406,7 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
     char * tmpfile=create_filepath(sfv_dir,sfv.sfv_list[i]->filename);
     if(tmpfile)
       sfv_check_create(tmpfile,sfv.sfv_list[i]);
+      free(tmpfile);
     /* Check file ? - means sfv uploaded AFTER files */
     i++;
   }
@@ -415,8 +425,11 @@ int sfv_process_new(const char *sfv_file, wzd_context_t *context)
           symlink_create(tmpdir, incomplete);
           free(tmpdir);
         }
-      } else
-        close(creat(incomplete,0600) );
+      } else {
+        int fh = creat(incomplete,0600);
+        if(fh !=-1 ) 
+          close( fh );
+      }
       free(incomplete);
     }
   }
@@ -453,7 +466,8 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
   char * sfv_dir;
 
   ret = sfv_find_sfv(filename,&sfv,&entry);
-  if(ret!=0) return -1; /* Dont process if no sfv is found */
+  if(ret!=0) 
+    return -1; /* Dont process if no sfv is found */
 
 #ifdef DEBUG
   out_err(LEVEL_NORMAL,"sfv_hook_postupload user %d file %s, crc %08lX OK\n",context->userid,filename,entry->crc);
@@ -469,7 +483,11 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
   sfv_check_create(filename,entry);
 
   sfv_dir = path_getdirname(filename);
-  if (!sfv_dir) return -1;
+  if (!sfv_dir){
+    sfv_free(&sfv);
+    return -1;
+  }
+    
   {
     wzd_release_stats stats;
     memset(&stats,0,sizeof(wzd_release_stats) );
@@ -477,7 +495,6 @@ int sfv_process_default(const char *filename, wzd_context_t *context)
     sfv_update_completebar(&stats, sfv_dir, context) ;  
   }
   free(sfv_dir);
-
   sfv_free(&sfv);
   return 0;
 }

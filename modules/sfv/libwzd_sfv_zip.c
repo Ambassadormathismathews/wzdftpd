@@ -172,7 +172,8 @@ unsigned long GetDizFileTotalCount(char * dizbuffer)
   char *ptr;
 
   ret = regcomp(&reg_format, "([0-9xXo0]+)/([0-9o0]+)", REG_EXTENDED);
-  if(ret) return 0;
+  if(ret) 
+    return 0;
 
   ptr=dizbuffer;
   ret = regexec(&reg_format,ptr,3,regmatch,0);
@@ -186,11 +187,13 @@ unsigned long GetDizFileTotalCount(char * dizbuffer)
         if (str_num_files[i] == 'o' || str_num_files[i] == 'O')  str_num_files[i] = '0';
       }
       num_files = atoi(str_num_files);
-      if (num_files!=0) break;
+      if (num_files!=0) 
+        break;
     } else {
     ptr+=regmatch[2].rm_eo;
     }
-    if(ptr==NULL) break;
+    if(ptr==NULL) 
+      break;
     ret = regexec(&reg_format,ptr,3,regmatch,0);
   }
 
@@ -326,8 +329,11 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
     if (incomplete){
       if(SfvConfig.incomplete_symlink)
         symlink_create(directory, incomplete);
-      else
-        close(creat(incomplete,0600) );
+      else {
+        int fh = creat(incomplete,0600);
+        if(fh !=-1 ) 
+          close( fh );
+      }
       free(incomplete);
     }
 
@@ -351,6 +357,7 @@ retun:
  */
 int sfv_process_diz(const char *diz_file, wzd_context_t *context)
 {
+#ifdef HAVE_ZLIB
   char buffer[1024];
   wzd_cache_t * fp;
   char * stripped_dirname;
@@ -363,12 +370,14 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
   }
   while ( wzd_cache_gets(fp,buffer,1024-1) ) {
      num_files=GetDizFileTotalCount(buffer);
-     if (num_files) {  break; }
+    if (num_files)
+      break;
   }
   wzd_cache_close(fp);
 
   /* no file count found in diz file, abort */
-  if(num_files==0) return -1;
+  if(num_files==0) 
+    return -1;
 
   stripped_dirname=path_getdirname(diz_file);
   if (stripped_dirname){
@@ -380,8 +389,11 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
     if (incomplete){
       if(SfvConfig.incomplete_symlink)
         symlink_create(stripped_dirname, incomplete);
-      else
-        close(creat(incomplete,0600) );
+      else{
+        int fh = creat(incomplete,0600);
+        if(fh !=-1 ) 
+          close( fh );
+       }
       free(incomplete);
     }
 
@@ -394,6 +406,6 @@ int sfv_process_diz(const char *diz_file, wzd_context_t *context)
     log_message("DIZ","\"%s\" \"Got DIZ %s. Expecting %d file(s).\"",stripped_dirname,stripped_dirname,num_files );
     free(stripped_dirname);
   }
-
+#endif
   return 0;
 }
