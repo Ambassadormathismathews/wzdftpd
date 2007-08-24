@@ -319,7 +319,7 @@ int tls_exit(void)
   CRYPTO_cleanup_all_ex_data();
 
   ERR_clear_error();
-  ERR_remove_state();
+  ERR_remove_state(0);
 
   ERR_free_strings();
 
