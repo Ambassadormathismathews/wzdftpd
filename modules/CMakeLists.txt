@@ -1,4 +1,10 @@
-SUBDIRS(debug sfv)
+if(WITH_SFV)
+  add_subdirectory(sfv)
+endif(WITH_SFV)
+
+if(DEBUG)
+  add_subdirectory(debug)
+endif(DEBUG)
 
 if(PERL_FOUND)
   add_subdirectory(perl)
