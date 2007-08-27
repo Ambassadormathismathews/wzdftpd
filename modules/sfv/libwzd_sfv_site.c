@@ -28,6 +28,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef HAVE_STRTOK_R
 #include "libwzd-base/wzd_strtok_r.h"
 #endif
