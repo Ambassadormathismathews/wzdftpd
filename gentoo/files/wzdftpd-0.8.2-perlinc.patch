@@ -1,0 +1,37 @@
+Index: cmake/FindPerlDev.cmake
+===================================================================
+--- cmake/FindPerlDev.cmake	(revision 1760)
++++ cmake/FindPerlDev.cmake	(working copy)
+@@ -14,6 +14,11 @@
+   /usr/lib/perl/5.8.1/CORE
+   /usr/lib/perl/5.8.0/CORE
+   /usr/lib/perl/5.8/CORE
++  /usr/lib/perl/*/CORE
++  /usr/lib/perl5/5.8.8/x86_64-linux/CORE
++  /usr/lib/perl5/5.8.8/i686-linux/CORE
++  /usr/lib/perl5/*/x86_64-linux/CORE
++  /usr/lib/perl5/*/i686-linux/CORE
+   $ENV{ProgramFiles}/Perl/lib/CORE
+   $ENV{SystemDrive}/Perl/lib/CORE
+   )
+@@ -57,9 +62,9 @@
+ #    MESSAGE(STATUS "Perl: no LD flags")
+   ENDIF(PERL_LIBRARY_OUTPUT_VARIABLE)
+ 
+-  SET(PERL_LIBDIR_EXTRACT_REGEX "([-./a-zA-Z0-9]*[.][a])")
++  SET(PERL_LIBDIR_EXTRACT_REGEX "([-_./a-zA-Z0-9]*[.][a])")
+   IF("${PERL_EXTRA_LD_FLAGS}" MATCHES "${PERL_LIBDIR_EXTRACT_REGEX}")
+-    STRING(REGEX MATCH "([-./a-zA-Z0-9]*[.][a])" PERL_DYNALOADER "${PERL_EXTRA_LD_FLAGS}")
++    STRING(REGEX MATCH "([-_./a-zA-Z0-9]*[.][a])" PERL_DYNALOADER "${PERL_EXTRA_LD_FLAGS}")
+ #    MESSAGE(DEBUG ": found .a file: ${PERL_DYNALOADER}")
+   ENDIF("${PERL_EXTRA_LD_FLAGS}" MATCHES "${PERL_LIBDIR_EXTRACT_REGEX}")
+ 
+@@ -90,7 +95,7 @@
+       )
+ #    MESSAGE(STATUS "Perl include: ${PERL_INCLUDE_OUTPUT_VARIABLE}")
+     IF (PERL_INCLUDE_OUTPUT_VARIABLE)
+-      STRING(REGEX REPLACE "[ ]*-I([-./a-zA-Z0-9]*)[ ]*" "\\1" PERL_POSSIBLE_INCLUDE_PATHS "${PERL_INCLUDE_OUTPUT_VARIABLE}")
++      STRING(REGEX REPLACE "[ ]*-I([-_./a-zA-Z0-9]*)[ ]*" "\\1" PERL_POSSIBLE_INCLUDE_PATHS "${PERL_INCLUDE_OUTPUT_VARIABLE}")
+ #      MESSAGE(STATUS "Perl possible include path: [${PERL_POSSIBLE_INCLUDE_PATHS}]")
+       FIND_PATH(PERL_INCLUDE_PATH perl.h ${PERL_POSSIBLE_INCLUDE_PATHS})
+ #      MESSAGE(STATUS "Perl include path: ${PERL_INCLUDE_PATH}")
