@@ -73,6 +73,126 @@
 
 #include "wzd_debug.h"
 
+/** \brief Close pasv connection (if opened) */
+void pasv_close(wzd_context_t * context)
+{
+  int ret;
+
+  if (context->pasvsock >= 0) {
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+    ret = socket_close(context->pasvsock);
+    context->pasvsock = -1;
+  }
+}
+
+/** \brief Create a socket and bind it to a port in the PASV range
+ *
+ * Any previously pasv socket is closed.
+ * The socket is stored in context->pasvsock
+ *
+ * \note this function relies on the fact that bind() does not modify the input structure
+ *
+ * \return the bound port, or -1 on error
+ */
+int get_pasv_port(net_family_t family, wzd_context_t * context)
+{
+  int ret;
+  fd_t sock;
+  unsigned int port, count;
+  socklen_t len;
+#if defined(IPV6_SUPPORT)
+  struct sockaddr_in6 addr6;
+#endif
+  struct sockaddr_in addr4;
+
+  struct sockaddr * addr;
+
+  /* close existing pasv connections */
+  if (context->pasvsock != (fd_t)-1) {
+    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+  }
+
+  count = mainConfig->pasv_high_range - mainConfig->pasv_low_range + 1;
+
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    sock = socket(AF_INET6,SOCK_STREAM,0);
+    if (sock < 0) return -1;
+
+    addr = (struct sockaddr *)&addr6;
+    len = sizeof(addr6);
+    addr6.sin6_family = AF_INET6;
+    addr6.sin6_flowinfo = 0;
+    memset(&addr6.sin6_addr,0,16);
+    addr6.sin6_port = htons((unsigned short)port);
+  }
+#endif
+  else if (family == WZD_INET4) {
+    sock = socket(AF_INET,SOCK_STREAM,0);
+    if (sock < 0) return -1;
+
+    addr = (struct sockaddr *)&addr4;
+    len = sizeof(addr4);
+    addr4.sin_family = AF_INET;
+    /* XXX use bind address */
+    addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr4.sin_port = htons((unsigned short)port);
+  }
+  else {
+    return -1;
+  }
+
+
+  /* first port is taken using random */
+  port = mainConfig->pasv_low_range;
+#ifndef WIN32
+  port = port + (random()) % count;
+#else
+  port = port + (rand()) % count;
+#endif
+
+  /* naive algorithm: try all ports sequentially */
+  while (count > 0) { /* use pasv range max */
+    /* memset(&sai,0,size); */
+#if defined(IPV6_SUPPORT)
+    if (family == WZD_INET6) {
+      addr6.sin6_port = htons((unsigned short)port);
+    } else
+#endif
+    {
+      addr4.sin_port = htons((unsigned short)port);
+    }
+
+    ret = bind(sock,addr,len);
+    if (ret == 0) break;
+
+    port++; /* retry with next port */
+    if (port >= mainConfig->pasv_high_range) {
+      /* see comment in libwzd-core/wzd_ClientThread.c for a potential problem
+       * (not really convinced of it anyway)
+       */
+      port = mainConfig->pasv_low_range;
+    }
+
+    WZD_ASSERT( port >= mainConfig->pasv_low_range && port <= mainConfig->pasv_high_range && port <= 65535 );
+
+    count--;
+  }
+
+  if (count == 0 && ret < 0) {
+    out_log(LEVEL_HIGH,"Could not bind to any port in the PASV range\n");
+    socket_close(sock);
+    return -1;
+  }
+
+  context->pasvsock = sock;
+  FD_REGISTER(context->pasvsock,"Client PASV socket");
+
+  return port;
+}
+
 void update_last_file(wzd_context_t * context)
 {
   struct timeval tv;

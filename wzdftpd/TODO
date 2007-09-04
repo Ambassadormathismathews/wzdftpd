@@ -3,6 +3,8 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- test if binding a v6 socket using sockaddr_in (v4 struct) works
+'********'
 - feature: warn if protocol is not recognized (wzd_events.c)
 '********'
 - cleanup code:

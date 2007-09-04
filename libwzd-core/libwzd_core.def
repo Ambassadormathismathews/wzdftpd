@@ -177,6 +177,7 @@ EXPORTS
 	out_err
 	out_log
 	out_xferlog
+	pasv_close
 	path_getbasename
 	path_getdirname
 	path_gettrailingname
