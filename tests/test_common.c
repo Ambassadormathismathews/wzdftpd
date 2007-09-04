@@ -20,6 +20,7 @@
 
 void fake_write_function(fd_t fd, const char * msg, size_t msg_len, unsigned int timeout, wzd_context_t * context);
 
+#define FAKE_BACKEND_NAME "fake"
 
 wzd_user_t * f_user = NULL;
 wzd_group_t * f_group = NULL;
@@ -34,8 +35,11 @@ void fake_mainConfig(void)
   config = malloc(sizeof(wzd_config_t));
   memset(config, 0, sizeof(wzd_config_t));
 
-  def = backend_register(NULL,fake_backend_init);
+  def = backend_register(FAKE_BACKEND_NAME,fake_backend_init);
   config->backends = def;
+
+  config->pasv_low_range = 1024;
+  config->pasv_high_range = 65535;
 
   mainConfig = config;
 
