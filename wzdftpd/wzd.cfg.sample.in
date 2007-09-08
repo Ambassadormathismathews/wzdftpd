@@ -16,10 +16,10 @@ backup config = true
 # Listen port (default: 21)
 # IMPORTANT: under unix, you'll need privileges to bind to a system port
 # ( < 1024 )
-#port = 6969
+#port = 21
 
 # PASV range (default: 1025->65536)
-# specify this iff you want to get a specific range
+# specify this if you want to get a specific range
 pasv_low_range = 1024
 pasv_high_range  = 65535
 #pasv_ip = 62.xxx.xxx.xxx
@@ -128,7 +128,7 @@ sitefile_user	= @sysconfdir@/file_user.txt
 
 ##### Zeroconf Settings
 [ZEROCONF]
-zeroconf_port = 6969
+zeroconf_port = 21
 #zeroconf_username = wzdftpd
 #zeroconf_password = wzdftpd
 #zeroconf_path = /tmp
@@ -274,7 +274,7 @@ param = @sysconfdir@/users
 [sections]
 # sections are used to define local server properties
 # format: name = path path_filter
-#   path is a regexp (man regex) to specify to specify where the section is
+#   path is a regexp (man regex) to specify where the section is
 #   path_filter is a filter to restrict dir names when using mkdir
 # the simplest section is: ALL = /* .*
 # order *IS* important (first matching section is taken)
