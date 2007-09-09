@@ -50,6 +50,10 @@
 # include <security/pam_misc.h>
 #endif
 
+#ifdef HAVE_PAM_MODULES_H
+# include <security/pam_modules.h>
+#endif
+
 #include <libwzd-core/wzd_structs.h> /* struct wzd_context_t */
 #include <libwzd-core/wzd_log.h> /* out_log */
 

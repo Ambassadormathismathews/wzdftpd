@@ -52,6 +52,7 @@ CHECK_INCLUDE_FILES ("security/pam_appl.h" HAVE_SECURITY_PAM_APPL_H)
 CHECK_INCLUDE_FILES ("pam/pam_appl.h" HAVE_PAM_PAM_APPL_H)
 CHECK_INCLUDE_FILES ("security/pam_misc.h" HAVE_SECURITY_PAM_MISC_H)
 CHECK_INCLUDE_FILES ("security/openpam.h" HAVE_OPENPAM_H)
+CHECK_INCLUDE_FILES ("security/pam_modules.h" HAVE_PAM_MODULES_H)
 
 CHECK_LIBRARY_EXISTS("pam" "pam_set_item" "" HAVE_LPAM)
 

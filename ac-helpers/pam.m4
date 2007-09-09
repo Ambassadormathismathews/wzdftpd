@@ -27,6 +27,10 @@ AC_DEFUN([WZD_LIB_PAM],
           AC_DEFINE(PAM_CONV_FUNC,misc_conv,Have misc_conv)
           pam_conv_func="misc_conv"
         fi
+        AC_CHECK_HEADER(security/pam_modules.h)
+        if test "$ac_cv_header_security_pam_modules_h" = yes; then
+          AC_DEFINE(HAVE_PAM_MODULES_H,,Have pam_modules.h)
+        fi
         AC_CHECK_HEADER(security/openpam.h)
         if test "$ac_cv_header_security_openpam_h" = yes; then
           AC_DEFINE(HAVE_OPENPAM_H,,Have openpam.h)

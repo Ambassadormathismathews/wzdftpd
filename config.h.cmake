@@ -6,6 +6,7 @@
 #cmakedefine HAVE_LIMITS_H 1
 #cmakedefine HAVE_MALLOC_H 1
 #cmakedefine HAVE_PAM_MISC_H 1
+#cmakedefine HAVE_PAM_MODULES_H 1
 #cmakedefine HAVE_PAM_PAM_APPL_H 1
 #cmakedefine HAVE_PTHREAD 1
 #cmakedefine HAVE_SECURITY_PAM_APPL_H 1
