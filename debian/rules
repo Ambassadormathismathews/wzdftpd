@@ -24,7 +24,7 @@ upstreamversion=$(shell dpkg-parsechangelog | grep Version | head -1 | sed -e 's
 EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON -DWITH_PAM=ON
 CMAKE_PREFIX = -DCMAKE_INSTALL_PREFIX="/usr"
 
-#include /usr/share/dpatch/dpatch.make
+include /usr/share/dpatch/dpatch.make
 
 ifndef DESTDIR
 DESTDIR=..
@@ -51,7 +51,8 @@ endif
 #	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam --with-zeroconf --enable-avahi
 
 configure: configure-stamp
-configure-stamp:
+
+configure-stamp: patch-stamp
 	dh_testdir
 	# The first pass is used to create the configuration file
 	$(MAKE) build/Makefile EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" PREFIX=/usr
@@ -74,7 +75,9 @@ build-arch-stamp: configure-stamp
 	$(MAKE) EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" CFLAGS="$(CFLAGS)"
 	touch build-arch-stamp
 
-clean:
+clean: clean-patched unpatch
+
+clean-patched:
 	dh_testdir
 	dh_testroot
 	rm -f build-arch-stamp  #CONFIGURE-STAMP#
