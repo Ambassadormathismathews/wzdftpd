@@ -127,9 +127,9 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     addr6.sin6_flowinfo = 0;
     memset(&addr6.sin6_addr,0,16);
     addr6.sin6_port = htons((unsigned short)port);
-  }
+  } else
 #endif
-  else if (family == WZD_INET4) {
+  if (family == WZD_INET4) {
     sock = socket(AF_INET,SOCK_STREAM,0);
     if (sock < 0) return -1;
 
