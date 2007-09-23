@@ -136,8 +136,12 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     addr = (struct sockaddr *)&addr4;
     len = sizeof(addr4);
     addr4.sin_family = AF_INET;
-    /* XXX use bind address */
-    addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (mainConfig->pasv_ip[0] != 0) {
+      /* checks on pasv_ip are done when loading config */
+      memcpy(&addr4.sin_addr.s_addr,mainConfig->pasv_ip,4);
+    } else {
+      addr4.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
     addr4.sin_port = htons((unsigned short)port);
   }
   else {
@@ -183,6 +187,12 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
 
   if (count == 0 && ret < 0) {
     out_log(LEVEL_HIGH,"Could not bind to any port in the PASV range\n");
+    socket_close(sock);
+    return -1;
+  }
+
+  if (listen(sock,5 /* XXX backlog */) < 0) {
+    out_log(LEVEL_HIGH,"PASV: listen() operation failed\n");
     socket_close(sock);
     return -1;
   }

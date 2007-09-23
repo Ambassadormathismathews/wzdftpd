@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
   unsigned long c1 = C1;
   int ret;
   unsigned long c2 = C2;
+  unsigned char localhost[4] = { 127, 0, 0, 1 };
 
   fake_context();
   fake_proto();
@@ -44,6 +45,14 @@ int main(int argc, char *argv[])
   mainConfig->pasv_low_range = 1015;
   mainConfig->pasv_high_range = 1025;
   ret = get_pasv_port(WZD_INET6, f_context);
+  fprintf(stderr, "bound port: %d (awaited: %s)\n", ret, "any port with range");
+  pasv_close(f_context);
+
+  /* bind to a specific address */
+  mainConfig->pasv_low_range = 1033;
+  mainConfig->pasv_high_range = 4096;
+  memcpy(mainConfig->pasv_ip,localhost,4);
+  ret = get_pasv_port(WZD_INET4, f_context);
   fprintf(stderr, "bound port: %d (awaited: %s)\n", ret, "any port with range");
   pasv_close(f_context);
 
