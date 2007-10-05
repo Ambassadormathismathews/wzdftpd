@@ -1586,6 +1586,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   unsigned char buffer[16];
   int offset=0;
   int count=0;
+  int all_ports_used=1;
 
   size = sizeof(struct sockaddr_in);
   port = mainConfig->pasv_low_range; /* use pasv range min */
@@ -1650,7 +1651,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
 #else
   port = port + (rand()) % count; /* we try to change starting port for random */
 #endif
-  while (count > 0) { /* use pasv range max */
+  while (count-- > 0) {
     memset(&sai,0,size);
 
     sai.sin_family = AF_INET;
@@ -1662,29 +1663,45 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
 
     memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
-    if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
+    if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) {
+      /* found a free port, stop searching */
+      all_ports_used = 0;
+      break;
+    }
     port++; /* retry with next port */
 
-    if (port >= mainConfig->pasv_high_range)
-    {
-      /* Rather than loop again, bail out.  This avoids an infinite loop,
-         which happens if pasvsock is bad for some reason.  pasvsock
-         shouldn't be bad (that would be a bug), but there's no reason
-         to make things worse and go into an infinite loop. */
-      return E_NO_DATA_CTX;
+    if (port > mainConfig->pasv_high_range) {
+      /* reached the top of the range, continue searching from the bottom */
+      port = mainConfig->pasv_low_range;
     }
   }
-  if (port < mainConfig->pasv_low_range || port > mainConfig->pasv_high_range)
-  {
-    out_log(LEVEL_HIGH, "PASV: found port out of range !! (%d not in [%d , %d])\n",
-        port, mainConfig->pasv_low_range, mainConfig->pasv_high_range);
-  }
 
-
-  if (port >= 65536) {
+  if (all_ports_used) {
+    /* all ports are in use, return an error */
+    out_log(LEVEL_HIGH, "PASV: all possible PASV ports are in use\n");
     socket_close(context->pasvsock);
     context->pasvsock = -1;
-    ret = send_message(425,context);
+    ret = send_message(425, context);
+    return E_NO_DATA_CTX;
+  }
+
+  /* sanity check */
+  if (port < mainConfig->pasv_low_range || port > mainConfig->pasv_high_range)
+  {
+    out_log(LEVEL_CRITICAL, "PASV: attempted to bind to port out of range (%d not in [%d , %d])\n",
+        port, mainConfig->pasv_low_range, mainConfig->pasv_high_range);
+        socket_close(context->pasvsock);
+        context->pasvsock = -1;
+        ret = send_message(425, context);
+        return E_NO_DATA_CTX;
+  }
+
+  /* sanity check */
+  if (port >= 65536) {
+    out_log(LEVEL_CRITICAL, "PASV: attempted to bind to invalid port 65536\n");
+    socket_close(context->pasvsock);
+    context->pasvsock = -1;
+    ret = send_message(425, context);
     return E_NO_DATA_CTX;
   }
 
@@ -1692,7 +1709,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
     out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
     socket_close(context->pasvsock);
     context->pasvsock = -1;
-    ret = send_message(425,context);
+    ret = send_message(425, context);
     return E_NO_DATA_CTX;
   }
 
