@@ -430,6 +430,15 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
     mod_type = _USER_USERNAME;
     strncpy(user->username, data, sizeof(user->username));
   }
+  /* creator */
+  else if (strcmp(varname, "creator")==0) {
+    wzd_user_t * creator;
+    creator = GetUserByName(data);
+    if (creator) {
+      mod_type = _USER_CREATOR;
+      user->creator = creator->uid;
+    } else return -1;
+  }
   /* user_slots */
   else if (strcmp(varname, "user_slots")==0) {
     ul=strtoul(data, &ptr, 0);

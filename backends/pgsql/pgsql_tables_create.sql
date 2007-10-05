@@ -35,6 +35,7 @@ CREATE TABLE users (
   rootpath varchar(255) NOT NULL,
   tagline varchar(255) default NULL,
   uid serial UNIQUE,
+  creator integer default NULL,
   flags varchar(32) default NULL,
   max_idle_time integer  default NULL,
   max_ul_speed bigint default NULL,

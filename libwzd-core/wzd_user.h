@@ -33,6 +33,7 @@ struct wzd_user_t {
   char                   username[HARD_USERNAME_LENGTH];
   char                   userpass[MAX_PASS_LENGTH];
   char                   rootpath[WZD_MAX_PATH];
+  uid_t                  creator;
   char                   tagline[MAX_TAGLINE_LENGTH];
   unsigned int           group_num;
   unsigned int           groups[MAX_GROUPS_PER_USER];

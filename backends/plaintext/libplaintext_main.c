@@ -273,6 +273,7 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     }
     if (mod_type & _USER_TAGLINE) strcpy(loop_user->tagline,user->tagline);
     if (mod_type & _USER_UID) loop_user->uid = user->uid;
+    if (mod_type & _USER_CREATOR) loop_user->creator = user->creator;
     if (mod_type & _USER_GROUPNUM) loop_user->group_num = user->group_num;
     if (mod_type & _USER_IDLE) loop_user->max_idle_time = user->max_idle_time;
     if (mod_type & _USER_GROUP) memcpy(loop_user->groups,user->groups,MAX_GROUPS_PER_USER);

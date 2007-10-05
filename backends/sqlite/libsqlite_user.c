@@ -228,7 +228,7 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
   if (db == NULL) return NULL;
 
   sqlite3_prepare(db, 
-    "SELECT username, userpass, rootpath, tagline, flags, max_idle_time, \
+    "SELECT username, userpass, rootpath, tagline, flags, creator, max_idle_time, \
             max_ul_speed, max_dl_speed, num_logins, credits, ratio,      \
             user_slots, leech_slots, perms, last_login                   \
        FROM users                                                        \
@@ -251,16 +251,17 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
         _TXT_CPY(user->tagline,  (char *) sqlite3_column_text(stmt, 3), MAX_TAGLINE_LENGTH);
         _TXT_CPY(user->flags, (char *) sqlite3_column_text(stmt, 4), MAX_FLAGS_NUM);
 
-	user->max_idle_time = sqlite3_column_int(stmt, 5);
-	user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 6);
-	user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 7);
-	user->num_logins = sqlite3_column_int(stmt, 8);
-	user->credits = sqlite3_column_int64(stmt, 9);
-	user->ratio = sqlite3_column_int(stmt, 10);
-	user->user_slots = sqlite3_column_int(stmt, 11);
-	user->leech_slots = sqlite3_column_int(stmt, 12);
-        user->userperms = (unsigned long) sqlite3_column_int64(stmt, 13);
-	user->last_login = sqlite3_column_int(stmt, 14);
+        user->creator = sqlite3_column_int(stmt, 5);
+	user->max_idle_time = sqlite3_column_int(stmt, 6);
+	user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 7);
+	user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 8);
+	user->num_logins = sqlite3_column_int(stmt, 9);
+	user->credits = sqlite3_column_int64(stmt, 10);
+	user->ratio = sqlite3_column_int(stmt, 11);
+	user->user_slots = sqlite3_column_int(stmt, 12);
+	user->leech_slots = sqlite3_column_int(stmt, 13);
+        user->userperms = (unsigned long) sqlite3_column_int64(stmt, 14);
+	user->last_login = sqlite3_column_int(stmt, 15);
 
 	libsqlite_user_get_ip(user);
         libsqlite_user_get_groups(user);
@@ -445,17 +446,18 @@ int libsqlite_user_add(wzd_user_t *user)
 
   query = sqlite3_mprintf(
     "INSERT INTO users (                                                 \
-        uid, username, userpass, rootpath, tagline, flags, max_idle_time,\
+        uid, username, userpass, rootpath, tagline, flags, creator, max_idle_time,\
         max_ul_speed, max_dl_speed, num_logins, ratio, user_slots,       \
         leech_slots, perms, credits, last_login                          \
       ) VALUES (                                                         \
-         %d, '%q', '%q', '%q', '%q', '%q', %d, %u, %u, %d, %d, %d, %d,  \
+         %d, '%q', '%q', '%q', '%q', '%q', %d, %d, %u, %u, %d, %d, %d, %d,  \
          %d, %d, %d                                                      \
       );",
     user->uid, user->username, passbuffer, user->rootpath,
-    user->tagline, user->flags, user->max_idle_time, user->max_ul_speed,
-    user->max_dl_speed, user->num_logins, user->ratio, user->user_slots,
-    user->leech_slots, user->userperms, user->credits, user->last_login
+    user->tagline, user->flags, user->creator, user->max_idle_time,
+    user->max_ul_speed, user->max_dl_speed, user->num_logins,
+    user->ratio, user->user_slots, user->leech_slots,
+    user->userperms, user->credits, user->last_login
   );
 
   out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
@@ -594,6 +596,10 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
   }
   if (mod_type & _USER_UID) {
     libsqlite_add_to_query(&query, "%c uid=%d ", separator, user->uid);
+    separator = ',';
+  }
+  if (mod_type & _USER_CREATOR) {
+    libsqlite_add_to_query(&query, "%c creator=%d ", separator, user->creator);
     separator = ',';
   }
   if (mod_type & _USER_IDLE) {

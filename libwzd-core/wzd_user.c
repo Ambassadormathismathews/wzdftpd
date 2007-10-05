@@ -151,6 +151,7 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
   homedir = group->defaultpath;
   ratio = group->ratio;
   newuser->userperms = group->groupperms;
+  newuser->creator = (unsigned int)-1;
 
   /* check if homedir exist */
   {

@@ -188,10 +188,22 @@ int do_site_adduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
     ret = send_message_with_args(501,context,"Problem adding user");
     user_free(newuser);
   } else {
-    if (is_gadmin) me->user_slots--; /* decrement user slots counter */
+    if (is_gadmin) {
+      newuser->creator = me->uid; /* set the creator of the new account to the current gadmin */
+      me->user_slots--; /* decrement user slots counter */
+      ret = backend_mod_user(mainConfig->backends->filename,newuser->uid,newuser,_USER_CREATOR);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem setting creator of new user");
+      }
+      ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_USERSLOTS);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem decrementing your user_slots - lucky you!");
+      }
+    }
     ret = send_message_with_args(200,context,"User added");
     /* do not free user, it is stored in registry */
   }
+  backend_commit_changes(mainConfig->backends->filename);
   str_deallocate(username); str_deallocate(password); str_deallocate(ip);
   return 0;
 }
@@ -210,7 +222,7 @@ int do_site_deluser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
 {
   wzd_string_t * username;
   int ret;
-  wzd_user_t *user, *me;
+  wzd_user_t *user, *me, *creator;
   int length;
   short is_gadmin;
 
@@ -254,10 +266,28 @@ int do_site_deluser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
   user->flags[length+1] = '\0';
 
   /* commit changes to backend */
-  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
+  ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem deleting user");
+  } else {
+    creator = user_get_by_id(user->creator);
+    if (creator && creator->groups[0]==user->groups[0]) {
+      user->creator = (unsigned int)-1; /* unset the creator uid to an 'invalid' uid */
+      creator->user_slots++; /* give the gadmin creator their user_slot back */
+      ret = backend_mod_user(mainConfig->backends->filename,creator->uid,creator,_USER_USERSLOTS);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem returning user_slot to creator");
+      }
+      ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_CREATOR);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem resetting creator on deleted user");
+      }
+    }
+    ret = send_message_with_args(200,context,"User deleted");
+  }
+
   backend_commit_changes(mainConfig->backends->filename);
 
-  ret = send_message_with_args(200,context,"User deleted");
   return 0;
 }
 
@@ -297,10 +327,14 @@ int do_site_readduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_conte
   }
 
   /* GAdmin ? */
-  if (is_gadmin)
-  {
-  if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
+  if (is_gadmin) {
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
       ret = send_message_with_args(501,context,"You can't change this user");
+      return 0;
+    }
+    /* don't readd the user if the gadmin is out of user_slots */
+    if (me->user_slots == 0) {
+      ret = send_message_with_args(501,context,"No more slots available");
       return 0;
     }
   }
@@ -319,9 +353,27 @@ int do_site_readduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_conte
   }
 
   /* commit changes to backend */
-  backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
+  ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
+  if (ret) {
+    ret = send_message_with_args(501,context,"Problem readding user");
+  } else {
+    if (is_gadmin) {
+      user->creator = me->uid; /* set the creator of the new account to the current gadmin */
+      me->user_slots--; /* decrement user slots counter */
+      ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_CREATOR);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem setting creator of target user");
+      }
+      ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_USERSLOTS);
+      if (ret) {
+        ret = send_message_with_args(501,context,"Problem decrementing your user_slots - lucky you!");
+      }
+    }
+    ret = send_message_with_args(200,context,"User undeleted");
+  }
 
-  ret = send_message_with_args(200,context,"User undeleted");
+  backend_commit_changes(mainConfig->backends->filename);
+
   return 0;
 }
 
@@ -651,6 +703,8 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
   short is_gadmin;
   char old_username[HARD_USERNAME_LENGTH];
   uid_t uid;
+  unsigned int creatorid = (unsigned int)-1;
+  unsigned int newgroupid = (unsigned int)-1;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
@@ -717,6 +771,24 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
     mod_type = _USER_ROOTPATH;
     strncpy(user->rootpath,str_tochar(value),WZD_MAX_PATH);
   }
+  /* creator */
+  else if (strcmp(str_tochar(field),"creator")==0) {
+    /* GAdmin ? */
+    if (is_gadmin) {
+       ret = send_message_with_args(501,context,"You can't change that field");
+       str_deallocate(field); str_deallocate(value);
+       return 0;
+    }
+    creatorid = GetUserIDByName(str_tochar(value)); /* check if the creator exists, get the uid */
+    if (creatorid != (unsigned int)-1) {
+      user->creator = creatorid; /* change the creator on the user */
+      mod_type = _USER_CREATOR;
+    } else {
+      ret = send_message_with_args(501,context,"Could not find the creator specified");
+      str_deallocate(field); str_deallocate(value);
+      return 0;
+    }
+  }
   /* tagline */
   else if (strcmp(str_tochar(field),"tagline")==0) {
     mod_type = _USER_TAGLINE;
@@ -725,8 +797,6 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
   /* uid */ /* FIXME useless ? */
   /* group */ /* add or remove group */
   else if (strcmp(str_tochar(field),"group")==0) {
-    unsigned int newgroupid=(unsigned int)-1;
-
     /* GAdmin ? */
     if (is_gadmin) {
        ret = send_message_with_args(501,context,"You can't change that field");

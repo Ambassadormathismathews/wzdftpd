@@ -82,6 +82,7 @@ struct wzd_backend_t {
 #define	_USER_USERSLOTS		1<<17
 #define	_USER_LEECHSLOTS	1<<18
 #define	_USER_RATIO		1<<19
+#define _USER_CREATOR		1<<20
 #define _USER_ALL               0x0000ffff
 #define _USER_CREATE            0x01000000
 

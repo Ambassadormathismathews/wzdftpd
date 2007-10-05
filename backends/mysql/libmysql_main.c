@@ -686,6 +686,7 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   wzd_row_get_string(user->userpass, MAX_PASS_LENGTH, row, UCOL_USERPASS);
   wzd_row_get_string(user->rootpath, WZD_MAX_PATH, row, UCOL_ROOTPATH);
   wzd_row_get_string(user->tagline, MAX_TAGLINE_LENGTH, row, UCOL_TAGLINE);
+  wzd_row_get_uint(&user->creator, row, UCOL_CREATOR);
   wzd_row_get_string(user->flags, MAX_FLAGS_NUM, row, UCOL_FLAGS);
   wzd_row_get_uint((unsigned int*)&user->max_idle_time, row, UCOL_MAX_IDLE_TIME);
   wzd_row_get_uint(&user->max_ul_speed, row, UCOL_MAX_UL_SPEED);

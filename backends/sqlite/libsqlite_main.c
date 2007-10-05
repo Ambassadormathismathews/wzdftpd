@@ -154,13 +154,13 @@ static int FCN_INIT(const char *arg)
 
   if (arg == NULL) {
     out_log(SQLITE_LOG_CHANNEL, "%s(%s):%d no argument given\n", __FILE__, __FUNCTION__, __LINE__);
-    out_log(SQLITE_LOG_CHANNEL, "you MUST provide a parameter for the sqlite connection\n");
+    out_log(SQLITE_LOG_CHANNEL, "You MUST provide a parameter for the sqlite connection\n");
     out_log(SQLITE_LOG_CHANNEL, "Add 'param=file' in [sqlite]\n");
     return -1;
   }
 
   if (stat(arg, &st) == -1 || ! st.st_mode & S_IFREG) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite db file does'nt exist or not a regular file.\n");
+    out_log(SQLITE_LOG_CHANNEL, "Sqlite db file doesn't exist or is not a regular file.\n");
     return -1;
   }
 
@@ -234,7 +234,7 @@ static wzd_user_t * FCN_GET_USER(uid_t uid)
   if (user) {
     reg_uid = user_register(user, BACKEND_ID);
     if (reg_uid != user->uid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre user.\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register user.\n");
       user_free(user);
       return NULL;
     }
@@ -263,7 +263,7 @@ static wzd_group_t * FCN_GET_GROUP(gid_t gid)
   if (group) {
     reg_gid = group_register(group, BACKEND_ID);
     if (reg_gid != group->gid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register group.\n");
       group_free(group);
       return NULL;
     }
@@ -288,7 +288,7 @@ static uid_t FCN_FIND_USER(const char *name, UNUSED wzd_user_t * _ignored)
   if (user) {
     reg_uid = user_register(user, BACKEND_ID);
     if (reg_uid != user->uid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre user.\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register user.\n");
       user_free(user);
       return INVALID_USER;
     }
@@ -313,7 +313,7 @@ static gid_t FCN_FIND_GROUP(const char *name, UNUSED wzd_group_t * _ignored)
   if (group) {
     reg_gid = group_register(group, BACKEND_ID);
     if (reg_gid != group->gid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register group.\n");
       group_free(group);
       return INVALID_USER;
     }
@@ -348,7 +348,7 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
 #ifdef CACHE
     reg_uid = user_register(user, BACKEND_ID);
     if (reg_uid != user->uid) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite backend can't registre on add\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register user.\n");
     }
 #endif /* CACHE */
   }
@@ -365,7 +365,7 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     } else {
       reg_uid = user_register(user, BACKEND_ID);
       if (reg_uid != user->uid) {
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could'nt registre user.\n");
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register user.\n");
         user_free(user);
         return -1;
       }
@@ -398,7 +398,7 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 #ifdef CACHE
     reg_gid = group_register(group, BACKEND_ID);
     if (reg_gid != group->gid) {
-      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register group.\n");
       group_free(group);
       return -1;
     }
@@ -415,7 +415,7 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
     } else {
       reg_gid = group_register(group, BACKEND_ID);
       if (reg_gid != group->gid) {
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not registre group.\n");
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could not register group.\n");
         group_free(group);
         return -1;
       }

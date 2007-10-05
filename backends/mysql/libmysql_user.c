@@ -146,6 +146,8 @@ int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     }
     if (mod_type & _USER_UID)
       APPEND_STRING_TO_QUERY("uid='%u' ", user->uid, query, query_length, mod, modified);
+    if (mod_type & _USER_CREATOR)
+      APPEND_STRING_TO_QUERY("creator='%u' ", user->creator, query, query_length, mod, modified);
     if (mod_type & _USER_IDLE)
       APPEND_STRING_TO_QUERY("max_idle_time='%u' ", user->max_idle_time, query, query_length, mod, modified);
 
@@ -264,10 +266,11 @@ int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     memset(user->userpass,0,MAX_PASS_LENGTH);
     memcpy(user->userpass, passbuffer, MAX_PASS_LENGTH);
 
-    if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',%u,'%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,creator,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',%u,'%u','%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
           user->username, passbuffer,
           user->rootpath,
           user->uid,
+	  user->creator,
           user->flags,
           (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
           user->num_logins, user->ratio, user->user_slots, user->leech_slots,

@@ -117,6 +117,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   fprintf(file,"pass=%s\n",user->userpass);
   fprintf(file,"home=%s\n",user->rootpath);
   fprintf(file,"uid=%u\n",user->uid);
+  fprintf(file,"creator=%u\n",user->creator);
   /* write ALL groups */
 
   if (user->group_num>0) {
@@ -562,6 +563,15 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       }
       user->uid = num;
     }
+    else if (strcmp("creator",varname)==0) {
+      num = strtol(value, &ptr, 0);
+      if (ptr == value | *ptr != '\0' || num < 0) { /* invalid number */
+        snprintf(errbuf,sizeof(errbuf),"Invalid creator uid %s\n",value);
+        ERRLOG(errbuf);
+        continue;
+      }
+      user->creator = num;
+    }
     else if (strcmp("rights",varname)==0) {
       num = strtoul(value, &ptr, 0);
       /* FIXME by default all users have CWD right FIXME */
@@ -698,7 +708,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
         continue;
       }
       user->leech_slots = (unsigned short)u_num;
-    } /* else if (strcmp("user_slots",... */
+    } /* else if (strcmp("leech_slots",... */
     else if (strcmp("max_idle_time",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */

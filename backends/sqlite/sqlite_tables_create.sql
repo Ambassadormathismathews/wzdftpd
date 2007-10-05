@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   rootpath TEXT NOT NULL,
   tagline TEXT default NULL,
   flags TEXT default NULL,
+  creator INTEGER(10) default NULL,
   max_idle_time INTEGER(10) default NULL,
   max_ul_speed BIGINT default NULL,
   max_dl_speed BIGINT default NULL,
@@ -70,12 +71,12 @@ INSERT INTO
 
 INSERT INTO 
   users (
-    uref, uid, username, userpass, rootpath, tagline, flags, 
+    uref, uid, username, userpass, rootpath, tagline, flags, creator, 
     max_idle_time, max_ul_speed, max_dl_speed, num_logins, ratio, 
     user_slots, leech_slots, perms, credits, last_login
   )
   VALUES (
-    1, 0, 'wzdftpd', 'wzufwPCZFYH/6', '/', 'Admin', "O", NULL, NULL, NULL, 
+    1, 0, 'wzdftpd', 'wzufwPCZFYH/6', '/', 'Admin', "O", NULL, NULL, NULL, NULL, 
     2, 0, NULL, NULL, 4294967295, NULL, NULL
   );
 
