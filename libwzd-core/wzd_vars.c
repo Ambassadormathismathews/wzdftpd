@@ -561,6 +561,11 @@ int vars_group_set(const char *groupname, const char *varname, const void *data,
     ul=strtoul(data,&ptr,0);
     if (!*ptr) { mod_type = _GROUP_GROUPPERMS; group->groupperms = ul; }
   }
+  /* flags */ /* TODO accept modifications style +f or -f */
+  else if (strcmp(varname, "flags")==0) {
+    strncpy(group->flags, data, MAX_FLAGS_NUM-1);
+    mod_type = _GROUP_FLAGS;
+  }
   /* max_ul */
   else if (strcmp(varname,"max_ul")==0) {
     ul=strtoul(data,&ptr,0);

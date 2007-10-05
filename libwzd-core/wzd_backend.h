@@ -98,6 +98,7 @@ struct wzd_backend_t {
 #define	_GROUP_NUMLOGINS	1<<8
 #define	_GROUP_TAGLINE		1<<9
 #define	_GROUP_GID		1<<10
+#define _GROUP_FLAGS		1<<11
 #define _GROUP_ALL              0x0000ffff
 #define _GROUP_CREATE           0x01000000
 

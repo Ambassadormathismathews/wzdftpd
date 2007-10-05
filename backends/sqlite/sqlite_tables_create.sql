@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS groups (
   gid INTEGER(10) NOT NULL UNIQUE,
   groupname TEXT NOT NULL,
   defaultpath TEXT NOT NULL,
+  flags TEXT default NULL,
   tagline TEXT DEFAULT NULL,
   groupperms INTEGER(10) default NULL,
   max_idle_time INTEGER(10) default NULL,

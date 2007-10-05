@@ -149,17 +149,18 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
   newuser = user_allocate();
 
   homedir = group->defaultpath;
+  /* check if group homedir exists */
+  fs_filestat_t s;
+  if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
+    out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating user %s)\n",homedir,username);
+  }
+
   ratio = group->ratio;
   newuser->userperms = group->groupperms;
-  newuser->creator = (unsigned int)-1;
 
-  /* check if homedir exist */
-  {
-    fs_filestat_t s;
-    if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
-      out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating user %s)\n",homedir,username);
-    }
-  }
+  /* the calling function is responsible for updating the creator as
+   * this function doesn't know who is creating the new user */
+  newuser->creator = (unsigned int)-1;
 
   strncpy(newuser->username, username, HARD_USERNAME_LENGTH-1);
   strncpy(newuser->userpass, pass, MAX_PASS_LENGTH-1);

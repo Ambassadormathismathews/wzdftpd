@@ -123,6 +123,10 @@ int wmysql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 
     if (mod_type & _GROUP_GROUPPERMS)
       APPEND_STRING_TO_QUERY("groupperms='%lx' ", group->groupperms, query, query_length, mod, modified);
+    if (mod_type & _GROUP_FLAGS) {
+      if (!wzd_mysql_check_name(group->flags)) goto error_mod_group_free;
+      APPEND_STRING_TO_QUERY("flags='%s' ", group->flags, query, query_length, mod, modified);
+    }
     if (mod_type & _GROUP_MAX_ULS)
       APPEND_STRING_TO_QUERY("max_ul_speed='%u' ", group->max_ul_speed, query, query_length, mod, modified);
     if (mod_type & _GROUP_MAX_DLS)
@@ -196,9 +200,10 @@ int wmysql_mod_group(gid_t gid, wzd_group_t * group, unsigned long mod_type)
 
   query = malloc(2048);
 
-  if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',%u,'%s','%s',0x%lx,%u,%u,%lu,%lu,%u)",
+  if (_wzd_run_update_query(query, 2048, "INSERT INTO groups (groupname,gid,defaultpath,flags,tagline,groupperms,max_idle_time,num_logins,max_ul_speed,max_dl_speed,ratio) VALUES ('%s',%u,'%s','%s','%s',0x%lx,%u,%u,%lu,%lu,%u)",
       group->groupname, group->gid,
       group->defaultpath,
+      group->flags,
       group->tagline,
       group->groupperms,
       (unsigned int)group->max_idle_time, group->max_ul_speed, group->max_dl_speed,

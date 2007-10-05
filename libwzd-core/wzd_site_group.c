@@ -69,7 +69,8 @@
 
 /* prototypes */
 void do_site_help(const char *site_command, wzd_context_t * context);
-
+static int _group_changeflags(wzd_group_t * group, const char *newflags);
+static void _gflags_simplify(char *flags, size_t length);
 
 
 int do_site_help_grpadd(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
@@ -735,6 +736,15 @@ int do_site_grpchange(wzd_string_t *cname, wzd_string_t *command_line, wzd_conte
     ul=strtoul(str_tochar(value),&ptr,0);
     if (!*ptr) { mod_type = _GROUP_GROUPPERMS; group->groupperms = ul; }
   }
+  /* flags */
+  else if (strcmp(str_tochar(field),"flags")==0) {
+    if (_group_changeflags(group,str_tochar(value))) {
+      ret = send_message_with_args(501,context,"Error occurred when changing flags");
+      str_deallocate(field); str_deallocate(value);
+      return 0;
+    }
+    mod_type = _GROUP_FLAGS;
+  }
   /* max_ul */
   else if (strcmp(str_tochar(field),"max_ul")==0) {
     ul=strtoul(str_tochar(value),&ptr,0);
@@ -850,3 +860,68 @@ int do_site_group(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t
   return 0;
 }
 
+/* copied from _user_changeflags in wzd_site_user.c */
+static int _group_changeflags(wzd_group_t * group, const char *newflags)
+{
+  size_t length;
+  char * ptr;
+
+  if (!group || !newflags) return -1;
+
+  if (newflags[0] == '+') {
+    /* flag addition */
+    length = strlen(group->flags);
+    if (length+strlen(newflags) >= MAX_FLAGS_NUM) return -1;
+
+    wzd_strncpy(group->flags+length,newflags+1,MAX_FLAGS_NUM-length-1);
+    /* remove duplicate flags */
+    _gflags_simplify(group->flags,MAX_FLAGS_NUM);
+
+    return 0;
+  }
+  else if (newflags[0] == '-') {
+    /* flag removal */
+    /** remove all flags from newflags */
+    while ( (++newflags)[0] != '\0') {
+      if ( (ptr = strchr(group->flags,newflags[0])) == NULL ) {
+        continue;
+      }
+      if (*(ptr+1)) {
+        length = strlen(ptr+1);
+        memmove(ptr,ptr+1,length);
+        *(ptr+length) = '\0';
+      } else {
+        *ptr = '\0';
+      }
+    }
+
+    return 0;
+  }
+  else {
+    /* replace flags */
+    strncpy(group->flags,newflags,MAX_FLAGS_NUM-1);
+    _gflags_simplify(group->flags,MAX_FLAGS_NUM);
+    return 0;
+  }
+
+  return -1;
+}
+
+/* copied from _flags_simplify in wzd_site_user.c */
+static void _gflags_simplify(char *flags, size_t length)
+{
+  char * ptr, * test;
+  size_t l;
+
+  l = strlen(flags);
+
+  for (test=flags; (length > 0) && (*test) ; test++,l--)
+  {
+    while ( (ptr = strchr(test+1,*test)) ) {
+      /* replace duplicate flag with last one */
+      *ptr = flags[l-1];
+      flags[l-1] = '\0';
+      l--;
+    }
+  }
+}

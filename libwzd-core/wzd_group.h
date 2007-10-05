@@ -32,6 +32,7 @@ struct wzd_group_t {
   char                   groupname[HARD_GROUPNAME_LENGTH];
   char                   tagline[MAX_TAGLINE_LENGTH];
   wzd_perm_t             groupperms;
+  char                   flags[MAX_FLAGS_NUM];
   u32_t                  max_idle_time;
   unsigned short         num_logins;     /**< number of simultaneous logins allowed */
   u32_t                  max_ul_speed;

@@ -891,6 +891,7 @@ static wzd_group_t * get_group_from_db(const char * where_statement)
   }
   wzd_row_get_string(group->groupname, HARD_GROUPNAME_LENGTH, res, GCOL_GROUPNAME);
   wzd_row_get_string(group->defaultpath, WZD_MAX_PATH, res, GCOL_DEFAULTPATH);
+  wzd_row_get_string(group->flags, WZD_MAX_FLAGS, res, GCOL_FLAGS);
   wzd_row_get_string(group->tagline, MAX_TAGLINE_LENGTH, res, GCOL_TAGLINE);
   wzd_row_get_ulong(&group->groupperms, res, GCOL_GROUPPERMS);
   wzd_row_get_uint((unsigned int*)&group->max_idle_time, res, GCOL_MAX_IDLE_TIME);

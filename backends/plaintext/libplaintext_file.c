@@ -113,9 +113,9 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   char buffer[4096], errbuf[1024];
   struct wzd_ip_list_t * current_ip;
 
-  fprintf(file,"name=%s\n",user->username);
-  fprintf(file,"pass=%s\n",user->userpass);
-  fprintf(file,"home=%s\n",user->rootpath);
+  fprintf(file,"name=%.*s\n",HARD_USERNAME_LENGTH,user->username);
+  fprintf(file,"pass=%.*s\n",MAX_PASS_LENGTH,user->userpass);
+  fprintf(file,"home=%.*s\n",WZD_MAX_PATH,user->rootpath);
   fprintf(file,"uid=%u\n",user->uid);
   fprintf(file,"creator=%u\n",user->creator);
   /* write ALL groups */
@@ -144,7 +144,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   }
   fprintf(file,"rights=0x%lx\n",user->userperms);
   if (strlen(user->tagline)>0)
-    fprintf(file,"tagline=%s\n",user->tagline);
+    fprintf(file,"tagline=%.*s\n",MAX_TAGLINE_LENGTH,user->tagline);
   for (current_ip = user->ip_list; current_ip != NULL; current_ip = current_ip->next_ip) {
     fprintf(file,"ip_allowed=%s\n",current_ip->regexp);
   }
@@ -168,7 +168,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
   if (user->max_idle_time)
     fprintf(file,"max_idle_time=%u\n",user->max_idle_time);
   if (user->flags && strlen(user->flags)>0)
-    fprintf(file,"flags=%s\n",user->flags);
+    fprintf(file,"flags=%.*s\n",MAX_FLAGS_NUM,user->flags);
   if (user->user_slots)
     fprintf(file,"user_slots=%hd\n",(unsigned short)user->user_slots);
   if (user->leech_slots)
@@ -184,7 +184,7 @@ int write_single_group(FILE * file, const wzd_group_t * group)
 {
   struct wzd_ip_list_t * current_ip;
 
-  fprintf(file,"privgroup\t%s\n",group->groupname);
+  fprintf(file,"privgroup\t%.*s\n",HARD_GROUPNAME_LENGTH,group->groupname);
   if (group->max_idle_time)
     fprintf(file,"max_idle_time=%u\n",group->max_idle_time);
   if (group->num_logins)
@@ -195,15 +195,17 @@ int write_single_group(FILE * file, const wzd_group_t * group)
     fprintf(file,"max_dl_speed=%u\n",group->max_dl_speed);
   fprintf(file,"rights=0x%lx\n",group->groupperms);
   if (strlen(group->tagline)>0)
-    fprintf(file,"tagline=%s\n",group->tagline);
+    fprintf(file,"tagline=%.*s\n",MAX_TAGLINE_LENGTH,group->tagline);
   fprintf(file,"gid=%u\n",group->gid);
   for (current_ip = group->ip_list; current_ip != NULL; current_ip = current_ip->next_ip) {
     fprintf(file,"ip_allowed=%s\n",current_ip->regexp);
   }
   if (strlen(group->defaultpath)>0)
-    fprintf(file,"default_home=%s\n",group->defaultpath);
+    fprintf(file,"default_home=%.*s\n",WZD_MAX_PATH,group->defaultpath);
   if (group->ratio)
     fprintf(file,"ratio=%u\n",group->ratio);
+  if (group->flags && strlen(group->flags)>0)
+    fprintf(file,"flags=%.*s\n",MAX_FLAGS_NUM,group->flags);
   fprintf(file,"\n");
 
   return 0;
@@ -463,6 +465,13 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtoul(value, &ptr, 0);
       group->groupperms = num;
     }
+    else if (strcmp("flags",varname)==0) {
+      num = strlen(value);
+      if (num <= 0 || num >= MAX_FLAGS_NUM) { /* suspicious length ! */
+        continue;
+      }
+      strncpy(group->flags,value,MAX_FLAGS_NUM);
+    } /* flags */
     else if (strcmp("max_dl_speed",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */

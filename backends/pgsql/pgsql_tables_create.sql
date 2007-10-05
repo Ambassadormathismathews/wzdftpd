@@ -8,6 +8,7 @@ CREATE TABLE groups (
   groupname varchar(255) UNIQUE NOT NULL,
   gid serial UNIQUE,
   defaultpath varchar(255) NOT NULL,
+  flags varchar(32) default NULL,
   tagline varchar(255) DEFAULT NULL,
   groupperms integer default NULL,
   max_idle_time integer default NULL,

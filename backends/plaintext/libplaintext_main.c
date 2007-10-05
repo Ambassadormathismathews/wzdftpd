@@ -351,6 +351,7 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
     }
     if (mod_type & _GROUP_GROUPNAME) strcpy(loop_group->groupname,group->groupname);
     if (mod_type & _GROUP_GROUPPERMS) loop_group->groupperms = group->groupperms;
+    if (mod_type & _GROUP_FLAGS) memcpy(loop_group->flags,group->flags,MAX_FLAGS_NUM);
     if (mod_type & _GROUP_IDLE) loop_group->max_idle_time = group->max_idle_time;
     if (mod_type & _GROUP_MAX_ULS) loop_group->max_ul_speed = group->max_ul_speed;
     if (mod_type & _GROUP_MAX_DLS) loop_group->max_dl_speed = group->max_dl_speed;

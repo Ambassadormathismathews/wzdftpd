@@ -10,6 +10,7 @@ CREATE TABLE groups (
   groupname TINYTEXT NOT NULL,
   gid int(10) unsigned NOT NULL UNIQUE,
   defaultpath TINYTEXT NOT NULL,
+  flags varchar(32) default NULL,
   tagline TINYTEXT default NULL,
   groupperms int(10) unsigned default NULL,
   max_idle_time int(10) unsigned default NULL,

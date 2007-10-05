@@ -270,7 +270,7 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
   if (db == NULL) return NULL;
   
   sqlite3_prepare(db,
-    "SELECT groupname, defaultpath, tagline, groupperms, max_idle_time, \
+    "SELECT groupname, defaultpath, flags, tagline, groupperms, max_idle_time, \
             num_logins, max_ul_speed, max_dl_speed, ratio               \
        FROM groups                                                      \
       WHERE gid = ?;",
@@ -291,14 +291,15 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
         group = group_allocate();
         group->gid = gid;
         _TXT_CPY(group->groupname, (char *) sqlite3_column_text(stmt, 0), HARD_GROUPNAME_LENGTH);
-        _TXT_CPY(group->defaultpath, (char *) sqlite3_column_text(stmt, 1), WZD_MAX_PATH); 
-        _TXT_CPY(group->tagline, (char *) sqlite3_column_text(stmt, 2), MAX_TAGLINE_LENGTH);
-        group->groupperms = sqlite3_column_int(stmt, 3);
-        group->max_idle_time = sqlite3_column_int(stmt, 4);
-        group->num_logins = sqlite3_column_int(stmt, 5);
-        group->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 6);
-        group->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 7);
-        group->ratio = sqlite3_column_int(stmt, 8);
+        _TXT_CPY(group->defaultpath, (char *) sqlite3_column_text(stmt, 1), WZD_MAX_PATH);
+	_TXT_CPY(group->flags, (char *) sqlite3_column_text(stmt, 2), MAX_FLAGS_NUM);
+        _TXT_CPY(group->tagline, (char *) sqlite3_column_text(stmt, 3), MAX_TAGLINE_LENGTH);
+        group->groupperms = sqlite3_column_int(stmt, 4);
+        group->max_idle_time = sqlite3_column_int(stmt, 5);
+        group->num_logins = sqlite3_column_int(stmt, 6);
+        group->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 7);
+        group->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 8);
+        group->ratio = sqlite3_column_int(stmt, 9);
 
         libsqlite_group_get_ip(group);
 
@@ -384,14 +385,15 @@ int libsqlite_group_add(wzd_group_t *group)
 
   query = sqlite3_mprintf(
     "INSERT INTO groups (                                             \
-         gid, groupname, defaultpath, tagline, groupperms,            \
+         gid, groupname, defaultpath, flags, tagline, groupperms,     \
          max_idle_time, num_logins, max_ul_speed, max_dl_speed, ratio \
       ) VALUES (                                                      \
-         %d, '%q', '%q', '%q', %d, %d, %d, %u, %u, %d                 \
+         %d, '%q', '%q', '%q', '%q', %d, %d, %d, %u, %u, %d           \
       );",
-    group->gid, group->groupname, group->defaultpath, group->tagline,
-    group->groupperms, group->max_idle_time, group->num_logins,
-    group->max_ul_speed, group->max_dl_speed, group->ratio
+    group->gid, group->groupname, group->defaultpath, group->flags,
+    group->tagline, group->groupperms, group->max_idle_time,
+    group->num_logins, group->max_ul_speed, group->max_dl_speed,
+    group->ratio
   );
 
   out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
@@ -450,6 +452,10 @@ void libsqlite_group_update(gid_t gid, wzd_group_t *group,
   }
   if (mod_type & _GROUP_GROUPPERMS) {
     libsqlite_add_to_query(&query, "%c groupperms = %d", separator, group->groupperms);
+    separator = ',';
+  }
+  if (mod_type & _GROUP_FLAGS) {
+    libsqlite_add_to_query(&query, "%c flags='%q' ", separator, group->flags);
     separator = ',';
   }
   if (mod_type & _GROUP_MAX_ULS) {
