@@ -382,7 +382,7 @@ int check_timeout(wzd_context_t * context)
             (int)delay
             );
       }
-      kill_child_new(context->pid_child,context);
+      context->exitclient = 1;
 #ifdef WZD_MULTIPROCESS
       exit(0);
 #else /* WZD_MULTIPROCESS */
