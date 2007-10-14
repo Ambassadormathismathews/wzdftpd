@@ -79,7 +79,7 @@ static int _kick_and_purge(void);
 
 int do_site_help_adduser(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
 {
-  send_message_with_args(501,context,"site adduser <user> <password> [<group>] [<ip1> <ip2> <...>]");
+  send_message_with_args(501,context,"site adduser <user> <password> <group> [<ip1> <ip2> <...>]");
   return 0;
 }
 
@@ -114,9 +114,9 @@ int do_site_adduser(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
   group = GetGroupByName(str_tochar(groupname));
 
   if (group == NULL) {
-    ret = send_message_with_args(501,context,"Invalid group name");
     str_deallocate(groupname);
-    return 0;
+    str_deallocate(username);
+    return do_site_help_adduser(cname,command_line,context);
   }
   else { str_deallocate(groupname); groupname = NULL; }
 
