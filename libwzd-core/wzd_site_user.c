@@ -1246,7 +1246,7 @@ int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     snprintf(buffer,1023,"%s","Command okay");
   } else { /* if (*command_line != '\0') */
 
-    snprintf(buffer,1023,"Your idle time is %u",user->max_idle_time);
+    snprintf(buffer,1023,"Your idle time is %u seconds",user->max_idle_time);
   } /* if (*command_line != '\0') */
 
   ret = send_message_with_args(200,context,buffer);
