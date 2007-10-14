@@ -94,6 +94,7 @@ void user_init_struct(wzd_user_t * user)
   memset(user,0,sizeof(wzd_user_t));
 
   user->uid = (uid_t)-1;
+  user->creator = (uid_t)-1;
 }
 
 /** \brief Free memory used by a \a user structure
