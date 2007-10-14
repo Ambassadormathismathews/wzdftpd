@@ -321,7 +321,7 @@ static int do_login_loop(wzd_context_t * context)
 
   while (1) {
     /* wait response */
-    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN-1,0,HARD_XFER_TIMEOUT,context);
+    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
       out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
@@ -333,7 +333,7 @@ static int do_login_loop(wzd_context_t * context)
     }
 
     /* this replace the memset (bzero ?) some lines before */
-    buffer[ret] = '\0';
+    buffer[ret-1] = '\0';
 
     if (buffer[0]=='\0') continue;
 

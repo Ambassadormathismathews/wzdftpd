@@ -87,8 +87,8 @@ int identify_token(const char *token)
   char buf[4];
   if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
-  memcpy(buf,token,4);
-  ascii_lower(buf,4);
+  memcpy(buf,token,sizeof(buf));
+  ascii_lower(buf,sizeof(buf));
 
   /* TODO order the following by probability order */
   if (length <= 4) {
