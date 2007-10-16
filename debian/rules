@@ -21,7 +21,7 @@ DEB_BUILD_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
 upstreamversion=$(shell dpkg-parsechangelog | grep Version | head -1 | sed -e 's/Version: //g')
 
-EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON -DWITH_PAM=ON
+EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON -DWITH_PAM=ON -DWITH_SFV=ON
 CMAKE_PREFIX = -DCMAKE_INSTALL_PREFIX="/usr"
 
 include /usr/share/dpatch/dpatch.make
