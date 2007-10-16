@@ -2731,7 +2731,6 @@ int do_dele(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
   }
 
   if (!ret) {
-    send_message_raw("250- Command okay\r\n",context);
     {
       wzd_string_t * event_args = STR(path);
       event_send(mainConfig->event_mgr, EVENT_DELE, 250, event_args, context);
