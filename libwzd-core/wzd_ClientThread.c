@@ -1737,7 +1737,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
 #endif
 
   if (strcasecmp("cpsv",str_tochar(name))==0)
-    context->tls_role = TLS_CLIENT_MODE;
+    context->connection_flags |= CONNECTION_SSCN;
 
   return E_OK;
 }
@@ -2118,11 +2118,14 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
     bytestot = 0;
   bytesnow = byteslast=context->resume;
 
+  
+  context->current_action.token = TOK_RETR;
   if (context->pasvsock == (fd_t)-1) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
     if (sock == (fd_t)-1) {
+      context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
       /* note: reply is done in waitconnect() */
@@ -2135,6 +2138,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
       param, bytestot);*/
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) == (fd_t)-1) {
+      context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
       /* note: reply is done in waitaccept() */
@@ -2216,6 +2220,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   int ret;
   wzd_user_t * user;
   const char *param;
+  connection_state_t restorestate;
   unsigned long open_flags;
 
   param = str_tochar(arg);
@@ -2306,9 +2311,13 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   FD_REGISTER(fd,"Client file (STOR)");
 
+  
+  restorestate = context->current_action.token;
+  context->current_action.token = TOK_STOR;
   if (context->pasvsock == (fd_t)-1) { /* PORT ! */
     sock = waitconnect(context);
     if (sock == (fd_t)-1) {
+      context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
       /* note: reply is done in waitconnect() */
@@ -2317,6 +2326,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   } else { /* PASV ! */
     ret = send_message(150,context);
     if ((sock=waitaccept(context)) == (fd_t)-1) {
+      context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
       /* note: reply is done in waitaccept() */
@@ -2862,12 +2872,13 @@ int do_sscn(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 
   arg = str_tochar(param);
   if (!arg || strlen(arg)==0 || strcasecmp(arg,"off")==0) {
-    context->tls_role = TLS_SERVER_MODE;
+    context->connection_flags &= ~CONNECTION_SSCN;
     ret = send_message_with_args(200,context,"SSCN:SERVER METHOD");
     return E_OK;
   }
+  
   if (strcasecmp(arg,"on")==0) {
-    context->tls_role = TLS_CLIENT_MODE;
+    context->connection_flags |= CONNECTION_SSCN;
     ret = send_message_with_args(200,context,"SSCN:CLIENT METHOD");
     return E_OK;
   }

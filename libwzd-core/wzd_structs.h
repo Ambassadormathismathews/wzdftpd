@@ -304,8 +304,6 @@ typedef struct {
 
 typedef enum { TLS_CLEAR, TLS_PRIV } tls_data_mode_t; /* data modes */
 
-typedef enum { TLS_SERVER_MODE=0, TLS_CLIENT_MODE } tls_role_t;
-
 typedef enum { TLS_NOTYPE=0, TLS_EXPLICIT, TLS_STRICT_EXPLICIT, TLS_IMPLICIT } tls_type_t;
 
 typedef enum { TLS_NONE, TLS_READ, TLS_WRITE } ssl_fd_mode_t;
@@ -329,6 +327,7 @@ typedef enum {
 
 /** context::connection_flags field */
 #define	CONNECTION_TLS	0x00000040
+#define	CONNECTION_SSCN 0x00000080
 #define	CONNECTION_UTF8	0x00000100
 
 typedef int (*read_fct_t)(fd_t,char*,size_t,int,unsigned int,void *);
@@ -395,7 +394,6 @@ struct wzd_context_t {
   struct wzd_ssl_t * ssl;
   struct wzd_reply_t * reply;
   wzd_tls_t   	tls;
-  tls_role_t    tls_role; /**< \brief TLS role: server or client */
   struct _auth_gssapi_data_t * gssapi_data;
 };
 

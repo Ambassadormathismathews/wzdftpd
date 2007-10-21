@@ -297,7 +297,6 @@ void context_init(wzd_context_t * context)
 
   context->peer_ip = ip_create();
 
-  context->tls_role = TLS_SERVER_MODE;
   context->read_fct = (read_fct_t)clear_read;
   context->write_fct = (write_fct_t)clear_write;
 }

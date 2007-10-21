@@ -228,7 +228,7 @@ int tls_init(void)
   SSL_load_error_strings();	/* readable error messages */
   SSL_library_init();		/* initialize library */
 
-  mainConfig->tls_ctx = tls_ctx = SSL_CTX_new(SSLv23_server_method());
+  mainConfig->tls_ctx = tls_ctx = SSL_CTX_new( SSLv23_method() );
   if (!tls_ctx) {
     out_log(LEVEL_CRITICAL,"SSL_CTX_new() %s\r\n",(char *)ERR_error_string(ERR_get_error(), NULL));
     return 1;
@@ -681,18 +681,23 @@ int tls_auth_data_cont(wzd_context_t * context)
   fd_set fd_r, fd_w;
   struct timeval tv;
   unsigned int fd,r;
+  int client_mode = (  
+    ( context->connection_flags & CONNECTION_SSCN ) &&
+    ( context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR ) 
+  ) ? 1 : 0;
 
-  if (context->tls_role == TLS_SERVER_MODE)
-    SSL_set_accept_state(ssl);
-  else
+  if (client_mode)
     SSL_set_connect_state(ssl);
+  else
+    SSL_set_accept_state(ssl);
 
   fd = SSL_get_fd(ssl);
   do {
-    if (context->tls_role == TLS_SERVER_MODE)
-      status = SSL_accept(ssl);
-    else
+   
+    if (client_mode)
       status = SSL_connect(ssl);
+    else 
+      status = SSL_accept(ssl);
 
     sslerr = SSL_get_error(ssl,status);
 
@@ -786,8 +791,10 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
 #include <fcntl.h>
 
-
-#define DH_BITS 1024
+/** \warning setting this value to > 512 will cause problems for compatibility
+ * with OpenSSL
+ */
+#define DH_BITS 512
 
 
 #include "wzd_structs.h"
@@ -1093,6 +1100,10 @@ int tls_init_datamode(int sock, wzd_context_t * context)
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
+  int client_mode = (  
+    ( context->connection_flags & CONNECTION_SSCN ) &&
+    ( context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR ) 
+  ) ? 1 : 0;
 
   if (context->tls.data_session) {
     out_log(LEVEL_NORMAL,"tls_init_datamode: a data session already exist (%p) !\n",
@@ -1100,7 +1111,39 @@ int tls_init_datamode(int sock, wzd_context_t * context)
     return 1;
   }
 
-  session = initialize_tls_session( (context->tls_role == TLS_SERVER_MODE) ? GNUTLS_SERVER : GNUTLS_CLIENT );
+  session = initialize_tls_session( client_mode ? GNUTLS_CLIENT : GNUTLS_SERVER );
+
+  /** \todo XXX parse TLS cipher names */
+  {
+    /** Note that the priority is set on the client. The server does not use
+     * the algorithm's priority except for disabling algorithms that were not
+     * specified.
+     */
+    const int cipherPriority[] =
+    {
+      GNUTLS_CIPHER_ARCFOUR_128,
+      GNUTLS_CIPHER_3DES_CBC,
+      GNUTLS_CIPHER_AES_128_CBC,
+      GNUTLS_CIPHER_AES_256_CBC,
+      GNUTLS_CIPHER_ARCFOUR_40,
+#if ( (LIBGNUTLS_VERSION_MAJOR > 1) || (LIBGNUTLS_VERSION_MINOR >= 3) )
+      GNUTLS_CIPHER_RC2_40_CBC,
+      GNUTLS_CIPHER_DES_CBC,
+#endif
+      0
+    };
+
+    gnutls_cipher_set_priority(session, cipherPriority);
+  }
+
+  {
+    const int protocols[] = { GNUTLS_TLS1, GNUTLS_SSL3, 0 };
+
+    gnutls_protocol_set_priority(session, protocols);
+  }
+#if 0
+  gnutls_set_default_export_priority(session);
+#endif
 
   gnutls_transport_set_ptr(session, (gnutls_transport_ptr) sock);
 
