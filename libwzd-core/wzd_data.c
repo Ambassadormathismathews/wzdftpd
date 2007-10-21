@@ -30,6 +30,7 @@
 
 #if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #ifdef _MSC_VER
 #include <io.h>
 #endif
