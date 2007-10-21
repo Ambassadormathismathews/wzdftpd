@@ -117,6 +117,7 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
   wzd_group_t * group = NULL;
   const char * homedir;
   unsigned int ratio;
+  fs_filestat_t s;
 
   WZD_ASSERT_RETURN( username != NULL, NULL );
   if (username == NULL) {
@@ -151,7 +152,6 @@ wzd_user_t * user_create(const char * username, const char * pass, const char * 
 
   homedir = group->defaultpath;
   /* check if group homedir exists */
-  fs_filestat_t s;
   if (fs_file_stat(homedir,&s) || !S_ISDIR(s.mode)) {
     out_log(LEVEL_HIGH,"WARNING homedir %s does not exist (while creating user %s)\n",homedir,username);
   }
