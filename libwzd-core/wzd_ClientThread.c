@@ -545,7 +545,7 @@ int waitaccept(wzd_context_t * context)
       context->pasvsock = -1;
       socket_close(sock);
       sock = -1;
-      send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+      send_message_with_args(426,context,"Data connection closed (SSL/TLS negotiation failed).");
       return -1;
     }
   }
@@ -593,7 +593,7 @@ int waitconnect(wzd_context_t * context)
     if (context->tls_data_mode == TLS_PRIV) {
       ret = tls_init_datamode(sock, context);
       if (ret) {
-        send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+        send_message_with_args(426,context,"Data connection closed (SSL/TLS negotiation failed).");
         return -1;
       }
     }
@@ -618,7 +618,7 @@ int waitconnect(wzd_context_t * context)
     if (context->tls_data_mode == TLS_PRIV) {
       ret = tls_init_datamode(sock, context);
       if (ret) {
-        send_message_with_args(421,context,"Data connection closed (SSL/TLS negotiation failed).");
+        send_message_with_args(426,context,"Data connection closed (SSL/TLS negotiation failed).");
         return -1;
       }
     }
