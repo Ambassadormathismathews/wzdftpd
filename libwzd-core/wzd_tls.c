@@ -794,7 +794,8 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 /** \warning setting this value to > 512 will cause problems for compatibility
  * with OpenSSL
  */
-#define DH_BITS 512
+#define SERVER_DH_BITS 768
+#define CLIENT_DH_BITS 512
 
 
 #include "wzd_structs.h"
@@ -824,7 +825,7 @@ static int generate_dh_params(void)
    * security requirements.
    */
   gnutls_dh_params_init(&dh_params);
-  gnutls_dh_params_generate2(dh_params, DH_BITS);
+  gnutls_dh_params_generate2(dh_params, SERVER_DH_BITS);
 
   return 0;
 }
@@ -846,7 +847,7 @@ int tls_dh_params_regenerate(void)
     return -1;
   }
 
-  gnutls_dh_params_generate2(new, DH_BITS);
+  gnutls_dh_params_generate2(new, SERVER_DH_BITS);
 
   WZD_MUTEX_LOCK(SET_MUTEX_GLOBAL);
   tmp = dh_params;
@@ -858,7 +859,7 @@ int tls_dh_params_regenerate(void)
 
   gnutls_dh_params_deinit(tmp);
 
-  out_log(LEVEL_INFO,"- Regenerated %d bits Diffie-Hellman key for TLS.\n", DH_BITS);
+  out_log(LEVEL_INFO,"- Regenerated %d bits Diffie-Hellman key for TLS.\n", SERVER_DH_BITS);
 
   return 0;
 }
@@ -970,7 +971,7 @@ static gnutls_session initialize_tls_session(gnutls_connection_end con_end)
     gnutls_certificate_server_set_request(session, GNUTLS_CERT_REQUEST);
   }
 
-  gnutls_dh_set_prime_bits(session, DH_BITS);
+  gnutls_dh_set_prime_bits(session, CLIENT_DH_BITS); /* OpenSSL will not be able to support more */
 
   return session;
 }
