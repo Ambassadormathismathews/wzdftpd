@@ -186,7 +186,6 @@ EXPORTS
 	perm_check
 	perm_free_recursive
 	perm_remove
-	print_file
 	read_token
 	readPermFile
 	regcomp

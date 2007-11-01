@@ -111,12 +111,6 @@ char * safe_vsnprintf(const char *format, va_list ap);
 /* defined in wzd_cookie_lex.l */
 int cookie_parse_buffer(const char *buffer, wzd_user_t * user, wzd_group_t * group, wzd_context_t * context, char * out_buffer, unsigned int out_buffer_len);
 
-/** \brief Read file, replace cookies and send it to client
- *
- * header (200-) MUST have been sent, and end (200 ) is NOT sent)
- */
-int print_file(const char *filename, int code, void * void_context);
-
 /* used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text);
 

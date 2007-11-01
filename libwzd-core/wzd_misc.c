@@ -790,46 +790,6 @@ void limiter_free(wzd_bw_limiter *l)
   free(l);
 }
 
-/** \brief Read file, replace cookies and send it to client
- *
- * header (200-) MUST have been sent, and end (200 ) is NOT sent)
- */
-int print_file(const char *filename, int code, void * void_context)
-{
-  wzd_context_t * context = void_context;
-  void * param;
-  char complete_buffer[1024];
-  char * buffer = complete_buffer + 4;
-  int ret;
-  FILE *fp;
-
-  if (strlen(filename)==0) {
-    out_log(LEVEL_HIGH,"Trying to print file (null) with code %d\n",code);
-    return 1;
-  }
-  fp = fopen(filename,"r");
-  if (!fp) {
-    out_log(LEVEL_HIGH,"Problem opening file %s (code %d)\n",filename,code);
-    return 1;
-  }
-
-  snprintf(complete_buffer,5,"%3d-",code);
-  if ( (fgets(buffer,1018,fp))==NULL ) {
-    out_log(LEVEL_HIGH,"File %s is empty (code %d)\n",filename,code);
-    return 1;
-  }
-
-  param = NULL;
-  do {
-    ret = cookie_parse_buffer(buffer,NULL,NULL,context,NULL,0); /* TODO test ret */
-  /* XXX FIXME TODO */
-/*    out_log(LEVEL_HIGH,"READ: %s\n",complete_buffer);*/
-    send_message_raw(complete_buffer,context);
-  } while ( (fgets(buffer,1018,fp)) != NULL);
-
-  return 0;
-}
-
 /** used to translate text to binary word for rights */
 unsigned long right_text2word(const char * text)
 {
