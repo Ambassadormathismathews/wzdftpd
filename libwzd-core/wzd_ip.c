@@ -93,7 +93,7 @@ wzd_ip_t * ip_create(void)
   return ip;
 }
 
-/** \brief Frees a \wzd_ip_t struct
+/** \brief Frees a \a wzd_ip_t struct
  */
 void ip_free(wzd_ip_t * ip)
 {
