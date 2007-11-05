@@ -30,21 +30,31 @@
 struct wzd_cache_t;
 typedef struct wzd_cache_t wzd_cache_t;
 
+/** \brief Open file and put it in cache.
+ *
+ * \note Initial refcount is 2, so file will not be freed on the first closing.
+ */
 wzd_cache_t* wzd_cache_open(const char *file, int flags, unsigned int mode);
 
 /** force update of specific file, only if present in cache */
 void wzd_cache_update(const char *file);
 
+/** \brief Get size of file */
 off_t wzd_cache_getsize(wzd_cache_t *c);
 
+/** \brief Read data from file */
 ssize_t wzd_cache_read(wzd_cache_t * c, void *buf, size_t count);
+
+/** \brief Write data to file */
 ssize_t wzd_cache_write(wzd_cache_t * c, void *buf, size_t count);
 
+/** \brief Attempt to read a line from file, reading at most \a size characters */
 char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size);
 
+/** \brief Decrement reference count on file. If 0, file is closed */
 void wzd_cache_close(wzd_cache_t * c);
 
-/* purge all files in cache */
+/** \brief Purge all files in cache */
 void wzd_cache_purge(void);
 
 

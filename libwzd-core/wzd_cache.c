@@ -191,14 +191,14 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   cache->current_location = 0;
   size = s.size;
   if (size > MAX_CACHE_FILE_LEN) {
-    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%d bytes)\n",size);
+    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",(long)size);
     c->data = NULL;
     c->datasize = 0;
   } else {
     length = size;
     c->data = malloc(length+1);
     if ( (ret=read(fd,c->data,length)) != length ) {
-      out_err(LEVEL_FLOOD,"Read only %d bytes on %d required\n",ret,length);
+      out_err(LEVEL_FLOOD,"Read only %ld bytes on %ld required\n",(long)ret,(long)length);
     }
     c->data[length] = '\0';
     c->datasize = length;
@@ -288,13 +288,13 @@ wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags
   length = s.size;
   c->use++;
   if (length > MAX_CACHE_FILE_LEN) {
-    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%d bytes)\n",length);
+    out_err(LEVEL_FLOOD,"File too big to be stored in cache (%ld bytes)\n",(long)length);
     c->data = NULL;
     c->datasize = 0;
   } else {
     c->data = malloc(length);
     if ( (ret=read(fd,c->data,length)) != length ) {
-      out_err(LEVEL_FLOOD,"Read only %d bytes\n",ret);
+      out_err(LEVEL_FLOOD,"Read only %ld bytes\n",(long)ret);
     }
     c->datasize = length;
     /* we can close the fd here */
