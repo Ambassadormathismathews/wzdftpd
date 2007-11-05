@@ -36,10 +36,11 @@ int main(int argc, char *argv[])
     }
   }
 
+  /* TEST 1 : cache MISS */
   /* Compare output from wzd_cache and standard FILE functions */
 
   snprintf(input1,sizeof(input1)-1,"%s/%s",srcdir,file1);
-  file = fopen(input1,"r");
+  file = fopen(input1,"r+");
   if (!file) {
     fprintf(stderr, "Input file not found\n");
     return 1;
@@ -64,7 +65,65 @@ int main(int argc, char *argv[])
   }
 
   wzd_cache_close(cache);
+
+
+  /* TEST 2 : cache HIT */
+  /* redo it (though, this time it is in cache) */
+  fseek(file, 0, SEEK_SET);
+  cache = wzd_cache_open(input1,O_RDONLY,0600);
+  if (!cache) {
+    fprintf(stderr, "wzd_cache_open broken\n");
+    return 2;
+  }
+
+  while(fgets(buffer1,sizeof(buffer1)-1,file)) {
+    if (!wzd_cache_gets(cache,buffer2,sizeof(buffer2)-1)) {
+      fprintf(stderr, "wzd_cache_gets broken\n");
+      return 4;
+    }
+
+    if (!memcmp(buffer1,buffer2,sizeof(buffer1))) {
+      fprintf(stderr, "fgets and wzd_cache_gets returned different output\n");
+      return 5;
+    }
+  }
+
+  wzd_cache_close(cache);
+
+
+  /* TEST 3 : cache REFRESH */
+  /* modify file, then redo it */
+  fseek(file, 0, SEEK_SET);
+  if (fgets(buffer1,sizeof(buffer1)-1,file)) {
+    fseek(file, 0, SEEK_SET);
+    fwrite(buffer1, strlen(buffer1), 1, file);
+  }
+  fseek(file, 0, SEEK_SET);
+  cache = wzd_cache_open(input1,O_RDONLY,0600);
+  if (!cache) {
+    fprintf(stderr, "wzd_cache_open broken\n");
+    return 2;
+  }
+
+  while(fgets(buffer1,sizeof(buffer1)-1,file)) {
+    if (!wzd_cache_gets(cache,buffer2,sizeof(buffer2)-1)) {
+      fprintf(stderr, "wzd_cache_gets broken\n");
+      return 4;
+    }
+
+    if (!memcmp(buffer1,buffer2,sizeof(buffer1))) {
+      fprintf(stderr, "fgets and wzd_cache_gets returned different output\n");
+      return 5;
+    }
+  }
+
+  wzd_cache_close(cache);
+
+
+
   fclose(file);
+
+  wzd_cache_purge();
 
   wzd_debug_fini();
 
