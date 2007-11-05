@@ -30,6 +30,10 @@ if(GNUTLS_FOUND)
   INCLUDE_DIRECTORIES(${GNUTLS_INCLUDE_DIR})
 endif(GNUTLS_FOUND)
 
+if(KRB5_FOUND)
+  INCLUDE_DIRECTORIES(${KRB5_INCLUDE_DIRS})
+endif(KRB5_FOUND)
+
 add_subdirectory (arch)
 
 SET(libwzd_core_pub_HEADERS
@@ -163,6 +167,10 @@ endif (CRYPTO_FOUND)
 if (GNUTLS_FOUND)
   set(libwzd_core_LIBS ${libwzd_core_LIBS} ${GNUTLS_LIBRARIES})
 endif (GNUTLS_FOUND)
+
+if (KRB5_FOUND)
+  set(libwzd_core_LIBS ${libwzd_core_LIBS} ${KRB5_LIBRARIES})
+endif (KRB5_FOUND)
 
 if (PAM_FOUND)
   set(libwzd_core_LIBS ${libwzd_core_LIBS} ${PAM_LIBRARIES})

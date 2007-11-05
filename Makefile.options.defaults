@@ -12,6 +12,7 @@ DEBUG = 0
 # 0 mean the component is disabled, 1 means that it is automatically detected
 
 WITH_IPV6 = 0
+WITH_KRB5 = 0
 WITH_PAM = 0
 WITH_UTF8 = 1
 

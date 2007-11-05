@@ -57,6 +57,7 @@ macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
 
 OPTION(WITH_IPV6 "enable IPv6 support" OFF)
+OPTION(WITH_KRB5 "enable kerberos 5 support" OFF)
 OPTION(WITH_PAM "enable PAM support" OFF)
 OPTION(WITH_UTF8 "enable UTF-8 support" ON)
 
@@ -66,6 +67,11 @@ OPTION(WITH_TESTS "enable unit tests" OFF)
 
 find_package(Threads REQUIRED)
 ADD_DEFINITIONS(-DWZD_MULTITHREAD)
+
+IF(WITH_KRB5)
+  SET(KRB5_FIND_COMPONENTS "gssapi")
+  macro_optional_find_package(Krb5)
+ENDIF(WITH_KRB5)
 
 #########################################################################
 # Disallow in-source build
@@ -106,6 +112,12 @@ if (OPENSSL_FOUND)
   SET(WZD_BUILD_OPTS  ${WZD_BUILD_OPTS} "ssl")
   ADD_DEFINITIONS(-DHAVE_OPENSSL)
 endif (OPENSSL_FOUND)
+
+if (KRB5_FOUND)
+  message(STATUS "Configuring for kerberos 5")
+  SET(WZD_BUILD_OPTS  ${WZD_BUILD_OPTS} "krb5")
+  ADD_DEFINITIONS(-DHAVE_KRB5)
+endif (KRB5_FOUND)
 
 if (WITH_IPV6)
   message(STATUS "Configuring for IPv6")
