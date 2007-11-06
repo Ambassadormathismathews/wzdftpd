@@ -38,6 +38,7 @@
 #include <libwzd-core/wzd_structs.h> /* struct wzd_context_t */
 #include <libwzd-core/wzd_log.h> /* out_log */
 #include <libwzd-core/wzd_misc.h> /* GetMyContext */
+#include <libwzd-core/wzd_debug.h> /* assertions */
 
 #if defined(HAVE_KRB5)
 
@@ -112,10 +113,15 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
       gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
       return -1;
     }
+#ifdef WZD_DBG_KRB5
+    out_log(LEVEL_INFO, "gss_import_name(%s) ok\n",buffer);
+#endif
   }
 
+#ifdef WZD_DBG_KRB5
   out_log(LEVEL_FLOOD,"auth_gssapi_init: acquiring credentials (uid = %d, keytab = %s)\n",
       (int)geteuid(), getenv( "KRB5_KTNAME") );
+#endif
 
   maj_stat = gss_acquire_cred (&min_stat,
                                (*data)->server,
@@ -128,6 +134,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
   if (maj_stat != GSS_S_COMPLETE) {
     out_log(LEVEL_HIGH,"auth_gssapi_init: getting credentials:\n");
     gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
+    out_log(LEVEL_HIGH,"check your KRB5_KTNAME environment variable\n");
     return -1;
   }
 
@@ -195,7 +202,9 @@ int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t
 
   *ptr_out = NULL;
 
-  out_log(LEVEL_FLOOD,"DEBUG: input token is %d bytes long\n",input_token.length);
+#ifdef WZD_DBG_KRB5
+  out_log(LEVEL_FLOOD,"DEBUG: input token is %ld bytes long\n",(long)input_token.length);
+#endif
 
   maj_stat = gss_accept_sec_context (&min_stat,
                                      &data->context_hdl,
@@ -253,7 +262,7 @@ int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_
   int error;
   OM_uint32 maj_stat, min_stat;
   gss_buffer_desc tokbuf, outbuf;
-  OM_uint32 cflags;
+  int cflags;
   gss_qop_t quality;
 
   tokbuf.value = calloc(strlen(ptr_in),1);
@@ -288,18 +297,75 @@ int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_
   return -1;
 }
 
+int auth_gssapi_encode(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out)
+{
+  int error;
+  OM_uint32 maj_stat, min_stat;
+  gss_buffer_desc in_buf, out_buf;
+  int conf_req_flag;
+  int state;
+
+  /* wrap message */
+  in_buf.value = ptr_in;
+  in_buf.length = length_in; /* XXX should be strlen(real_msg) + 1 at least */
+
+  /* crypt message */
+  state = 1;
+
+  /* request confidentiality */
+  conf_req_flag = 0;
+
+  maj_stat = gss_wrap (&min_stat,
+                       data->context_hdl,
+                       conf_req_flag,
+                       GSS_C_QOP_DEFAULT,
+                       &in_buf,
+                       &state,
+                       &out_buf);
+  if (maj_stat != GSS_S_COMPLETE) {
+    out_log(LEVEL_HIGH,"gss_wrap error (%lx,%lx):\n",(unsigned long)maj_stat,(unsigned long)min_stat);
+    gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
+    return -1;
+  }
+
+  if (out_buf.length != 0) {
+    *ptr_out = calloc(out_buf.length*4 + 4 + 1 + 2,1); /* 4 more characters for reply code + space, and 2 more for CRLF */
+    memcpy(*ptr_out, "632 ", 4);
+    if ( (error = radix_encode(out_buf.value, (unsigned char*)*ptr_out+4, (int *)&out_buf.length, 0)) != 0 ) {
+      out_log(LEVEL_HIGH,"GSSAPI: could no encode reply\n");
+      return -1;
+    }
+    *length_out = strlen(*ptr_out);
+    memcpy(*ptr_out + *length_out, "\r\n", 2);
+    (*length_out) += 2;
+  }
+
+#ifdef WZD_DBG_KRB5
+    out_log(LEVEL_FLOOD,"DEBUG: encoded [%s]\n",*ptr_out);
+#endif
+
+  maj_stat = gss_release_buffer (&min_stat, &out_buf);
+
+  return 0;
+}
+
 int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   int ret;
   wzd_context_t * context = vcontext;
+
+  WZD_ASSERT( msg != NULL );
 
   ret = clear_read(sock, msg, length, flags, timeout, vcontext);
   if (ret < 0) return ret;
 
   msg[ret] = '\0';
 
+#ifdef WZD_DBG_KRB5
   out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_read %d = [%s]\n",ret,msg);
-  if (ret > 3 && strncasecmp(msg,"MIC ",4)==0) {
+#endif
+
+  if (ret > 3 && (strncasecmp(msg,"MIC ",4)==0 || strncasecmp(msg,"ENC ",4)==0)) { /** \todo XXX if text is ENC, decode message as such */
     char * ptr_out = NULL;
     size_t length_out;
     int err;
@@ -308,7 +374,9 @@ int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned in
 
     err = auth_gssapi_decode_mic(context->gssapi_data, msg+4, strlen(msg+4), &ptr_out, &length_out);
 
+#ifdef WZD_DBG_KRB5
     out_log(LEVEL_FLOOD,"DEBUG: decoded [%s]\n",ptr_out);
+#endif
 
     if (length_out >= length) {
       out_log(LEVEL_CRITICAL,"FATAL: decoded MIC command is larger than base64\n");
@@ -325,10 +393,30 @@ int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned in
 
 int auth_gssapi_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
+  wzd_context_t * context = vcontext;
   int ret;
+  char *ptr_out;
+  size_t length_out;
+  char * real_msg;
 
-  ret = clear_write(sock, msg, length, flags, timeout, vcontext);
-  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_write %d = [%s]\n",ret,msg);
+  WZD_ASSERT( msg != NULL );
+  real_msg = wzd_strdup(msg);
+
+  /* line breaks should not be included */
+  while ( length > 0 && ( real_msg[length-1]=='\r' || real_msg[length-1]=='\n' ) ) {
+    real_msg[length-1] = '\0';
+    length--;
+  }
+
+#ifdef WZD_DBG_KRB5
+  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_write %d = [%s]\n",ret,real_msg);
+#endif
+
+  ret = auth_gssapi_encode(context->gssapi_data, real_msg, length, &ptr_out, &length_out);
+
+  ret = clear_write(sock, ptr_out, length_out, flags, timeout, vcontext);
+
+  free(ptr_out);
 
   return ret;
 }

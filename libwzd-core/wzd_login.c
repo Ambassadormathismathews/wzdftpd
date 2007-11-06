@@ -649,7 +649,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
           size_t length_out;
 
           base64data = strtok_r(NULL," \t\r\n",&ptr);
+#ifdef WZD_DBG_KRB5
           out_log(LEVEL_FLOOD,"DEBUG: received ADAT [%s]\n",base64data);
+#endif
           ret = auth_gssapi_accept_sec_context(context->gssapi_data, base64data, strlen(base64data), &ptr_out, &length_out);
           switch (ret) {
             case 1:

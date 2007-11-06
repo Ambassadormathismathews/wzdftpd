@@ -31,14 +31,41 @@
 
 typedef struct _auth_gssapi_data_t * auth_gssapi_data_t;
 
+/** \brief Initialize GSSAPI code
+ *
+ * \note This function should be called only once
+ */
 int auth_gssapi_init(auth_gssapi_data_t * data);
 
+/** \brief Accept security context
+ */
 int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out);
 
+/** \brief Decode MIC (or ENC) command
+ *
+ * Command is decoded from base64, then passed to gss_unwrap
+ */
 int auth_gssapi_decode_mic(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out);
 
+/** \brief Encode GSSAPI reply
+ *
+ * Reply must be stripped from the last CRLF, then passed to gss_wrap and encoded in base 64. A reply code is prepended:
+ *  - 631 for a reply ensuring integrity only
+ *  - 632 for a reply ensuring integrity and confidentiality
+ *  - 633 for a reply ensuring confidentiality only
+ */
+int auth_gssapi_encode(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out);
+
+/** \brief Read function for a GSSAPI-compliant client
+ *
+ * Check if command is protected by MIC or ENC
+ */
 int auth_gssapi_read(int sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
+/** \brief Write function for a GSSAPI-compliant client
+ *
+ * Encode reply before sending
+ */
 int auth_gssapi_write(int sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
 /* return 1 if user is validated */
