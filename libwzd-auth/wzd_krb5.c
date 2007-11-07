@@ -69,6 +69,9 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
   u_char acct_buf[4];
 #endif
 
+  /** we need the server ip address to initialize kerberos, so at the moment
+   * we use the local address from the connection
+   */
   context = GetMyContext();
   if (!context) return 0;
 
@@ -186,7 +189,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
 int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t length_in, char ** ptr_out, size_t * length_out)
 {
   OM_uint32 maj_stat, min_stat, min_stat2;
-  gss_buffer_desc input_token, output_token;
+  gss_buffer_desc input_token, output_token, name_token;
   gss_name_t client_name;
   gss_OID mechid;
   unsigned int ret_flags = 0;
@@ -231,6 +234,24 @@ int auth_gssapi_accept_sec_context(auth_gssapi_data_t data, char * ptr_in,size_t
 
   if (maj_stat == GSS_S_COMPLETE) {
     out_log(LEVEL_FLOOD,"DEBUG: gssapi authentication succeeded\n");
+
+    /* get name */
+    maj_stat = gss_display_name (&min_stat,
+                                 client_name,
+                                 &name_token,
+                                 NULL);
+    if (GSS_ERROR(maj_stat)) {
+      out_log(LEVEL_HIGH,"gss_display_name error (%lx,%lx):\n",(unsigned long)maj_stat,(unsigned long)min_stat);
+      gss_log_errors (LEVEL_HIGH,maj_stat,min_stat);
+      return -1;
+    }
+
+#ifdef WZD_DBG_KRB5
+  out_log(LEVEL_INFO,"INFO: krb5 client name is %d bytes long: [%.*s]\n",(int)name_token.length,(int)name_token.length,(char*)name_token.value);
+#endif
+
+  /** \todo XXX save name for later authentication */
+
     return 0; /* finished */
   }
 
@@ -409,14 +430,21 @@ int auth_gssapi_write(fd_t sock, const char *msg, size_t length, int flags, unsi
   }
 
 #ifdef WZD_DBG_KRB5
-  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_write %d = [%s]\n",ret,real_msg);
+  out_log(LEVEL_FLOOD,"DEBUG: auth_gssapi_write [%s]\n",real_msg);
 #endif
 
   ret = auth_gssapi_encode(context->gssapi_data, real_msg, length, &ptr_out, &length_out);
+  if (ret < 0) {
+    out_log(LEVEL_CRITICAL,"FATAL: auth_gssapi_encode failed\n");
+    free(ptr_out);
+    free(real_msg);
+    return -1;
+  }
 
   ret = clear_write(sock, ptr_out, length_out, flags, timeout, vcontext);
 
   free(ptr_out);
+  free(real_msg);
 
   return ret;
 }

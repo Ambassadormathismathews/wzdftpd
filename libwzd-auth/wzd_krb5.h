@@ -25,7 +25,10 @@
 #ifndef __WZD_KRB5__
 #define __WZD_KRB5__
 
-/*! \addtogroup libwzd_auth
+/*! \file wzd_krb5.h
+ * \brief Implementation of the GSSAPI support (as described in RFC 2228)
+ *
+ * \addtogroup libwzd_auth
  *  @{
  */
 

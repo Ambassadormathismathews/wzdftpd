@@ -668,11 +668,6 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
               ret = send_message_with_args(535,context,"GSSAPI authentication failed");
               return 1;
           }
-#if 0
-          length_in = base64_encode((u_int8_t*)ptr_out,length_out,(u_int8_t*)buffer2);
-          ret = send_message_with_args(334, context, "ADAT=", buffer2);
-          send_message_with_args(530,context,"I don't know yet how to play with ADAT");
-#endif
         }
         break;
     default:
