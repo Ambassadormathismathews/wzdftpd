@@ -224,11 +224,6 @@ int do_pass(const char *username, const char * pass, wzd_context_t * context)
     return E_PASS_REJECTED;
   }
 
-  /* normalize rootpath */
-
-/*  if (!realpath(context->userinfo.rootpath,buffer)) return 1;
-  strncpy(context->userinfo.rootpath,buffer,1024);*/
-
   /* initial dir */
   strcpy(context->currentpath,"/");
 #ifdef WIN32
@@ -320,8 +315,8 @@ static int do_login_loop(wzd_context_t * context)
   context->state = STATE_LOGGING;
 
   while (1) {
-    /* wait response */
-    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
+    /* wait response : read at most BUFFER_LEN - 1 characters, so we are sure we can add a \0  */
+    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN-1,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
       out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
@@ -332,23 +327,17 @@ static int do_login_loop(wzd_context_t * context)
       return 1;
     }
 
-    /* this replace the memset (bzero ?) some lines before */
-    buffer[ret-1] = '\0';
+    buffer[ret] = '\0'; /* no overflow here since we read BUFFER_LEN - 1 characters at most */
+    chop(buffer);
 
     if (buffer[0]=='\0') continue;
 
-    {
-      size_t length = strlen(buffer);
-      while (length > 0 && (buffer[length-1]=='\r' || buffer[length-1]=='\n'))
-        buffer[length-- -1] = '\0';
-      set_action(context,buffer);
-    }
+    set_action(context,buffer);
 
 #ifdef DEBUG
 out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,buffer);
 #endif
 
-    /* strtok_r: to be reentrant ! */
     ptr = buffer;
     token = strtok_r(buffer," \t\r\n",&ptr);
     command = identify_token(token);
@@ -459,9 +448,11 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
 #if defined (HAVE_KRB5)
       if (strcasecmp(token,"GSSAPI")==0) {
         ret = do_login_gssapi(context);
-        /** \todo mark the user as already authenticated */
+        if (ret != 0) {
+          out_log(LEVEL_INFO, "GSSAPI authentication failed");
+        }
+        /* continue authentication to handle login/password */
         break;
-/*        return ret;*/
       }
 #endif
       if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
@@ -757,8 +748,6 @@ int do_login(wzd_context_t * context)
 static int check_tls_forced(wzd_context_t * context)
 {
   wzd_user_t * user;
-/*  wzd_group_t *group;
-  int i;*/
 
   user = GetUserByID(context->userid);
 
@@ -767,17 +756,6 @@ static int check_tls_forced(wzd_context_t * context)
       return E_USER_TLSFORCED;
     }
   }
-  /* TODO XXX FIXME implement flags for groups */
-#if 0
-  /* try groups */
-  for (i=0; i<user->group_num; i++) {
-    group = GetGroupByID(user->groups[i]);
-    if (group->flags && strchr(group->flags,FLAG_TLS)) {
-      if ( !(context->connection_flags & CONNECTION_TLS) ) {
-        return 1;
-      }
-  }
-#endif
 
   return E_OK;
 }
