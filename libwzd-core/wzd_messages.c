@@ -125,39 +125,28 @@ void free_messages(void)
 
 const char * getMessage(int code, int *must_free)
 {
+  int ret;
   const char * ptr;
   char * file_buffer;
-  unsigned long filesize, size;
-  u64_t sz64;
+  size_t size;
 
   if (code < 0 || code > HARD_MSG_LIMIT)
     return DEFAULT_MSG;
+
   *must_free = 0;
+
   ptr = msg_tab[code];
   if (!ptr || strlen(ptr)==0) return DEFAULT_MSG;
+
   if (ptr[0]=='+') { /* returns file content */
-    wzd_cache_t * fp;
-    fp = wzd_cache_open(ptr+1,O_RDONLY,0644);
-    if (!fp) return DEFAULT_MSG;
-    sz64 = wzd_cache_getsize(fp);
-    if (sz64 > INT_MAX) {
-      out_log(LEVEL_HIGH,"%s:%d couldn't allocate " PRIu64 " bytes for message %d\n",__FILE__,__LINE__,code);
-      wzd_cache_close(fp);
-      *must_free = 0;
-      return NULL;
-    }
-    filesize = (unsigned int) sz64;
-    file_buffer = wzd_malloc(filesize+1);
-    if ( (size=wzd_cache_read(fp,file_buffer,filesize))!=filesize ) {
-      wzd_free(file_buffer);
-      wzd_cache_close(fp);
+    ret = wzd_cache_read_file_fast(ptr+1, &file_buffer, &size);
+    if (ret < 0) {
       return DEFAULT_MSG;
     }
-    file_buffer[filesize]='\0';
-    wzd_cache_close(fp);
     *must_free = 1;
     return file_buffer;
   }
+
   return ptr;
 }
 
