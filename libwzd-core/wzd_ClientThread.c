@@ -640,22 +640,6 @@ int waitconnect(wzd_context_t * context)
 
 int list_callback(fd_t sock, wzd_context_t * context, char *line)
 {
-  fd_set fds;
-  struct timeval tv;
-
-  do {
-    FD_ZERO(&fds);
-    FD_SET(sock,&fds);
-    tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
-
-    if (select(sock+1,NULL,&fds,NULL,&tv) <= 0) {
-      out_err(LEVEL_FLOOD,"LIST timeout to client.\n");
-      socket_close(sock);
-      send_message_with_args(501,context,"LIST timeout");
-      return 0;
-    }
-  } while (!FD_ISSET(sock,&fds));
-
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->tls_data_mode == TLS_CLEAR)
     clear_write(sock,line,strlen(line),0,HARD_XFER_TIMEOUT,context);
@@ -2422,7 +2406,7 @@ int do_mdtm(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
   return E_FILE_NOEXIST;
 }
 
-/*************** do_size *****************************/
+/*************** do_moda *****************************/
 int do_moda(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
 #ifdef HAVE_STRPTIME
@@ -2545,6 +2529,10 @@ int do_moda(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 }
 
 /*************** do_size *****************************/
+/** Get file size
+ *
+ * \return E_OK or an error code
+ */
 int do_size(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
@@ -2578,12 +2566,8 @@ int do_size(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 }
 
 /*************** do_abor *****************************/
-/** \brief Abort current transfer
- *
- * Abort current service command and any associated transfer of data.
- * The command connection is not closed, but the data connection is closed.
- *
- * The corresponding FTP command is ABOR (RFC959 p30)
+/** Abort current service command and any associated transfer of data.
+ * The control connection is not closed, but the data connection is closed.
  */
 int do_abor(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t * context)
 {
