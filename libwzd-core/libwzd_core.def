@@ -298,6 +298,7 @@ EXPORTS
 	wzd_cache_open
 	wzd_cache_purge
 	wzd_cache_read
+	wzd_cache_read_file_fast
 	wzd_cache_update
 	wzd_cache_write
 	wzd_debug_init

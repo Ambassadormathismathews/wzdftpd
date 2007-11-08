@@ -57,6 +57,9 @@ void wzd_cache_close(wzd_cache_t * c);
 /** \brief Purge all files in cache */
 void wzd_cache_purge(void);
 
+/** \brief Open file in cache, read it and return contents */
+int wzd_cache_read_file_fast(const char * filename, char ** buffer, size_t * size);
+
 
 #ifndef WZD_NO_USER_CACHE
 

@@ -584,3 +584,54 @@ void wzd_cache_purge(void)
   WZD_MUTEX_UNLOCK(SET_MUTEX_CACHE);
 }
 
+/** Open file in cache, read it and return contents
+ *
+ * *buffer must be freed using wzd_free() if not NULL.
+ *
+ * \param[in] filename Absolute path to file
+ * \param[out] buffer Address of a char *, which will store the contents of the file
+ * \param[out] size Address of a size_t, which will store the length of the file
+ *
+ * \return 0 if ok
+ */
+int wzd_cache_read_file_fast(const char * filename, char ** buffer, size_t * size)
+{
+  wzd_cache_t * fp;
+  u64_t sz64;
+  char * file_buffer;
+  unsigned long filesize, size_read;
+
+  fp = wzd_cache_open(filename, O_RDONLY, 0644);
+  if (fp == NULL) return -1;
+
+  sz64 = wzd_cache_getsize(fp);
+  if (sz64 > INT_MAX) {
+    out_log(LEVEL_HIGH,"ERROR: wzd_cache_read_file_fast: file %s is too big to be read\n",filename);
+    wzd_cache_close(fp);
+    return -1;
+  }
+
+  filesize = (unsigned int) sz64;
+  file_buffer = wzd_malloc(filesize+1);
+  if ( file_buffer == NULL) {
+    out_log(LEVEL_HIGH,"ERROR: wzd_cache_read_file_fast: couldn't allocate %ld bytes for file %s\n",filesize+1,filename);
+    wzd_cache_close(fp);
+    return -1;
+  }
+
+  size_read = wzd_cache_read(fp,file_buffer,filesize);
+  if ( size_read != filesize ) {
+    out_log(LEVEL_HIGH,"ERROR: wzd_cache_read_file_fast: read %ld bytes instead of %ld for file %s\n",size_read,filesize,filename);
+    wzd_cache_close(fp);
+    return -1;
+  }
+
+  file_buffer[filesize]='\0';
+  wzd_cache_close(fp);
+
+  *buffer = file_buffer;
+  *size = size_read;
+
+  return 0;
+}
+
