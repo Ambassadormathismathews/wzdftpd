@@ -1330,42 +1330,41 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
   int ret;
   int found = 0;
   wzd_user_t *user;
+  char buffer[1024];
 
   username = str_tok(param," \t\r\n");
   if (!username) {
     ret = send_message_with_args(501,context,"Usage: site kick <user>");
     return 0;
   }
-  /* check if user  exists */
+  /* check if user exists */
   user = GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( user == NULL ) {
     ret = send_message_with_args(501,context,"User does not exist");
-    return 0;
-  }
-
-  /* preliminary check: i can't kill myself */
-  if (user->uid == context->userid) {
-    ret = send_message_with_args(501,context,"My religion forbids me suicide!");
-    return 0;
-  }
-
-  /* kill'em all ! */
-  {
+  } else { /* kill'em all! */
     ListElmt * elmnt;
     wzd_context_t * loop_context;
     for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
       loop_context = list_data(elmnt);
       if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
         if (user->uid == loop_context->userid) {
-          found = 1;
-          kill_child_new(loop_context->pid_child,context);
+          /* note that kill_child_new does not permit suicide */
+          if (kill_child_new(loop_context->pid_child,context))
+            found++;
         }
       }
     } /* for all contexts */
+    if (!found) {
+      if (user->uid != context->userid)
+        ret = send_message_with_args(501,context,"User has no connections to server");
+      else
+        ret = send_message_with_args(501,context,"Can not commit suicide");
+    } else {
+      snprintf(buffer,1023,"User's %d connections to server have been killed",found);
+      ret = send_message_with_args(200,context,buffer);
+    }
   }
-  if (!found) { ret = send_message_with_args(501,context,"User is not logged!"); }
-  else { ret = send_message_with_args(200,context,"KILL signal sent"); }
 
   return 0;
 }
