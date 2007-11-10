@@ -69,7 +69,10 @@ int do_port(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_pasv(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_eprt(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_epsv(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+
+/** \brief ABOR: abort current transfer */
 int do_abor(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+
 int do_print_message(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_rnfr(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_rnto(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
@@ -84,7 +87,10 @@ int do_retr(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_stor(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_rest(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_mdtm(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+
+/** \brief SIZE: get file size */
 int do_size(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
+
 int do_dele(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_pret(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);
 int do_xcrc(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context);

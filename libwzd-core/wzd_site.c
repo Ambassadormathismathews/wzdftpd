@@ -1619,10 +1619,9 @@ int do_site_unlock(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd
   do
   {
     /* convert file to absolute path, remember file_unlock wants ABSOLUTE paths ! */
-    ret = checkpath(str_tochar(filename),buffer,context);
+    ret = checkpath_new(str_tochar(filename),buffer,context);
     str_deallocate(filename);
     if (ret) continue; /* path is NOT ok ! */
-/*    buffer[strlen(buffer)-1] = '\0';*/ /* remove '/', appended by checkpath */
 
     /* we need to use open() directly because file_open uses file_islocked ... */
     ret = file_force_unlock(buffer);

@@ -1446,7 +1446,7 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
 
   fd = fs_open(filename,mode,0666);
   if (fd == -1) {
-    out_log(LEVEL_INFO,"Can't open %s,errno %d : %s\n",filename,errno,strerror(errno));
+    out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",filename,errno,strerror(errno));
     return -1;
   }
 
@@ -2051,7 +2051,10 @@ out_err(LEVEL_HIGH,"Forcing unlock file %s\n",file);
 #endif
 
   fd = open(file,O_RDWR);
-  if (fd < 0) return -1;
+  if (fd < 0) {
+    out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",file,errno,strerror(errno));
+    return -1;
+  }
 
 #ifndef WIN32
   {
