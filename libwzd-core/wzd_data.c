@@ -375,8 +375,6 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
         user->credits -= n;
       context->idle_time_data_start = server_time;
     } else { /* end */
-      send_message_raw("226- command ok\r\n",context);
-
       data_end_transfer(0 /* is_upload */, 1 /* end_ok */, context);
 
       ret = send_message(226,context);
@@ -413,8 +411,6 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       context->idle_time_data_start = server_time;
     } else { /* consider it is finished */
       off_t current_position;
-
-      send_message_raw("226- command ok\r\n",context);
 
       /** If we don't resume a previous upload, we have to truncate the current file
        * or we won't be able to overwrite a file by a smaller one
@@ -517,7 +513,6 @@ int do_local_retr(wzd_context_t * context)
 
 _local_retr_exit:
   if (exit_ok) { /* send header */
-    send_message_raw("226- command ok\r\n",context);
     context->last_file.crc = crc;
   }
 
@@ -618,7 +613,6 @@ _local_stor_exit:
   if (exit_ok) { /* send header */
     off_t current_position;
 
-    send_message_raw("226- command ok\r\n",context);
     context->last_file.crc = crc;
 
     /** If we don't resume a previous upload, we have to truncate the current file
