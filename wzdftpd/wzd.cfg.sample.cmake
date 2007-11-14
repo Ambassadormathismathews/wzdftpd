@@ -299,8 +299,9 @@ ALL = /* ^([]\[A-Za-z0-9_.'() \t+-])*$
 #event1 = MKDIR /bin/df
 
 # Here you can define external site commands.
+# You must use absolute paths
 [custom_commands]
-#my_free = ./free.sh
+#my_free = /usr/local/bin/free.sh
 # this defines the SITE RULES command, which prints the following file
 site_rules = !@CMAKE_INSTALL_PREFIX@/@sysconfdir@/file_rules.txt
 
