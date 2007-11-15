@@ -1496,9 +1496,16 @@ int serverMainThreadProc(void *arg)
 
   /********** daemon mode ***********/
 #ifndef DEBUG
-  close(0);
-  close(1);
-  close(2);
+  {
+    /* warning: do not close fd (0 1 2), or this will create problems when trying
+     * to create child process with a pipe (dup2 fails with error EBADF)
+     */
+    int fd = open("/dev/null",O_RDWR);
+    dup2(fd,0);
+    dup2(fd,1);
+    dup2(fd,2);
+    close(fd);
+  }
 #endif
 
 #ifndef WIN32
