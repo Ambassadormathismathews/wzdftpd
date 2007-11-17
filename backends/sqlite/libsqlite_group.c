@@ -55,15 +55,24 @@ static int libsqlite_group_next_id()
   db = libsqlite_open();
   if (db == NULL) return INVALID_GROUP;
   
-  sqlite3_prepare(db, "SELECT COUNT(gid), MAX(gid) FROM groups;",
-                  -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT COUNT(gid), MAX(gid) FROM groups;",
+                        -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return INVALID_GROUP;
+  }
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return INVALID_GROUP;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return INVALID_GROUP;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         count = sqlite3_column_int(stmt, 0);
@@ -98,17 +107,26 @@ int libsqlite_group_get_ref_by_id(gid_t gid)
   sqlite3_stmt *stmt=NULL;
 
   db = libsqlite_open();
-  if (db == NULL) return ref;
+  if (db == NULL) return -1;
   
-  sqlite3_prepare(db, "SELECT gref FROM groups WHERE gid = ?;", -1, &stmt, NULL);
-  sqlite3_bind_int(stmt, 1, gid);
+  ret = sqlite3_prepare(db, "SELECT gref FROM groups WHERE gid = ?;", -1, &stmt, NULL);
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return -1;
+  }
+
+  ret = sqlite3_bind_int(stmt, 1, gid);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-        return ref;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);      
+        return -1;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         ref = sqlite3_column_int(stmt, 0);
@@ -139,17 +157,26 @@ gid_t libsqlite_group_get_id_by_ref(int ref)
   db = libsqlite_open();
   if (db == NULL) return gid;
   
-  sqlite3_prepare(db, "SELECT gid FROM groups WHERE gref = ?;", -1,
-                  &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT gid FROM groups WHERE gref = ?;", -1,
+                        &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return INVALID_GROUP;
+  }
 
   sqlite3_bind_int(stmt, 1, ref);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return gid;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return INVALID_GROUP;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         gid = sqlite3_column_int(stmt, 0);
@@ -179,18 +206,26 @@ static gid_t libsqlite_group_get_id_by_name(const char *name)
 
   db = libsqlite_open();
   if (db == NULL) return gid;
-  
-  sqlite3_prepare(db, "SELECT gid FROM groups WHERE groupname = ?;", -1,
-                  &stmt, NULL);
+
+  ret = sqlite3_prepare(db, "SELECT gid FROM groups WHERE groupname = ?;", -1,
+                        &stmt, NULL);
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return INVALID_GROUP;
+  }
 
   sqlite3_bind_text(stmt, 1, name, strlen(name), SQLITE_STATIC);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return gid;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return INVALID_GROUP;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         gid = sqlite3_column_int(stmt, 0);
@@ -222,17 +257,26 @@ static void libsqlite_group_get_ip(wzd_group_t *group)
   db = libsqlite_open();
   if (db == NULL) return;
   
-  sqlite3_prepare(db, "SELECT ip FROM groupip WHERE gref = ?;",
-                  -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT ip FROM groupip WHERE gref = ?;",
+                        -1, &stmt, NULL);
+
+  if (ret != SQLITE_DONE) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return;
+  }
 
   sqlite3_bind_int(stmt, 1, ref);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         ip = (char *) sqlite3_column_text(stmt, 0);
@@ -264,17 +308,24 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
   sqlite3 *db=NULL;
   sqlite3_stmt *stmt=NULL;
 
-  out_log(SQLITE_LOG_CHANNEL, "Sqlite backend search for gid(%d)\n", gid);
-
   db = libsqlite_open();
   if (db == NULL) return NULL;
   
-  sqlite3_prepare(db,
-    "SELECT groupname, defaultpath, flags, tagline, groupperms, max_idle_time, \
-            num_logins, max_ul_speed, max_dl_speed, ratio               \
-       FROM groups                                                      \
-      WHERE gid = ?;",
-    -1, &stmt, NULL);
+  ret = sqlite3_prepare(db,
+    "SELECT                                                                 \
+         groupname, defaultpath, flags, tagline, groupperms, max_idle_time, \
+         num_logins, max_ul_speed, max_dl_speed, ratio                      \
+     FROM                                                                   \
+         groups                                                             \
+     WHERE gid = ?;",
+    -1, &stmt, NULL
+   );
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return NULL;
+  }
 
   sqlite3_bind_int(stmt, 1, gid);
 
@@ -282,12 +333,14 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
   {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return NULL;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return NULL;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend gid(%d) found.\n", gid);
         group = group_allocate();
         group->gid = gid;
         _TXT_CPY(group->groupname, (char *) sqlite3_column_text(stmt, 0), HARD_GROUPNAME_LENGTH);
@@ -311,7 +364,7 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
   libsqlite_close(&db);
 
   if (! group) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend gid(%d) not found.\n", gid);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite: gid(%d) not found.\n", gid);
   }
 
   return group;
@@ -340,14 +393,22 @@ gid_t *libsqlite_group_get_list()
   db = libsqlite_open();
   if (db == NULL) return NULL;
 
-  sqlite3_prepare(db, "SELECT gid FROM groups;", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT gid FROM groups;", -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return NULL;
+  }
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return NULL;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return NULL;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         group_list = realloc(group_list, (index + 2) * sizeof(gid_t));
@@ -376,7 +437,7 @@ int libsqlite_group_add(wzd_group_t *group)
 
   group->gid = libsqlite_group_next_id();
   if (group->gid == INVALID_GROUP) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite Backend could'nt get next gid.\n");
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could'nt get next gid.\n");
     return 0;
   }
 
@@ -396,11 +457,9 @@ int libsqlite_group_add(wzd_group_t *group)
     group->ratio
   );
 
-  out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
-
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   if (errmsg) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend query error: %s\n", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
     libsqlite_close(&db);
     return 0;
   }
@@ -481,11 +540,9 @@ void libsqlite_group_update(gid_t gid, wzd_group_t *group,
   if (separator == ',') {
     libsqlite_add_to_query(&query, " WHERE gid = %d;", gid);
  
-    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite update query: %s\n", query);
-   
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
     }
 
     libsqlite_close(&db);
@@ -534,7 +591,7 @@ static void libsqlite_group_update_ip(gid_t gid, wzd_group_t *group)
                             gref, curr->regexp);
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
       sqlite3_free(errmsg);
       errmsg = NULL;
     }
@@ -547,7 +604,7 @@ static void libsqlite_group_update_ip(gid_t gid, wzd_group_t *group)
                             gref, curr->regexp);
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
       sqlite3_free(errmsg);
       errmsg = NULL;
     }
@@ -583,7 +640,7 @@ void libsqlite_group_del(gid_t gid)
   query = sqlite3_mprintf("DELETE FROM groups WHERE gref=%d;", gref);
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   if (errmsg != NULL) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s", errmsg);
     sqlite3_free(errmsg);
     errmsg = NULL;
   }
@@ -593,7 +650,7 @@ void libsqlite_group_del(gid_t gid)
   query = sqlite3_mprintf("DELETE FROM ugr WHERE gref=%d;", gref);
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   if (errmsg != NULL) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s", errmsg);
     sqlite3_free(errmsg);
     errmsg = NULL;
   }

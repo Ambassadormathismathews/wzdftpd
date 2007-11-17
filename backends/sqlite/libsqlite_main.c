@@ -180,9 +180,6 @@ static int FCN_FINI(void)
 
 static uid_t FCN_VALIDATE_LOGIN(const char *login, UNUSED wzd_user_t * _ignored)
 {
- 
-  out_log(SQLITE_LOG_CHANNEL, "Backend sqlite search for user '%s'\n", login);
-
   return libsqlite_user_get_id_by_name(login);
 }
 

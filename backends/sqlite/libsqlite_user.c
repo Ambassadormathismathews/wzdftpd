@@ -59,15 +59,24 @@ static uid_t libsqlite_user_next_id()
   db = libsqlite_open();
   if (db == NULL) return INVALID_USER;
   
-  sqlite3_prepare(db, "SELECT COUNT(uid), MAX(uid) FROM users;",
-                  -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT COUNT(uid), MAX(uid) FROM users;",
+                        -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return INVALID_USER;
+  }
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return INVALID_USER;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return INVALID_USER;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         count = sqlite3_column_int(stmt, 0);
@@ -104,19 +113,28 @@ uid_t libsqlite_user_get_id_by_name(const char *username)
   db = libsqlite_open();
   if (db == NULL) return INVALID_USER;
 
-  sqlite3_prepare(db, "SELECT uid FROM users WHERE username = ?", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT uid FROM users WHERE username = ?", -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return INVALID_USER;
+  }
+
   sqlite3_bind_text(stmt, 1, username, strlen(username), SQLITE_STATIC);
 
   while ( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
+      case SQLITE_ERROR:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s.\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return INVALID_USER;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         uid = sqlite3_column_int(stmt, 0);
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite got a result: uid=%d\n", uid);
-        break;
-      case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
         break;
     }
   }
@@ -125,10 +143,6 @@ uid_t libsqlite_user_get_id_by_name(const char *username)
 
   if (uid == INVALID_USER) {
     out_log(SQLITE_LOG_CHANNEL, "Backend sqlite user not found.\n");
-  }
-  else {
-    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite found user: %s(%d)\n", username,
-            uid);
   }
 
   libsqlite_close(&db);
@@ -150,19 +164,28 @@ static int libsqlite_user_get_ref_by_uid(uid_t uid)
   db = libsqlite_open();
   if (db == NULL) return ref;
 
-  sqlite3_prepare(db, "SELECT uref FROM users WHERE uid = ?", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT uref FROM users WHERE uid = ?", -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return -1;
+  }
+
   sqlite3_bind_int(stmt, 1, uid);
 
   while ( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
+      case SQLITE_ERROR:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return -1;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         ref = sqlite3_column_int(stmt, 0);
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite got a result: uid=%d\n", uid);
-        break;
-      case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
         break;
     }
   }
@@ -190,18 +213,32 @@ static void libsqlite_user_get_ip(wzd_user_t *user)
   db = libsqlite_open();
   if (db == NULL) return;
 
-  sqlite3_prepare(db, "SELECT ip FROM userip WHERE uref = ?", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT ip FROM userip WHERE uref = ?", -1, &stmt,
+                        NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return;
+  }
+
   sqlite3_bind_int(stmt, 1, ref);
 
   while( (ret=sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
+      case SQLITE_ERROR:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         ip = (char *) sqlite3_column_text(stmt, 0);
-	if (ip == NULL) continue;
-	if (strlen(ip) < 1 || strlen(ip) >= MAX_IP_LENGTH) continue;
-	ip_add_check(&user->ip_list, ip, 1);
+        if (ip == NULL) continue;
+        if (strlen(ip) < 1 || strlen(ip) >= MAX_IP_LENGTH) continue;
+        ip_add_check(&user->ip_list, ip, 1);
         break;
     }
   }
@@ -222,27 +259,36 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
   sqlite3 *db=NULL;
   sqlite3_stmt *stmt=NULL;
 
-  out_log(SQLITE_LOG_CHANNEL, "Sqlite backend search for uid(%d)\n", uid);
-
   db = libsqlite_open();
   if (db == NULL) return NULL;
 
-  sqlite3_prepare(db, 
+  ret = sqlite3_prepare(db, 
     "SELECT username, userpass, rootpath, tagline, flags, creator, max_idle_time, \
             max_ul_speed, max_dl_speed, num_logins, credits, ratio,      \
             user_slots, leech_slots, perms, last_login                   \
        FROM users                                                        \
        WHERE uid = ?",
        -1, &stmt, NULL);
+ 
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return NULL;
+  }
 
   sqlite3_bind_int(stmt, 1, uid);
 
   while( (ret=sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
+      case SQLITE_ERROR:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return NULL;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n"); 
         continue;
       case SQLITE_ROW:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend found user.\n");
         user = user_allocate();
         user->uid = uid;
         _TXT_CPY(user->username, (char *) sqlite3_column_text(stmt, 0), HARD_USERNAME_LENGTH);
@@ -252,23 +298,20 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
         _TXT_CPY(user->flags, (char *) sqlite3_column_text(stmt, 4), MAX_FLAGS_NUM);
 
         user->creator = sqlite3_column_int(stmt, 5);
-	user->max_idle_time = sqlite3_column_int(stmt, 6);
-	user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 7);
-	user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 8);
-	user->num_logins = sqlite3_column_int(stmt, 9);
-	user->credits = sqlite3_column_int64(stmt, 10);
-	user->ratio = sqlite3_column_int(stmt, 11);
-	user->user_slots = sqlite3_column_int(stmt, 12);
-	user->leech_slots = sqlite3_column_int(stmt, 13);
+        user->max_idle_time = sqlite3_column_int(stmt, 6);
+        user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 7);
+        user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 8);
+        user->num_logins = sqlite3_column_int(stmt, 9);
+        user->credits = sqlite3_column_int64(stmt, 10);
+        user->ratio = sqlite3_column_int(stmt, 11);
+        user->user_slots = sqlite3_column_int(stmt, 12);
+        user->leech_slots = sqlite3_column_int(stmt, 13);
         user->userperms = (unsigned long) sqlite3_column_int64(stmt, 14);
-	user->last_login = sqlite3_column_int(stmt, 15);
+        user->last_login = sqlite3_column_int(stmt, 15);
 
-	libsqlite_user_get_ip(user);
+        libsqlite_user_get_ip(user);
         libsqlite_user_get_groups(user);
         libsqlite_user_get_stats(user);
-        break;
-      case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error in query.\n");
         break;
     }
   }
@@ -312,15 +355,25 @@ static void libsqlite_user_get_groups(wzd_user_t *user)
   db = libsqlite_open();
   if (db == NULL) return;
   
-  sqlite3_prepare(db, "SELECT gref FROM ugr WHERE uref = ?;", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT gref FROM ugr WHERE uref = ?;", -1, &stmt, NULL);
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return;
+  }
+
   sqlite3_bind_int(stmt, 1, uref);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         gref = sqlite3_column_int(stmt, 0);
@@ -350,15 +403,29 @@ static void libsqlite_user_get_stats(wzd_user_t *user)
   db = libsqlite_open();
   if (db == NULL) return;
   
-  sqlite3_prepare(db, "SELECT bytes_ul_total, bytes_dl_total, files_ul_total, files_dl_total FROM stats WHERE uref = ?;", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, 
+    "SELECT bytes_ul_total, bytes_dl_total, files_ul_total, files_dl_total \
+       FROM stats  WHERE uref = ?;",
+    -1, &stmt, NULL
+  );
+
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return;
+  }
+
   sqlite3_bind_int(stmt, 1, uref);
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         user->stats.bytes_ul_total = sqlite3_column_int64(stmt, 0);
@@ -390,14 +457,23 @@ uid_t *libsqlite_user_get_list()
   db = libsqlite_open();
   if (db == NULL) return NULL;
   
-  sqlite3_prepare(db, "SELECT uid FROM users;", -1, &stmt, NULL);
+  ret = sqlite3_prepare(db, "SELECT uid FROM users;", -1, &stmt, NULL);
+  
+  if (ret != SQLITE_OK) {
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
+    libsqlite_close(&db);
+    return NULL;
+  }
 
   while( (ret = sqlite3_step(stmt)) != SQLITE_DONE ) {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite backend error.\n");
-	return NULL;
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        libsqlite_close(&db);
+        return NULL;
       case SQLITE_BUSY:
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite step busy.\n");
         continue;
       case SQLITE_ROW:
         user_list = realloc(user_list, (index + 2) * sizeof(uid_t));
@@ -428,7 +504,7 @@ int libsqlite_user_add(wzd_user_t *user)
 
   user->uid = libsqlite_user_next_id();
   if (user->uid == INVALID_USER) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite Backend could'nt get next uid.\n");
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite could'nt get next uid.\n");
     return -1;
   }
   
@@ -446,12 +522,12 @@ int libsqlite_user_add(wzd_user_t *user)
 
   query = sqlite3_mprintf(
     "INSERT INTO users (                                                 \
-        uid, username, userpass, rootpath, tagline, flags, creator, max_idle_time,\
-        max_ul_speed, max_dl_speed, num_logins, ratio, user_slots,       \
-        leech_slots, perms, credits, last_login                          \
+        uid, username, userpass, rootpath, tagline, flags, creator,      \
+        max_idle_time, max_ul_speed, max_dl_speed, num_logins, ratio,    \
+        user_slots, leech_slots, perms, credits, last_login              \
       ) VALUES (                                                         \
-         %d, '%q', '%q', '%q', '%q', '%q', %d, %d, %u, %u, %d, %d, %d, %d,  \
-         %d, %d, %d                                                      \
+         %d, '%q', '%q', '%q', '%q', '%q', %d, %d, %u, %u, %d, %d, %d,   \
+         %d, %d, %d, %d                                                  \
       );",
     user->uid, user->username, passbuffer, user->rootpath,
     user->tagline, user->flags, user->creator, user->max_idle_time,
@@ -460,12 +536,10 @@ int libsqlite_user_add(wzd_user_t *user)
     user->userperms, user->credits, user->last_login
   );
 
-  out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
-
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   sqlite3_free(query);
   if (errmsg) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend query error: %s\n", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
     goto error_sqlite_close; 
   }
 
@@ -494,12 +568,11 @@ int libsqlite_user_add(wzd_user_t *user)
        user->stats.files_ul_total, user->stats.files_dl_total
     );
 #endif /* WIN32 */
-  out_log(SQLITE_LOG_CHANNEL, "add query: %s\n", query);
 
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   sqlite3_free(query);
   if (errmsg) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend query error: %s\n", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
     goto error_sqlite_close;
   }
 
@@ -529,7 +602,7 @@ void libsqlite_user_del(uid_t uid)
   if (!db) return;
 
   query = sqlite3_mprintf(
-    "DELETE FROM users WHERE uref = %d;                  \
+    "DELETE FROM users WHERE uref = %d;                 \
      DELETE FROM userip WHERE uref = %d;                \
      DELETE FROM ugr WHERE uref = %d;                   \
      DELETE FROM stats WHERE uref = %d",
@@ -539,12 +612,9 @@ void libsqlite_user_del(uid_t uid)
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   sqlite3_free(query);
   if (errmsg) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite backend query(%s) error: %s\n", query,
-            errmsg);
-    goto error_sqlite_close;
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
   }
 
-error_sqlite_close:
   libsqlite_close(&db);
 }
 
@@ -659,11 +729,9 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
   if (separator == ',') {
     libsqlite_add_to_query(&query, " WHERE uid = %d;", uid);
  
-    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite update query: %s\n", query);
-   
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
     }
   }
 
@@ -711,7 +779,7 @@ static void libsqlite_user_update_stats(uid_t uid, wzd_user_t *user)
 
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
   if (errmsg) {
-    out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
   }
   sqlite3_free(query);
 
@@ -756,7 +824,7 @@ static void libsqlite_user_update_ip(uid_t uid, wzd_user_t *user)
                             uref, curr->regexp);
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
       sqlite3_free(errmsg);
       errmsg = NULL;
     }
@@ -769,7 +837,7 @@ static void libsqlite_user_update_ip(uid_t uid, wzd_user_t *user)
                             uref, curr->regexp);
     sqlite3_exec(db, query, NULL, NULL, &errmsg);
     if (errmsg) {
-      out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+      out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
       sqlite3_free(errmsg);
       errmsg = NULL;
     }
@@ -820,7 +888,7 @@ static void libsqlite_user_update_group(uid_t uid, wzd_user_t *user)
                                 uref, gref);
         sqlite3_exec(db, query, NULL, NULL, &errmsg);
         if (errmsg) {
-          out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+          out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
           sqlite3_free(errmsg);
           errmsg = NULL;
         }
@@ -844,7 +912,7 @@ static void libsqlite_user_update_group(uid_t uid, wzd_user_t *user)
 
       sqlite3_exec(db, query, NULL, NULL, &errmsg);
       if (errmsg) {
-        out_log(SQLITE_LOG_CHANNEL, "Sqlite query error: %s\n", errmsg);
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite query exec error: %s\n", errmsg);
         sqlite3_free(errmsg);
         errmsg = NULL;
       }
