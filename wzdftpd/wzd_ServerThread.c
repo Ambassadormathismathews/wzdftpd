@@ -892,7 +892,7 @@ static void server_login_accept(wzd_context_t * context)
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (mainConfig->tls_type == TLS_IMPLICIT) {
     if (tls_auth("SSL",context)) {
-      close(context->controlfd);
+      socket_close(context->controlfd);
       FD_UNREGISTER(context->controlfd,"Client socket");
       out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
       /* mark context as free */
@@ -908,7 +908,7 @@ static void server_login_accept(wzd_context_t * context)
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_CHECKIP_LOGIN)) {
     ret = check_ip_before_login(context);
     if (ret) {
-      close(context->controlfd);
+      socket_close(context->controlfd);
       FD_UNREGISTER(context->controlfd,"Client socket");
       out_log(LEVEL_NORMAL,"INFO rejected connection from %s\n",inet_buf);
       /* mark context as free */
@@ -1621,7 +1621,7 @@ void serverMainThreadCleanup(int retcode)
   list_destroy(&server_ip_list);
 
   if (mainConfig->controlfd != (fd_t)-1) {
-    close(mainConfig->controlfd);
+    socket_close(mainConfig->controlfd);
     FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
   }
 #ifdef WZD_MULTITHREAD
