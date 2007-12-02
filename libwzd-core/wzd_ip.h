@@ -81,6 +81,12 @@ int ip_remove(struct wzd_ip_list_t ** list, const char * ip);
 int ip_inlist(struct wzd_ip_list_t *list, const char *ip);
 void ip_list_free(struct wzd_ip_list_t *list);
 
+/** \brief Convert an ip address structure to a string
+ *
+ * \return 0 if ok
+ */
+int ip_numeric_to_string(const char *ip, net_family_t family, char *buf, size_t length);
+
 /** \brief Convert a host name to a numeric ip
  *
  * Caller must free \a ip with wzd_free()

@@ -398,6 +398,26 @@ void ip_list_free(struct wzd_ip_list_t *list)
   }
 }
 
+/** \brief Convert an ip address structure to a string
+ *
+ * \return 0 if ok
+ */
+int ip_numeric_to_string(const char *ip, net_family_t family, char *buf, size_t length)
+{
+  char inet_buf[64];
+
+#if defined(IPV6_SUPPORT)
+  if (family == WZD_INET6) {
+    inet_ntop(AF_INET6, ip, buf, length);
+  } else
+#endif
+  {
+    inet_ntop(AF_INET, ip, buf, length);
+  }
+
+  return 0;
+}
+
 
 int hostnametoip(const char *hostname, char **ip, size_t *length, net_family_t *family)
 {
