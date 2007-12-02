@@ -162,7 +162,7 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context);
 
 /***********************/
 MODULE_NAME(tcl);
-MODULE_VERSION(106);
+MODULE_VERSION(107);
 
 /***********************/
 /* WZD_MODULE_INIT     */
@@ -358,9 +358,9 @@ static event_reply_t tcl_event_logout(const char * args)
 
   if ( (slave = Tcl_GetSlave(interp, buffer)) )
   {
+    Tcl_Release(slave);
     if (!Tcl_InterpDeleted(slave))
       Tcl_DeleteInterp(slave);
-    Tcl_Release(slave);
   }
 
   return EVENT_OK;
@@ -542,6 +542,8 @@ static Tcl_Interp * _tcl_getslave(Tcl_Interp *interp, void *context)
     ret = Tcl_CreateAlias(slave, "vars_shm", interp, "vars_shm", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vars_user", interp, "vars_user", 0, NULL);
     ret = Tcl_CreateAlias(slave, "vfs", interp, "vfs", 0, NULL);
+
+    Tcl_Preserve(slave);
 
     return slave;
   }
