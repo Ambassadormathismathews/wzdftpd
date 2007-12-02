@@ -12,6 +12,7 @@ endif (WIN32)
 add_library (libwzd_debug SHARED
 	debug_backends.c debug_backends.h
 	debug_commands.c debug_commands.h
+	debug_context.c debug_context.h
 	debug_crontab.c debug_crontab.h
 	debug_modules.c debug_modules.h
 	libwzd_debug.c

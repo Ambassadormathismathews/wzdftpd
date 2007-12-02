@@ -36,6 +36,7 @@
 
 #include "debug_backends.h"
 #include "debug_commands.h"
+#include "debug_context.h"
 #include "debug_crontab.h"
 #include "debug_modules.h"
 
@@ -49,6 +50,7 @@ int add_debug_commands(void)
   dbg_command_name_t commands[] = {
     { "site_cronjob", do_site_cronjob },
     { "site_listbackends", do_site_listbackends },
+    { "site_listcontexts", do_site_listcontexts },
     { "site_listcrontab", do_site_listcrontab },
     { "site_listmodules", do_site_listmodules },
     { NULL, NULL }
