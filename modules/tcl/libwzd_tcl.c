@@ -199,7 +199,7 @@ int WZD_MODULE_INIT(void)
   }
 
   {
-    char * logdir;
+    char * logdir = NULL;
     int ret;
 
     ret = -1;
@@ -212,7 +212,7 @@ int WZD_MODULE_INIT(void)
         str_deallocate(str);
       }
     }
-    {
+    if (logdir) {
       int fd;
 
       wzd_string_t *str = str_allocate();
