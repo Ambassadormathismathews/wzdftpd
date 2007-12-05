@@ -12,7 +12,8 @@ ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 ADD_LIBRARY (libwzd_dupecheck SHARED
         libwzd_dupecheck_main.c
-        libwzd_dupecheck_main.h
+        libwzd_dupecheck_dupelog.c
+        libwzd_dupecheck_dupelog
 	dupecheck.def
 	)
 
