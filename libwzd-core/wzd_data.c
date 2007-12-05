@@ -265,7 +265,14 @@ void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
 
     /** \todo Find a way to indicate if transfer was ok in event */
     str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
-    event_send(mainConfig->event_mgr, event_id, reply_code, event_args, context);
+    if (event_send(mainConfig->event_mgr, event_id, reply_code, event_args, context) == EVENT_DENY && is_upload)
+    {
+      out_log(LEVEL_INFO, "An EVENT_POSTUPLOAD-script denied file; deleting '%s'.\n", context->current_action.arg);
+      // TODO: file_remove checks permissions.
+      // Should we perhaps just use unlink() + checkpath_new()?
+      file_remove(context->current_action.arg, context);
+      event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD_DENIED, reply_code, event_args, context);
+    }
     str_deallocate(event_args);
   }
 }
@@ -444,8 +451,10 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
 
 /** \brief run local transfer loop for RETR
  */
-int do_local_retr(wzd_context_t * context)
+void *do_local_retr(void * _context)
 {
+  wzd_context_t * context = (wzd_context_t *)_context;
+
   struct timeval tv;
   fd_set fds_w;
   int ret, err;
@@ -538,8 +547,10 @@ _local_retr_exit:
 
 /** \brief run local transfer loop for STOR
  */
-int do_local_stor(wzd_context_t * context)
+void *do_local_stor(void * _context)
 {
+  wzd_context_t * context = (wzd_context_t *)_context;
+
   struct timeval tv;
   fd_set fds_r;
   int ret, err;

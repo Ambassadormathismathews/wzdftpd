@@ -339,18 +339,27 @@ int check_timeout(wzd_context_t * context)
     time_t data_delay;
     data_delay = t - context->idle_time_data_start;
     if (data_delay > HARD_XFER_TIMEOUT) {
+      file_close(context->current_action.current_file,context);
+      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
+      context->current_action.current_file = -1;
+
       /* send events here allow sfv checker to mark file as bad if
        * partially uploaded
        */
       {
         wzd_string_t * event_args = str_allocate();
         str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
-        event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context);
+        if (event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context) == EVENT_DENY)
+        {
+          out_log(LEVEL_INFO, "An EVENT_POSTUPLOAD-script denied file; deleting '%s'.\n", context->current_action.arg);
+          // TODO: file_remove checks permissions.
+          // Should we perhaps just use unlink() + checkpath_new()?
+          file_remove(context->current_action.arg, context);
+          event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD_DENIED, 0, event_args, context);
+        }
         str_deallocate(event_args);
       }
-      file_close(context->current_action.current_file,context);
-      FD_UNREGISTER(context->current_action.current_file,"Client file (RETR or STOR)");
-      context->current_action.current_file = -1;
+
       context->current_action.bytesnow = 0;
       context->current_action.token = TOK_UNKNOWN;
       data_close(context);

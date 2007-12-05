@@ -338,9 +338,9 @@ int backend_close(const char *backend)
  */
 int backend_reload(const char *backend)
 {
+#if 0
   int ret;
 
-#if 0
   ret = backend_close(backend);
   if (ret) return 1;
 

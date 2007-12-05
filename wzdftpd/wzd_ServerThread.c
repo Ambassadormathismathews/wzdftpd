@@ -247,6 +247,8 @@ static int global_check_ip_allowed(unsigned char *userip, net_family_t family)
       ret = ip_list_check(mainConfig->login_pre_ip_checks,ipv4);
     }
   } else
+#else
+    (void)ipv6; /* Quelches warnings about unused variable. */
 #endif
   {
     inet_ntop(AF_INET,userip,ipv4,INET_ADDRSTRLEN);
@@ -1634,7 +1636,7 @@ void serverMainThreadCleanup(int retcode)
     for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
     {
       if ((loop_context = list_data(elmnt))) {
-        wzd_thread_cancel(loop_context->pid_child);
+        wzd_thread_cancel((wzd_thread_t *)loop_context->pid_child);
 #ifdef WIN32
         /** \todo remove this when wzd_thread_cancel is implemented on windows */
         loop_context->exitclient = 1;

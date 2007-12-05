@@ -404,8 +404,6 @@ void ip_list_free(struct wzd_ip_list_t *list)
  */
 int ip_numeric_to_string(const char *ip, net_family_t family, char *buf, size_t length)
 {
-  char inet_buf[64];
-
 #if defined(IPV6_SUPPORT)
   if (family == WZD_INET6) {
     inet_ntop(AF_INET6, ip, buf, length);

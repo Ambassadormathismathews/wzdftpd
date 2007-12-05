@@ -43,11 +43,11 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
 
 /** \brief run local transfer loop for RETR
  */
-int do_local_retr(wzd_context_t * context);
+void *do_local_retr(void * _context);
 
 /** \brief run local transfer loop for STOR
  */
-int do_local_stor(wzd_context_t * context);
+void *do_local_stor(void * _context);
 
 /** \brief Create thread for data transfer (RETR)
  */
