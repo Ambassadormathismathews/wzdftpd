@@ -68,27 +68,6 @@ static event_reply_t dupecheck_event_preupload(const char * args)
 {
   int ret;
 
-  const char *filename, *username;
-  char *str = strdup(args), *ptr;
-  username = strtok_r(str, " ", &ptr);
-  filename = ptr;
-
-  if (strrchr(filename, '/') != NULL)
-  {
-    filename = strrchr(filename, '/') + 1;
-  }
-
-  ret = dupelog_is_upload_allowed(filename);
-
-  free(str);
-
-  return ret;
-}
-
-static event_reply_t dupecheck_event_postupload(const char * args)
-{
-  int ret;
-
   char *filename, *path, *username;
   char *str = strdup(args), *ptr;
 
@@ -110,7 +89,11 @@ static event_reply_t dupecheck_event_postupload(const char * args)
     filename++;
   }
 
-  ret = dupelog_add_entry(path, filename);
+  ret = dupelog_is_upload_allowed(filename);
+  if (ret != EVENT_DENY)
+  {
+    dupelog_add_entry(path, filename);
+  }
 
   free(str);
 
@@ -158,7 +141,6 @@ int WZD_MODULE_INIT (void)
   params = STR("%filepath");
 
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_PREUPLOAD, dupecheck_event_preupload, NULL);
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTUPLOAD, dupecheck_event_postupload, NULL);
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTUPLOAD_DENIED, dupecheck_event_postupload_denied, NULL);
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_DELE, dupecheck_event_dele, NULL);
   
@@ -168,11 +150,6 @@ int WZD_MODULE_INIT (void)
 
 int WZD_MODULE_CLOSE(void)
 {
-/* Using it does more bad than good
- hook_remove(&getlib_mainConfig()->hook,EVENT_PREUPLOAD,(void_fct)&dupecheck_hook_preupload);
-  hook_remove(&getlib_mainConfig()->hook,EVENT_POSTUPLOAD,(void_fct)&dupecheck_hook_postupload);
-  hook_remove(&getlib_mainConfig()->hook,EVENT_SITE,(void_fct)&dupecheck_hook_site);
-  */
   out_log(LEVEL_INFO, "Dupecheck: Module unloaded!\n");
   return 0;
 }
