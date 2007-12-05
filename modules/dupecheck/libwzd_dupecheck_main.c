@@ -44,8 +44,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <time.h>
-
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -61,7 +59,10 @@ MODULE_NAME(dupecheck);
 MODULE_VERSION(100);
 
 static event_reply_t dupecheck_event_preupload(const char * args);
-static event_reply_t dupecheck_event_postupload(const char * args);
+static event_reply_t dupecheck_event_postupload_denied(const char * args);
+static event_reply_t dupecheck_event_dele(const char * args);
+static event_reply_t dupecheck_event_prerename(const char * args);
+static event_reply_t dupecheck_event_postrename(const char * args);
 
 /***** EVENT HOOKS *****/
 static event_reply_t dupecheck_event_preupload(const char * args)
@@ -102,35 +103,118 @@ static event_reply_t dupecheck_event_preupload(const char * args)
 
 static event_reply_t dupecheck_event_postupload_denied(const char * args)
 {
-  int ret;
-
-  const char *filename, *username;
-  char *str = strdup(args), *ptr;
-  username = strtok_r(str, " ", &ptr);
-  filename = ptr;
+  const char *filename = strchr(args, ' ');
+  if (filename == NULL)
+    filename = args;
+  else
+    filename++;
 
   if (strrchr(filename, '/') != NULL)
-  {
     filename = strrchr(filename, '/') + 1;
-  }
 
-  ret = dupelog_delete_entry(filename);
-
-  free(str);
-
-  return ret;
+  return dupelog_delete_entry(filename);
 }
 
 static event_reply_t dupecheck_event_dele(const char * args)
 {
-  int ret;
-
   if (strrchr(args, '/') != NULL)
-  {
     args = strrchr(args, '/') + 1;
-  }
 
   return dupelog_delete_entry(args);
+}
+
+static event_reply_t dupecheck_event_prerename(const char * args)
+{
+  /* This code is a bit complicated, because it compares the two filenames in args
+   * without modifying or duplicating args. We have to compare the two arguments, 
+   * because if they're identical (E.g. you're moving a file to another directory,
+   * but keeping filename) you'll get a false positive from dupelog_is_upload_allowed
+   */
+
+  // FIXME: Paths with space in it :(
+  char *pathFrom = strchr(args, ' '), *filenameFrom, *pathTo, *filenameTo;
+  int filenameToLength;
+
+  if (pathFrom == NULL)
+  {
+    out_err(LEVEL_HIGH, "Dupecheck: No space in args for dupecheck_event_prerename('%s')\n", args);
+    return EVENT_OK;
+  }
+  pathFrom++;
+
+  pathTo = strchr(pathFrom, ' ');
+  if (pathTo == NULL)
+  {
+    out_err(LEVEL_HIGH, "Dupecheck: No second space in args for dupecheck_event_prerename('%s')\n", args);
+    return EVENT_OK;
+  }
+  pathTo++;
+
+  /* Here we set filenameFrom to the 
+   * first character in the filename. It is _not_ nullterminated
+   * where the filename ends, but rather where the args end. */
+  for (filenameFrom = pathTo - 1; filenameFrom > pathFrom && *filenameFrom != '/'; filenameFrom--);
+  filenameFrom++;
+
+  /* Here we set filenameTo to the first character
+   * in the filename, this _is_ nullterminated (it's the last part
+   * of the args) */
+  filenameTo = strrchr(pathTo, '/');
+  if (filenameTo == NULL)
+    filenameTo = pathTo;
+  filenameTo++;
+
+  filenameToLength = strlen(filenameTo);
+
+  /* This checks if filenameFrom and filenameTo are
+   * equally long. If they are, it're not the same filename,
+   * and we check with the dupelog. */
+  if (filenameFrom + filenameToLength + 1 != pathTo)
+    return dupelog_is_upload_allowed(filenameTo);
+  /* This checks the part of filenameFrom that contains the filename (that's
+   * why we use strncmp - it stops after the right amount of characters).
+   * This is only valid because we know the strings are of equal length.
+   * If they're the same filename, then filenameFrom will be in the dupedb, and
+   * we'll get a false positive from dupelog_is_upload_allowed(). */
+  if (strncmp(filenameFrom, filenameTo, filenameToLength) == 0)
+    return EVENT_OK;
+
+  /* No more special-casing, we just check it. */
+  return dupelog_is_upload_allowed(filenameTo);
+}
+
+static event_reply_t dupecheck_event_postrename(const char * args)
+{
+  char *filenameFrom, *filenameTo, *pathTo;
+  char *str = strdup(args), *ptr;
+
+  // TODO: Make sure path is absolute!
+  filenameFrom = strtok_r(strchr(str, ' '), " ", &ptr);
+  pathTo = ptr;
+
+  filenameTo = strrchr(pathTo, '/');
+
+  if (strrchr(filenameFrom, '/') != NULL);
+    filenameFrom = strrchr(filenameFrom, '/') + 1;
+
+  if (filenameTo == NULL)
+  {
+    // FIXME: Path needs to found
+    filenameTo = pathTo;
+    pathTo = "./";
+  }
+  else
+  {
+    *filenameTo = '\0';
+    filenameTo++;
+  }
+
+  dupelog_delete_entry(filenameFrom);
+  dupelog_add_entry(pathTo, filenameTo);
+
+  free(str);
+
+  return EVENT_OK;
 }
 
 /***********************/
@@ -143,6 +227,8 @@ int WZD_MODULE_INIT (void)
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_PREUPLOAD, dupecheck_event_preupload, NULL);
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTUPLOAD_DENIED, dupecheck_event_postupload_denied, NULL);
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_DELE, dupecheck_event_dele, NULL);
+  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_PRERENAME, dupecheck_event_prerename, NULL);
+  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTRENAME, dupecheck_event_postrename, NULL);
   
   out_log(LEVEL_INFO, "Dupecheck: Module loaded!\n");
   return 0;

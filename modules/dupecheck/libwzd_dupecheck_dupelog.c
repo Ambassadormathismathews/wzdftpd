@@ -26,6 +26,7 @@
 
 #include "libwzd_dupecheck_dupelog.h"
 
+#include <time.h>
 #include <sqlite3.h>
 
 #include <libwzd-core/wzd_structs.h>
