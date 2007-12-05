@@ -56,6 +56,8 @@ macro_optional_find_package(SQLite3)
 macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
 
+OPTION(WITH_DUPECHECK "enable dupecheck module" OFF)
+
 OPTION(WITH_IPV6 "enable IPv6 support" OFF)
 OPTION(WITH_KRB5 "enable kerberos 5 support" OFF)
 OPTION(WITH_PAM "enable PAM support" OFF)

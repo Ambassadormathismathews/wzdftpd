@@ -1,5 +1,9 @@
 add_subdirectory(debug)
 
+if(WITH_DUPECHECK)
+  add_subdirectory(dupecheck)
+endif(WITH_DUPECHECK)
+
 if(WITH_SFV)
   add_subdirectory(sfv)
 endif(WITH_SFV)
