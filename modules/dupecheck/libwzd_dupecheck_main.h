@@ -1,0 +1,5 @@
+#ifndef __LIBWZD_DUPECHECK_MAIN_H__
+#define __LIBWZD_DUPECHECK_MAIN_H__
+
+
+#endif /* __LIBWZD_DUPECHECK_MAIN_H__ */

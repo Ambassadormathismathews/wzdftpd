@@ -221,8 +221,7 @@ struct wzd_backend_def_t * backend_register(const char * filename, backend_init_
     handle = dlopen(filename,DL_ARG);
     if (!handle) {
       out_log(LEVEL_HIGH,"Could not dlopen backend '%s'\n",filename);
-      out_log(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-      out_log(LEVEL_HIGH,"dlerror: %s\n",dlerror());
+      out_log(LEVEL_HIGH," ^-- Reason: %s\n",dlerror());
       return NULL;
     }
 

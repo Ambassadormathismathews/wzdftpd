@@ -409,8 +409,7 @@ int module_check(const char *filename)
   handle = dlopen(path,mode);
   if (!handle) {
     out_err(LEVEL_HIGH,"Could not dlopen module '%s'\n",filename);
-    out_err(LEVEL_HIGH,"errno: %d error: %s\n",errno, strerror(errno));
-    out_err(LEVEL_HIGH,"dlerror: %s\n",dlerror());
+    out_err(LEVEL_HIGH," ^-- Reason: %s\n",dlerror());
     return 1;
   }
 

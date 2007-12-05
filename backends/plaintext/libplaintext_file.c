@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <signal.h>
 
@@ -574,7 +575,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
     }
     else if (strcmp("creator",varname)==0) {
       num = strtol(value, &ptr, 0);
-      if (ptr == value | *ptr != '\0' || num < 0) { /* invalid number */
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid creator uid %s\n",value);
         ERRLOG(errbuf);
         continue;
@@ -897,11 +898,12 @@ int read_files(const char *filename)
   file_user = fopen(USERS_FILE,"r");
 
   if (file_user == NULL) {
+    snprintf(errbuf, sizeof(errbuf), "Could not open file '%s': %s\n", USERS_FILE, strerror(errno));
+
     ERRLOG("********************************************\n");
     ERRLOG("\n");
-    ERRLOG("This is backend plaintext speaking:\n");
-    ERRLOG("Could not open file"); ERRLOG(USERS_FILE);
-    ERRLOG("\ndie die die !\n");
+    ERRLOG("Plaintext-backend: Reading userfile failed! Exiting.\n");
+    ERRLOG(errbuf);
     ERRLOG("\n");
     ERRLOG("********************************************\n");
     return -1;

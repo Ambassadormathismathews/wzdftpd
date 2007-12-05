@@ -1,7 +1,11 @@
 add_subdirectory(debug)
 
 if(WITH_DUPECHECK)
-  add_subdirectory(dupecheck)
+  if(SQLITE3_FOUND)
+    add_subdirectory(dupecheck)
+  else(SQLITE3_FOUND)
+    message("Could not find Sqlite3, not compiling libwzd-dupecheck.")
+  endif(SQLITE3_FOUND)
 endif(WITH_DUPECHECK)
 
 if(WITH_SFV)
