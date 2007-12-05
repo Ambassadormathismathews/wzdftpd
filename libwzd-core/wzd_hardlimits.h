@@ -74,6 +74,8 @@
 #define RESERVED_LOG_CHANNELS 10
 
 /* do NOT ever change the following ! */  
+/* NOTE: WZD_MAX_PATH _must be_ <= HARD_LAST_COMMAND_LENGTH (which is usually WZD_BUFFER_LEN)
+ * if not, you might get truncation of paths for events. */
 #define WZD_BUFFER_LEN	1024
 #define WZD_MAX_PATH 1024
 
