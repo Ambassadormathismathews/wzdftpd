@@ -162,10 +162,13 @@ static int check_table_created(sqlite3 *db)
 static sqlite3 *opendb()
 {
   sqlite3 *db;
-  
-  if (sqlite3_open("/wzdftpd/dupedb", &db) != SQLITE_OK)
+  const char *dbpath = config_get_value(getlib_mainConfig()->cfg_file, "dupecheck", "database");
+  if (dbpath == NULL)
+    dbpath = DUPECHECK_DEFAULT_DB;
+
+  if (sqlite3_open(dbpath, &db) != SQLITE_OK)
   {
-    out_err(LEVEL_HIGH, "Dupecheck: Could not open dupedb '%s': %s\n", "/wzdftpd/dupedb", sqlite3_errmsg(db));
+    out_err(LEVEL_HIGH, "Dupecheck: Could not open dupedb '%s': %s\n", dbpath, sqlite3_errmsg(db));
     sqlite3_close(db);
     return NULL;
   }

@@ -235,6 +235,7 @@ site_vfsdel = +O
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_dupecheck.so = deny
 
 [sfv]
 progressmeter = [WzD] - %3d%% Complete - [WzD]
@@ -242,6 +243,11 @@ del_progressmeter = \[.*] - ...% Complete - \[WzD]
 incomplete_indicator = ../(incomplete)-%releasename
 other_completebar = [WzD] - ( %.0mM %fF - COMPLETE ) - [WzD]
 create_symlinks = false
+
+##### Dupecheck settings.
+[dupecheck]
+## Where should dupecheck keep it's sqlite database?
+# database = @CMAKE_INSTALL_PREFIX@/dupedb
 
 [plaintext]
 param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
