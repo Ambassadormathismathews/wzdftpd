@@ -271,6 +271,7 @@ enum event_id_t {
   EVENT_WIPE          = 0x00008000,
 
   EVENT_PRERENAME     = 0x00040000,
+  EVENT_POSTRENAME    = 0x00080000,
 
   EVENT_SITE          = 0x00010000,
   EVENT_CRONTAB       = 0x00100000,

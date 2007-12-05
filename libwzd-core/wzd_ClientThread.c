@@ -3029,7 +3029,6 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
     send_message_with_args(501, context, "Forbidden");
     return E_FILE_FORBIDDEN;
   }
-  str_deallocate(event_args);
 
   context->current_action.token = TOK_UNKNOWN;
   context->current_action.current_file = -1;
@@ -3039,9 +3038,11 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
   if (ret) {
     ret = send_message_with_args(550,context,"RNTO","command failed");
   } else {
+    event_send(mainConfig->event_mgr, EVENT_POSTRENAME, 250, event_args, context);
     ret = send_message_with_args(250,context,"RNTO"," command okay");
     context->idle_time_start = time(NULL);
   }
+  str_deallocate(event_args);
   return E_OK;
 }
 
