@@ -2977,6 +2977,17 @@ int do_rnfr(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
     return E_FILE_FORBIDDEN;
   }
 
+  wzd_string_t * event_args = str_allocate();
+  str_sprintf(event_args, "%s %s", user->username, path);
+  if (event_send(mainConfig->event_mgr, EVENT_PRERNFR, 0, event_args, context) == EVENT_DENY)
+  {
+    out_log(LEVEL_INFO, "RNFR on '%s' by %s denied by a EVENT_PRERNFR-handler.\n", path, user->username);
+    str_deallocate(event_args);
+    send_message_with_args(501, context, "Forbidden");
+    return E_FILE_FORBIDDEN;
+  }
+  str_deallocate(event_args);
+
   context->current_action.token = TOK_RNFR;
   strncpy(context->current_action.arg,path,HARD_LAST_COMMAND_LENGTH);
   context->current_action.current_file = -1;
@@ -3019,6 +3030,18 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
     ret = send_message_with_args(501,context,"Forbidden");
     return E_FILE_FORBIDDEN;
   }
+
+  wzd_string_t * event_args = str_allocate();
+  str_sprintf(event_args, "%s %s", user->username, path);
+  if (event_send(mainConfig->event_mgr, EVENT_PRERNTO, 0, event_args, context) == EVENT_DENY)
+  {
+    out_log(LEVEL_INFO, "RNTO on '%s' by %s denied by a EVENT_PRERNTO-handler.\n", path, user->username);
+    str_deallocate(event_args);
+    send_message_with_args(501, context, "Forbidden");
+    return E_FILE_FORBIDDEN;
+  }
+  str_deallocate(event_args);
+
   context->current_action.token = TOK_UNKNOWN;
   context->current_action.current_file = -1;
   context->current_action.bytesnow = 0;
