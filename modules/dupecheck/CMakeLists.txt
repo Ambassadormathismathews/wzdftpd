@@ -9,11 +9,15 @@ INCLUDE_DIRECTORIES(${WZDFTPD_SOURCE_DIR}
 	)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
-ADD_DEFINITIONS(-DDUPECHECK_DEFAULT_DB='"${CMAKE_INSTALL_PREFIX}/dupedb"')
+ADD_DEFINITIONS(-DDUPECHECK_DEFAULT_DB='"${CMAKE_INSTALL_PREFIX}/${localstatedir}/lib/dupelog"')
 
 
 ADD_LIBRARY (libwzd_dupecheck SHARED
         libwzd_dupecheck_main.c
+        libwzd_dupecheck_events.c
+        libwzd_dupecheck_events.h
+        libwzd_dupecheck_commands.c
+        libwzd_dupecheck_commands.h
         libwzd_dupecheck_dupelog.c
         libwzd_dupecheck_dupelog.h
 	dupecheck.def

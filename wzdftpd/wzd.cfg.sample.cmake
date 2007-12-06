@@ -247,7 +247,7 @@ create_symlinks = false
 ##### Dupecheck settings.
 [dupecheck]
 ## Where should dupecheck keep it's sqlite database?
-# database = @CMAKE_INSTALL_PREFIX@/dupedb
+# database = @CMAKE_INSTALL_PREFIX@/@localstatedir@/lib/dupelog
 
 [plaintext]
 param = @CMAKE_INSTALL_PREFIX@/@sysconfdir@/users
