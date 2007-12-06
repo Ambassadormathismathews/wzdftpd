@@ -1,0 +1,17 @@
+ * Allow for more extensive site dupe syntax
+  - match filenames
+  - match in a specific period range
+ * Strip away the users ftproot from matches, and also only match the part after their ftproot.
+ * Add configuration options for:
+  - nocheckdirs
+     dirs that are not checked for dupes when uploading files.
+     files uploaded into these dirs are not added to the dupelog either
+  - retentiontime
+     how many days (?) to keep files in the dupelog, to keep the size manageable.
+  - hidedirs
+     dirs in this list will be added (and checked) for dupes, but the path
+     of the file will not be added to the dupelog. this means that searching
+     for the path yields no results, but the filename will still be matched
+     on a dupecheck
+ * Add site undupe (basically site dupe just with delete instead of select)
+ * Configurable rights for site commands (dupe = anyone, undupe = +O?)
