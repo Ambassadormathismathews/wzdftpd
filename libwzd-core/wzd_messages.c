@@ -232,10 +232,10 @@ int send_message_raw_formatted(wzd_context_t * context, const char * format, ...
   if (ret < 0)
     return -1;
 
-  str_append(str, "\r\n");
-
-  ret = (context->write_fct)(context->controlfd, str_tochar(str), str_length(str), 0, HARD_XFER_TIMEOUT, context);
   out_log(LEVEL_FLOOD, "send_message_raw_formatted -> [%s]\n", str_tochar(str));
+
+  str_append(str, "\r\n");
+  ret = (context->write_fct)(context->controlfd, str_tochar(str), str_length(str), 0, HARD_XFER_TIMEOUT, context);
 
   str_deallocate(str);
   va_end(argptr);
