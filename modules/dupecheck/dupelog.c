@@ -24,7 +24,7 @@
  * the source code for OpenSSL in the source distribution.
  */
 
-#include "libwzd_dupecheck_dupelog.h"
+#include "dupelog.h"
 
 #include <stdio.h>
 #include <time.h>
@@ -153,8 +153,6 @@ void dupelog_print_matching_dirs(const char *pattern, int limit, wzd_context_t *
   sqlite3 *db;
   int retval, rows = 0;
 
-  out_log(LEVEL_INFO, "Dupecheck: Matching '%s'\n", pattern);
-
   db = opendb();
   if (!db)
     return;
@@ -183,6 +181,41 @@ void dupelog_print_matching_dirs(const char *pattern, int limit, wzd_context_t *
   sqlite3_finalize(stmt);
 
   send_message_raw_formatted(context, "210-- %d matches for '%s'", rows, pattern);
+
+  sqlite3_close(db);
+}
+
+void dupelog_delete_matching_files(const char *pattern, wzd_context_t *context)
+{
+  sqlite3_stmt *stmt;
+  sqlite3 *db;
+  int retval, rows = 0;
+
+  db = opendb();
+  if (!db)
+    return;
+
+  const char *deleteQuery = "DELETE FROM dupelog WHERE lower(filename) GLOB lower(?)";
+  if (sqlite3_prepare(db, deleteQuery, -1, &stmt, NULL) != SQLITE_OK)
+  {
+    if (stmt)
+      sqlite3_finalize(stmt);
+    out_err(LEVEL_HIGH, "Dupecheck: Could not prepare delete query for '%s': %s\n", pattern, sqlite3_errmsg(db));
+    sqlite3_close(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, pattern, -1, SQLITE_TRANSIENT);
+  retval = sqlite3_step(stmt);
+
+  if (retval == SQLITE_DONE || retval == SQLITE_ROW)
+    rows = sqlite3_changes(db);
+  else
+    rows = 0;
+
+  sqlite3_finalize(stmt);
+
+  send_message_raw_formatted(context, "210- Deleted %d dupes that matched '%s'", rows, pattern);
 
   sqlite3_close(db);
 }

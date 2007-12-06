@@ -36,18 +36,35 @@
 #include <libwzd-core/wzd_file.h>
 #include <libwzd-core/wzd_messages.h>
 
-#include "libwzd_dupecheck_dupelog.h"
+#include "dupelog.h"
 #include "libwzd_dupecheck_commands.h"
 
-int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int dupecheck_command_undupe(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
-  out_log(LEVEL_INFO, "Dupecheck: site dupe!\n");
-
   int limit = 10;
   char *parameters, *temp;
   if (str_length(param) == 0)
   {
-    send_message_raw_formatted(context, "210 Syntax: site dupecheck <pattern>");
+    dupecheck_command_help_undupe(context);
+    return 0;
+  }
+
+  // TODO: Parse arguments more sensibly? Allow changing of limit?
+
+  out_log(LEVEL_INFO, "Dupecheck: site undupe '%s'\n", str_tochar(param));
+  dupelog_delete_matching_files(str_tochar(param), context);
+
+  send_message_raw_formatted(context, "210 site undupe done!");
+  return 0;
+}
+
+int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+{
+  int limit = 10;
+  char *parameters, *temp;
+  if (str_length(param) == 0)
+  {
+    dupecheck_command_help_dupe(context);
     return 0;
   }
 
@@ -59,35 +76,27 @@ int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_
   out_log(LEVEL_INFO, "Dupecheck: site dupe '%s'\n", str_tochar(param));
   dupelog_print_matching_dirs(str_tochar(param), limit, context);
 
-  /*
-  str_prepend(param, "%");
-  str_append(param, "%");
-
-  parameters = strdup(str_tochar(param));
-
-  out_log(LEVEL_INFO, "Dupecheck: site dupe '%s'\n", parameters);
-
-  for (temp = parameters; *temp; ++temp)
-  {
-    switch (*temp)
-    {
-        case ' ':
-          *temp = '%';
-          break;
-        case '?':
-          *temp = '_';
-          break;
-        case '*':
-          *temp = '%';
-          break;
-        default:
-          break;
-    }
-  }
-  dupelog_print_matching(parameters, limit, context);
-
-  free(parameters); */
-
+  send_message_raw_formatted(context, "210 site dupe done!");
   return 0;
 }
 
+void dupecheck_command_help_dupe(wzd_context_t * context)
+{
+  send_message_raw_formatted(context, "510- Syntax: site dupe <pattern>");
+  send_message_raw_formatted(context, "510-  site dupe searches all (recently) uploaded directories, and shows you the matching ones.");
+  send_message_raw_formatted(context, "510-");
+  send_message_raw_formatted(context, "510-  <pattern> is a glob-style wildcard pattern, meaning you can use the following wildcards:");
+  send_message_raw_formatted(context, "510-   * - matches zero or more characters.");
+  send_message_raw_formatted(context, "510-   ? - matches one or zero characters.");
+  send_message_raw_formatted(context, "510-");
+  send_message_raw_formatted(context, "510  Note: Searching always adds a * to the start and end of your query. :-)");
+}
+void dupecheck_command_help_undupe(wzd_context_t * context)
+{
+  send_message_raw_formatted(context, "510- Syntax: site undupe <pattern>");
+  send_message_raw_formatted(context, "510-  site undupe searches the dupedb for all filenames matching the pattern, and undupes them.");
+  send_message_raw_formatted(context, "510-");
+  send_message_raw_formatted(context, "510-  <pattern> is a glob-style wildcard pattern, meaning you can use the following wildcards:");
+  send_message_raw_formatted(context, "510-   * - matches zero or more characters.");
+  send_message_raw_formatted(context, "510    ? - matches one or zero characters.");
+}

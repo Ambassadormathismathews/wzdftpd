@@ -18,8 +18,8 @@ ADD_LIBRARY (libwzd_dupecheck SHARED
         libwzd_dupecheck_events.h
         libwzd_dupecheck_commands.c
         libwzd_dupecheck_commands.h
-        libwzd_dupecheck_dupelog.c
-        libwzd_dupecheck_dupelog.h
+        dupelog.c
+        dupelog.h
 	dupecheck.def
 	)
 

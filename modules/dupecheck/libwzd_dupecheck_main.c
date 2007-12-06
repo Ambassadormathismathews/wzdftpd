@@ -48,7 +48,9 @@ int WZD_MODULE_INIT (void)
   event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTRENAME, dupecheck_event_postrename, NULL);
 
   commands_add(getlib_mainConfig()->commands_list, "site_dupe", dupecheck_command_dupe , NULL, TOK_CUSTOM);
+  commands_add(getlib_mainConfig()->commands_list, "site_undupe", dupecheck_command_undupe , NULL, TOK_CUSTOM);
 //  commands_set_permission(getlib_mainConfig()->commands_list, "site_dupe", "+O"); TODO?
+//  commands_set_permission(getlib_mainConfig()->commands_list, "site_undupe", "+O"); TODO?
   
   out_log(LEVEL_INFO, "Dupecheck: Module loaded!\n");
   return 0;

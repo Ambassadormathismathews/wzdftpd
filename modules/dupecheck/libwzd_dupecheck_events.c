@@ -36,7 +36,7 @@
 #include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_file.h>
 
-#include "libwzd_dupecheck_dupelog.h"
+#include "dupelog.h"
 #include "libwzd_dupecheck_events.h"
 
 /***** EVENT HOOKS *****/
