@@ -24,6 +24,8 @@
  * the source code for OpenSSL in the source distribution.
  */
 
+#include <string.h>
+
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -32,30 +34,62 @@
 #include <libwzd-core/wzd_mod.h> /* WZD_MODULE_INIT */
 #include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_file.h>
+#include <libwzd-core/wzd_messages.h>
 
-#include "libwzd_dupecheck_events.h"
+#include "libwzd_dupecheck_dupelog.h"
 #include "libwzd_dupecheck_commands.h"
 
-MODULE_NAME(dupecheck);
-MODULE_VERSION(100);
-
-int WZD_MODULE_INIT (void)
-{ 
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_PREUPLOAD, dupecheck_event_preupload, NULL);
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTUPLOAD_DENIED, dupecheck_event_postupload_denied, NULL);
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_DELE, dupecheck_event_dele, NULL);
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_PRERENAME, dupecheck_event_prerename, NULL);
-  event_connect_function(getlib_mainConfig()->event_mgr, EVENT_POSTRENAME, dupecheck_event_postrename, NULL);
-
-  commands_add(getlib_mainConfig()->commands_list, "site_dupe", dupecheck_command_dupe , NULL, TOK_CUSTOM);
-//  commands_set_permission(getlib_mainConfig()->commands_list, "site_dupe", "+O"); TODO?
-  
-  out_log(LEVEL_INFO, "Dupecheck: Module loaded!\n");
-  return 0;
-}
-
-int WZD_MODULE_CLOSE(void)
+int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
-  out_log(LEVEL_INFO, "Dupecheck: Module unloaded!\n");
+  out_log(LEVEL_INFO, "Dupecheck: site dupe!\n");
+
+  int limit = 10;
+  char *parameters, *temp;
+  if (str_length(param) == 0)
+  {
+    send_message_with_args(211, context, " == DUPECHECK ==");
+    send_message_with_args(200, context, "Syntax: site dupe <pattern>");
+    // TODO: Show syntax.
+    return 0;
+  }
+
+  // TODO: Parse arguments more sensibly? Allow changing of limit?
+  
+  str_prepend(param, "*");
+  str_append(param, "*");
+
+  out_log(LEVEL_INFO, "Dupecheck: site dupe '%s'\n", str_tochar(param));
+  dupelog_print_matching(str_tochar(param), limit, context);
+
+  /*
+  str_prepend(param, "%");
+  str_append(param, "%");
+
+  parameters = strdup(str_tochar(param));
+
+  out_log(LEVEL_INFO, "Dupecheck: site dupe '%s'\n", parameters);
+
+  for (temp = parameters; *temp; ++temp)
+  {
+    switch (*temp)
+    {
+        case ' ':
+          *temp = '%';
+          break;
+        case '?':
+          *temp = '_';
+          break;
+        case '*':
+          *temp = '%';
+          break;
+        default:
+          break;
+    }
+  }
+  dupelog_print_matching(parameters, limit, context);
+
+  free(parameters); */
+
   return 0;
 }
+

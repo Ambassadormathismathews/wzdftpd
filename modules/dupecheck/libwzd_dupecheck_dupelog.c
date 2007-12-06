@@ -26,6 +26,7 @@
 
 #include "libwzd_dupecheck_dupelog.h"
 
+#include <stdio.h>
 #include <time.h>
 #include <sqlite3.h>
 
@@ -37,6 +38,7 @@
 #include <libwzd-core/wzd_mod.h> /* WZD_MODULE_INIT */
 #include <libwzd-core/wzd_configfile.h>
 #include <libwzd-core/wzd_file.h>
+#include <libwzd-core/wzd_messages.h>
 
 /* These two are defined further down. */
 static int check_table_created(sqlite3 *db);
@@ -143,6 +145,60 @@ int dupelog_delete_entry(const char *filename)
   sqlite3_close(db);
 
   return EVENT_OK;
+}
+
+void dupelog_print_matching(const char *pattern, int limit, wzd_context_t *context)
+{
+  sqlite3_stmt *stmt;
+  sqlite3 *db;
+  int retval, rows = 0;
+  wzd_string_t *reply;
+
+  reply = str_allocate();
+
+  out_log(LEVEL_INFO, "Dupecheck: Matching '%s'\n", pattern);
+  db = opendb();
+
+  if (!db)
+    return;
+
+  const char *selectQuery = "SELECT filename, path, added_at FROM dupelog WHERE lower(filename) GLOB lower(?) ORDER BY added_at DESC LIMIT ?";
+  if (sqlite3_prepare(db, selectQuery, -1, &stmt, NULL) != SQLITE_OK)
+  {
+    if (stmt)
+      sqlite3_finalize(stmt);
+    out_err(LEVEL_HIGH, "Dupecheck: Could not prepare select query for '%s': %s\n", pattern, sqlite3_errmsg(db));
+    sqlite3_close(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, pattern, -1, SQLITE_TRANSIENT);
+  sqlite3_bind_int(stmt, 2, limit);
+  str_append(reply, " == DUPECHECK ==\r\n");
+  while ((retval = sqlite3_step(stmt)) == SQLITE_ROW)
+  {
+    char timeFormatted[11];
+    time_t time = sqlite3_column_int(stmt, 2);
+
+    strftime(timeFormatted, 11, "%F", localtime(&time));
+    str_append_printf(reply, " %s - %s %s\r\n", timeFormatted, sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 0));
+/*    reply_push(context, " ");
+    reply_push(context, timeFormatted);
+    reply_push(context, " - ");
+    reply_push(context, sqlite3_column_text(stmt, 1));
+    reply_push(context, sqlite3_column_text(stmt, 0));
+    reply_push(context, "\n");*/
+
+    rows++;
+  }
+  sqlite3_finalize(stmt);
+
+  str_append_printf(reply, " -- %d matches for '%s'\r\n", rows, pattern);
+  send_message_formatted(210, context, str_tochar(reply));
+
+  str_deallocate(reply);
+
+  sqlite3_close(db);
 }
 
 static int check_table_created(sqlite3 *db)
