@@ -116,8 +116,7 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
   if (sfv->sfv_list == NULL) return -1;
   dirlen = strlen(directory);
 
-  i=0;
-  while (sfv->sfv_list[i]) {
+  for ( i=0; sfv->sfv_list[i]; i++ ){
     total_count++;
     filelen = strlen(sfv->sfv_list[i]->filename);
     dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .missing or .bad*/
@@ -129,34 +128,27 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
     strncat(dirbuffer,sfv->sfv_list[i]->filename,filelen);
     filelen=strlen(dirbuffer);
 
-    file=stat(dirbuffer,&s);
+    file=stat(dirbuffer,&s);        /* if file = 0, file is found */
     if(!file) cur_st_size=(unsigned long) s.st_size;
     strncpy(dirbuffer+filelen,".missing",10);
-    missing=stat(dirbuffer,&s);
+    missing=stat(dirbuffer,&s);     /* if missing = 0, missing is found */
     strncpy(dirbuffer+filelen,".bad",10);
-    bad=stat(dirbuffer,&s);
+    bad=stat(dirbuffer,&s);         /* if bad = 0, .bad is found */
 
     /* file is found and ok */
-    if ( !file && missing && bad ) {
+    if ( file==0 && missing && bad ) {
       size_total += (cur_st_size / 1024.);
       count_ok++;
     }
-
-    else if ( file ) {
-      /* else file is not found */
-      if ( !bad ) {
-        /* A .bad files does exist , remove it*/
-        strncpy(dirbuffer+filelen,".bad",10);
-        remove(dirbuffer);
-      }
-      if ( missing ){
+    else if ( file!=0 ) {
+      /*  file is not found */
+      if ( missing ){ /* no missing file yet, create one */
         /* create a .missing file */
         strncpy(dirbuffer+filelen,".missing",10);
         close(open(dirbuffer,O_WRONLY|O_CREAT,0666));
       }
     }
     free(dirbuffer);
-    i++;
   }
 
   stats->files_ok=count_ok;
@@ -198,20 +190,23 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     entry->state = SFV_MISSING;
     return 0;
   }
+  
   entry->size = s.st_size;
   real_crc = 0;
   ret = calc_crc32(filename,&real_crc,0,-1);
-  if (ret) return -1;
+  if (ret) 
+    return -1; /* something weird has happened, crc calc failed, do nothing */
+
+  /* remove any existing .bad file first */
+    if (!stat(bad,&s)) remove(bad);
 
   if (real_crc == entry->crc) {
-    if (!stat(bad,&s)) remove(bad);
-    if (!stat(missing,&s)) remove(missing);
+    /* CRC OK */
+    if (!stat(missing,&s)) remove(missing); /* remove also .missing if still there */
     entry->state = SFV_OK;
   } else { /* CRC differs */
     entry->state = SFV_BAD;
-    fd = open(bad,O_WRONLY|O_CREAT,0666);
-    close(fd);
-    if (!stat(missing,&s)) remove(missing);
+    rename( filename , bad ); /* rename to .bad */
   }
   return 0;
 }

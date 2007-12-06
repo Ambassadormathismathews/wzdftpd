@@ -185,15 +185,12 @@ int sfv_create(const char * sfv_file)
     int fd_sfv;
     fd_sfv = open(sfv_file,O_CREAT | O_WRONLY | O_TRUNC,0644);
 
-    i=0;
-    while (sfv.comments[i]) {
+    for (i=0; sfv.comments[i]; i++) {
       write(fd_sfv,sfv.comments[i],strlen(sfv.comments[i]));
       write(fd_sfv,"\n",1);
-      i++;
     }
 
-    i=0;
-    while (sfv.sfv_list[i]) {
+    for (i=0; sfv.sfv_list[i]; i++) {
       if (snprintf(buffer,2047,"%s %lx\n",sfv.sfv_list[i]->filename,
       sfv.sfv_list[i]->crc) <= 0) return -1;
       ret = strlen(buffer);
@@ -201,7 +198,6 @@ int sfv_create(const char * sfv_file)
         out_err(LEVEL_CRITICAL,"Unable to write sfv_file (%s)\n",strerror(errno));
         return -1;
       }
-      i++;
     }
 
     close(fd_sfv);
@@ -240,10 +236,9 @@ int sfv_check(const char * sfv_file)
     return -1;
   }
 
-  i=0;
   strcpy(filename,dir);
   ptr = filename + strlen(dir);
-  while (sfv.sfv_list[i]) {
+  for (i=0; sfv.sfv_list[i]; i++) {
     strcpy(ptr,sfv.sfv_list[i]->filename);
     if (stat(filename,&s) || S_ISDIR(s.st_mode)) {
       ret += 0x1000;
@@ -262,7 +257,6 @@ out_err(LEVEL_CRITICAL,"file %s calculated: %08lX reference: %08lX\n",filename,c
 #endif
     }
     *ptr = '\0';
-    i++;
   }
 
   sfv_free(&sfv);

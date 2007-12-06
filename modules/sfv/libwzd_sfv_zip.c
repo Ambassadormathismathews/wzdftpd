@@ -68,7 +68,7 @@
 /***** ZIP/DIZ CHECK FUNCTIONS *****/
 
 /** parse dir to calculate zip with diz release stats
--> also manages .bad and .missing
+-> also manages .bad
 return:
 -1 on error
 0 no error
@@ -76,7 +76,7 @@ return:
 int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char *directory, unsigned long files_total)
 {
   char *dirbuffer;
-  int curfile,bad,missing;
+  int curfile,bad;
   size_t dirlen, filelen;
   char *dirname;
   struct wzd_dir_t * dir;
@@ -110,7 +110,7 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
       if ( strcasecmp(ptr,".zip") ) continue;
     } else continue;
 
-    dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .missing or .bad*/
+    dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .bad*/
     if(!dirbuffer) continue;
 
     memset(dirbuffer,0,dirlen+filelen+15);
@@ -119,30 +119,15 @@ int sfv_diz_update_release_and_get_stats(wzd_release_stats * stats , const char 
     strncat(dirbuffer,file->filename,filelen);
     filelen=strlen(dirbuffer);
 
-    curfile=stat(dirbuffer,&s);
-    if(!curfile) cur_st_size=(unsigned long) s.st_size;
-    strncpy(dirbuffer+filelen,".missing",10);
-    missing=stat(dirbuffer,&s);
+    curfile=stat(dirbuffer,&s);      /* if curfile = 0, file is found */
+    if( curfile == 0) cur_st_size=(unsigned long) s.st_size;
     strncpy(dirbuffer+filelen,".bad",10);
-    bad=stat(dirbuffer,&s);
+    bad=stat(dirbuffer,&s);         /* if bad = 0, .bad is found */
 
     /* file is found and ok */
-    if ( !curfile && missing && bad ) {
+    if ( curfile == 0 && bad ) {
       size_total += (cur_st_size / 1024.);
       count_ok++;
-    }
-    else if ( curfile ) {
-      /* else file is not found */
-      if ( !bad ) {
-        /* A .bad files does exist , remove it*/
-        strncpy(dirbuffer+filelen,".bad",10);
-        remove(dirbuffer);
-      }
-      if ( missing ){
-        /* create a .missing file */
-        strncpy(dirbuffer+filelen,".missing",10);
-        close(open(dirbuffer,O_WRONLY|O_CREAT,0666));
-      }
     }
     free(dirbuffer);
   }
@@ -295,28 +280,31 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
   struct stat s;
   unsigned long files_total=0;
   char * directory;
-  char * filebuffer;
+  char * bad;
   size_t len;
 
   /* Get .bad path + filename*/
   len = strlen(zip_file);
-  filebuffer=malloc(len+15); /* Some extra len for .bad*/
-  if(!filebuffer) return -1;
-  memset(filebuffer,0,len+15);
-  strncpy(filebuffer,zip_file,len);
-  strncpy(filebuffer+len,".bad",10);
+  bad=malloc(len+15); /* Some extra len for .bad*/
+  if(!bad) return -1;
+  memset(bad,0,len+15);
+  strncpy(bad,zip_file,len);
+  strncpy(bad+len,".bad",10);
 
   ret = sfv_check_zip(zip_file,context,&files_total);
+  
+  /* remove any .bad file first */
+  if (!stat(bad,&s)) remove(bad); /* if .bad already exists, remove it first */
+  
+  /* file not ok, rename it to .bad */
   if (ret){
-    close(open(filebuffer,O_WRONLY|O_CREAT,0666) );
-  } else {
-    /* file was ok */
-    if (!stat(filebuffer,&s)) remove(filebuffer); /* if .bad exists, remove it */
+    rename( zip_file , bad );
   }
-  free(filebuffer);
+  free(bad);
 
   /* no file count found, abort */
-  if (files_total==0) return -1;
+  if (files_total==0) 
+    return -1;
 
   directory = path_getdirname(zip_file);
   if(directory) {
