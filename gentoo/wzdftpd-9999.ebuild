@@ -11,7 +11,7 @@ DESCRIPTION="A portable, modular, small, and efficient FTP server"
 SRC_URI=""
 HOMEPAGE="http://www.wzdftpd.net"
 IUSE="mysql postgres sqlite ssl ipv6 sfv zeroconf pam gnutls tcl perl utf8
-		debug tests"
+		dupecheck debug tests"
 RESTRICT="strip"
 ESVN_REPO_URI="https://svn.wzdftpd.net/svn/wzdftpd/trunk"
 ESVN_PATCHES="${FILESDIR}/${P}-*.patch"
@@ -24,7 +24,8 @@ RDEPEND="sqlite? ( dev-db/sqlite )
 			pam? ( sys-libs/pam )
 			tcl? ( dev-lang/tcl )
 			perl? ( dev-lang/perl )
-			zeroconf? ( net-dns/avahi )"
+			zeroconf? ( net-dns/avahi )
+			dupecheck? ( dev-db/sqlite )"
 
 DEPEND="${RDEPEND}
 			>=dev-util/cmake-2.4.6"
@@ -135,6 +136,12 @@ src_compile() {
 		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DWITH_SFV:BOOL=ON"
 	else
 		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DWITH_SFV:BOOL=OFF"
+	fi
+
+	if use dupecheck; then
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DWITH_DUPECHECK:BOOL=ON"
+	else
+		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DWITH_DUPECHECK:BOOL=OFF"
 	fi
 
 	CMAKE_VARIABLES="${CMAKE_VARIABLES} -DCMAKE_INSTALL_PREFIX:PATH=/usr"
