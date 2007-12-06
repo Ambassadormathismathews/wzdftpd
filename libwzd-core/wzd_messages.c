@@ -202,8 +202,48 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
   return 0;
 }
 
-/*************** send_message_raw ********************/
+/*************** send_message_raw_formatted ********************/
+int send_message_raw_formatted(wzd_context_t * context, const char * format, ...)
+{
+  va_list argptr;
+  wzd_string_t * str;
+  int ret;
 
+  if (!format)
+    return -1;
+
+  va_start(argptr, format);
+
+  str = str_allocate();
+  ret = str_vsprintf(str, format, argptr);
+
+  if (ret < 0)
+    return -1;
+
+  /* convert str to unicode if connection is in UTF-8 mode */
+#ifdef HAVE_UTF8
+  if (context->connection_flags & CONNECTION_UTF8)
+  {
+    if (!str_is_valid_utf8(str))
+      str_local_to_utf8(str,local_charset());
+  }
+#endif
+
+  if (ret < 0)
+    return -1;
+
+  str_append(str, "\r\n");
+
+  ret = (context->write_fct)(context->controlfd, str_tochar(str), str_length(str), 0, HARD_XFER_TIMEOUT, context);
+  out_log(LEVEL_FLOOD, "send_message_raw_formatted -> [%s]\n", str_tochar(str));
+
+  str_deallocate(str);
+  va_end(argptr);
+
+  return 0;
+}
+
+/*************** send_message_raw ********************/
 int send_message_raw(const char *msg, wzd_context_t * context)
 {
   int ret;

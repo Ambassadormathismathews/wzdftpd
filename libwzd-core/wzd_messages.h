@@ -39,6 +39,11 @@ int send_message(int code, wzd_context_t * context);
 int send_message_with_args(int code, wzd_context_t * context, ...);
 int send_message_raw(const char *msg, wzd_context_t * context);
 
+/** \brief send formatted reply to client, you have to take care of reply code
+ *
+ */
+int send_message_raw_formatted(wzd_context_t * context, const char * format, ...);
+
 /** \brief send formatted reply to client
  *
  * This will replace all previous functions to send messages
