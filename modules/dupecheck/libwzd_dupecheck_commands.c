@@ -47,9 +47,7 @@ int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_
   char *parameters, *temp;
   if (str_length(param) == 0)
   {
-    send_message_with_args(211, context, " == DUPECHECK ==");
-    send_message_with_args(200, context, "Syntax: site dupe <pattern>");
-    // TODO: Show syntax.
+    send_message_raw_formatted(context, "210 Syntax: site dupecheck <pattern>");
     return 0;
   }
 
@@ -59,7 +57,7 @@ int dupecheck_command_dupe(wzd_string_t *name, wzd_string_t *param, wzd_context_
   str_append(param, "*");
 
   out_log(LEVEL_INFO, "Dupecheck: site dupe '%s'\n", str_tochar(param));
-  dupelog_print_matching(str_tochar(param), limit, context);
+  dupelog_print_matching_dirs(str_tochar(param), limit, context);
 
   /*
   str_prepend(param, "%");

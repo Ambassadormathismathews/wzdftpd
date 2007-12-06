@@ -147,22 +147,19 @@ int dupelog_delete_entry(const char *filename)
   return EVENT_OK;
 }
 
-void dupelog_print_matching(const char *pattern, int limit, wzd_context_t *context)
+void dupelog_print_matching_dirs(const char *pattern, int limit, wzd_context_t *context)
 {
   sqlite3_stmt *stmt;
   sqlite3 *db;
   int retval, rows = 0;
-  wzd_string_t *reply;
-
-  reply = str_allocate();
 
   out_log(LEVEL_INFO, "Dupecheck: Matching '%s'\n", pattern);
-  db = opendb();
 
+  db = opendb();
   if (!db)
     return;
 
-  const char *selectQuery = "SELECT filename, path, added_at FROM dupelog WHERE lower(filename) GLOB lower(?) ORDER BY added_at DESC LIMIT ?";
+  const char *selectQuery = "SELECT path, added_at FROM dupelog WHERE lower(path) GLOB lower(?) GROUP BY path ORDER BY added_at DESC LIMIT ?";
   if (sqlite3_prepare(db, selectQuery, -1, &stmt, NULL) != SQLITE_OK)
   {
     if (stmt)
@@ -174,29 +171,18 @@ void dupelog_print_matching(const char *pattern, int limit, wzd_context_t *conte
 
   sqlite3_bind_text(stmt, 1, pattern, -1, SQLITE_TRANSIENT);
   sqlite3_bind_int(stmt, 2, limit);
-  str_append(reply, " == DUPECHECK ==\r\n");
   while ((retval = sqlite3_step(stmt)) == SQLITE_ROW)
   {
     char timeFormatted[11];
-    time_t time = sqlite3_column_int(stmt, 2);
+    time_t time = sqlite3_column_int(stmt, 1);
 
     strftime(timeFormatted, 11, "%F", localtime(&time));
-    str_append_printf(reply, " %s - %s %s\r\n", timeFormatted, sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 0));
-/*    reply_push(context, " ");
-    reply_push(context, timeFormatted);
-    reply_push(context, " - ");
-    reply_push(context, sqlite3_column_text(stmt, 1));
-    reply_push(context, sqlite3_column_text(stmt, 0));
-    reply_push(context, "\n");*/
-
+    send_message_raw_formatted(context, "210- %s  %s", timeFormatted, sqlite3_column_text(stmt, 0));
     rows++;
   }
   sqlite3_finalize(stmt);
 
-  str_append_printf(reply, " -- %d matches for '%s'\r\n", rows, pattern);
-  send_message_formatted(210, context, str_tochar(reply));
-
-  str_deallocate(reply);
+  send_message_raw_formatted(context, "210 -- %d matches for '%s'", rows, pattern);
 
   sqlite3_close(db);
 }
