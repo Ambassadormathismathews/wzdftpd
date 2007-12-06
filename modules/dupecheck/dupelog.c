@@ -182,7 +182,7 @@ void dupelog_print_matching_dirs(const char *pattern, int limit, wzd_context_t *
   }
   sqlite3_finalize(stmt);
 
-  send_message_raw_formatted(context, "210 -- %d matches for '%s'", rows, pattern);
+  send_message_raw_formatted(context, "210-- %d matches for '%s'", rows, pattern);
 
   sqlite3_close(db);
 }
