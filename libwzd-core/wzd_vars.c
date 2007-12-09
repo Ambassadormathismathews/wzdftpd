@@ -324,7 +324,7 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   wzd_user_t * user;
   unsigned long mod_type;
   unsigned long ul;
-  char *ptr;
+  char *ptr = 0;
   int ret;
 
   if (!username || !varname) return 1;
@@ -341,11 +341,14 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   }
   /* credits */
   else if (strcmp(varname, "credits")==0) {
-    u64_t ull;
+    i64_t ll;
 
-    ull = strtoull(data, &ptr, 0); /** \todo XXX check overflows */
+    ll = strtoll(data, &ptr, 0);
+    if (*ptr || ptr == data || ll < 0 || ll == LLONG_MAX) {
+      return -1;
+    }
 
-    user->credits = ull;
+    user->credits = (u64_t)ll;
     mod_type = _USER_CREDITS;
   }
   /* bytes_ul and bytes_dl should never be changed ... */

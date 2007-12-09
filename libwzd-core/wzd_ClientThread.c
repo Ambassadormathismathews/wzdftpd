@@ -2928,23 +2928,23 @@ int do_quit(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 int do_rest(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
-  u64_t ull;
-  char *ptr;
+  i64_t ll;
+  char *ptr = 0;
 
   if (!arg) {
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
   }
-  ull = strtoull(str_tochar(arg), &ptr, 0);
-  if (ptr==str_tochar(arg) || *ptr!='\0')
+  ll = strtoll(str_tochar(arg), &ptr, 0);
+  if (*ptr || ptr == str_tochar(arg) || ll < 0 || ll == LLONG_MAX)
   {
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
   } else {
     char buf[256];
-    snprintf(buf,256,"Restarting at %" PRIu64 ". Send STORE or RETRIEVE.",ull);
+    snprintf(buf,256,"Restarting at %" PRIu64 ". Send STORE or RETRIEVE.",(u64_t)ll);
     ret = send_message_with_args(350,context,buf);
-    context->resume = ull;
+    context->resume = (u64_t)ll;
   }
   return E_OK;
 }

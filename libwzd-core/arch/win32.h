@@ -193,6 +193,12 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define PRIu64  __PRI64_PREFIX "u"
 
+/* visual c++ doesn't follow C99 naming standards */
+#define strtoll _strtoi64
+#define strtoull _strtoui64
+#define LLONG_MAX _I64_MAX
+#define ULLONG_MAX _UI64_MAX
+
 typedef unsigned fd_t;
 
 typedef size_t ssize_t;
@@ -256,7 +262,6 @@ typedef size_t ssize_t;
 #include <libwzd-auth/wzd_crypt.h>
 #include <libwzd-auth/wzd_md5crypt.h>
 #include "wzd_strptime.h"
-#include "wzd_strtoull.h"
 
 
 

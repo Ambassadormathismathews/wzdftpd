@@ -692,7 +692,7 @@ int do_site_help_change(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command
  */
 int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
+  char *ptr = 0;
   wzd_string_t * username, * field, * value;
   unsigned long mod_type;
   unsigned long ul;
@@ -861,11 +861,24 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
   }
   /* credits */
   else if (strcmp(str_tochar(field),"credits")==0) {
-    u64_t ull;
+    i64_t ll;
 
-    ull=strtoull(str_tochar(value),&ptr,0);
+    ll=strtoll(str_tochar(value),&ptr,0);
+    if (*ptr || ptr == str_tochar(value)) {
+      str_deallocate(field); str_deallocate(value);
+      return do_site_help_change(cname,command_line,context);
+    } else if (ll < 0) {
+      ret = send_message_with_args(501,context,"Cannot set credits to a negative value");
+      str_deallocate(field); str_deallocate(value);
+      return 0;
+    } else if (ll == LLONG_MAX) {
+      ret = send_message_with_args(501,context,"Credits value is too large");
+      str_deallocate(field); str_deallocate(value);
+      return 0;
+    }
 
-    if (!*ptr) { mod_type = _USER_CREDITS; user->credits = ull; }
+    mod_type = _USER_CREDITS;
+    user->credits = (u64_t)ll;
   }
   /* num_logins */
   else if (strcmp(str_tochar(field),"num_logins")==0) {
@@ -1431,11 +1444,12 @@ int do_site_help_give(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
  */
 int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
+  char *ptr = 0;
   wzd_string_t * str_give, *username;
   int ret;
   wzd_user_t *user, *me;
   u64_t kbytes;
+  i64_t ll;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -1459,13 +1473,23 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
-  kbytes = strtoull(str_tochar(str_give),&ptr,0);
-  if (*ptr!='\0') {
+  ll = strtoll(str_tochar(str_give),&ptr,0);
+  if (*ptr || ptr == str_tochar(str_give)) {
     str_deallocate(str_give);
     return do_site_help_give(cname,command_line,context);
+  } else if (ll < 0) {
+    ret = send_message_with_args(501,context,"Can not give negative credits. Use SITE TAKE instead");
+    str_deallocate(str_give);
+    return 0;
+  } else if (ll == LLONG_MAX) {
+    ret = send_message_with_args(501,context,"Amount of credits specified is too large");
+    str_deallocate(str_give);
+    return 0;
   }
-  str_deallocate(str_give);
+  
+  kbytes = (u64_t)ll;
   kbytes *= 1024;
+  str_deallocate(str_give);
 
 #if 0
   /* TODO find user group or take current user */
@@ -1513,11 +1537,12 @@ int do_site_help_take(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
  */
 int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
-  char *ptr;
+  char *ptr = 0;
   wzd_string_t * str_take, *username;
   int ret;
   wzd_user_t *user, *me;
   u64_t kbytes;
+  i64_t ll;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -1541,13 +1566,23 @@ int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
-  kbytes = strtoull(str_tochar(str_take),&ptr,0);
-  if (*ptr!='\0') {
+  ll = strtoll(str_tochar(str_take),&ptr,0);
+  if (*ptr || ptr == str_tochar(str_take)) {
     str_deallocate(str_take);
     return do_site_help_take(cname,command_line,context);
+  } else if (ll < 0) {
+    ret = send_message_with_args(501,context,"Can not take negative credits. Use SITE GIVE instead");
+    str_deallocate(str_take);
+    return 0;
+  } else if (ll == LLONG_MAX) {
+    ret = send_message_with_args(501,context,"Amount of credits specified is too large");
+    str_deallocate(str_take);
+    return 0;
   }
-  str_deallocate(str_take);
+  
+  kbytes = (u64_t)ll;
   kbytes *= 1024;
+  str_deallocate(str_take);
 
 #if 0
   /* TODO find user group or take current user */

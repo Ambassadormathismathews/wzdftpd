@@ -28,7 +28,7 @@ RDEPEND="sqlite? ( dev-db/sqlite )
 			dupecheck? ( dev-db/sqlite )"
 
 DEPEND="${RDEPEND}
-			>=dev-util/cmake-2.4.6"
+			>=dev-util/cmake-2.4.7"
 
 pkg_setup() {
 	if use ssl && use gnutls; then
@@ -54,7 +54,6 @@ src_compile() {
 	local CMAKE_VARIABLES=""
 
 	if use debug; then
-		append-flags -ggdb -o1
 		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DDEBUG:BOOL=ON -DWITH_DEBUG:BOOL=ON -DCMAKE_BUILD_TYPE:STRING=Debug"
 	else
 		CMAKE_VARIABLES="${CMAKE_VARIABLES} -DDEBUG:BOOL=OFF -DWITH_DEBUG:BOOL=OFF -DCMAKE_BUILD_TYPE:STRING=Release"
