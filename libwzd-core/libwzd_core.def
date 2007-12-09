@@ -245,7 +245,6 @@ EXPORTS
 	stripdir
 	strlcat
 	strptime
-	strtok_r
 	strtomd5
 	symlink_create
 	symlink_remove

@@ -39,9 +39,6 @@
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
-# ifndef HAVE_STRTOK_R
-#  include "libwzd-base/wzd_strtok_r.h"
-# endif
 #endif
 
 #include <libwzd-auth/wzd_auth.h>

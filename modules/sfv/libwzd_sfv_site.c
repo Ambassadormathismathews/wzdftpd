@@ -32,10 +32,6 @@
 #include "config.h"
 #endif
 
-#ifndef HAVE_STRTOK_R
-#include "libwzd-base/wzd_strtok_r.h"
-#endif
-
 #ifdef WIN32
 #include <winsock2.h>
 #include <direct.h>

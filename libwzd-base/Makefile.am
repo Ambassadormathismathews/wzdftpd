@@ -10,7 +10,6 @@ libwzd_base_la_HEADERS = \
 	stack.h \
 	strpcpy.h \
 	wzd_strlcat.h \
-	wzd_strtok_r.h
 
 libwzd_base_la_SOURCES = \
 	dlist.c \
@@ -19,4 +18,3 @@ libwzd_base_la_SOURCES = \
 	stack.c \
 	strpcpy.c \
 	wzd_strlcat.c \
-	wzd_strtok_r.c

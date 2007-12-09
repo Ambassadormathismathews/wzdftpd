@@ -89,10 +89,6 @@
 
 #endif /* _MSC_VER */
 
-#ifndef HAVE_STRTOK_R
-# include "libwzd-base/wzd_strtok_r.h"
-#endif
-
 
 #include "wzd_structs.h"
 

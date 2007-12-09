@@ -139,7 +139,6 @@ Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_user.h; DestDir: {app}\includ
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_utf8.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_vars.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_vfs.h; DestDir: {app}\include\libwzd-core; Components: development
-Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-base\wzd_strtok_r.h; DestDir: {app}\include\libwzd-base; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-base\dlist.h; DestDir: {app}\include\libwzd-base; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-base\hash.h; DestDir: {app}\include\libwzd-base; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-base\list.h; DestDir: {app}\include\libwzd-base; Components: development

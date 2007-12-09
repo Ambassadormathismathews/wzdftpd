@@ -42,10 +42,6 @@
 #include <sys/wait.h>
 #endif
 
-#ifndef HAVE_STRTOK_R
-# include "libwzd-base/wzd_strtok_r.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

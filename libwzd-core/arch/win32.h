@@ -199,6 +199,8 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 #define LLONG_MAX _I64_MAX
 #define ULLONG_MAX _UI64_MAX
 
+#define strtok_r strtok_s
+
 typedef unsigned fd_t;
 
 typedef size_t ssize_t;
