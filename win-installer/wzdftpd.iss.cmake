@@ -131,7 +131,6 @@ Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_site_user.h; DestDir: {app}\i
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_socket.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_string.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_strptime.h; DestDir: {app}\include\libwzd-core; Components: development
-Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_strtoull.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_structs.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_threads.h; DestDir: {app}\include\libwzd-core; Components: development
 Source: @CMAKE_CURRENT_SOURCE_DIR@\libwzd-core\wzd_tls.h; DestDir: {app}\include\libwzd-core; Components: development

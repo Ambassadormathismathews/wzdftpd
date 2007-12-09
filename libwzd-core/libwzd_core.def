@@ -247,7 +247,6 @@ EXPORTS
 	strptime
 	strtok_r
 	strtomd5
-	strtoull
 	symlink_create
 	symlink_remove
 	time_to_str

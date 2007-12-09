@@ -514,7 +514,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
   wzd_user_t * user;
   long num;
   unsigned long u_num;
-  u64_t ul_num;
+  i64_t ll_num;
 
   user = user_allocate();
 
@@ -638,22 +638,22 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       user->max_dl_speed = num;
     } /* max_dl_speed */
     else if (strcmp("bytes_ul_total",varname)==0) {
-      ul_num = strtoull(value, &ptr, 0);
-      if (ptr == value || *ptr != '\0') { /* invalid number */
+      ll_num = strtoll(value, &ptr, 0);
+      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->stats.bytes_ul_total = ul_num;
+      user->stats.bytes_ul_total = (u64_t)ll_num;
     } /* bytes_ul_total */
     else if (strcmp("bytes_dl_total",varname)==0) {
-      ul_num = strtoull(value, &ptr, 0);
-      if (ptr == value || *ptr != '\0') { /* invalid number */
+      ll_num = strtoll(value, &ptr, 0);
+      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->stats.bytes_dl_total = ul_num;
+      user->stats.bytes_dl_total = (u64_t)ll_num;
     } /* bytes_dl_total */
     else if (strcmp("files_dl_total",varname)==0) {
       u_num = strtoul(value, &ptr, 0);
@@ -674,13 +674,13 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       user->stats.files_ul_total = u_num;
     } /* files_ul_total */
    else if (strcmp("credits",varname)==0) {
-      ul_num = strtoull(value, &ptr, 0);
-      if (ptr == value || *ptr != '\0') { /* invalid number */
+      ll_num = strtoll(value, &ptr, 0);
+      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->credits = ul_num;
+      user->credits = (u64_t)ll_num;
     } /* credits */
 
     else if (strcmp("num_logins",varname)==0) {

@@ -476,8 +476,8 @@ static inline int wzd_row_get_ullong(u64_t *dst, MYSQL_ROW row, unsigned int ind
 
   if (!dst || !row || row[index]==NULL) return 1;
 
-  i = strtoull(row[index], &ptr, 0);
-  if (ptr && *ptr == '\0') {
+  i = strtoull(row[index], &ptr, 0); /* assume the value cannot ever be negative */
+  if (*ptr || ptr == row[index]) {
     *dst = i;
     return 0;
   }
