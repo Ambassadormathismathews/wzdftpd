@@ -1070,6 +1070,7 @@ int do_site_help_chratio(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *comman
 int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr=NULL;
+  char *str=NULL;
   wzd_string_t * str_ratio, *username;
   int ret;
   wzd_user_t *user, *me;
@@ -1094,12 +1095,18 @@ int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
   str_deallocate(username);
   if ( !user ) {
     ret = send_message_with_args(501,context,"User does not exist");
+    str_deallocate(str_ratio);
     return 0;
   }
 
-  ratio = strtoul(str_tochar(str_ratio),&ptr,0);
-
-  if (*ptr!='\0') {
+  str = str_tochar(str_ratio);
+  if (*str < '0' || *str > '9') { /* invalid number */
+    str_deallocate(str_ratio);
+    return do_site_help_chratio(cname,command_line,context);
+  }
+  ratio = strtoul(str,&ptr,0);
+  if (*ptr || ptr == str_ratio) { /* invalid number */
+    str_deallocate(str_ratio);
     return do_site_help_chratio(cname,command_line,context);
   }
   str_deallocate(str_ratio);
