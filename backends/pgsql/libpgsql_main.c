@@ -503,7 +503,7 @@ static inline int wzd_row_get_ullong(u64_t *dst, PGresult * res, unsigned int in
 
   if (!dst || !res || PQgetisnull(res,0,index)) return 1;
 
-  i = strtoull(PQgetvalue(res,0,index), &ptr, 0); /* assume the value cannot ever be negative */
+  i = strtoull(PQgetvalue(res,0,index), &ptr, 0);
 
   if (*ptr || ptr == PQgetvalue(res,0,index)) {
     *dst = i;

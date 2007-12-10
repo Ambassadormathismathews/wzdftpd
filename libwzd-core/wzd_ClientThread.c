@@ -2924,23 +2924,33 @@ int do_quit(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 int do_rest(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   int ret;
-  i64_t ll;
+  u64_t ull;
   char *ptr = 0;
+  char *str = 0;
 
   if (!arg) {
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
   }
-  ll = strtoll(str_tochar(arg), &ptr, 0);
-  if (*ptr || ptr == str_tochar(arg) || ll < 0 || ll == LLONG_MAX)
-  {
+  str = str_tochar(arg);
+  if (*str < '0' || *str > '9') { /* invalid number */
+    ret = send_message_with_args(501,context,"Invalid REST marker");
+    return E_PARAM_INVALID;
+  }
+  ull = strtoull(str, &ptr, 0);
+  if (*ptr || ptr == str || ull == ULLONG_MAX) { /* invalid number */
+    /* Note that checking for an overflow against ULLONG_MAX
+     * is more important than losing ULLONG_MAX as a valid
+     * REST marker. It shouldn't be assumed that values
+     * greater than ULLONG_MAX round down to ULLONG_MAX.
+     */
     ret = send_message_with_args(501,context,"Invalid REST marker");
     return E_PARAM_INVALID;
   } else {
     char buf[256];
-    snprintf(buf,256,"Restarting at %" PRIu64 ". Send STORE or RETRIEVE.",(u64_t)ll);
+    snprintf(buf,256,"Restarting at %" PRIu64 ". Send STORE or RETRIEVE.",ull);
     ret = send_message_with_args(350,context,buf);
-    context->resume = (u64_t)ll;
+    context->resume = ull;
   }
   return E_OK;
 }

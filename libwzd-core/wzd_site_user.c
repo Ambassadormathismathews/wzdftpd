@@ -693,9 +693,11 @@ int do_site_help_change(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command
 int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
+  char *str = 0;
   wzd_string_t * username, * field, * value;
   unsigned long mod_type;
   unsigned long ul;
+  u64_t ull;
   unsigned int oldratio=0;
   int ret;
   wzd_user_t * user, *me;
@@ -861,24 +863,19 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
   }
   /* credits */
   else if (strcmp(str_tochar(field),"credits")==0) {
-    i64_t ll;
-
-    ll=strtoll(str_tochar(value),&ptr,0);
-    if (*ptr || ptr == str_tochar(value)) {
+    str = str_tochar(value);
+    if (*str < '0' || *str > '9') { /* invalid number */
       str_deallocate(field); str_deallocate(value);
       return do_site_help_change(cname,command_line,context);
-    } else if (ll < 0) {
-      ret = send_message_with_args(501,context,"Cannot set credits to a negative value");
+    }
+    ull=strtoull(str,&ptr,0); /* values greater than ULLONG_MAX will round down to ULLONG_MAX */
+    if (*ptr || ptr == str) { /* invalid number */
       str_deallocate(field); str_deallocate(value);
-      return 0;
-    } else if (ll == LLONG_MAX) {
-      ret = send_message_with_args(501,context,"Credits value is too large");
-      str_deallocate(field); str_deallocate(value);
-      return 0;
+      return do_site_help_change(cname,command_line,context);
     }
 
     mod_type = _USER_CREDITS;
-    user->credits = (u64_t)ll;
+    user->credits = ull;
   }
   /* num_logins */
   else if (strcmp(str_tochar(field),"num_logins")==0) {
@@ -1445,11 +1442,11 @@ int do_site_help_give(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
 int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
+  char *str = 0;
   wzd_string_t * str_give, *username;
   int ret;
   wzd_user_t *user, *me;
-  u64_t kbytes;
-  i64_t ll;
+  u64_t bytes;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -1473,22 +1470,17 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
-  ll = strtoll(str_tochar(str_give),&ptr,0);
-  if (*ptr || ptr == str_tochar(str_give)) {
+  str = str_tochar(str_give);
+  if (*str < '0' || *str > '9') { /* invalid number */
     str_deallocate(str_give);
     return do_site_help_give(cname,command_line,context);
-  } else if (ll < 0) {
-    ret = send_message_with_args(501,context,"Can not give negative credits. Use SITE TAKE instead");
+  }
+  bytes = strtoull(str,&ptr,0); /* values greater than ULLONG_MAX will round down to ULLONG_MAX */
+  if (*ptr || ptr == str) { /*invalid number */
     str_deallocate(str_give);
-    return 0;
-  } else if (ll == LLONG_MAX) {
-    ret = send_message_with_args(501,context,"Amount of credits specified is too large");
-    str_deallocate(str_give);
-    return 0;
+    return do_site_help_give(cname,command_line,context);
   }
   
-  kbytes = (u64_t)ll;
-  kbytes *= 1024;
   str_deallocate(str_give);
 
 #if 0
@@ -1505,23 +1497,33 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
 #endif /* 0 */
 
   /* check user credits */
-  if (me->credits && me->credits < kbytes) {
+  if (me->credits < bytes) {
     ret = send_message_with_args(501,context,"You don't have enough credits!");
     return 0;
   }
 
-  user->credits += kbytes;
-  if (me->credits)
-    me->credits -= kbytes;
+  /* don't increment credits above ULLONG_MAX */
+  if (ULLONG_MAX - bytes <= user->credits) { /* overflow condition */
+    bytes = ULLONG_MAX - user->credits;
+    user->credits = ULLONG_MAX;
+  } else /* no overflow occured */
+    user->credits += bytes;
 
+    /* \TODO don't decrement credits for gadmin/siteops */
+    me->credits -= bytes;
+    
   /* add it to backend */
   ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_CREDITS);
 
   if (ret) {
     ret = send_message_with_args(501,context,"Problem changing value");
   } else {
+    /* \TODO inform user if an overflow occured and how many credits were actually transferred */
     ret = send_message_with_args(200,context,"Credits given");
   }
+
+  ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_CREDITS);
+
   return 0;
 }
 
@@ -1538,11 +1540,11 @@ int do_site_help_take(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
 int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
+  char *str = 0;
   wzd_string_t * str_take, *username;
   int ret;
   wzd_user_t *user, *me;
-  u64_t kbytes;
-  i64_t ll;
+  u64_t bytes;
   short is_gadmin;
 
   me = GetUserByID(context->userid);
@@ -1566,22 +1568,17 @@ int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
-  ll = strtoll(str_tochar(str_take),&ptr,0);
-  if (*ptr || ptr == str_tochar(str_take)) {
+  str = str_tochar(str_take);
+  if (*str < '0' || *str > '9') { /* invalid number */
     str_deallocate(str_take);
     return do_site_help_take(cname,command_line,context);
-  } else if (ll < 0) {
-    ret = send_message_with_args(501,context,"Can not take negative credits. Use SITE GIVE instead");
+  }
+  bytes = strtoull(str,&ptr,0); /* values greater than ULLONG_MAX will round down to ULLONG_MAX */
+  if (*ptr || ptr == str) { /* invalid number */
     str_deallocate(str_take);
-    return 0;
-  } else if (ll == LLONG_MAX) {
-    ret = send_message_with_args(501,context,"Amount of credits specified is too large");
-    str_deallocate(str_take);
-    return 0;
+    return do_site_help_take(cname,command_line,context);
   }
   
-  kbytes = (u64_t)ll;
-  kbytes *= 1024;
   str_deallocate(str_take);
 
 #if 0
@@ -1603,8 +1600,9 @@ int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
-  if (user->credits > kbytes)
-    user->credits -= kbytes;
+  /* don't decrement credits below 0 (credits is an unsigned number)*/
+  if (user->credits > bytes)
+    user->credits -= bytes;
   else
     user->credits = 0;
 

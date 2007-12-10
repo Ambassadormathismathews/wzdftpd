@@ -514,7 +514,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
   wzd_user_t * user;
   long num;
   unsigned long u_num;
-  i64_t ll_num;
+  u64_t ull_num;
 
   user = user_allocate();
 
@@ -638,22 +638,32 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       user->max_dl_speed = num;
     } /* max_dl_speed */
     else if (strcmp("bytes_ul_total",varname)==0) {
-      ll_num = strtoll(value, &ptr, 0);
-      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
+      if (*value < '0' || *value > '9') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->stats.bytes_ul_total = (u64_t)ll_num;
+      ull_num = strtoull(value, &ptr, 0);
+      if (*ptr || ptr == value) { /* invalid number */
+        snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
+        ERRLOG(errbuf);
+        continue;
+      }
+      user->stats.bytes_ul_total = ull_num;
     } /* bytes_ul_total */
     else if (strcmp("bytes_dl_total",varname)==0) {
-      ll_num = strtoll(value, &ptr, 0);
-      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
+      if (*value < '0' || *value > '9') { /* invalid number */
+        snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
+        ERRLOG(errbuf);
+        continue;
+      } 
+      ull_num = strtoull(value, &ptr, 0);
+      if (*ptr || ptr == value) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->stats.bytes_dl_total = (u64_t)ll_num;
+      user->stats.bytes_dl_total = ull_num;
     } /* bytes_dl_total */
     else if (strcmp("files_dl_total",varname)==0) {
       u_num = strtoul(value, &ptr, 0);
@@ -673,16 +683,20 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       }
       user->stats.files_ul_total = u_num;
     } /* files_ul_total */
-   else if (strcmp("credits",varname)==0) {
-      ll_num = strtoll(value, &ptr, 0);
-      if (*ptr || ptr == value || ll_num < 0 || ll_num == LLONG_MAX) { /* invalid number */
+    else if (strcmp("credits",varname)==0) {
+      if (*value < '0' || *value > '9') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
         ERRLOG(errbuf);
         continue;
       }
-      user->credits = (u64_t)ll_num;
+      ull_num = strtoull(value, &ptr, 0);
+      if (*ptr || ptr == value) { /* invalid number */
+        snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
+        ERRLOG(errbuf);
+        continue;
+      }
+      user->credits = ull_num;
     } /* credits */
-
     else if (strcmp("num_logins",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */

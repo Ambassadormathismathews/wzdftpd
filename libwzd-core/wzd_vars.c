@@ -70,7 +70,7 @@ static struct wzd_shm_vars_t * _shm_vars[32] = { NULL };
 
 
 
-int vars_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_get(const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
 {
   if (!config) return 1;
 
@@ -136,7 +136,7 @@ int vars_get(const char *varname, void *data, unsigned int datalength, wzd_confi
  *
  * \todo we should change the value in config->cfg_file
  */
-int vars_set(const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
+int vars_set(const char *varname, const char *data, unsigned int datalength, wzd_config_t * config)
 {
   int i;
   unsigned long ul;
@@ -203,7 +203,7 @@ int vars_set(const char *varname, const void *data, unsigned int datalength, wzd
   return 1;
 }
 
-int vars_user_get(const char *username, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_user_get(const char *username, const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_user_t * user;
   wzd_group_t * group;
@@ -319,11 +319,12 @@ int vars_user_delip(const char *username, const char *ip, wzd_config_t *config)
   return backend_mod_user(config->backends->filename, user->uid, user, _USER_IP);
 }
 
-int vars_user_set(const char *username, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
+int vars_user_set(const char *username, const char *varname, const char *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_user_t * user;
   unsigned long mod_type;
   unsigned long ul;
+  u64_t ull;
   char *ptr = 0;
   int ret;
 
@@ -341,14 +342,12 @@ int vars_user_set(const char *username, const char *varname, const void *data, u
   }
   /* credits */
   else if (strcmp(varname, "credits")==0) {
-    i64_t ll;
-
-    ll = strtoll(data, &ptr, 0);
-    if (*ptr || ptr == data || ll < 0 || ll == LLONG_MAX) {
+    if (*data < '0' || *data > '9') /* invalid number */
       return -1;
-    }
-
-    user->credits = (u64_t)ll;
+    ull = strtoull(data, &ptr, 0);
+    if (*ptr || ptr == data) /* invalid number */
+      return -1;
+    user->credits = ull;
     mod_type = _USER_CREDITS;
   }
   /* bytes_ul and bytes_dl should never be changed ... */
@@ -476,7 +475,7 @@ int vars_user_new(const char *username, const char *pass, const char *groupname,
   return err ? 1 : 0;
 }
 
-int vars_group_get(const char *groupname, const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_group_get(const char *groupname, const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_group_t * group;
 
@@ -512,7 +511,7 @@ int vars_group_get(const char *groupname, const char *varname, void *data, unsig
   return 1;
 }
 
-int vars_group_set(const char *groupname, const char *varname, const void *data, unsigned int datalength, wzd_config_t * config)
+int vars_group_set(const char *groupname, const char *varname, const char *data, unsigned int datalength, wzd_config_t * config)
 {
   wzd_group_t * group;
   unsigned long mod_type;
@@ -685,7 +684,7 @@ struct wzd_shm_vars_t * vars_shm_find(const char *varname, wzd_config_t * config
 /* fills data with varname content, max size: datalength
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_shm_get(const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
 {
   struct wzd_shm_vars_t * var;
   int ret = 1;
@@ -706,7 +705,7 @@ int vars_shm_get(const char *varname, void *data, unsigned int datalength, wzd_c
  * Create varname if needed.
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_shm_set(const char *varname, void *data, unsigned int datalength, wzd_config_t * config)
+int vars_shm_set(const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
 {
   struct wzd_shm_vars_t * var;
 

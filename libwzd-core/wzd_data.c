@@ -378,8 +378,13 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
       limiter_add_bytes(&context->current_dl_limiter,limiter_mutex,n,0);
 
       user->stats.bytes_dl_total += n;
-      if (user->ratio)
-        user->credits -= n;
+      if (user->ratio) {
+        /* make sure credits aren't decremented below 0 (credits is an unsigned number) */
+        if (user->credits >= n)
+          user->credits -= n;
+        else
+          user->credits = 0;
+      }
       context->idle_time_data_start = server_time;
     } else { /* end */
       data_end_transfer(0 /* is_upload */, 1 /* end_ok */, context);
@@ -413,8 +418,13 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
       limiter_add_bytes(&context->current_ul_limiter,limiter_mutex,n,0);
 
       user->stats.bytes_ul_total += n;
-      if (user->ratio)
-        user->credits += (user->ratio * n);
+      if (user->ratio) {
+        /* make sure credits aren't incremented above ULLONG_MAX */
+        if (ULLONG_MAX - (user->ratio * n) <= user->credits)
+          user->credits = ULLONG_MAX;
+        else
+          user->credits += (user->ratio * n);
+      }
       context->idle_time_data_start = server_time;
     } else { /* consider it is finished */
       off_t current_position;
@@ -507,8 +517,13 @@ void *do_local_retr(void * _context)
         if (auto_crc) calc_crc32_buffer( context->data_buffer, &crc, count);
 
         user->stats.bytes_dl_total += count;
-        if (user->ratio)
-          user->credits -= count;
+        if (user->ratio) {
+          /* make sure credits aren't decremented below 0 (credits is an unsigned number) */
+          if (user->credits >= count)
+            user->credits -= count;
+          else
+            user->credits = 0;
+        }
         context->idle_time_data_start = server_time;
       } else {
         exit_ok = 1;
@@ -607,8 +622,13 @@ void *do_local_stor(void * _context)
         if (auto_crc) calc_crc32_buffer( context->data_buffer, &crc, count);
 
         user->stats.bytes_ul_total += count;
-        if (user->ratio)
-          user->credits += (user->ratio * ret);
+        if (user->ratio) {
+          /* make sure credits aren't incremented above ULLONG_MAX */
+          if (ULLONG_MAX - (user->ratio * count) <= user->credits)
+            user->credits = ULLONG_MAX;
+          else
+            user->credits += (user->ratio * count);
+        }
         context->idle_time_data_start = server_time;
       } else {
         exit_ok = 1;
