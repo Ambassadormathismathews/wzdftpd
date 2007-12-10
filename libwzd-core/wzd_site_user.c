@@ -1227,7 +1227,8 @@ int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
 int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
-  char *ptr;
+  char *ptr = 0;
+  char *str = 0;
   int ret;
   wzd_user_t * user;
   unsigned long idletime;
@@ -1240,24 +1241,34 @@ int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     return 0;
   }
 
-  if (command_line && strlen(str_tochar(command_line))>0) {
+  str = str_tochar(command_line);
+  if (str && strlen(str) > 0) {
+    /* command has arguments, user wants to set idle timeout */
     if (!user->flags || !strchr(user->flags,FLAG_SITEOP)) {
       ret = send_message_with_args(501,context,"You do not have the rights to do that!");
       return 0;
     }
-    idletime = strtoul(str_tochar(command_line),&ptr,0);
-    if (*ptr!='\0' || idletime > 7200) { /* XXX hard max idle value of 7200s */
+    if (*str < '0' || *str > '9') { /* invalid number */
       ret = send_message_with_args(501,context,"Invalid value - Usage: site idle [<idletime>]");
+      return 0;
+    }
+    idletime = strtoul(str,&ptr,0);
+    if (*ptr) { /* invalid number */
+      ret = send_message_with_args(501,context,"Invalid value - Usage: site idle [<idletime>]");
+      return 0;
+    }
+    if (idletime > 7200) { /* XXX hard max idle value of 7200s */
+      ret = send_message_with_args(501,context,"Maximum idle timeout value is 7200 seconds");
       return 0;
     }
     user->max_idle_time = idletime;
     /* commit to backend */
     backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_IDLE);
     snprintf(buffer,1023,"%s","Command okay");
-  } else { /* if (*command_line != '\0') */
-
+  } else {
+    /* no arguments, user just wants to view their current idle timeout setting */
     snprintf(buffer,1023,"Your idle time is %u seconds",user->max_idle_time);
-  } /* if (*command_line != '\0') */
+  }
 
   ret = send_message_with_args(200,context,buffer);
   return 0;
