@@ -120,6 +120,7 @@ wzd_reply_t * wzd_send_message(const char *buffer, int length);
 #else /* WIN32 */
 
 # define strncasecmp strnicmp
+# define strtok_r strtok_s
 
 #endif /* WIN32 */
 

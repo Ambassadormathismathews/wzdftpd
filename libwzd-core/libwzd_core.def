@@ -138,6 +138,7 @@ EXPORTS
 	ip_list_check
 	ip_list_check_ident
 	ip_list_free
+	ip_numeric_to_string
 	is_hidden_file
 	is_perm_file
 	is_user_in_group

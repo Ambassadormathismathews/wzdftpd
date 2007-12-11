@@ -2999,6 +2999,7 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
   char path[WZD_MAX_PATH];
   int ret;
   wzd_user_t * user;
+  wzd_string_t * event_args;
 
   user = GetUserByID(context->userid);
 
@@ -3026,7 +3027,7 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
     return E_FILE_FORBIDDEN;
   }
 
-  wzd_string_t * event_args = str_allocate();
+  event_args = str_allocate();
   str_sprintf(event_args, "%s %s %s", user->username, context->current_action.arg, path);
   if (event_send(mainConfig->event_mgr, EVENT_PRERENAME, 0, event_args, context) == EVENT_DENY)
   {
