@@ -2702,6 +2702,7 @@ int do_dele(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
   owner = file_getowner(path,context);
 
   context->current_action.token = TOK_DELE;
+  strncpy(context->current_action.arg, path, HARD_LAST_COMMAND_LENGTH);
   out_err(LEVEL_FLOOD,"Removing file '%s'\n",path);
 
   ret = file_remove(path,context);
