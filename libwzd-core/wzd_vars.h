@@ -125,7 +125,7 @@ int vars_shm_get(const char *varname, char *data, unsigned int datalength, wzd_c
 /** change varname with data contents size of data is datalength
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_shm_set(const char *varname, char *data, unsigned int datalength, wzd_config_t * config);
+int vars_shm_set(const char *varname, const char *data, unsigned int datalength, wzd_config_t * config);
 
 /** @} */
 

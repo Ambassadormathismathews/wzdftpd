@@ -705,7 +705,7 @@ int vars_shm_get(const char *varname, char *data, unsigned int datalength, wzd_c
  * Create varname if needed.
  * @returns 0 if ok, 1 if an error occured
  */
-int vars_shm_set(const char *varname, char *data, unsigned int datalength, wzd_config_t * config)
+int vars_shm_set(const char *varname, const char *data, unsigned int datalength, wzd_config_t * config)
 {
   struct wzd_shm_vars_t * var;
 
