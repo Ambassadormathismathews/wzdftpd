@@ -161,7 +161,7 @@ gid_t libsqlite_group_get_id_by_ref(int ref)
                         &stmt, NULL);
 
   if (ret != SQLITE_OK) {
-    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.", sqlite3_errmsg(db));
+    out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
     libsqlite_close(&db);
     return INVALID_GROUP;
   }
@@ -260,7 +260,7 @@ static void libsqlite_group_get_ip(wzd_group_t *group)
   ret = sqlite3_prepare(db, "SELECT ip FROM groupip WHERE gref = ?;",
                         -1, &stmt, NULL);
 
-  if (ret != SQLITE_DONE) {
+  if (ret != SQLITE_OK) {
     out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.", sqlite3_errmsg(db));
     libsqlite_close(&db);
     return;
@@ -333,7 +333,7 @@ wzd_group_t *libsqlite_group_get_by_id(gid_t gid)
   {
     switch(ret) {
       case SQLITE_ERROR:
-        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s\n", sqlite3_errmsg(db));
+        out_log(SQLITE_LOG_CHANNEL, "Backend sqlite prepare error: %s.\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         libsqlite_close(&db);
         return NULL;
