@@ -1466,9 +1466,11 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
   wzd_user_t *user, *me;
   u64_t bytes;
   short is_gadmin;
+  short is_siteop;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+  is_siteop = (me->flags && strchr(me->flags,FLAG_SITEOP)) ? 1 : 0;
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
@@ -1488,6 +1490,13 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     return 0;
   }
 
+  if (is_gadmin) {
+    /* gadmins cannot change user from different group */
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
+      is_gadmin = 0; /* treat the gadmin as a normal user so they lose credits */
+    }
+  }
+
   str = str_tochar(str_give);
   if (*str < '0' || *str > '9') { /* invalid number */
     str_deallocate(str_give);
@@ -1501,22 +1510,22 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
   
   str_deallocate(str_give);
 
-#if 0
-  /* TODO find user group or take current user */
-  if (is_gadmin)
-  {
-    /* GAdmins cannot change user from different group */
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
-    {
-      ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
+  if (!is_gadmin && !is_siteop) {
+    /* ensure that leech users cannot give out unlimited credits */
+    if (me->ratio == 0) {
+      ret = send_message_with_args(501,context,"Users without a ratio cannot give credits");
+      return 0;
+    }
+    /* make sure the user has enough credits to give */
+    if (me->credits < bytes) {
+      ret = send_message_with_args(501,context,"You don't have enough credits");
       return 0;
     }
   }
-#endif /* 0 */
 
-  /* check user credits */
-  if (me->credits < bytes) {
-    ret = send_message_with_args(501,context,"You don't have enough credits!");
+  /* leech users shouldn't be able to receive credits */
+  if (user->ratio == 0) {
+    ret = send_message_with_args(501,context,"Users without a ratio cannot receive credits");
     return 0;
   }
 
@@ -1527,7 +1536,8 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
   } else /* no overflow occured */
     user->credits += bytes;
 
-    /* \TODO don't decrement credits for gadmin/siteops */
+  /* decrement credits for user unless they are a gadmin or siteop */
+  if (!is_gadmin && !is_siteop)
     me->credits -= bytes;
     
   /* add it to backend */
@@ -1540,7 +1550,8 @@ int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
     ret = send_message_with_args(200,context,"Credits given");
   }
 
-  ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_CREDITS);
+  if (!is_gadmin && !is_siteop)
+    ret = backend_mod_user(mainConfig->backends->filename,me->uid,me,_USER_CREDITS);
 
   return 0;
 }
@@ -1564,9 +1575,17 @@ int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
   wzd_user_t *user, *me;
   u64_t bytes;
   short is_gadmin;
+  short is_siteop;
 
   me = GetUserByID(context->userid);
   is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+  is_siteop = (me->flags && strchr(me->flags,FLAG_SITEOP)) ? 1 : 0;
+
+  /* only gadmins and siteops can use this command */
+  if (!is_gadmin || !is_siteop) {
+    ret = send_message_with_args(501,context,"You are not authorized to use this command");
+    return 0;
+  }
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
@@ -1599,18 +1618,13 @@ int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t 
   
   str_deallocate(str_take);
 
-#if 0
-  /* TODO find user group or take current user */
-  if (is_gadmin)
-  {
+  if (is_gadmin) {
     /* GAdmins cannot change user from different group */
-    if (me->group_num==0 || user.group_num==0 || me->groups[0]!=user.groups[0])
-    {
+    if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
       ret = send_message_with_args(501,context,"You are not allowed to change users from this group");
       return 0;
     }
   }
-#endif /* 0 */
 
   /* check user credits */
   if (user->ratio==0) {
