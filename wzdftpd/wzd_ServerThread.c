@@ -175,7 +175,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(wzd_ident_context_t * ident_context);
 static void server_ident_timeout_check(void);
 
-static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);;
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
 static void server_login_accept(wzd_context_t * context);

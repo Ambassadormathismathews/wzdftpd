@@ -693,7 +693,7 @@ int do_site_help_change(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command
 int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
-  char *str = 0;
+  const char *str = 0;
   wzd_string_t * username, * field, * value;
   unsigned long mod_type;
   unsigned long ul;
@@ -1070,7 +1070,7 @@ int do_site_help_chratio(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *comman
 int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr=NULL;
-  char *str=NULL;
+  const char *str=NULL;
   wzd_string_t * str_ratio, *username;
   int ret;
   wzd_user_t *user, *me;
@@ -1105,7 +1105,7 @@ int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
     return do_site_help_chratio(cname,command_line,context);
   }
   ratio = strtoul(str,&ptr,0);
-  if (*ptr || ptr == str_ratio) { /* invalid number */
+  if (*ptr) { /* invalid number */
     str_deallocate(str_ratio);
     return do_site_help_chratio(cname,command_line,context);
   }
@@ -1235,7 +1235,7 @@ int do_site_idle(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 {
   char buffer[1024];
   char *ptr = 0;
-  char *str = 0;
+  const char *str = 0;
   int ret;
   wzd_user_t * user;
   unsigned long idletime;
@@ -1460,7 +1460,7 @@ int do_site_help_give(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
 int do_site_give(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
-  char *str = 0;
+  const char *str = 0;
   wzd_string_t * str_give, *username;
   int ret;
   wzd_user_t *user, *me;
@@ -1569,7 +1569,7 @@ int do_site_help_take(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_l
 int do_site_take(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char *ptr = 0;
-  char *str = 0;
+  const char *str = 0;
   wzd_string_t * str_take, *username;
   int ret;
   wzd_user_t *user, *me;

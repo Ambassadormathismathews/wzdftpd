@@ -25,6 +25,9 @@
 #ifndef __WZD_DATA__
 #define __WZD_DATA__
 
+/** \brief Close pasv connection (if opened) */
+void pasv_close(wzd_context_t * context);
+
 /** \brief Close data connection (if opened) */
 void data_close(wzd_context_t * context);
 

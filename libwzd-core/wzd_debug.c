@@ -315,7 +315,7 @@ int check_context(wzd_context_t * context)
   {
     out_err(LEVEL_CRITICAL,"CRITICAL GetMyContext does not match context !\n");
     out_err(LEVEL_CRITICAL,"CRITICAL GetMyContext %p\n",GetMyContext());
-    out_err(LEVEL_CRITICAL,"CRITICAL context      %p\n",context);
+    out_err(LEVEL_CRITICAL,"CRITICAL context      %p\n",(void*)context);
     return 1;
   }
   if (!context->magic == CONTEXT_MAGIC)

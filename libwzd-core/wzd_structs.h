@@ -172,32 +172,24 @@ typedef struct wzd_group_t wzd_group_t;
 
 /*********************** BACKEND **************************/
 
-/** IMPORTANT:
+/** \brief Initialization function for backends.
  *
- * all validation functions have the following return code:
- *
- *   0 = success
- *
- *   !0 = failure
- *
- * the last parameter of all functions is a ptr to current user
+ * A backend receives a newly allocated structure, and must fill values
+ * before returning 0 (success) or an other code (failure).
  */
-
-
-
 typedef int (*backend_init_function_t)(struct wzd_backend_t*);
 
+/** \brief Backend definition: module used to store users / groups
+ */
 struct wzd_backend_def_t {
-  char * filename;
+  char * filename; /**< Shared library, or NULL for a static backend */
 
-  char * param;
-  void * handle;
+  char * param;    /**< Parameters to be given at backend init */
+  void * handle;   /**< (System) handle to shared library */
 
-  backend_init_function_t fcn_init;
+  struct wzd_backend_t * b; /**< Function definitions */
 
-  struct wzd_backend_t * b;
-
-  struct wzd_backend_def_t * next_backend;
+  struct wzd_backend_def_t * next_backend; /**< Next backend */
 };
 
 

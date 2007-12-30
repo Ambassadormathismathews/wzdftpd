@@ -3,6 +3,14 @@
 - use 'rats','splint', 'pscan' for security audit
 
 '********'
+- backend_find_user should fill the user directly (so the call to GetUserByID is not needed).
+  This means the backend should return a deep copy of the user !
+  It should also be locked using a mutex
+'********'
+- add instances for modules / backends
+'********'
+- solve the problem with port
+'********'
 - test if binding a v6 socket using sockaddr_in (v4 struct) works
 '********'
 - feature: warn if protocol is not recognized (wzd_events.c)

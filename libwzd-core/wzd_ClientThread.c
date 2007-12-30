@@ -239,15 +239,13 @@ int clear_write(fd_t sock, const char *msg, size_t length, UNUSED int flags, uns
 void client_die(wzd_context_t * context)
 {
 #ifdef DEBUG
-  out_log(LEVEL_FLOOD,"client_die(context = %p)\n",context);
+  out_log(LEVEL_FLOOD,"client_die(context = %p)\n", (void*)context);
 #endif
 
   if (context == NULL) return;
 
   if (context->magic != CONTEXT_MAGIC) {
-#ifdef DEBUG
-out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
-#endif
+    out_err(LEVEL_HIGH,"clientThread: context->magic is invalid at exit\n");
     return;
   }
 
@@ -1535,7 +1533,7 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
     ret = send_message_with_args(501,context,"Invalid parameters");
     return E_PARAM_NULL;
   }
-  if ((sscanf(str_tochar(args),"%d,%d,%d,%d,%d,%d",
+  if ((sscanf(str_tochar(args),"%d,%d,%d,%d,%u,%u",
           &a0,&a1,&a2,&a3,
           &p1,&p2))<6) {
     ret = send_message(502,context);
@@ -1581,12 +1579,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   port = mainConfig->pasv_low_range; /* use pasv range min */
 
   /* close existing pasv connections */
-  if (context->pasvsock != (fd_t)-1) {
-    socket_close(context->pasvsock);
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-/*    port = context->pasvsock+1; *//* FIXME force change of socket */
-    context->pasvsock = -1;
-  }
+  pasv_close(context);
 
   /* create socket */
   if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
@@ -2927,7 +2920,7 @@ int do_rest(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
   int ret;
   u64_t ull;
   char *ptr = 0;
-  char *str = 0;
+  const char *str = 0;
 
   if (!arg) {
     ret = send_message_with_args(501,context,"Invalid REST marker");

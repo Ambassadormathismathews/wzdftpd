@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   const char ref7[] = "value\0";
   const char ref8[] = "val2\0";
   const char ref9[] = "test val 9\0";
-  const char ref10[] = {0x74, 0xc3, 0xa9, 0x6c, 0xc3, 0xa0, 0xc3, 0xa7, 0xc3, 0xb6, 0x0};
+  const unsigned char ref10[] = {0x74, 0xc3, 0xa9, 0x6c, 0xc3, 0xa0, 0xc3, 0xa7, 0xc3, 0xb6, 0x0};
   const char ref11[] = "télàçö";
 
   str = str_allocate();
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "str_local_to_utf8 not working\n");
     return 13;
   }
-  if ( strcmp(ref10,str_tochar(str2)) ) {
+  if ( strcmp((char*)ref10,str_tochar(str2)) ) {
     fprintf(stderr, "str_local_to_utf8 returned crap\n");
     return 14;
   }
