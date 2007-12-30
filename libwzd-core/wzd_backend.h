@@ -164,7 +164,8 @@ int backend_close(const char *backend);
  */
 int backend_reload(const char *backend);
 
-enum { INVALID_USER = (uid_t)-1, GET_USER_LIST = (uid_t)-2 };
+#define INVALID_USER  (uid_t)-1
+#define GET_USER_LIST (uid_t)-2
 
 /**
  * \brief Get user informations
@@ -178,7 +179,8 @@ enum { INVALID_USER = (uid_t)-1, GET_USER_LIST = (uid_t)-2 };
  */
 wzd_user_t * backend_get_user(uid_t userid);
 
-enum { INVALID_GROUP = (gid_t)-1, GET_GROUP_LIST = (gid_t)-2 };
+#define INVALID_GROUP  (gid_t)-1
+#define GET_GROUP_LIST (gid_t)-2
 
 /**
  * \brief Get group informations
