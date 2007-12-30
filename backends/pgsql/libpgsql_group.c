@@ -284,7 +284,7 @@ static int _group_update_ip(gid_t ref, wzd_group_t * group)
   char query[512];
   PGresult * res;
   int i_stored;
-  int found;
+  int found = 0;
   int ret;
   const char *ip_stored;
   struct wzd_ip_list_t * current_ip;

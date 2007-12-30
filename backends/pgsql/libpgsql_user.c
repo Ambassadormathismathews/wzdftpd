@@ -360,7 +360,7 @@ static int _user_update_groups(uid_t ref, wzd_user_t * user)
   char query[512];
   PGresult * res;
   int g_stored, g_mod;
-  int found;
+  int found = 0;
   long l;
   char *ptr;
   gid_t gid;
@@ -433,7 +433,7 @@ static int _user_update_ip(uid_t ref, wzd_user_t * user)
   char query[512];
   PGresult * res;
   int i_stored;
-  int found;
+  int found = 0;
   int ret;
   const char *ip_stored;
   struct wzd_ip_list_t * current_ip;
