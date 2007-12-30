@@ -410,7 +410,7 @@ static int _int_rename(const char * src, const char *dst)
     char buffer[32768];
     int fd_from, fd_to;
     size_t sz;
-    int mode;
+    int flags = 0;
 
 #ifdef WIN32
     /* since we can't move directories on windows, we can get here while
@@ -419,13 +419,13 @@ static int _int_rename(const char * src, const char *dst)
      */
     ret = rename(src,dst);
     if (ret == 0) return 0;
-    mode = _O_BINARY;
+    flags = _O_BINARY;
 #endif
 
     /* FIXME XXX would it be wise to test functions return values ? :-P */
-    fd_from = open(src,O_RDONLY | mode);
+    fd_from = open(src,O_RDONLY | flags);
     if (fd_from < 0) return -1;
-    fd_to = open(dst,O_CREAT | O_WRONLY | mode,0666); /** \fixme this will overwite existing files */
+    fd_to = open(dst,O_CREAT | O_WRONLY | flags,0666); /** \fixme this will overwite existing files */
     if (fd_to < 0) { close(fd_from); return -1; }
     do {
       sz = read(fd_from,buffer,sizeof(buffer));
