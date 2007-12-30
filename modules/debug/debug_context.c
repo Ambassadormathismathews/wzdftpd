@@ -55,7 +55,7 @@ static void _debug_print_context(wzd_context_t * ctx, wzd_context_t * current_ct
   char buffer[4096];
   char inet_buf[64];
 
-  snprintf(buffer,sizeof(buffer)," context %p\n",ctx);
+  snprintf(buffer,sizeof(buffer)," context %p\n",(void*)ctx);
   ret = send_message_raw(buffer,current_ctx);
 
   if (ctx->magic != CONTEXT_MAGIC) {

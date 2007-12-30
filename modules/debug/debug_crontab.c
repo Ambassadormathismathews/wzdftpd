@@ -78,7 +78,7 @@ int do_site_cronjob(wzd_string_t *name, wzd_string_t *param, wzd_context_t * con
 {
   int ret, status;
   char buffer[4096];
-  wzd_string_t * commandname, * jobname;
+  wzd_string_t * commandname, * jobname = NULL;
 
   commandname = str_tok(param," \t\r\n");
   if (!commandname) {
