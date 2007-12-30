@@ -110,7 +110,7 @@ void tls_auth_data_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 static int _tls_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 {
 #ifdef DEBUG
-  out_log(LEVEL_FLOOD,"_tls_verify_callback (%d, %p)\n",preverify_ok,x509_ctx);
+  out_log(LEVEL_FLOOD,"_tls_verify_callback (%d, %p)\n",preverify_ok,(void*)x509_ctx);
 #endif
 
   return 1;
@@ -188,39 +188,25 @@ int tls_init(void)
 {
   int status;
   SSL_CTX * tls_ctx;
-  char * tls_certificate;
-  char * tls_certificate_key;
-  char * tls_ca_file=NULL, * tls_ca_path=NULL;
-  wzd_string_t * str;
+  wzd_string_t * tls_certificate=NULL;
+  wzd_string_t * tls_certificate_key=NULL;
+  wzd_string_t * tls_ca_file=NULL;
+  wzd_string_t * tls_ca_path=NULL;
 
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
     out_log(LEVEL_INFO,"TLS Disabled by config\n");
     return 0;
   }
 
-  {
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
-    if (!str) {
-      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
-      return 1;
-    }
-    /** \bug FIXME memory leak here !! */
-    tls_certificate = strdup(str_tochar(str));
-    str_deallocate(str);
-    /* ignore errors */
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_file", NULL);
-    if (str) {
-      /** \bug FIXME memory leak here !! */
-      tls_ca_file = strdup(str_tochar(str));
-      str_deallocate(str);
-    }
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_path", NULL);
-    if (str) {
-      /** \bug FIXME memory leak here !! */
-      tls_ca_path = strdup(str_tochar(str));
-      str_deallocate(str);
-    }
+  tls_certificate = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
+  if (tls_certificate == NULL) {
+    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+    return 1;
   }
+
+  /* optional values */
+  tls_ca_file = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_file", NULL);
+  tls_ca_path = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_path", NULL);
 
   out_log(LEVEL_INFO,"Initializing TLS (this can take a while).\n");
 
@@ -247,32 +233,30 @@ int tls_init(void)
    * SSL_CTX_use_certificate_file
    */
 /*  status = SSL_CTX_use_certificate_file(tls_ctx, mainConfig->tls_certificate, X509_FILETYPE_PEM);*/
-  status = SSL_CTX_use_certificate_chain_file(tls_ctx, tls_certificate);
+  status = SSL_CTX_use_certificate_chain_file(tls_ctx, str_tochar(tls_certificate));
   if (status <= 0) {
-    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", tls_certificate, (char *)ERR_error_string(ERR_get_error(), NULL));
+    out_log(LEVEL_CRITICAL,"SSL_CTX_use_certificate_chain_file(%s) %s\n", str_tochar(tls_certificate), (char *)ERR_error_string(ERR_get_error(), NULL));
     SSL_CTX_free(tls_ctx);
     mainConfig->tls_ctx = NULL;
+    str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
+    str_deallocate(tls_ca_file); str_deallocate(tls_ca_path);
     return 1;
   }
 
   /* set private key file - usually the same */
-  {
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
-    if (str) {
-      /** \bug FIXME memory leak here !! */
-      tls_certificate_key = strdup(str_tochar(str));
-      str_deallocate(str);
-    } else {
-      /* if no key provided, try using the same certificate */
-      tls_certificate_key = tls_certificate;
-    }
+  tls_certificate_key = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
+  if (tls_certificate_key == NULL) {
+    /* if no key provided, try using the same certificate */
+    tls_certificate_key = str_dup(tls_certificate);
   }
 
-  status = SSL_CTX_use_PrivateKey_file(tls_ctx, tls_certificate_key, X509_FILETYPE_PEM);
+  status = SSL_CTX_use_PrivateKey_file(tls_ctx, str_tochar(tls_certificate_key), X509_FILETYPE_PEM);
   if (status <= 0) {
-    out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", tls_certificate_key, (char *)ERR_error_string(ERR_get_error(), NULL));
+    out_log(LEVEL_CRITICAL,"SSL_CTX_use_PrivateKey_file(%s) %s\n", str_tochar(tls_certificate_key), (char *)ERR_error_string(ERR_get_error(), NULL));
     SSL_CTX_free(tls_ctx);
     mainConfig->tls_ctx = NULL;
+    str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
+    str_deallocate(tls_ca_file); str_deallocate(tls_ca_path);
     return 1;
   }
 
@@ -281,19 +265,23 @@ int tls_init(void)
   if (tls_ca_file || tls_ca_path) {
     STACK_OF(X509_NAME) * ca_list;
 
-    if (!SSL_CTX_load_verify_locations(tls_ctx, tls_ca_file, tls_ca_path))
+    if (!SSL_CTX_load_verify_locations(tls_ctx, str_tochar(tls_ca_file), str_tochar(tls_ca_path)))
     {
-      out_log(LEVEL_CRITICAL,"SSL_CTX_load_verify_locations(%s,%s) %s\n", tls_ca_file, tls_ca_path, (char *)ERR_error_string(ERR_get_error(), NULL));
+      out_log(LEVEL_CRITICAL,"SSL_CTX_load_verify_locations(%s,%s) %s\n", str_tochar(tls_ca_file), str_tochar(tls_ca_path), (char *)ERR_error_string(ERR_get_error(), NULL));
       SSL_CTX_free(tls_ctx);
       mainConfig->tls_ctx = NULL;
+      str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
+      str_deallocate(tls_ca_file); str_deallocate(tls_ca_path);
       return 1;
     }
 
-    ca_list = _tls_init_ca_list(tls_ca_file,tls_ca_path);
+    ca_list = _tls_init_ca_list(str_tochar(tls_ca_file),str_tochar(tls_ca_path));
     if (!ca_list) {
-      out_log(LEVEL_CRITICAL,"_tls_init_ca_list(%s,%s) %s\n", tls_ca_file, tls_ca_path, (char *)ERR_error_string(ERR_get_error(), NULL));
+      out_log(LEVEL_CRITICAL,"_tls_init_ca_list(%s,%s) %s\n", str_tochar(tls_ca_file), str_tochar(tls_ca_path), (char *)ERR_error_string(ERR_get_error(), NULL));
       SSL_CTX_free(tls_ctx);
       mainConfig->tls_ctx = NULL;
+      str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
+      str_deallocate(tls_ca_file); str_deallocate(tls_ca_path);
       return 1;
     }
 
@@ -303,7 +291,10 @@ int tls_init(void)
   SSL_CTX_set_session_cache_mode(tls_ctx, SSL_SESS_CACHE_CLIENT);
   SSL_CTX_set_session_id_context(tls_ctx, (const unsigned char *) "1", 1);
 
-  out_log(LEVEL_INFO,"TLS initialization successful.\n");
+  out_log(LEVEL_INFO,"TLS initialization successful (%s).\n",OPENSSL_VERSION_TEXT);
+
+  str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
+  str_deallocate(tls_ca_file); str_deallocate(tls_ca_path);
 
   return 0;
 }
@@ -870,25 +861,19 @@ void tls_context_init(wzd_context_t * context)
 
 int tls_init(void)
 {
-  char * tls_certificate;
-  char * tls_certificate_key;
-  char * tls_ca_file=NULL;
-  wzd_string_t * str;
+  wzd_string_t * tls_certificate=NULL;
+  wzd_string_t * tls_certificate_key=NULL;
+  wzd_string_t * tls_ca_file=NULL;
 
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_DISABLE_TLS)) {
     out_log(LEVEL_INFO,"TLS Disabled by config\n");
     return 0;
   }
 
-  {
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
-    if (!str) {
-      out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
-      return 1;
-    }
-    /** \bug FIXME memory leak here !! */
-    tls_certificate = strdup(str_tochar(str));
-    str_deallocate(str);
+  tls_certificate = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate", NULL);
+  if (tls_certificate == NULL) {
+    out_log(LEVEL_CRITICAL,"TLS: no certificate provided. (use tls_certificate directive in config)\n");
+    return 1;
   }
 
   out_log(LEVEL_INFO,"Initializing TLS (this can take a while).\n");
@@ -900,8 +885,10 @@ int tls_init(void)
 
   /** \todo TODO XXX move this code to global init ? */
   gnutls_certificate_allocate_credentials(&x509_cred);
+
+  tls_ca_file = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_ca_file", NULL);
   if (tls_ca_file) {
-    gnutls_certificate_set_x509_trust_file(x509_cred, tls_ca_file,
+    gnutls_certificate_set_x509_trust_file(x509_cred, str_tochar(tls_ca_file),
         GNUTLS_X509_FMT_PEM);
   }
 
@@ -909,28 +896,26 @@ int tls_init(void)
   gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
       GNUTLS_X509_FMT_PEM);
 */
-  {
-    str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
-    if (str) {
-      /** \bug FIXME memory leak here !! */
-      tls_certificate_key = strdup(str_tochar(str));
-      str_deallocate(str);
-    } else {
-      /* if no key provided, try using the same certificate */
-      tls_certificate_key = tls_certificate;
-    }
+  tls_certificate_key = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_certificate_key", NULL);
+  if (tls_certificate_key == NULL) {
+    /* if no key provided, try using the same certificate */
+    tls_certificate_key = str_dup(tls_certificate);
   }
 
   gnutls_certificate_set_x509_key_file(x509_cred,
-      tls_certificate /* CERTFILE */,
-      tls_certificate_key /* KEYFILE */,
+      str_tochar(tls_certificate) /* CERTFILE */,
+      str_tochar(tls_certificate_key) /* KEYFILE */,
       GNUTLS_X509_FMT_PEM);
 
   generate_dh_params();
 
   gnutls_certificate_set_dh_params(x509_cred, dh_params);
 
-  out_log(LEVEL_INFO,"TLS initialization successful.\n");
+  out_log(LEVEL_INFO,"TLS initialization successful (GnuTLS %s).\n",LIBGNUTLS_VERSION);
+
+  str_deallocate(tls_certificate);
+  str_deallocate(tls_certificate_key);
+  str_deallocate(tls_ca_file);
 
   return 0;
 }
@@ -951,7 +936,8 @@ static gnutls_session initialize_tls_session(gnutls_connection_end con_end)
 {
   /* Allow connections to servers that have OpenPGP keys as well.
    */
-  const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
+  //const int cert_type_priority[3] = { GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0 };
+  const int cert_type_priority[2] = { GNUTLS_CRT_X509, 0 };
 
   gnutls_session session;
 
@@ -974,6 +960,26 @@ static gnutls_session initialize_tls_session(gnutls_connection_end con_end)
   gnutls_dh_set_prime_bits(session, CLIENT_DH_BITS); /* OpenSSL will not be able to support more */
 
   return session;
+}
+
+static int tls_verify_cert(gnutls_session session, wzd_context_t * context)
+{
+  unsigned int status = 0;
+  int ret;
+
+  ret = gnutls_certificate_verify_peers2(session, &status);
+
+  out_log(LEVEL_FLOOD, "Certificate verification: ret %d status %u\n", ret, status);
+
+  switch (ret) {
+  case GNUTLS_E_SUCCESS:
+    return 0;
+  case GNUTLS_E_NO_CERTIFICATE_FOUND:
+    // check if client certificate is required. If yes, exit
+    break;
+  }
+
+  return -1;
 }
 
 int tls_auth (const char *type, wzd_context_t * context)
@@ -1077,6 +1083,8 @@ int tls_auth (const char *type, wzd_context_t * context)
     }
     ret = 1;
   } while (ret != 0);
+
+  ret = tls_verify_cert(session, context);
 
   /* set read/write functions */
   context->read_fct = (read_fct_t)tls_read;

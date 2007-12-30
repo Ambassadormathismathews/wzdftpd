@@ -62,7 +62,7 @@ int check_certificate(const char *user, const char *data)
   if ( !(context->connection_flags & CONNECTION_TLS) ) return 0;
 
   client_cert = SSL_get_peer_certificate(ssl_get_obj(context));
-  out_log(LEVEL_FLOOD, "[%p] = SSL_get_peer_certificate(...)\n", client_cert);
+  out_log(LEVEL_FLOOD, "[%p] = SSL_get_peer_certificate(...)\n", (void*)client_cert);
 
   if (!client_cert) return 0; /* no client cert */
 
