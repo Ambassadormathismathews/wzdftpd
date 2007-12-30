@@ -68,6 +68,9 @@
 
 #define	HARD_LS_BUFFERSIZE	4096
 
+/** \brief Maximum number of entries the LIST command can return */
+#define MAX_DIRECTORY_ENTRIES   65535
+
 /* the maximum number of channels for log */
 #define MAX_LOG_CHANNELS 64
 /* the number of reserved channels (with special behaviour) */

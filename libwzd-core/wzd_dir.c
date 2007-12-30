@@ -124,7 +124,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
   while ( !fs_dir_read(dir,&finfo) ) {
     dir_filename = fs_fileinfo_getname(finfo);
 
-    if (watchdog++ > 65535) {
+    if (watchdog++ > MAX_DIRECTORY_ENTRIES) {
       out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open\n");
       fs_dir_close(dir);
       return NULL;
@@ -218,7 +218,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     char * buffer_vfs = wzd_malloc(WZD_MAX_PATH+1);
     while (vfs)
     {
-      if (watchdog++ > 65535) {
+      if (watchdog++ > MAX_DIRECTORY_ENTRIES) {
         out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open (in vfs)\n");
         return NULL;
       }
@@ -274,7 +274,7 @@ struct wzd_dir_t * dir_open(const char *name, wzd_context_t * context)
     itp = NULL;
     while (it)
     {
-      if (watchdog++ > 65535) {
+      if (watchdog++ > MAX_DIRECTORY_ENTRIES) {
         out_log(LEVEL_HIGH, "watchdog: detected infinite loop in dir_open (in symlinks check)\n");
         return NULL;
       }
