@@ -1403,41 +1403,68 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
   int found = 0;
   wzd_user_t *user;
   char buffer[1024];
+  unsigned int is_gadmin;
+  unsigned int is_siteop;
+  wzd_user_t * me;
 
   username = str_tok(param," \t\r\n");
   if (!username) {
     ret = send_message_with_args(501,context,"Usage: site kick <user>");
     return 0;
   }
+  
   /* check if user exists */
   user = GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( user == NULL ) {
     ret = send_message_with_args(501,context,"User does not exist");
-  } else { /* kill'em all! */
-    ListElmt * elmnt;
-    wzd_context_t * loop_context;
-    for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
-      loop_context = list_data(elmnt);
-      if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
-        if (user->uid == loop_context->userid) {
-          /* note that kill_child_new does not permit suicide */
-          if (kill_child_new(loop_context->pid_child,context))
-            found++;
-        }
+    return 0;
+  }
+
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+  is_siteop = (me->flags && strchr(me->flags,FLAG_SITEOP)) ? 1 : 0;
+
+  /* this command can only be used by siteops and gadmins */
+  if (!is_siteop && !is_gadmin) {
+    ret = send_message_with_args(501,context,"You are not authorized to use this command");
+    return 0;
+  }
+
+  /* gadmins can only kick users within their own group */
+  if (is_gadmin) {
+    if (me->group_num == 0 || user->group_num == 0 || me->groups[0] != user->groups[0]) {
+      ret = send_message_with_args(501,context,"You can only kick users within your own group");
+      return 0;
+    }
+  }
+
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
+  for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
+    loop_context = list_data(elmnt);
+    if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
+      if (user->uid == loop_context->userid) {
+        /* note that kill_child_new does not permit suicide */
+        if (!kill_child_new(loop_context->pid_child,context))
+          /* user killed successfully, increment kill counter */
+          found++;
       }
-    } /* for all contexts */
+    }
+
+    /* if no connections were killed, report reason */
     if (!found) {
       if (user->uid != context->userid)
         ret = send_message_with_args(501,context,"User has no connections to server");
       else
         ret = send_message_with_args(501,context,"Can not commit suicide");
+
+    /* otherwise report number of connections killed */
     } else {
       snprintf(buffer,1023,"User's %d connections to server have been killed",found);
       ret = send_message_with_args(200,context,buffer);
     }
   }
-
   return 0;
 }
 
