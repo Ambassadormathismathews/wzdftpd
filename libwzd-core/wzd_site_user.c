@@ -70,9 +70,6 @@
 
 
 
-static int _user_changeflags(wzd_user_t * user, const char *newflags);
-static void _flags_simplify(char *flags, size_t length);
-
 static int _kick_and_purge(void);
 
 
@@ -843,10 +840,20 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
        str_deallocate(field); str_deallocate(value);
        return 0;
     }
-
-    if (_user_changeflags(user,str_tochar(value))) {
-       ret = send_message_with_args(501,context,"Error occurred when changing flags");
-       str_deallocate(field); str_deallocate(value);
+    ret = user_flags_change(user, value);
+    if (ret < 0) {
+      if (ret == -1)
+        ret = send_message_with_args(501,context,"Invalid syntax or argument values");
+      else if (ret == -2)
+        ret = send_message_with_args(501,context,"Error adding flags to user");
+      else if (ret == -3)
+        ret = send_message_with_args(501,context,"Error removing flags from user");
+      else if (ret == -4)
+        ret = send_message_with_args(501,context,"Critical error replacing flags. All flags lost!");
+      else if (ret == -5)
+        ret = send_message_with_args(501,context,"GADMIN and SITEOP flags cannot be used together");
+      str_deallocate(field);
+      str_deallocate(value);
       return 0;
     }
     mod_type = _USER_FLAGS;
@@ -977,9 +984,7 @@ int do_site_help_changegrp(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *comm
 {
   send_message_raw("501-site changegrp <user> <group1> [<group2> ...]\r\n",context);
   send_message_raw(" Add user to group, or remove it if already in group\r\n",context);
-
   send_message_raw("501 site changegrp aborted\r\n",context);
-
   return 0;
 }
 
@@ -1153,18 +1158,38 @@ int do_site_chratio(wzd_string_t *cname, wzd_string_t *command_line, wzd_context
 }
 
 
+/** site help flags: shows help on the site flags command
+ *
+ * site help flags
+ */
+int do_site_help_flags(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command_line, wzd_context_t * context)
+{
+  send_message_raw("501-site flags [<user>] [<flags>]\r\n",context);
+  send_message_raw(" If no arguments are supplied, view flags for your account.\r\n",context);
+  send_message_raw(" With optional <user> argument, view flags for specified user.\r\n",context);
+  send_message_raw(" With both <user> and <flags> arguments, change flags for specified user.\r\n",context);
+  send_message_raw(" <flags> can start with either + or - to give or take flags.\r\n",context);
+  send_message_raw(" Otherwise <flags> will replace any existing flags the user has.\r\n",context);
+  send_message_raw(" <flags> is a case sensitive alphanumeric string.\r\n",context);
+  send_message_raw("501 site flags aborted\r\n",context);
+  return 0;
+}
+
 
 /** site flags: display a user's flags
  *
  * flags &lt;user&gt; &lt;newflags&gt;
  */
-int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
+int do_site_flags(UNUSED wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * context)
 {
   char buffer[1024];
   wzd_string_t *newflags = NULL;
   wzd_string_t * username = NULL;
   int ret;
   wzd_user_t * user;
+  wzd_user_t * me;
+  unsigned int is_gadmin;
+  unsigned int is_siteop;
 
   username = str_tok(command_line," \t\r\n");
   if (!username) {
@@ -1174,7 +1199,7 @@ int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
     newflags = str_tok(command_line," \t\r\n");
   }
 
-  /* check if user exists */
+  /* check if the user exists */
   user=GetUserByName(str_tochar(username));
   str_deallocate(username);
   if ( !user ) {
@@ -1182,43 +1207,62 @@ int do_site_flags(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
     return 0;
   }
 
+  me = GetUserByID(context->userid);
+  is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
+  is_siteop = (me->flags && strchr(me->flags,FLAG_SITEOP)) ? 1 : 0;
+
+  /* display flags assigned to the user */
   if (!newflags) {
-    snprintf(buffer,1023,"Flags for %s: %s",user->username,user->flags);
 
-    ret = send_message_with_args(200,context,buffer);
-  } else {
-    unsigned int is_gadmin;
-    wzd_user_t * me = GetUserByID(context->userid);
-
-    is_gadmin = (me->flags && strchr(me->flags,FLAG_GADMIN)) ? 1 : 0;
-
-    /* GAdmin ? */
-    if (is_gadmin)
-    {
-      if (me->group_num==0 || user->group_num==0 || me->groups[0]!=user->groups[0]) {
-        ret = send_message_with_args(501,context,"You can't change this user");
+    /* gadmins can only view flags for users within their group */
+    if (is_gadmin && me->uid != user->uid) {
+      if (me->group_num == 0 || user->group_num == 0 || me->groups[0] != user->groups[0]) {
+        ret = send_message_with_args(501,context,"You can't view flags for users outside your group");
         str_deallocate(newflags);
         return 0;
       }
-    }
-    /* authorized ? */
-    if (!strchr(me->flags,FLAG_SITEOP)) {
-      ret = send_message_with_args(501,context,"You can't change flags for other users");
+
+    /* normal users can't view flags of other users */
+    } else if (!is_siteop && me->uid != user->uid) {
+      ret = send_message_with_args(501,context,"You can't view flags for other users");
       str_deallocate(newflags);
       return 0;
     }
 
-    if (_user_changeflags(user,str_tochar(newflags))) {
-      ret = send_message_with_args(501,context,"Error occurred changing flags");
+    snprintf(buffer,1023,"Flags for %s: %s",user->username,user->flags);
+    ret = send_message_with_args(200,context,buffer);
+
+  /* change the flags assigned to the user */
+  } else {
+    /* only siteops can change flags */
+    if (!is_siteop) {
+      ret = send_message_with_args(501,context,"You can't change flags assigned to other users");
       str_deallocate(newflags);
       return 0;
     }
+
+    ret = user_flags_change(user, newflags);
+    if (ret < 0) {
+      if (ret == -1)
+        do_site_help_flags(cname, command_line, context);
+      else if (ret == -2)
+        ret = send_message_with_args(501,context,"Error adding flags to user");
+      else if (ret == -3)
+        ret = send_message_with_args(501,context,"Error removing flags from user");
+      else if (ret == -4)
+        ret = send_message_with_args(501,context,"Critical error replacing flags. All flags lost!");
+      else if (ret == -5)
+        ret = send_message_with_args(501,context,"GADMIN and SITEOP flags cannot be used together");
+      str_deallocate(newflags);
+      return 0;
+    }
+
     /* commit to backend */
     ret = backend_mod_user(mainConfig->backends->filename,user->uid,user,_USER_FLAGS);
     if (!ret)
       ret = send_message_with_args(200,context,"Flags changed");
     else
-      ret = send_message_with_args(501,context,"Flags changed, but error committing changes to backend");
+      ret = send_message_with_args(501,context,"Flags changed, but changes could not be committed to the backend");
   }
 
   str_deallocate(newflags);
@@ -1748,75 +1792,6 @@ int do_site_su(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_t * 
   return 0;
 }
 
-
-
-
-
-
-
-static int _user_changeflags(wzd_user_t * user, const char *newflags)
-{
-  size_t length;
-  char * ptr;
-
-  if (!user || !newflags) return -1;
-
-  if (newflags[0] == '+') {
-    /* flag addition */
-    length = strlen(user->flags);
-    if (length+strlen(newflags) >= MAX_FLAGS_NUM) return -1;
-
-    wzd_strncpy(user->flags+length,newflags+1,MAX_FLAGS_NUM-length-1);
-    /* remove duplicate flags */
-    _flags_simplify(user->flags,MAX_FLAGS_NUM);
-
-    return 0;
-  }
-  else if (newflags[0] == '-') {
-    /* flag removal */
-    /** remove all flags from newflags */
-    while ( (++newflags)[0] != '\0') {
-      if ( (ptr = strchr(user->flags,newflags[0])) == NULL ) {
-        continue;
-      }
-      if (*(ptr+1)) {
-        length = strlen(ptr+1);
-        memmove(ptr,ptr+1,length);
-        *(ptr+length) = '\0';
-      } else {
-        *ptr = '\0';
-      }
-    }
-
-    return 0;
-  }
-  else {
-    /* replace flags */
-    strncpy(user->flags,newflags,MAX_FLAGS_NUM-1);
-    _flags_simplify(user->flags,MAX_FLAGS_NUM);
-    return 0;
-  }
-
-  return -1;
-}
-
-static void _flags_simplify(char *flags, size_t length)
-{
-  char * ptr, * test;
-  size_t l;
-
-  l = strlen(flags);
-
-  for (test=flags; (length > 0) && (*test) ; test++,l--)
-  {
-    while ( (ptr = strchr(test+1,*test)) ) {
-      /* replace duplicate flag with last one */
-      *ptr = flags[l-1];
-      flags[l-1] = '\0';
-      l--;
-    }
-  }
-}
 
 /** \brief iterate users and purge those marked as deleted, kicking them if logged
  * One important thing is that a deleted user can't login if deleted,

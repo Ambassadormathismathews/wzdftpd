@@ -33,6 +33,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 
@@ -454,3 +455,168 @@ uid_t * group_list_users(gid_t gid, char flag /* optional */)
   return uid_list;
 }
 
+/** \brief Add flags to a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return
+ *  - 0 on success
+ *  - -1 on error: invalid arguments
+ *  - -2 on error: SITEOP and GADMIN flags cannot be used together
+ *  - -3 on error: the user has run out of flags
+ */
+int user_flags_add(wzd_user_t * user, const char *flags) {
+  int i;
+  int j = 0;
+  int length;
+  int currlen;
+
+  if (user && flags && *flags)
+    length = strlen(flags);
+  else
+    return -1;
+
+  if ((strchr((char *)&user->flags, FLAG_SITEOP) && strchr(flags, FLAG_GADMIN))
+    || (strchr((char *)&user->flags, FLAG_GADMIN) && strchr(flags, FLAG_SITEOP))
+    || (strchr(flags, FLAG_SITEOP) && strchr(flags, FLAG_GADMIN)))
+    return -2;
+
+  /* prevent the flags string from overflowing */
+  currlen = strlen((char *)&user->flags);
+  if (currlen + length >= MAX_FLAGS_NUM)
+    return -3;
+
+  /* add new flags to user flags field */
+  for (i = 0; i < length; i++) {
+    if (isalnum(flags[i])) {
+      if (!strchr((char *)&user->flags, flags[i])) {
+        user->flags[currlen + j] = flags[i];
+        j++;
+      }
+    }
+  }
+
+  /* null terminate the new set of flags */
+  user->flags[currlen + length] = '\0';
+
+  return 0;
+}
+
+/** \brief Remove flags from a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return 0 on success, -1 on failure
+ */
+int user_flags_delete(wzd_user_t * user, const char *flags) {
+  int i;
+  int j = 0;
+  int length;
+  int currlen;
+  char * strpos;
+  char * matches[MAX_FLAGS_NUM];
+  char newflags[MAX_FLAGS_NUM];
+
+  if (user && user->flags && flags && *flags)
+    length = strlen(flags);
+  else
+    return -1;
+
+  if (length >= MAX_FLAGS_NUM)
+    return -1;
+
+  /* find matching flags which we want to remove */
+  memset(matches, 0, MAX_FLAGS_NUM);
+  for (i = 0; i < length; i++) {
+    if (isalnum(flags[i])) {
+      strpos = strchr((char *)user->flags, flags[i]);
+      if (strpos) {
+        matches[j] = strpos;
+        j++;
+      }
+    }
+  }
+
+  /* create a new set of flags which don't contain the deleted flags */
+  memset(newflags, '\0', MAX_FLAGS_NUM);
+  currlen = strlen((char *)&user->flags);
+  strpos = &newflags;
+  for (i = 0; i < currlen; i++) {
+    if (!memchr(&matches, &user->flags[i], MAX_FLAGS_NUM)) {
+      *strpos = user->flags[i];
+      strpos++;
+    }
+  }
+
+  /* copy new set of flags back to users flags field */
+  strncpy((char *)&user->flags, (char *)&newflags, MAX_FLAGS_NUM);
+  *strpos = '\0';
+
+  return 0;
+}
+
+/** \brief Delete all flags assigned to a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ */
+void user_flags_clear(wzd_user_t * user) {
+  memset(&user->flags, '\0', MAX_FLAGS_NUM);
+  return;
+}
+
+/** \brief Change user flags from supplied flag modification string
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return
+ *  - 0 on success
+ *  - -1 on error: function arguments not valid
+ *  - -2 on error: could not add flags to user
+ *  - -3 on error: could not remove flags from user
+ *  - -4 on error: could not update flags for user
+ *  - -5 on error: SITEOP and GADMIN flags cannot be used together
+ */
+int user_flags_change(wzd_user_t * user, wzd_string_t * newflags) {
+  const char * flags;
+  int ret;
+
+  if (!user || !newflags)
+    return -1;
+  flags = str_tochar(newflags);
+
+  /* add flags */
+  if (flags[0] == '+') {
+    ret = user_flags_add(user, flags + 1);
+    if (ret == -2)
+      return -5;
+    else if (ret < 0)
+      return -2;
+
+  /* delete flags */
+  } else if (flags[0] == '-') {
+    if (user_flags_delete(user, flags + 1))
+      return -3;
+
+  /* replace flags */
+  } else if (isalnum(flags[0])) {
+    if (strlen(flags) >= MAX_FLAGS_NUM)
+      return -1;
+    /* setting SITEOP and GADMIN flags at the same time is BAD */
+    if (strchr(flags, FLAG_SITEOP) && strchr(flags, FLAG_GADMIN))
+      return -5;
+    user_flags_clear(user);
+    if (user_flags_add(user, flags))
+      /* we should NEVER reach this point but it is a sanity check just incase */
+      return -4;
+
+  /* invalid flags string */
+  } else
+    return -1;
+
+  /* success */
+  return 0;
+}

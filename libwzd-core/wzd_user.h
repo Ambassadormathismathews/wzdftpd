@@ -128,4 +128,48 @@ int user_ip_add(wzd_user_t * user, const char * ip, int is_authorized);
  */
 uid_t * group_list_users(gid_t gid, char flag /* optional */);
 
+/** \brief Add flags to a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return
+ *  - 0 on success
+ *  - -1 on error: invalid arguments
+ *  - -2 on error: SITEOP and GADMIN flags cannot be used together
+ *  - -3 on error: the user has run out of flags
+ */
+int user_flags_add(wzd_user_t * user, const char *flags);
+
+/** \brief Remove flags from a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return 0 on success, -1 on failure
+ */
+int user_flags_delete(wzd_user_t * user, const char *flags);
+
+/** \brief Delete all flags assigned to a user
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ */
+void user_flags_clear(wzd_user_t * user);
+
+/** \brief Change user flags from supplied flag modification string
+ *
+ * \todo make this function threadsafe
+ * \warning this function is not threadsafe as user->flags is not modified atomically
+ *
+ * \return
+ *  - 0 on success
+ *  - -1 on error: function arguments not valid
+ *  - -2 on error: could not add flags to user
+ *  - -3 on error: could not remove flags from user
+ *  - -4 on error: could not update flags for user
+ *  - -5 on error: SITEOP and GADMIN flags cannot be used together
+ */
+int user_flags_change(wzd_user_t * user, wzd_string_t * newflags);
+
 #endif /* __WZD_USER_H__ */

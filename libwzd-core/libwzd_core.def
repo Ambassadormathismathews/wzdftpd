@@ -256,6 +256,10 @@ EXPORTS
 	tls_init
 	user_allocate
 	user_find_free_uid
+    user_flags_add
+    user_flags_change
+    user_flags_clear
+    user_flags_delete
 	user_free
 	user_free_registry
 	user_get_by_id
