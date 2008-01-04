@@ -200,6 +200,8 @@ int do_site_help_command(wzd_string_t *command, wzd_string_t *command_line, wzd_
 {
   wzd_string_t *argument, *str;
   wzd_command_t * c;
+  wzd_user_t * me = NULL;
+  wzd_group_t * megrp = NULL;
 
   argument = str_tok(command_line," \t\r\n");
 
@@ -224,7 +226,10 @@ int do_site_help_command(wzd_string_t *command, wzd_string_t *command_line, wzd_
   /* generic help */
   str = config_get_string(mainConfig->cfg_file,"GLOBAL","help_file",NULL);
   if (str != NULL) {
-    do_site_print_file_raw(str_tochar(str),context);
+    me = GetUserByID(context->userid);
+    if (me && me->groups[0])
+      megrp = GetGroupByID(me->groups[0]);
+    do_site_print_file(str_tochar(str),me,megrp,context);
     str_deallocate(str);
     return 0;
   }
