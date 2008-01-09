@@ -1406,6 +1406,8 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
   unsigned int is_gadmin;
   unsigned int is_siteop;
   wzd_user_t * me;
+  ListElmt * elmnt;
+  wzd_context_t * loop_context;
 
   username = str_tok(param," \t\r\n");
   if (!username) {
@@ -1439,8 +1441,6 @@ int do_site_kick(UNUSED wzd_string_t *ignored, wzd_string_t *param, wzd_context_
     }
   }
 
-  ListElmt * elmnt;
-  wzd_context_t * loop_context;
   for (elmnt=list_head(context_list); elmnt; elmnt=list_next(elmnt)) {
     loop_context = list_data(elmnt);
     if (loop_context && loop_context->magic == CONTEXT_MAGIC) {
