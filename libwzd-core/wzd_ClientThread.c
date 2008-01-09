@@ -140,29 +140,31 @@ int clear_read(fd_t sock, char *msg, size_t length, UNUSED int flags, unsigned i
   if (timeout==0)
     ret = recv(sock,msg,length,0);
   else {
-    FD_ZERO(&fds);
-    FD_ZERO(&efds);
-    FD_SET(sock,&fds);
-    FD_SET(sock,&efds);
-    tv.tv_sec = timeout; tv.tv_usec = 0;
+    while (1) {
+      FD_ZERO(&fds);
+      FD_ZERO(&efds);
+      FD_SET(sock,&fds);
+      FD_SET(sock,&efds);
+      tv.tv_sec = timeout; tv.tv_usec = 0;
 
 #if defined(_MSC_VER)
-    ret = select(0,&fds,NULL,&efds,&tv);
+      ret = select(0,&fds,NULL,&efds,&tv);
 #else
-    ret = select(sock+1,&fds,NULL,&efds,&tv);
+      ret = select(sock+1,&fds,NULL,&efds,&tv);
 #endif
-    save_errno = errno;
+      save_errno = errno;
 
-    if (FD_ISSET(sock,&fds)) /* ok */
+      if (FD_ISSET(sock,&fds)) /* ok */
+        break;
+      if (FD_ISSET(sock,&efds)) {
+        if (save_errno == EINTR) continue;
+        out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
+        return -1;
+      }
+      if (!FD_ISSET(sock,&fds)) /* timeout */
+        return 0;
       break;
-    if (FD_ISSET(sock,&efds)) {
-      if (save_errno == EINTR) continue;
-      out_log(LEVEL_CRITICAL,"Error during recv: %s\n",strerror(save_errno));
-      return -1;
     }
-    if (!FD_ISSET(sock,&fds)) /* timeout */
-      return 0;
-
     ret = recv(sock,msg,length,0);
   } /* timeout */
 
