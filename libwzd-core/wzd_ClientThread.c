@@ -1307,6 +1307,9 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
   if (ret != EVENT_OK && ret != EVENT_BREAK) {
     out_log(LEVEL_NORMAL, "MKDIR denied by hook (returned %d)\n", ret);
     ret = send_message_with_args(501,context,"MKDIR denied");
+    wzd_free(buffer);
+    wzd_free(path);
+    wzd_free(cmd);
     return E_XFER_REJECTED;
   }
 
