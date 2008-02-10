@@ -111,9 +111,11 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
   unsigned long cur_st_size;
   double size_total=0;
   struct stat s;
+  int fd;
   int i;
 
-  if (sfv->sfv_list == NULL) return -1;
+  if (sfv->sfv_list == NULL) 
+    return -1;
   dirlen = strlen(directory);
 
   for ( i=0; sfv->sfv_list[i]; i++ ){

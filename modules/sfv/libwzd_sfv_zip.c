@@ -294,7 +294,8 @@ int sfv_process_zip(const char *zip_file, wzd_context_t *context)
   ret = sfv_check_zip(zip_file,context,&files_total);
   
   /* remove any .bad file first */
-  if (!stat(bad,&s)) remove(bad); /* if .bad already exists, remove it first */
+  if (!stat(bad,&s)) 
+    remove(bad); /* if .bad already exists, remove it first */
   
   /* file not ok, rename it to .bad */
   if (ret){
