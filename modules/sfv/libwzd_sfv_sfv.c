@@ -147,7 +147,9 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
       if ( missing ){ /* no missing file yet, create one */
         /* create a .missing file */
         strncpy(dirbuffer+filelen,".missing",10);
-        close(open(dirbuffer,O_WRONLY|O_CREAT,0666));
+        fd = open( dirbuffer,O_WRONLY|O_CREAT,0666 );
+        if ( fd != -1 )
+          close(fd);
       }
     }
     free(dirbuffer);
@@ -164,12 +166,14 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
 /** create / remove ".missing" / ".bad" depending on the result of the test */
 int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
 {
-  char missing[1024], bad[1024];
+  char missing[512], bad[512];
   unsigned long real_crc;
   int ret, fd;
   struct stat s;
 
-  if (strlen(filename) > 1000) return -1;
+  if (strlen(filename) > 500)
+    return -1;
+
   strcpy(missing,filename);
   strcpy(bad,filename);
   strcat(missing,".missing");
@@ -178,7 +182,8 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
   if (stat(filename,&s) && errno==ENOENT) {
     /* missing */
     fd = open(missing,O_WRONLY|O_CREAT,0666);
-    close(fd);
+    if (fd != -1)
+      close(fd);
     if (!stat(bad,&s)) remove(bad);
     entry->state = SFV_MISSING;
     return 0;
@@ -187,7 +192,8 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     /* remove 0-sized file and treat it as missing */
     remove(filename);
     fd = open(missing,O_WRONLY|O_CREAT,0666);
-    close(fd);
+    if (fd != -1)
+      close(fd);
     if (!stat(bad,&s)) remove(bad);
     entry->state = SFV_MISSING;
     return 0;
