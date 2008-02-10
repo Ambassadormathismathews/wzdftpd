@@ -1527,6 +1527,7 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
   unsigned int p1, p2;
   int ret;
   wzd_user_t * user;
+  unsigned int port;
 
   if (context->pasvsock != (fd_t)-1) {
     socket_close(context->pasvsock);
@@ -1547,6 +1548,7 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
   context->dataip[1] = (unsigned char)a1;
   context->dataip[2] = (unsigned char)a2;
   context->dataip[3] = (unsigned char)a3;
+  port = ((p1&0xff)<<8) | (p2&0xff);
 
   user = GetUserByID(context->userid);
 
@@ -1556,9 +1558,16 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
     return E_NOPERM;
   }
 
-  /** \todo check destination port for security: >= 1024 */
+  /** check destination port for security: >= 1024 */
+  if (port < 1024) {
+    memset(context->dataip,0,16);
+    out_log(LEVEL_HIGH, "PORT: attempt to bind to port < 1024\n");
+    ret = send_message_with_args(501,context,"Port not allowed");
+    return E_NOPERM;
+  }
 
-  context->dataport = ((p1&0xff)<<8) | (p2&0xff);
+
+  context->dataport = port;
   context->datafamily = WZD_INET4;
   ret = send_message_with_args(200,context,"Command okay");
   return E_OK;
@@ -1790,6 +1799,14 @@ int do_eprt(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
     free(orig_param);
     return E_PARAM_INVALID;
   }
+  /** check destination port for security: >= 1024 */
+  if (tcp_port < 1024) {
+    out_log(LEVEL_HIGH, "EPRT: attempt to bind to port < 1024\n");
+    ret = send_message_with_args(501,context,"Port not allowed");
+    free(orig_param);
+    return E_NOPERM;
+  }
+
 
   /* resolve net_addr to context->dataip */
   switch (net_prt) {
