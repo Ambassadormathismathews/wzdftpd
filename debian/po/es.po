@@ -1,0 +1,65 @@
+# Translation of wzdftpd_0.8.1-1_templates.po to Spanish
+# Copyright (C) 2007 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the wzdftpd package.
+#
+#  Traductores, si no conocen el formato PO, merece la pena leer la
+#  documentación de gettext, especialmente las secciones dedicadas a este
+#  formato, por ejemplo ejecutando:
+#         info -n '(gettext)PO Files'
+#         info -n '(gettext)Header Entry'
+#
+# Equipo de traducción al español, por favor lean antes de traducir
+# los siguientes documentos:
+#
+# - El proyecto de traducción de Debian al español
+#   http://www.debian.org/intl/spanish/
+#   especialmente las notas y normas de traducción en
+#   http://www.debian.org/intl/spanish/notas
+#
+# - La guía de traducción de po's de debconf:
+#   /usr/share/doc/po-debconf/README-trans
+#   o http://www.debian.org/intl/l10n/po-debconf/README-trans
+#
+# Si tiene dudas o consultas sobre esta traducción consulte con el último
+# traductor (campo Last-Translator) y ponga en copia a la lista de
+# traducción de Debian al español (<debian-l10n-spanish@lists.debian.org>)
+#
+# Enrique Matias Sanchez <cronopios@gmail.com>, 2007.
+msgid ""
+msgstr ""
+"Project-Id-Version: wzdftpd_0.8.1-1_templates\n"
+"Report-Msgid-Bugs-To: chifflier@cpe.fr\n"
+"POT-Creation-Date: 2006-09-28 09:26+0200\n"
+"PO-Revision-Date: 2008-02-10 19:27-0500\n"
+"Last-Translator: Enrique Matias Sanchez <cronopios@gmail.com>\n"
+"Language-Team: Spanish <debian-l10n-es@debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid "Upgrading"
+msgstr "Actualización"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid ""
+"The format of the config file has changed in version 0.6.0, and is not "
+"compatible with previous version."
+msgstr ""
+"El formato del fichero de configuración cambió en la versión 0.6.0, y no es "
+"compatible con versiones anteriores."
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid ""
+"You must create a new config file. See /usr/share/doc/wzdftpd/examples for "
+"an example."
+msgstr ""
+"Debe crear un nuevo fichero de configuración. En «/usr/share/doc/wzdftpd/"
+"examples» puede encontrar un ejemplo."

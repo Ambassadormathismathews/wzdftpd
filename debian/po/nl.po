@@ -1,0 +1,36 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE 'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the  package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: wzdftpd\n"
+"Report-Msgid-Bugs-To: chifflier@cpe.fr\n"
+"POT-Creation-Date: 2006-09-28 09:26+0200\n"
+"PO-Revision-Date: 2007-10-26 13:26+0100\n"
+"Last-Translator: Bart Cornelis <cobaco@skolelinux.no>\n"
+"Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Dutch\n"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid "Upgrading"
+msgstr "Bezig met opwaarderen"
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid "The format of the config file has changed in version 0.6.0, and is not compatible with previous version."
+msgstr "Het formaat van het configuratiebestand is veranderd in versie 0.6.0, en is niet compatibel met de vorige versie."
+
+#. Type: note
+#. Description
+#: ../wzdftpd.templates:1001
+msgid "You must create a new config file. See /usr/share/doc/wzdftpd/examples for an example."
+msgstr "Er dient een nieuw configuratiebestand aangemaakt te worden. Een voorbeeld vindt u in /usr/share/doc/wzdftpd/examples ."
+
