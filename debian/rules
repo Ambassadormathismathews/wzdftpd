@@ -24,7 +24,7 @@ upstreamversion=$(shell dpkg-parsechangelog | grep Version | head -1 | sed -e 's
 EXTRA_CMAKE_FLAGS=-DSKIP_BUILD_RPATH=ON -DSKIP_INSTALL_RPATH=ON -DWITH_PAM=ON -DWITH_SFV=ON
 CMAKE_PREFIX = -DCMAKE_INSTALL_PREFIX="/usr"
 
-include /usr/share/dpatch/dpatch.make
+include /usr/share/quilt/quilt.make
 
 ifndef DESTDIR
 DESTDIR=..
@@ -50,9 +50,9 @@ endif
 #	# Add here commands to configure the package.
 #	CFLAGS="$(CFLAGS)" ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --datadir=\$${prefix}/lib --localstatedir=/var --sysconfdir=/etc/wzdftpd --with-pam --with-zeroconf --enable-avahi
 
-configure: configure-stamp
+configure: patch configure-stamp
 
-configure-stamp: patch-stamp
+configure-stamp:
 	dh_testdir
 	# The first pass is used to create the configuration file
 	$(MAKE) build/Makefile EXTRA_CMAKE_FLAGS="$(EXTRA_CMAKE_FLAGS)" PREFIX=/usr
@@ -83,7 +83,7 @@ clean-patched:
 	rm -f build-arch-stamp  #CONFIGURE-STAMP#
 
 	# Add here commands to clean up after the build process.
-	[ ! -f Makefile ] || [ ! -f build/Makefile ] || $(MAKE) distclean
+	[ ! -f Makefile ] || [ ! -f build/Makefile ] || $(MAKE) clean
 	dh_clean
 
 install: install-arch

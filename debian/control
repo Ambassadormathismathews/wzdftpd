@@ -2,8 +2,8 @@ Source: wzdftpd
 Section: net
 Priority: optional
 Maintainer: Pierre Chifflier <pollux@debian.org>
-Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, dpatch, libavahi-client-dev (>= 0.6.0), cmake (>= 2.4.5)
-Standards-Version: 3.7.2
+Build-Depends: debhelper (>= 4.1.16), libgnutls-dev | libssl-dev, zlib1g-dev, tcl8.4-dev, libperl-dev, libpam0g-dev, libmysqlclient15-dev | libmysqlclient14-dev, libpq-dev, flex, quilt, libavahi-client-dev (>= 0.6.0), cmake (>= 2.4.5)
+Standards-Version: 3.7.3
 
 Package: wzdftpd
 Architecture: any
@@ -48,9 +48,9 @@ Description: Zeroconf module for wzdftpd
 Package: wzdftpd-mod-tcl
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: TCL module for wzdftpd
- This package provides the necessary files to run TCL plugins in wzdftpd,
- in the TCL module.
+Description: Tcl module for wzdftpd
+ This package provides the necessary files to run Tcl plugins in wzdftpd,
+ in the Tcl module.
 
 Package: wzdftpd-mod-perl
 Architecture: any

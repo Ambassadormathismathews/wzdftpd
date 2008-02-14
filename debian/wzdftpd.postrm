@@ -26,7 +26,7 @@ case "$1" in
      purge)
        rm -f /etc/wzdftpd/users /etc/wzdftpd/users.OLD
        rm -f /etc/wzdftpd/wzd.cfg
-       rm -f /etc/wzdftpd/wzd.cfg.wzdftpd-old /etc/wzdftpd/wzd.cfg.wzdftpd-new /etc/wzdftpd/wzd.cfg.dpkg-dist
+       rm -f /etc/wzdftpd/wzd.cfg.wzdftpd-old /etc/wzdftpd/wzd.cfg.wzdftpd-new /etc/wzdftpd/wzd.cfg.dpkg-dist /etc/wzdftpd/wzd.cfg.ucf-dist /etc/wzdftpd/wzd.cfg.ucf-old
      
      ;;
      

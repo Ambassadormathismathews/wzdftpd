@@ -1,3 +1,29 @@
+wzdftpd (0.8.3-2) unstable; urgency=low
+
+  * Remove ucf files when purging (Closes: #454369)
+  * Add Dutch debconf translation (Closes: #450993)
+  * Add Spanish debconf translation (Closes: #465164)
+  * Switch to quilt
+  * Bump standards version (no changes)
+
+ -- Pierre Chifflier <pollux@debian.org>  Thu, 14 Feb 2008 09:42:55 +0100
+
+wzdftpd (0.8.3-1) unstable; urgency=high
+
+  * New upstream release
+  * Ack NMU for security fix (Closes: #446192)
+  * Drop 10_new_pam_header and 20_config_typos, included in upstream
+
+ -- Pierre Chifflier <pollux@debian.org>  Sun, 14 Oct 2007 10:24:39 +0200
+
+wzdftpd (0.8.2-2.1) unstable; urgency=high
+
+  * Non-maintainer upload by testing security team.
+  * Fix off-by-one in wzd_login.c which leads to a remote
+    denial of service vulnerability (CVE-2007-5300) (Closes: #446192).
+
+ -- Nico Golde <nion@debian.org>  Thu, 11 Oct 2007 13:03:42 +0200
+
 wzdftpd (0.8.2-2) unstable; urgency=low
 
   * Set default homedir for user wzdftpd to / (Closes: #438183)
