@@ -111,10 +111,8 @@ install-arch:
 	mv debian/tmp/usr/etc debian/tmp/
 
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/files ;\
-	mv wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
-	mv users.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
-	rm debian/tmp/etc/wzdftpd/wzd.cfg.sample ;\
-	rm debian/tmp/etc/wzdftpd/users.sample
+	mv debian/tmp/etc/wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
+	mv debian/tmp/etc/wzdftpd/users.sample debian/wzdftpd/usr/share/wzdftpd/files
 
 	install -p -o root -g root -m 644 $(CURDIR)/debian/wzdftpd.overrides $(CURDIR)/debian/wzdftpd/usr/share/lintian/overrides/wzdftpd
 
