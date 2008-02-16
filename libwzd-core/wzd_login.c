@@ -721,7 +721,6 @@ int do_login(wzd_context_t * context)
       remote_host = inet_str;
     else
       remote_host = h->h_name;
-    out_log(LEVEL_INFO,"%s from %s\n",(ret)?"LOGIN FAILURE":"LOGIN OKAY",remote_host);
     log_message( (ret)?"LOGIN_FAILED":"LOGIN" ,"%s (%s) \"%s\" \"%s\" \"%s\"",
         (remote_host)?remote_host:"no host!",
         inet_str,
