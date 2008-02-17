@@ -207,7 +207,7 @@ void out_log(int level,const char *fmt,...)
 {
   int prior=0;
   va_list argptr;
-  char buffer[4096];
+  char *buffer=NULL;
   char datestr[128];
   time_t timeval;
   struct tm * ntime;
@@ -226,7 +226,7 @@ void out_log(int level,const char *fmt,...)
   if (_log_channels[level].fd > 0 || _log_channels[level].syslog)
   {
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-    vsnprintf(buffer,sizeof(buffer)-1,fmt,argptr);
+    buffer = safe_vsnprintf(fmt,argptr);
     va_end (argptr);
 
     if (_log_channels[level].fd > 0) {
@@ -264,6 +264,7 @@ void out_log(int level,const char *fmt,...)
       syslog(prior,"%s",buffer);
     }
 #endif
+    wzd_free(buffer);
   }
 
 #ifdef DEBUG
@@ -306,10 +307,12 @@ void out_log(int level,const char *fmt,...)
 
     va_start(argptr,fmt); /* note: ansi compatible version of va_start */
     snprintf(new_format,sizeof(new_format)-1,"%s%s%s",msg_begin,fmt,msg_end);
-    vsnprintf(buffer,sizeof(buffer)-1,new_format,argptr);
+    buffer = safe_vsnprintf(new_format,argptr);
     va_end (argptr);
 
     write(1 /* stderr */, buffer, strlen(buffer));
+
+    wzd_free(buffer);
   }
 #endif
 }
@@ -442,23 +445,13 @@ void out_xferlog(wzd_context_t * context, int is_complete)
 void log_message(const char *event, const char *fmt, ...)
 {
   va_list argptr;
-  char buffer[2048];
-  char datestr[128];
-  time_t timeval;
-  struct tm * ntime;
+  char *buffer=NULL;
 
   va_start(argptr,fmt); /* note: ansi compatible version of va_start */
-  vsnprintf(buffer,2047,fmt,argptr);
+  buffer = safe_vsnprintf(fmt,argptr);
   va_end (argptr);
 
-  timeval = time(NULL);
-  ntime = localtime( &timeval );
-  (void)strftime(datestr,sizeof(datestr),"%a %b %d %H:%M:%S %Y",ntime);
-  out_log(LEVEL_NORMAL,"%s %s: %s\n",
-      datestr,
-      event,
-      buffer
-      );
+  out_log(LEVEL_NORMAL,"%s: %s\n", event, buffer);
 }
 
 int str2loglevel(const char *s)
