@@ -659,7 +659,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
   wzd_context_t * context=NULL;
   unsigned short remote_port;
   unsigned short local_port;
-  fd_t fd_ident;
+  fd_t fd_ident=-1;
   int ret;
   ListElmt * elmnt;
   wzd_ident_context_t * ident_context;
@@ -1557,11 +1557,7 @@ int serverMainThreadProc(void *arg)
     ret = select(maxfd+1, &r_fds, &w_fds, &e_fds, &tv);
 #endif
 
-/*    out_err(LEVEL_FLOOD,".");*/
-/*    fflush(stderr);*/
-
-    switch (ret) {
-    case -1: /* error */
+    if (ret < 0) {
       if (errno == EINTR) continue; /* retry */
       if (errno == EBADF) {
         out_log(LEVEL_CRITICAL,"FATAL Bad file descriptor\n");
@@ -1572,20 +1568,15 @@ int serverMainThreadProc(void *arg)
         strerror(errno), __FILE__, __LINE__);
       serverMainThreadCleanup(-1);
       return -1;
-#if 0
-    case 0: /* timeout */
-      /* check for timeout logins */
-      break;
-#endif
-    default: /* input */
-      time (&server_time);
-
-      server_control_check(&r_fds,&w_fds,&e_fds);
-      server_ident_check(&r_fds,&w_fds,&e_fds);
-      /* check ident timeout */
-      server_ident_timeout_check();
-      server_ip_check(&r_fds,&w_fds,&e_fds);
     }
+
+    time (&server_time);
+
+    server_control_check(&r_fds,&w_fds,&e_fds);
+    server_ident_check(&r_fds,&w_fds,&e_fds);
+    /* check ident timeout */
+    server_ident_timeout_check();
+    server_ip_check(&r_fds,&w_fds,&e_fds);
 
   } /* while (!serverstop) */
 
