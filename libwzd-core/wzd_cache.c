@@ -478,9 +478,11 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     if (c->current_location >= cache->datasize) return NULL;
     memcpy(buffer,cache->data+c->current_location,size_to_read);
 /*    c->current_location += size_to_read;*/
-    while (--size>0 && (_c=(*ptr++)) != (char)EOF)
+    while (--size>0 && ret-->0)
     {
-      if ( (*dst++ = _c)=='\n' )
+      _c = (*ptr++);
+      *dst++ = _c;
+      if (_c =='\n')
         break;
       if ( --size_to_read == 0 ) {
         size_to_read = (size<4096)?size:4096;
@@ -498,7 +500,6 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     }
     c->current_location += size_to_read;
     *dst=0;
-    if (_c==(char)EOF && ptr==buf) return NULL;
 /*    lseek(fd,position + (dst-buf), SEEK_SET );*/
     c->current_location = position + (dst-buf);
 
@@ -514,9 +515,11 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     size_to_read = (size<4096)?size:4096;
     ret = read(fd,buffer,size_to_read);
     if (ret <= 0) return NULL;
-    while (--size>0 && (_c=(*ptr++)) != (char)EOF)
+    while (--size>0 && ret-->0)
     {
-      if ( (*dst++ = _c)=='\n' )
+      _c = (*ptr++);
+      *dst++ = _c;
+      if (_c =='\n')
         break;
       if ( --size_to_read == 0 ) {
         size_to_read = (size<4096)?size:4096;
@@ -526,7 +529,6 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
       }
     }
     *dst=0;
-    if (_c==(char)EOF && ptr==buf) return NULL;
     (void)lseek(fd,position + (dst-buf), SEEK_SET );
     /* update current_location */
     c->current_location += strlen(buf);
