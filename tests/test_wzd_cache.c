@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
   FILE * file;
   char buffer2[1024];
   char * srcdir = NULL;
+  int n;
   unsigned long c2 = C2;
 
   wzd_debug_init();
@@ -58,7 +59,8 @@ int main(int argc, char *argv[])
       return 4;
     }
 
-    if (!memcmp(buffer1,buffer2,sizeof(buffer1))) {
+    n = strlen(buffer1);
+    if (memcmp(buffer1,buffer2,n) != 0) {
       fprintf(stderr, "fgets and wzd_cache_gets returned different output\n");
       return 5;
     }
@@ -82,7 +84,8 @@ int main(int argc, char *argv[])
       return 4;
     }
 
-    if (!memcmp(buffer1,buffer2,sizeof(buffer1))) {
+    n = strlen(buffer1);
+    if (memcmp(buffer1,buffer2,n) != 0) {
       fprintf(stderr, "fgets and wzd_cache_gets returned different output\n");
       return 5;
     }
@@ -111,7 +114,8 @@ int main(int argc, char *argv[])
       return 4;
     }
 
-    if (!memcmp(buffer1,buffer2,sizeof(buffer1))) {
+    n = strlen(buffer1);
+    if (memcmp(buffer1,buffer2,n) != 0) {
       fprintf(stderr, "fgets and wzd_cache_gets returned different output\n");
       return 5;
     }
