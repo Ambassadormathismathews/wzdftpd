@@ -512,11 +512,8 @@ int user_flags_add(wzd_user_t * user, const char *flags) {
  */
 int user_flags_delete(wzd_user_t * user, const char *flags) {
   int i;
-  int j = 0;
-  int length;
-  int currlen;
+  size_t length;
   char * strpos;
-  char * matches[MAX_FLAGS_NUM];
   char newflags[MAX_FLAGS_NUM];
 
   if (user && user->flags && flags && *flags)
@@ -527,32 +524,17 @@ int user_flags_delete(wzd_user_t * user, const char *flags) {
   if (length >= MAX_FLAGS_NUM)
     return -1;
 
-  /* find matching flags which we want to remove */
-  memset(matches, 0, MAX_FLAGS_NUM);
-  for (i = 0; i < length; i++) {
-    if (isalnum(flags[i])) {
-      strpos = strchr((char *)user->flags, flags[i]);
-      if (strpos) {
-        matches[j] = strpos;
-        j++;
-      }
-    }
-  }
-
   /* create a new set of flags which don't contain the deleted flags */
   memset(newflags, '\0', MAX_FLAGS_NUM);
-  currlen = strlen((char *)&user->flags);
-  strpos = &newflags;
-  for (i = 0; i < currlen; i++) {
-    if (!memchr(&matches, &user->flags[i], MAX_FLAGS_NUM)) {
-      *strpos = user->flags[i];
-      strpos++;
+  strpos = newflags;
+  for (i = 0; i < strlen(user->flags); i++) {
+    if (!memchr(flags, user->flags[i], length)) {
+      *strpos++ = user->flags[i];
     }
   }
 
   /* copy new set of flags back to users flags field */
   strncpy((char *)&user->flags, (char *)&newflags, MAX_FLAGS_NUM);
-  *strpos = '\0';
 
   return 0;
 }

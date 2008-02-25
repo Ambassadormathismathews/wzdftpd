@@ -45,6 +45,16 @@ int main(int argc, char *argv[])
 
   wzd_free(uid_list);
 
+  /* test on flags */
+  user_flags_clear(user1);
+  user_flags_add(user1, "abc");
+  if (strcmp(user1->flags,"abc")!=0) exit(1);
+  user_flags_add(user1, "aef");
+  if (strcmp(user1->flags,"abcef")!=0) exit(1);
+  user_flags_delete(user1, "ade");
+  if (strcmp(user1->flags,"bcf")!=0) exit(1);
+
+  /* end of tests */
   user = user_unregister(user1->uid);
   user_free(user);
 
