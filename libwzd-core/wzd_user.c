@@ -511,8 +511,7 @@ int user_flags_add(wzd_user_t * user, const char *flags) {
  * \return 0 on success, -1 on failure
  */
 int user_flags_delete(wzd_user_t * user, const char *flags) {
-  int i;
-  size_t length;
+  size_t i, length;
   char * strpos;
   char newflags[MAX_FLAGS_NUM];
 
