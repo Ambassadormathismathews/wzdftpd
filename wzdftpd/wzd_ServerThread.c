@@ -178,7 +178,7 @@ static void server_ident_timeout_check(void);
 static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
-static void server_login_accept(wzd_context_t * context);
+static int server_login_accept(wzd_context_t * context);
 
 static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
@@ -870,7 +870,7 @@ static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_
 /*
  * checks if login sequence can start, creates new context, etc
  */
-static void server_login_accept(wzd_context_t * context)
+static int server_login_accept(wzd_context_t * context)
 {
   wzd_thread_t thread;
   wzd_thread_attr_t thread_attr;
@@ -898,9 +898,8 @@ static void server_login_accept(wzd_context_t * context)
       FD_UNREGISTER(context->controlfd,"Client socket");
       out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
       /* mark context as free */
-      context->magic = 0;
-      /** \todo FIXME context is NOT freed */
-      return;
+      context_remove(context_list, context);
+      return -1;
     }
     context->connection_flags |= CONNECTION_TLS;
   }
@@ -914,30 +913,30 @@ static void server_login_accept(wzd_context_t * context)
       FD_UNREGISTER(context->controlfd,"Client socket");
       out_log(LEVEL_NORMAL,"INFO rejected connection from %s\n",inet_buf);
       /* mark context as free */
-      context->magic = 0;
-      /** \todo FIXME context is NOT freed */
-      return;
+      context_remove(context_list, context);
+      return -1;
     }
   }
 
   /* start new thread */
-
   ret = wzd_thread_attr_init( & thread_attr );
   if (ret) {
     out_err(LEVEL_CRITICAL,"Unable to initialize thread attributes !\n");
-    return;
+    return -1;
   }
   if (wzd_thread_attr_set_detached( & thread_attr )) {
     out_err(LEVEL_CRITICAL,"Unable to set thread attributes !\n");
-    return;
+    return -1;
   }
   ret = wzd_thread_create(&thread,&thread_attr,clientThreadProc,context);
   if (ret) {
     out_err(LEVEL_CRITICAL,"Unable to create thread\n");
-    return;
+    return -1;
   }
   context->pid_child = (unsigned long)WZD_THREAD_VOID(&thread);
   wzd_thread_attr_destroy(&thread_attr); /* not needed anymore */
+  
+  return 0;
 }
 
 /*
@@ -1597,7 +1596,9 @@ void serverMainThreadCleanup(int retcode)
 
   wzd_mutex_lock(end_mutex);
 
-  if (++finished > 1) exit(0); /* already finished ? */
+  if (++finished > 1) 
+    return; /* return, no exit 0 because of service */
+
 
   out_log(LEVEL_HIGH,"Server exiting, retcode %d\n",retcode);
 
