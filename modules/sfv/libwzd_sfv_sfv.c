@@ -122,19 +122,23 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
     total_count++;
     filelen = strlen(sfv->sfv_list[i]->filename);
     dirbuffer=malloc(dirlen+filelen+15); /* Some extra len for .missing or .bad*/
-    if(!dirbuffer) continue;
+    if(!dirbuffer) 
+      continue;
 
     memset(dirbuffer,0,dirlen+filelen+15);
     strncpy(dirbuffer,directory,dirlen);
-    if (dirbuffer[dirlen-1] != '/') strcat(dirbuffer,"/");
+    if (dirbuffer[dirlen-1] != '/') 
+      strcat(dirbuffer,"/");
+    
     strncat(dirbuffer,sfv->sfv_list[i]->filename,filelen);
     filelen=strlen(dirbuffer);
 
     file=stat(dirbuffer,&s);        /* if file = 0, file is found */
     if(!file) cur_st_size=(unsigned long) s.st_size;
-    strncpy(dirbuffer+filelen,".missing",10);
+    strcpy( dirbuffer+filelen,".missing" );
+    
     missing=stat(dirbuffer,&s);     /* if missing = 0, missing is found */
-    strncpy(dirbuffer+filelen,".bad",10);
+    strcpy(dirbuffer+filelen,".bad" );
     bad=stat(dirbuffer,&s);         /* if bad = 0, .bad is found */
 
     /* file is found and ok */
@@ -146,7 +150,7 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
       /*  file is not found */
       if ( missing ){ /* no missing file yet, create one */
         /* create a .missing file */
-        strncpy(dirbuffer+filelen,".missing",10);
+        strcpy( dirbuffer+filelen, ".missing" );
         fd = open( dirbuffer,O_WRONLY|O_CREAT,0666 );
         if ( fd != -1 )
           close(fd);
@@ -184,6 +188,7 @@ int sfv_check_create(const char *filename, wzd_sfv_entry * entry)
     fd = open(missing,O_WRONLY|O_CREAT,0666);
     if (fd != -1)
       close(fd);
+    
     if (!stat(bad,&s)) remove(bad);
     entry->state = SFV_MISSING;
     return 0;
@@ -232,8 +237,10 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   int count_comments=0, count_entries=0;
   int length;
 
-  if (stat(filename,&st) < 0) return -1;
-  if (!S_ISREG(st.st_mode)) return -1;
+  if (stat(filename,&st) < 0) 
+    return -1;
+  if (!S_ISREG(st.st_mode)) 
+    return -1;
   if ((fp=wzd_cache_open(filename,O_RDONLY,0644)) == NULL)
     return -1;
 
@@ -242,6 +249,7 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
 
   while ( wzd_cache_gets(fp,buf,BUFSIZ-1) != NULL) {
 /*    if (i == -1) return -1;*/
+
     ptr = buf;
     length = strlen(buf); /* fgets put a '\0' at the end */
     /* trim trailing space, because fgets keep a \n */
@@ -249,9 +257,13 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
       *(ptr+length-1) = '\0';
       length--;
     }
-    if (length <= 0) continue;
+    
+    if (length <= 0) 
+      continue;
     /* XXX limitation */
-    if (length > 512) continue;
+    if (length > 512)
+      continue;
+      
     if (buf[0] == ';') { /* comment */
       /* count_comments + 2 : +1 for the new line to add, +1 to terminate
          array by NULL */
@@ -266,7 +278,10 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
          array by NULL */
       if ((count_entries + 2 )% 50 == 0)
         sfv->sfv_list = realloc(sfv->sfv_list,(count_entries+50)*sizeof(wzd_sfv_entry*));
-      if (length < 10) continue;
+      
+      if (length < 10) 
+        continue;
+        
       ptr = buf + length - 8;
       *(buf+length-9) = '\0';
       sfv->sfv_list[count_entries] = malloc(sizeof(wzd_sfv_entry));

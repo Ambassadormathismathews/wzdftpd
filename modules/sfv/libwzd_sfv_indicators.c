@@ -71,35 +71,37 @@ Caller needs to free
 char *c_incomplete_indicator(const char * indicator, const char * currentdir, wzd_context_t * context)
 {
   char buffer[2*WZD_MAX_PATH];
-  char sfvdirname[128]; /*take max 127 characters for the releasename*/
+  char releasename[128]; /*take max 127 characters for the releasename*/
   size_t length, needed;
   char * out=NULL;
   const char * ptr_in;
   char * ptr_out;
   wzd_user_t * user;
-  wzd_group_t * group;
   size_t dirlen;
   char * directory;
   char * ptr;
 
   user = GetUserByID(context->userid);
-  if (!user) return NULL;
-
-  if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
-  else group = NULL;
+  if (!user)
+    return NULL;
 
   dirlen=strlen(currentdir);
   directory=malloc(dirlen+5);
   memset(directory,0,dirlen+5);
   strncpy(directory,currentdir,dirlen);
-  if (directory[dirlen-1]=='/') directory[dirlen-1]='\0';
+  if (directory[dirlen-1]=='/')
+    directory[dirlen-1]='\0';
   
   /* Get the releasename */
-  memset(&sfvdirname,0,sizeof(sfvdirname) );
-  ptr=strrchr(directory,'/')+1;
-  if(!ptr) return NULL;
-  strncpy(sfvdirname, ptr ,127 ) ;
-  
+  ptr=strrchr(directory,'/');
+  if(!ptr++)
+    return NULL;
+
+  /* TODO: check if name is CD1 , CD2 etc, if so than create a name like Release-CD1 */
+  strncpy( releasename, ptr ,127 ) ;
+  releasename[127]='\0';
+
+
   /* Always make dir / terminated */
   strcat(directory,"/");
 
@@ -177,6 +179,11 @@ char *c_incomplete_indicator(const char * indicator, const char * currentdir, wz
         ptr_out += needed;
       }
       else if (strncmp(ptr_in,"%grouphome",10)==0){
+
+        wzd_group_t * group;
+        if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
+        else group = NULL;
+
         if (group){
           needed = strlen(group->defaultpath);
           length += needed;
@@ -191,13 +198,13 @@ char *c_incomplete_indicator(const char * indicator, const char * currentdir, wz
         else return NULL; /* we want user's main group and he has no one ... */
       }
       else if (strncmp(ptr_in,"%releasename",12)==0){
-        needed = strlen(sfvdirname);
+        needed = strlen(releasename);
         length += needed;
         if (length >= 2*WZD_MAX_PATH) {
            out_log(LEVEL_CRITICAL,"libwzd_sfv: buffer size exceeded for indicator %s\n",indicator);
            return NULL;
         }
-        memcpy(ptr_out,sfvdirname,needed);
+        memcpy(ptr_out,releasename,needed);
         ptr_in += 12;
         ptr_out += needed;
       } else {
