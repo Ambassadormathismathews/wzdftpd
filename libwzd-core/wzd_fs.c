@@ -75,7 +75,6 @@ struct fs_dir_t {
 #endif
 
   fs_fileinfo_t finfo;
-  short first;
 };
 
 
@@ -131,7 +130,6 @@ int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
   strncpy((*newdir)->dirname,pathname,strlen(pathname)+2);
   (*newdir)->handle = NULL;
   (*newdir)->finfo.name = NULL;
-  (*newdir)->first = 0;
 
   /* ensure pathname is / terminated */
   len = strlen(pathname);
@@ -167,6 +165,7 @@ int fs_dir_close(fs_dir_t * dir)
   return ret;
 }
 
+
 /** \brief Read a directory
  *
  * pathname should be UTF-8 encoded, or will be converted to unicode.
@@ -179,10 +178,7 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
   int ret;
   size_t sz;
 
-  if (dir->first == 1) {
-    dir->first = 0;
-  }
-  else if (dir->handle == NULL) {
+  if (dir->handle == NULL) {
     size_t sz;
     wchar_t * dstname, * eos;
 
@@ -199,6 +195,7 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
     eos = wcschr(dstname,'\0');
     eos[0] = '*';
     eos[1] = '\0';
+    
     dir->handle = FindFirstFileW(dstname,&(dir->entry));
     /* make sure that we actually have a valid handle */
     if (dir->handle == INVALID_HANDLE_VALUE) {
@@ -206,9 +203,6 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
       return -1;
     }
     eos[0] = '\0';
-
-    dir->first = 1;
-
     free(dstname);
   }
   else if (!FindNextFileW(dir->handle,&(dir->entry))) {
