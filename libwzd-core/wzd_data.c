@@ -127,7 +127,6 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     addr6.sin6_family = AF_INET6;
     addr6.sin6_flowinfo = 0;
     memset(&addr6.sin6_addr,0,16);
-    addr6.sin6_port = htons((unsigned short)port);
   } else
 #endif
   if (family == WZD_INET4) {
@@ -143,7 +142,6 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     } else {
       addr4.sin_addr.s_addr = htonl(INADDR_ANY);
     }
-    addr4.sin_port = htons((unsigned short)port);
   }
   else {
     return -1;
