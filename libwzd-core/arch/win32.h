@@ -196,8 +196,12 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 /* visual c++ doesn't follow C99 naming standards */
 #define strtoll _strtoi64
 #define strtoull _strtoui64
-#define LLONG_MAX _I64_MAX
-#define ULLONG_MAX _UI64_MAX
+#ifndef LLONG_MAX
+# define LLONG_MAX _I64_MAX
+#endif
+#ifndef ULLONG_MAX
+# define ULLONG_MAX _UI64_MAX
+#endif
 
 #define strtok_r strtok_s
 
