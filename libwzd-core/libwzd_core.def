@@ -61,6 +61,7 @@ EXPORTS
 	context_free
 	context_init
 	context_list
+	context_remove
 	cookie_parse_buffer
 	cronjob_add
 	cronjob_free
