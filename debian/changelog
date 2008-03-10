@@ -1,3 +1,10 @@
+wzdftpd (0.8.3-4) unstable; urgency=low
+
+  * Fix paths in config file
+  * Fix build script
+
+ -- Pierre Chifflier <pollux@debian.org>  Thu, 21 Feb 2008 09:57:57 +0100
+
 wzdftpd (0.8.3-3) unstable; urgency=low
 
   * Fix prerm scripts

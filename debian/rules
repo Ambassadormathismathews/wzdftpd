@@ -80,10 +80,11 @@ clean: clean-patched unpatch
 clean-patched:
 	dh_testdir
 	dh_testroot
-	rm -f build-arch-stamp  #CONFIGURE-STAMP#
+	rm -f build-arch-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || [ ! -f build/Makefile ] || $(MAKE) clean
+	rm -f users.sample wzd.cfg.sample
 	dh_clean
 
 install: install-arch
@@ -111,8 +112,10 @@ install-arch:
 	mv debian/tmp/usr/etc debian/tmp/
 
 	install -m 755 -d debian/wzdftpd/usr/share/wzdftpd/files ;\
-	mv debian/tmp/etc/wzdftpd/wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
-	mv debian/tmp/etc/wzdftpd/users.sample debian/wzdftpd/usr/share/wzdftpd/files
+	rm -f debian/tmp/etc/wzdftpd/wzd.cfg.sample;\
+	rm -f debian/tmp/etc/wzdftpd/users.sample; \
+	mv wzd.cfg.sample debian/wzdftpd/usr/share/wzdftpd/files ;\
+	mv users.sample debian/wzdftpd/usr/share/wzdftpd/files
 
 	install -p -o root -g root -m 644 $(CURDIR)/debian/wzdftpd.overrides $(CURDIR)/debian/wzdftpd/usr/share/lintian/overrides/wzdftpd
 
