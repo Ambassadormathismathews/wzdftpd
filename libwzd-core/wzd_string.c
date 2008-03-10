@@ -576,7 +576,7 @@ int str_sprintf(wzd_string_t *str, const char *format, ...)
 
 /** \brief Prepend formatted output to string
  */
-int str_prepend_printf(wzd_string_t *str, const char *format, ...)
+size_t str_prepend_printf(wzd_string_t *str, const char *format, ...)
 {
   va_list argptr;
   int result;
@@ -641,7 +641,7 @@ int str_prepend_printf(wzd_string_t *str, const char *format, ...)
 
 /** \brief Append formatted output to string
  */
-int str_append_printf(wzd_string_t *str, const char *format, ...)
+size_t str_append_printf(wzd_string_t *str, const char *format, ...)
 {
   va_list argptr;
   int result;

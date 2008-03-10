@@ -134,11 +134,11 @@ int str_vsprintf(wzd_string_t *str, const char *format, va_list ap);
 
 /** \brief Prepend formatted output to string
  */
-int str_prepend_printf(wzd_string_t *str, const char *format, ...);
+size_t str_prepend_printf(wzd_string_t *str, const char *format, ...);
 
 /** \brief Append formatted output to string
  */
-int str_append_printf(wzd_string_t *str, const char *format, ...);
+size_t str_append_printf(wzd_string_t *str, const char *format, ...);
 
 /** \brief Split \a str into a maximum of \a max_tokens pieces, separated by \a sep.
  *

@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
   const char ref9[] = "test val 9\0";
   const unsigned char ref10[] = {0x74, 0xc3, 0xa9, 0x6c, 0xc3, 0xa0, 0xc3, 0xa7, 0xc3, 0xb6, 0x0};
   const char ref11[] = "télàçö";
+  const char ref12[] = "some string";
+  const char ref13[] = "some";
 
   str = str_allocate();
 
@@ -148,6 +150,18 @@ int main(int argc, char *argv[])
 
   str_deallocate(str);
   str_deallocate(str2);
+
+  str = STR("some test string");
+  str_erase(str,5,5);
+  if ( strcmp(ref12,str_tochar(str)) ) {
+    fprintf(stderr, "str_erase returned crap\n");
+    return 17;
+  }
+  str_erase(str,4,-1);
+  if ( strcmp(ref13,str_tochar(str)) ) {
+    fprintf(stderr, "str_erase returned crap\n");
+    return 18;
+  }
 
   fake_exit();
 
