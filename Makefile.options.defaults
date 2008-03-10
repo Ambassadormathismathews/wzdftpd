@@ -16,6 +16,8 @@ WITH_KRB5 = 0
 WITH_PAM = 0
 WITH_UTF8 = 1
 
+WITH_SFV = 0
+
 ### TLS support
 # if GnuTLS is found, it is prefered to OpenSSL
 WITH_GNUTLS = 1
