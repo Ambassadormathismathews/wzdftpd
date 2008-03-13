@@ -86,7 +86,9 @@
 #define i64_t int64_t
 #define u64_t uint64_t
 
-typedef signed fd_t;
+/* these types are standard on POSIX */
+typedef int fd_t;
+typedef int socket_t;
 
 
 #include <sys/time.h> /* struct timeval */

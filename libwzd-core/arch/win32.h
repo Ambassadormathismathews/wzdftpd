@@ -205,9 +205,14 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz);
 
 #define strtok_r strtok_s
 
-typedef unsigned fd_t;
+typedef int fd_t;
+/* use SOCKET, because it can be 64-bits on windows 64 */
+typedef SOCKET socket_t;
 
-typedef size_t ssize_t;
+/* small hack: ptrdiff_t is the only standard signed type which
+ * should be the same size as size_t
+ */
+typedef ptrdiff_t ssize_t;
 
 #define inline __inline
 
@@ -290,7 +295,7 @@ const char * inet_ntop(int af, const void *src, char *dst, size_t size);
 
 #define DIRCMP	strcasecmp
 #define DIRNCMP	strncasecmp
-#define DIRNORM(s,l,low) win_normalize(s,l,low)
+#define DIRNORM(s,l,low) win_normalize(s,(unsigned int)l,low)
 
 /** remove trailing / */
 #define REMOVE_TRAILING_SLASH(str) \
