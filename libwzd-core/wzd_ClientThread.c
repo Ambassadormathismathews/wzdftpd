@@ -129,7 +129,7 @@ static struct thread_key_t * _key_context = NULL;
  * Try to read length bytes in non-blocking mode for timeout seconds
  * max. If timeout is null, performs a blocking read.
  */
-int clear_read(fd_t sock, char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
+int clear_read(socket_t sock, char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -178,7 +178,7 @@ int clear_read(fd_t sock, char *msg, size_t length, UNUSED int flags, unsigned i
  * Try to write length bytes in non-blocking mode for timeout seconds
  * max. If timeout is null, performs a blocking write.
  */
-int clear_write(fd_t sock, const char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
+int clear_write(socket_t sock, const char *msg, size_t length, UNUSED int flags, unsigned int timeout, UNUSED void * vcontext)
 {
 /*  wzd_context_t * context = (wzd_context_t*)vcontext;*/
   int ret;
@@ -250,7 +250,7 @@ void client_die(wzd_context_t * context)
   }
 
   /* close opened files */
-  if (context->current_action.current_file != (fd_t)-1) {
+  if (context->current_action.current_file != (socket_t)-1) {
     data_end_transfer( (context->current_action.token == TOK_STOR) /* is_upload */, 0 /* end_ok */, context);
   }
 
@@ -268,12 +268,12 @@ void client_die(wzd_context_t * context)
 
   out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
   /* close existing pasv connections */
-  if (context->pasvsock != (fd_t)-1) {
+  if (context->pasvsock != (socket_t)-1) {
     socket_close(context->pasvsock);
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
     context->pasvsock = -1;
   }
-  if (context->datafd != (fd_t)-1) {
+  if (context->datafd != (socket_t)-1) {
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     /* if TLS, shutdown TLS before closing data connection */
     tls_close_data(context);
@@ -482,7 +482,7 @@ int waitaccept(wzd_context_t * context)
 {
   fd_set fds;
   struct timeval tv;
-  fd_t sock;
+  socket_t sock;
   unsigned char remote_host[16];
   unsigned int remote_port;
   wzd_user_t * user;
@@ -513,7 +513,7 @@ int waitaccept(wzd_context_t * context)
   } while (!FD_ISSET(sock,&fds));
 
   sock = socket_accept(context->pasvsock, remote_host, &remote_port, &context->datafamily);
-  if (sock == (fd_t)-1) {
+  if (sock == (socket_t)-1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
@@ -641,7 +641,7 @@ int waitconnect(wzd_context_t * context)
 
 /*************** list_callback ***********************/
 
-int list_callback(fd_t sock, wzd_context_t * context, char *line)
+int list_callback(socket_t sock, wzd_context_t * context, char *line)
 {
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (context->tls_data_mode == TLS_CLEAR)
@@ -659,7 +659,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,n;
-  fd_t sock;
+  socket_t sock;
   char nullch[8];
   char * cmask;
   const char * param;
@@ -680,7 +680,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   param = str_tochar(arg);
 
-  if (context->pasvsock == (fd_t)-1 && context->dataport == 0)
+  if (context->pasvsock == (socket_t)-1 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
@@ -801,12 +801,12 @@ printf("path: '%s'\n",path);
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
+  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
 
     /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
 
     sock = waitconnect(context);
-    if (sock == (fd_t)-1) {
+    if (sock == (socket_t)-1) {
       /* note: reply is done in waitconnect() */
       wzd_free(path);
       return E_CONNECTTIMEOUT;
@@ -814,7 +814,7 @@ printf("path: '%s'\n",path);
 
   } else { /* PASV ! */
     ret = send_message(150,context); /* about to open data connection */
-    if ((sock=waitaccept(context)) == (fd_t)-1) {
+    if ((sock=waitaccept(context)) == (socket_t)-1) {
       /* note: reply is done in waitaccept() */
       wzd_free(path);
       return E_PASV_FAILED;
@@ -854,7 +854,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 {
   int ret;
   wzd_user_t * user;
-  fd_t sock;
+  socket_t sock;
   char * path;
 
   user = GetUserByID(context->userid);
@@ -864,7 +864,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (fd_t)-1 && context->dataport == 0)
+  if (context->pasvsock == (socket_t)-1 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
@@ -911,12 +911,12 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
+  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
 
     /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
 
     sock = waitconnect(context);
-    if (sock == (fd_t)-1) {
+    if (sock == (socket_t)-1) {
       /* note: reply is done in waitconnect() */
       wzd_free(path);
       return E_CONNECTTIMEOUT;
@@ -924,7 +924,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 
   } else { /* PASV ! */
     ret = send_message(150,context); /* about to open data connection */
-    if ((sock=waitaccept(context)) == (fd_t)-1) {
+    if ((sock=waitaccept(context)) == (socket_t)-1) {
       /* note: reply is done in waitaccept() */
       wzd_free(path);
       return E_PASV_FAILED;
@@ -1095,7 +1095,7 @@ int do_stat(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 {
   char mask[1024],cmd[WZD_MAX_PATH], *path;
   int ret,n;
-  fd_t sock;
+  socket_t sock;
   char nullch[8];
   char * cmask;
   const char *param;
@@ -1529,7 +1529,7 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
   wzd_user_t * user;
   unsigned int port;
 
-  if (context->pasvsock != (fd_t)-1) {
+  if (context->pasvsock != (socket_t)-1) {
     socket_close(context->pasvsock);
     context->pasvsock = -1;
   }
@@ -1594,7 +1594,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   pasv_close(context);
 
   /* create socket */
-  if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
+  if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) == (socket_t)-1) {
     context->pasvsock = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
@@ -1751,7 +1751,7 @@ int do_eprt(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
   char * param, * orig_param;
   wzd_user_t * user;
 
-  if (context->pasvsock != (fd_t)-1) {
+  if (context->pasvsock != (socket_t)-1) {
     socket_close(context->pasvsock);
     context->pasvsock = -1;
   }
@@ -1880,7 +1880,7 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
   port = mainConfig->pasv_low_range; /* use pasv range min */
 
   /* close existing pasv connections */
-  if (context->pasvsock != (fd_t)-1) {
+  if (context->pasvsock != (socket_t)-1) {
     socket_close(context->pasvsock);
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
     context->pasvsock = -1;
@@ -1888,9 +1888,9 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
   /* create socket */
 #if !defined(IPV6_SUPPORT)
-  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1)
+  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) == (socket_t)-1)
 #else
-  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1)
+  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) == (socket_t)-1)
 #endif
   {
     context->pasvsock = -1;
@@ -2011,7 +2011,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
   char path[WZD_MAX_PATH];
   int fd;
   u64_t bytestot, bytesnow, byteslast;
-  fd_t sock;
+  socket_t sock;
   int ret;
   wzd_user_t * user;
   const char *param;
@@ -2027,7 +2027,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock == (fd_t)-1) && (context->dataport == 0)) {
+  if ((context->pasvsock == (socket_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
     return E_NO_DATA_CTX;
   }
@@ -2122,11 +2122,11 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 
   
   context->current_action.token = TOK_RETR;
-  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
+  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
-    if (sock == (fd_t)-1) {
+    if (sock == (socket_t)-1) {
       context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
@@ -2139,7 +2139,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 /*    sprintf(cmd, "150 Opening BINARY data connection for '%s' (%ld bytes).\r\n",
       param, bytestot);*/
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) == (fd_t)-1) {
+    if ((sock=waitaccept(context)) == (socket_t)-1) {
       context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (RETR)");
@@ -2218,7 +2218,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
   int fd;
   u64_t bytesnow, byteslast;
-  fd_t sock;
+  socket_t sock;
   int ret;
   wzd_user_t * user;
   const char *param;
@@ -2236,7 +2236,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connection */
-  if ((context->pasvsock == (fd_t)-1) && (context->dataport == 0)) {
+  if ((context->pasvsock == (socket_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return E_NO_DATA_CTX;
   }
@@ -2316,9 +2316,9 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   
   restorestate = context->current_action.token;
   context->current_action.token = TOK_STOR;
-  if (context->pasvsock == (fd_t)-1) { /* PORT ! */
+  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
     sock = waitconnect(context);
-    if (sock == (fd_t)-1) {
+    if (sock == (socket_t)-1) {
       context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
@@ -2327,7 +2327,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
     }
   } else { /* PASV ! */
     ret = send_message(150,context);
-    if ((sock=waitaccept(context)) == (fd_t)-1) {
+    if ((sock=waitaccept(context)) == (socket_t)-1) {
       context->current_action.token = restorestate;
       file_close(fd,context);
       FD_UNREGISTER(fd,"Client file (STOR)");
@@ -2594,12 +2594,12 @@ int do_abor(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
   user = GetUserByID(context->userid);
 
-  if (context->pasvsock != (fd_t)-1 && context->datafd != context->pasvsock) {
+  if (context->pasvsock != (socket_t)-1 && context->datafd != context->pasvsock) {
     socket_close(context->pasvsock);
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
     context->pasvsock=-1;
   }
-  if (context->current_action.current_file != (fd_t)-1) {
+  if (context->current_action.current_file != (socket_t)-1) {
     /* transfer aborted, we should send a 426 */
     ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
@@ -3287,7 +3287,7 @@ void * clientThreadProc(void *arg)
   wzd_context_t * context;
   char *buffer = NULL;
   int save_errno;
-  fd_t sockfd;
+  socket_t sockfd;
   int ret;
   wzd_user_t * user;
   wzd_command_t * command;
