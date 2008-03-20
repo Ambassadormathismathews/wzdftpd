@@ -72,7 +72,7 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
 {
   struct hostent * host;
   int ret=-1;
-  int sz = MIN(length,sizeof(host->h_addr_list));
+  size_t sz = MIN(length,sizeof(host->h_addr_list));
 
   wzd_mutex_lock(server_mutex);
   host = gethostbyname(name);
@@ -178,9 +178,9 @@ int socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remot
   struct sockaddr_in * from4;
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 * from6;
-  socklen_t len = sizeof(struct sockaddr_in6);
+  socklen_t len = (socklen_t)sizeof(struct sockaddr_in6);
 #else
-  socklen_t len = sizeof(struct sockaddr_in);
+  socklen_t len = (socklen_t)sizeof(struct sockaddr_in);
 #endif
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
@@ -318,7 +318,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 #if defined(IPV6_SUPPORT)
   struct sockaddr_in6 sai6;
 #endif
-  socklen_t len = sizeof(struct sockaddr_in);
+  socklen_t len = (socklen_t)sizeof(struct sockaddr_in);
   int ret;
   int on=1;
 #ifdef WIN32
@@ -623,11 +623,8 @@ int socket_wait_to_read(socket_t sock, unsigned int timeout)
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER)
-      ret = select(0,&rfds,&wfds,&efds,&tv);
-#else
       ret = select(sock+1,&rfds,&wfds,&efds,&tv);
-#endif
+      
       save_errno = errno;
 
       if (FD_ISSET(sock,&efds)) {
@@ -673,11 +670,8 @@ int socket_wait_to_write(socket_t sock, unsigned int timeout)
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#ifdef WIN32
-      ret = select(0,NULL,&wfds,&efds,&tv);
-#else
       ret = select(sock+1,NULL,&wfds,&efds,&tv);
-#endif
+      
       save_errno = errno;
 
       if (ret == -1) return -1;
