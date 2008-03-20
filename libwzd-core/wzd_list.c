@@ -75,8 +75,8 @@ static int list_match(char *,char *);
 
 static char * mlst_format_line(struct wzd_file_t * file_info, fs_filestat_t *s, char * buffer, wzd_context_t * context);
 
-int list_call_wrapper(fd_t sock, wzd_context_t *context, const char *line, char *buffer, size_t *buffer_len,
-    int callback(fd_t,wzd_context_t*,char *))
+int list_call_wrapper(socket_t sock, wzd_context_t *context, const char *line, char *buffer, size_t *buffer_len,
+    int callback(socket_t,wzd_context_t*,char *))
 {
   size_t length;
   if (!line) { /* request to flush */
@@ -102,8 +102,8 @@ int list_call_wrapper(fd_t sock, wzd_context_t *context, const char *line, char 
 
 
 
-int list(fd_t sock,wzd_context_t * context,enum list_type_t format,char *directory,char *mask,
-	 int callback(fd_t,wzd_context_t*,char *))
+int list(socket_t sock,wzd_context_t * context,enum list_type_t format,char *directory,char *mask,
+	 int callback(socket_t,wzd_context_t*,char *))
 {
   struct wzd_dir_t * dir;
   struct wzd_file_t * file;
@@ -307,7 +307,7 @@ char * mlst_single_file(const char *filename, wzd_context_t * context)
   return str_buffer;
 }
 
-int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
+int mlsd_directory(const char * dirname, socket_t sock, int callback(socket_t,wzd_context_t*,char *),
     wzd_context_t * context)
 {
   char send_buffer[HARD_LS_BUFFERSIZE];

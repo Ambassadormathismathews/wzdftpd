@@ -25,8 +25,8 @@
 #ifndef __WZD_LIST__
 #define __WZD_LIST__
 
-int list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *));
-int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(fd_t,wzd_context_t*,char *)) DEPRECATED;
+int list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(socket_t,wzd_context_t*,char *));
+int old_list(int,wzd_context_t *,enum list_type_t,char *,char *,int callback(socket_t,wzd_context_t*,char *)) DEPRECATED;
 int list_match(char *,char *);
 
 /* filename must be an ABSOLUTE path
@@ -34,7 +34,7 @@ int list_match(char *,char *);
  */
 char * mlst_single_file(const char *filename, wzd_context_t * context);
 
-int mlsd_directory(const char * dirname, fd_t sock, int callback(fd_t,wzd_context_t*,char *),
+int mlsd_directory(const char * dirname, socket_t sock, int callback(socket_t,wzd_context_t*,char *),
     wzd_context_t * context);
 
 #endif /* __WZD_LIST__ */
