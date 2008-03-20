@@ -392,7 +392,7 @@ out_err(LEVEL_HIGH,"CRITICAL: could not shmat, key %lu - errno is %d (%s)\n",
    * works on multiprocess, but in mt ?!
    */
 #if WZD_MULTITHREAD
-  shm->semid = (struct sem_t*)semget(key,1,0);
+  shm->semid = semget(key,1,0);
   if (!shm->semid) {
 #else
   shm->semid = semget(key,1,0);
