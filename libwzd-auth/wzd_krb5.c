@@ -39,6 +39,8 @@
 #include <libwzd-core/wzd_log.h> /* out_log */
 #include <libwzd-core/wzd_misc.h> /* GetMyContext */
 #include <libwzd-core/wzd_debug.h> /* assertions */
+#include <libwzd-core/wzd_types.h> /* get typedef for socket_t */
+#include <libwzd-core/arch/win32.h> /* win32 typedef for socket_t */
 
 #if defined(HAVE_KRB5)
 
@@ -370,7 +372,7 @@ int auth_gssapi_encode(auth_gssapi_data_t data, char * ptr_in,size_t length_in, 
   return 0;
 }
 
-int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int auth_gssapi_read(socket_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   int ret;
   wzd_context_t * context = vcontext;
@@ -412,7 +414,7 @@ int auth_gssapi_read(fd_t sock, char *msg, size_t length, int flags, unsigned in
   return ret;
 }
 
-int auth_gssapi_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
+int auth_gssapi_write(socket_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext)
 {
   wzd_context_t * context = vcontext;
   int ret;
