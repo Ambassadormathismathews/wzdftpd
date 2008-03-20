@@ -316,14 +316,14 @@ static int do_login_loop(wzd_context_t * context)
 
   while (1) {
     /* wait response : read at most BUFFER_LEN - 1 characters, so we are sure we can add a \0  */
-    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN-1,0,HARD_XFER_TIMEOUT,context);
+    ret = (context->read_fct)(context->control_socket,buffer,BUFFER_LEN-1,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
-      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
+      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->control_socket);
       return 1;
     }
     if (ret==-1) {
-      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->controlfd);
+      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->control_socket);
       return 1;
     }
 
@@ -598,14 +598,14 @@ static int do_login_gssapi(wzd_context_t * context)
 
   while (1) {
     /* wait response */
-    ret = (context->read_fct)(context->controlfd,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
+    ret = (context->read_fct)(context->control_socket,buffer,BUFFER_LEN,0,HARD_XFER_TIMEOUT,context);
 
     if (ret == 0) {
-      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->controlfd);
+      out_err(LEVEL_FLOOD,"Connection closed or timeout (socket %d)\n",context->control_socket);
       return 1;
     }
     if (ret==-1) {
-      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->controlfd);
+      out_err(LEVEL_FLOOD,"Error reading client response (socket %d)\n",context->control_socket);
       return 1;
     }
 

@@ -79,17 +79,17 @@ void pasv_close(wzd_context_t * context)
 {
   int ret;
 
-  if (context->pasvsock >= 0) {
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    ret = socket_close(context->pasvsock);
-    context->pasvsock = -1;
+  if (context->pasv_socket >= 0) {
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    ret = socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
   }
 }
 
 /** \brief Create a socket and bind it to a port in the PASV range
  *
  * Any previously pasv socket is closed.
- * The socket is stored in context->pasvsock
+ * The socket is stored in context->pasv_socket
  *
  * \note this function relies on the fact that bind() does not modify the input structure
  *
@@ -109,10 +109,10 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
   struct sockaddr * addr;
 
   /* close existing pasv connections */
-  if (context->pasvsock != (socket_t)-1) {
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+  if (context->pasv_socket != (socket_t)-1) {
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
   }
 
   count = mainConfig->pasv_high_range - mainConfig->pasv_low_range + 1;
@@ -196,8 +196,8 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     return -1;
   }
 
-  context->pasvsock = sock;
-  FD_REGISTER(context->pasvsock,"Client PASV socket");
+  context->pasv_socket = sock;
+  FD_REGISTER(context->pasv_socket,"Client PASV socket");
 
   return port;
 }
@@ -228,12 +228,12 @@ void data_close(wzd_context_t * context)
     ret = tls_close_data(context);
 #endif
 #ifdef DEBUG
-out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context->datafd, context->controlfd);
+out_err(LEVEL_FLOOD,"closing data connection fd: %d (control fd: %d)\n",context->data_socket, context->control_socket);
 #endif
-  ret = socket_close(context->datafd);
-  FD_UNREGISTER(context->datafd,"Client data socket");
-  context->datafd = -1;
-  context->pasvsock = -1;
+  ret = socket_close(context->data_socket);
+  FD_UNREGISTER(context->data_socket,"Client data socket");
+  context->data_socket = -1;
+  context->pasv_socket = -1;
   context->state = STATE_UNKNOWN;
 }
 
@@ -289,28 +289,28 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is RETR. Please report me to authors\n");
       return -1;
     }
-    if (context->datafd==(socket_t)-1 || !fd_is_valid(context->datafd)) {
-      out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
-          context->datafd,__FILE__,__LINE__);
+    if (context->data_socket==(socket_t)-1 || !fd_is_valid(context->data_socket)) {
+      out_err(LEVEL_HIGH,"Trying to set invalid data_socket (%d) %s:%d\n",
+          context->data_socket,__FILE__,__LINE__);
       return -1;
     }
-    FD_SET(context->datafd,fdw);
-    FD_SET(context->datafd,fde);
-    return context->datafd;
+    FD_SET(context->data_socket,fdw);
+    FD_SET(context->data_socket,fde);
+    return context->data_socket;
     break;
   case TOK_STOR:
     if (context->state != STATE_XFER) {
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is STOR. Please report me to authors\n");
       return -1;
     }
-    if (context->datafd==(socket_t)-1 || !fd_is_valid(context->datafd)) {
-      out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
-          context->datafd,__FILE__,__LINE__);
+    if (context->data_socket==(socket_t)-1 || !fd_is_valid(context->data_socket)) {
+      out_err(LEVEL_HIGH,"Trying to set invalid data_socket (%d) %s:%d\n",
+          context->data_socket,__FILE__,__LINE__);
       return -1;
     }
-    FD_SET(context->datafd,fdr);
-    FD_SET(context->datafd,fde);
-    return context->datafd;
+    FD_SET(context->data_socket,fdr);
+    FD_SET(context->data_socket,fde);
+    return context->data_socket;
     break;
   }
   return -1;
@@ -326,13 +326,13 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
 
   switch (action) {
   case TOK_RETR:
-    if (FD_ISSET(context->datafd,fdw)) return 1;
-    if (FD_ISSET(context->datafd,fde)) return -1;
+    if (FD_ISSET(context->data_socket,fdw)) return 1;
+    if (FD_ISSET(context->data_socket,fde)) return -1;
     break;
   case TOK_STOR:
-    if (FD_ISSET(context->datafd,fdr)) return 1;
-    if (FD_ISSET(context->datafd,fde)) return -1;
-    return context->datafd;
+    if (FD_ISSET(context->data_socket,fdr)) return 1;
+    if (FD_ISSET(context->data_socket,fde)) return -1;
+    return context->data_socket;
     break;
   }
   return 0;
@@ -356,10 +356,10 @@ int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set
     if (n>0) {
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
       if (context->tls_data_mode == TLS_CLEAR)
-        ret = clear_write(context->datafd,context->data_buffer,(size_t)n,0,HARD_XFER_TIMEOUT,context);
+        ret = clear_write(context->data_socket,context->data_buffer,(size_t)n,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
-        ret = (context->write_fct)(context->datafd,context->data_buffer,(unsigned int)n,0,HARD_XFER_TIMEOUT,context);
+        ret = (context->write_fct)(context->data_socket,context->data_buffer,(unsigned int)n,0,HARD_XFER_TIMEOUT,context);
       if (ret <= 0) {
 /*        out_log(LEVEL_INFO,"INFO error or timeout sending data\n");*/
         /* error/timeout sending data */
@@ -402,10 +402,10 @@ out_err(LEVEL_INFO,"Send 226 message returned %d\n",ret);
   case TOK_STOR:
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
       if (context->tls_data_mode == TLS_CLEAR)
-        n = clear_read(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
+        n = clear_read(context->data_socket,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
       else
 #endif
-      n = (context->read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
+      n = (context->read_fct)(context->data_socket,context->data_buffer,mainConfig->data_buffer_length,0,HARD_XFER_TIMEOUT,context);
     if (n>0) {
       if (file_write(context->current_action.current_file,context->data_buffer,(size_t)n) != (ssize_t)n) {
         out_log(LEVEL_NORMAL,"Write failed %d bytes (returned %d %s)\n",n,errno,strerror(errno));
@@ -468,7 +468,7 @@ void *do_local_retr(void * _context)
   int ret, err;
   ssize_t count;
   fd_t file = context->current_action.current_file;
-  socket_t maxfd = context->datafd;
+  socket_t maxfd = context->data_socket;
   wzd_user_t * user = GetUserByID(context->userid);
   int exit_ok = 0;
   write_fct_t write_fct;
@@ -493,7 +493,7 @@ void *do_local_retr(void * _context)
   do {
     FD_ZERO(&fds_w);
 
-    FD_SET(context->datafd,&fds_w);
+    FD_SET(context->data_socket,&fds_w);
 
     tv.tv_sec=30; tv.tv_usec=0L;
 
@@ -502,7 +502,7 @@ void *do_local_retr(void * _context)
     if (ret > 0) {
       count = read(file, context->data_buffer, mainConfig->data_buffer_length);
       if (count > 0) {
-        ret = (write_fct)(context->datafd,context->data_buffer,(size_t)count,0,0,context);
+        ret = (write_fct)(context->data_socket,context->data_buffer,(size_t)count,0,0,context);
 
         if (ret <= 0) goto _local_retr_exit;
 
@@ -569,7 +569,7 @@ void *do_local_stor(void * _context)
   int ret, err;
   ssize_t count;
   fd_t file = context->current_action.current_file;
-  socket_t maxfd = context->datafd;
+  socket_t maxfd = context->data_socket;
   wzd_user_t * user = GetUserByID(context->userid);
   int exit_ok = 0;
   read_fct_t read_fct;
@@ -594,14 +594,14 @@ void *do_local_stor(void * _context)
   do {
     FD_ZERO(&fds_r);
 
-    FD_SET(context->datafd,&fds_r);
+    FD_SET(context->data_socket,&fds_r);
 
     tv.tv_sec=30; tv.tv_usec=0L;
 
     ret = select(maxfd+1,&fds_r,NULL,NULL,&tv);
 
     if (ret > 0) {
-      count = (read_fct)(context->datafd,context->data_buffer,mainConfig->data_buffer_length,0,0,context);
+      count = (read_fct)(context->data_socket,context->data_buffer,mainConfig->data_buffer_length,0,0,context);
       if (count > 0) {
         ret = write(file, context->data_buffer, count);
 

@@ -266,29 +266,29 @@ void client_die(wzd_context_t * context)
   }
 
 
-  out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->controlfd);
+  out_log(LEVEL_INFO,"Client dying (socket %d)\n",context->control_socket);
   /* close existing pasv connections */
-  if (context->pasvsock != (socket_t)-1) {
-    socket_close(context->pasvsock);
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    context->pasvsock = -1;
+  if (context->pasv_socket != (socket_t)-1) {
+    socket_close(context->pasv_socket);
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    context->pasv_socket = -1;
   }
-  if (context->datafd != (socket_t)-1) {
+  if (context->data_socket != (socket_t)-1) {
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
     /* if TLS, shutdown TLS before closing data connection */
     tls_close_data(context);
 #endif
-    socket_close(context->datafd);
-    FD_UNREGISTER(context->datafd,"Client data fd");
+    socket_close(context->data_socket);
+    FD_UNREGISTER(context->data_socket,"Client data fd");
   }
-  context->datafd = -1;
+  context->data_socket = -1;
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   /* if TLS, shutdown TLS before closing control connection */
   tls_free(context);
 #endif
-  socket_close(context->controlfd);
-  FD_UNREGISTER(context->controlfd,"Client socket");
-  context->controlfd = -1;
+  socket_close(context->control_socket);
+  FD_UNREGISTER(context->control_socket,"Client socket");
+  context->control_socket = -1;
 
   wzd_tls_free(_key_context);
   _key_context = NULL;
@@ -496,7 +496,7 @@ int waitaccept(wzd_context_t * context)
     }
   }
 
-  sock = context->pasvsock;
+  sock = context->pasv_socket;
   do {
     FD_ZERO(&fds);
     FD_SET(sock,&fds);
@@ -504,30 +504,30 @@ int waitaccept(wzd_context_t * context)
 
     if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
-      FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-      socket_close(context->pasvsock);
-      context->pasvsock = -1;
+      FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+      socket_close(context->pasv_socket);
+      context->pasv_socket = -1;
       send_message_with_args(501,context,"PASV timeout");
       return -1;
     }
   } while (!FD_ISSET(sock,&fds));
 
-  sock = socket_accept(context->pasvsock, remote_host, &remote_port, &context->datafamily);
+  sock = socket_accept(context->pasv_socket, remote_host, &remote_port, &context->datafamily);
   if (sock == (socket_t)-1) {
     out_err(LEVEL_FLOOD,"accept failed to client %s:%d.\n",__FILE__,__LINE__);
     out_err(LEVEL_FLOOD,"errno is %d:%s.\n",errno,strerror(errno));
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     send_message_with_args(501,context,"PASV timeout");
     return -1;
   }
 
   if (fxp_is_denied(user) && test_fxp((const char*)remote_host,context->datafamily,context) != 0) {
     memset(context->dataip,0,16);
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     socket_close(sock);
     sock = -1;
     send_message_with_args(501,context,"FXP not allowed");
@@ -543,9 +543,9 @@ int waitaccept(wzd_context_t * context)
     ret = tls_init_datamode(sock, context);
     if (ret) {
       out_err(LEVEL_INFO,"WARNING TLS data negotiation failed with client %s:%d.\n",__FILE__,__LINE__);
-      FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-      socket_close(context->pasvsock);
-      context->pasvsock = -1;
+      FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+      socket_close(context->pasv_socket);
+      context->pasv_socket = -1;
       socket_close(sock);
       sock = -1;
       send_message_with_args(426,context,"Data connection closed (SSL/TLS negotiation failed).");
@@ -554,11 +554,11 @@ int waitaccept(wzd_context_t * context)
   }
 #endif
 
-  socket_close (context->pasvsock);
-  FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-  context->pasvsock = sock;
+  socket_close (context->pasv_socket);
+  FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+  context->pasv_socket = sock;
 
-  context->datafd = sock;
+  context->data_socket = sock;
   context->datamode = DATA_PASV;
 
   return sock;
@@ -586,7 +586,7 @@ int waitconnect(wzd_context_t * context)
     /** \todo TODO XXX FIXME check ipv4 IP at this point ! */
 
     ret = send_message(150,context); /* about to open data connection */
-    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->controlfd,HARD_XFER_TIMEOUT);
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->control_socket,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       ret = send_message(425,context);
       return -1;
@@ -610,7 +610,7 @@ int waitconnect(wzd_context_t * context)
     /** \todo TODO XXX FIXME check ipv6 IP at this point ! */
 
     ret = send_message(150,context); /* about to open data connection */
-    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->controlfd,HARD_XFER_TIMEOUT);
+    sock = socket_connect(context->dataip,context->datafamily,context->dataport,context->localport-1,context->control_socket,HARD_XFER_TIMEOUT);
     if (sock == -1) {
       out_log(LEVEL_FLOOD,"Error establishing PORT connection: %s (%d)\n",strerror(errno),errno);
       ret = send_message(425,context);
@@ -680,7 +680,7 @@ int do_list(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   param = str_tochar(arg);
 
-  if (context->pasvsock == (socket_t)-1 && context->dataport == 0)
+  if (context->pasv_socket == (socket_t)-1 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
@@ -801,7 +801,7 @@ printf("path: '%s'\n",path);
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
+  if (context->pasv_socket == (socket_t)-1) { /* PORT ! */
 
     /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
 
@@ -819,7 +819,7 @@ printf("path: '%s'\n",path);
       wzd_free(path);
       return E_PASV_FAILED;
     }
-    context->pasvsock = -1;
+    context->pasv_socket = -1;
   }
   FD_REGISTER(sock,"Client LIST socket");
 
@@ -840,7 +840,7 @@ printf("path: '%s'\n",path);
 #endif
   ret = socket_close(sock);
   FD_UNREGISTER(sock,"Client LIST socket");
-  context->datafd = -1;
+  context->data_socket = -1;
   context->idle_time_start = time(NULL);
   context->state = STATE_UNKNOWN;
 
@@ -864,7 +864,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (socket_t)-1 && context->dataport == 0)
+  if (context->pasv_socket == (socket_t)-1 && context->dataport == 0)
   {
     ret = send_message_with_args(501,context,"No data connection available.");
     return E_NO_DATA_CTX;
@@ -911,7 +911,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
     return E_NOPERM;
   }
 
-  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
+  if (context->pasv_socket == (socket_t)-1) { /* PORT ! */
 
     /** \todo TODO check that ip is correct - no trying to fxp LIST ??!! */
 
@@ -929,7 +929,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
       wzd_free(path);
       return E_PASV_FAILED;
     }
-    context->pasvsock = -1;
+    context->pasv_socket = -1;
   }
   FD_REGISTER(sock,"Client MLSD socket");
 
@@ -951,7 +951,7 @@ int do_mlsd(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 #endif
   ret = socket_close(sock);
   FD_UNREGISTER(sock,"Client MLSD socket");
-  context->datafd = -1;
+  context->data_socket = -1;
   context->idle_time_start = time(NULL);
   context->state = STATE_UNKNOWN;
 
@@ -1210,7 +1210,7 @@ printf("path: '%s'\n",path);
     return E_NOPERM;
   }
 
-  sock = context->controlfd;
+  sock = context->control_socket;
 
   if (strlen(mask)==0) strcpy(mask,"*");
 
@@ -1529,9 +1529,9 @@ int do_port(UNUSED wzd_string_t *name, wzd_string_t *args, wzd_context_t * conte
   wzd_user_t * user;
   unsigned int port;
 
-  if (context->pasvsock != (socket_t)-1) {
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+  if (context->pasv_socket != (socket_t)-1) {
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
   }
   if (!args) {
     ret = send_message_with_args(501,context,"Invalid parameters");
@@ -1594,13 +1594,13 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   pasv_close(context);
 
   /* create socket */
-  if ((context->pasvsock=socket(AF_INET,SOCK_STREAM,0)) == (socket_t)-1) {
-    context->pasvsock = -1;
+  if ((context->pasv_socket=socket(AF_INET,SOCK_STREAM,0)) == (socket_t)-1) {
+    context->pasv_socket = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
   }
 
-  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->control_socket, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
 #if defined(IPV6_SUPPORT)
@@ -1657,7 +1657,7 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
 
     memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
-    if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) {
+    if (bind(context->pasv_socket,(struct sockaddr *)&sai,size)==0) {
       /* found a free port, stop searching */
       all_ports_used = 0;
       break;
@@ -1673,8 +1673,8 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   if (all_ports_used) {
     /* all ports are in use, return an error */
     out_log(LEVEL_HIGH, "PASV: all possible PASV ports are in use\n");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     ret = send_message(425, context);
     return E_NO_DATA_CTX;
   }
@@ -1684,8 +1684,8 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   {
     out_log(LEVEL_CRITICAL, "PASV: attempted to bind to port out of range (%d not in [%d , %d])\n",
         port, mainConfig->pasv_low_range, mainConfig->pasv_high_range);
-        socket_close(context->pasvsock);
-        context->pasvsock = -1;
+        socket_close(context->pasv_socket);
+        context->pasv_socket = -1;
         ret = send_message(425, context);
         return E_NO_DATA_CTX;
   }
@@ -1693,24 +1693,24 @@ int do_pasv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *args, wzd_context_t 
   /* sanity check */
   if (port >= 65536) {
     out_log(LEVEL_CRITICAL, "PASV: attempted to bind to invalid port 65536\n");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     ret = send_message(425, context);
     return E_NO_DATA_CTX;
   }
 
-  if (listen(context->pasvsock,1)<0) {
+  if (listen(context->pasv_socket,1)<0) {
     out_log(LEVEL_CRITICAL,"Major error during listen: errno %d error %s\n",errno,strerror(errno));
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     ret = send_message(425, context);
     return E_NO_DATA_CTX;
   }
 
-  FD_REGISTER(context->pasvsock,"Client PASV socket");
+  FD_REGISTER(context->pasv_socket,"Client PASV socket");
 
   context->datafamily = WZD_INET4;
-  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->control_socket, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   ret = send_message_with_args(227,context,pasv_bind_ip[0], pasv_bind_ip[1], pasv_bind_ip[2], pasv_bind_ip[3],(port>>8)&0xff, port&0xff);
 
@@ -1751,9 +1751,9 @@ int do_eprt(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
   char * param, * orig_param;
   wzd_user_t * user;
 
-  if (context->pasvsock != (socket_t)-1) {
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+  if (context->pasv_socket != (socket_t)-1) {
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
   }
   /* context->resume = 0; */
   if (!arg || strlen(str_tochar(arg)) <= 7) {
@@ -1880,25 +1880,25 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
   port = mainConfig->pasv_low_range; /* use pasv range min */
 
   /* close existing pasv connections */
-  if (context->pasvsock != (socket_t)-1) {
-    socket_close(context->pasvsock);
+  if (context->pasv_socket != (socket_t)-1) {
+    socket_close(context->pasv_socket);
 /*    port = context->pasvsock+1; *//* FIXME force change of socket */
-    context->pasvsock = -1;
+    context->pasv_socket = -1;
   }
 
   /* create socket */
 #if !defined(IPV6_SUPPORT)
-  if ((context->pasvsock = socket(PF_INET,SOCK_STREAM,0)) == (socket_t)-1)
+  if ((context->pasv_socket = socket(PF_INET,SOCK_STREAM,0)) == (socket_t)-1)
 #else
-  if ((context->pasvsock = socket(PF_INET6,SOCK_STREAM,0)) == (socket_t)-1)
+  if ((context->pasv_socket = socket(PF_INET6,SOCK_STREAM,0)) == (socket_t)-1)
 #endif
   {
-    context->pasvsock = -1;
+    context->pasv_socket = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
   }
 
-  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->control_socket, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
   if (mainConfig->pasv_ip[0] == 0) {
     memcpy(pasv_bind_ip,myip,sizeof(pasv_bind_ip));
@@ -1929,7 +1929,7 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
     memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));
 
-    if (bind(context->pasvsock,(struct sockaddr *)&sai,size)==0) break;
+    if (bind(context->pasv_socket,(struct sockaddr *)&sai,size)==0) break;
 #else /* IPV6_SUPPORT */
     memset(&sai6,0,size);
 
@@ -1944,30 +1944,30 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
 /*    memcpy(&sai.sin_addr.s_addr,&addr,sizeof(unsigned long));*/
 
-    if (bind(context->pasvsock,(struct sockaddr *)&sai6,size)==0) break;
+    if (bind(context->pasv_socket,(struct sockaddr *)&sai6,size)==0) break;
 
 #endif /* IPV6_SUPPORT */
     port++; /* retry with next port */
   }
   if (port > mainConfig->pasv_high_range || port >= 65536) {
     out_log(LEVEL_CRITICAL,"EPSV: could not find any available port for binding");
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
   }
 
-  if (listen(context->pasvsock,1)<0) {
+  if (listen(context->pasv_socket,1)<0) {
     out_log(LEVEL_CRITICAL,"EPSV: could not listen on port %d: errno %d error %s\n",port,errno,strerror(errno));
-    socket_close(context->pasvsock);
-    context->pasvsock = -1;
+    socket_close(context->pasv_socket);
+    context->pasv_socket = -1;
     ret = send_message(425,context);
     return E_NO_DATA_CTX;
   }
 
-  FD_REGISTER(context->pasvsock,"Client PASV socket");
+  FD_REGISTER(context->pasv_socket,"Client PASV socket");
 
-  myip = getmyip(context->controlfd, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
+  myip = getmyip(context->control_socket, context->family, buffer); /* FIXME use a variable to get pasv ip ? */
 
 #if !defined(IPV6_SUPPORT)
   context->datafamily = WZD_INET4;
@@ -2027,7 +2027,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connetion */
-  if ((context->pasvsock == (socket_t)-1) && (context->dataport == 0)) {
+  if ((context->pasv_socket == (socket_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(501,context,"No data connection available - issue PORT or PASV first");
     return E_NO_DATA_CTX;
   }
@@ -2122,7 +2122,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 
   
   context->current_action.token = TOK_RETR;
-  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
+  if (context->pasv_socket == (socket_t)-1) { /* PORT ! */
 
     /* \todo TODO IP-check needed (FXP ?!) */
     sock = waitconnect(context);
@@ -2149,7 +2149,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
   }
   FD_REGISTER(sock,"Client data socket (RETR)");
 
-  context->datafd = sock;
+  context->data_socket = sock;
 
   file_seek(fd,(fs_off_t)context->resume,SEEK_SET);
 
@@ -2236,7 +2236,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
 /* TODO FIXME send all error or any in this function ! */
   /* we must have a data connection */
-  if ((context->pasvsock == (socket_t)-1) && (context->dataport == 0)) {
+  if ((context->pasv_socket == (socket_t)-1) && (context->dataport == 0)) {
     ret = send_message_with_args(503,context,"Issue PORT or PASV First");
     return E_NO_DATA_CTX;
   }
@@ -2316,7 +2316,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   
   restorestate = context->current_action.token;
   context->current_action.token = TOK_STOR;
-  if (context->pasvsock == (socket_t)-1) { /* PORT ! */
+  if (context->pasv_socket == (socket_t)-1) { /* PORT ! */
     sock = waitconnect(context);
     if (sock == (socket_t)-1) {
       context->current_action.token = restorestate;
@@ -2337,7 +2337,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
   }
   FD_REGISTER(sock,"Client data socket (STOR)");
 
-  context->datafd = sock;
+  context->data_socket = sock;
 
   /* set owner */
   {
@@ -2594,10 +2594,10 @@ int do_abor(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
   user = GetUserByID(context->userid);
 
-  if (context->pasvsock != (socket_t)-1 && context->datafd != context->pasvsock) {
-    socket_close(context->pasvsock);
-    FD_UNREGISTER(context->pasvsock,"Client PASV socket");
-    context->pasvsock=-1;
+  if (context->pasv_socket != (socket_t)-1 && context->data_socket != context->pasv_socket) {
+    socket_close(context->pasv_socket);
+    FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
+    context->pasv_socket=-1;
   }
   if (context->current_action.current_file != (socket_t)-1) {
     /* transfer aborted, we should send a 426 */
@@ -3298,7 +3298,7 @@ void * clientThreadProc(void *arg)
 #endif
 
   context = arg;
-  sockfd = context->controlfd;
+  sockfd = context->control_socket;
   context->last_file.name[0] = '\0';
   context->last_file.token = TOK_UNKNOWN;
   context->data_buffer = wzd_malloc(mainConfig->data_buffer_length);

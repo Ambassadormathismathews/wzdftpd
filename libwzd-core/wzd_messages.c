@@ -168,7 +168,7 @@ int send_message(int code, wzd_context_t * context)
 #ifdef DEBUG
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->control_socket,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
 
   str_deallocate(str);
 
@@ -196,7 +196,7 @@ int send_message_with_args(int code, wzd_context_t * context, ...)
 #ifdef DEBUG
   out_err(LEVEL_FLOOD,"<thread %ld> ->ML %s",(unsigned long)context->pid_child,str_tochar(str));
 #endif
-  ret = (context->write_fct)(context->controlfd,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->control_socket,str_tochar(str),str_length(str),0,HARD_XFER_TIMEOUT,context);
 
   str_deallocate(str);
   return 0;
@@ -235,7 +235,7 @@ int send_message_raw_formatted(wzd_context_t * context, const char * format, ...
   out_log(LEVEL_FLOOD, "send_message_raw_formatted -> [%s]\n", str_tochar(str));
 
   str_append(str, "\r\n");
-  ret = (context->write_fct)(context->controlfd, str_tochar(str), str_length(str), 0, HARD_XFER_TIMEOUT, context);
+  ret = (context->write_fct)(context->control_socket, str_tochar(str), str_length(str), 0, HARD_XFER_TIMEOUT, context);
 
   str_deallocate(str);
   va_end(argptr);
@@ -256,7 +256,7 @@ if (msg[strlen(msg)-1]!='\n')
 else
   out_err(LEVEL_FLOOD,"<thread %ld> -> %s",(unsigned long)context->pid_child,msg);
 #endif
-  ret = (context->write_fct)(context->controlfd,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
+  ret = (context->write_fct)(context->control_socket,msg,strlen(msg),0,HARD_XFER_TIMEOUT,context);
 
   return ret;
 }
@@ -299,7 +299,7 @@ int send_message_formatted(int code, wzd_context_t * context, const char * forma
     out_log(LEVEL_FLOOD, "send_message_formatted UL -> [%d %s]\n", code, str_tochar(*it));
     str_prepend_printf(*it,"%.3d ",code);
     str_append(*it,"\r\n");
-    ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
+    ret = (context->write_fct)(context->control_socket,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
   } else { /* multi-line */
     out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d-%s]\n", code, str_tochar(*it));
     it++;
@@ -308,12 +308,12 @@ int send_message_formatted(int code, wzd_context_t * context, const char * forma
         out_log(LEVEL_FLOOD, "send_message_formatted ML -> [%d %s]\n", code, str_tochar(*it));
         str_prepend_printf(*it,"%.3d ",code);
         str_append(*it,"\r\n");
-        ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
+        ret = (context->write_fct)(context->control_socket,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
       } else {
         out_log(LEVEL_FLOOD, "send_message_formatted ML -> [ %s]\n", str_tochar(*it));
         str_prepend_printf(*it,"%.3d-",code);
         str_append(*it,"\r\n");
-        ret = (context->write_fct)(context->controlfd,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
+        ret = (context->write_fct)(context->control_socket,str_tochar(*it),str_length(*it),0,HARD_XFER_TIMEOUT,context);
       }
     }
   }

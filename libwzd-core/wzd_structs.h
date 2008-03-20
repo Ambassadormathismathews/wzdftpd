@@ -327,8 +327,8 @@ typedef enum {
 #define	CONNECTION_SSCN 0x00000080
 #define	CONNECTION_UTF8	0x00000100
 
-typedef int (*read_fct_t)(fd_t,char*,size_t,int,unsigned int,void *);
-typedef int (*write_fct_t)(fd_t,const char*,size_t,int,unsigned int,void *);
+typedef int (*read_fct_t)(socket_t,char*,size_t,int,unsigned int,void *);
+typedef int (*write_fct_t)(socket_t,const char*,size_t,int,unsigned int,void *);
 
 typedef struct wzd_context_t wzd_context_t;
 
@@ -357,8 +357,8 @@ struct wzd_context_t {
   char          * idnt_address;
   connection_state_t state;
   unsigned char	exitclient;
-  fd_t          controlfd;
-  fd_t          datafd;
+  socket_t          control_socket;
+  socket_t          data_socket;
   data_mode_t   datamode;
   tls_data_mode_t    tls_data_mode;
   net_family_t  datafamily; /**< \brief IPv4 or IPv6 */
@@ -368,7 +368,7 @@ struct wzd_context_t {
   union wzd_thread_t * transfer_thread;
   u8_t          is_transferring;
 
-  fd_t          pasvsock;
+  socket_t          pasv_socket;
   read_fct_t    read_fct;
   write_fct_t   write_fct;
   int           dataport;
@@ -440,7 +440,7 @@ struct wzd_config_t {
   char *        logdir;
   unsigned int  umask;
   char *	dir_message;
-  fd_t		controlfd; /**< external control: named pipe, unix socket, or socket */
+  socket_t		control_socket; /**< external control: named pipe, unix socket, or socket */
   char          ip[MAX_IP_LENGTH];
   char          dynamic_ip[MAX_IP_LENGTH];
   unsigned int	port;

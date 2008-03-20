@@ -114,7 +114,7 @@ void cfg_init(wzd_config_t * cfg)
 #endif /* BSD */
 
   cfg->xferlog_fd = -1;
-  cfg->controlfd = -1;
+  cfg->control_socket = -1;
 
   commands_init(&cfg->commands_list);
   commands_add_defaults(cfg->commands_list);

@@ -83,7 +83,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
   }
 
   addrlen = sizeof(local);
-  if (getsockname (context->controlfd, (struct sockaddr *)&local, &addrlen) < 0)
+  if (getsockname (context->control_socket, (struct sockaddr *)&local, &addrlen) < 0)
 /*      || addrlen != sizeof(local))*/
   {
     out_log(LEVEL_HIGH,"auth_gssapi_init: could use getsockname()\n");
@@ -91,7 +91,7 @@ int auth_gssapi_init(auth_gssapi_data_t * data)
   }
 
   addrlen = sizeof(remote);
-  if (getpeername (context->controlfd, (struct sockaddr *)&remote, &addrlen) < 0)
+  if (getpeername (context->control_socket, (struct sockaddr *)&remote, &addrlen) < 0)
 /*      || addrlen != sizeof(remote))*/
   {
     out_log(LEVEL_HIGH,"auth_gssapi_init: could use getpeername()\n");

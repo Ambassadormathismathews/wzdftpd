@@ -323,9 +323,9 @@ int check_context(wzd_context_t * context)
     out_err(LEVEL_CRITICAL,"CRITICAL context->magic is invalid, context may be corrupted\n");
     return 1;
   }
-  if (context->controlfd == (fd_t)-1 || !fd_is_valid(context->controlfd)) {
-    out_err(LEVEL_CRITICAL,"Trying to set invalid sockfd (%d) %s:%d\n",
-        context->controlfd,__FILE__,__LINE__);
+  if (context->control_socket == (socket_t)-1 || !fd_is_valid(context->control_socket)) {
+    out_err(LEVEL_CRITICAL,"Trying to set invalid socket_t (%d) %s:%d\n",
+        context->control_socket,__FILE__,__LINE__);
     return 1;
   }
 

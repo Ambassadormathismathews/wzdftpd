@@ -335,14 +335,14 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
   WZD_ASSERT(context->ssl != NULL);
 
   /* FIXME bad conception of parameters ... */
-  if (sock == context->controlfd)
+  if (sock == context->control_socket)
   {
     ssl = context->ssl->obj;
   }
   else
   {
     ssl = context->ssl->data_ssl;
-    /* XXX we assume that if sock != context->controlfd, then we have datas ... */
+    /* XXX we assume that if sock != context->control_socket, then we have datas ... */
   }
   do {
     ret = SSL_read(ssl, msg, length);
@@ -397,11 +397,11 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
   WZD_ASSERT(context->ssl != NULL);
 
   /* FIXME bad conception of parameters ... */
-  if (sock == context->controlfd)
+  if (sock == context->control_socket)
     ssl = context->ssl->obj;
   else
     ssl = context->ssl->data_ssl;
-    /* XXX we assume that if sock != context->controlfd, then we have datas ... */
+    /* XXX we assume that if sock != context->control_socket, then we have datas ... */
 
   WZD_ASSERT( ssl != NULL );
 
@@ -489,7 +489,7 @@ int tls_auth (const char *type, wzd_context_t * context)
     return 1;
   }
   SSL_set_cipher_list(context->ssl->obj,tls_cipher_list);
-  ret = SSL_set_fd(context->ssl->obj,context->controlfd);
+  ret = SSL_set_fd(context->ssl->obj,context->control_socket);
   if (ret != 1) {
     out_log(LEVEL_CRITICAL,"SSL_set_fd failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
     return 1;
@@ -986,7 +986,7 @@ int tls_auth (const char *type, wzd_context_t * context)
 {
   int ret;
   gnutls_session session;
-  int fd = context->controlfd;
+  int fd = context->control_socket;
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
@@ -1334,7 +1334,7 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
   gnutls_session * session;
   int alert;
 
-  if (sock == context->controlfd)
+  if (sock == context->control_socket)
     session = context->tls.session;
   else
     session = context->tls.data_session;
@@ -1344,7 +1344,7 @@ int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeou
     if (ret >= 0) return ret;
 
     if (gnutls_error_is_fatal(ret)) {
-      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d (%s) on %s connection\n",ret,gnutls_strerror(ret),(sock==context->controlfd)?"control":"data");
+      out_log(LEVEL_HIGH,"gnutls_record_recv returned %d (%s) on %s connection\n",ret,gnutls_strerror(ret),(sock==context->control_socket)?"control":"data");
       return -1;
     }
     switch(ret) {
@@ -1391,7 +1391,7 @@ int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int
   gnutls_session * session;
   int alert;
 
-  if (sock == context->controlfd)
+  if (sock == context->control_socket)
     session = context->tls.session;
   else
     session = context->tls.data_session;

@@ -281,9 +281,9 @@ void context_init(wzd_context_t * context)
   if (context == NULL) return;
 
   memset(context,0,sizeof(wzd_context_t));
-  context->controlfd = -1;
-  context->datafd = -1;
-  context->pasvsock = -1;
+  context->control_socket = -1;
+  context->data_socket = -1;
+  context->pasv_socket = -1;
   context->userid = (unsigned int)-1;
   context->thread_id = (unsigned long)-1;
   context->state = STATE_UNKNOWN;

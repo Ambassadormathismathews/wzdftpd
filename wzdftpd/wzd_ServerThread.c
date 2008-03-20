@@ -471,22 +471,22 @@ static int check_ip_before_login(wzd_context_t * context)
  */
 static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd)
 {
-  if (mainConfig->controlfd != (socket_t)-1) {
-    FD_SET(mainConfig->controlfd,r_fds);
-    FD_SET(mainConfig->controlfd,e_fds);
-    *maxfd = MAX(*maxfd,mainConfig->controlfd);
+  if (mainConfig->control_socket != (socket_t)-1) {
+    FD_SET(mainConfig->control_socket,r_fds);
+    FD_SET(mainConfig->control_socket,e_fds);
+    *maxfd = MAX(*maxfd,mainConfig->control_socket);
   }
 }
 
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 {
-  if (mainConfig->controlfd != (socket_t)-1) {
-    if (FD_ISSET(mainConfig->controlfd,e_fds)) { /* error */
+  if (mainConfig->control_socket != (socket_t)-1) {
+    if (FD_ISSET(mainConfig->control_socket,e_fds)) { /* error */
       /** \todo XXX FIXME error on control FD, warn user, and then ? */
       out_log(LEVEL_HIGH, "Error on control fd: %d %s\n",errno,strerror(errno));
       return;
     }
-    if (FD_ISSET(mainConfig->controlfd,r_fds)) { /* get control entry */
+    if (FD_ISSET(mainConfig->control_socket,r_fds)) { /* get control entry */
       /** \todo XXX FIXME spawn a new control thread: authenticate user then take commands */
     }
   }
@@ -567,7 +567,7 @@ static int server_add_ident_candidate(socket_t socket_accept_fd)
   /* don't forget init is done before */
 /*  context->magic = CONTEXT_MAGIC;*/  /* magic is set inside lock, it makes no sense here */
   context->state = STATE_CONNECTING;
-  context->controlfd = newsock;
+  context->control_socket = newsock;
   context->family = family;
   context->localport = localport;
   time (&context->login_time);
@@ -749,8 +749,8 @@ continue_connection:
         /* 2- get local and remote ports */
 
         /* get remote port number */
-        local_port = socket_get_local_port(context->controlfd);
-        remote_port = socket_get_remote_port(context->controlfd);
+        local_port = socket_get_local_port(context->control_socket);
+        remote_port = socket_get_remote_port(context->control_socket);
 
         snprintf(buffer,sizeof(buffer),"%u, %u\r\n",remote_port,local_port);
 
@@ -894,8 +894,8 @@ static int server_login_accept(wzd_context_t * context)
 #if defined(HAVE_OPENSSL) || defined(HAVE_GNUTLS)
   if (mainConfig->tls_type == TLS_IMPLICIT) {
     if (tls_auth("SSL",context)) {
-      socket_close(context->controlfd);
-      FD_UNREGISTER(context->controlfd,"Client socket");
+      socket_close(context->control_socket);
+      FD_UNREGISTER(context->control_socket,"Client socket");
       out_log(LEVEL_HIGH,"TLS switch failed (implicit) from client %s\n", inet_buf);
       /* mark context as free */
       context_remove(context_list, context);
@@ -909,8 +909,8 @@ static int server_login_accept(wzd_context_t * context)
   if (CFG_GET_OPTION(mainConfig,CFG_OPT_CHECKIP_LOGIN)) {
     ret = check_ip_before_login(context);
     if (ret) {
-      socket_close(context->controlfd);
-      FD_UNREGISTER(context->controlfd,"Client socket");
+      socket_close(context->control_socket);
+      FD_UNREGISTER(context->control_socket,"Client socket");
       out_log(LEVEL_NORMAL,"INFO rejected connection from %s\n",inet_buf);
       /* mark context as free */
       context_remove(context_list, context);
@@ -1610,9 +1610,9 @@ void serverMainThreadCleanup(int retcode)
 
   list_destroy(&server_ip_list);
 
-  if (mainConfig->controlfd != (socket_t)-1) {
-    socket_close(mainConfig->controlfd);
-    FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
+  if (mainConfig->control_socket != (socket_t)-1) {
+    socket_close(mainConfig->control_socket);
+    FD_UNREGISTER(mainConfig->control_socket,"Server control fd");
   }
 #ifdef WZD_MULTITHREAD
   /* kill all childs threads */
