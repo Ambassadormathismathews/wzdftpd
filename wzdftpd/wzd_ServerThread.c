@@ -127,15 +127,15 @@ void server_rebind(const char *new_ip, unsigned int new_port);
 int server_switch_to_config(wzd_config_t *config);
 
 typedef struct {
-  fd_t read_fd;
-  fd_t write_fd;
+  socket_t read_fd;
+  socket_t write_fd;
   wzd_context_t * context;
 } wzd_ident_context_t;
 
 typedef struct {
   unsigned short dynamic;
   char *         ip;
-  fd_t           sock;
+  socket_t           sock;
 } server_ip_t;
 
 /************ PUBLIC **************/
@@ -169,19 +169,19 @@ static wzd_mutex_t * end_mutex = NULL;
 
 static List server_ip_list;
 static List server_ident_list;
-static int server_add_ident_candidate(fd_t socket_accept_fd);
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
+static int server_add_ident_candidate(socket_t socket_accept_fd);
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd);
 static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 static void server_ident_remove(wzd_ident_context_t * ident_context);
 static void server_ident_timeout_check(void);
 
-static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd);
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
 
 static int server_login_accept(wzd_context_t * context);
 
 static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds);
-static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd);
+static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd);
 static void server_ip_free(void * p);
 
 static int check_ip_before_login(wzd_context_t * context);
@@ -469,9 +469,9 @@ static int check_ip_before_login(wzd_context_t * context)
 /*
  * add idents to the correct fd_set
  */
-static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
+static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd)
 {
-  if (mainConfig->controlfd != (fd_t)-1) {
+  if (mainConfig->controlfd != (socket_t)-1) {
     FD_SET(mainConfig->controlfd,r_fds);
     FD_SET(mainConfig->controlfd,e_fds);
     *maxfd = MAX(*maxfd,mainConfig->controlfd);
@@ -480,7 +480,7 @@ static void server_control_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds
 
 static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 {
-  if (mainConfig->controlfd != (fd_t)-1) {
+  if (mainConfig->controlfd != (socket_t)-1) {
     if (FD_ISSET(mainConfig->controlfd,e_fds)) { /* error */
       /** \todo XXX FIXME error on control FD, warn user, and then ? */
       out_log(LEVEL_HIGH, "Error on control fd: %d %s\n",errno,strerror(errno));
@@ -495,21 +495,21 @@ static void server_control_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 /*
  * add a connection to the list of idents to be checked
  */
-static int server_add_ident_candidate(fd_t socket_accept_fd)
+static int server_add_ident_candidate(socket_t socket_accept_fd)
 {
   unsigned char remote_host[16];
   unsigned int remote_port;
   int localport;
   char inet_buf[INET6_ADDRSTRLEN]; /* usually 46 */
   unsigned char userip[16];
-  fd_t newsock, fd_ident;
+  socket_t newsock, fd_ident;
   unsigned short ident_port = 113;
   wzd_context_t * context;
   wzd_ident_context_t * ident_context;
   net_family_t family;
 
   newsock = socket_accept(socket_accept_fd, remote_host, &remote_port, &family);
-  if (newsock == (fd_t)-1)
+  if (newsock == (socket_t)-1)
   {
     out_log(LEVEL_HIGH,"FATAL Error while accepting\n");
     serverMainThreadCleanup(-1); /** \todo do not exit server, just client */
@@ -590,7 +590,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
   /* try to open ident connection, the same type as the incoming connection */
   fd_ident = socket_connect(userip,family,ident_port,0,newsock,HARD_IDENT_TIMEOUT);
 
-  if (fd_ident == (fd_t)-1) {
+  if (fd_ident == (socket_t)-1) {
     if (errno == ENOTCONN || errno == ECONNREFUSED || errno == ETIMEDOUT) {
       server_login_accept(context);
       return 0;
@@ -626,7 +626,7 @@ static int server_add_ident_candidate(fd_t socket_accept_fd)
 /*
  * add idents to the correct fd_set
  */
-static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
+static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd)
 {
   ListElmt * elmnt;
   wzd_ident_context_t * ident_context;
@@ -634,13 +634,13 @@ static void server_ident_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, 
   for (elmnt=server_ident_list.head; elmnt; elmnt=list_next(elmnt)) {
     ident_context = list_data(elmnt);
     if (!ident_context) continue;
-    if (ident_context->read_fd != (fd_t)-1)
+    if (ident_context->read_fd != (socket_t)-1)
     {
       FD_SET(ident_context->read_fd,r_fds);
       FD_SET(ident_context->read_fd,e_fds);
       *maxfd = MAX(*maxfd,ident_context->read_fd);
     }
-    if (ident_context->write_fd != (fd_t)-1)
+    if (ident_context->write_fd != (socket_t)-1)
     {
       FD_SET(ident_context->write_fd,w_fds);
       FD_SET(ident_context->write_fd,e_fds);
@@ -659,7 +659,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
   wzd_context_t * context=NULL;
   unsigned short remote_port;
   unsigned short local_port;
-  fd_t fd_ident=-1;
+  socket_t fd_ident=-1;
   int ret;
   ListElmt * elmnt;
   wzd_ident_context_t * ident_context;
@@ -672,7 +672,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 
     context = ident_context->context;
 
-    if (ident_context->read_fd != (fd_t)-1)
+    if (ident_context->read_fd != (scoket_t)-1)
     {
       if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
@@ -732,7 +732,7 @@ continue_connection:
         if (!elmnt) return;
       }
     }
-    else if (ident_context->write_fd != (fd_t)-1)
+    else if (ident_context->write_fd != (socket_t)-1)
     {
       fd_ident = ident_context->write_fd;
       if (FD_ISSET(ident_context->write_fd,e_fds)) { /* error */
@@ -825,7 +825,7 @@ static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
     server_ip = list_data(elmnt);
     if (!server_ip) continue;
 
-    if (server_ip->sock != (fd_t)-1)
+    if (server_ip->sock != (socket_t)-1)
     {
       if (FD_ISSET(server_ip->sock,e_fds)) { /* error */
         out_log(LEVEL_INFO,"ERROR reading response (%d) %d %s\n",server_ip->sock,errno,strerror(errno));
@@ -850,7 +850,7 @@ static void server_ip_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 /*
  * add server ips to the correct fd_set
  */
-static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_t * maxfd)
+static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, socket_t * maxfd)
 {
   ListElmt * elmnt;
   server_ip_t * server_ip;
@@ -858,7 +858,7 @@ static void server_ip_select(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds, fd_
   for (elmnt=server_ip_list.head; elmnt; elmnt=list_next(elmnt)) {
     server_ip = list_data(elmnt);
     if (!server_ip) continue;
-    if (server_ip->sock != (fd_t)-1)
+    if (server_ip->sock != (socket_t)-1)
     {
       FD_SET(server_ip->sock,r_fds);
       FD_SET(server_ip->sock,e_fds);
@@ -1037,7 +1037,7 @@ int server_switch_to_config(wzd_config_t *config)
   char * ptr;
   int i;
   unsigned long ul;
-  fd_t sock4, sock6;
+  socket_t sock4, sock6;
   unsigned int port;
   server_ip_t * server_ip;
   char * ipaddress;
@@ -1094,13 +1094,13 @@ int server_switch_to_config(wzd_config_t *config)
       if (ipaddress == NULL || strchr(ipaddress,':') == NULL)
         sock4 = socket_make(ipaddress,&port,config->max_threads,WZD_INET4);
 
-      if (sock4 == (fd_t)-1 && sock6 == (fd_t)-1) {
+      if (sock4 == (socket_t)-1 && sock6 == (socket_t)-1) {
         out_log(LEVEL_CRITICAL,"FATAL Could not bind to ip %s\n",str_tochar(str_list[i]));
         str_deallocate_array(str_list);
         return -1;
       }
 
-      if (sock6 != (fd_t)-1) {
+      if (sock6 != (socket_t)-1) {
         server_ip = wzd_malloc(sizeof(*server_ip));
         server_ip->dynamic = 0;
         server_ip->ip = wzd_strdup(ptr_to_data);
@@ -1122,7 +1122,7 @@ int server_switch_to_config(wzd_config_t *config)
           }
         }
       }
-      if (sock4 != (fd_t)-1) {
+      if (sock4 != (socket_t)-1) {
         server_ip = wzd_malloc(sizeof(*server_ip));
         server_ip->dynamic = 0;
         server_ip->ip = wzd_strdup(ptr_to_data);
@@ -1358,7 +1358,7 @@ int serverMainThreadProc(void *arg)
   int ret, err;
   unsigned long max_wait_time;
   fd_set r_fds, w_fds, e_fds;
-  fd_t maxfd;
+  socket_t maxfd;
   struct timeval tv;
 #if defined(WIN32) 
   WSADATA wsaData;
@@ -1614,7 +1614,7 @@ void serverMainThreadCleanup(int retcode)
 
   list_destroy(&server_ip_list);
 
-  if (mainConfig->controlfd != (fd_t)-1) {
+  if (mainConfig->controlfd != (socket_t)-1) {
     socket_close(mainConfig->controlfd);
     FD_UNREGISTER(mainConfig->controlfd,"Server control fd");
   }
