@@ -98,7 +98,7 @@ void pasv_close(wzd_context_t * context)
 int get_pasv_port(net_family_t family, wzd_context_t * context)
 {
   int ret;
-  fd_t sock;
+  socket_t sock;
   unsigned int port, count;
   socklen_t len;
 #if defined(IPV6_SUPPORT)
@@ -109,7 +109,7 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
   struct sockaddr * addr;
 
   /* close existing pasv connections */
-  if (context->pasvsock != (fd_t)-1) {
+  if (context->pasvsock != (socket_t)-1) {
     FD_UNREGISTER(context->pasvsock,"Client PASV socket");
     socket_close(context->pasvsock);
     context->pasvsock = -1;
@@ -289,7 +289,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is RETR. Please report me to authors\n");
       return -1;
     }
-    if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
+    if (context->datafd==(socket_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
       return -1;
@@ -303,7 +303,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is STOR. Please report me to authors\n");
       return -1;
     }
-    if (context->datafd==(fd_t)-1 || !fd_is_valid(context->datafd)) {
+    if (context->datafd==(socket_t)-1 || !fd_is_valid(context->datafd)) {
       out_err(LEVEL_HIGH,"Trying to set invalid datafd (%d) %s:%d\n",
           context->datafd,__FILE__,__LINE__);
       return -1;
@@ -467,8 +467,8 @@ void *do_local_retr(void * _context)
   fd_set fds_w;
   int ret, err;
   ssize_t count;
-  int file = context->current_action.current_file;
-  int maxfd = context->datafd;
+  fd_t file = context->current_action.current_file;
+  socket_t maxfd = context->datafd;
   wzd_user_t * user = GetUserByID(context->userid);
   int exit_ok = 0;
   write_fct_t write_fct;
@@ -568,8 +568,8 @@ void *do_local_stor(void * _context)
   fd_set fds_r;
   int ret, err;
   ssize_t count;
-  int file = context->current_action.current_file;
-  int maxfd = context->datafd;
+  fd_t file = context->current_action.current_file;
+  socket_t maxfd = context->datafd;
   wzd_user_t * user = GetUserByID(context->userid);
   int exit_ok = 0;
   read_fct_t read_fct;
