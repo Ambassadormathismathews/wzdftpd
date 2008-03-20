@@ -1,4 +1,4 @@
-project(libwzd)
+project(libwzd C)
 
 INCLUDE_DIRECTORIES(${WZDFTPD_SOURCE_DIR}
 	${WZDFTPD_SOURCE_DIR}/libwzd-core
