@@ -1550,11 +1550,7 @@ int serverMainThreadProc(void *arg)
     server_ip_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_control_select(&r_fds, &w_fds, &e_fds, &maxfd);
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
-    ret = select(0, &r_fds, &w_fds, &e_fds, &tv);
-#else
     ret = select(maxfd+1, &r_fds, &w_fds, &e_fds, &tv);
-#endif
 
     if (ret < 0) {
       if (errno == EINTR) continue; /* retry */
