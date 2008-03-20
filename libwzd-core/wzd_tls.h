@@ -39,8 +39,8 @@ int tls_free(wzd_context_t * context);
 
 int tls_auth_data_cont(wzd_context_t * context);
 
-int tls_read(fd_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
-int tls_write(fd_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+int tls_read(socket_t sock, char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
+int tls_write(socket_t sock, const char *msg, size_t length, int flags, unsigned int timeout, void * vcontext);
 
 #ifdef HAVE_OPENSSL
   void * ssl_get_obj(wzd_context_t * context);
