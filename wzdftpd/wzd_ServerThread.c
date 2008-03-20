@@ -102,6 +102,7 @@
 #include <libwzd-core/wzd_section.h>
 #include <libwzd-core/wzd_site.h>
 #include <libwzd-core/wzd_threads.h>
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_user.h>
 #include <libwzd-core/wzd_utf8.h>
 #include <libwzd-core/wzd_vars.h>
