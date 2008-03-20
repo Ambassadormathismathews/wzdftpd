@@ -147,11 +147,7 @@ int clear_read(socket_t sock, char *msg, size_t length, UNUSED int flags, unsign
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER)
-      ret = select(0,&fds,NULL,&efds,&tv);
-#else
       ret = select(sock+1,&fds,NULL,&efds,&tv);
-#endif
       save_errno = errno;
 
       if (FD_ISSET(sock,&fds)) /* ok */
@@ -199,11 +195,7 @@ int clear_write(socket_t sock, const char *msg, size_t length, UNUSED int flags,
         FD_SET(sock,&efds);
         tv.tv_sec = timeout; tv.tv_usec = 0;
 
-#if defined(_MSC_VER)
-        ret = select(0,NULL,&fds,&efds,&tv);
-#else
         ret = select(sock+1,NULL,&fds,&efds,&tv);
-#endif
         save_errno = errno;
 
         if (FD_ISSET(sock,&fds)) /* break */
