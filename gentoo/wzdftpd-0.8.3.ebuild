@@ -36,7 +36,7 @@ pkg_setup() {
 }
 
 src_compile() {
-	use debug && append-flags -ggdb -o1
+	use debug && append-flags -ggdb -O1
 
 	mycmakeargs="${mycmakeargs}
 		$(cmake-utils_use_with sqlite SQLite3)
