@@ -60,6 +60,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
