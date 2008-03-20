@@ -289,7 +289,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is RETR. Please report me to authors\n");
       return -1;
     }
-    if (context->data_socket==(socket_t)-1 || !fd_is_valid(context->data_socket)) {
+    if (context->data_socket==(socket_t)-1) {
       out_err(LEVEL_HIGH,"Trying to set invalid data_socket (%d) %s:%d\n",
           context->data_socket,__FILE__,__LINE__);
       return -1;
@@ -303,7 +303,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
       out_log(LEVEL_HIGH,"Assertion failed: state != XFER but current action is STOR. Please report me to authors\n");
       return -1;
     }
-    if (context->data_socket==(socket_t)-1 || !fd_is_valid(context->data_socket)) {
+    if (context->data_socket==(socket_t)-1) {
       out_err(LEVEL_HIGH,"Trying to set invalid data_socket (%d) %s:%d\n",
           context->data_socket,__FILE__,__LINE__);
       return -1;

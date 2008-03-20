@@ -100,20 +100,6 @@ void wzd_debug_fini(void)
 #endif
 }
 
-/** Check if fd is a valid file descriptor */
-int fd_is_valid(int fd)
-{
-  /* cygwin does NOT accept testing winsock fd's */
-#if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
-  return 1;
-#else
-  static struct statbuf s;
-
-  if (fs_fstat(fd,&s)<0) return 0;
-  return 1;
-#endif
-}
-
 /* Memory allocation */
 /*@null@*/ void * wzd_malloc(size_t size)
 {
@@ -323,7 +309,7 @@ int check_context(wzd_context_t * context)
     out_err(LEVEL_CRITICAL,"CRITICAL context->magic is invalid, context may be corrupted\n");
     return 1;
   }
-  if (context->control_socket == (socket_t)-1 || !fd_is_valid(context->control_socket)) {
+  if (context->control_socket == (socket_t)-1) {
     out_err(LEVEL_CRITICAL,"Trying to set invalid socket_t (%d) %s:%d\n",
         context->control_socket,__FILE__,__LINE__);
     return 1;

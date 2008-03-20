@@ -77,7 +77,6 @@ EXPORTS
 	event_connect_function
 	event2str
 	fd_dump
-	fd_is_valid
 	fd_register
 	fd_unregister
 	file_chown
