@@ -63,8 +63,8 @@
 
 #endif /* WZD_USE_PCH */
 
-static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen);
-static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen);
+static socket_t socket_make_v4(const char *ip, unsigned int *port, int nListen);
+static socket_t socket_make_v6(const char *ip, unsigned int *port, int nListen);
 
 /*************** socket_make ****************************/
 
@@ -90,7 +90,7 @@ int socket_getipbyname(const char *name, char *buffer, size_t length)
 /** bind socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-fd_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t family)
+socket_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t family)
 {
   switch (family) {
     case WZD_INET_NONE:
@@ -108,13 +108,13 @@ fd_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t f
 
 
 /*************** socket_close ***************************/
-int socket_close(fd_t sock)
+int socket_close(socket_t sock)
 {
 #if defined(_MSC_VER)
   char acReadBuffer[256];
   int nNewBytes;
 
-  if (sock == (fd_t)-1) return 0; /* invalid fd */
+  if (sock == (socket_t)-1) return 0; /* invalid fd */
 
   /* Disallow any further data sends.  This will tell the other side
    * that we want to go away now.  If we skip this step, we don't
@@ -166,9 +166,9 @@ int socket_close(fd_t sock)
 
 /*************** socket_accept **************************/
 
-int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *f)
+int socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *f)
 {
-  fd_t new_sock;
+  socket_t new_sock;
   net_family_t family = WZD_INET_NONE;
 #ifdef WIN32 /** \todo no ipv6 support for windows ... */
   struct sockaddr_in from;
@@ -185,7 +185,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
 
   new_sock = accept(sock, (struct sockaddr *)&from, &len);
 
-  if (new_sock == (fd_t)-1) {
+  if (new_sock == (socket_t)-1) {
     out_log(LEVEL_CRITICAL,"Accept failed %s:%d\n", __FILE__, __LINE__);
     return -1;
   }
@@ -266,7 +266,7 @@ int socket_accept(fd_t sock, unsigned char *remote_host, unsigned int *remote_po
  * 1    select() timeout
  * 2    select() returned with an error condition
  */
-static int _waitconnect(fd_t sockfd, /* socket */
+static int _waitconnect(socket_t sockfd, /* socket */
                 int timeout_msec)
 {
   fd_set fd;
@@ -310,9 +310,9 @@ static int _waitconnect(fd_t sockfd, /* socket */
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, fd_t fd, unsigned int timeout)
+int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, socket_t fd, unsigned int timeout)
 {
-  fd_t sock;
+  socket_t sock;
   struct sockaddr *sai;
   struct sockaddr_in sai4;
 #if defined(IPV6_SUPPORT)
@@ -329,7 +329,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
   {
     len = sizeof(sai4);
 
-    if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
+    if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (socket_t)-1) {
       out_log(LEVEL_CRITICAL,"Could not create socket %s:%d\n", __FILE__, __LINE__);
       return -1;
     }
@@ -592,17 +592,17 @@ int get_sock_port(int sock, int local)
 
 /* Returns remote/local port number for the current connection. */
 
-int socket_get_remote_port(fd_t sock)
+int socket_get_remote_port(socket_t sock)
 {
   return get_sock_port(sock, 0);
 }
 
-int socket_get_local_port(fd_t sock)
+int socket_get_local_port(socket_t sock)
 {
   return get_sock_port(sock, 1);
 }
 
-int socket_wait_to_read(fd_t sock, unsigned int timeout)
+int socket_wait_to_read(socket_t sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
@@ -652,7 +652,7 @@ int socket_wait_to_read(fd_t sock, unsigned int timeout)
   return -1;
 }
 
-int socket_wait_to_write(fd_t sock, unsigned int timeout)
+int socket_wait_to_write(socket_t sock, unsigned int timeout)
 {
   int ret;
   int save_errno;
@@ -711,10 +711,10 @@ int socket_wait_to_write(fd_t sock, unsigned int timeout)
 /** bind IPv4 socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
+static socket_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
 {
   socklen_t c;
-  fd_t sock;
+  socket_t sock;
   struct sockaddr_in sai;
 
   memset(&sai, 0, sizeof(struct sockaddr_in));
@@ -744,7 +744,7 @@ static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
    }
   }
 
-  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (fd_t)-1) {
+  if ((sock = socket(PF_INET,SOCK_STREAM,0)) == (socket_t)-1) {
     out_err(LEVEL_CRITICAL,"Could not create socket: %s (%s:%d)\n", strerror(errno), __FILE__, __LINE__);
     return -1;
   }
@@ -785,10 +785,10 @@ static fd_t socket_make_v4(const char *ip, unsigned int *port, int nListen)
 /** bind IPv6 socket at port, if port = 0 picks first free and set it
  * \return -1 or socket
  */
-static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
+static socket_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
 {
   socklen_t c;
-  fd_t sock;
+  socket_t sock;
   struct sockaddr_in sai;
   struct sockaddr_in6 sai6;
   int one=1;
@@ -849,7 +849,7 @@ static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
 #endif /* 0 */
   }
 
-  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (fd_t)-1) {
+  if ((sock = socket(PF_INET6,SOCK_STREAM,0)) == (socket_t)-1) {
     out_err(LEVEL_HIGH,"Could not create IPv6 socket: %s (%s:%d)\n", strerror(errno), __FILE__, __LINE__);
     return -1;
   }
@@ -889,7 +889,7 @@ static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
   return sock;
 }
 #else /* IPV6_SUPPORT */
-static fd_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
+static socket_t socket_make_v6(const char *ip, unsigned int *port, int nListen)
 {
   return -1;
 }
