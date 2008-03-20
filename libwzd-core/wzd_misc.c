@@ -408,7 +408,7 @@ static int _int_rename(const char * src, const char *dst)
   } else
   if (S_ISREG(s.mode)) {
     char buffer[32768];
-    int fd_from, fd_to;
+    fd_t fd_from, fd_to;
     size_t sz;
     int flags = 0;
 
