@@ -533,8 +533,6 @@ int main(int argc, char **argv)
     ret = runMainThread(argc,argv);
 #endif
 
-  /* we should never pass here - see wzd_ServerThread.c */
-
   return ret;
 }
 

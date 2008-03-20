@@ -155,7 +155,7 @@ int runMainThread(int argc, char **argv)
     out_log(LEVEL_CRITICAL,"FATAL   wzdftpd:     [%s]\n",WZD_VERSION_LONG);
     out_log(LEVEL_CRITICAL,"FATAL   libwzd-core: [%s]\n",wzd_get_version_long());
 
-    exit (-1);
+    return -1;
   }
 
   ret = serverMainThreadProc(0);
