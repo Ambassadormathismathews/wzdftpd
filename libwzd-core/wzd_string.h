@@ -98,7 +98,7 @@ wzd_string_t * str_trim_right(wzd_string_t *str);
  *
  * The rest of the wzd_string_t is shifted down to fill the gap.
  */
-wzd_string_t * str_erase(wzd_string_t * str, size_t pos, int len);
+wzd_string_t * str_erase(wzd_string_t * str, size_t pos, size_t len);
 
 /** \brief Convert string to lower case
  * \note
