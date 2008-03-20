@@ -673,7 +673,7 @@ static void server_ident_check(fd_set * r_fds, fd_set * w_fds, fd_set * e_fds)
 
     context = ident_context->context;
 
-    if (ident_context->read_fd != (scoket_t)-1)
+    if (ident_context->read_fd != (socket_t)-1)
     {
       if (FD_ISSET(ident_context->read_fd,e_fds)) { /* error */
         /* remove ident connection from list and continues with no ident */
