@@ -76,12 +76,12 @@ void tls_context_init(wzd_context_t * context)
 
 void tls_auth_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
-  unsigned int socket;
+  socket_t socket;
 
   WZD_ASSERT_VOID(context != NULL);
   WZD_ASSERT_VOID(context->ssl != NULL);
 
-  socket = SSL_get_fd(context->ssl->obj);
+  socket = (socket_t)SSL_get_fd(context->ssl->obj);
 
   if (context->ssl->ssl_fd_mode == TLS_READ)
     FD_SET(socket,r);
@@ -93,12 +93,12 @@ void tls_auth_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 
 void tls_auth_data_setfd_set(wzd_context_t * context, fd_set *r, fd_set *w)
 {
-  unsigned int socket;
+  socket_t socket;
 
   WZD_ASSERT_VOID(context != NULL);
   WZD_ASSERT_VOID(context->ssl != NULL);
 
-  socket = SSL_get_fd(context->ssl->data_ssl);
+  socket = (socket_t)SSL_get_fd(context->ssl->data_ssl);
 
   if (context->ssl->ssl_fd_mode == TLS_READ)
     FD_SET(socket,r);
@@ -489,7 +489,7 @@ int tls_auth (const char *type, wzd_context_t * context)
     return 1;
   }
   SSL_set_cipher_list(context->ssl->obj,tls_cipher_list);
-  ret = SSL_set_fd(context->ssl->obj,context->control_socket);
+  ret = SSL_set_fd(context->ssl->obj,(int)context->control_socket);
   if (ret != 1) {
     out_log(LEVEL_CRITICAL,"SSL_set_fd failed (%s)\n",ERR_error_string(ERR_get_error(),NULL));
     return 1;
@@ -509,7 +509,7 @@ int tls_auth_cont(wzd_context_t * context)
 /* non blocking test */
 #if 1
   SSL * ssl = context->ssl->obj;
-  unsigned int fd;
+  socket_t sock;
   int ret, status, sslerr;
   fd_set fd_r, fd_w;
   struct timeval tv;
@@ -519,15 +519,15 @@ int tls_auth_cont(wzd_context_t * context)
 #endif
 
   SSL_set_accept_state(ssl);
-  fd = SSL_get_fd(ssl);
+  sock = (socket_t)SSL_get_fd(ssl);
   /* ensure socket is non-blocking */
 #if defined(WIN32) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     {
     unsigned long noBlock=1;
-    ioctlsocket(fd,FIONBIO,&noBlock);
+    ioctlsocket(sock,FIONBIO,&noBlock);
   }
 #else
-  fcntl(fd,F_SETFL,(fcntl(fd,F_GETFL)|O_NONBLOCK));
+  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
   do {
     status = SSL_accept(ssl);
@@ -544,11 +544,11 @@ int tls_auth_cont(wzd_context_t * context)
       tv.tv_sec = 5;
       switch (sslerr) {
       case SSL_ERROR_WANT_READ:
-        FD_SET(fd,&fd_r);
+        FD_SET(sock,&fd_r);
         context->ssl->ssl_fd_mode = TLS_READ;
         break;
       case SSL_ERROR_WANT_WRITE:
-        FD_SET(fd,&fd_w);
+        FD_SET(sock,&fd_w);
         context->ssl->ssl_fd_mode = TLS_WRITE;
         break;
       default:
@@ -558,8 +558,8 @@ int tls_auth_cont(wzd_context_t * context)
             ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }
-      ret = select(fd+1,&fd_r,&fd_w,NULL,&tv);
-      if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
+      ret = select(sock+1,&fd_r,&fd_w,NULL,&tv);
+      if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
         out_err(LEVEL_HIGH,"tls_auth_cont failed\n");
         return -1;
       }
@@ -656,7 +656,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 #else
   fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
-  if (SSL_set_fd(context->ssl->data_ssl, sock) != 1)
+  if (SSL_set_fd(context->ssl->data_ssl, (int)sock) != 1)
   /* FIXME PORT ? */
     out_log(LEVEL_CRITICAL,"SSL_set_fd error\n");
 
@@ -671,7 +671,8 @@ int tls_auth_data_cont(wzd_context_t * context)
   int status, sslerr;
   fd_set fd_r, fd_w;
   struct timeval tv;
-  unsigned int fd,r;
+  int r;
+  socket_t sock;
   int client_mode = (  
     ( context->connection_flags & CONNECTION_SSCN ) &&
     ( context->current_action.token == TOK_RETR || context->current_action.token == TOK_STOR ) 
@@ -682,7 +683,7 @@ int tls_auth_data_cont(wzd_context_t * context)
   else
     SSL_set_accept_state(ssl);
 
-  fd = SSL_get_fd(ssl);
+  sock = (socket_t)SSL_get_fd(ssl);
   do {
    
     if (client_mode)
@@ -703,11 +704,11 @@ int tls_auth_data_cont(wzd_context_t * context)
       tv.tv_sec = 5;
       switch (sslerr) {
         case SSL_ERROR_WANT_READ:
-          FD_SET(fd,&fd_r);
+          FD_SET(sock,&fd_r);
 out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_READ\n");
           break;
         case SSL_ERROR_WANT_WRITE:
-          FD_SET(fd,&fd_w);
+          FD_SET(sock,&fd_w);
 out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
           break;
         default:
@@ -716,7 +717,7 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
           tls_close_data(context);
           return 1;
       }
-      r = select(fd+1, &fd_r, &fd_w, NULL, &tv);
+      r = select(sock+1, &fd_r, &fd_w, NULL, &tv);
     }
   } while (status == -1 && r != 0);
 
@@ -986,7 +987,7 @@ int tls_auth (const char *type, wzd_context_t * context)
 {
   int ret;
   gnutls_session session;
-  int fd = context->control_socket;
+  socket_t sock = context->control_socket;
   int was_writing=0;
   fd_set fd_r, fd_w;
   struct timeval tv;
@@ -996,7 +997,7 @@ int tls_auth (const char *type, wzd_context_t * context)
 
   session = initialize_tls_session(GNUTLS_SERVER);
 
-  gnutls_transport_set_ptr(session, (gnutls_transport_ptr) fd);
+  gnutls_transport_set_ptr(session, (gnutls_transport_ptr) sock);
 
   {
     str = config_get_string(mainConfig->cfg_file, "GLOBAL", "tls_cipher_list", NULL);
@@ -1036,10 +1037,10 @@ int tls_auth (const char *type, wzd_context_t * context)
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     {
     unsigned long noBlock=1;
-    ioctlsocket(fd,FIONBIO,&noBlock);
+    ioctlsocket(sock,FIONBIO,&noBlock);
   }
 #else
-  fcntl(fd,F_SETFL,(fcntl(fd,F_GETFL)|O_NONBLOCK));
+  fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
 #endif
 
   /* Perform the TLS handshake
@@ -1071,12 +1072,12 @@ int tls_auth (const char *type, wzd_context_t * context)
     FD_ZERO(&fd_w);
     tv.tv_usec = 0;
     tv.tv_sec = 5;
-    if (was_writing) { FD_SET(fd,&fd_w); }
-    else { FD_SET(fd,&fd_r); }
+    if (was_writing) { FD_SET(sock,&fd_w); }
+    else { FD_SET(sock,&fd_r); }
 
-    ret = select(fd+1, &fd_r, &fd_w, NULL, &tv);
+    ret = select(sock+1, &fd_r, &fd_w, NULL, &tv);
 
-    if ( ! (FD_ISSET(fd,&fd_r) || FD_ISSET(fd,&fd_w)) ) { /* timeout */
+    if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
       out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
       gnutls_deinit(session);
       return 1;
@@ -1102,7 +1103,7 @@ int tls_auth_cont(wzd_context_t * context)
   return 0;
 }
 
-int tls_init_datamode(int sock, wzd_context_t * context)
+int tls_init_datamode(socket_t sock, wzd_context_t * context)
 {
   int ret;
   gnutls_session session;
@@ -1160,7 +1161,7 @@ int tls_init_datamode(int sock, wzd_context_t * context)
 #if defined(_MSC_VER) || (defined(__CYGWIN__) && defined(WINSOCK_SUPPORT))
     {
     unsigned long noBlock=1;
-    ioctlsocket(fd,FIONBIO,&noBlock);
+    ioctlsocket(sock,FIONBIO,&noBlock);
   }
 #else
   fcntl(sock,F_SETFL,(fcntl(sock,F_GETFL)|O_NONBLOCK));
