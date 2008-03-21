@@ -113,7 +113,7 @@ int ip_is_bnc(const char * remote, wzd_config_t * config);
  *
  * \a buffer must be at least 16 bytes long
  */
-unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer);
+unsigned char * getmyip(socket_t sock, net_family_t family, unsigned char * buffer);
 
 /** \brief Parse string and return host object or NULL
  */

@@ -658,7 +658,7 @@ int ip_is_bnc(const char * remote, wzd_config_t * config)
  *
  * \a buffer must be at least 16 bytes long
  */
-unsigned char * getmyip(int sock, net_family_t family, unsigned char * buffer)
+unsigned char * getmyip(socket_t sock, net_family_t family, unsigned char * buffer)
 {
   struct sockaddr_in sa;
   unsigned int size;
