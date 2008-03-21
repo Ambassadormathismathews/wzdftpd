@@ -83,7 +83,7 @@ void free_ftp_command(struct ftp_command_t * command)
  */
 int identify_token(const char *token)
 {
-  unsigned int length;
+  size_t length;
   char buf[4];
   if (!token || (length=strlen(token))==0)
     return TOK_UNKNOWN;
