@@ -159,6 +159,9 @@ int event_send(wzd_event_manager_t * mgr, u32_t event_id, unsigned int reply_cod
 
   WZD_ASSERT( mgr != NULL);
 
+  if (!user)
+    return -1;
+
   if (user->group_num > 0) group = GetGroupByID(user->groups[0]);
 
 #ifdef WZD_DBG_EVENT
