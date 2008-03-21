@@ -76,9 +76,9 @@ unsigned int group_count, group_count_max=0;
 
 
 
-void plaintext_log(const char * error, const char * filename, const char * func_name, int line)
+void plaintext_log(const char * error)
 {
-  out_log(PLAINTEXT_LOG_CHANNEL, "%s(%s):%d %s",filename,func_name,line,error);
+  out_log(PLAINTEXT_LOG_CHANNEL, "%s",error);
 }
 
 
@@ -100,14 +100,14 @@ static int FCN_INIT(const char *arg)
 
   /* TODO check user definitions (no missing fields, etc) */
   if (!ret)
-    ERRLOG("Backend plaintext initialized\n");
+    plaintext_log("Backend plaintext initialized\n");
 
   return ret;
 }
 
 static int FCN_FINI(void)
 {
-  ERRLOG("Backend plaintext unloading\n");
+  plaintext_log("Backend plaintext unloading\n");
 
   free(USERS_FILE);
   USERS_FILE = NULL;
@@ -215,7 +215,7 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
       if ((uid_t)err != user->uid) {
         char errbuf[1024];
         snprintf(errbuf,sizeof(errbuf),"ERROR Could not register user %s\n",user->username);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
       }
     }
 
@@ -329,7 +329,7 @@ static int FCN_MOD_GROUP(gid_t gid, wzd_group_t * group, unsigned long mod_type)
       if ((gid_t)err != group->gid) {
         char errbuf[1024];
         snprintf(errbuf,sizeof(errbuf),"ERROR Could not register group %s\n",group->groupname);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
       }
     }
 

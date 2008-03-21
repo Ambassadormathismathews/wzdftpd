@@ -28,9 +28,7 @@
 #define __LIBWZD_PLAINTEXT_MAIN__
 
 
-#define ERRLOG(s) plaintext_log((s),__FILE__,__FUNCTION__,__LINE__)
-
-void plaintext_log(const char * error, const char * filename, const char * func_name, int line);
+void plaintext_log(const char * error);
 
 extern char * USERS_FILE;
 

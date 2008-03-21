@@ -126,7 +126,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
     if (!loop_group) {
       /* FIXME warn user */
       snprintf(errbuf,sizeof(errbuf),"Invalid MAIN group %u for user %s\n",user->groups[0],user->username);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
     } else {
       strcpy(buffer,loop_group->groupname);
       for (j=1; j<user->group_num; j++) {
@@ -135,7 +135,7 @@ int write_single_user(FILE * file, const wzd_user_t * user)
         if (!loop_group) {
           /* FIXME warn user */
           snprintf(errbuf,sizeof(errbuf),"Invalid MAIN group %u for user %s\n",user->groups[j],user->username);
-          ERRLOG(errbuf);
+          plaintext_log(errbuf);
         } else {
           strcat(buffer,loop_group->groupname);
         }
@@ -271,13 +271,13 @@ int write_user_file(void)
   file = fopen(filename,"r");
   if (!file) {
     snprintf(errbuf,sizeof(errbuf),"Could not open file %s !\n",filename);
-    ERRLOG(errbuf);
+    plaintext_log(errbuf);
     return -1;
   }
   fileold = fopen(filenameold,"w+");
   if (!fileold) {
     snprintf(errbuf,sizeof(errbuf),"Could not open file %s !\n",filenameold);
-    ERRLOG(errbuf);
+    plaintext_log(errbuf);
     return -1;
   }
 
@@ -288,7 +288,7 @@ int write_user_file(void)
       j = fwrite(buffer,1,i,fileold);
       if (!j) {
         snprintf(errbuf,sizeof(errbuf),"ERROR writing to %s\n",filenameold);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         return -1;
       }
     }
@@ -302,13 +302,13 @@ int write_user_file(void)
   sigemptyset(&mask);
   sigaddset(&mask,SIGINT);
   if (sigprocmask(SIG_BLOCK,&mask,NULL)<0) {
-    ERRLOG("Unable to block SIGINT with sigprocmask\n");
+    plaintext_log("Unable to block SIGINT with sigprocmask\n");
   }
 #endif
 
   file = freopen(filename,"w+",file);
   if (!file) {
-    ERRLOG("unable to reopen users file (%s:%d)\n");
+    plaintext_log("unable to reopen users file (%s:%d)\n");
     return -1;
   }
   fseek(file,SEEK_SET,0);
@@ -326,7 +326,7 @@ int write_user_file(void)
   for (i=0; group_list[i]!=INVALID_GROUP; i++)
   {
     if (!(loop_group = group_get_by_id(group_list[i]))) {
-      ERRLOG("EMPTY NODE IN GROUP LIST !\n");
+      plaintext_log("EMPTY NODE IN GROUP LIST !\n");
       continue;
     }
     if (loop_group->groupname[0]=='\0') continue;
@@ -346,7 +346,7 @@ int write_user_file(void)
   for (i=0; user_list[i]!=INVALID_USER; i++)
   {
     if (!(loop_user = user_get_by_id(user_list[i]))) {
-      ERRLOG("EMPTY NODE IN USER LIST !\n");
+      plaintext_log("EMPTY NODE IN USER LIST !\n");
       continue;
     }
     if (loop_user->username[0]=='\0') continue;
@@ -364,7 +364,7 @@ int write_user_file(void)
   /* unblock signals - if a SIGINT is pending, it should be harmless now */
 #ifndef WIN32
   if (sigprocmask(SIG_UNBLOCK,&mask,NULL)<0) {
-    ERRLOG("Unable to unblock SIGINT with sigprocmask\n");
+    plaintext_log("Unable to unblock SIGINT with sigprocmask\n");
   }
 #endif
 
@@ -406,7 +406,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
     err = regexec(&reg_line,buffer,3,regmatch,0);
     if (err) {
       snprintf(errbuf,sizeof(errbuf),"Line '%s' does not respect config line format - ignoring\n",buffer);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
       continue;
     }
     memcpy(varname,buffer+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
@@ -418,7 +418,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid gid %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->gid = num;
@@ -427,7 +427,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_idle_time %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->max_idle_time = num;
@@ -436,7 +436,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid num_logins %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->num_logins = (unsigned short)num;
@@ -446,7 +446,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       err = __group_ip_add(group,value);
       if (err != 0 ) {
         snprintf(errbuf,sizeof(errbuf),"ERROR unable to add ip %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
     } /* ip_allowed */
@@ -457,7 +457,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid ratio %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->ratio = num;
@@ -477,7 +477,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_dl_speed %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->max_dl_speed = num;
@@ -486,7 +486,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_ul_speed %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       group->max_ul_speed = num;
@@ -496,7 +496,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
     } /* tagline */
     else {
       snprintf(errbuf,sizeof(errbuf),"ERROR Variable '%s' is not correct (value %s) - ignoring\n",varname,value);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
     }
   };
 
@@ -530,7 +530,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
     err = regexec(&reg_line,buffer,3,regmatch,0);
     if (err) {
       snprintf(errbuf,sizeof(errbuf),"Line '%s' does not respect config line format - ignoring\n",buffer);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
       continue;
     }
     memcpy(varname,buffer+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
@@ -542,7 +542,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid uid %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->uid = num;
@@ -568,7 +568,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid uid %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->uid = num;
@@ -577,7 +577,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid creator uid %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->creator = num;
@@ -614,7 +614,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_ul_speed %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->max_ul_speed = num;
@@ -623,7 +623,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid last_login %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->last_login = num;
@@ -632,7 +632,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_dl_speed %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->max_dl_speed = num;
@@ -640,13 +640,13 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
     else if (strcmp("bytes_ul_total",varname)==0) {
       if (*value < '0' || *value > '9') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       ull_num = strtoull(value, &ptr, 0);
       if (*ptr || ptr == value) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_ul_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->stats.bytes_ul_total = ull_num;
@@ -654,13 +654,13 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
     else if (strcmp("bytes_dl_total",varname)==0) {
       if (*value < '0' || *value > '9') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       } 
       ull_num = strtoull(value, &ptr, 0);
       if (*ptr || ptr == value) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid bytes_dl_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->stats.bytes_dl_total = ull_num;
@@ -669,7 +669,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid files_dl_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->stats.files_dl_total = u_num;
@@ -678,7 +678,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid files_ul_total %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->stats.files_ul_total = u_num;
@@ -686,13 +686,13 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
     else if (strcmp("credits",varname)==0) {
       if (*value < '0' || *value > '9') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       ull_num = strtoull(value, &ptr, 0);
       if (*ptr || ptr == value) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid credits %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->credits = ull_num;
@@ -701,7 +701,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid number %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->num_logins = (unsigned short)num;
@@ -710,7 +710,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid ratio %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->ratio = num;
@@ -719,7 +719,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid user_slots %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->user_slots = (unsigned short)u_num;
@@ -728,7 +728,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid leech_slots %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->leech_slots = (unsigned short)u_num;
@@ -737,7 +737,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
         snprintf(errbuf,sizeof(errbuf),"Invalid max_idle_time %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
       user->max_idle_time = num;
@@ -746,7 +746,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       err = __user_ip_add(user,value);
       if (err != 0 ) {
         snprintf(errbuf,sizeof(errbuf),"ERROR unable to add ip %s\n",value);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
     } /* ip_allowed */
@@ -806,13 +806,13 @@ fprintf(stderr,"Entering section GROUPS\n");
       if (!token) continue;
       token = strtok(NULL," \t\n");
       if (!token) {
-        ERRLOG("privgroup should be followed by the group name !\n");
+        plaintext_log("privgroup should be followed by the group name !\n");
         continue;
       }
 
       if (++group_count >= group_count_max) {
         snprintf(errbuf,sizeof(errbuf),"Too many groups: %u\n",group_count);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
 
@@ -823,13 +823,13 @@ fprintf(stderr,"Entering section GROUPS\n");
         err = group_register(group_new, 1 /* XXX backend id */);
         if ((gid_t)err != group_new->gid) {
           snprintf(errbuf,sizeof(errbuf),"ERROR Could not register group %s\n",group_new->groupname);
-          ERRLOG(errbuf);
+          plaintext_log(errbuf);
         }
       }
 
       break;
     default:
-      ERRLOG("Houston, we have a problem (invalid varname)\n");
+      plaintext_log("Houston, we have a problem (invalid varname)\n");
       break;
     }
   }
@@ -863,7 +863,7 @@ fprintf(stderr,"Entering section USERS\n");
     err = regexec(&reg_line,line,3,regmatch,0);
     if (err) {
       snprintf(errbuf,sizeof(errbuf),"Line '%s' does not respect config line format - ignoring\n",line);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
       continue;
     }
     memcpy(varname,line+regmatch[1].rm_so,regmatch[1].rm_eo-regmatch[1].rm_so);
@@ -874,7 +874,7 @@ fprintf(stderr,"Entering section USERS\n");
     if (strcmp("name",varname)==0) {
       if (++user_count >= user_count_max) {
         snprintf(errbuf,sizeof(errbuf),"Too many users defined %u\n",user_count);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         continue;
       }
 
@@ -886,7 +886,7 @@ fprintf(stderr,"Entering section USERS\n");
         err = user_register(user_new,1 /* XXX backend id */);
         if ((uid_t)err != user_new->uid) {
           snprintf(errbuf,sizeof(errbuf),"ERROR Could not register user %s\n",user_new->username);
-          ERRLOG(errbuf);
+          plaintext_log(errbuf);
         }
       }
 
@@ -903,9 +903,9 @@ int read_files(const char *filename)
   char errbuf[1024];
 
   if (!filename || strlen(filename)>=256) {
-    ERRLOG("You MUST provide a parameter for the users file\n");
-    ERRLOG("Add  param = /path/to/users  in [plaintext] section in your config file\n");
-    ERRLOG("See Documentation for help\n");
+    plaintext_log("You MUST provide a parameter for the users file\n");
+    plaintext_log("Add  param = /path/to/users  in [plaintext] section in your config file\n");
+    plaintext_log("See Documentation for help\n");
     return -1;
   }
   strncpy(USERS_FILE,filename,256);
@@ -914,18 +914,18 @@ int read_files(const char *filename)
   if (file_user == NULL) {
     snprintf(errbuf, sizeof(errbuf), "Could not open file '%s': %s\n", USERS_FILE, strerror(errno));
 
-    ERRLOG("********************************************\n");
-    ERRLOG("\n");
-    ERRLOG("Plaintext-backend: Reading userfile failed! Exiting.\n");
-    ERRLOG(errbuf);
-    ERRLOG("\n");
-    ERRLOG("********************************************\n");
+    plaintext_log("********************************************\n");
+    plaintext_log("\n");
+    plaintext_log("Plaintext-backend: Reading userfile failed! Exiting.\n");
+    plaintext_log(errbuf);
+    plaintext_log("\n");
+    plaintext_log("********************************************\n");
     return -1;
   }
 
   line = malloc(MAX_LINE);
   if (!line) {
-    ERRLOG("Could not malloc !\n");
+    plaintext_log("Could not malloc !\n");
     return -1;
   }
 
@@ -983,7 +983,7 @@ int read_files(const char *filename)
       else if (strcasecmp("HOSTS",token)==0) section_ignore(file_user,token,line,MAX_LINE);
       else {
         snprintf(errbuf,sizeof(errbuf),"Unkown section %s\n",token);
-        ERRLOG(errbuf);
+        plaintext_log(errbuf);
         regfree(&reg_line);
         return 1;
       }
@@ -991,7 +991,7 @@ int read_files(const char *filename)
     } /* line begins by [ */
     else { /* directive without section */
       snprintf(errbuf,sizeof(errbuf),"directive without section in line '%s'\n",line);
-      ERRLOG(errbuf);
+      plaintext_log(errbuf);
       regfree(&reg_line);
       return 1;
     }
