@@ -52,7 +52,7 @@ sqlite3 *libsqlite_open()
 {
   sqlite3 *db=NULL;
   if (sqlite3_open(_sqlite_file, &db) != SQLITE_OK) {
-    out_log(SQLITE_LOG_CHANNEL, "%s(%s):%d cannot open database file\n", __FILE__, __FUNCTION__, __LINE__);
+    out_log(SQLITE_LOG_CHANNEL, "libsqlite cannot open database file\n");
     out_log(SQLITE_LOG_CHANNEL, "sqlite message: %s\n", sqlite3_errmsg(db));
     libsqlite_close(&db);
     return NULL;
@@ -153,7 +153,7 @@ static int FCN_INIT(const char *arg)
     log_set(SQLITE_LOG_CHANNEL, log_get(LEVEL_NORMAL));
 
   if (arg == NULL) {
-    out_log(SQLITE_LOG_CHANNEL, "%s(%s):%d no argument given\n", __FILE__, __FUNCTION__, __LINE__);
+    out_log(SQLITE_LOG_CHANNEL, "libsqlite FCN_INIT was not given an argument\n");
     out_log(SQLITE_LOG_CHANNEL, "You MUST provide a parameter for the sqlite connection\n");
     out_log(SQLITE_LOG_CHANNEL, "Add 'param=file' in [sqlite]\n");
     return -1;
