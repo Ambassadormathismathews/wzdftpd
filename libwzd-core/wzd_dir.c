@@ -357,7 +357,7 @@ char * path_getdirname(const char *file)
 {
   char * dirname;
   const char * ptr;
-  unsigned int length;
+  size_t length;
 
   if (!file) return NULL;
   ptr = file + strlen(file);
@@ -390,7 +390,7 @@ char * path_getbasename(const char *file, const char *suffix)
 {
   char * basename;
   const char * ptr;
-  unsigned int length;
+  size_t length;
 
   if (!file) return NULL;
   ptr = file + strlen(file);
@@ -437,7 +437,7 @@ char * path_gettrailingname(const char *file, unsigned int n)
 {
   char * name;
   const char * ptr;
-  unsigned int length;
+  size_t length;
   unsigned int count;
 
   if (!file) return NULL;
