@@ -38,7 +38,7 @@ pkg_setup() {
 src_compile() {
 	use debug && append-flags -ggdb -O1
 
-	mycmakeargs="${mycmakeargs}
+	mycmakeargs="
 		$(cmake-utils_use_with sqlite SQLite3)
 		$(cmake-utils_use_with mysql MySQL)
 		$(cmake-utils_use_with postgres PostgreSQL)

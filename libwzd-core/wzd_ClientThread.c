@@ -2592,7 +2592,7 @@ int do_abor(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
     FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
     context->pasv_socket=-1;
   }
-  if (context->current_action.current_file != (socket_t)-1) {
+  if (context->current_action.current_file != (fd_t)-1) {
     /* transfer aborted, we should send a 426 */
     ret = send_message(426,context);
     out_xferlog(context, 0 /* incomplete */);
