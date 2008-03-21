@@ -123,10 +123,10 @@
 unsigned long compute_hashval (const void *key, size_t keylen)
 {
   size_t cnt;
-  unsigned long int hval;
+  unsigned long hval;
 
   cnt = 0;
-  hval = keylen;
+  hval = (unsigned long)keylen;
   while (cnt < keylen)
   {
     hval = (hval << 9) | (hval >> (LONGBITS - 9));
@@ -156,10 +156,10 @@ char *time_to_str(time_t time)
 {
 
   static char workstr[100];
-  unsigned short int days=(time/86400),hours,mins,secs;
-  hours=((time-(days*86400))/3600);
-  mins=((time-(days*86400)-(hours*3600))/60);
-  secs = time % 60;
+  unsigned short int days=(unsigned short int)(time/86400),hours,mins,secs;
+  hours=(unsigned short int)((time-(days*86400))/3600);
+  mins=(unsigned short int)((time-(days*86400)-(hours*3600))/60);
+  secs = (unsigned short int)time % 60;
 
   if (days) {
     snprintf(workstr,sizeof(workstr),"%dd %dh %dm %ds",days,hours,mins,secs);
@@ -332,6 +332,7 @@ int get_device_info(const char *file, long * f_type, long * f_bsize, long * f_bl
   if (drive > 26) return -1;
   err = _getdiskfree(drive, &df);
   if (!err) {
+    if (f_type) *f_type = -1; /* not filled in */
     if (f_free) *f_free = df.avail_clusters * df.sectors_per_cluster;
     if (f_bsize) *f_bsize = df.bytes_per_sector;
     if (f_blocks) *f_blocks = df.total_clusters * df.sectors_per_cluster;
@@ -354,8 +355,8 @@ static int _int_rename(const char * src, const char *dst)
   if (S_ISDIR(s.mode)) {
     char buf_src[2048];
     char buf_dst[2048];
-    unsigned int length_src=2048;
-    unsigned int length_dst=2048;
+    size_t length_src=2048;
+    size_t length_dst=2048;
     char * ptr_src, * ptr_dst;
     const char *filename;
     fs_dir_t * dir;
@@ -749,8 +750,8 @@ wzd_mutex_unlock(mutex);
   {*/
 #ifndef WIN32
     gettimeofday( &tv, &tz );
-    elapsed = (tv.tv_sec - l->current_time.tv_sec) * 1000000;
-    elapsed += (tv.tv_usec - l->current_time.tv_usec);
+    elapsed = (unsigned long)(tv.tv_sec - l->current_time.tv_sec) * 1000000;
+    elapsed += (unsigned long)(tv.tv_usec - l->current_time.tv_usec);
 #else
     _ftime(&tb);
     elapsed = (tb.time - l->current_time.time) * 1000000;
@@ -869,9 +870,9 @@ int my_str_compare(const char * src, const char *dst)
 }
 
 /* lower only characters in A-Z ! */
-void ascii_lower(char * s, unsigned int length)
+void ascii_lower(char * s, size_t length)
 {
-  register unsigned int i=0;
+  register size_t i=0;
   while (i<length) {
     if (s[i] >= 'A' && s[i] <= 'Z') {
       s[i] |= 0x20;

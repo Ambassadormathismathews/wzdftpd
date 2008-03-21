@@ -118,7 +118,7 @@ unsigned long right_text2word(const char * text);
 int my_str_compare(const char * src, const char *dst);
 
 /* lower only characters in A-Z ! */
-void ascii_lower(char * s, unsigned int length);
+void ascii_lower(char * s, size_t length);
 
 /** \brief Read next token from input string.
  * \return a pointer to the next token, or NULL if not found, or if there is
