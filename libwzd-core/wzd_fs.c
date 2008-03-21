@@ -91,18 +91,18 @@ int fs_mkdir(const char * pathname, unsigned long mode, int * err)
   if (err && (ret < 0)) *err = errno;
 #else
   {
-    size_t sz;
+    int sz;
     wchar_t * dstname;
 
     if (!utf8_valid(pathname,strlen(pathname)))
       return -1;
 
-    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    dstname = malloc(sz * sizeof(wchar_t) + 1);
+    dstname = malloc((size_t)sz * sizeof(wchar_t) + 1);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, dstname, sz);
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, dstname, sz);
 
     if (ret <= 0) { free(dstname); return -1; }
 
@@ -122,7 +122,7 @@ int fs_mkdir(const char * pathname, unsigned long mode, int * err)
  */
 int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
 {
-  int len;
+  size_t len;
 
   *newdir = wzd_malloc(sizeof(fs_dir_t));
 
@@ -176,18 +176,17 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
 
 #ifdef WIN32
   int ret;
-  size_t sz;
+  int sz;
 
   if (dir->handle == NULL) {
-    size_t sz;
     wchar_t * dstname, * eos;
 
-    sz = MultiByteToWideChar(CP_UTF8, 0, dir->dirname, strlen(dir->dirname)+1, NULL, 0);
+    sz = MultiByteToWideChar(CP_UTF8, 0, dir->dirname, (int)strlen(dir->dirname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    dstname = malloc(sz * sizeof(wchar_t) + 3);
+    dstname = malloc((size_t)sz * sizeof(wchar_t) + 3);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, dir->dirname, strlen(dir->dirname)+1, dstname, sz);
+    ret = MultiByteToWideChar(CP_UTF8, 0, dir->dirname, (int)strlen(dir->dirname)+1, dstname, sz);
 
     if (ret <= 0) { free(dstname); return -1; }
 
@@ -209,12 +208,12 @@ int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
     return -1;
   }
 
-  sz = WideCharToMultiByte(CP_UTF8, 0, dir->entry.cFileName, wcslen(dir->entry.cFileName)+1, NULL, 0, NULL, NULL);
+  sz = WideCharToMultiByte(CP_UTF8, 0, dir->entry.cFileName, (int)wcslen(dir->entry.cFileName)+1, NULL, 0, NULL, NULL);
   if (sz <= 0) return -1;
 
-  filename = wzd_malloc(sz + 2);
+  filename = wzd_malloc((size_t)sz + 2);
 
-  ret = WideCharToMultiByte(CP_UTF8, 0, dir->entry.cFileName, wcslen(dir->entry.cFileName)+1, filename, sz, NULL, NULL);
+  ret = WideCharToMultiByte(CP_UTF8, 0, dir->entry.cFileName, (int)wcslen(dir->entry.cFileName)+1, filename, sz, NULL, NULL);
 
   dir->finfo.wname = dir->entry.cFileName;
 #else
@@ -272,15 +271,15 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s)
   {
     struct _stati64 st;
     wchar_t * wbuffer;
-    size_t sz;
+    int sz;
     int ret;
 
-    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    wbuffer = malloc(sz * sizeof(wchar_t) + 5);
+    wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
     if (ret <= 0) { free(wbuffer); return -1; }
 
     if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
@@ -329,15 +328,15 @@ int fs_file_stat(const char *pathname, fs_filestat_t * s)
   {
     struct _stati64 st;
     wchar_t * wbuffer;
-    size_t sz;
+    int sz;
     int ret;
 
-    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, NULL, 0);
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
     if (sz <= 0) return -1;
 
-    wbuffer = malloc(sz * sizeof(wchar_t) + 5);
+    wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
 
-    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, strlen(pathname)+1, wbuffer, sz);
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
     if (ret <= 0) { free(wbuffer); return -1; }
 
     if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
@@ -361,13 +360,13 @@ int fs_file_stat(const char *pathname, fs_filestat_t * s)
 
 /** \brief Get informations on file
  */
-int fs_file_fstat(int fd, fs_filestat_t * s)
+int fs_file_fstat(fd_t file, fs_filestat_t * s)
 {
 #ifndef WIN32
   {
     struct stat st;
 
-    if (!fstat(fd,&st)) {
+    if (!fstat(file,&st)) {
       if (s) {
         s->size = (u64_t)st.st_size;
         s->mode = st.st_mode;
@@ -383,7 +382,7 @@ int fs_file_fstat(int fd, fs_filestat_t * s)
   {
     struct _stati64 st;
 
-    if (!_fstati64(fd,&st)) {
+    if (!_fstati64(file,&st)) {
       if (s) {
         s->size = st.st_size;
         s->mode = st.st_mode;

@@ -81,7 +81,7 @@ int fs_file_lstat(const char *pathname, fs_filestat_t * s);
 
 /** \brief Get informations on file
  */
-int fs_file_fstat(int fd, fs_filestat_t * s);
+int fs_file_fstat(fd_t file, fs_filestat_t * s);
 
 
 const char * fs_fileinfo_getname(fs_fileinfo_t * finfo);
