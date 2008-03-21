@@ -80,6 +80,8 @@ typedef enum {
   E_USER_CLOSED,	/**< site is closed for this login */
   E_USER_DELETED,	/**< user have been deleted */
   E_USER_NUMLOGINS,	/**< user has reached user num_logins limit */
+  E_USER_LOGINSPERIP, /**< user user has reached max number of logins per ip */
+  E_USER_TOOMANYUSERS, /**< maximum number of users for the server is reached */
   E_USER_TLSFORCED,	/**< user must be in TLS mode */
 
   E_GROUP_NUMLOGINS,	/**< user has reached group num_logins limit */
@@ -210,6 +212,7 @@ enum wzd_flag_t {
   FLAG_SITEOP = 'O',
   FLAG_SEE_IP = 's',
   FLAG_SEE_HOME = 't',
+  FLAG_ALWAYS_ALLOW_LOGIN = 'a', /**< allow login even if the max logins per user (and optionally per ip) or maximum logins for the server is reached */
 };
 
 /************************ MODULES *************************/
@@ -431,6 +434,7 @@ struct wzd_config_t {
   unsigned char	site_closed;
   wzd_backend_def_t * backends;
   int		max_threads;
+  int       max_users; /**< maximum amount of users allowed on the server at any time, bypassed with the +a flag */
   char *	logfilename;
   unsigned int	logfilemode;
   FILE *	logfile;

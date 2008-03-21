@@ -43,6 +43,7 @@ struct wzd_user_t {
   u32_t                  max_ul_speed;
   u32_t                  max_dl_speed;   /**< @brief bytes / sec */
   unsigned short         num_logins;     /**< @brief number of simultaneous logins allowed */
+  unsigned short         logins_per_ip;  /**< @brief number of logins allowed from a single IP */
   struct wzd_ip_list_t * ip_list;
   wzd_stats_t            stats;
   u64_t                  credits;

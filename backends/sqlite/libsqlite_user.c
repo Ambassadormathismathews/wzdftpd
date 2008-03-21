@@ -264,7 +264,7 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
 
   ret = sqlite3_prepare(db, 
     "SELECT username, userpass, rootpath, tagline, flags, creator, max_idle_time, \
-            max_ul_speed, max_dl_speed, num_logins, credits, ratio,      \
+            max_ul_speed, max_dl_speed, num_logins, logins_per_ip, credits, ratio,\
             user_slots, leech_slots, perms, last_login                   \
        FROM users                                                        \
        WHERE uid = ?",
@@ -302,12 +302,13 @@ wzd_user_t *libsqlite_user_get_by_id(uid_t uid)
         user->max_ul_speed = (u32_t) sqlite3_column_int64(stmt, 7);
         user->max_dl_speed = (u32_t) sqlite3_column_int64(stmt, 8);
         user->num_logins = sqlite3_column_int(stmt, 9);
-        user->credits = sqlite3_column_int64(stmt, 10);
-        user->ratio = sqlite3_column_int(stmt, 11);
-        user->user_slots = sqlite3_column_int(stmt, 12);
-        user->leech_slots = sqlite3_column_int(stmt, 13);
-        user->userperms = (unsigned long) sqlite3_column_int64(stmt, 14);
-        user->last_login = sqlite3_column_int(stmt, 15);
+        user->logins_per_ip = sqlite3_column_int(stmt, 10);
+        user->credits = sqlite3_column_int64(stmt, 11);
+        user->ratio = sqlite3_column_int(stmt, 12);
+        user->user_slots = sqlite3_column_int(stmt, 13);
+        user->leech_slots = sqlite3_column_int(stmt, 14);
+        user->userperms = (unsigned long) sqlite3_column_int64(stmt, 15);
+        user->last_login = sqlite3_column_int(stmt, 16);
 
         libsqlite_user_get_ip(user);
         libsqlite_user_get_groups(user);
@@ -523,17 +524,17 @@ int libsqlite_user_add(wzd_user_t *user)
   query = sqlite3_mprintf(
     "INSERT INTO users (                                                 \
         uid, username, userpass, rootpath, tagline, flags, creator,      \
-        max_idle_time, max_ul_speed, max_dl_speed, num_logins, ratio,    \
-        user_slots, leech_slots, perms, credits, last_login              \
+        max_idle_time, max_ul_speed, max_dl_speed, num_logins, logins_per_ip, \
+        ratio, user_slots, leech_slots, perms, credits, last_login       \
       ) VALUES (                                                         \
          %d, '%q', '%q', '%q', '%q', '%q', %d, %d, %u, %u, %d, %d, %d,   \
-         %d, %d, %d, %d                                                  \
+         %d, %d, %d, %d, %d                                              \
       );",
     user->uid, user->username, passbuffer, user->rootpath,
     user->tagline, user->flags, user->creator, user->max_idle_time,
     user->max_ul_speed, user->max_dl_speed, user->num_logins,
-    user->ratio, user->user_slots, user->leech_slots,
-    user->userperms, user->credits, user->last_login
+    user->logins_per_ip, user->ratio, user->user_slots,
+    user->leech_slots, user->userperms, user->credits, user->last_login
   );
 
   sqlite3_exec(db, query, NULL, NULL, &errmsg);
@@ -694,6 +695,10 @@ int libsqlite_user_update(uid_t uid, wzd_user_t *user, unsigned long mod_type)
   }
   if (mod_type & _USER_NUMLOGINS) {
     libsqlite_add_to_query(&query, "%c num_logins=%d ", separator, user->num_logins);
+    separator = ',';
+  }
+  if (mod_type & _USER_LOGINSPERIP) {
+    libsqlite_add_to_query(&query, "%c logins_per_ip=%d ", separator, user->logins_per_ip);
     separator = ',';
   }
   if (mod_type & _USER_CREDITS) {

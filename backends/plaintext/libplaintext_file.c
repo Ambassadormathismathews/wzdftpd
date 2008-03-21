@@ -166,6 +166,8 @@ int write_single_user(FILE * file, const wzd_user_t * user)
     fprintf(file,"ratio=%u\n",user->ratio);
   if (user->num_logins)
     fprintf(file,"num_logins=%u\n",user->num_logins);
+  if (user->logins_per_ip)
+    fprintf(file,"logins_per_ip=%u\n",user->logins_per_ip);
   if (user->max_idle_time)
     fprintf(file,"max_idle_time=%u\n",user->max_idle_time);
   if (user->flags && strlen(user->flags)>0)
@@ -705,7 +707,16 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
         continue;
       }
       user->num_logins = (unsigned short)num;
-    } /* else if (strcmp("num_logins",... */
+    } /* num_logins */
+    else if (strcmp("logins_per_ip",varname)==0) {
+      num = strtol(value, &ptr, 0);
+      if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
+        snprintf(errbuf,sizeof(errbuf),"Invalid number %s\n",value);
+        plaintext_log(errbuf);
+        continue;
+      }
+      user->logins_per_ip = (unsigned short)num;
+    } /* logins_per_ip */
     else if (strcmp("ratio",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */
@@ -714,7 +725,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
         continue;
       }
       user->ratio = num;
-    } /* else if (strcmp("ratio",... */
+    } /* ratio */
     else if (strcmp("user_slots",varname)==0) {
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
@@ -723,7 +734,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
         continue;
       }
       user->user_slots = (unsigned short)u_num;
-    } /* else if (strcmp("user_slots",... */
+    } /* user_slots */
     else if (strcmp("leech_slots",varname)==0) {
       u_num = strtoul(value, &ptr, 0);
       if (ptr == value || *ptr != '\0') { /* invalid number */
@@ -732,7 +743,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
         continue;
       }
       user->leech_slots = (unsigned short)u_num;
-    } /* else if (strcmp("leech_slots",... */
+    } /* leech_slots */
     else if (strcmp("max_idle_time",varname)==0) {
       num = strtol(value, &ptr, 0);
       if (ptr == value || *ptr != '\0' || num < 0) { /* invalid number */

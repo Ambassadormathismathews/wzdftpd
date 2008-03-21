@@ -42,6 +42,7 @@ CREATE TABLE users (
   max_ul_speed bigint default NULL,
   max_dl_speed bigint default NULL,
   num_logins integer default NULL,
+  logins_per_ip integer default NULL,
   ratio integer default NULL,
   user_slots integer default NULL,
   leech_slots integer default NULL,
@@ -55,10 +56,6 @@ CREATE TABLE users (
 --
 
 INSERT INTO users (username,rootpath,tagline,uid,flags,perms) VALUES ('wzdftpd','/','local admin',nextval('users_uid_seq'),'OIstH',cast (X'ffffffff' as integer));
-
-INSERT INTO users (username,rootpath,uid,flags,perms) VALUES
-('novel','/usr/home/novel',nextval('users_uid_seq'),'OIstH',cast (X'ffffffff' as integer));
-INSERT INTO users (username,rootpath,uid,perms) VALUES ('anonymous','/tmp',nextval('users_uid_seq'),cast (X'ffffffff' as integer));
 
 --
 -- Table structure for table `UGR` (User-Group Relations)
@@ -99,9 +96,6 @@ ALTER TABLE ONLY userip ADD CONSTRAINT "$1" FOREIGN KEY (ref) REFERENCES users(r
 
 INSERT into userip (ref,ip) SELECT users.ref,'127.0.0.1' FROM users WHERE users.uid=1;
 
-INSERT into userip (ref,ip) SELECT users.ref,'foobar@localhost' FROM users WHERE users.uid=2;
-INSERT into userip (ref,ip) SELECT users.ref,'127.0.0.1' FROM users WHERE users.uid=2;
-
 --
 -- Table structure for table `Stats`
 --
@@ -118,17 +112,11 @@ CREATE TABLE stats (
 ALTER TABLE ONLY stats ADD CONSTRAINT "$1" FOREIGN KEY (ref) REFERENCES users(ref);
 
 INSERT INTO stats (ref) SELECT users.ref FROM users where uid=1;
-INSERT INTO stats (ref) SELECT users.ref FROM users where uid=2;
-INSERT INTO stats (ref) SELECT users.ref FROM users where uid=3;
 
 --
 -- hmm - moo, moo; I'm trying to insert references into UGR
 --
 INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
-
--- insert novel into admin group (he's a good friend !)
-INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=2 AND groups.gid=1;
-
 
 --
 -- find all groups (gid) given a uid

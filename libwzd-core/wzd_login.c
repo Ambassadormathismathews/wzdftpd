@@ -93,8 +93,10 @@ static int do_login_gssapi(wzd_context_t * context);
  * E_USER_REJECTED if user name is rejected by backend
  * E_USER_DELETED if user has been deleted
  * E_USER_NUMLOGINS if user has reached num_logins
+ * E_USER_LOGINSPERIP if user has reached user num_logins
  * E_USER_CLOSED if site is closed and user is not a siteop
  * E_USER_TLSFORCED if user must use SSL/TLS
+ * E_USER_TOOMANYUSERS if maximum number of users connected to the server is reached
  * E_GROUP_NUMLOGINS if user has reached group num_logins
  */
 int do_user(const char *username, wzd_context_t * context)
@@ -119,27 +121,40 @@ int do_user(const char *username, wzd_context_t * context)
       !(me->flags && strchr(me->flags,FLAG_SITEOP)))
     return E_USER_CLOSED;
 
-  /* count logins from user */
-  if (me->num_logins)
-  {
-    ListElmt * elmnt;
-    wzd_context_t * loop_context;
-    int count=0;
-    for (elmnt=list_head(context_list); elmnt!=NULL; elmnt=list_next(elmnt))
+
+  /* allow users with FLAG_ALWAYS_ALLOW_LOGIN set and siteop's to bypass user limits */
+  if (!(me->flags && (strchr(me->flags,FLAG_ALWAYS_ALLOW_LOGIN) || strchr(me->flags,FLAG_SITEOP)))) {
+
+    /* check if there are too many users connected to the server */
+    if (context_list && mainConfig->max_users) {
+      if (list_size(context_list) > mainConfig->max_users)
+        return E_USER_TOOMANYUSERS;
+    }
+
+    /* count logins from user (as well as how many of those are from context->hostip) */
     {
-      loop_context = list_data(elmnt);
-      if (loop_context && loop_context->magic == CONTEXT_MAGIC && context->userid == loop_context->userid)
-        count++;
-    } /* for all contexts */
+      ListElmt * elmnt;
+      wzd_context_t * loop_context;
+      int count_logins = 0;
+      int count_fromip = 0;
+      for (elmnt = list_head(context_list); elmnt != NULL; elmnt = list_next(elmnt)) {
+        loop_context = list_data(elmnt);
+        /* only count if the userid's match... but don't count the context trying to login! */
+        if (loop_context && loop_context->magic == CONTEXT_MAGIC && context->userid == loop_context->userid && context->control_socket != loop_context->control_socket) {
+          count_logins++;
+          /* check if IP of connecting user has already connected to the same user account with the same IP */
+          if (memcmp(context->hostip, loop_context->hostip, sizeof(context->hostip)) == 0)
+            count_fromip++;
+        }
+      } /* for all contexts */
 
-    /* we substract 1, because the current login attempt is counted */
-    count--;
+      /* >= is used as a comparison because the connecting user is not included in the counts */
+      if (me->num_logins && count_logins >= me->num_logins) return E_USER_NUMLOGINS;
+      if (me->logins_per_ip && count_fromip >= me->logins_per_ip) return E_USER_LOGINSPERIP;
+    }
 
-/*    out_err(LEVEL_CRITICAL,"NUM_logins: %d\n",count);*/
+  } /* \!(FLAG_ALWAYS_ALLOW_LOGIN || FLAG_SITEOP) */
 
-    if (count >= me->num_logins) return E_USER_NUMLOGINS;
-    /* >= and not ==, because it two attempts are issued simultaneously, count > num_logins ! */
-  }
 
   /* foreach group of user, check num_logins */
   {
@@ -370,8 +385,11 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
           break;
         ret = send_message_with_args(421,context,"User deleted");
         return 1;
-      case E_USER_NUMLOGINS: /* too many logins */
-        ret = send_message_with_args(421,context,"Too many connections with your login");
+      case E_USER_NUMLOGINS: /* too many logins from the same account */
+        ret = send_message_with_args(421,context,"Too many connections with this login account");
+        return 1;
+      case E_USER_LOGINSPERIP: /* too many logins from the same IP */
+        ret = send_message_with_args(421,context,"Too many connections with this IP address");
         return 1;
       case E_USER_CLOSED: /* site closed */
         ret = send_message_with_args(421,context,"Site is closed, try again later");
@@ -384,6 +402,9 @@ out_err(LEVEL_FLOOD,"<thread %ld> <- '%s'\n",(unsigned long)context->pid_child,b
         return 1;
       case E_GROUP_NUMLOGINS: /* too many logins for group */
         ret = send_message_with_args(421,context,"Too many connections for your group");
+        return 1;
+      case E_USER_TOOMANYUSERS: /* too many users connected to the server */
+        ret = send_message_with_args(421,context,"Too many connections to the server");
         return 1;
       default:
         ret = send_message_with_args(421,context,"User rejected (unknown error)");

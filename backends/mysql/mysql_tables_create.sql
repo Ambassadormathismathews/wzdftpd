@@ -45,6 +45,7 @@ CREATE TABLE users (
   max_ul_speed double unsigned default NULL,
   max_dl_speed double unsigned default NULL,
   num_logins smallint(5) unsigned default NULL,
+  logins_per_ip smallint(5) unsigned default NULL,
   ratio int(10) unsigned default NULL,
   user_slots int(10) unsigned default NULL,
   leech_slots int(10) unsigned default NULL,
@@ -57,10 +58,7 @@ CREATE TABLE users (
 -- Dumping data for table `users`
 --
 
-INSERT INTO users VALUES ('','wzdftpd',NULL,'/','local admin',1,NULL,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
-
-INSERT INTO users VALUES ('','novel',NULL,'/usr/home/novel',NULL,2,NULL,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
-INSERT INTO users VALUES ('','anonymous',NULL,'/tmp',NULL,3,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
+INSERT INTO users VALUES ('','wzdftpd',NULL,'/','local admin',1,NULL,"OIstH",NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0xffffffff,NULL,NULL);
 
 --
 -- Table structure for table `ugr` (User-Group Relations)
@@ -94,9 +92,6 @@ CREATE TABLE userip (
 
 INSERT INTO userip VALUES(1,"127.0.0.1");
 
-INSERT INTO userip VALUES(2,"foobar@localhost");
-INSERT INTO userip VALUES(2,"127.0.0.1");
-
 --
 -- Table structure for table `stats`
 --
@@ -111,15 +106,11 @@ CREATE TABLE stats (
 ) TYPE=MyISAM;
 
 INSERT INTO stats (ref) VALUES (1);
-INSERT INTO stats (ref) VALUES (2);
 
 --
 -- hmm - moo, moo; I'm trying to insert references into ugr
 --
 INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=1 AND groups.gid=1;
-
--- insert novel into admin group (he's a good friend !)
-INSERT into ugr (uref,gref) SELECT users.ref,groups.ref FROM users,groups WHERE users.uid=2 AND groups.gid=1;
 
 
 --

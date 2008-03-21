@@ -61,46 +61,47 @@ struct wzd_backend_t {
 
 
 /* used to know what was modified in update functions */
-#define	_USER_NOTHING		0
-#define	_USER_USERNAME		1<<0
-#define	_USER_USERPASS		1<<1
-#define	_USER_ROOTPATH		1<<2
-#define	_USER_TAGLINE		1<<3
-#define	_USER_UID		1<<4
-#define	_USER_GROUPNUM		1<<5
-#define	_USER_GROUP		1<<6
-#define	_USER_IDLE		1<<7
-#define	_USER_PERMS		1<<8
-#define	_USER_FLAGS		1<<9
-#define	_USER_MAX_ULS		1<<10
-#define	_USER_MAX_DLS		1<<11
-#define	_USER_IP		1<<12
-#define	_USER_BYTESUL		1<<13
-#define	_USER_BYTESDL		1<<14
-#define	_USER_CREDITS		1<<15
-#define	_USER_NUMLOGINS		1<<16
-#define	_USER_USERSLOTS		1<<17
-#define	_USER_LEECHSLOTS	1<<18
-#define	_USER_RATIO		1<<19
-#define _USER_CREATOR		1<<20
-#define _USER_ALL               0x0000ffff
-#define _USER_CREATE            0x01000000
+#define _USER_NOTHING       0
+#define _USER_USERNAME      1<<0
+#define _USER_USERPASS      1<<1
+#define _USER_ROOTPATH      1<<2
+#define _USER_TAGLINE       1<<3
+#define _USER_UID           1<<4
+#define _USER_GROUPNUM      1<<5
+#define _USER_GROUP         1<<6
+#define _USER_IDLE          1<<7
+#define _USER_PERMS         1<<8
+#define _USER_FLAGS         1<<9
+#define _USER_MAX_ULS       1<<10
+#define _USER_MAX_DLS       1<<11
+#define _USER_IP            1<<12
+#define _USER_BYTESUL       1<<13
+#define _USER_BYTESDL       1<<14
+#define _USER_CREDITS       1<<15
+#define _USER_NUMLOGINS     1<<16
+#define _USER_USERSLOTS     1<<17
+#define _USER_LEECHSLOTS    1<<18
+#define _USER_RATIO	        1<<19
+#define _USER_CREATOR       1<<20
+#define _USER_LOGINSPERIP   1<<21
+#define _USER_ALL           0x0000ffff
+#define _USER_CREATE        0x01000000
 
-#define _GROUP_NOTHING		0
-#define	_GROUP_GROUPNAME	1<<0
-#define	_GROUP_GROUPPERMS	1<<1
-#define	_GROUP_IDLE		1<<2
-#define	_GROUP_MAX_ULS		1<<3
-#define	_GROUP_MAX_DLS		1<<4
-#define	_GROUP_RATIO		1<<5
-#define	_GROUP_IP		1<<6
-#define	_GROUP_DEFAULTPATH	1<<7
-#define	_GROUP_NUMLOGINS	1<<8
-#define	_GROUP_TAGLINE		1<<9
-#define	_GROUP_GID		1<<10
-#define _GROUP_FLAGS		1<<11
-#define _GROUP_ALL              0x0000ffff
-#define _GROUP_CREATE           0x01000000
+#define _GROUP_NOTHING      0
+#define _GROUP_GROUPNAME    1<<0
+#define _GROUP_GROUPPERMS   1<<1
+#define _GROUP_IDLE         1<<2
+#define _GROUP_MAX_ULS      1<<3
+#define _GROUP_MAX_DLS      1<<4
+#define _GROUP_RATIO        1<<5
+#define _GROUP_IP           1<<6
+#define _GROUP_DEFAULTPATH  1<<7
+#define _GROUP_NUMLOGINS    1<<8
+#define _GROUP_TAGLINE      1<<9
+#define _GROUP_GID          1<<10
+#define _GROUP_FLAGS        1<<11
+#define _GROUP_ALL          0x0000ffff
+#define _GROUP_CREATE       0x01000000
 
 
 /** \brief Get backend version

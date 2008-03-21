@@ -53,8 +53,11 @@ xferlog = @CMAKE_INSTALL_PREFIX@/@localstatedir@/log/@PACKAGE@/xferlog
 # directory to store various log files
 logdir = @CMAKE_INSTALL_PREFIX@/@localstatedir@/log/@PACKAGE@
 
-# max number of child threads (default: 32)
-max_threads = 32
+# max number of child threads (default: 64)
+max_threads = 64
+
+# max number of users allowed to connect to server (default: 64)
+max_users = 64
 
 # backend to use for auth (default: plaintext)
 # you can check backend version with directives > and <

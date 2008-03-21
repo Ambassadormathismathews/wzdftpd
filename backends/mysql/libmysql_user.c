@@ -169,6 +169,8 @@ int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
       APPEND_STRING_TO_QUERY("max_dl_speed='%u' ", user->max_dl_speed, query, query_length, mod, modified);
     if (mod_type & _USER_NUMLOGINS)
       APPEND_STRING_TO_QUERY("num_logins='%u' ", user->num_logins, query, query_length, mod, modified);
+    if (mod_type & _USER_LOGINSPERIP)
+      APPEND_STRING_TO_QUERY("logins_per_ip='%u' ", user->logins_per_ip, query, query_length, mod, modified);
 
     if ((mod_type & _USER_BYTESDL) || (mod_type & _USER_BYTESUL)) {
       _user_update_stats(ref,user); /** \todo FIXME test return ! */
@@ -266,15 +268,15 @@ int wmysql_mod_user(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     memset(user->userpass,0,MAX_PASS_LENGTH);
     memcpy(user->userpass, passbuffer, MAX_PASS_LENGTH);
 
-    if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,creator,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',%u,'%u','%s',%u,%lu,%lu,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
+    if (_wzd_run_update_query(query, 2048, "INSERT INTO users (username,userpass,rootpath,uid,creator,flags,max_idle_time,max_ul_speed,max_dl_speed,num_logins,logins_per_ip,ratio,user_slots,leech_slots,perms,credits) VALUES ('%s','%s','%s',%u,'%u','%s',%u,%lu,%lu,%u,%u,%u,%u,%u,0x%lx,%" PRIu64 ")",
           user->username, passbuffer,
           user->rootpath,
           user->uid,
 	  user->creator,
           user->flags,
           (unsigned int)user->max_idle_time, user->max_ul_speed, user->max_dl_speed,
-          user->num_logins, user->ratio, user->user_slots, user->leech_slots,
-          user->userperms, user->credits
+          user->num_logins, user->logins_per_ip, user->ratio, user->user_slots,
+          user->leech_slots, user->userperms, user->credits
           ))
       goto error_user_add;
   }

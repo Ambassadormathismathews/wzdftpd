@@ -125,6 +125,7 @@ typedef enum {
   COOKIE_GROUPMAXIDLE,
   COOKIE_GROUPMAXUL,
   COOKIE_GROUPNAME,
+  COOKIE_GROUPFLAGS,
   COOKIE_GROUPNUM_LOGINS,
   COOKIE_GROUPRATIO,
   COOKIE_GROUPTAG,
@@ -155,6 +156,7 @@ typedef enum {
   COOKIE_USERGROUPS,
   COOKIE_USERHOME,
   COOKIE_USERID,
+  COOKIE_USERCREATOR,
   COOKIE_USERIP,
   COOKIE_USERIP_ALLOW,
   COOKIE_USERLASTCMD,
@@ -165,6 +167,7 @@ typedef enum {
   COOKIE_USERMAXUL,
   COOKIE_USERNAME,
   COOKIE_USERNUM_LOGINS,
+  COOKIE_USERLOGINS_PER_IP,
   COOKIE_USERPATH,
   COOKIE_USERPID,
   COOKIE_USERPWD,
@@ -346,6 +349,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_GROUP}maxidle	BEGIN(INITIAL); return COOKIE_GROUPMAXIDLE;
 <sc_cook>{C_GROUP}maxul		BEGIN(INITIAL); return COOKIE_GROUPMAXUL;
 <sc_cook>{C_GROUP}name		BEGIN(INITIAL); return COOKIE_GROUPNAME;
+<sc_cook>{C_GROUP}flags     BEGIN(INITIAL); return COOKIE_GROUPFLAGS;
 <sc_cook>{C_GROUP}num_logins	BEGIN(INITIAL); return COOKIE_GROUPNUM_LOGINS;
 <sc_cook>{C_GROUP}ratio		BEGIN(INITIAL); return COOKIE_GROUPRATIO;
 <sc_cook>{C_GROUP}tag		BEGIN(INITIAL); return COOKIE_GROUPTAG;
@@ -375,6 +379,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}group		BEGIN(INITIAL); return COOKIE_USERGROUP;
 <sc_cook>{C_USER}home		BEGIN(INITIAL); return COOKIE_USERHOME;
 <sc_cook>{C_USER}id		BEGIN(INITIAL); return COOKIE_USERID;
+<sc_cook>{C_USER}creator    BEGIN(INITIAL); return COOKIE_USERCREATOR;
 <sc_cook>{C_USER}ip_allow[0-9]+	BEGIN(INITIAL); return COOKIE_USERIP_ALLOW;
 <sc_cook>{C_USER}ip		BEGIN(INITIAL); return COOKIE_USERIP;
 <sc_cook>{C_USER}lastcmd	BEGIN(INITIAL); return COOKIE_USERLASTCMD;
@@ -385,6 +390,7 @@ C_VFS    ([0-9]+".")?"vfs"
 <sc_cook>{C_USER}maxul		BEGIN(INITIAL); return COOKIE_USERMAXUL;
 <sc_cook>{C_USER}name		BEGIN(INITIAL); return COOKIE_USERNAME;
 <sc_cook>{C_USER}num_logins	BEGIN(INITIAL); return COOKIE_USERNUM_LOGINS;
+<sc_cook>{C_USER}logins_per_ip BEGIN(INITIAL); return COOKIE_USERLOGINS_PER_IP;
 <sc_cook>{C_USER}path		BEGIN(INITIAL); return COOKIE_USERPATH;
 <sc_cook>{C_USER}pid		BEGIN(INITIAL); return COOKIE_USERPID;
 <sc_cook>{C_USER}pwd		BEGIN(INITIAL); return COOKIE_USERPWD;
@@ -1017,6 +1023,20 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
+    case COOKIE_GROUPFLAGS:
+      get_cookie_format(yytext,&padding);
+      if (current_group)
+      {
+        if (current_group->flags && strlen(current_group->flags)>0)
+          snprintf(internalbuffer,IBUFSIZE,"%s",current_group->flags);
+        else
+          snprintf(internalbuffer,IBUFSIZE,"no flags");
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"groupflags");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_GROUPIP_ALLOW:
       get_cookie_format(yytext,&padding);
       {
@@ -1547,6 +1567,15 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;
+    case COOKIE_USERCREATOR:
+      get_cookie_format(yytext,&padding);
+      if (current_user)
+        snprintf(internalbuffer,IBUFSIZE,"%u",current_user->creator);
+      else
+        snprintf(internalbuffer,IBUFSIZE,"usercreator");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
     case COOKIE_USERIP:
       get_cookie_format(yytext,&padding);
       if (current_context)
@@ -1697,6 +1726,18 @@ out_err(LEVEL_HIGH,"char: %d [%c]\n", c, c);
       }
       else
         snprintf(internalbuffer,IBUFSIZE,"usernum_logins");
+      cookie_ptr = internalbuffer;
+      cookie_length = strlen(cookie_ptr);
+      break;
+    case COOKIE_USERLOGINS_PER_IP:
+      get_cookie_format(yytext,&padding);
+      if (current_user)
+      {
+        if (current_user->logins_per_ip == 0) snprintf(internalbuffer, IBUFSIZE,"Unlimited");
+        else snprintf(internalbuffer,IBUFSIZE,"%d",current_user->logins_per_ip);
+      }
+      else
+        snprintf(internalbuffer,IBUFSIZE,"userlogins_per_ip");
       cookie_ptr = internalbuffer;
       cookie_length = strlen(cookie_ptr);
       break;

@@ -93,7 +93,8 @@ void cfg_init(wzd_config_t * cfg)
   cfg->pasv_low_range = 1025;
   cfg->pasv_high_range = 65535;
 
-  cfg->max_threads = 32;
+  cfg->max_threads = 64;
+  cfg->max_users = 64;
   cfg->umask = 0775;
   cfg->data_buffer_length = 16384;
 
@@ -250,6 +251,15 @@ wzd_config_t * cfg_store(wzd_configfile_t * file, int * error)
       return NULL;
     }
     cfg->loglevel = i;
+    str_deallocate(str);
+  }
+
+  /* MAX_USERS */
+  str = config_get_string(file, "GLOBAL", "max_users", NULL);
+  if (str) {
+    ul = strtoul(str_tochar(str),&p,0);
+    if (p && *p == '\0')
+      cfg->max_users = ul;
     str_deallocate(str);
   }
 

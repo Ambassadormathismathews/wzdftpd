@@ -89,6 +89,10 @@ int vars_get(const char *varname, char *data, unsigned int datalength, wzd_confi
     snprintf(data,datalength,"%s",loglevel2str(config->loglevel));
     return 0;
   }
+  if (strcasecmp(varname,"max_users")==0) {
+    snprintf(data,datalength,"%u",config->max_users);
+    return 0;
+  }
   if (strcasecmp(varname,"max_dl")==0) {
     snprintf(data,datalength,"%u",config->global_dl_limiter.maxspeed);
     return 0;
@@ -163,6 +167,13 @@ int vars_set(const char *varname, const char *data, unsigned int datalength, wzd
     }
     config->loglevel = i;
     return 0;
+  }
+  if (strcasecmp(varname,"max_users")==0) {
+    ul = strtoul(data,&ptr,0);
+    if (ptr && *ptr == '\0') {
+      config->max_users = ul;
+      return 0;
+    }
   }
   if (strcasecmp(varname,"max_dl")==0) {
     ul = strtoul(data,&ptr,0);
@@ -378,31 +389,42 @@ int vars_user_set(const char *username, const char *varname, const char *data, u
     ul=strtoul(data, &ptr, 0);
     /* TODO compare with USHORT_MAX */
     if (*ptr) return -1;
-    mod_type = _USER_LEECHSLOTS; user->leech_slots = (unsigned short)ul;
+    mod_type = _USER_LEECHSLOTS;
+    user->leech_slots = (unsigned short)ul;
   }
   /* max_dl */
   else if (strcmp(varname, "max_dl")==0) {
     ul=strtoul(data, &ptr, 0);
     if (*ptr) return -1;
-    mod_type = _USER_MAX_DLS; user->max_dl_speed = ul;
+    mod_type = _USER_MAX_DLS;
+    user->max_dl_speed = ul;
   }
   /* max_idle */
   else if (strcmp(varname, "max_idle")==0) {
     ul=strtoul(data, &ptr, 0);
     if (*ptr) return -1;
-    mod_type = _USER_IDLE; user->max_idle_time = ul;
+    mod_type = _USER_IDLE;
+    user->max_idle_time = ul;
   }
   /* max_ul */
   else if (strcmp(varname, "max_ul")==0) {
     ul=strtoul(data, &ptr, 0);
     if (*ptr) return -1;
-    mod_type = _USER_MAX_ULS; user->max_ul_speed = ul;
+    mod_type = _USER_MAX_ULS;
+    user->max_ul_speed = ul;
   }
   /* num_logins */
   else if (strcmp(varname, "num_logins")==0) {
-    ul=strtoul(data, &ptr,0);
+    ul=strtoul(data, &ptr, 0);
     if (*ptr) return -1;
-    mod_type = _USER_NUMLOGINS; user->num_logins = (unsigned short)ul;
+    mod_type = _USER_NUMLOGINS;
+    user->num_logins = (unsigned short)ul;
+  }
+  else if (strcmp(varname, "logins_per_ip)")==0) {
+    ul=strtoul(data, &ptr, 0);
+    if (*ptr) return -1;
+    mod_type = _USER_LOGINSPERIP;
+    user->logins_per_ip = (unsigned short)ul;
   }
   /* pass */
   else if (strcmp(varname, "pass")==0) {
@@ -413,13 +435,15 @@ int vars_user_set(const char *username, const char *varname, const char *data, u
   else if (strcmp(varname, "perms")==0) {
     ul=strtoul(data, &ptr, 0);
     if (*ptr) return -1;
-    mod_type = _USER_PERMS; user->userperms = ul;
+    mod_type = _USER_PERMS;
+    user->userperms = ul;
   }
   /* ratio */
   else if (strcmp(varname, "ratio")==0) {
     ul=strtoul(data, &ptr,0);
     if (*ptr) return -1;
-    mod_type = _USER_RATIO; user->ratio = ul;
+    mod_type = _USER_RATIO;
+    user->ratio = ul;
   }
   /* tagline */
   else if (strcmp(varname, "tag")==0) {
@@ -446,7 +470,8 @@ int vars_user_set(const char *username, const char *varname, const char *data, u
     ul=strtoul(data, &ptr, 0);
     /* TODO compare with USHORT_MAX */
     if (*ptr) return -1;
-    mod_type = _USER_USERSLOTS; user->user_slots = (unsigned short)ul;
+    mod_type = _USER_USERSLOTS;
+    user->user_slots = (unsigned short)ul;
   }
 
   /* commit to backend */

@@ -781,6 +781,7 @@ static wzd_user_t * get_user_from_db(const char * where_statement)
   wzd_row_get_uint(&user->max_ul_speed, res, UCOL_MAX_UL_SPEED);
   wzd_row_get_uint(&user->max_dl_speed, res, UCOL_MAX_DL_SPEED);
   if (wzd_row_get_uint(&i, res, UCOL_NUM_LOGINS)==0) user->num_logins = i;
+  if (wzd_row_get_uint(&i, res, UCOL_LOGINS_PER_IP)==0) user->logins_per_ip = i;
   wzd_row_get_uint(&user->ratio, res, UCOL_RATIO);
   if (wzd_row_get_uint(&i, res, UCOL_USER_SLOTS)==0) user->user_slots = i;
   if (wzd_row_get_uint(&i, res, UCOL_LEECH_SLOTS)==0) user->leech_slots = i;

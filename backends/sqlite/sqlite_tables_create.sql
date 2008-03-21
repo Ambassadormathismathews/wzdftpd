@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
   max_ul_speed BIGINT default NULL,
   max_dl_speed BIGINT default NULL,
   num_logins INTEGER(5) default NULL,
+  logins_per_ip INTEGER(5) default NULL,
   ratio INTEGER(10) default NULL,
   user_slots INTEGER(10) default NULL,
   leech_slots INTEGER(10) default NULL,
@@ -73,12 +74,12 @@ INSERT INTO
 INSERT INTO 
   users (
     uref, uid, username, userpass, rootpath, tagline, flags, creator, 
-    max_idle_time, max_ul_speed, max_dl_speed, num_logins, ratio, 
-    user_slots, leech_slots, perms, credits, last_login
+    max_idle_time, max_ul_speed, max_dl_speed, num_logins, logins_per_ip,
+    ratio, user_slots, leech_slots, perms, credits, last_login
   )
   VALUES (
     1, 0, 'wzdftpd', 'wzufwPCZFYH/6', '/', 'Admin', "O", NULL, NULL, NULL, NULL, 
-    2, 0, NULL, NULL, 4294967295, NULL, NULL
+    2, 0, 0, NULL, NULL, 4294967295, NULL, NULL
   );
 
 INSERT INTO ugr ( uref, gref ) VALUES (1, 1);

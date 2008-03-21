@@ -282,6 +282,7 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
     if (mod_type & _USER_MAX_ULS) loop_user->max_ul_speed = user->max_ul_speed;
     if (mod_type & _USER_MAX_DLS) loop_user->max_dl_speed = user->max_dl_speed;
     if (mod_type & _USER_NUMLOGINS) loop_user->num_logins = user->num_logins;
+    if (mod_type & _USER_LOGINSPERIP) loop_user->logins_per_ip = user->logins_per_ip;
     if (mod_type & _USER_IP) {
       /* replace old list by the new one */
       struct wzd_ip_list_t * old_list;

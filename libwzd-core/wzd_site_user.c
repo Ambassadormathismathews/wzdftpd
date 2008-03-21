@@ -662,21 +662,22 @@ int do_site_help_change(UNUSED wzd_string_t *cname, UNUSED wzd_string_t *command
 {
   send_message_raw("501-site change <user> <field> <value>\r\n",context);
   send_message_raw("field can be one of:\r\n",context);
-  send_message_raw(" name        changes the user login name\r\n",context);
-  send_message_raw(" pass        changes user password\r\n",context);
-  send_message_raw(" homedir     changes user chroot's dir\r\n",context);
-  send_message_raw(" tagline     changes user tagline\r\n",context);
-  send_message_raw(" group       add/remove user from group\r\n",context);
-  send_message_raw(" max_idle    changes idle time\r\n",context);
-  send_message_raw(" perms       changes default user permissions\r\n",context);
-  send_message_raw(" flags       changes user flags\r\n",context);
-  send_message_raw(" max_ul      changes maximum upload speed\r\n",context);
-  send_message_raw(" max_dl      changes maximum download speed\r\n",context);
-  send_message_raw(" credits     changes user credits\r\n",context);
-  send_message_raw(" ratio       changes user ratio\r\n",context);
-  send_message_raw(" num_logins  changes maximum simultaneous logins allowed\r\n",context);
-  send_message_raw(" user_slots  changes allowed user slots (for GAdmins)\r\n",context);
-  send_message_raw(" leech_slots changes allowed leech slots (for GAdmins)\r\n",context);
+  send_message_raw(" name          changes the user login name\r\n",context);
+  send_message_raw(" pass          changes user password\r\n",context);
+  send_message_raw(" homedir       changes user chroot's dir\r\n",context);
+  send_message_raw(" tagline       changes user tagline\r\n",context);
+  send_message_raw(" group         add/remove user from group\r\n",context);
+  send_message_raw(" max_idle      changes idle time\r\n",context);
+  send_message_raw(" perms         changes default user permissions\r\n",context);
+  send_message_raw(" flags         changes user flags\r\n",context);
+  send_message_raw(" max_ul        changes maximum upload speed\r\n",context);
+  send_message_raw(" max_dl        changes maximum download speed\r\n",context);
+  send_message_raw(" credits       changes user credits\r\n",context);
+  send_message_raw(" ratio         changes user ratio\r\n",context);
+  send_message_raw(" num_logins    changes maximum simultaneous logins allowed (0=unlimited)\r\n",context);
+  send_message_raw(" logins_per_ip changes maximum logins per ip (0=unlimited)\r\n",context);
+  send_message_raw(" user_slots    changes allowed user slots (for GAdmins)\r\n",context);
+  send_message_raw(" leech_slots   changes allowed leech slots (for GAdmins)\r\n",context);
 
   send_message_raw("501 site change aborted\r\n",context);
 
@@ -887,7 +888,28 @@ int do_site_change(wzd_string_t *cname, wzd_string_t *command_line, wzd_context_
   /* num_logins */
   else if (strcmp(str_tochar(field),"num_logins")==0) {
     ul=strtoul(str_tochar(value),&ptr,0);
-    if (!*ptr) { mod_type = _USER_NUMLOGINS; user->num_logins = (unsigned short)ul; }
+    if (!*ptr) {
+      if (is_gadmin && user->num_logins < (unsigned short)ul ) {
+        ret = send_message_with_args(501,context,"You cannot increase this field");
+        str_deallocate(field); str_deallocate(value);
+        return 0;
+      }
+      mod_type = _USER_NUMLOGINS;
+      user->num_logins = (unsigned short)ul;
+    }
+  }
+  /* logins_per_ip */
+  else if (strcmp(str_tochar(field),"logins_per_ip")==0) {
+    ul=strtoul(str_tochar(value),&ptr,0);
+    if (!*ptr) {
+      if (is_gadmin && user->logins_per_ip < (unsigned short)ul ) {
+        ret = send_message_with_args(501,context,"You cannot increase this field");
+        str_deallocate(field); str_deallocate(value);
+        return 0;
+      }
+      mod_type = _USER_LOGINSPERIP;
+      user->logins_per_ip = (unsigned short)ul;
+    }
   }
   /* ratio */
   else if (strcmp(str_tochar(field),"ratio")==0) {
