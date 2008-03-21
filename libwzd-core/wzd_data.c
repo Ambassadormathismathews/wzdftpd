@@ -335,7 +335,7 @@ int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde
     return context->data_socket;
     break;
   }
-  return 0;
+  return -1;
 }
 
 int data_execute(wzd_context_t * context, wzd_user_t * user, fd_set *fdr, fd_set *fdw)
