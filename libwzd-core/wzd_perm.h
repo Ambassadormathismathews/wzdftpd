@@ -140,6 +140,6 @@ int perm_check(const char *permname, const wzd_context_t * context, wzd_command_
  * \param[out] max_length Maximum number of bytes that can be written to output buffer
  * \return 0 if ok
  */
-int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_length);
+int perm2str(wzd_command_perm_t * perm, char * perm_buffer, size_t max_length);
 
 #endif /* __WZD_PERM__ */

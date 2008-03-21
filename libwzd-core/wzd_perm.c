@@ -179,10 +179,10 @@ void perm_free_recursive(wzd_command_perm_t * perm)
  * \param[out] max_length Maximum number of bytes that can be written to output buffer
  * \return 0 if ok
  */
-int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_length)
+int perm2str(wzd_command_perm_t * perm, char * perm_buffer, size_t max_length)
 {
   char *perm_buffer_ptr;
-  unsigned int length;
+  size_t length;
   wzd_command_perm_entry_t * entry;
 
   if (!perm) return 1;
@@ -193,7 +193,7 @@ int perm2str(wzd_command_perm_t * perm, char * perm_buffer, unsigned int max_len
   entry = perm->entry_list;
   while (entry) {
     *perm_buffer_ptr++ = ' ';
-    length ++;
+    length++;
     if (strcmp(entry->target,"*")!=0) {
       switch(entry->cp) {
         case CPERM_USER: *perm_buffer_ptr++ = '='; break;
