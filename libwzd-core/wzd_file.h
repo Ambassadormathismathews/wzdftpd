@@ -70,11 +70,11 @@ struct wzd_file_t {
 
 int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context);
 
-void file_close(int fd, wzd_context_t * context);
+void file_close(fd_t file, wzd_context_t * context);
 
 /* wrappers just to keep things in same memory zones */
-ssize_t file_read(fd_t fd,void *data,size_t length);
-ssize_t file_write(fd_t fd,const void *data,size_t length);
+ssize_t file_read(fd_t file,void *data,size_t length);
+ssize_t file_write(fd_t file,const void *data,size_t length);
 
 int file_chown(const char *filename, const char *username, const char *groupname, wzd_context_t * context);
 
@@ -84,7 +84,7 @@ int file_remove(const char *filename, wzd_context_t * context);
 int file_mkdir(const char *dirname, unsigned int mode, wzd_context_t * context);
 int file_rmdir(const char *dirname, wzd_context_t * context);
 
-fs_off_t file_seek(fd_t fd, fs_off_t offset, int whence);
+fs_off_t file_seek(fd_t file, fs_off_t offset, int whence);
 
 wzd_user_t * file_getowner(const char *filename, wzd_context_t * context);
 
@@ -96,9 +96,9 @@ int symlink_create(const char *existing, const char *link);
 int symlink_remove(const char *link);
 
 /* returns 1 if file is currently locked, else 0 */
-int file_lock(fd_t fd, short lock_mode);
-int file_unlock(fd_t fd);
-int file_islocked(fd_t fd, short lock_mode);
+int file_lock(fd_t file, short lock_mode);
+int file_unlock(fd_t file);
+int file_islocked(fd_t file, short lock_mode);
 int file_force_unlock(const char *file);
 
 /* low-level func */

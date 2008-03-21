@@ -1414,7 +1414,7 @@ int softlink_remove(const char *linkname)
 
 int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context)
 {
-  int fd;
+  fd_t file;
   int ret;
   wzd_user_t * user;
   short is_locked;
@@ -1440,13 +1440,13 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   mode |= _O_BINARY;
 #endif
 
-  fd = fs_open(filename,mode,0666);
-  if (fd == -1) {
+  file = fs_open(filename,mode,0666);
+  if (file == -1) {
     out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",filename,errno,strerror(errno));
     return -1;
   }
 
-  is_locked = file_islocked(fd,F_WRLCK);
+  is_locked = file_islocked(file,F_WRLCK);
 
   if (is_locked == -1) {
     out_log(LEVEL_NORMAL,"Could not get lock info\n");
@@ -1454,34 +1454,34 @@ int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_co
   else {
     if ( mode & O_WRONLY ) {
       if (is_locked) {
-        close(fd);
+        close(file);
 /*        out_err(LEVEL_HIGH,"Can't open %s in write mode, locked !\n",filename);*/
         return -1;
       }
-      file_lock(fd,F_WRLCK);
+      file_lock(file,F_WRLCK);
     }
     else {
       if (is_locked) {
 /*	out_err(LEVEL_HIGH,"%s is locked, trying to read\n",filename);*/
         if ( CFG_GET_OPTION(mainConfig,CFG_OPT_DENY_ACCESS_FILES_UPLOADED) ) {
-          close(fd);
+          close(file);
           return -1;
         }
       }
     }
   }
 
-  return fd;
+  return file;
 }
 
-void file_close(int fd, wzd_context_t * context)
+void file_close(fd_t file, wzd_context_t * context)
 {
-  close(fd);
+  close(file);
 }
 
-fs_off_t file_seek(fd_t fd, fs_off_t offset, int whence)
+fs_off_t file_seek(fd_t file, fs_off_t offset, int whence)
 {
-  return fs_lseek(fd,offset,whence);
+  return fs_lseek(file,offset,whence);
 }
 
 /** NOTE:
@@ -1969,10 +1969,10 @@ struct wzd_file_t * file_stat(const char *filename, wzd_context_t * context)
 /* if program crash, locks acquired by fcntl (POSIX) or _locking (VISUAL)
  * are released, and then do are less annoying.
  */
-int file_lock(fd_t fd, short lock_mode)
+int file_lock(fd_t file, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
-out_err(LEVEL_HIGH,"Locking file %d\n",fd);
+out_err(LEVEL_HIGH,"Locking file %d\n",file);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -1980,20 +1980,20 @@ out_err(LEVEL_HIGH,"Locking file %d\n",fd);
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
   lck.l_start = 0;
   lck.l_len = 0;
-  if (fcntl(fd, F_SETLK, &lck) < 0) {
+  if (fcntl(file, F_SETLK, &lck) < 0) {
     return -1;
   }
 #else
-  if (_locking(fd, LK_NBLCK, -1) == -1)
+  if (_locking(file, LK_NBLCK, -1) == -1)
     return -1;
 #endif
   return 0;
 }
 
-int file_unlock(fd_t fd)
+int file_unlock(fd_t file)
 {
 #ifdef WZD_DBG_LOCK
-out_err(LEVEL_HIGH,"Unlocking file %d\n",fd);
+out_err(LEVEL_HIGH,"Unlocking file %d\n",file);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -2001,20 +2001,20 @@ out_err(LEVEL_HIGH,"Unlocking file %d\n",fd);
   lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
   lck.l_start = 0;
   lck.l_len = 0;
-  if (fcntl(fd, F_SETLK, &lck) < 0) {
+  if (fcntl(file, F_SETLK, &lck) < 0) {
     return -1;
   }
 #else
-  if (_locking(fd, LK_UNLCK, -1) == -1)
+  if (_locking(file, LK_UNLCK, -1) == -1)
     return -1;
 #endif
   return 0;
 }
 
-int file_islocked(fd_t fd, short lock_mode)
+int file_islocked(fd_t file, short lock_mode)
 {
 #ifdef WZD_DBG_LOCK
-out_err(LEVEL_HIGH,"Testing lock for file %d\n",fd);
+out_err(LEVEL_HIGH,"Testing lock for file %d\n",file);
 #endif
 #ifndef WIN32
   struct flock lck;
@@ -2023,13 +2023,13 @@ out_err(LEVEL_HIGH,"Testing lock for file %d\n",fd);
   lck.l_start = 0;
   lck.l_len = 0;
 
-  if (fcntl(fd, F_GETLK, &lck) < 0) {
+  if (fcntl(file, F_GETLK, &lck) < 0) {
     return -1;
   }
   if (lck.l_type == F_RDLCK || lck.l_type == F_WRLCK) return 1;
 #else
-  if (_locking(fd, LK_NBLCK, -1) != -1) {
-    _locking(fd, LK_UNLCK, -1);
+  if (_locking(file, LK_NBLCK, -1) != -1) {
+    _locking(file, LK_UNLCK, -1);
     return 0;
   } else {
     if (errno == EACCES) return 1;
@@ -2041,13 +2041,13 @@ out_err(LEVEL_HIGH,"Testing lock for file %d\n",fd);
 
 int file_force_unlock(const char *file)
 {
-  int fd;
+  fd_t file;
 #ifdef WZD_DBG_LOCK
 out_err(LEVEL_HIGH,"Forcing unlock file %s\n",file);
 #endif
 
-  fd = open(file,O_RDWR);
-  if (fd < 0) {
+  file = open(file,O_RDWR);
+  if (file < 0) {
     out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",file,errno,strerror(errno));
     return -1;
   }
@@ -2059,31 +2059,31 @@ out_err(LEVEL_HIGH,"Forcing unlock file %s\n",file);
     lck.l_whence = SEEK_SET;/* offset l_start from beginning of file */
     lck.l_start = 0;
     lck.l_len = 0;
-    if (fcntl(fd, F_SETLK, &lck) < 0) {
-      close(fd);
+    if (fcntl(file, F_SETLK, &lck) < 0) {
+      close(file);
       return -1;
     }
   }
 #else
-  if (_locking(fd, LK_UNLCK, -1) == -1)
+  if (_locking(file, LK_UNLCK, -1) == -1)
   {
-    close(fd);
+    close(file);
     return -1;
   }
 #endif
-  close(fd);
+  close(file);
   return 0;
 }
 
 /* wrappers just to keep things in same memory zones */
-ssize_t file_read(fd_t fd,void *data,size_t length)
+ssize_t file_read(fd_t file,void *data,size_t length)
 {
-  return read(fd,data,length);
+  return read(file,data,length);
 }
 
-ssize_t file_write(fd_t fd,const void *data,size_t length)
+ssize_t file_write(fd_t file,const void *data,size_t length)
 {
-  return write(fd,data,length);
+  return write(file,data,length);
 }
 
 /* symlink operations */
