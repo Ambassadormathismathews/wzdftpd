@@ -2039,16 +2039,16 @@ out_err(LEVEL_HIGH,"Testing lock for file %d\n",file);
   return 0;
 }
 
-int file_force_unlock(const char *file)
+int file_force_unlock(const char *filename)
 {
   fd_t file;
 #ifdef WZD_DBG_LOCK
 out_err(LEVEL_HIGH,"Forcing unlock file %s\n",file);
 #endif
 
-  file = open(file,O_RDWR);
+  file = open(filename,O_RDWR);
   if (file < 0) {
-    out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",file,errno,strerror(errno));
+    out_log(LEVEL_INFO,"Can't open %s, errno %d : %s\n",filename,errno,strerror(errno));
     return -1;
   }
 
