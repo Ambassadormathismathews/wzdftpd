@@ -235,7 +235,7 @@ int sfv_read(const char *filename, wzd_sfv_file *sfv)
   char * ptr;
   char *err_ptr;
   int count_comments=0, count_entries=0;
-  int length;
+  size_t length;
 
   if (stat(filename,&st) < 0) 
     return -1;

@@ -92,7 +92,8 @@ returns 0 if all ok
  */
 int sfv_create(const char * sfv_file)
 {
-  int ret=0, thisret;
+  size_t ret;
+  int thisret;
   char * directory,*dirname;
   size_t len;
   char * sfvfile;
@@ -243,7 +244,7 @@ int sfv_check(const char * sfv_file)
       crc = 0;
       thisret = calc_crc32(filename,&crc,0,-1);
       if (thisret || crc != sfv.sfv_list[i]->crc) {
-      ret ++;
+      ret++;
       sfv.sfv_list[i]->state = SFV_BAD;
       } else {
       sfv.sfv_list[i]->state = SFV_OK;
