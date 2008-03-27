@@ -577,7 +577,7 @@ int config_remove_group(wzd_configfile_t * file, const char * groupname)
  */
 int config_load_from_file (wzd_configfile_t * config, const char * file, unsigned long flags)
 {
-  int fd;
+  fd_t fd;
   int ret;
 
   if (!config || !file) return CF_ERROR_INVALID_ARGS;
@@ -597,7 +597,7 @@ int config_load_from_file (wzd_configfile_t * config, const char * file, unsigne
  *
  * If the object cannot be created then the return value is non-zero.
  */
-int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags)
+int config_load_from_fd (wzd_configfile_t * config, fd_t fd, unsigned long flags)
 {
   char read_buf[4096];
   int bytes_read;

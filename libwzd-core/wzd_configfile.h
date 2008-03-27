@@ -174,7 +174,7 @@ int config_load_from_file (wzd_configfile_t * config, const char * file, unsigne
  *
  * If the object cannot be created then the return value is non-zero.
  */
-int config_load_from_fd (wzd_configfile_t * config, int fd, unsigned long flags);
+int config_load_from_fd (wzd_configfile_t * config, fd_t fd, unsigned long flags);
 
 /** \brief Loads a key file from memory into an empty wzd_configfile_t structure.
  *
