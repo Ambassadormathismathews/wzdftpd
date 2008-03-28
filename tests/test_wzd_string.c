@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "str_erase returned crap\n");
     return 17;
   }
-  str_erase(str,4,-1);
+  str_erase(str,4,str_length(str)-4);
   if ( strcmp(ref13,str_tochar(str)) ) {
     fprintf(stderr, "str_erase returned crap\n");
     return 18;

@@ -354,16 +354,9 @@ wzd_string_t * str_trim_right(wzd_string_t *str)
 wzd_string_t * str_erase(wzd_string_t * str, size_t pos, size_t len)
 {
   if (!str || !str->buffer) return NULL;
-  if (pos > str->length) return NULL;
+  if (pos + len > str->length) return NULL;
 
-  if (len < 0)
-    len = str->length - pos;
-  else {
-    if (pos + len > str->length) return NULL;
-
-    if (pos + len < str->length)
-      wzd_memmove (str->buffer + pos, str->buffer + pos + len, str->length - (pos + len));
-  }
+  wzd_memmove(str->buffer + pos, str->buffer + pos + len, str->length - (pos + len));
 
   str->length -= len;
 

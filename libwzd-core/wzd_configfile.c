@@ -379,7 +379,7 @@ int config_set_string_list(wzd_configfile_t * file, const char * groupname, cons
     str_append(str, VALUE_LIST_SEPARATOR);
   }
   /* removes the last separator */
-  str_erase(str, str_length(str)-strlen(VALUE_LIST_SEPARATOR), -1);
+  str_erase(str, str_length(str)-strlen(VALUE_LIST_SEPARATOR), strlen(VALUE_LIST_SEPARATOR));
 
   ret = config_set_value(file, groupname, key, str_tochar(str));
 
@@ -884,8 +884,8 @@ static int config_parse_flush_buffer(wzd_configfile_t * config)
 #endif
 
   if (str_length(config->parse_buffer) > 0) {
-    ret = config_parse_line (config, str_tochar(config->parse_buffer), str_length(config->parse_buffer));
-    str_erase (config->parse_buffer, 0, -1);
+    ret = config_parse_line(config, str_tochar(config->parse_buffer), str_length(config->parse_buffer));
+    str_erase(config->parse_buffer, 0, str_length(config->parse_buffer));
 
 #if DEBUG
   if ((config->flags & CF_FILE_DEBUG)) {

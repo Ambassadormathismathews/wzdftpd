@@ -359,7 +359,7 @@ void reply_clear(wzd_context_t * context)
   context->reply->code = 0;
   /* re-use allocated string if any */
   if (context->reply->_reply != NULL)
-    str_erase(context->reply->_reply,0,-1);
+    str_erase(context->reply->_reply,0,str_length(context->reply->_reply));
   else
     context->reply->_reply = str_allocate();
   context->reply->sent = 0;
