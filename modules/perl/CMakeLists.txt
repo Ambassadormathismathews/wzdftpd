@@ -36,11 +36,13 @@ IF (NOT WIN32)
     MACRO_ADD_LINK_FLAGS(libwzd_perl "${PERL_EXTRA_LD_FLAGS}")
   ENDIF(PERL_EXTRA_LD_FLAGS)
 
-  ADD_CUSTOM_TARGET(libDynaLoader.a COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${PERL_DYNALOADER}
-    libDynaLoader.a)
-  ADD_DEPENDENCIES(libwzd_perl libDynaLoader.a)
-  SET(perl_LIBS ${perl_LIBS} DynaLoader)
+  IF(PERL_DYNALOADER)
+    ADD_CUSTOM_TARGET(libDynaLoader.a COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      ${PERL_DYNALOADER}
+      libDynaLoader.a)
+    ADD_DEPENDENCIES(libwzd_perl libDynaLoader.a)
+    SET(perl_LIBS ${perl_LIBS} DynaLoader)
+  ENDIF(PERL_DYNALOADER)
 ENDIF (NOT WIN32)
 
 IF(PERL_LIBRARY)
