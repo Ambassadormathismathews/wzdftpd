@@ -443,7 +443,7 @@ wzd_popen_t * wzd_popen(const char * command)
 {
   int p[2]; /* pipe contains: read,write */
   int child_pid;
-  wzd_popen_t * ret;
+  wzd_popen_t * ret = 0;
 
   if (pipe(p)<0) {
     fprintf(stderr,"error during pipe: %d\n",errno);
