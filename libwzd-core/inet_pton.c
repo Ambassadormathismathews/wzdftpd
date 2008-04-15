@@ -112,7 +112,7 @@ inet_pton4(src, dst)
     const char *pch;
 
     if ((pch = strchr(digits, ch)) != NULL) {
-      unsigned int new = *tp * 10 + (pch - digits);
+      unsigned int new = *tp * 10 + (int)(pch - digits);
 
       if (new > 255)
         return (0);
