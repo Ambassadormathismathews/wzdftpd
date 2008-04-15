@@ -2425,7 +2425,7 @@ int do_moda(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
     __const char *__restrict __fmt, struct tm *__tp);
 #endif
   int ret, command_ok=0;
-  char * facts, * fact, * value, * ptr;
+  char * facts, * fact, * value, * ptr = NULL;
   struct tm tm_atime, tm_mtime;
   struct utimbuf utime_buf = {0, 0};
   char * filename;
