@@ -47,7 +47,7 @@ int radix_encode(unsigned char inbuf[], unsigned char outbuf[], int *len, int de
     if (decode) {
 	for (i=0,j=0; inbuf[i] && inbuf[i] != '='; i++) {
 	    if ((p = strchr(radixN, inbuf[i])) == NULL) return(1);
-	    D = p - radixN;
+	    D = (int)(p - radixN);
 	    switch (i&3) {
 		case 0:
 		    outbuf[j] = D<<2;
