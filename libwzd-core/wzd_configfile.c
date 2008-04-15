@@ -601,7 +601,7 @@ int config_load_from_fd (wzd_configfile_t * config, fd_t fd, unsigned long flags
 {
   char read_buf[4096];
   int bytes_read;
-  int ret;
+  int ret = CF_OK;
   struct stat stat_buf;
 
   if (!config || fd < 0) return CF_ERROR_INVALID_ARGS;
@@ -635,9 +635,7 @@ int config_load_from_fd (wzd_configfile_t * config, fd_t fd, unsigned long flags
   } while (ret == CF_OK);
 
   if (ret != CF_OK)
-    return ret;
-
-  config_parse_flush_buffer (config);
+    config_parse_flush_buffer(config);
 
   return ret;
 }
