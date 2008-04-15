@@ -1,22 +1,24 @@
-   NEWS file for wzdftpd
+NEWS file for wzdftpd
 
-0.9.0:
+0.8.3: October 28 2007
 
-New features
+Security
+    * Fixed denial of service buffer overflow on USER command (CVE-2007-5300)
 
 Bugfixes
+    * Misc problems with TLS (GnuTLS/OpenSSL compatibility) corrected
+    * Some memory leaks with OpenSSL were fixed
+    * PASV port range is now used better
 
 0.8.2: July 9 2007
 
 New features
-
     * SQLite backend has been added
     * Brand new Windows installer
     * Extra SITE HELP documentation added for various commands
     * SQL backends can connect to SQL servers using TLS encryption 
 
 Bugfixes
-
     * Lots of spelling errors and ambiguities have been corrected in server responses
     * Event triggers now work correctly on Windows when specifying full paths for the scripts
     * First entry in a directory list is now correctly sent to the client
