@@ -97,7 +97,7 @@ void pasv_close(wzd_context_t * context)
  */
 int get_pasv_port(net_family_t family, wzd_context_t * context)
 {
-  int ret;
+  int ret = -1;
   socket_t sock;
   unsigned int port, count;
   socklen_t len;
@@ -184,7 +184,7 @@ int get_pasv_port(net_family_t family, wzd_context_t * context)
     count--;
   }
 
-  if (count == 0 && ret < 0) {
+  if (ret < 0) {
     out_log(LEVEL_HIGH,"Could not bind to any port in the PASV range\n");
     socket_close(sock);
     return -1;
