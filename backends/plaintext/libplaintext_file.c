@@ -469,7 +469,7 @@ wzd_group_t * read_single_group(FILE * file, const char *groupname, char * buffe
       group->groupperms = num;
     }
     else if (strcmp("flags",varname)==0) {
-      num = strlen(value);
+      num = (long)strlen(value);
       if (num <= 0 || num >= MAX_FLAGS_NUM) { /* suspicious length ! */
         continue;
       }
@@ -560,7 +560,7 @@ wzd_user_t * read_single_user(FILE * file, const char *username, char * buffer, 
       strncpy(user->userpass,value,MAX_PASS_LENGTH-1);
     }
     else if (strcmp("flags",varname)==0) {
-      num = strlen(value);
+      num = (long)strlen(value);
       if (num <= 0 || num >= MAX_FLAGS_NUM) { /* suspicious length ! */
         continue;
       }
