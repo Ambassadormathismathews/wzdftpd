@@ -16,6 +16,6 @@ INCLUDE(MacroEnsureOutOfSourceBuild)
 #INCLUDE(MacroPushRequiredVars)
 #INCLUDE(MacroLogFeature)
 
-INCLUDE(MacroCreateLibtoolFile)
+#INCLUDE(MacroCreateLibtoolFile)
 
 INCLUDE(CheckCCompilerFlag)
