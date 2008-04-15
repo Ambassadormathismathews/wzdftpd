@@ -634,7 +634,7 @@ int config_load_from_fd (wzd_configfile_t * config, fd_t fd, unsigned long flags
     ret = config_parse_data(config, read_buf, bytes_read);
   } while (ret == CF_OK);
 
-  if (ret != CF_OK)
+  if (ret == CF_OK)
     config_parse_flush_buffer(config);
 
   return ret;
