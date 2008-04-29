@@ -2,7 +2,7 @@
  */
 /*
  * wzdftpd - a modular and cool ftp server
- * Copyright (C) 2002-2004  Pierre Chifflier
+ * Copyright (C) 2002-2008  Pierre Chifflier
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
