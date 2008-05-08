@@ -6,7 +6,7 @@
 
 int main(int argc, const char **argv)
 {
-  const char *msg = "site who";
+  const char *msg = "SITE WHO\r\n";
   int ret;
   wzd_reply_t * reply;
   int i;

@@ -317,11 +317,22 @@ wzd_reply_t * wzd_send_message(const char *message, int msg_length)
     return NULL;
   }
 
-  /* ensure last bytes of message are \r\n ? */
+  /* ensure last bytes of message are \r\n and write message to socket */
+  if (msg_length < 2 || (message[msg_length - 2] != '\r' && message[msg_length - 1] != '\n')) {
+    buffer = malloc(msg_length + 3);
+    memcpy(buffer, message, msg_length);
+    buffer[msg_length] = '\r';
+    buffer[msg_length + 1] = '\n';
+    buffer[msg_length + 2] = '\0';
+    ret = _config->connector.write(buffer, msg_length + 2);
+    if (ret != msg_length + 2) return NULL;
+    free(buffer);
+  } else {
+    ret = _config->connector.write(message, msg_length);
+    if (ret != msg_length) return NULL;
+  }
 
-  ret = _config->connector.write(message,msg_length);
-  if (ret != msg_length) return NULL;
-
+  /* get result from socket */
   buffer_length = 4096;
   buffer = malloc(buffer_length+1);
   buffer[0] = '\0';

@@ -7,7 +7,7 @@
 int main(int argc, const char **argv)
 {
   int ret;
-  const char *msg = "site uptime";
+  const char *msg = "SITE UPTIME\r\n";
   wzd_reply_t * reply;
   char * buffer;
 
