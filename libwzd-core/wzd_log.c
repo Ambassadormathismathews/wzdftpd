@@ -60,12 +60,16 @@
 #include "wzd_log.h"
 #include "wzd_misc.h"
 #include "wzd_user.h"
+#include "wzd_mutex.h"
 
 #include "wzd_debug.h"
 
 #endif /* WZD_USE_PCH */
 
 static struct memory_log_t _static_log;
+
+static wzd_mutex_t * _static_log_mutex = NULL;
+static int _static_log_enabled = 0; /* 0 = disabled */
 
 static void _buffer_push(const char *);
 
@@ -80,14 +84,20 @@ int log_init(void)
 {
   int i;
 
+  _static_log_mutex = wzd_mutex_create(0); /* argument is unused */
+  if (_static_log_mutex) {
+    _static_log.size = 100; /* last 100 messages */
+    _static_log.data = malloc(_static_log.size * sizeof(char *));
+    if (_static_log.data) {
+      memset(_static_log.data, 0, _static_log.size * sizeof(char *));
+      _static_log_enabled = 1;
+    }
+  }
+
   for (i=0; i<MAX_LOG_CHANNELS; i++) {
     _log_channels[i].fd = -1;
     _log_channels[i].syslog = 0;
   }
-
-  _static_log.size = 100; /* last 100 messages */
-  _static_log.data = malloc(_static_log.size * sizeof(char*));
-  memset(_static_log.data,0,_static_log.size * sizeof(char*));
 
   return 0;
 }
@@ -118,6 +128,9 @@ void log_fini(void)
 {
   int i,j,fd;
 
+  _static_log_enabled = 0;
+  wzd_mutex_lock(_static_log_mutex);
+
   for (i=0; i<MAX_LOG_CHANNELS; i++)
     if (_log_channels[i].fd != -1) {
       fd = _log_channels[i].fd;
@@ -130,11 +143,17 @@ void log_fini(void)
       close(fd);
     }
 
-  for (i=0; i<_static_log.size; i++) {
-    free(_static_log.data[i]);
+  if (_static_log_enabled) {
+    for (i=0; i<_static_log.size; i++) {
+      if (_static_log.data[i])
+        free(_static_log.data[i]);
+    }
+    free(_static_log.data);
+    _static_log.size = 0;
   }
-  free(_static_log.data);
-  _static_log.size = 0;
+
+  wzd_mutex_destroy(_static_log_mutex);
+  _static_log_mutex = NULL;
 }
 
 /* NOTE we are forced to open log in lib, because of win32
@@ -233,8 +252,13 @@ void out_log(int level,const char *fmt,...)
       write(_log_channels[level].fd, datestr, strlen(datestr));
       write(_log_channels[level].fd, buffer, strlen(buffer));
     }
-
-    _buffer_push(buffer);
+    
+    if (_static_log_enabled) {
+      if (!wzd_mutex_lock(_static_log_mutex)) {
+        _buffer_push(buffer);
+        wzd_mutex_unlock(_static_log_mutex);
+      }
+    }
 
 #ifndef _WIN32
     if (_log_channels[level].syslog)
@@ -503,6 +527,8 @@ static void _buffer_push(const char *str)
  */
 struct memory_log_t * get_log_buffer(void)
 {
-  return (&_static_log);
+  if (_static_log_enabled)
+    return (&_static_log);
+  return NULL;
 }
 

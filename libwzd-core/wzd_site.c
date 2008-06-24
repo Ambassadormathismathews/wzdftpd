@@ -1560,12 +1560,19 @@ int do_site_sections(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *param, w
 int do_site_showlog(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
   int i;
-  struct memory_log_t * log = get_log_buffer();
-  wzd_string_t * buffer = str_allocate();
+  struct memory_log_t * log;
+  wzd_string_t * buffer;
   int lines_to_show = 10;
   int offset = 0;
   char *ptr;
   unsigned long ul;
+
+  log = get_log_buffer();
+  if (!log) {
+    send_message_with_args(501, context, "Static log buffer not enabled");
+    return -1;
+  }
+  buffer = str_allocate();
 
   /* check if we have an argument (the number of lines to display) */
   if (str_length(command_line) > 0) {
