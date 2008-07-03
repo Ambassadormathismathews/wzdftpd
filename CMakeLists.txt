@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 2.6)
 PROJECT (WZDFTPD C)
 
 # enable submission to Dart Testing Dashboard
