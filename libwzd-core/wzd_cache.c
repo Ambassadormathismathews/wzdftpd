@@ -500,7 +500,10 @@ char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
     }
     c->current_location += size_to_read;
     *dst=0;
-/*    lseek(fd,position + (dst-buf), SEEK_SET );*/
+    /* check if we are at end of file */
+    if (c->current_location >= cache->datasize && ptr==buf)
+        return NULL;
+
     c->current_location = position + (dst-buf);
 
   } else { /* file is not in cache ! */
