@@ -43,7 +43,9 @@
 
 static int _cron_find_and_execute(const char * jobname, wzd_cronjob_t * crontab);
 
-int do_site_listcrontab(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_site_listcrontab(UNUSED wzd_string_t *name,
+        UNUSED wzd_string_t *param,
+        wzd_context_t * context)
 {
   int ret;
   char buffer[4096];
@@ -60,7 +62,7 @@ int do_site_listcrontab(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
 
   while (cronjob != NULL) {
 
-    snprintf(buffer,sizeof(buffer)," %-33s %-4s %-4s %-4s %-4s %-9s %-5ld\n",cronjob->hook->external_command,
+    snprintf(buffer,sizeof(buffer)," %-33s %-4s %-4s %-4s %-4s %-9s %-5ld\r\n",cronjob->hook->external_command,
         cronjob->minutes, cronjob->hours, cronjob->day_of_month, cronjob->month,
         cronjob->day_of_week, (long)(cronjob->next_run - now));
     ret = send_message_raw(buffer,context);
@@ -74,7 +76,9 @@ int do_site_listcrontab(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
   return 0;
 }
 
-int do_site_cronjob(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_site_cronjob(UNUSED wzd_string_t *name,
+        wzd_string_t *param,
+        wzd_context_t * context)
 {
   int ret, status;
   char buffer[4096];
@@ -95,7 +99,7 @@ int do_site_cronjob(wzd_string_t *name, wzd_string_t *param, wzd_context_t * con
 
       status = _cron_find_and_execute(str_tochar(jobname),getlib_mainConfig()->crontab);
 
-      snprintf(buffer,sizeof(buffer)-1," cron job: %s\n",str_tochar(jobname));
+      snprintf(buffer,sizeof(buffer)-1," cron job: %s\r\n",str_tochar(jobname));
       ret = send_message_raw(buffer,context);
 
       if (status == 0)

@@ -55,7 +55,7 @@ static void _debug_print_context(wzd_context_t * ctx, wzd_context_t * current_ct
   char buffer[4096];
   char inet_buf[64];
 
-  snprintf(buffer,sizeof(buffer)," context %p\n",(void*)ctx);
+  snprintf(buffer,sizeof(buffer)," context %p\r\n",(void*)ctx);
   ret = send_message_raw(buffer,current_ctx);
 
   if (ctx->magic != CONTEXT_MAGIC) {
@@ -64,25 +64,27 @@ static void _debug_print_context(wzd_context_t * ctx, wzd_context_t * current_ct
   }
 
   ip_numeric_to_string((const char*)ctx->hostip, ctx->family, inet_buf, sizeof(inet_buf));
-  snprintf(buffer,sizeof(buffer),"   host %s\n", inet_buf);
+  snprintf(buffer,sizeof(buffer),"   host %s\r\n", inet_buf);
   ret = send_message_raw(buffer,current_ctx);
 
   if (ctx->ident && ctx->idnt_address) {
-    snprintf(buffer,sizeof(buffer),"   ident %s@%s\n", ctx->ident, ctx->idnt_address);
+    snprintf(buffer,sizeof(buffer),"   ident %s@%s\r\n", ctx->ident, ctx->idnt_address);
     ret = send_message_raw(buffer,current_ctx);
   }
 
-  snprintf(buffer,sizeof(buffer),"   uid %u\n", ctx->userid);
+  snprintf(buffer,sizeof(buffer),"   uid %u\r\n", ctx->userid);
   ret = send_message_raw(buffer, current_ctx);
 
-  snprintf(buffer,sizeof(buffer),"   current path: [%s]\n", ctx->currentpath);
+  snprintf(buffer,sizeof(buffer),"   current path: [%s]\r\n", ctx->currentpath);
   ret = send_message_raw(buffer, current_ctx);
 
-  snprintf(buffer,sizeof(buffer),"   pid_child: %lu  thread_id: %lu\n", ctx->pid_child, ctx->thread_id);
+  snprintf(buffer,sizeof(buffer),"   pid_child: %lu  thread_id: %lu\r\n", ctx->pid_child, ctx->thread_id);
   ret = send_message_raw(buffer, current_ctx);
 }
 
-int do_site_listcontexts(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_site_listcontexts(UNUSED wzd_string_t *name,
+        UNUSED wzd_string_t *param,
+        wzd_context_t * context)
 {
   int ret;
   ListElmt * elmnt;

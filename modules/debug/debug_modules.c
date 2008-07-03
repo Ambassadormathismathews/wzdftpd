@@ -37,7 +37,9 @@
 
 #include "debug_modules.h"
 
-int do_site_listmodules(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_site_listmodules(UNUSED wzd_string_t *name,
+        UNUSED wzd_string_t *param,
+        wzd_context_t * context)
 {
   int ret;
   wzd_module_t * module_list;
@@ -56,10 +58,10 @@ int do_site_listmodules(wzd_string_t *name, wzd_string_t *param, wzd_context_t *
     module_name = module_get_name(module_list);
     module_version = module_get_version(module_list);
 
-    snprintf(buffer,sizeof(buffer),"  -> name: %s\n",module_name ? module_name : "(null)");
+    snprintf(buffer,sizeof(buffer),"  -> name: %s\r\n",module_name ? module_name : "(null)");
     ret = send_message_raw(buffer,context);
 
-    snprintf(buffer,sizeof(buffer),"  -> version: %s\n",module_version ? module_version : "(null)");
+    snprintf(buffer,sizeof(buffer),"  -> version: %s\r\n",module_version ? module_version : "(null)");
     ret = send_message_raw(buffer,context);
 
     module_list = module_list->next_module;

@@ -37,7 +37,9 @@
 
 #include "debug_backends.h"
 
-int do_site_listbackends(wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
+int do_site_listbackends(UNUSED wzd_string_t *name,
+        UNUSED wzd_string_t *param,
+        wzd_context_t * context)
 {
   int ret;
   char buffer[4096];
@@ -47,19 +49,19 @@ int do_site_listbackends(wzd_string_t *name, wzd_string_t *param, wzd_context_t 
 
   send_message_raw("200-\r\n",context);
 
-  snprintf(buffer,sizeof(buffer)," %s\n",backend->filename);
+  snprintf(buffer,sizeof(buffer),"200- %s\r\n",backend->filename);
   ret = send_message_raw(buffer,context);
 
-  snprintf(buffer,sizeof(buffer),"  -> name: %s\n",backend->b->name);
+  snprintf(buffer,sizeof(buffer),"  -> name: %s\r\n",backend->b->name);
   ret = send_message_raw(buffer,context);
 
-  snprintf(buffer,sizeof(buffer),"  -> version: %s\n",backend_get_version(backend));
+  snprintf(buffer,sizeof(buffer),"  -> version: %s\r\n",backend_get_version(backend));
   ret = send_message_raw(buffer,context);
 
-  snprintf(buffer,sizeof(buffer),"  -> id: %d\n",backend->b->backend_id);
+  snprintf(buffer,sizeof(buffer),"  -> id: %d\r\n",backend->b->backend_id);
   ret = send_message_raw(buffer,context);
 
-  snprintf(buffer,sizeof(buffer),"  -> used by: %d\n",backend_inuse(backend->b->name));
+  snprintf(buffer,sizeof(buffer),"  -> used by: %d\r\n",backend_inuse(backend->b->name));
   ret = send_message_raw(buffer,context);
 
   ret = send_message_raw("200 command ok\r\n",context);
