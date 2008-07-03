@@ -56,6 +56,7 @@ macro_optional_find_package(PostgreSQL)
 macro_optional_find_package(SQLite3)
 macro_optional_find_package(TCLDev)
 macro_optional_find_package(Zeroconf)
+macro_optional_find_package(ZLIB)
 
 OPTION(WITH_DUPECHECK "enable dupecheck module" OFF)
 
