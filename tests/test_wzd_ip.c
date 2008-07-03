@@ -10,7 +10,7 @@ struct test_ip_t {
   signed int   result;
 };
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   unsigned long c2 = C2;

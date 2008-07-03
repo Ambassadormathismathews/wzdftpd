@@ -30,7 +30,7 @@ void test_stripdir(char * test_input, const char * correct_out)
   }
 }
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   int i;

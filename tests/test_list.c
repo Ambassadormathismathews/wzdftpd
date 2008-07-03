@@ -62,7 +62,7 @@ int populate_list(List * list)
   return 0;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   List list;

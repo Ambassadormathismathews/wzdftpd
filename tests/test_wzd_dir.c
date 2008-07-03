@@ -32,7 +32,7 @@ struct test_basename_t {
 int create_fake_dirinfo(const char * dir);
 int remove_fake_dirinfo(const char * dir);
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   char buffer[2048];

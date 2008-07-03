@@ -14,7 +14,7 @@
 #define C2 0x9abcdef0
 
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   int ret;

@@ -31,7 +31,7 @@ int test_cookies(const char * input, const char * reference, char * buffer, char
 
 /* run this program inside a memory checker (like valgrind) */
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   char outbuf[BUFLEN];

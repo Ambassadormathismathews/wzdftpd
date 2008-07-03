@@ -103,7 +103,7 @@ time_t _find_next_exec(time_t now, wzd_test_struct_t test)
   return next;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   time_t now;

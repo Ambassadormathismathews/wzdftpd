@@ -13,7 +13,7 @@
 
 unsigned int global_var = 0;
 
-void * thread_func(void * param)
+void * thread_func(UNUSED void * param)
 {
   global_var++;
   printf("global_var: %u\n",global_var);
@@ -21,7 +21,7 @@ void * thread_func(void * param)
   return NULL;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   wzd_thread_t thread;

@@ -17,7 +17,7 @@ struct wzd_string_t {
 #endif
 
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   wzd_string_t * str, * str2;

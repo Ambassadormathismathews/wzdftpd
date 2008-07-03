@@ -17,7 +17,7 @@
 #define EVENT_ID_TEST3  (1<<3)
 #define EVENT_ID_TEST4  (1<<4)
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   int ret;

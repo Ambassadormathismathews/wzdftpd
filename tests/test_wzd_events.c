@@ -23,7 +23,7 @@ event_reply_t callback1(const char * args)
   return EVENT_OK;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
   unsigned long c1 = C1;
   wzd_event_manager_t * mgr;
