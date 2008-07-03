@@ -2409,7 +2409,7 @@ int do_site(wzd_string_t *command, wzd_string_t *command_line, wzd_context_t * c
     ret = send_message_with_args(200,context,"SITE command executed (with warnings)");
     break;
   case EVENT_IGNORED:
-    ret = send_message_with_args(250,context,"SITE ","command unknown");
+    ret = send_message_with_args(502,context,"SITE ","command unknown");
     break;
   case EVENT_HANDLED:
     break;
