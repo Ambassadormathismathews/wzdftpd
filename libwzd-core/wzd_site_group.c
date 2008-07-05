@@ -299,6 +299,9 @@ int do_site_ginfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
   wzd_string_t * groupname;
   int ret;
   wzd_group_t * group;
+  wzd_user_t  * me;
+
+  me = GetUserByID(context->userid);
 
   groupname = str_tok(command_line," \t\r\n");
   if (!groupname) {
@@ -319,7 +322,13 @@ int do_site_ginfo(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_
     return 0;
   }
 
-  /* TODO XXX FIXME gadmins can see ginfo only on their primary group ? */
+  /* gadmins can see ginfo only on their primary group ! */
+  if ((me->flags && strchr(me->flags,FLAG_GADMIN) &&
+      ((me->group_num == 0) || (me->groups[0] != group->gid)))) {
+    ret = send_message_with_args(501, context, "Group administrators can only view information on their primary group !");
+    return 0;
+  }
+
   do_site_print_file(str_tochar(str),NULL,group,context);
 
   str_deallocate(str);
