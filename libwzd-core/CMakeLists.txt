@@ -127,7 +127,6 @@ add_library (libwzd_core SHARED
 	wzd_site_user.c
 	wzd_socket.c
 	wzd_string.c
-	wzd_strptime.c wzd_strptime.h
 	wzd_threads.c
 	wzd_tls.c
 	wzd_user.c

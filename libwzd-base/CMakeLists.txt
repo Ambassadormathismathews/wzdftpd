@@ -5,6 +5,7 @@ SET(libwzd_base_pub_HEADERS
 	stack.h
 	strpcpy.h
 	wzd_strlcat.h
+	wzd_strptime.h
    )
 
 INSTALL(FILES ${libwzd_base_pub_HEADERS} DESTINATION ${HEADERS_INSTALL_PATH}/wzdftpd/libwzd-base)

@@ -272,7 +272,7 @@ typedef ptrdiff_t ssize_t;
 
 #include <libwzd-auth/wzd_crypt.h>
 #include <libwzd-auth/wzd_md5crypt.h>
-#include "wzd_strptime.h"
+#include <libwzd-base/wzd_strptime.h>
 
 
 

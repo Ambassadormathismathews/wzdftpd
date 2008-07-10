@@ -10,4 +10,6 @@ SET(base_SOURCES
 	${WZDFTPD_SOURCE_DIR}/libwzd-base/strpcpy.h
 	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strlcat.c
 	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strlcat.h
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strptime.c
+	${WZDFTPD_SOURCE_DIR}/libwzd-base/wzd_strptime.h
 	)
