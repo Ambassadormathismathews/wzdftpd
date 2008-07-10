@@ -74,6 +74,8 @@
 #include <pthread.h>
 #endif
 
+#include <libwzd-base/wzd_strptime.h>
+
 #include "wzd_structs.h"
 
 #include "wzd_fs.h"
@@ -2420,10 +2422,6 @@ int do_mdtm(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 /*************** do_moda *****************************/
 int do_moda(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * context)
 {
-#ifdef HAVE_STRPTIME
-  extern char *strptime (__const char *__restrict __s,
-    __const char *__restrict __fmt, struct tm *__tp);
-#endif
   int ret, command_ok=0;
   char * facts, * fact, * value, * ptr = NULL;
   struct tm tm_atime, tm_mtime;

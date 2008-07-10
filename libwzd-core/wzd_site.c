@@ -58,6 +58,8 @@
 #include <signal.h>
 #include <fcntl.h>
 
+#include <libwzd-base/wzd_strptime.h>
+
 #include "wzd_structs.h"
 
 #include "wzd_commands.h"
@@ -1704,10 +1706,6 @@ int do_site_user(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
 
 int do_site_utime(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_context_t * context)
 {
-#ifdef HAVE_STRPTIME
-  extern char *strptime (__const char *__restrict __s,
-    __const char *__restrict __fmt, struct tm *__tp);
-#endif
   char buffer[BUFFER_LEN];
   char * ptr;
   wzd_string_t * filename;

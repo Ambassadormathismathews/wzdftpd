@@ -32,7 +32,14 @@
 #define STRPTIME_H
 
 #ifndef HAVE_STRPTIME
+
 char * strptime( char *buf, char *fmt, struct tm *tm );
+
+#else
+
+extern char *strptime (__const char *__restrict __s,
+	__const char *__restrict __fmt, struct tm *__tp);
+
 #endif
 
 #endif
