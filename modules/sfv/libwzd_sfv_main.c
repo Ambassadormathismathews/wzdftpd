@@ -165,11 +165,35 @@ int sfv_remove_incomplete_indicator(const char *dirname, wzd_context_t *context)
 static event_reply_t sfv_event_preupload(const char * args)
 {
   int ret;
-  const char * username, * filename;
-  char * str = strdup(args), * ptr;
-  username = strtok_r(str," ",&ptr);
-  filename = ptr;
+  const char * username;
+  const char * filename;
+  char * str = strdup(args);
+  char * end;
 
+  username = strchr(str, '\"') + 1;
+  if (!username) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(username, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
+
+  filename = strchr(end + 1, '\"') + 1;
+  if (!filename) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(filename, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
+  
   ret = sfv_hook_preupload(EVENT_PREUPLOAD, username, filename);
 
   free(str);
@@ -214,11 +238,34 @@ int sfv_hook_preupload(unsigned long event_id, const char * username, const char
 static event_reply_t sfv_event_postupload(const char * args)
 {
   int ret;
-  const char * username, * filename;
-  char * str = strdup(args), * ptr;
+  const char * username;
+  const char * filename;
+  char * str = strdup(args);
+  char * end;
 
-  username = strtok_r(str," ",&ptr);
-  filename = ptr;
+  username = strchr(str, '\"') + 1;
+  if (!username) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(username, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
+
+  filename = strchr(end + 1, '\"') + 1;
+  if (!filename) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(filename, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
 
   ret = sfv_hook_postupload(EVENT_POSTUPLOAD, username, filename);
 
@@ -252,13 +299,35 @@ int sfv_hook_postupload(unsigned long event_id, const char * username, const cha
 
 static event_reply_t sfv_event_rmdir(const char * args)
 {
-
   int ret;
-  const char * username, * dirname;
-  char * str = strdup(args), * ptr;
+  const char * username;
+  const char * dirname;
+  char * str = strdup(args);
+  char * end;
 
-  username = strtok_r(str," ",&ptr);
-  dirname = ptr;
+  username = strchr(str, '\"') + 1;
+  if (!username) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(username, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
+
+  dirname = strchr(end + 1, '\"') + 1;
+  if (!dirname) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  end = strchr(dirname, '\"');
+  if (!end) {
+    free(str);
+    return EVENT_ERROR;
+  }
+  *end = '\0';
 
   ret = sfv_hook_rmdir(EVENT_RMDIR, username, dirname);
 
