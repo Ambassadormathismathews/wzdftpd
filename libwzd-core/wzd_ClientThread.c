@@ -254,7 +254,8 @@ void client_die(wzd_context_t * context)
     wzd_string_t * event_args = NULL;
 
     if (user) {
-      event_args = STR(user->username);
+      event_args = str_allocate();
+      str_sprintf(event_args, "\"%s\"", user->username);
       event_send(mainConfig->event_mgr, EVENT_LOGOUT, 0, event_args, context);
       str_deallocate(event_args);
     }
@@ -337,7 +338,7 @@ int check_timeout(wzd_context_t * context)
        */
       {
         wzd_string_t * event_args = str_allocate();
-        str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+        str_sprintf(event_args, "\"%s\" \"%s\"", user->username, context->current_action.arg);
         if (event_send(mainConfig->event_mgr, EVENT_POSTUPLOAD, 0, event_args, context) == EVENT_DENY)
         {
           out_log(LEVEL_INFO, "An EVENT_POSTUPLOAD-script denied file; deleting '%s'.\n", context->current_action.arg);
@@ -1294,7 +1295,7 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
 
   {
     wzd_string_t * event_args = str_allocate();
-    str_sprintf(event_args,"%s %s",user->username,buffer);
+    str_sprintf(event_args, "\"%s\" \"%s\"", user->username, buffer);
     ret = event_send(mainConfig->event_mgr, EVENT_PREMKDIR, 0, event_args, context);
     str_deallocate(event_args);
   }
@@ -1378,7 +1379,8 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
     /* send message header */
     send_message_raw("257- Command okay\r\n",context);
     {
-      wzd_string_t * event_args = STR(buffer);
+      wzd_string_t * event_args = str_allocate();
+      str_sprintf(event_args, "\"%s\" \"%s\"", user->username, buffer);
       event_send(mainConfig->event_mgr, EVENT_MKDIR, 257, event_args, context);
       str_deallocate(event_args);
     }
@@ -1472,7 +1474,7 @@ int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * cont
     send_message_raw("258- Command okay\r\n",context);
     {
       wzd_string_t * event_args = str_allocate();
-      str_sprintf(event_args,"%s %s",user->username,path);
+      str_sprintf(event_args, "\"%s\" \"%s\"", user->username, path);
       event_send(mainConfig->event_mgr, EVENT_RMDIR, 258, event_args, context);
       str_deallocate(event_args);
     }
@@ -2064,7 +2066,7 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
 
   {
     wzd_string_t * event_args = str_allocate();
-    str_sprintf(event_args,"%s %s",user->username,path);
+    str_sprintf(event_args, "\"%s\" \"%s\"", user->username, path);
     ret = event_send(mainConfig->event_mgr, EVENT_PREDOWNLOAD, 0, event_args, context);
     str_deallocate(event_args);
   }
@@ -2276,7 +2278,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   {
     wzd_string_t * event_args = str_allocate();
-    str_sprintf(event_args,"%s %s",user->username,path);
+    str_sprintf(event_args, "\"%s\" \"%s\"", user->username, path);
     ret = event_send(mainConfig->event_mgr, EVENT_PREUPLOAD, 0, event_args, context);
     str_deallocate(event_args);
   }
@@ -2736,7 +2738,8 @@ int do_dele(UNUSED wzd_string_t *name, wzd_string_t *param, wzd_context_t * cont
 
   if (!ret) {
     {
-      wzd_string_t * event_args = STR(path);
+      wzd_string_t * event_args = str_allocate();
+      str_sprintf(event_args, "\"%s\" \"%s\"", user->username, path);
       event_send(mainConfig->event_mgr, EVENT_DELE, 250, event_args, context);
       str_deallocate(event_args);
     }
@@ -3033,7 +3036,7 @@ int do_rnto(UNUSED wzd_string_t *name, wzd_string_t *filename, wzd_context_t * c
   }
 
   event_args = str_allocate();
-  str_sprintf(event_args, "%s %s %s", user->username, context->current_action.arg, path);
+  str_sprintf(event_args, "\"%s\" \"%s\" \"%s\"", user->username, context->current_action.arg, path);
   if (event_send(mainConfig->event_mgr, EVENT_PRERENAME, 0, event_args, context) == EVENT_DENY)
   {
     out_log(LEVEL_INFO, "RNTO on '%s' -> '%s' by %s denied by a EVENT_PRERENAME-handler.\n", context->current_action.arg, path, user->username);
@@ -3330,7 +3333,8 @@ void * clientThreadProc(void *arg)
   /* user+pass ok */
   send_message_raw("230- Command okay\r\n",context);
   {
-    wzd_string_t * event_args = STR(user->username);
+    wzd_string_t * event_args = str_allocate();
+    str_sprintf(event_args, "\"%s\"", user->username);
     event_send(mainConfig->event_mgr, EVENT_LOGIN, 230, event_args, context);
     str_deallocate(event_args);
   }

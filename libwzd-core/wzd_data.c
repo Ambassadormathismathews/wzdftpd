@@ -262,7 +262,7 @@ void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
     wzd_string_t * event_args = str_allocate();
 
     /** \todo Find a way to indicate if transfer was ok in event */
-    str_sprintf(event_args,"%s %s",user->username,context->current_action.arg);
+    str_sprintf(event_args, "\"%s\" \"%s\"", user->username, context->current_action.arg);
     if (event_send(mainConfig->event_mgr, event_id, reply_code, event_args, context) == EVENT_DENY && is_upload)
     {
       out_log(LEVEL_INFO, "An EVENT_POSTUPLOAD-script denied file; deleting '%s'.\n", context->current_action.arg);

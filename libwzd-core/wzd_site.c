@@ -2242,7 +2242,7 @@ int do_site_wipe(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     {
       wzd_string_t * event_args = str_allocate();
       wzd_user_t * user = GetUserByID(context->userid);
-      str_sprintf(event_args,"%s %s",user->username,str_tochar(filename));
+      str_sprintf(event_args, "\"%s\" \"%s\"", user->username, str_tochar(filename));
       ret = event_send(mainConfig->event_mgr, EVENT_PREWIPE, 0, event_args, context);
       str_deallocate(event_args);
     }
@@ -2264,7 +2264,7 @@ int do_site_wipe(UNUSED wzd_string_t *ignored, wzd_string_t *command_line, wzd_c
     {
       wzd_string_t * event_args = str_allocate();
       wzd_user_t * user = GetUserByID(context->userid);
-      str_sprintf(event_args,"%s %s",user->username,str_tochar(filename));
+      str_sprintf(event_args, "\"%s\" \"%s\"", user->username, str_tochar(filename));
       event_send(mainConfig->event_mgr, EVENT_WIPE, 200, event_args, context);
       str_deallocate(event_args);
     }
