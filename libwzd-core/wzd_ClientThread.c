@@ -1234,10 +1234,12 @@ printf("path: '%s'\n",path);
 
 int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
-  char  * cmd = NULL, * path = NULL;
+  char * cmd = NULL;
+  char * path = NULL;
   char * buffer = NULL;
   int ret;
-  wzd_user_t * user;
+  wzd_user_t * user = NULL;
+  wzd_group_t * group = NULL;
   const char *param;
 
   if (!str_checklength(arg,1,WZD_MAX_PATH-1))
@@ -1252,6 +1254,8 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
   buffer = wzd_malloc(WZD_MAX_PATH+1);
 
   user = GetUserByID(context->userid);
+  if (!user)
+    goto label_error_mkdir;
 
   if ( !(user->userperms & RIGHT_MKDIR) ) { ret = E_NOPERM; goto label_error_mkdir; }
 
@@ -1370,11 +1374,14 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
       out_err(LEVEL_FLOOD,"MKDIR returned %d (%s)\n",errno,strerror(errno));
     goto label_error_mkdir; /* keep current ret value for later use */
   } else {
-    const char *groupname=NULL;
     if (user->group_num > 0) {
-      groupname = GetGroupByID(user->groups[0])->groupname;
+      group = GetGroupByID(user->groups[0]);
     }
-    file_chown(buffer,user->username,groupname,context);
+    file_chown(buffer,
+        user->username,
+        group ? group->groupname : NULL,
+        context
+        );
 
     /* send message header */
     send_message_raw("257- Command okay\r\n",context);
@@ -1398,8 +1405,8 @@ int do_mkdir(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * conte
     log_message("NEWDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
         path, /* ftp-absolute path */
         user->username,
-        (groupname)?groupname:"No Group",
-        user->tagline
+        group ? group->groupname : "No group",
+        *(user->tagline) ? user->tagline : "No tagline"
         );
   }
   context->idle_time_start = time(NULL);
