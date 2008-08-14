@@ -745,7 +745,7 @@ int do_login(wzd_context_t * context)
         *inet_str ? inet_str : "No IP address",
         user && user->username ? user->username : "No username",
         group && group->groupname ? group->groupname : "No groupname",
-        user && user->tagline ? user->tagline : "No tagline"
+        user && *(user->tagline) ? user->tagline : "No tagline"
         );
   }
 
