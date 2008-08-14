@@ -210,7 +210,7 @@ int vfs_match_perm(const char *perms,wzd_user_t *user)
     case '-':
       for (i=0; i<user->group_num; i++) {
         group = GetGroupByID(user->groups[i]);
-        if (strcasecmp(token,group->groupname)==0) { free(buffer); return (negate) ? 0 : 1; }
+        if (group && strcasecmp(token,group->groupname)==0) { free(buffer); return (negate) ? 0 : 1; }
       }
       break;
     case '+':
