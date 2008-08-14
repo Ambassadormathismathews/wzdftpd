@@ -2222,12 +2222,14 @@ int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * contex
  */
 int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
-  char path[WZD_MAX_PATH],path2[WZD_MAX_PATH];
+  char path[WZD_MAX_PATH];
+  char path2[WZD_MAX_PATH];
   int fd;
   u64_t bytesnow, byteslast;
   socket_t sock;
   int ret;
   wzd_user_t * user;
+  wzd_group_t * group;
   const char *param;
   connection_state_t restorestate;
   unsigned long open_flags;
@@ -2236,7 +2238,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   user = GetUserByID(context->userid);
 
-  if ( !(user->userperms & RIGHT_STOR) ) {
+  if ( !user || (user && !(user->userperms & RIGHT_STOR)) ) {
     ret = send_message_with_args(550,context,"STOR","No access");
     return E_NOPERM;
   }
@@ -2348,11 +2350,14 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 
   /* set owner */
   {
-    const char *groupname=NULL;
     if (user->group_num > 0) {
-      groupname = GetGroupByID(user->groups[0])->groupname;
+      group = GetGroupByID(user->groups[0]);
     }
-    file_chown (path,user->username,groupname,context);
+    file_chown(path,
+        user->username,
+        group ? group->groupname : NULL,
+        context
+        );
   }
 
   bytesnow = byteslast = 0;
