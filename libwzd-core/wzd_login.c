@@ -299,7 +299,7 @@ int do_user_ip(const char *username, wzd_context_t * context)
   /* user ip not found, try groups */
   for (i=0; i<user->group_num; i++) {
     group = GetGroupByID(user->groups[i]);
-    if (ip_list_check_ident(group->ip_list, ip, context->ident)==1)
+    if (group && ip_list_check_ident(group->ip_list, ip, context->ident)==1)
       return E_OK;
   }
 
