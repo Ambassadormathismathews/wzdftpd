@@ -2912,29 +2912,26 @@ int do_quit(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 
   ret = send_message(221,context);
   {
-    const char * groupname = NULL;
-    wzd_user_t * user;
-    const char * remote_host;
-    struct hostent *h;
+    wzd_user_t * user = NULL;
+    wzd_group_t * group = NULL;
+    struct hostent * h = NULL;
     char inet_str[256];
     int af = (context->family == WZD_INET6) ? AF_INET6 : AF_INET;
 
     user = GetUserByID(context->userid);
 
-    if (user->group_num > 0) groupname = GetGroupByID(user->groups[0])->groupname;
+    if (user && user->group_num > 0) {
+      group = GetGroupByID(user->groups[0]);
+    }
     inet_str[0] = '\0';
-    inet_ntop(af,context->hostip,inet_str,sizeof(inet_str));
-    h = gethostbyaddr((char*)&context->hostip,sizeof(context->hostip),af);
-    if (h==NULL)
-      remote_host = inet_str;
-    else
-      remote_host = h->h_name;
+    inet_ntop(af, context->hostip, inet_str, sizeof(inet_str));
+    h = gethostbyaddr((char*)&context->hostip, sizeof(context->hostip), af);
     log_message("LOGOUT","%s (%s) \"%s\" \"%s\" \"%s\"",
-        remote_host,
-        inet_str,
-        user->username,
-        (groupname)?groupname:"No Group",
-        user->tagline
+        h && h->h_name ? h->h_name : "No hostname",
+        *inet_str ? inet_str : "No IP address",
+        user && *(user->username) ? user->username : "No username",
+        group && *(group->groupname) ? group->groupname : "No groupname",
+        user && *(user->tagline) ? user->tagline : "No tagline"
         );
   }
   context->exitclient=1;
