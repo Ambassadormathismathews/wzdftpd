@@ -1432,10 +1432,12 @@ label_error_mkdir:
 
 int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * context)
 {
-  char path[WZD_MAX_PATH], buffer[WZD_MAX_PATH];
+  char path[WZD_MAX_PATH];
+  char buffer[WZD_MAX_PATH];
   fs_filestat_t s;
   int ret;
-  wzd_user_t * user;
+  wzd_user_t * user = NULL;
+  wzd_group_t * group = NULL;
   const char *param;
 
   if (!str_checklength(arg,1,WZD_MAX_PATH-1))
@@ -1446,6 +1448,8 @@ int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * cont
   param = str_tochar(arg);
 
   user = GetUserByID(context->userid);
+  if (!user)
+    goto label_error_rmdir;
 
   if ( !(user->userperms & RIGHT_RMDIR) ) { ret = E_NOPERM;; goto label_error_rmdir; }
 
@@ -1488,11 +1492,10 @@ int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * cont
     ret = send_message_with_args(258,context,param,"Removed");
 
     {
-      const char *groupname=NULL;
       char tbuf[WZD_MAX_PATH], path[WZD_MAX_PATH];
 
       if (user->group_num > 0) {
-        groupname = GetGroupByID(user->groups[0])->groupname;
+        group = GetGroupByID(user->groups[0]);
       }
 
       if (param[0] != '/') {
@@ -1507,8 +1510,8 @@ int do_rmdir(UNUSED wzd_string_t *name, wzd_string_t * arg, wzd_context_t * cont
       log_message("DELDIR","\"%s\" \"%s\" \"%s\" \"%s\"",
           path, /* ftp-absolute path */
           user->username,
-          (groupname)?groupname:"No Group",
-          user->tagline
+          group ? group->groupname : "No group",
+          *(user->tagline) ? user->tagline : "No tagline"
           );
     }
 
