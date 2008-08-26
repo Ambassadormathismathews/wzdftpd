@@ -196,6 +196,15 @@ int WZD_MODULE_INIT(void)
     }
   }
 
+  {
+    char *argv[] = { "wzdftpd", NULL };
+    int argc = 1;
+    extern char **environ;
+    char **env = environ;
+
+    PERL_SYS_INIT3(&argc,(char ***)&argv,&env);
+  }
+
   if ( !(my_perl = perl_init()) ) {
     out_log(LEVEL_HIGH,"PERL could not create interpreter\n");
     if (perl_fd_errlog >= 0) {
@@ -230,6 +239,7 @@ void WZD_MODULE_CLOSE(void)
 {
   perl_destruct(my_perl);
   perl_free(my_perl);
+  PERL_SYS_TERM();
   my_perl = NULL;
   if (perl_fd_errlog >= 0) {
     close(perl_fd_errlog);
