@@ -48,6 +48,7 @@
 
 #include "wzd_structs.h"
 #include "wzd_log.h"
+#include "wzd_mutex.h"
 
 #include "wzd_tls.h"
 
@@ -57,6 +58,11 @@
 #include "wzd_debug.h"
 
 
+static int _tls_init_threads(void);
+static void _tls_exit_threads(void);
+static void _openssl_static_lock_callback(int, int, const char *, int);
+
+
 /** @brief SSL connection objects */
 struct wzd_ssl_t {
   SSL *         obj;
@@ -64,8 +70,14 @@ struct wzd_ssl_t {
   ssl_fd_mode_t ssl_fd_mode;
 };
 
+/* pointers to OpenSSL lock arrays */
+wzd_mutex_t **openssl_static_lock = NULL;
+ssize_t openssl_static_lock_num = 0;
+wzd_mutex_t **openssl_dynamic_lock = NULL;
+ssize_t openssl_dynamic_lock_num = 0;
 
 
+/*************** tls_context_init ***********************/
 void tls_context_init(wzd_context_t * context)
 {
   context->ssl = wzd_malloc(sizeof(struct wzd_ssl_t));
@@ -187,6 +199,7 @@ static STACK_OF(X509_NAME) * _tls_init_ca_list(const char *ca_file, const char *
 int tls_init(void)
 {
   int status;
+  int ret;
   SSL_CTX * tls_ctx;
   wzd_string_t * tls_certificate=NULL;
   wzd_string_t * tls_certificate_key=NULL;
@@ -291,6 +304,19 @@ int tls_init(void)
   SSL_CTX_set_session_cache_mode(tls_ctx, SSL_SESS_CACHE_CLIENT);
   SSL_CTX_set_session_id_context(tls_ctx, (const unsigned char *) "1", 1);
 
+  ret = _tls_init_threads();
+  if (ret) {
+    out_log(LEVEL_CRITICAL, "_tls_init_threads failed (out of memory?)");
+    str_deallocate(tls_certificate);
+    str_deallocate(tls_certificate_key);
+    str_deallocate(tls_ca_file);
+    str_deallocate(tls_ca_path);
+    return 1;
+  }
+
+  CRYPTO_set_locking_callback((void(*)(int, int, const char *, int))_openssl_static_lock_callback);
+  /* TODO: set dynamic locking callbacks */
+
   out_log(LEVEL_INFO,"TLS initialization successful (%s).\n",OPENSSL_VERSION_TEXT);
 
   str_deallocate(tls_certificate); str_deallocate(tls_certificate_key);
@@ -298,6 +324,38 @@ int tls_init(void)
 
   return 0;
 }
+
+/*************** _tls_init_threads *******************/
+static int _tls_init_threads(void) {
+  int static_locks_req;
+  int i;
+  int j;
+
+  /* determine how many static locks OpenSSL requires */
+  static_locks_req = CRYPTO_num_locks();
+  if (static_locks_req > 0) {
+    openssl_static_lock = wzd_malloc(sizeof(wzd_mutex_t *) * static_locks_req);
+    if (!openssl_static_lock)
+      return -1;
+    /* create each mutex so it is ready to be used */
+    for (i = 0; i < static_locks_req; i++) {
+      openssl_static_lock[i] = wzd_mutex_create(0);
+      if (!openssl_static_lock[i]) {
+        for (j = 0; j < i; j++)
+          wzd_mutex_destroy(openssl_static_lock[j]);
+	wzd_free(openssl_static_lock);
+	openssl_static_lock = NULL;
+	return -1;
+      }
+    }
+  }
+  
+  /* TODO: init dynamic lock array (it can grow/shrink later) */
+
+  openssl_static_lock_num = static_locks_req;
+  return 0;
+}
+  
 
 /*************** tls_exit ****************************/
 
@@ -314,10 +372,34 @@ int tls_exit(void)
 
   ERR_free_strings();
 
+  CRYPTO_set_locking_callback(NULL);
+  /* TODO: unset dynamic locking callbacks */
+  _tls_exit_threads();
+
   SSL_CTX_free(mainConfig->tls_ctx);
   return 0;
 }
 
+/*************** _tls_exit_threads *******************/
+static void _tls_exit_threads(void) {
+  int i;
+
+  for (i = 0; i < openssl_static_lock_num; i++)
+    wzd_mutex_destroy(openssl_static_lock[i]);
+  wzd_free(openssl_static_lock);
+
+  /* TODO: free up dynamic lock array */
+  return;
+}
+
+/*************** _openssl_static_lock_callback *******/
+static void _openssl_static_lock_callback(int mode, int n, const char *file, int line) {
+  if (mode & CRYPTO_LOCK)
+    wzd_mutex_lock(openssl_static_lock[n]);
+  else if (mode & CRYPTO_UNLOCK)
+    wzd_mutex_unlock(openssl_static_lock[n]);
+  return;
+}
 
 /*************** tls_read ****************************/
 
