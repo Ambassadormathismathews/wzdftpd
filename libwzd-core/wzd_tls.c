@@ -71,10 +71,10 @@ struct wzd_ssl_t {
 };
 
 /* pointers to OpenSSL lock arrays */
-wzd_mutex_t **openssl_static_lock = NULL;
-ssize_t openssl_static_lock_num = 0;
-wzd_mutex_t **openssl_dynamic_lock = NULL;
-ssize_t openssl_dynamic_lock_num = 0;
+static wzd_mutex_t **openssl_static_lock = NULL;
+static ssize_t openssl_static_lock_num = 0;
+static wzd_mutex_t **openssl_dynamic_lock = NULL;
+static ssize_t openssl_dynamic_lock_num = 0;
 
 
 /*************** tls_context_init ***********************/
@@ -387,6 +387,8 @@ static void _tls_exit_threads(void) {
   for (i = 0; i < openssl_static_lock_num; i++)
     wzd_mutex_destroy(openssl_static_lock[i]);
   wzd_free(openssl_static_lock);
+  openssl_static_lock = NULL;
+  openssl_static_lock_num = 0;
 
   /* TODO: free up dynamic lock array */
   return;
