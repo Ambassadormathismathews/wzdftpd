@@ -49,6 +49,7 @@
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_mutex.h"
+#include "wzd_socket.h"
 
 #include "wzd_tls.h"
 
