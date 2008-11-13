@@ -204,8 +204,8 @@ enum wzd_flag_t {
   FLAG_FULLPATH = 'f',  /**< show the complete path to the user */
   FLAG_FXP_DISABLE = 'F',  /**< disable site-to-site transfer */
   FLAG_GADMIN = 'G',
-  FLAG_HIDDEN = 'H',
-  FLAG_ULTRAHIDDEN = 'h',
+  FLAG_HIDDEN = 'h',
+  FLAG_ULTRAHIDDEN = 'H',
   FLAG_IDLE = 'I',
   FLAG_TLS = 'k',       /**< explicit and implicit connections only */
   FLAG_TLS_DATA = 'K',  /**< user must use encrypted data connection */
