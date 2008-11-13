@@ -223,6 +223,8 @@ static int FCN_MOD_USER(uid_t uid, wzd_user_t * user, unsigned long mod_type)
   } else { /* modification */
 
     loop_user = user_get_by_id(uid);
+    if (!loop_user)
+      return -1;
 
 /*    fprintf(stderr,"User %s exist\n",name);*/
     if (!user) { /* delete user permanently */
