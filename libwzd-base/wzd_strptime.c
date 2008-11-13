@@ -43,8 +43,7 @@
 
 #ifndef HAVE_STRPTIME
 
-extern void ascii_lower(char * s, size_t length);
-#define lowercase_string(x) ascii_lower(x,strlen(x))
+static void lowercase_string(char *str);
 
 
 #define asizeof(a)      (sizeof (a) / sizeof ((a)[0]))
@@ -370,6 +369,15 @@ strptime(char *buf, char *fmt, struct tm *tm)
   }
 
   return buf;
+}
+
+void lowercase_string(char *str) {
+  int len;
+  int i;
+  len = strlen(str);
+  for (i = 0; i < len; i++) {
+    str[i] = tolower(str[i]);
+  }
 }
 
 #endif   /* ndef HAVE_STRPTIME */
