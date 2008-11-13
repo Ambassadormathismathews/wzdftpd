@@ -457,7 +457,7 @@ int tls_read(socket_t sock, char *msg, size_t length, int flags, unsigned int ti
       return -1;
     }
 
-    r = select(sock+1,&fd_r,&fd_w,NULL,&tv);
+    r = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
   } while (ret == -1 && r != 0);
 
   if (r==0)
@@ -515,7 +515,7 @@ int tls_write(socket_t sock, const char *msg, size_t length, int flags, unsigned
       return -1;
     }
 
-    r = select(sock+1,&fd_r,&fd_w,NULL,&tv);
+    r = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
   } while (ret == -1 && r != 0);
 
   if (r==0)
@@ -642,7 +642,7 @@ int tls_auth_cont(wzd_context_t * context)
             ERR_error_string(ERR_get_error(),NULL));
         return 1;
       }
-      ret = select(sock+1,&fd_r,&fd_w,NULL,&tv);
+      ret = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
       if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
         out_err(LEVEL_HIGH,"tls_auth_cont failed\n");
         return -1;
@@ -801,7 +801,7 @@ out_err(LEVEL_FLOOD,"SSL_ERROR_WANT_WRITE\n");
           tls_close_data(context);
           return 1;
       }
-      r = select(sock+1, &fd_r, &fd_w, NULL, &tv);
+      r = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
     }
   } while (status == -1 && r != 0);
 
@@ -1159,7 +1159,7 @@ int tls_auth (const char *type, wzd_context_t * context)
     if (was_writing) { FD_SET(sock,&fd_w); }
     else { FD_SET(sock,&fd_r); }
 
-    ret = select(sock+1, &fd_r, &fd_w, NULL, &tv);
+    ret = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
 
     if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
       out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
@@ -1283,7 +1283,7 @@ int tls_init_datamode(socket_t sock, wzd_context_t * context)
     if (was_writing) { FD_SET(sock,&fd_w); }
     else { FD_SET(sock,&fd_r); }
 
-    ret = select(sock+1, &fd_r, &fd_w, NULL, &tv);
+    ret = socket_select(sock + 1, &fd_r, &fd_w, NULL, &tv);
 
     if ( ! (FD_ISSET(sock,&fd_r) || FD_ISSET(sock,&fd_w)) ) { /* timeout */
       out_log(LEVEL_HIGH,"GnuTLS: tls_auth failed !\n");
@@ -1441,7 +1441,7 @@ int tls_read(socket_t sock, char *msg, size_t length, int flags, unsigned int ti
         tv.tv_usec = 0;
 
         if (timeout) {
-          r = select(sock+1,&fd_r,NULL,NULL,&tv);
+          r = socket_select(sock + 1, &fd_r, NULL, NULL, &tv);
           if (r <= 0) return -1;
         }
 
@@ -1498,7 +1498,7 @@ int tls_write(socket_t sock, const char *msg, size_t length, int flags, unsigned
         tv.tv_sec = timeout;
         tv.tv_usec = 0;
 
-        r = select(sock+1,NULL,&fd_w,NULL,&tv);
+        r = socket_select(sock + 1, NULL, &fd_w, NULL, &tv);
         if (r <= 0) return -1;
 
         continue;

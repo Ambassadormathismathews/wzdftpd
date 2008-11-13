@@ -275,7 +275,7 @@ void data_end_transfer(int is_upload, int end_ok, wzd_context_t * context)
   }
 }
 
-int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
+socket_t data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
 {
   unsigned int action;
 
@@ -316,7 +316,7 @@ int data_set_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
   return -1;
 }
 
-int data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
+socket_t data_check_fd(wzd_context_t * context, fd_set *fdr, fd_set *fdw, fd_set *fde)
 {
   unsigned int action;
 
@@ -497,7 +497,7 @@ void *do_local_retr(void * _context)
 
     tv.tv_sec=30; tv.tv_usec=0L;
 
-    ret = select(maxfd+1,NULL,&fds_w,NULL,&tv);
+    ret = socket_select(maxfd + 1, NULL, &fds_w, NULL, &tv);
 
     if (ret > 0) {
       count = read(file, context->data_buffer, mainConfig->data_buffer_length);
@@ -598,7 +598,7 @@ void *do_local_stor(void * _context)
 
     tv.tv_sec=30; tv.tv_usec=0L;
 
-    ret = select(maxfd+1,&fds_r,NULL,NULL,&tv);
+    ret = socket_select(maxfd + 1, &fds_r, NULL, NULL, &tv);
 
     if (ret > 0) {
       count = (read_fct)(context->data_socket,context->data_buffer,mainConfig->data_buffer_length,0,0,context);

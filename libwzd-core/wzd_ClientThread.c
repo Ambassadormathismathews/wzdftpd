@@ -148,9 +148,10 @@ int clear_read(socket_t sock, char *msg, size_t length, UNUSED int flags, unsign
       FD_ZERO(&efds);
       FD_SET(sock,&fds);
       FD_SET(sock,&efds);
-      tv.tv_sec = timeout; tv.tv_usec = 0;
+      tv.tv_sec = timeout;
+      tv.tv_usec = 0;
 
-      ret = select(sock+1,&fds,NULL,&efds,&tv);
+      ret = socket_select(sock + 1, &fds, NULL, &efds, &tv);
       save_errno = errno;
 
       if (FD_ISSET(sock,&fds)) /* ok */
@@ -196,9 +197,10 @@ int clear_write(socket_t sock, const char *msg, size_t length, UNUSED int flags,
         FD_ZERO(&efds);
         FD_SET(sock,&fds);
         FD_SET(sock,&efds);
-        tv.tv_sec = timeout; tv.tv_usec = 0;
+        tv.tv_sec = timeout;
+	tv.tv_usec = 0;
 
-        ret = select(sock+1,NULL,&fds,&efds,&tv);
+        ret = socket_select(sock + 1, NULL, &fds, &efds, &tv);
         save_errno = errno;
 
         if (FD_ISSET(sock,&fds)) /* break */
@@ -474,7 +476,7 @@ int do_chdir(const char * wanted_path, wzd_context_t *context)
 
 /*************** waitaccept **************************/
 
-int waitaccept(wzd_context_t * context)
+socket_t waitaccept(wzd_context_t * context)
 {
   fd_set fds;
   struct timeval tv;
@@ -498,7 +500,7 @@ int waitaccept(wzd_context_t * context)
     FD_SET(sock,&fds);
     tv.tv_sec=HARD_XFER_TIMEOUT; tv.tv_usec=0L; /* FIXME - HARD_XFER_TIMEOUT should be a variable */
 
-    if (select(sock+1,&fds,NULL,NULL,&tv) <= 0) {
+    if (socket_select(sock + 1, &fds, NULL, NULL, &tv) <= 0) {
       out_err(LEVEL_FLOOD,"accept timeout to client %s:%d.\n",__FILE__,__LINE__);
       FD_UNREGISTER(context->pasv_socket,"Client PASV socket");
       socket_close(context->pasv_socket);
@@ -562,9 +564,9 @@ int waitaccept(wzd_context_t * context)
 
 /*************** waitconnect *************************/
 
-int waitconnect(wzd_context_t * context)
+socket_t waitconnect(wzd_context_t * context)
 {
-  int sock;
+  socket_t sock;
   int ret;
 
   {
@@ -3415,8 +3417,8 @@ void * clientThreadProc(void *arg)
      * to use 100% cpu (infinite loop).
      * The solution is not to use efds
      */
-/*    ret = select(ret+1,&fds_r,&fds_w,&efds,&tv);*/
-    ret = select(ret+1,&fds_r,&fds_w,NULL,&tv);
+/*    ret = socket_select(ret + 1, &fds_r, &fds_w, &efds, &tv); */
+    ret = socket_select(ret + 1, &fds_r, &fds_w, NULL, &tv);
     FD_ZERO(&efds);
     save_errno = errno;
 

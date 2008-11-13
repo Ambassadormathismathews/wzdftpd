@@ -1551,7 +1551,7 @@ int serverMainThreadProc(void *arg)
     server_ip_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_ident_select(&r_fds, &w_fds, &e_fds, &maxfd);
     server_control_select(&r_fds, &w_fds, &e_fds, &maxfd);
-    ret = select(maxfd+1, &r_fds, &w_fds, &e_fds, &tv);
+    ret = socket_select(maxfd + 1, &r_fds, &w_fds, &e_fds, &tv);
 
     if (ret < 0) {
       if (errno == EINTR) continue; /* retry */

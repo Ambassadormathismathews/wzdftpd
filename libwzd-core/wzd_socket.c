@@ -163,10 +163,20 @@ int socket_close(socket_t sock)
 #endif
 }
 
+/*************** socket_select **************************/
+int socket_select(socket_t sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
+#ifdef WIN32
+  /* Winsock ignores the first argument which is an integer on Windows. Because
+   * an integer is 32bit and socket_t is 64bit on Windows 64bit systems, we'll
+   * get compiler warnings if we don't ignore the first argument here. */
+  return select(0, readfds, writefds, exceptfds, timeout);
+#endif
+  return select(sock, readfds, writefds, exceptfds, timeout);
+}
 
 /*************** socket_accept **************************/
 
-int socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *f)
+socket_t socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *f)
 {
   socket_t new_sock;
   net_family_t family = WZD_INET_NONE;
@@ -286,7 +296,7 @@ static int _waitconnect(socket_t sockfd, /* socket */
 
   interval.tv_usec = timeout_msec*1000;
 
-  rc = select(sockfd+1, NULL, &fd, &errfd, &interval);
+  rc = socket_select(sockfd+1, NULL, &fd, &errfd, &interval);
   if(-1 == rc)
     /* error, no connect here, try next */
     return -1;
@@ -310,7 +320,7 @@ static int _waitconnect(socket_t sockfd, /* socket */
 
 /*************** socket_connect *************************/
 
-int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, socket_t fd, unsigned int timeout)
+socket_t socket_connect(unsigned char *remote_host, int family, int remote_port, int localport, socket_t fd, unsigned int timeout)
 {
   socket_t sock;
   struct sockaddr *sai;
@@ -550,7 +560,7 @@ int socket_connect(unsigned char * remote_host, int family, int remote_port, int
 }
 
 /** \brief Returns the local/remote port for the socket. */
-int get_sock_port(int sock, int local)
+int get_sock_port(socket_t sock, int local)
 {
 #if !defined(WIN32) && !defined(__sun__)
   struct sockaddr_storage from;
@@ -622,11 +632,14 @@ int socket_wait_to_read(socket_t sock, unsigned int timeout)
       FD_SET(sock,&wfds);
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
+      
+      ret = socket_select(sock + 1, &rfds, &wfds, &efds, &tv);
 
-      ret = select(sock+1,&rfds,&wfds,&efds,&tv);
+      if (ret == -1) return -1;
+      if (ret == 0) return 1; /* timeout */
       
       save_errno = errno;
-
+      
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
         out_log(LEVEL_CRITICAL,"Error during socket_wait_to_read: %d %s\n",save_errno,strerror(save_errno));
@@ -669,17 +682,14 @@ int socket_wait_to_write(socket_t sock, unsigned int timeout)
       FD_SET(sock,&wfds);
       FD_SET(sock,&efds);
       tv.tv_sec = timeout; tv.tv_usec = 0;
-
-      ret = select(sock+1,NULL,&wfds,&efds,&tv);
+      
+      ret = socket_select(sock + 1, NULL, &wfds, &efds, &tv);
+      
+      if (ret == -1) return -1;
+      if (ret == 0) return 1; /* timeout */
       
       save_errno = errno;
-
-      if (ret == -1) return -1;
-
-      if (ret == 0) return 1; /* timeout */
-
-
-
+      
       if (FD_ISSET(sock,&efds)) {
         if (save_errno == EINTR) continue;
 #ifdef WIN32

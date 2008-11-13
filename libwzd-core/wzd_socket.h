@@ -28,9 +28,11 @@
 socket_t socket_make(const char *ip, unsigned int *port, int nListen, net_family_t family);
 int socket_close(socket_t sock);
 
-int socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *family);
+int socket_select(socket_t sock, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
-int socket_connect(unsigned char * remote_host, int family, int remote_port, int localport, socket_t fd, unsigned int timeout);
+socket_t socket_accept(socket_t sock, unsigned char *remote_host, unsigned int *remote_port, net_family_t *family);
+
+socket_t socket_connect(unsigned char *remote_host, int family, int remote_port, int localport, socket_t fd, unsigned int timeout);
 
 /* Returns remote/local port number for the current connection. */
 int socket_get_remote_port(socket_t sock);
