@@ -2018,7 +2018,7 @@ int do_epsv(UNUSED wzd_string_t *name, UNUSED wzd_string_t *arg, wzd_context_t *
 int do_retr(UNUSED wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
-  int fd;
+  fd_t fd;
   u64_t bytestot, bytesnow, byteslast;
   socket_t sock;
   int ret;
@@ -2226,7 +2226,7 @@ int do_stor(wzd_string_t *name, wzd_string_t *arg, wzd_context_t * context)
 {
   char path[WZD_MAX_PATH];
   char path2[WZD_MAX_PATH];
-  int fd;
+  fd_t fd;
   u64_t bytesnow, byteslast;
   socket_t sock;
   int ret;

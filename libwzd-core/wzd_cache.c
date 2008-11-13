@@ -217,7 +217,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   fs_filestat_t st;
   wzd_cache_t * cache;
   wzd_internal_cache_t * c;
-  int fd;
+  fd_t fd;
 
   if (!file) return NULL;
 
@@ -259,7 +259,7 @@ wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags
   fs_filestat_t s;
   unsigned long hash;
   size_t length, ret;
-  int fd;
+  fd_t fd;
 
   hash = compute_hashval(file,strlen(file));
 

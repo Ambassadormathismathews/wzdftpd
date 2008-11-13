@@ -68,7 +68,7 @@ struct wzd_file_t {
 };
 
 
-int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context);
+fd_t file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context);
 
 void file_close(fd_t file, wzd_context_t * context);
 

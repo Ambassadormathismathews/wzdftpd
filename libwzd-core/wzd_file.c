@@ -1412,7 +1412,7 @@ int softlink_remove(const char *linkname)
 
 /************ PUBLIC FUNCTIONS ***************/
 
-int file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context)
+fd_t file_open(const char *filename, int mode, unsigned long wanted_right, wzd_context_t * context)
 {
   fd_t file;
   int ret;

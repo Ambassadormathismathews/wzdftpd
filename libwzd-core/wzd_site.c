@@ -1463,7 +1463,7 @@ int do_site_savecfg(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *command_l
 {
   wzd_string_t * data = NULL;
   size_t length = 0, written;
-  int fd;
+  fd_t fd;
   int do_backup;
   int err = 0;
 
@@ -1477,7 +1477,7 @@ int do_site_savecfg(UNUSED wzd_string_t *ignored, UNUSED wzd_string_t *command_l
 
   if (do_backup)
   {
-    int backup_fd;
+    fd_t backup_fd;
     char buffer[1024];
     ssize_t ret;
     char * filename = NULL;
