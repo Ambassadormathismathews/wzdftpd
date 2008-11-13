@@ -247,7 +247,7 @@ void client_die(wzd_context_t * context)
   }
 
   /* close opened files */
-  if (context->current_action.current_file != (socket_t)-1) {
+  if (context->current_action.current_file != (fd_t)-1) {
     data_end_transfer( (context->current_action.token == TOK_STOR) /* is_upload */, 0 /* end_ok */, context);
   }
 
