@@ -35,9 +35,6 @@
   * \brief strptime() replacement
   */
 
-
-#include "wzd_all.h"
-
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
@@ -93,7 +90,7 @@ char    *
 strptime(char *buf, char *fmt, struct tm *tm)
 {
   char    c, *ptr;
-  int     i, j
+  int     i, j;
   size_t  len;
 
   ptr = fmt;
