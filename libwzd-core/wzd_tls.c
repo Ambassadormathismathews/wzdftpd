@@ -701,7 +701,7 @@ int tls_auth_cont(wzd_context_t * context)
 
 /*************** tls_init_datamode *******************/
 
-int tls_init_datamode(int sock, wzd_context_t * context)
+int tls_init_datamode(socket_t sock, wzd_context_t * context)
 {
   char * tls_cipher_list;
   wzd_string_t * str;
