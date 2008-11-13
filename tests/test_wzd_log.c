@@ -4,6 +4,7 @@
 
 #include <fcntl.h> /* O_RDONLY */
 
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 
@@ -17,7 +18,7 @@ int main()
   unsigned long c1 = C1;
   int ret;
   char template[] = "/tmp/wzd-XXXXXX";
-  int fd;
+  fd_t fd;
   unsigned long c2 = C2;
 
   wzd_debug_init();

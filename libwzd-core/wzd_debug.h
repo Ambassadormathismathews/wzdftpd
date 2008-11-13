@@ -25,6 +25,8 @@
 #ifndef __WZD_DEBUG__
 #define __WZD_DEBUG__
 
+#include "wzd_types.h"
+
 #ifdef DEBUG
 
 #define WZD_ASSERT_VOID(x) if (!(x)) { fprintf(stderr,"Assertion Failed "#x" on %s:%d\n",__FILE__,__LINE__); return ; }
@@ -73,8 +75,8 @@ void wzd_debug_init(void);
 /** end all debug functions */
 void wzd_debug_fini(void);
 
-int fd_register(int fd, const char *desc, const char *file, unsigned int line, const char *function);
-int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function);
+int fd_register(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function);
+int fd_unregister(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function);
 void fd_dump(void);
 #ifdef DEBUG
 # define FD_REGISTER(fd,desc)   fd_register(fd,desc,__FILE__,__LINE__,__FUNCTION__)

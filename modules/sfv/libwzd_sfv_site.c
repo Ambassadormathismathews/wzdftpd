@@ -49,6 +49,7 @@
 #include <errno.h>
 
 /*#include "wzd.h"*/
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -179,7 +180,7 @@ int sfv_create(const char * sfv_file)
   /* writes file */
   {
     char buffer[2048];
-    int fd_sfv;
+    fd_t fd_sfv;
     fd_sfv = open(sfv_file,O_CREAT | O_WRONLY | O_TRUNC,0644);
 
     for (i=0; sfv.comments[i]; i++) {

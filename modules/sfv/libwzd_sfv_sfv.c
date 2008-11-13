@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -111,7 +112,7 @@ int sfv_sfv_update_release_and_get_stats(wzd_release_stats * stats , const char 
   unsigned long cur_st_size;
   double size_total=0;
   struct stat s;
-  int fd;
+  fd_t fd;
   int i;
 
   if (sfv->sfv_list == NULL) 

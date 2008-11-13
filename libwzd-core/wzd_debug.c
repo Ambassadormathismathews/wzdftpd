@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include "wzd_types.h"
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -65,7 +66,7 @@
 #ifdef DEBUG
 struct wzd_fd {
   unsigned long sig;
-  int fd;
+  fd_t fd;
   char file[256];
   unsigned int line;
   char function[256];
@@ -78,8 +79,8 @@ static void fd_init(void);
 
 #endif
 
-int fd_register(int fd, const char *desc, const char *file, unsigned int line, const char *function);
-int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function);
+int fd_register(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function);
+int fd_unregister(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function);
 void fd_dump(void);
 
 size_t wzd_strnlen (const char *s, size_t n);
@@ -179,7 +180,7 @@ static void fd_init(void)
 }
 #endif /* DEBUG */
 
-int fd_register(int fd, const char *desc, const char *file, unsigned int line, const char *function)
+int fd_register(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function)
 {
 #ifdef DEBUG
   if (fd < 0) return 1;
@@ -221,7 +222,7 @@ int fd_register(int fd, const char *desc, const char *file, unsigned int line, c
   return 0;
 }
 
-int fd_unregister(int fd, const char *desc, const char *file, unsigned int line, const char *function)
+int fd_unregister(fd_t fd, const char *desc, const char *file, unsigned int line, const char *function)
 {
 #ifdef DEBUG
   if (fd < 0) return 1;

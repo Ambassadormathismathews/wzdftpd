@@ -66,6 +66,7 @@
 #include <tcl.h>
 
 /*#include <wzd.h>*/
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -213,7 +214,7 @@ int WZD_MODULE_INIT(void)
       }
     }
     if (logdir) {
-      int fd;
+      fd_t fd;
 
       wzd_string_t *str = str_allocate();
       str_sprintf(str,"%s/%s", logdir, TCL_ERRORLOGNAME);

@@ -1030,7 +1030,7 @@ void server_crashed(int signum)
  */
 int server_switch_to_config(wzd_config_t *config)
 {
-  int fd;
+  fd_t fd;
   int ret;
   int err;
   wzd_string_t ** str_list;
@@ -1502,7 +1502,7 @@ int serverMainThreadProc(void *arg)
     /* warning: do not close fd (0 1 2), or this will create problems when trying
      * to create child process with a pipe (dup2 fails with error EBADF)
      */
-    int fd = open("/dev/null",O_RDWR);
+    fd_t fd = open("/dev/null",O_RDWR);
     dup2(fd,0);
     dup2(fd,1);
     dup2(fd,2);

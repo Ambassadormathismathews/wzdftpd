@@ -30,6 +30,7 @@
 
 #ifdef USE_BONJOUR
 
+#include <libwzd-core/wzd_types.h>
 #include "libwzd_bonjour.h"
 
 DNSServiceRef publish_session = NULL;
@@ -157,7 +158,7 @@ void* bo_zeroconf_setup(unsigned long port,
 
 int bo_zeroconf_run(void) {
   fd_set set;
-  int fd;
+  fd_t fd;
   struct timeval timeout;
 
   /* Initialize the file descriptor set. */

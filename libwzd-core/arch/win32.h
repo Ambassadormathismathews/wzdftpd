@@ -113,7 +113,7 @@
 #define dlerror()				"Not supported on win32"
 
 #define ftruncate(fd,pos)	win32_ftruncate((fd),(__int64)(pos))
-int win32_ftruncate(int fd, __int64 length);
+int win32_ftruncate(fd_t fd, __int64 length);
 
 #define readlink(path,buf,bufsiz)	(-1)
 #define symlink(oldpath,newpath)	(-1)

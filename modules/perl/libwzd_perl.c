@@ -67,6 +67,7 @@
 #include <perl.h>
 #include <XSUB.h>
 
+#include <libwzd-core/wzd_types.h>
 #include <libwzd-core/wzd_structs.h>
 #include <libwzd-core/wzd_log.h>
 #include <libwzd-core/wzd_misc.h>
@@ -171,7 +172,7 @@ int WZD_MODULE_INIT(void)
       }
     }
     if (logdir) {
-      int fd;
+      fd_t fd;
       const char * filename;
 
       wzd_string_t *str = str_allocate();

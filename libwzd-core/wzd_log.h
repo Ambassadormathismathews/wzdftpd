@@ -25,6 +25,8 @@
 #ifndef __WZD_LOG__
 #define __WZD_LOG__
 
+#include "wzd_types.h"
+
 /* colors */
 
 #ifndef _MSC_VER
@@ -68,7 +70,7 @@ int log_open(const char * filename, int filemode);
 
 /** \brief Close log file
  */
-void log_close(int fd);
+void log_close(fd_t fd);
 
 /** \brief Close all log descriptors
  */
@@ -99,7 +101,7 @@ int log_get(unsigned int level);
  *
  * \note fd must have been returned from log_open()
  */
-int log_set(unsigned int level, int fd);
+int log_set(unsigned int level, fd_t fd);
 
 /** \brief Use syslog for specified level
  *
@@ -113,7 +115,7 @@ int xferlog_open(const char *filename, unsigned int filemode);
 
 /** \brief Close xferlog file opened using \ref xferlog_open
  */
-void xferlog_close(int fd);
+void xferlog_close(fd_t fd);
 
 /** \brief Send message to the server logger
  */

@@ -34,6 +34,7 @@
 #include <arpa/inet.h>  /* struct in_addr */
 #endif
 
+#include "wzd_types.h"
 #include "wzd_mutex.h"
 
 unsigned long compute_hashval (const void *key, size_t keylen);
@@ -77,7 +78,7 @@ int is_hidden_file(const char *filename);
 
 /* get file last change time */
 time_t get_file_ctime(const char *file);
-time_t lget_file_ctime(int fd);
+time_t lget_file_ctime(fd_t fd);
 
 /* renames file/dir, if on different fs then moves recursively */
 int safe_rename(const char *src, const char *dst);

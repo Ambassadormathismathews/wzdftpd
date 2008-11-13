@@ -53,6 +53,7 @@
 #include "wzd_cache.h"
 
 
+#include "wzd_types.h"
 #include "wzd_structs.h"
 #include "wzd_fs.h"
 #include "wzd_group.h"
@@ -75,7 +76,7 @@ typedef struct wzd_internal_cache_t wzd_internal_cache_t;
  * do not use directly
  */
 struct wzd_internal_cache_t  {
-  int fd;
+  fd_t fd;
 
   unsigned long filename_hash;
   off_t datasize;
@@ -129,7 +130,7 @@ wzd_cache_t * wzd_cache_open(const char *file, int flags, unsigned int mode)
   size_t ret;
   size_t length;
   size_t size;
-  int fd;
+  fd_t fd;
 
   if (!file) return NULL;
 
@@ -311,7 +312,7 @@ wzd_cache_t* _cache_refresh(wzd_internal_cache_t *c, const char *file, int flags
   fs_filestat_t st;
   wzd_cache_t * cache;
   wzd_internal_cache_t c2, c_old;
-  int fd;
+  fd_t fd;
 
   if (!file) return NULL;
 
@@ -450,7 +451,7 @@ ssize_t wzd_cache_write(wzd_cache_t * c, void *buf, size_t count)
 char * wzd_cache_gets(wzd_cache_t * c, char *buf, unsigned int size)
 {
   off_t position;
-  int fd;
+  fd_t fd;
   char buffer[4096], *ptr, *dst;
   char _c=0;
   ssize_t ret;

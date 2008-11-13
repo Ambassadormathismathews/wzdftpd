@@ -90,6 +90,7 @@
 #endif /* _MSC_VER */
 
 
+#include "wzd_types.h"
 #include "wzd_structs.h"
 
 #include "wzd_ClientThread.h"
@@ -516,7 +517,7 @@ time_t get_file_ctime(const char *file)
   return s.ctime;
 }
 
-time_t lget_file_ctime(int fd)
+time_t lget_file_ctime(fd_t fd)
 {
   fs_filestat_t s;
   if ( fs_file_fstat(fd,&s) < 0 ) return (time_t)-1;
@@ -1129,7 +1130,7 @@ int win32_gettimeofday(struct timeval *tv, struct timezone *tz)
 /** We can't use _chsize() since it is limited to 2Gb files, nor _chsize_s()
  * which does not exist on all versions of the platform SDK.
  */
-int win32_ftruncate(int fd, __int64 length)
+int win32_ftruncate(fd_t fd, __int64 length)
 {
   HANDLE handle = (HANDLE)_get_osfhandle(fd);
   __int64 offset, offset_set;

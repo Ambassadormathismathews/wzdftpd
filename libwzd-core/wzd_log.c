@@ -56,6 +56,7 @@
 
 #include <fcntl.h> /* O_WRONLY */
 
+#include "wzd_types.h"
 #include "wzd_structs.h"
 #include "wzd_log.h"
 #include "wzd_misc.h"
@@ -74,7 +75,7 @@ static int _static_log_enabled = 0; /* 0 = disabled */
 static void _buffer_push(const char *);
 
 struct wzd_log_entry_t {
-  int fd;
+  fd_t fd;
   int syslog;
 };
 
@@ -104,7 +105,7 @@ int log_init(void)
 
 int log_open(const char * filename, int filemode)
 {
-  int fd;
+  fd_t fd;
 
   fd = open(filename, filemode, 0640);
   if (fd)
@@ -113,7 +114,7 @@ int log_open(const char * filename, int filemode)
   return fd;
 }
 
-void log_close(int fd)
+void log_close(fd_t fd)
 {
 #ifdef DEBUG
   if (fd == 1 /* stdout */ || fd == 2 /* stderr */) return;
@@ -161,7 +162,7 @@ void log_fini(void)
  */
 int log_open_old(const char *filename, int filemode)
 {
-  int fd;
+  fd_t fd;
 
   fd = open(filename, filemode, 0640);
   if (fd < 0)
@@ -190,7 +191,7 @@ int log_get(unsigned int level)
   return _log_channels[level].fd;
 }
 
-int log_set(unsigned int level, int fd)
+int log_set(unsigned int level, fd_t fd)
 {
   unsigned int i, count;
 
@@ -412,7 +413,7 @@ void out_err(int level, const char *fmt,...)
 
 int xferlog_open(const char *filename, unsigned int filemode)
 {
-  int fd;
+  fd_t fd;
 #if (defined (__FreeBSD__) && (__FreeBSD__ < 5)) || defined(WIN32) || defined(__APPLE__)
   fd = open(filename,O_WRONLY | O_CREAT | O_APPEND, filemode);
 #else /* ! BSD */
@@ -421,7 +422,7 @@ int xferlog_open(const char *filename, unsigned int filemode)
   return fd;
 }
 
-void xferlog_close(int fd)
+void xferlog_close(fd_t fd)
 {
   close(fd);
 }
