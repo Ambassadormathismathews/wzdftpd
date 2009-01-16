@@ -97,7 +97,20 @@ EXPORTS
 	file_write
 	free_file_recursive
 	free_messages
+	fs_open
+	fs_read
+	fs_write
+	fs_close
+	fs_unlink
+	fs_rename
+	fs_mkdir
+	fs_rmdir
+	fs_dir_open
+	fs_dir_close
+	fs_dir_read
 	fs_file_stat
+	fs_file_lstat
+	fs_file_fstat
 	get_bandwidth
 	get_device_info
 	get_system_ip
