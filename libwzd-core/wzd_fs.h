@@ -110,24 +110,23 @@ int fs_dir_close(fs_dir_t *dir);
  */
 int fs_dir_read(fs_dir_t *dir, fs_fileinfo_t **fileinfo);
 
-/** \brief Get informations on file
+/** \brief Get information about the attributes of a file, following symbolic links
  *
- * pathname must be an absolute path.
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * filename must be an absolute path.
+ * filename should be UTF-8 encoded, or will be converted to Unicode.
  */
-int fs_file_stat(const char *pathname, fs_filestat_t *s, int *err);
+int fs_file_stat(const char *filename, fs_filestat_t *s, int *err);
 
-/** \brief Get informations on file
+/** \brief Get information about the attributes of a file, not following symbolic links
  *
- * pathname must be an absolute path.
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * filename must be an absolute path.
+ * filename should be UTF-8 encoded, or will be converted to Unicode.
  */
-int fs_file_lstat(const char *pathname, fs_filestat_t *s, int *err);
+int fs_file_lstat(const char *filename, fs_filestat_t *s, int *err);
 
-/** \brief Get information on file
+/** \brief Get information about the attributes of a file, following symbolic links
  */
 int fs_file_fstat(fd_t file, fs_filestat_t *s, int *err);
-
 
 const char *fs_fileinfo_getname(fs_fileinfo_t *finfo);
 
