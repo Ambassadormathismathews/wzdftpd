@@ -32,7 +32,6 @@
 #include <winsock2.h>
 #include <direct.h>
 #include <wchar.h>
-#include <io.h>
 #else
 #include <unistd.h>
 #include <sys/socket.h>
@@ -68,66 +67,23 @@ struct fs_fileinfo_t {
 
 struct fs_dir_t {
   void * handle;
+
   char * dirname;
+
 #ifdef WIN32
   WIN32_FIND_DATAW entry;
 #endif
+
   fs_fileinfo_t finfo;
 };
 
 
-/** \brief Open/create a file
- *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
- */
-fd_t fs_open(const char *filename, int mode, int permission, int *err) {
-}
-
-/** \brief Close an open file handle
- */
-void fs_close(fd_t fd) {
-}
-
-/** \brief Read from a file
- */
-ssize_t fs_read(fd_t fd, void *buffer, size_t size) {
-}
-
-/** \brief Write to a file
- */
-ssize_t fs_write(fd_t fd, const void *buffer, size_t size) {
-}
-
-/** \brief Remove a file
- *
- * filename should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_unlink(const char *filename, int *err) {
-}
-
-/** \brief chmod a file
- *
- * filename should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_chmod(const char *filename, int permission, int *err) {
-}
-
-/** \brief Rename a file/directory
- *
- * src should be UTF-8 encoded, or will be converted to Unicode.
- * dst should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_rename(const char *src, const char *dst, int *err) {
-}
-
-
 /** \brief Create a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
- *
- * \return -1 on error, and set \a err to errno
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_mkdir(const char *pathname, unsigned long mode, int *err) {
+int fs_mkdir(const char * pathname, unsigned long mode, int * err)
+{
   int ret;
 
 #ifndef WIN32
@@ -160,18 +116,12 @@ int fs_mkdir(const char *pathname, unsigned long mode, int *err) {
   return ret;
 }
 
-/** \brief Remove a directory
- *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_rmdir(const char *pathname, int *err) {
-}
-
 /** \brief Open a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_dir_open(const char *pathname, fs_dir_t **newdir) {
+int fs_dir_open(const char * pathname, fs_dir_t ** newdir)
+{
   size_t len;
 
   *newdir = wzd_malloc(sizeof(fs_dir_t));
@@ -193,7 +143,8 @@ int fs_dir_open(const char *pathname, fs_dir_t **newdir) {
 
 /** \brief Close a directory
  */
-int fs_dir_close(fs_dir_t* dir) {
+int fs_dir_close(fs_dir_t * dir)
+{
   int ret = 0;
 
   /* dir->finfo.name may not be allocated yet, so we have to double check */
@@ -214,11 +165,13 @@ int fs_dir_close(fs_dir_t* dir) {
   return ret;
 }
 
+
 /** \brief Read a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_dir_read(fs_dir_t *dir, fs_fileinfo_t **fileinfo) {
+int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t **fileinfo)
+{
   char * filename = NULL; /* UTF-8 ! */
 
 #ifdef WIN32
@@ -291,144 +244,158 @@ int fs_dir_read(fs_dir_t *dir, fs_fileinfo_t **fileinfo) {
   return 0;
 }
 
-/** \brief Get information about the attributes of a file, following symbolic links
+/** \brief Get informations on file
  *
- * filename must be an absolute path.
- * filename should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_file_stat(const char *filename, fs_filestat_t *s, int *err) {
+int fs_file_lstat(const char *pathname, fs_filestat_t * s)
+{
 #ifndef WIN32
-  struct stat st;
+  {
+    struct stat st;
 
-  if (!stat(pathname,&st)) {
-    if (s) {
-      s->size = (u64_t)st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      return 0;
+    if (!lstat(pathname,&st)) {
+      if (s) {
+        s->size = (u64_t)st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
     }
+    return -1;
   }
-  return -1;
 #else
-  struct _stati64 st;
-  wchar_t * wbuffer;
-  int sz;
-  int ret;
+  {
+    struct _stati64 st;
+    wchar_t * wbuffer;
+    int sz;
+    int ret;
 
-  sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
-  if (sz <= 0) return -1;
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
+    if (sz <= 0) return -1;
 
-  wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
+    wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
 
-  ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
-  if (ret <= 0) { free(wbuffer); return -1; }
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
+    if (ret <= 0) { free(wbuffer); return -1; }
 
-  if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
+    if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
 
-  ret = -1;
-  if (!_wstati64(wbuffer,&st)) {
-    if (s) {
-      s->size = st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      ret = 0;
+    ret = -1;
+    if (!_wstati64(wbuffer,&st)) {
+      if (s) {
+        s->size = st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        ret = 0;
+      }
     }
-  }
-  free(wbuffer);
+    free(wbuffer);
   return ret;
+  }
 #endif
 }
 
-/** \brief Get information about the attributes of a file, not following symbolic links
+/** \brief Get informations on file
  *
- * filename must be an absolute path.
- * filename should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_file_lstat(const char *filename, fs_filestat_t *s, int *err) {
+int fs_file_stat(const char *pathname, fs_filestat_t * s)
+{
 #ifndef WIN32
-  struct stat st;
+  {
+    struct stat st;
 
-  if (!lstat(pathname,&st)) {
-    if (s) {
-      s->size = (u64_t)st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      return 0;
+    if (!stat(pathname,&st)) {
+      if (s) {
+        s->size = (u64_t)st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
     }
+    return -1;
   }
-  return -1;
 #else
-  struct _stati64 st;
-  wchar_t * wbuffer;
-  int sz;
-  int ret;
+  {
+    struct _stati64 st;
+    wchar_t * wbuffer;
+    int sz;
+    int ret;
 
-  sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
-  if (sz <= 0) return -1;
+    sz = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, NULL, 0);
+    if (sz <= 0) return -1;
 
-  wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
+    wbuffer = malloc((size_t)sz * sizeof(wchar_t) + 5);
 
-  ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
-  if (ret <= 0) { free(wbuffer); return -1; }
+    ret = MultiByteToWideChar(CP_UTF8, 0, pathname, (int)strlen(pathname)+1, wbuffer, sz);
+    if (ret <= 0) { free(wbuffer); return -1; }
 
-  if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
+    if( strlen(pathname)==2 && pathname[1]==':' ) wcscat(wbuffer,L"/");
 
-  ret = -1;
-  if (!_wstati64(wbuffer,&st)) {
-    if (s) {
-      s->size = st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      ret = 0;
+    ret = -1;
+    if (!_wstati64(wbuffer,&st)) {
+      if (s) {
+        s->size = st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        ret = 0;
+      }
     }
+    free(wbuffer);
+    return ret;
   }
-  free(wbuffer);
-  return ret;
 #endif
 }
 
-/** \brief Get information about the attributes of a file, following symbolic links
+/** \brief Get informations on file
  */
-int fs_file_fstat(fd_t file, fs_filestat_t *s, int *err) {
+int fs_file_fstat(fd_t file, fs_filestat_t * s)
+{
 #ifndef WIN32
-  struct stat st;
+  {
+    struct stat st;
 
-  if (!fstat(file,&st)) {
-    if (s) {
-      s->size = (u64_t)st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      return 0;
+    if (!fstat(file,&st)) {
+      if (s) {
+        s->size = (u64_t)st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
     }
+    return -1;
   }
-  return -1;
 #else
-  struct _stati64 st;
+  {
+    struct _stati64 st;
 
-  if (!_fstati64(file,&st)) {
-    if (s) {
-      s->size = st.st_size;
-      s->mode = st.st_mode;
-      s->mtime = st.st_mtime;
-      s->ctime = st.st_ctime;
-      s->nlink = st.st_nlink;
-      return 0;
+    if (!_fstati64(file,&st)) {
+      if (s) {
+        s->size = st.st_size;
+        s->mode = st.st_mode;
+        s->mtime = st.st_mtime;
+        s->ctime = st.st_ctime;
+        s->nlink = st.st_nlink;
+        return 0;
+      }
     }
+    return -1;
   }
-  return -1;
 #endif
 }
-
 
 const char * fs_fileinfo_getname(fs_fileinfo_t * finfo)
 {

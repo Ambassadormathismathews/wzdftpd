@@ -41,93 +41,49 @@ struct fs_filestat_t {
   int nlink;
 };
 
-
-/** \brief Open/create a file
- *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
- */
-fd_t fs_open(const char *filename, int mode, int permission, int *err);
-
-/** \brief Close an open file handle
- */
-void fs_close(fd_t fd);
-
-/** \brief Read from a file
- */
-ssize_t fs_read(fd_t fd, void *buffer, size_t size);
-
-/** \brief Write to a file
- */
-ssize_t fs_write(fd_t fd, const void *buffer, size_t size);
-
-/** \brief Remove a file
- *
- * filename should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_unlink(const char *filename, int *err);
-
-/** \brief chmod a file
- *
- * filename should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_chmod(const char *filename, int permission, int *err);
-
-/** \brief Rename a file/directory
- *
- * src should be UTF-8 encoded, or will be converted to Unicode.
- * dst should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_rename(const char *src, const char *dst, int *err);
-
-
 /** \brief Create a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  *
  * \return -1 on error, and set \a err to errno
  */
-int fs_mkdir(const char *pathname, unsigned long mode, int *err);
-
-/** \brief Remove a directory
- *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
- */
-int fs_rmdir(const char *pathname, int *err);
+int fs_mkdir(const char * pathname, unsigned long mode, int * err);
 
 /** \brief Open a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_dir_open(const char *pathname, fs_dir_t **newdir);
+int fs_dir_open(const char * pathname, fs_dir_t ** newdir);
 
 /** \brief Close a directory
  */
-int fs_dir_close(fs_dir_t *dir);
+int fs_dir_close(fs_dir_t * dir);
 
 /** \brief Read a directory
  *
- * pathname should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_dir_read(fs_dir_t *dir, fs_fileinfo_t **fileinfo);
+int fs_dir_read(fs_dir_t * dir, fs_fileinfo_t ** fileinfo);
 
-/** \brief Get information about the attributes of a file, following symbolic links
+/** \brief Get informations on file
  *
- * filename must be an absolute path.
- * filename should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_file_stat(const char *filename, fs_filestat_t *s, int *err);
+int fs_file_stat(const char *pathname, fs_filestat_t * s);
 
-/** \brief Get information about the attributes of a file, not following symbolic links
+/** \brief Get informations on file
  *
- * filename must be an absolute path.
- * filename should be UTF-8 encoded, or will be converted to Unicode.
+ * pathname must be an absolute path
+ * pathname should be UTF-8 encoded, or will be converted to unicode.
  */
-int fs_file_lstat(const char *filename, fs_filestat_t *s, int *err);
+int fs_file_lstat(const char *pathname, fs_filestat_t * s);
 
-/** \brief Get information about the attributes of a file, following symbolic links
+/** \brief Get informations on file
  */
-int fs_file_fstat(fd_t file, fs_filestat_t *s, int *err);
+int fs_file_fstat(fd_t file, fs_filestat_t * s);
 
-const char *fs_fileinfo_getname(fs_fileinfo_t *finfo);
+
+const char * fs_fileinfo_getname(fs_fileinfo_t * finfo);
 
 #endif /* __WZD_FS__ */

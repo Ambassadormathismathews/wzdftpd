@@ -146,6 +146,29 @@ typedef int socket_t;
 #include <stdio.h>
 
 
+/* stat64 */
+#ifdef HAVE_STAT64
+# define statbuf stat64
+# define fs_stat(f,s) stat64(f, s)
+# define fs_lstat(f,s) lstat64(f, s)
+# define fs_fstat(f,s) fstat64(f, s)
+# define fs_lseek(f,o,w) lseek64(f, o, w)
+# define fs_open(p,f,l) open64(p,f,l)
+# define fs_off_t off64_t
+#else /* HAVE_STAT64 */
+# define statbuf stat
+# define fs_stat(f,s) stat(f, s)
+# define fs_lstat(f,s) lstat(f, s)
+# define fs_fstat(f,s) fstat(f, s)
+# define fs_lseek(f,o,w) lseek(f, o, w)
+# define fs_open(p,f,l) open(p,f,l)
+# define fs_off_t off_t
+#endif /* HAVE_STAT64 */
+
+
+
+
+
 #define WZD_DEFAULT_PIDFILE "/var/run/wzdftpd.pid"
 
 
