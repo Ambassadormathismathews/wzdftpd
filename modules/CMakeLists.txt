@@ -20,6 +20,12 @@ if(WITH_PerlDev)
   endif(PERL_FOUND)
 endif(WITH_PerlDev)
 
+if(WITH_PythonDev)
+  if(PYTHON_FOUND)
+    add_subdirectory(python)
+  endif(PYTHON_FOUND)
+endif(WITH_PythonDev)
+
 if(WITH_TCLDev)
   if(TCL_FOUND)
     add_subdirectory(tcl)

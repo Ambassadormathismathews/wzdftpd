@@ -237,6 +237,7 @@ site_vfsdel = +O
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_sfv.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_tcl.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_perl.so = deny
+@CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_python.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_zeroconf.so = deny
 @CMAKE_INSTALL_PREFIX@/@datadir@/@PACKAGE@/modules/libwzd_dupecheck.so = deny
 
