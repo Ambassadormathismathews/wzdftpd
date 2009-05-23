@@ -15,25 +15,20 @@ else(PYTHON_INCLUDE_DIR AND PYTHON_LIBRARIES)
   
   #find include
   find_path(PYTHON_INCLUDE_DIR Python.h
-      /usr/include/python2.4
+      /usr/local/include/python2.6
+      /usr/include/python2.6
+      /usr/local/include/python2.5
       /usr/include/python2.5
       /usr/local/include/python2.4
-      /usr/local/include/python2.5
+      /usr/include/python2.4
   )
 
   #find libraries
-  find_library(PYTHON_LIBRARIES NAMES python2.4
+  find_library(PYTHON_LIBRARIES NAMES python2.6 python2.5 python2.4
       PATHS
       /usr/lib
       /usr/local/lib
   )
-  if (NOT PYTHON_LIBRARIES)
-    find_library(PYTHON_LIBRARIES NAMES python2.5
-                 PATHS
-		 /usr/lib
-		 /usr/local/lib
-    )
-  endif (NOT PYTHON_LIBRARIES)
 
   #check and display
   if(PYTHON_INCLUDE_DIR AND PYTHON_LIBRARIES)
