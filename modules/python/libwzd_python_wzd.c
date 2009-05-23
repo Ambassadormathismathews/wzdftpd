@@ -118,7 +118,7 @@ static PyObject* libwzd_python_wzd_putlog(UNUSED PyObject *self, PyObject *args)
     Py_RETURN_NONE;
   }
   
-  out_log(level, message);
+  out_log(level, "%s", message);
 
   Py_RETURN_NONE;
 }
