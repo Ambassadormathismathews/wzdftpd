@@ -56,20 +56,62 @@ PyMethodDef libwzd_python_wzd_vfs_link_methods[] = {
 
 static PyObject* libwzd_python_wzd_vfs_mkdir(UNUSED PyObject *self, PyObject *args)
 {
+  int ret;
   PyObject *real;
-  char *dir_name;
+  const char *path;
+  char real_path[WZD_MAX_PATH + 1];
+  
+  wzd_context_t *context=GetMyContext();
 
-  if ( ! PyArg_ParseTuple(args, "s|O", &dir_name, &real) ) {
-    out_log(LEVEL_HIGH, "wzd.vfs.mkdir(char *name[, bool real])\n");
+  if ( ! PyArg_ParseTuple(args, "s|O", &path, &real) ) {
+    out_log(LEVEL_HIGH, "wzd.vfs.mkdir(const char *path[, bool real])\n");
     Py_RETURN_FALSE;
   }
-  
-  Py_RETURN_TRUE;
+
+  if ( PyObject_IsTrue(real) != 1 ) {
+    /* convert to real_path */
+    if ( checkpath_new(path, real_path, context) != E_FILE_NOEXIST) {
+        Py_RETURN_FALSE;
+    }
+  } else {
+    /* just copy */
+    strncpy(real_path, path, sizeof(real_path));
+  }
+
+  if ( file_mkdir(real_path, 0755, context) )
+    Py_RETURN_FALSE;
+  else
+    Py_RETURN_TRUE;
 }
 
 static PyObject* libwzd_python_wzd_vfs_rmdir(UNUSED PyObject *self, PyObject *args)
 {
-  Py_RETURN_TRUE;
+  int ret;
+  PyObject *real;
+  const char *path;
+  char real_path[WZD_MAX_PATH + 1];
+  
+  wzd_context_t *context=GetMyContext();
+
+  if ( ! PyArg_ParseTuple(args, "s|O", &path, &real) ) {
+    out_log(LEVEL_HIGH, "wzd.vfs.rmdir(const char *path[, bool real])\n");
+    Py_RETURN_FALSE;
+  }
+
+  if ( PyObject_IsTrue(real) != 1 ) {
+    /* convert to real_path */
+    if ( checkpath_new(path, real_path, context) != E_FILE_NOEXIST) {
+        Py_RETURN_FALSE;
+    }
+  } else {
+    /* just copy */
+    strncpy(real_path, path, sizeof(real_path));
+  }
+
+  if ( file_rmdir(real_path, context) )
+    Py_RETURN_FALSE;
+  else
+    Py_RETURN_TRUE;
 }
 
 static PyObject* libwzd_python_wzd_vfs_link_create(UNUSED PyObject *self, PyObject *args)

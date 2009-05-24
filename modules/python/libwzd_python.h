@@ -51,7 +51,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#undef _POSIX_C_SOURCE /* avoid a warning. */
+#ifdef _POSIX_C_SOURCE
+#  undef _POSIX_C_SOURCE /* avoid a warning. */
+#endif
 #include <Python.h>
 
 #include <libwzd-core/wzd_structs.h>

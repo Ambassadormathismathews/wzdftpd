@@ -48,7 +48,7 @@ static PyObject* libwzd_python_catch(UNUSED PyObject *self, PyObject *args)
     Py_RETURN_NONE;
   }
 
-  out_log(LEVEL_FLOOD, "python: %s", errmsg);
+  out_log(LEVEL_FLOOD, "python: %s\n", errmsg);
 
   Py_RETURN_NONE;
 }
@@ -88,7 +88,7 @@ static int libwzd_python_hook_protocol(const char *file, const char *args)
   int argc;
   char **argv, *str_args, *token;
   PyGILState_STATE state;
-  PyObject *wzd, *wzd_group, *wzd_user, *wzd_shm, *catch, *sys;
+  PyObject *wzd, *wzd_group, *wzd_user, *wzd_shm, *catch, *sys, *level;
 
   out_log(LEVEL_FLOOD, "python_hook %s(%s)\n", file, args);
  
@@ -103,6 +103,19 @@ static int libwzd_python_hook_protocol(const char *file, const char *args)
 
   /* wzd object */
   wzd = Py_InitModule("wzd", libwzd_python_wzd_methods);
+
+  /* try to create a level object */
+  level = Py_InitModule("__wzd_level", NULL);
+  PyObject_SetAttrString(level, "lowest", PyLong_FromLong(LEVEL_LOWEST));
+  PyObject_SetAttrString(level, "flood", PyLong_FromLong(LEVEL_FLOOD));
+  PyObject_SetAttrString(level, "info", PyLong_FromLong(LEVEL_INFO));
+  PyObject_SetAttrString(level, "normal", PyLong_FromLong(LEVEL_NORMAL));
+  PyObject_SetAttrString(level, "high", PyLong_FromLong(LEVEL_HIGH));
+  PyObject_SetAttrString(level, "critical", PyLong_FromLong(LEVEL_CRITICAL));
+
+  PyObject_SetAttrString(wzd, "level", level);
+  
+
   /* wzd.exc object */
   //PyObject_SetAttrString(wzd, "exc", wzd_exc);
   /* wzd.group object */
