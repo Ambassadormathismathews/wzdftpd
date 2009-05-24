@@ -38,6 +38,7 @@ Name: backends\mysql; Description: MySQL; Types: full
 Name: backends\pgsql; Description: PostgreSQL; Types: full
 Name: backends\sqlite; Description: SQLite; Types: full
 Name: modules; Description: Modules; Types: full
+Name: modules\lua; Description: Lua; Types: full
 Name: modules\perl; Description: Perl; Types: full
 Name: modules\tcl; Description: Tcl; Types: full
 Name: modules\sfv; Description: SFV; Types: full
@@ -61,6 +62,7 @@ Name: {app}\ftproot; Components: core;
 Source: @CMAKE_CURRENT_BINARY_DIR@\wzdftpd\release\wzdftpd.exe; DestDir: {app}; Components: core; BeforeInstall: StopExistingService
 Source: @CMAKE_CURRENT_BINARY_DIR@\libwzd-core\release\libwzd_core.dll; DestDir: {app}; Components: core
 Source: @CMAKE_CURRENT_BINARY_DIR@\libwzd\release\libwzd.dll; DestDir: {app}; Components: core
+Source: @CMAKE_CURRENT_BINARY_DIR@\modules\lua\release\libwzd_lua.dll; DestDir: {app}\modules; Components: modules\lua
 Source: @CMAKE_CURRENT_BINARY_DIR@\modules\perl\release\libwzd_perl.dll; DestDir: {app}\modules; Components: modules\perl
 Source: @CMAKE_CURRENT_BINARY_DIR@\modules\sfv\release\libwzd_sfv.dll; DestDir: {app}\modules; Components: modules\sfv
 Source: @CMAKE_CURRENT_BINARY_DIR@\modules\tcl\release\libwzd_tcl.dll; DestDir: {app}\modules; Components: modules\tcl

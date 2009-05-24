@@ -14,6 +14,12 @@ if(WITH_SFV)
   add_subdirectory(sfv)
 endif(WITH_SFV)
 
+if(WITH_LuaDev)
+  if(LUA51_FOUND)
+    add_subdirectory(lua)
+  endif(LUA51_FOUND)
+endif(WITH_LuaDev)
+
 if(WITH_PerlDev)
   if(PERL_FOUND)
     add_subdirectory(perl)
