@@ -145,7 +145,7 @@ static int _api_user_get(lua_State *state)
   lua_settable(state, -3);
 
   lua_pushstring(state, "credits");
-  lua_pushinteger(state, -1); /* temp cannot convert uint64 to int -- user->credits); */
+  lua_pushinteger(state, user->credits);
   lua_settable(state, -3);
 
   lua_pushstring(state, "ratio");
